@@ -1,0 +1,64 @@
+body {
+    background: white;
+    color: yellow;
+    margin: 0;
+    padding: 0;
+}
+
+
+.div-table-row:first-child > .div-table-row-cell
+{
+    padding-top: 10px;
+}
+.div-table-row-cell
+{
+    display: table-cell;
+    padding-left: 5px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    vertical-align: top;
+}
+
+.div-table-row {
+    display: table-row;
+}
+
+.div-table {
+    display: table;
+}
+
+.radio-settings-buttons, .main-settings-buttons {
+    text-align: right;
+}
+
+.group-border {
+    border: black;
+    border-style: solid;
+    padding: 10px;
+    border-width: 1px;
+    margin-top: 10px;
+    width: auto;
+}
+
+.div-main-settings {
+    width: 100%;
+}
+
+input[type=text], select
+{
+    font-size: 1.0em;
+    font-family: "Helvetica Neue", "Lucida Grande", "Segoe UI", Arial, Helvetica, Verdana, sans-serif;
+}
+
+.wiroc-textbox {
+    width: 200px;
+    border: 1px solid #c5c5c5;
+    padding: 0.3em;
+    margin: 0;
+}
+
+.wiroc-tooltip {
+    max-width: 1200px !important;
+    overflow:auto !important;
+}
+

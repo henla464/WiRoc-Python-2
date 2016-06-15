@@ -1,0 +1,23 @@
+http://stackoverflow.com/questions/4800099/how-to-identify-multiple-usb-serial-adapters-under-ubuntu-10-1
+
+----------------------
+create this file
+/etc/udev/rules.d/usb-parse-devpath.rules:
+ACTION=="add", KERNEL=="ttyUSB[0-9]*", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", PROGRAM="/etc/udev/rules.d/usb-parse-devpath.pm %p", SYMLINK+="usb-ports/%c"
+
+----------------------
+
+
+And this (give it execute permissions)
+/etc/udev/rules.d/usb-parse-devpath.pm
+
+#!/usr/bin/perl -w
+
+@items = split("/", $ARGV[0]);
+for ($i = 0; $i < @items; $i++) {
+    if ($items[$i] =~ m/^usb[0-9]+$/) {
+        print $items[$i + 2] . "\n";
+        last;
+    }
+}
+
