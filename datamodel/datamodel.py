@@ -5,6 +5,16 @@ from struct import *
 from constants import *
 from utils.utils import Utils
 
+class SettingData(object):
+    columns = [("Key", str), ("Value", str)]
+
+    def __init__(self):
+        self.id = None
+        self.Key = None
+        self.Value = None
+
+
+
 class RadioMessageData(object):
     columns = [("stx", int), ("dataLength", int), ("messageVersion", int),
                ("fromNode", int), ("messageType", int), ("messageNumber", int),
@@ -272,63 +282,6 @@ class RadioMessageSimpleAckData(object):
     def UpdateChecksum(self):
         return None
 
-
-class NodeSettingsData(object):
-    columns = [("NodeNumber", int), ("OutboundChannel", str), ("InboundChannel", str),
-               ("InboundRadioMode", int), ("OutboundRadioMode", int)]
-
-    def __init__(self):
-        self.id = None
-        self.NodeNumber = 0
-        self.OutboundChannel = "A2"
-        self.InboundChannel = "A1"
-        self.InboundRadioMode = P2P_RETRY
-        self.OutboundRadioMode = P2P_RETRY
-        self.InboundRadioNodes = []
-
-class MainSettingsData(object):
-    columns = [("NodeNumber", int), ("SendToMeosDatabase", bool), ("MeosDatabaseServer", str),
-               ("MeosDatabaseServerPort", int)]
-    def __init__(self):
-        self.id = None
-        self.NodeNumber = 0
-        self.SendToMeosDatabase = False
-        self.MeosDatabaseServer = ""
-        self.MeosDatabaseServerPort = ""
-        self.NodeToControlNumberMapping = []
-
-
-class RadioSettingsData(object):
-    columns = [("RadioNumber", int), ("Description", str), ("ChannelId", int),
-               ("RadioMode", int), ("Inbound", bool), ("Enabled", bool), ("RadioExists", bool)]
-    def __init__(self):
-        self.id = None
-        self.RadioNumber = None
-        self.Description = ""
-        self.ChannelId = None
-        self.RadioMode = P2P_RETRY
-        self.Inbound = True
-        self.Enabled = False
-        self.RadioExists = True
-        self.InboundRadioNodes = []
-
-
-class InboundRadioNodeData(object):
-    columns = [("NodeNumber", int), ("RadioSettingsId", int)]
-
-    def __init__(self, NodeNumber = 0):
-        self.id = None
-        self.NodeNumber = NodeNumber
-        self.RadioSettingsId = None
-
-
-class NodeToControlNumberData(object):
-    columns = [("NodeNumber", int), ("ControlNumber", int)]
-
-    def __init__(self, NodeNumber = 0, ControlNumber = 0):
-        self.id = None
-        self.NodeNumber = NodeNumber
-        self.ControlNumber = ControlNumber
 
 
 class ChannelData(object):

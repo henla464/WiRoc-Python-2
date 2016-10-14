@@ -2,7 +2,7 @@ __author__ = 'henla464'
 
 import sqlite3 as lite
 import datetime
-
+from datamodel.datamodel import SettingData
 
 class DB:
 
@@ -20,6 +20,7 @@ class DB:
         table_object = table_class()
 
         for column_name in row.keys():
+            print(column_name)
             python_type = DB._get_python_type(table_object, column_name)
             python_value = self.data_mapping.get_python_value(python_type, row[column_name])
             setattr(table_object, column_name, python_value)
@@ -87,6 +88,8 @@ class DB:
         with self.connection:
             self.connection.row_factory = lite.Row
             db_cursor = self.connection.cursor()
+#            if table_class is SettingData:
+#                print(select_SQL_statement)
             db_cursor.execute(select_SQL_statement)
             rows = db_cursor.fetchall()
             table_objects = []

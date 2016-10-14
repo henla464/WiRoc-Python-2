@@ -14,8 +14,8 @@ import threading
 import time
 import socket
 import sys
-from webroutes.mainsettings import *
-from webroutes.radiosettings import *
+from webroutes.radioconfiguration import *
+from webroutes.meosconfiguration import *
 
 battery = Battery()
 
@@ -29,7 +29,7 @@ class Main:
 
     def __init__(self):
         DatabaseHelper.ensure_tables_created()
-        DatabaseHelper.ensure_main_settings_exists()
+        #DatabaseHelper.ensure_main_settings_exists()
         self.settings = SettingsClass()
         self.timeSlotManager = TimeSlotManager(self.settings)
         self.nextCallTimeSlotMessage = time.time()
@@ -37,42 +37,11 @@ class Main:
         self.radios = []
 
         print("init")
-        detectedRadios = self.DetectRadios()
-        radioNumbers = [radio.GetRadioNumber() for radio in detectedRadios]
-        DatabaseHelper.ensure_radio_settings_exists(radioNumbers)
+        #detectedRadios = self.DetectRadios()
+        #radioNumbers = [radio.GetRadioNumber() for radio in detectedRadios]
+        #DatabaseHelper.ensure_radio_settings_exists(radioNumbers)
 
-        self.ConfigureRadios(detectedRadios)
-        if self.IsAnyRadioInP2MRetryMode():
-                self.SetupSendTimeSlotMessageTimer()
-
-        battery.SetupBatteryMonitorTimer()
-
-    def DetectRadios(self):
-        usbPortsDirectory = "/dev/usb-ports"
-        detectedRadios = []
-        try:
-            serialFiles = [f for f in listdir(usbPortsDirectory)]
-            serialFiles.sort()
-
-            print(serialFiles)
-            for serialFile in serialFiles:
-                radioNumber = 10 + int(serialFile.split(".")[1])
-                if serialFile == "1-1.2":
-                    radioNumber = 1
-                elif serialFile == "1-1.3":
-                    radioNumber = 2
-                elif serialFile == "1-1.4":
-                    radioNumber = 3
-                elif serialFile == "1-1.5":
-                    radioNumber = 4
-
-                serialFilePath = join(usbPortsDirectory, serialFile)
-                detectedRadio = Radio(serialFilePath, radioNumber)
-                detectedRadios.append(detectedRadio)
-        except:
-            e = sys.exc_info()[0]
-            print("exception" + str(e))
-        return detectedRadios
+        #self.ConfigureRadios(detectedRadios)
 
     def ConfigureRadio(self, radio):
         radioNumber = radio.GetRadioNumber()
@@ -106,42 +75,6 @@ class Main:
             self.ConfigureRadio(existingRadio)
 
 
-    def PrintTimeSlotMessage(self, timeSlotMessage):
-        print("TimeSlotMessage:")
-        for timeSlot in timeSlotMessage.dataRecordArray:
-            print("  NodeNumber: " + str(timeSlot.nodeNumber) +
-                  " timeSlotLength: " + str(timeSlot.timeSlotLength) +
-                  " messageNumber: " + str(timeSlot.messageNumber))
-
-    def SendTimeSlotMessage(self):
-        for radio in self.radios:
-            if radio.GetIsInitialized():
-                radioNumber = radio.GetRadioNumber()
-                timeSlotDatas = self.timeSlotManager.GetTimeSlotData(radioNumber)
-                timeSlotMessage = RadioMessageData(ACKS_AND_TIMESLOT)
-                timeSlotMessage.dataLength = len(timeSlotDatas) * timeSlotDatas[0].GetSize()
-                timeSlotMessage.fromNode = self.settings.GetNodeNumber()
-                timeSlotMessage.messageNumber = 1
-                timeSlotMessage.dataRecordArray = timeSlotDatas
-                timeSlotMessage.UpdateChecksum()
-                self.PrintTimeSlotMessage(timeSlotMessage)
-                radio.SendData(timeSlotMessage)
-
-    def IsAnyRadioInP2MRetryMode(self):
-        for radio in self.radios:
-            if radio.GetIsInitialized():
-                radioNumber = radio.GetRadioNumber()
-                radioMode = self.settings.GetRadioMode(radioNumber)
-                if radioMode == P2M_RETRY:
-                    return True
-        return False
-
-    def SetupSendTimeSlotMessageTimer(self):
-        self.SendTimeSlotMessage()
-        self.nextCallTimeSlotMessage += 8.8
-        if self.IsAnyRadioInP2MRetryMode():
-            threading.Timer(self.nextCallTimeSlotMessage - time.time(), self.SetupSendTimeSlotMessageTimer).start()
-
     def Run(self):
         while True:
             self.GetInboundRadioMessageToDB()
@@ -149,14 +82,6 @@ class Main:
             self.SendToCompetitionDatabase()
             self.SendTestMessage()
             self.CheckForChangesToConfigurationAndReconfigure()
-            self.CheckForScanForNewRadiosRequest()
-
-    def CheckForScanForNewRadiosRequest(self):
-        if self.settings.GetScanForNewRadiosRequest():
-            SettingsClass.SetScanForNewRadiosRequest(False)
-            detectedRadios = self.DetectRadios()
-            radioNumbers = [radio.GetRadioNumber() for radio in detectedRadios]
-            DatabaseHelper.ensure_radio_settings_exists(radioNumbers)
 
     def CheckForChangesToConfigurationAndReconfigure(self):
         if self.settings.GetIsConfigurationDirty():
@@ -206,7 +131,7 @@ class Main:
 
     def SendToCompetitionDatabase(self):
         punches = DatabaseHelper.get_punches_to_send_to_meos()
-        if self.settings.GetSendToMeosDatabase():
+        if self.settings.GetSendToMeosEnabled():
             if len(punches) > 0:
                 # Create a TCP/IP socket
                 #time.sleep(1)
