@@ -21,6 +21,7 @@ def setChannel(channel):
         sd.Key = 'Channel'
     sd.Value = channel
     sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetConfigurationDirty('Channel')
     return jsonpickle.encode(MicroMock(Channel=int(sd.Value)))
 
 @app.route('/radioconfiguration/datarate/', methods=['GET'])
@@ -45,6 +46,7 @@ def setDataRate(dataRate):
     else:
         sd.Value = 7032
     sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetConfigurationDirty('DataRate')
     return jsonpickle.encode(MicroMock(DataRate=int(sd.Value)))
 
 
@@ -62,47 +64,7 @@ def setAcknowledgement(ack):
         sd.Key = 'AcknowledgementRequested'
     sd.Value = 'True' if ack.lower() == 'true' else 'False'
     sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetConfigurationDirty('AcknowledgementRequested')
     return jsonpickle.encode(MicroMock(AcknowledgementRequested=sd.Value.lower()=='true'))
-
-
-@app.route('/mainsettings/save', methods=['POST'])
-def saveMainSettings():
-    postedMainSettings = request.get_json(force=True)
-    #print(postedRadioSettings)
-    mainSettings = MainSettingsData()
-    #print(radioSettings)
-    mainSettings.id = None #save_main_settings will always update existing
-    mainSettings.NodeNumber = postedMainSettings['NodeNumber']
-    mainSettings.SendToMeosDatabase = postedMainSettings['SendToMeosDatabase']
-    mainSettings.MeosDatabaseServer = postedMainSettings['MeosDatabaseServer']
-    mainSettings.MeosDatabaseServerPort = postedMainSettings['MeosDatabaseServerPort']
-    mainSettings.NodeToControlNumberMapping = []
-    postedNodeToControlNumberMapping = postedMainSettings['NodeToControlNumberMapping']
-    print(postedNodeToControlNumberMapping)
-    for postedNodeToControl in postedNodeToControlNumberMapping:
-        nodeToCtrl = NodeToControlNumberData()
-        nodeToCtrl.id = None
-        nodeToCtrl.NodeNumber = postedNodeToControl['NodeNumber']
-        nodeToCtrl.ControlNumber = postedNodeToControl['ControlNumber']
-        mainSettings.NodeToControlNumberMapping.append(nodeToCtrl)
-
-    savedMainSettings = DatabaseHelper.save_main_settings(mainSettings)
-    SettingsClass.SetConfigurationDirty(True)
-    return jsonpickle.encode(MicroMock(MainSettings=savedMainSettings))
-
-@app.route('/mainsettings/removeAllPunches', methods=['GET'])
-def removeAllPunches():
-    DatabaseHelper.remove_all_punches()
-    return jsonpickle.encode(MicroMock(message="Punches deleted"))
-
-
-@app.route('/mainsettings/recreateDatabase', methods=['GET'])
-def recreateDatabase():
-    DatabaseHelper.drop_all_tables()
-    DatabaseHelper.ensure_tables_created()
-    DatabaseHelper.add_default_channels()
-    SettingsClass.SetConfigurationDirty(True)
-    return jsonpickle.encode(MicroMock(message="Database emptied"))
-
 
 

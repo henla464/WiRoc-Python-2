@@ -1,0 +1,103 @@
+To flash image
+
+Run this on Ubuntu before running the chrome flash tool:
+sudo usermod -a -G dialout $USER
+sudo usermod -a -G plugdev $USER
+
+# Create udev rules 
+echo -e 'SUBSYSTEM=="usb", ATTRS{idVendor}=="1f3a", ATTRS{idProduct}=="efe8", GROUP="plugdev", MODE="0660" SYMLINK+="usb-chip"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="18d1", ATTRS{idProduct}=="1010", GROUP="plugdev", MODE="0660" SYMLINK+="usb-chip-fastboot"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1f3a", ATTRS{idProduct}=="1010", GROUP="plugdev", MODE="0660" SYMLINK+="usb-chip-fastboot"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", GROUP="plugdev", MODE="0660" SYMLINK+="usb-serial-adapter"
+' | sudo tee /etc/udev/rules.d/99-allwinner.rules
+sudo udevadm control --reload-rules
+
+http://flash.getchip.com/
+
+-----------
+Setup DHCP server on CHIP
+
+
+-----------
+Install WiRoc on C.H.I.P
+
+Install sqlite3
+	sudo apt-get install libsqlite3-dev
+
+Install flask
+	a) sudo pip3.4 install flask
+
+Install serial
+	a) sudo pip3.4 install pyserial
+
+Install jsonpickle
+	a) sudo pip3.4 install jsonpickle
+
+Install pyudev
+	pip3 install pyudev
+
+
+Add user to dialout so it can access serialports without sudo
+sudo usermod -a -G dialout $USER
+
+---------
+
+1. Install libssl
+	a) sudo apt-get install libssl-dev openssl
+
+
+//4. Install pip
+//	a) sudo apt-get install python3-pip
+
+
+
+--------
+Connect to wifi
+sudo nmcli device wifi connect 'LasePrivate' password 'pw' ifname wlan0
+--------
+
+--------
+Use UART on header
+--------
+Header U14, pin outs 1,3 and 5
+First stop Getty to avoid most shell stdin/stdout to interfere with UART. Yes most, saddly kernel messages will still go though and there is currently no way to stop them (and they may happen from time to time after boot):
+
+$ sudo systemctl stop serial-getty@ttyS0.service
+
+You can then use UART as a standard serial port from /dev/ttyS0.
+-------
+
+-------
+Gadget serial
+-------
+Stop kernel to write to it
+sudo systemctl stop getty@ttyGS0.service
+
+-------
+
+-------
+Share your internet connection over usb
+-------
+http://askubuntu.com/questions/691986/network-manager-shared-connection-and-manual-settings-of-the-interface
+
+sudo apt-get install dnsmasq-base
+// remove dnsmasq, it interfers with nm
+sudo apt-get remove dnsmasq
+// create or edit the connection in nm, set it to shared
+on the chip renew the IP lease: dhclient usb0 -v
+-------
+
+------
+apt-get issue
+------
+https://bbs.nextthing.co/t/apt-get-update-fails-with-latest-image/11461/11
+
+-------
+log in with ssh
+-------
+
+
+
+http://depado.markdownblog.com/2015-03-12-short-tutorial-raspbian-python3-4-rpi-gpio
+
+http://wiki.emacinc.com/wiki/EMAC_OE_USB_Gadget_Connections

@@ -1,21 +1,16 @@
 __author__ = 'henla464'
 
-from settings.settings import SettingsClass
-from loraradio.radio import Radio
-from datamodel.db_helper import DatabaseHelper
-from datamodel.datamodel import RadioMessageData
 from battery.battery import Battery
 from constants import *
-from loraradio.timeslotmanager import TimeSlotManager
-#import RPi.GPIO as GPIO
-from os import listdir
-from os.path import isfile, join
+from datamodel.datamodel import MessageBoxData
+from datamodel.datamodel import MessageSubscriptionData
+from setup import Setup
 import threading
 import time
-import socket
-import sys
+import logging, logging.handlers
 from webroutes.radioconfiguration import *
 from webroutes.meosconfiguration import *
+
 
 battery = Battery()
 
@@ -26,171 +21,105 @@ class Main:
     inboundRadioMode = None
     radios = []
     sock = None
+    lastTimeReconfigured = time.time()
 
     def __init__(self):
+        #DatabaseHelper.drop_all_tables()
+        DatabaseHelper.truncate_setup_tables()
         DatabaseHelper.ensure_tables_created()
+        DatabaseHelper.add_default_channels()
+        SettingsClass.IncrementPowerCycle()
         #DatabaseHelper.ensure_main_settings_exists()
-        self.settings = SettingsClass()
-        self.timeSlotManager = TimeSlotManager(self.settings)
-        self.nextCallTimeSlotMessage = time.time()
+        #self.settings = SettingsClass()
+
+        self.subscriberAdapters = Setup.SetupSubscribers()
+        self.inputAdapters = Setup.SetupInputAdapters(True)
+
+        #self.timeSlotManager = TimeSlotManager(self.settings)
+        #self.nextCallTimeSlotMessage = time.time()
 
         self.radios = []
 
-        print("init")
         #detectedRadios = self.DetectRadios()
         #radioNumbers = [radio.GetRadioNumber() for radio in detectedRadios]
         #DatabaseHelper.ensure_radio_settings_exists(radioNumbers)
 
         #self.ConfigureRadios(detectedRadios)
 
-    def ConfigureRadio(self, radio):
-        radioNumber = radio.GetRadioNumber()
-        print("radioNumber: ", end="")
-        print(radioNumber)
-        radioChannel = self.settings.GetRadioChannel(radioNumber)
-        enabled = self.settings.GetRadioEnabled(radioNumber)
-        if enabled and radioChannel is not None:
-            radio.Init(radioChannel)
+
+    def timeToReconfigure(self):
+        currentTime = time.time()
+        if currentTime - self.lastTimeReconfigured > 30:
+            self.lastTimeReconfigured = currentTime
+            return True
         else:
-            radio.Disable()
-            print("Radio not enabled")
-
-
-    def ConfigureRadios(self, detectedRadios):
-        oldRadioNumbers = [radio.GetRadioNumber() for radio in self.radios]
-        newRadioNumbers = [radio.GetRadioNumber() for radio in detectedRadios]
-        newRadios = [radio for radio in detectedRadios if radio.GetRadioNumber() not in oldRadioNumbers]
-        # add and configure the newly detected radios that doesn't exist in old
-        for newRadio in newRadios:
-            self.ConfigureRadio(newRadio)
-        self.radios += newRadios
-        # disable and remove the radios that doesn't exist anymore
-        radiosToRemove = [r for r in self.radios if r.GetRadioNumber() not in newRadioNumbers]
-        for radioToRemove in radiosToRemove:
-            radioToRemove.Disable()
-        self.radios = [r for r in self.radios if r.GetRadioNumber() in newRadioNumbers]
-        # reconfigure existing radios
-        existingRadios = [r for r in self.radios if r.GetRadioNumber() in oldRadioNumbers]
-        for existingRadio in existingRadios:
-            self.ConfigureRadio(existingRadio)
+            return False
 
 
     def Run(self):
         while True:
-            self.GetInboundRadioMessageToDB()
-            self.SendAckMessage()
-            self.SendToCompetitionDatabase()
-            self.SendTestMessage()
-            self.CheckForChangesToConfigurationAndReconfigure()
 
-    def CheckForChangesToConfigurationAndReconfigure(self):
-        if self.settings.GetIsConfigurationDirty():
-            SettingsClass.SetConfigurationDirty(False)
-            self.settings.UpdateFromDatabase()
-            detectedRadios = self.DetectRadios()
-            self.ConfigureRadios(detectedRadios)
-            if self.IsAnyRadioInP2MRetryMode():
-                self.SetupSendTimeSlotMessageTimer()
+            if self.timeToReconfigure():
+                self.subscriberAdapters = Setup.SetupSubscribers()
+                self.inputAdapters = Setup.SetupInputAdapters(False)
 
+            time.sleep(0.05)
+            for inputAdapter in self.inputAdapters:
+                inputData = inputAdapter.GetData()
+                if inputData is not None:
+                    if inputData["MessageType"] == "DATA":
+                        logging.debug("Received data")
+                        messageTypeName = inputAdapter.GetTypeName()
+                        instanceName = inputAdapter.GetInstanceName()
+                        messageTypeId = DatabaseHelper.get_message_type(messageTypeName).id
+                        mbd = MessageBoxData()
+                        mbd.MessageData = inputData["Data"]
+                        mbd.MessageTypeId = messageTypeId
+                        mbd.PowerCycleCreated = SettingsClass.GetPowerCycle()
+                        mbd.ChecksumOK = inputData["ChecksumOK"]
+                        mbd.InstanceName = instanceName
+                        mbd = DatabaseHelper.save_message_box(mbd)
 
-    def PrintRadioMessage(self, radioMessage):
-        print("RadioMessage: messageNumber: ", end="")
-        print(radioMessage.messageNumber)
-        for punch in radioMessage.dataRecordArray:
-            print(" siCardNumber: " + str(punch.siCardNumber))
+                        logging.debug("MessageTypeID: " + messageTypeId)
+                        subscriptions = DatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
+                        for subscription in subscriptions:
+                            msgSubscription = MessageSubscriptionData()
+                            msgSubscription.MessageBoxId = mbd.id
+                            msgSubscription.SubscriptionId = subscription.id
+                            DatabaseHelper.save_message_subscription(msgSubscription)
+                    elif inputData["MessageType"] == "ACK":
+                        messageNumber = inputData["MessageNumber"]
+                        logging.debug("Received ack, for message number: " + str(messageNumber))
+                        DatabaseHelper.archive_message_subscription_after_ack(messageNumber)
 
-    def GetInboundRadioMessageToDB(self):
-        #time.sleep(0.1)
-        for radio in self.radios:
-            if radio.GetIsInitialized():
-                #print("for each radio initialized")
-                radioMessage = radio.GetRadioData()
-                if radioMessage is not None:
-                    print("Radio message received from node: ", end="")
-                    print(radioMessage.fromNode)
-                    if radioMessage.messageType == PUNCH or radioMessage.messageType == COMBINED_PUNCH:
-                        self.PrintRadioMessage(radioMessage)
-                        DatabaseHelper.save_radio_message(radioMessage)
+            msgSubscriptions = DatabaseHelper.get_message_subscriptions_view()
+            for msgSub in msgSubscriptions:
+                #find the right adapter
+                for subAdapter in self.subscriberAdapters:
+                    if (msgSub.SubscriberInstanceName == subAdapter.GetInstanceName() and
+                            msgSub.SubscriberTypeName == subAdapter.GetTypeName()):
 
-
-    def SendAckMessage(self):
-        for radio in self.radios:
-            if radio.GetIsInitialized():
-                radioNumber = radio.GetRadioNumber()
-                radioMode = self.settings.GetRadioMode(radioNumber)
-
-                if radioMode == P2P_RETRY:
-                    #send simple ack
-                    radioMessages = DatabaseHelper.get_last_x_radio_message_data_not_acked(radioNumber, 1)
-                    if len(radioMessages) > 0 and radioMessages[0].messageNumber is not None:
-                        print("send simple ack")
-                        radio.SendSimpleAckMessage(radioMessages[0].messageNumber)
-                        radioMessages[0].ackSent = True
-                        DatabaseHelper.save_radio_message(radioMessages[0])
-
-
-    def SendToCompetitionDatabase(self):
-        punches = DatabaseHelper.get_punches_to_send_to_meos()
-        if self.settings.GetSendToMeosEnabled():
-            if len(punches) > 0:
-                # Create a TCP/IP socket
-                #time.sleep(1)
-                print("time1")
-                if self.sock is None:
-                    try:
-                        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        print("Address: " + self.settings.GetMeosDatabaseServer() + " Port: " + str(self.settings.GetMeosDatabaseServerPort()))
-                        server_address = (self.settings.GetMeosDatabaseServer(), self.settings.GetMeosDatabaseServerPort())
-                        self.sock.connect(server_address)
-                        print("after connect")
-                    except socket.gaierror as msg:
-                        print("Address-related error connecting to server: " + str(msg))
-                        print("close")
-                        self.sock.close()
-                        self.sock = None
-                        time.sleep(1)
-                        return
-                    except socket.error as msg:
-                        print("Connection error: " + str(msg))
-                        print("close")
-                        self.sock.close()
-                        self.sock = None
-                        time.sleep(1)
-                        return
-
-                try:
-                    for punch in punches:
-                        stationNumber = DatabaseHelper.get_control_number_by_node_number(punch.origFromNode)
-                        if stationNumber is not None:
-                            print("send punch to meos")
-                            punchBytesToSend = punch.GetMeosByteArray(stationNumber)
-
-                            # Send data
-                            self.sock.sendall(punchBytesToSend)
-                            DatabaseHelper.set_punch_sent_to_meos(punch.id)
+                        # transform the data before sending
+                        transformClass = subAdapter.GetTransform(msgSub.TransformName)
+                        transformedData = transformClass.Transform(msgSub.MessageData)
+                        if transformedData is not None:
+                            success = subAdapter.SendData(transformedData)
+                            if success:
+                                logging.info("Message sent")
+                                if msgSub.DeleteAfterSent: # move msgsub to archive
+                                    DatabaseHelper.archive_message_subscription_view_after_sent(msgSub)
+                                else: # set SentDate and increment NoOfSendTries
+                                    DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub)
+                            else:
+                                # failed to send
+                                logging.warning("Failed to send message")
                         else:
-                            DatabaseHelper.set_no_station_number_found(punch.id)
-                except socket.error as msg:
-                    print(msg)
-                    self.sock = None
-                #finally:
-                    #print("close")
-                    #self.sock.close()
-
-    def SendTestMessage(self):
-        for radio in self.radios:
-            if radio.GetIsInitialized():
-                radioNumber = radio.GetRadioNumber()
-                radioMode = self.settings.GetRadioMode(radioNumber)
-
-                if radioMode == TESTING and time.time() > radio.GetTimeOfLastTestMessageSent() + 5:
-                    print("send testing message")
-                    nodeNumber = self.settings.GetNodeNumber()
-                    radio.SendTestMessage(nodeNumber)
+                            # shouldn't be sent, so just archive the message subscription
+                            DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
 
 
 def startMain():
-    print("start main")
+    logging.info("Start main")
     main = Main()
     main.Run()
 
@@ -204,10 +133,28 @@ def common_settings():
     return personId
 
 def startWebServer():
+    logging.info("Start web server")
     app.run(debug=True, host='0.0.0.0', use_reloader=False)
 
 if __name__ == '__main__':
-    print("main")
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                        filename='WiRoc.log',
+                        filemode='w')
+    # set a format which is simpler for console use
+    formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+    rotFileHandler = logging.handlers.RotatingFileHandler('WiRoc.log', maxBytes=20000000, backupCount=5)
+    rotFileHandler.setFormatter(formatter)
+
+    # define a Handler which writes INFO messages or higher to the sys.stderr
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+    console.setFormatter(formatter)
+    # add the handler to the root logger
+    logging.getLogger('').addHandler(rotFileHandler)
+    logging.getLogger('').addHandler(console)
+
+    logging.info("Start")
     threading.Thread(target=startMain).start()
     startWebServer()
 
