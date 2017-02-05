@@ -84,6 +84,13 @@ class DB:
             table_object = self._get_table_object(table_class, row)
             return table_object
 
+    def get_scalar_by_SQL(self, table_class, select_SQL_statement):
+        with self.connection:
+            self.connection.row_factory = lite.Row
+            db_cursor = self.connection.cursor()
+            db_cursor.execute(select_SQL_statement)
+            return db_cursor.fetchone()[0]
+
     def get_table_objects_by_SQL(self, table_class, select_SQL_statement):
         with self.connection:
             self.connection.row_factory = lite.Row

@@ -3,6 +3,7 @@ from settings.settings import SettingsClass
 import inputadapters.receiveloraadapter
 import pyudev
 import logging
+import socket
 
 class SendLoraAdapter(object):
     Instances = []
@@ -11,13 +12,18 @@ class SendLoraAdapter(object):
     def CreateInstances():
         # check the number of lora radios and return an instance for each
         serialPorts = []
-        # https://github.com/dhylands/usb-ser-mon/blob/master/find_port.py
-        uDevContext = pyudev.Context()
-        for device in uDevContext.list_devices(subsystem='tty'):
-            if 'ID_VENDOR_ID' in device:
-                if device['ID_VENDOR_ID'].lower() == '10c4' and \
-                                device['ID_MODEL_ID'].lower() == 'ea60':
-                    serialPorts.append(device.device_node)
+
+        if socket.gethostname() == 'chip':
+            serialPorts.append('/dev/ttyS2')
+        else:
+            # https://github.com/dhylands/usb-ser-mon/blob/master/find_port.py
+            uDevContext = pyudev.Context()
+            for device in uDevContext.list_devices(subsystem='tty'):
+                if 'ID_VENDOR_ID' in device:
+                    if device['ID_VENDOR_ID'].lower() == '10c4' and \
+                                    device['ID_MODEL_ID'].lower() == 'ea60':
+                        #serialPorts.append(device.device_node)
+                        "asdf"
 
         highestInstanceNumber = 0
         newInstances = []
@@ -28,6 +34,7 @@ class SendLoraAdapter(object):
 
             alreadyCreated = False
             for instance in SendLoraAdapter.Instances:
+                logging.info("SendLoraAdapter instance: " + instance.GetSerialDevicePath())
                 if instance.GetSerialDevicePath() == serialDev:
                     alreadyCreated = True
                     newInstances.append(instance)
@@ -35,16 +42,18 @@ class SendLoraAdapter(object):
                         highestInstanceNumber = instance.GetInstanceNumber()
 
             #don't create both receive and send adapter for same serial port
-            for instance in inputadapters.receiveloraadapter.ReceiveLoraAdapter.Instances:
-                if instance.GetSerialDevicePath() == serialDev:
-                    alreadyCreated = True
+            #for instance in inputadapters.receiveloraadapter.ReceiveLoraAdapter.Instances:
+            #    if instance.GetSerialDevicePath() == serialDev:
+            #        alreadyCreated = True
 
             if not alreadyCreated:
                 highestInstanceNumber = highestInstanceNumber + 1
+                logging.info("SendLoraAdapter created: " + serialDev + " instanceNo: " + str(highestInstanceNumber))
                 newInstances.append(
                     SendLoraAdapter(highestInstanceNumber, serialDev))
 
-        SendLoraAdapter.Instances = newInstances
+        if len(newInstances) > 0:
+            SendLoraAdapter.Instances = newInstances
         return SendLoraAdapter.Instances
 
     @staticmethod
@@ -72,9 +81,15 @@ class SendLoraAdapter(object):
 
     def GetTransformNames(self):
         #"BLEToLoraTransform",
-        return ["SIToLoraTransform", "LoraToLoraAckTransform"]
+        transforms = []
+        if SettingsClass.GetLoraMode() == "SEND":
+            transforms.append("SIToLoraTransform")
+        else:
+            transforms.append("LoraToLoraAckTransform")
+        return transforms
 
     def SetTransform(self, transformClass):
+        logging.info("Add transform: " + transformClass.GetName())
         self.transforms[transformClass.GetName()] = transformClass
 
     def GetTransform(self, transformName):

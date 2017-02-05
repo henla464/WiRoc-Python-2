@@ -1,7 +1,7 @@
 __author__ = 'henla464'
 
 from battery.battery import Battery
-from constants import *
+#from constants import *
 from datamodel.datamodel import MessageBoxData
 from datamodel.datamodel import MessageSubscriptionData
 from setup import Setup
@@ -10,118 +10,218 @@ import time
 import logging, logging.handlers
 from webroutes.radioconfiguration import *
 from webroutes.meosconfiguration import *
-
+import cProfile
+from chipGPIO.chipGPIO import *
+import socket
 
 battery = Battery()
 
 class Main:
-    settings = None
-    timeSlotManager = None
-    nextCallTimeSlotMessage = None
-    inboundRadioMode = None
-    radios = []
-    sock = None
-    lastTimeReconfigured = time.time()
+    #settings = None
+    #timeSlotManager = None
+    #nextCallTimeSlotMessage = None
+    #inboundRadioMode = None
+    #sock = None
+
 
     def __init__(self):
-        #DatabaseHelper.drop_all_tables()
-        DatabaseHelper.truncate_setup_tables()
-        DatabaseHelper.ensure_tables_created()
-        DatabaseHelper.add_default_channels()
+        self.shouldReconfigure = False
+        self.lastTimeReconfigured = time.time()
+
+        #DatabaseHelper.mainDatabaseHelper.drop_all_tables()
+        #DatabaseHelper.mainDatabaseHelper.truncate_setup_tables()
+        DatabaseHelper.mainDatabaseHelper = DatabaseHelper()
+        DatabaseHelper.mainDatabaseHelper.ensure_tables_created()
+        DatabaseHelper.mainDatabaseHelper.add_default_channels()
         SettingsClass.IncrementPowerCycle()
-        #DatabaseHelper.ensure_main_settings_exists()
-        #self.settings = SettingsClass()
 
         self.subscriberAdapters = Setup.SetupSubscribers()
         self.inputAdapters = Setup.SetupInputAdapters(True)
+        Setup.SetupPins()
+        self.runningOnChip = socket.gethostname() == 'chip'
 
-        #self.timeSlotManager = TimeSlotManager(self.settings)
-        #self.nextCallTimeSlotMessage = time.time()
+    def displayChannel(self):
+        if self.runningOnChip:
+            channel = SettingsClass.GetChannel()
+            lightSegA = channel in [2,3,5,6,7,8,9]
+            lightSegB = channel in [1, 2, 3, 4, 7, 8, 9]
+            lightSegC = channel in [1, 3, 4, 5, 6, 7, 8, 9]
+            lightSegD = channel in [2, 3, 5, 6, 8]
+            lightSegE = channel in [2, 6, 8]
+            lightSegF = channel in [4, 5, 6, 8, 9]
+            lightSegG = channel in [2, 3, 4, 5, 6, 8, 9]
 
-        self.radios = []
+            digitalWrite(0, int(lightSegA))
+            digitalWrite(1, int(lightSegB))
+            digitalWrite(2, int(lightSegC))
+            digitalWrite(3, int(lightSegD))
+            digitalWrite(4, int(lightSegE))
+            digitalWrite(5, int(lightSegF))
+            digitalWrite(6, int(lightSegG))
 
-        #detectedRadios = self.DetectRadios()
-        #radioNumbers = [radio.GetRadioNumber() for radio in detectedRadios]
-        #DatabaseHelper.ensure_radio_settings_exists(radioNumbers)
-
-        #self.ConfigureRadios(detectedRadios)
-
+            digitalWrite(7, int(SettingsClass.GetAcknowledgementRequested()))
 
     def timeToReconfigure(self):
         currentTime = time.time()
-        if currentTime - self.lastTimeReconfigured > 30:
+        if currentTime - self.lastTimeReconfigured > 10 or self.shouldReconfigure:
             self.lastTimeReconfigured = currentTime
+            self.shouldReconfigure = False
             return True
         else:
             return False
+
+    def timeToSendMessage(self, msgSub):
+        if (
+            (msgSub.FindAdapterTryDate is None and
+                (msgSub.NoOfSendTries == 0 or
+                 (msgSub.NoOfSendTries == 1 and time.time() - msgSub.SentDate > SettingsClass.GetFirstRetryDelay()) or
+                 (msgSub.NoOfSendTries == 2 and time.time() - msgSub.SentDate > SettingsClass.GetSecondRetryDelay()))
+            )
+            or
+                (msgSub.FindAdapterTryDate is not None and
+                    (msgSub.FindAdapterTries == 0 or
+                    (msgSub.FindAdapterTries == 1 and time.time() - msgSub.FindAdapterTryDate > SettingsClass.GetFirstRetryDelay()) or
+                    (msgSub.FindAdapterTries == 2 and time.time() - msgSub.FindAdapterTryDate > SettingsClass.GetSecondRetryDelay()))
+                    )):
+            return True
+        return False
+
+    def shouldArchiveMessage(self, msgSub):
+        if (
+            (msgSub.FindAdapterTryDate is None
+             and msgSub.NoOfSendTries == 3
+             and time.time() - msgSub.SentDate > 30)
+            or
+            (msgSub.FindAdapterTryDate is not None
+             and msgSub.FindAdapterTries == 3
+             and time.time() - msgSub.FindAdapterTryDate > SettingsClass.GetSecondRetryDelay())):
+            return True
+        return False
+
+    def getMessageSubscriptionsToSend(self):
+        msgSubsToSend = []
+        if SettingsClass.GetMessagesToSendExists():
+            msgSubscriptions = DatabaseHelper.mainDatabaseHelper.get_message_subscriptions_view()
+            if len(msgSubscriptions) == 0:
+                SettingsClass.SetMessagesToSendExists(False)
+            else:
+                for msgSub in msgSubscriptions:
+                    if self.timeToSendMessage(msgSub):
+                        msgSubsToSend.append(msgSub)
+        return msgSubsToSend
+
+    def archiveFailedMessages(self):
+        if SettingsClass.GetMessagesToSendExists():
+            msgSubscriptions = DatabaseHelper.mainDatabaseHelper.get_message_subscriptions_view()
+            for msgSub in msgSubscriptions:
+                if self.shouldArchiveMessage(msgSub):
+                    DatabaseHelper.mainDatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
 
 
     def Run(self):
         while True:
 
             if self.timeToReconfigure():
+                SettingsClass.SetMessagesToSendExists(True)
+                self.archiveFailedMessages()
+                self.displayChannel()
+                #return
                 self.subscriberAdapters = Setup.SetupSubscribers()
                 self.inputAdapters = Setup.SetupInputAdapters(False)
+           
 
             time.sleep(0.05)
             for inputAdapter in self.inputAdapters:
-                inputData = inputAdapter.GetData()
+                inputData = None
+                try:
+                    inputData = inputAdapter.GetData()
+                except Exception as ex:
+                    self.shouldReconfigure = True
+                    logging.error("InputAdapter error in GetData:")
+                    logging.error(ex)
+
                 if inputData is not None:
+                    logging.info("input data")
                     if inputData["MessageType"] == "DATA":
-                        logging.debug("Received data")
+                        logging.info("Received data")
                         messageTypeName = inputAdapter.GetTypeName()
                         instanceName = inputAdapter.GetInstanceName()
-                        messageTypeId = DatabaseHelper.get_message_type(messageTypeName).id
+                        messageTypeId = DatabaseHelper.mainDatabaseHelper.get_message_type(messageTypeName).id
                         mbd = MessageBoxData()
                         mbd.MessageData = inputData["Data"]
                         mbd.MessageTypeId = messageTypeId
                         mbd.PowerCycleCreated = SettingsClass.GetPowerCycle()
                         mbd.ChecksumOK = inputData["ChecksumOK"]
                         mbd.InstanceName = instanceName
-                        mbd = DatabaseHelper.save_message_box(mbd)
+                        mbd = DatabaseHelper.mainDatabaseHelper.save_message_box(mbd)
 
-                        logging.debug("MessageTypeID: " + messageTypeId)
-                        subscriptions = DatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
+                        logging.debug("MessageTypeID: " + str(messageTypeId))
+                        subscriptions = DatabaseHelper.mainDatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
                         for subscription in subscriptions:
                             msgSubscription = MessageSubscriptionData()
                             msgSubscription.MessageBoxId = mbd.id
                             msgSubscription.SubscriptionId = subscription.id
-                            DatabaseHelper.save_message_subscription(msgSubscription)
+                            DatabaseHelper.mainDatabaseHelper.save_message_subscription(msgSubscription)
+                            SettingsClass.SetMessagesToSendExists(True)
                     elif inputData["MessageType"] == "ACK":
                         messageNumber = inputData["MessageNumber"]
                         logging.debug("Received ack, for message number: " + str(messageNumber))
-                        DatabaseHelper.archive_message_subscription_after_ack(messageNumber)
+                        DatabaseHelper.mainDatabaseHelper.archive_message_subscription_after_ack(messageNumber)
 
-            msgSubscriptions = DatabaseHelper.get_message_subscriptions_view()
-            for msgSub in msgSubscriptions:
-                #find the right adapter
-                for subAdapter in self.subscriberAdapters:
-                    if (msgSub.SubscriberInstanceName == subAdapter.GetInstanceName() and
-                            msgSub.SubscriberTypeName == subAdapter.GetTypeName()):
+            if SettingsClass.GetMessagesToSendExists():
+                msgSubscriptions = self.getMessageSubscriptionsToSend()
+                for msgSub in msgSubscriptions:
+                    logging.info("msg subscriptions")
+                    #find the right adapter
+                    adapterFound = False
+                    logging.info("msg subscriptions 2")
+                    for subAdapter in self.subscriberAdapters:
+                        logging.info("sub adapter 1")
+                        if (msgSub.SubscriberInstanceName == subAdapter.GetInstanceName() and
+                                msgSub.SubscriberTypeName == subAdapter.GetTypeName()):
+                            adapterFound = True
 
-                        # transform the data before sending
-                        transformClass = subAdapter.GetTransform(msgSub.TransformName)
-                        transformedData = transformClass.Transform(msgSub.MessageData)
-                        if transformedData is not None:
-                            success = subAdapter.SendData(transformedData)
-                            if success:
-                                logging.info("Message sent")
-                                if msgSub.DeleteAfterSent: # move msgsub to archive
-                                    DatabaseHelper.archive_message_subscription_view_after_sent(msgSub)
-                                else: # set SentDate and increment NoOfSendTries
-                                    DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub)
+                            # transform the data before sending
+                            transformClass = subAdapter.GetTransform(msgSub.TransformName)
+                            transformedData = transformClass.Transform(msgSub.MessageData)
+                            if transformedData is not None:
+                                success = subAdapter.SendData(transformedData)
+                                if success:
+                                    logging.info("Message sent")
+                                    if msgSub.DeleteAfterSent: # move msgsub to archive
+                                        DatabaseHelper.mainDatabaseHelper.archive_message_subscription_view_after_sent(msgSub)
+                                    else: # set SentDate and increment NoOfSendTries
+                                        DatabaseHelper.mainDatabaseHelper.increment_send_tries_and_set_sent_date(msgSub)
+                                else:
+                                    # failed to send
+                                    logging.warning("Failed to send message")
+                                    DatabaseHelper.mainDatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub)
                             else:
-                                # failed to send
-                                logging.warning("Failed to send message")
-                        else:
-                            # shouldn't be sent, so just archive the message subscription
-                            DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
+                                # shouldn't be sent, so just archive the message subscription
+                                DatabaseHelper.mainDatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
+                    logging.info("sub adapter if not found")
+                    if not adapterFound:
+                        logging.info("Send adapter not found for " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName)
+                        DatabaseHelper.mainDatabaseHelper.increment_find_adapter_tries_and_set_find_adapter_try_date(msgSub)
 
+
+
+
+main = None
+def main():
+    logging.info("Start main")
+    global main
+    main = Main()
+
+
+def run():
+    global main
+    main.Run()
 
 def startMain():
-    logging.info("Start main")
-    main = Main()
-    main.Run()
+    main()
+    run()
+    #cProfile.run('run()')
 
 @app.route('/')
 def index():
@@ -134,6 +234,7 @@ def common_settings():
 
 def startWebServer():
     logging.info("Start web server")
+    DatabaseHelper.webDatabaseHelper = DatabaseHelper()
     app.run(debug=True, host='0.0.0.0', use_reloader=False)
 
 if __name__ == '__main__':
@@ -153,6 +254,12 @@ if __name__ == '__main__':
     # add the handler to the root logger
     logging.getLogger('').addHandler(rotFileHandler)
     logging.getLogger('').addHandler(console)
+
+    #Create pid file for systemd service
+    pid = str(os.getpid())
+    f = open('/run/WiRocPython.pid', 'w')
+    f.write(pid)
+    f.close()
 
     logging.info("Start")
     threading.Thread(target=startMain).start()

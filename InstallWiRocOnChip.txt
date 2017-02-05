@@ -14,46 +14,117 @@ sudo udevadm control --reload-rules
 
 http://flash.getchip.com/
 
------------
-Setup DHCP server on CHIP
 
 
 -----------
 Install WiRoc on C.H.I.P
 
+Update package list:
+	sudo apt-get update
+
 Install sqlite3
 	sudo apt-get install libsqlite3-dev
 
+Install python/pip
+	a) sudo apt-get install python3
+        b) //dont know if this is necessary// sudo apt-get install python3-setuptools python3-dev build-essential 
+        c) sudo apt-get install python3-pip
+
 Install flask
-	a) sudo pip3.4 install flask
+	a) sudo pip3 install flask
 
 Install serial
-	a) sudo pip3.4 install pyserial
+	a) sudo pip3 install pyserial
 
 Install jsonpickle
-	a) sudo pip3.4 install jsonpickle
+	a) sudo pip3 install jsonpickle
 
 Install pyudev
-	pip3 install pyudev
+	a) sudo pip3 install pyudev
 
+Install newer nodejs
+	a) wget https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-armv7l.tar.xz
+	b) sudo tar -C /usr/local --strip-components 1 -xJf node-v6.9.1-linux-armv7l.tar.xz
+	c) sudo ln -s /usr/local/bin/node /usr/bin/nodejs
+	d) sudo ln -s /usr/local/bin/npm /usr/bin/npm
+
+ON Ubuntu: Copy over WiRoc-Python-2
+	a) scp -r WiRoc-Python-2 chip@chip.local:/home/chip
+
+ON Ubuntu: Copy over WiRoc-BLE-Device
+	a) scp -r WiRoc-BLE-Device chip@chip.local:/home/chip
+
+#ON Ubuntu: Copy over WiRoc-StartupScripts
+#	a) scp -r WiRoc-StartupScripts chip@chip.local:/home/chip
+
+Install python 2
+	a) sudo apt-get install python
+
+Install bleno
+	a) sudo apt-get install bluetooth bluez libbluetooth-dev libudev-dev
+	c) cd /home/chip/WiRoc-BLE-Device/
+	b) npm install bleno
+
+Startup scripts:
+	cd /home/chip
+	mkdir WiRoc-StartupScripts
+	cd WiRoc-StartupScripts
+	wget -O /home/chip/WiRoc-StartupScripts/Startup.sh https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/Startup.sh
+	sudo chmod +x /home/chip/WiRoc-StartupScripts/Startup.sh
+	wget -O /home/chip/WiRoc-StartupScripts/setGPIOuart2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/setGPIOuart2
+	sudo chmod +x /home/chip/WiRoc-StartupScripts/setGPIOuart2
+	sudo wget -O /etc/systemd/system/WiRocPython.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPython.service
+	sudo wget -O /etc/systemd/system/WiRocBLE.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocBLE.service
+	sudo wget -O /etc/systemd/system/WiRocStartup.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocStartup.service
+	sudo systemctl enable /etc/systemd/system/WiRocStartup.service
+	sudo systemctl enable /etc/systemd/system/WiRocBLE.service
+	sudo systemctl enable /etc/systemd/system/WiRocPython.service
+
+
+
+#Disable bluetoothd
+#	a) once: sudo systemctl stop bluetooth (or permanently sudo systemctl disable bluetooth)
+#	b) power up bt adapter: sudo hciconfig hci0 up
+
+
+Install the new dtb on chip
+	rm /boot/sun5i-r8-chip.dtb
+	wget -O /boot https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/sun5i-r8-chip.dtb
+	
+#c) cp /home/chip/WiRoc-StartupScripts/sun5i-r8-chip.dtb /boot/sun5i-r8-chip.dtb
+
+#Add a call to the startup script from etc/rc.local Add it before the exit 0
+#	a) sh '/home/chip/WiRoc-StartupScripts/Startup.sh'
+
+
+Install WiRoc-Monitor
+	a) ? sudo apt-get install i2c-tools
+	sudo wget -O /usr/local/bin/gpio.sh https://raw.githubusercontent.com/henla464/WiRoc-Monitor/master/gpio.sh
+	sudo wget -O /usr/local/bin/blink.sh https://raw.githubusercontent.com/henla464/WiRoc-Monitor/master/blink.sh
+        sudo chmod +x /usr/local/bin/blink.sh
+        sudo wget -O /etc/systemd/system/blink.service https://raw.githubusercontent.com/henla464/WiRoc-Monitor/master/blink.service
+        sudo wget -O /usr/local/etc/blink.cfg https://raw.githubusercontent.com/henla464/WiRoc-Monitor/master/blink.cfg
+	sudo systemctl enable /etc/systemd/system/blink.service
 
 Add user to dialout so it can access serialports without sudo
 sudo usermod -a -G dialout $USER
 
----------
-
-1. Install libssl
-	a) sudo apt-get install libssl-dev openssl
-
-
-//4. Install pip
-//	a) sudo apt-get install python3-pip
-
-
 
 --------
+List devices
+nmcli -m multiline -f device,type,state device status
+
+List wifi networks
+nmcli -m multiline -f ssid,signal,security device wifi list
+
 Connect to wifi
 sudo nmcli device wifi connect 'LasePrivate' password 'pw' ifname wlan0
+
+sudo nmcli device disconnect wlan0
+
+change mac
+nmcli connection modify --temporary <connection_name> 802-11-wireless.cloned-mac-address 00:60:1B:EB:F8:73
+nmcli connection up <connection_name>
 --------
 
 --------
@@ -66,6 +137,11 @@ $ sudo systemctl stop serial-getty@ttyS0.service
 
 You can then use UART as a standard serial port from /dev/ttyS0.
 -------
+
+------
+Stop getty
+  sudo kill -19 <pid>
+------
 
 -------
 Gadget serial
@@ -80,9 +156,9 @@ Share your internet connection over usb
 -------
 http://askubuntu.com/questions/691986/network-manager-shared-connection-and-manual-settings-of-the-interface
 
-sudo apt-get install dnsmasq-base
+//sudo apt-get install dnsmasq-base
 // remove dnsmasq, it interfers with nm
-sudo apt-get remove dnsmasq
+//sudo apt-get remove dnsmasq
 // create or edit the connection in nm, set it to shared
 on the chip renew the IP lease: dhclient usb0 -v
 -------
@@ -98,6 +174,7 @@ log in with ssh
 
 
 
+https://github.com/xtacocorex/CHIP_IO
 http://depado.markdownblog.com/2015-03-12-short-tutorial-raspbian-python3-4-rpi-gpio
 
 http://wiki.emacinc.com/wiki/EMAC_OE_USB_Gadget_Connections

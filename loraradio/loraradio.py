@@ -44,7 +44,7 @@ class LoraRadio:
 
     @staticmethod
     def getSettingsArray(channel, loraDataRate):
-        channelData = DatabaseHelper.get_channel(channel, loraDataRate)
+        channelData = DatabaseHelper.mainDatabaseHelper.get_channel(channel, loraDataRate)
         frequency = int(channelData.Frequency / 61.035)
         frequencyOne = ((frequency & 0xFF0000)>>16)
         frequencyTwo = ((frequency & 0xFF00)>>8)
@@ -183,4 +183,5 @@ class LoraRadio:
         else:
             message = self.receivedMessage
             self.receivedMessage = LoraRadioMessage()
+            logging.info("Lora radio, received message!")
             return message

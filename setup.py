@@ -5,14 +5,24 @@ from datamodel.datamodel import SubscriptionData
 from datamodel.datamodel import TransformData
 from datamodel.db_helper import DatabaseHelper
 import logging
+from chipGPIO.chipGPIO import *
+import socket
 
 class Setup:
+    subscriberAdapterClasses = None
+    inputAdapterClasses = None
     @staticmethod
     def SetupSubscribers():
-        modules = Loader.ImportDirectory("subscriberadapters", False)
+        if Setup.subscriberAdapterClasses is None:
+            Setup.subscriberAdapterClasses = []
+            subscriberModules = Loader.ImportDirectory("subscriberadapters", False)
+
+            for mod in subscriberModules:
+                adapterClass = Loader.GetFirstClassFromModule(mod, "Adapter")
+                Setup.subscriberAdapterClasses.append(adapterClass)
+
         adapterObjects = []
-        for mod in modules:
-            adapterClass = Loader.GetFirstClassFromModule(mod, "Adapter")
+        for adapterClass in Setup.subscriberAdapterClasses:
             instances = adapterClass.CreateInstances()
             adapterObjects.extend(instances)
 
@@ -22,7 +32,7 @@ class Setup:
                 typeName = adapter.GetTypeName()
                 instanceName = adapter.GetInstanceName()
                 subscriberData = SubscriberData(typeName, instanceName)
-                subscriberData = DatabaseHelper.save_subscriber(subscriberData)
+                subscriberData = DatabaseHelper.mainDatabaseHelper.save_subscriber(subscriberData)
 
                 # add message types, transforms and subscriptions to the database
                 transformNames = adapter.GetTransformNames()
@@ -36,20 +46,20 @@ class Setup:
                             # add message types to database
                             messageTypeName = transformClass.GetInputMessageType()
                             messageTypeData = MessageTypeData(messageTypeName)
-                            inputMessageData = DatabaseHelper.save_message_type(messageTypeData)
+                            inputMessageData = DatabaseHelper.mainDatabaseHelper.save_message_type(messageTypeData)
                             messageTypeName = transformClass.GetOutputMessageType()
                             messageTypeData = MessageTypeData(messageTypeName)
-                            outputMessageData = DatabaseHelper.save_message_type(messageTypeData)
+                            outputMessageData = DatabaseHelper.mainDatabaseHelper.save_message_type(messageTypeData)
 
                             # add transform to database
                             transformData = TransformData(transformClass.GetName(), inputMessageData.id, outputMessageData.id)
-                            transformData = DatabaseHelper.save_transform(transformData)
+                            transformData = DatabaseHelper.mainDatabaseHelper.save_transform(transformData)
 
                             # add subscription to database
                             deleteAfterSent = adapter.GetDeleteAfterSent()
                             enabled = True
                             subscriptionData = SubscriptionData(deleteAfterSent, enabled, subscriberData.id, transformData.id)
-                            subscriptionData = DatabaseHelper.save_subscription(subscriptionData)
+                            subscriptionData = DatabaseHelper.mainDatabaseHelper.save_subscription(subscriptionData)
 
         for adapterObj in adapterObjects:
             if not adapterObj.Init():
@@ -59,22 +69,40 @@ class Setup:
 
     @staticmethod
     def SetupInputAdapters(createMessageTypeIfNotExist):
-        modules = Loader.ImportDirectory("inputadapters", False)
+        if Setup.inputAdapterClasses is None:
+            Setup.inputAdapterClasses = []
+            modules = Loader.ImportDirectory("inputadapters", False)
+            for mod in modules:
+                logging.info(mod)
+                adapterClass = Loader.GetFirstClassFromModule(mod, "Adapter")
+                Setup.inputAdapterClasses.append(adapterClass)
+
         adapterObjects = []
-        for mod in modules:
-            adapterClass = Loader.GetFirstClassFromModule(mod, "Adapter")
+        for adapterClass in Setup.inputAdapterClasses:
             instances = adapterClass.CreateInstances()
 
             if createMessageTypeIfNotExist:
                 # add message types to database
                 messageTypeName = adapterClass.GetTypeName()
                 messageTypeData = MessageTypeData(messageTypeName)
-                DatabaseHelper.save_message_type(messageTypeData)
+                DatabaseHelper.mainDatabaseHelper.save_message_type(messageTypeData)
 
             adapterObjects.extend(instances)
 
-        for adapterObj in adapterObjects:
-            adapterObj.Init()
+            for adapterObj in adapterObjects:
+                adapterObj.Init()
 
         return adapterObjects
 
+
+    @staticmethod
+    def SetupPins():
+        if socket.gethostname() == 'chip':
+            pinMode(0, OUTPUT)
+            pinMode(1, OUTPUT)
+            pinMode(2, OUTPUT)
+            pinMode(3, OUTPUT)
+            pinMode(4, OUTPUT)
+            pinMode(5, OUTPUT)
+            pinMode(6, OUTPUT)
+            pinMode(7, OUTPUT)

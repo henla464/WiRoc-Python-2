@@ -109,30 +109,42 @@ class SubscriptionData(object):
 
 
 class MessageSubscriptionData(object):
-    columns = [("CustomData", str), ("SentDate", datetime),
+    columns = [("CustomData", str), ("SentDate", datetime), ("SendFailedDate", datetime),
+               ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
                ("NoOfSendTries", int), ("AckReceivedDate", datetime), ("MessageBoxId", int),
                ("SubscriptionId", int)]
 
-    def __init__(self, CustomData=None, SentDate=None, AckReceivedDate=None,
+    def __init__(self, CustomData=None, SentDate=None, SendFailedDate=None,
+                 FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
                  NoOfSendTries=0, MessageBoxId=None, SubscriptionId=None):
         self.id = None
         self.CustomData = CustomData
         self.SentDate = SentDate
+        self.SendFailedDate = SendFailedDate
         self.NoOfSendTries = NoOfSendTries
+        self.FindAdapterTryDate = FindAdapterTryDate
+        self.FindAdapterTries = FindAdapterTries
         self.AckReceivedDate = AckReceivedDate
         self.MessageBoxId = MessageBoxId
         self.SubscriptionId = SubscriptionId
 
+
 class MessageSubscriptionArchiveData(object):
     columns = [ ("OrigId", int), ("CustomData", str),
-                ("SentDate", datetime), ("NoOfSendTries", int), ("AchReceivedDate", datetime),
+                ("SentDate", datetime), ("SendFailedDate", datetime),
+                ("FindAdapterTryDate", datetime),("FindAdapterTries", int),
+                ("NoOfSendTries", int), ("AckReceivedDate", datetime),
                 ("MessageBoxId", int), ("SubscriptionId", int)]
 
-    def __init__(self, CustomData=None, SentDate=None, AckReceivedDate=None,
+    def __init__(self, CustomData=None, SentDate=None, SendFailedDate=None,
+                 FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
                  NoOfSendTries=0, MessageBoxId=None, SubscriptionId=None):
         self.id = None
         self.CustomData = CustomData
         self.SentDate = SentDate
+        self.SendFailedDate = SendFailedDate
+        self.FindAdapterTryDate = FindAdapterTryDate
+        self.FindAdapterTries = FindAdapterTries
         self.NoOfSendTries = NoOfSendTries
         self.AckReceivedDate = AckReceivedDate
         self.MessageBoxId = MessageBoxId
@@ -140,7 +152,8 @@ class MessageSubscriptionArchiveData(object):
 
 
 class MessageSubscriptionView(object):
-    columns = [("CustomData", str), ("SentDate", datetime),
+    columns = [("CustomData", str), ("SentDate", datetime), ("SendFailedDate", datetime),
+               ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
                ("NoOfSendTries", int), ("AckReceivedDate", datetime), ("MessageBoxId", int),
                ("SubscriptionId", int),
                ("DeleteAfterSent", bool), ("Enabled", bool), ("SubscriberId", int),
@@ -151,6 +164,9 @@ class MessageSubscriptionView(object):
         self.id = None
         self.CustomData = None
         self.SentDate = None
+        self.SendFailedDate = None
+        self.FindAdapterTryDate = None
+        self.FindAdapterTries = None
         self.NoOfSendTries = None
         self.AckReceivedDate = None
         self.MessageBoxId = None
@@ -164,19 +180,19 @@ class MessageSubscriptionView(object):
         self.MessageData = None
 
 
-class MessageSubscriptionArchiveData(object):
-    columns = [("CustomData", str), ("SentDate", datetime),
-               ("NoOfSendTries", int), ("MessageBoxId", int), ("SubscriptionId", int)]
+#class MessageSubscriptionArchiveData(object):
+#    columns = [("CustomData", str), ("SentDate", datetime),
+#               ("NoOfSendTries", int), ("MessageBoxId", int), ("SubscriptionId", int)]
 
-    def __init__(self, OrigId=None, CustomData=None, SentDate=None,
-                 NoOfSendTries=None, MessageBoxId=None, SubscriptionId=None):
-        self.id = None
-        self.OrigId = OrigId
-        self.CustomData = CustomData
-        self.SentDate = SentDate
-        self.NoOfSendTries = NoOfSendTries
-        self.MessageBoxId = MessageBoxId
-        self.SubscriptionId = SubscriptionId
+#    def __init__(self, OrigId=None, CustomData=None, SentDate=None,
+#                 NoOfSendTries=None, MessageBoxId=None, SubscriptionId=None):
+#        self.id = None
+#        self.OrigId = OrigId
+#        self.CustomData = CustomData
+#        self.SentDate = SentDate
+#        self.NoOfSendTries = NoOfSendTries
+#        self.MessageBoxId = MessageBoxId
+#        self.SubscriptionId = SubscriptionId
 
 
 # Non database objects

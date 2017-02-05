@@ -1,3 +1,4 @@
+from settings.settings import SettingsClass
 import serial
 import pyudev
 import logging
@@ -6,9 +7,6 @@ from time import sleep
 from utils.utils import Utils
 
 class ReceiveSIAdapter(object):
-    CRC_POLYNOM = 0x8005
-    CRC_BIT16 = 0x8000
-
     Instances = []
     @staticmethod
     def CreateInstances():
@@ -34,6 +32,10 @@ class ReceiveSIAdapter(object):
                     ReceiveSIAdapter('si' + str(1+len(newInstances)), serialDev))
 
         ReceiveSIAdapter.Instances = newInstances
+        if len(ReceiveSIAdapter.Instances) > 0:
+            SettingsClass.SetReceiveSIAdapterActive("True")
+        else:
+            SettingsClass.SetReceiveSIAdapterActive("False")
         return ReceiveSIAdapter.Instances
 
     @staticmethod
