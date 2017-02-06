@@ -128,7 +128,7 @@ class Main:
                 #return
                 self.subscriberAdapters = Setup.SetupSubscribers()
                 self.inputAdapters = Setup.SetupInputAdapters(False)
-           
+
 
             time.sleep(0.05)
             for inputAdapter in self.inputAdapters:

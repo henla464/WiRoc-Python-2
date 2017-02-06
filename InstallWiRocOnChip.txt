@@ -15,8 +15,13 @@ sudo udevadm control --reload-rules
 http://flash.getchip.com/
 
 
+------------------------
+screen /dev/ttyACM0
 
------------
+cd /home/chip
+wget -O /home/chip/install.sh https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/install.sh
+chmod u+x install.sh
+------------------------
 Install WiRoc on C.H.I.P
 
 Update package list:
@@ -53,9 +58,6 @@ ON Ubuntu: Copy over WiRoc-Python-2
 
 ON Ubuntu: Copy over WiRoc-BLE-Device
 	a) scp -r WiRoc-BLE-Device chip@chip.local:/home/chip
-
-#ON Ubuntu: Copy over WiRoc-StartupScripts
-#	a) scp -r WiRoc-StartupScripts chip@chip.local:/home/chip
 
 Install python 2
 	a) sudo apt-get install python

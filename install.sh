@@ -46,16 +46,83 @@ tar -C /usr/local --strip-components 1 -xJf node-v6.9.1-linux-armv7l.tar.xz
 ln -s /usr/local/bin/node /usr/bin/nodejs
 ln -s /usr/local/bin/npm /usr/bin/npm
 
+echo "Install python 2"
+read line
+#Install python 2
+apt-get install python
+
+echo "Install bluetooth stuff"
+read line
+#Install bluetooth stuff
+apt-get install bluetooth bluez libbluetooth-dev libudev-dev
+
+echo "WiRoc-Python-2"
+read line
+#install Python-2
+wget https://github.com/henla464/WiRoc-Python-2/raw/master/WiRoc-Python-2.tar.gz
+mkdir WiRoc-Python-2
+tar xvfz WiRoc-Python-2.tar.gz -C WiRoc-Python-2
+
+echo "WiRoc-BLE"
+read line
+#install WiRoc-BLE
+wget https://github.com/henla464/WiRoc-BLE-Device/raw/master/WiRoc-BLE-Device.tar.gz
+mkdir WiRoc-BLE-Device
+tar xvfz WiRoc-BLE-Device.tar.gz -C WiRoc-BLE-Device
+
+echo "install bleno"
+read line
+#install bleno
+cd /home/chip/WiRoc-BLE-Device/
+npm install bleno
+cd /home/chip
 
 
+echo "install startup scripts"
+read line
+#Startup scripts:
+mkdir WiRoc-StartupScripts
+wget -O /home/chip/WiRoc-StartupScripts/Startup.sh https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/Startup.sh
+chmod +x /home/chip/WiRoc-StartupScripts/Startup.sh
+wget -O /home/chip/WiRoc-StartupScripts/setGPIOuart2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/setGPIOuart2
+chmod +x /home/chip/WiRoc-StartupScripts/setGPIOuart2
+wget -O /etc/systemd/system/WiRocPython.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPython.service
+wget -O /etc/systemd/system/WiRocBLE.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocBLE.service
+wget -O /etc/systemd/system/WiRocStartup.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocStartup.service
+systemctl enable /etc/systemd/system/WiRocStartup.service
+systemctl enable /etc/systemd/system/WiRocBLE.service
+systemctl enable /etc/systemd/system/WiRocPython.service
+
+
+
+echo "install new dtb"
+read line
+#Install the new dtb on chip
+rm /boot/sun5i-r8-chip.dtb
+wget -O /boot/sun5i-r8-chip.dtb https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/sun5i-r8-chip.dtb
+
+
+echo "install wiroc-monitor"
+read line
+#Install WiRoc-Monitor
+wget -O /usr/local/bin/gpio.sh https://raw.githubusercontent.com/henla464/WiRoc-Monitor/master/gpio.sh
+wget -O /usr/local/bin/blink.sh https://raw.githubusercontent.com/henla464/WiRoc-Monitor/master/blink.sh
+chmod +x /usr/local/bin/blink.sh
+wget -O /etc/systemd/system/blink.service https://raw.githubusercontent.com/henla464/WiRoc-Monitor/master/blink.service
+wget -O /usr/local/etc/blink.cfg https://raw.githubusercontent.com/henla464/WiRoc-Monitor/master/blink.cfg
+systemctl enable /etc/systemd/system/blink.service
+
+echo "add user to dialout"
+read line
+sudo usermod -a -G dialout $USER
 
 
 read -n1 -r -p "Press space to continue..." key
 
 if [ "$key" = '' ]; then
     # Space pressed, do something
-    # echo [$key] is empty when SPACE is pressed # uncomment to trace
+    echo [$key] is empty when SPACE is pressed # uncomment to trace
 else
     # Anything else pressed, do whatever else.
-    # echo [$key] not empty
+    echo [$key] not empty
 fi

@@ -146,7 +146,7 @@ class DatabaseHelper:
     def set_subscriptions_enabled(self, enabled, subscriberTypeName):
         sql = ("SELECT SubscriptionData.* FROM SubscriberData JOIN SubscriptionData "
                "ON SubscriberData.id = SubscriptionData.SubscriberId "
-               "WHERE SubscriberData.TypeName = " + str(subscriberTypeName))
+               "WHERE SubscriberData.TypeName = '" + str(subscriberTypeName) +"'")
         rows = self.db.get_table_objects_by_SQL(SubscriptionData, sql)
         for subscription in rows:
             subscription.Enabled = enabled
