@@ -1,33 +1,45 @@
 #!/bin/bash
 
-echo "Enter wifi pw"
-read pw
-
-nmcli device wifi connect 'LasePrivate' password '$line' ifname wlan0
 
 
+echo "update"
+read line
 # update app list
 apt-get update
 
+echo "sqlite3"
+read line
 #Install sqlite3
 apt-get install libsqlite3-dev
 
+echo "python/pip"
+read line
 #Install python/pip
 apt-get install python3
 apt-get install python3-pip
 
+echo "flask"
+read line
 #Install flask
 pip3 install flask
 
+echo "pyserial"
+read line
 #Install serial
 pip3 install pyserial
 
+echo "jsonpickle"
+read line
 #Install jsonpickle
 pip3 install jsonpickle
 
+echo "pyudev"
+read line
 #Install pyudev
 pip3 install pyudev
 
+echo "newer nodejs"
+read line
 #Install newer nodejs
 wget https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-armv7l.tar.xz
 tar -C /usr/local --strip-components 1 -xJf node-v6.9.1-linux-armv7l.tar.xz
