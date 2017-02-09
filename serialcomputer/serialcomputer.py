@@ -42,7 +42,7 @@ class SerialComputer:
 
             if self.compSerial.is_open:
                 logging.debug("TestConnection 3")
-                self.compSerial.write(bytearray([0x41])) #noOfBytes =
+                noOfBytes = self.compSerial.in_waiting()
                 logging.debug("TestConnection 4") # + str(noOfBytes)
             else:
                 return False
