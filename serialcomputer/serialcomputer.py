@@ -35,7 +35,7 @@ class SerialComputer:
         if not self.compSerial.is_open:
             try:
                 self.compSerial.open()
-                self.compSerial.write(bytearray(b'\xff'))
+                self.compSerial.in_waiting()
                 self.compSerial.close()
                 return True
             except Exception as ex:
@@ -77,7 +77,7 @@ class SerialComputer:
     def GetData(self):
         if self.compSerial.inWaiting() == 0:
             return None
-        logging.debug("SI Station, data to fetch")
+        logging.debug("Serial computer, data to fetch")
         expectedLength = 3
         receivedData = bytearray()
         startFound = False
@@ -95,13 +95,13 @@ class SerialComputer:
                 if len(receivedData) == 3:
                     expectedLength = receivedData[2] + 6
                 if len(receivedData) < expectedLength and self.compSerial.inWaiting() == 0:
-                    logging.debug("SI Station, sleep and wait for more bytes")
+                    logging.debug("Serial computer, sleep and wait for more bytes")
                     sleep(0.05)
 
         if len(receivedData) != expectedLength:
             # throw away the data, isn't correct
-            logging.error("SI Station, data not of expected length (thrown away)")
+            logging.error("Serial computer, data not of expected length (thrown away)")
             return None
 
-        logging.info("SI message received!")
+        logging.info("Serial computer message received!")
         return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}
