@@ -32,19 +32,37 @@ class SerialComputer:
         return self.portName
 
     def TestConnection(self):
+        wasOpened = False
         if not self.compSerial.is_open:
             try:
+                logging.debug("TestConnection 1")
                 self.compSerial.open()
-                self.compSerial.in_waiting()
-                self.compSerial.close()
+                wasOpened = True
+                logging.debug("TestConnection 2")
+            except Exception as ex:
+                logging.error("TestConnection SI Computer, opening serial exception:")
+                logging.error(ex)
+                return False
+        if self.compSerial.is_open:
+            try:
+                logging.debug("TestConnection 3")
+                noOfBytes = self.compSerial.write(bytearray(b'\xff'))
+                logging.debug("TestConnection 4: " + str(noOfBytes))
                 return True
             except Exception as ex:
-                logging.error("SI Computer, opening serial exception:")
+                logging.error("TestConnection SI Computer, write serial exception:")
                 logging.error(ex)
                 return False
         else:
-            return True
+            return False
 
+        if wasOpened:
+            logging.debug("TestConnection 5")
+            self.compSerial.close()
+            logging.debug("TestConnection 6")
+
+        logging.debug("TestConnection 7")
+        return True
 
     def Init(self):
         if self.GetIsInitialized():
