@@ -20,7 +20,7 @@ screen /dev/ttyACM0
 
 cd /home/chip
 #sudo systemctl disable networkmanager.service
-sudo nmcli device wifi connect 'LasePrivate' password 'bjbierho' ifname wlan0
+sudo nmcli device wifi connect 'LasePrivate' password 'pw' ifname wlan0
 wget -O /home/chip/install.sh https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/install.sh
 chmod u+x install.sh
 ------------------------
