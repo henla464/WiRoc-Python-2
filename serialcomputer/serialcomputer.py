@@ -50,6 +50,7 @@ class SerialComputer:
         except Exception as ex:
             logging.error("TestConnection SI Computer, serial exception:")
             logging.error(ex)
+            self.compSerial.close()
             return False
 
         if wasOpened:
