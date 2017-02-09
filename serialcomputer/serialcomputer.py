@@ -35,6 +35,7 @@ class SerialComputer:
         if not self.compSerial.is_open:
             try:
                 self.compSerial.open()
+                self.compSerial.write(bytearray(b'\xff'))
                 self.compSerial.close()
                 return True
             except Exception as ex:
