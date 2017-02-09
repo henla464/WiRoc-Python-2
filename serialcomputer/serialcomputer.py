@@ -33,27 +33,23 @@ class SerialComputer:
 
     def TestConnection(self):
         wasOpened = False
-        if not self.compSerial.is_open:
-            try:
+        try:
+            if not self.compSerial.is_open:
                 logging.debug("TestConnection 1")
                 self.compSerial.open()
                 wasOpened = True
                 logging.debug("TestConnection 2")
-            except Exception as ex:
-                logging.error("TestConnection SI Computer, opening serial exception:")
-                logging.error(ex)
-                return False
-        if self.compSerial.is_open:
-            try:
+
+            if self.compSerial.is_open:
                 logging.debug("TestConnection 3")
-                noOfBytes = self.compSerial.write(bytearray(b'\xff'))
-                logging.debug("TestConnection 4: " + str(noOfBytes))
-                return True
-            except Exception as ex:
-                logging.error("TestConnection SI Computer, write serial exception:")
-                logging.error(ex)
+                self.compSerial.write(bytearray([0x41])) #noOfBytes =
+                logging.debug("TestConnection 4") # + str(noOfBytes)
+            else:
                 return False
-        else:
+
+        except Exception as ex:
+            logging.error("TestConnection SI Computer, serial exception:")
+            logging.error(ex)
             return False
 
         if wasOpened:
