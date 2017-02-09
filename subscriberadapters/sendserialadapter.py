@@ -36,13 +36,16 @@ class SendSerialAdapter(object):
     def EnableDisableSubscription():
         if len(SendSerialAdapter.Instances) > 0:
             if SendSerialAdapter.Instances[0].TestConnection():
-                SettingsClass.SetSendSerialAdapterActive("True")
+                logging.info("Setting SetSendSerialAdapterActive True")
+                SettingsClass.SetSendSerialAdapterActive(True)
                 DatabaseHelper.mainDatabaseHelper.set_subscriptions_enabled(True, SendSerialAdapter.GetTypeName())
             else:
-                SettingsClass.SetSendSerialAdapterActive("False")
+                logging.info("Setting SetSendSerialAdapterActive False")
+                SettingsClass.SetSendSerialAdapterActive(False)
                 DatabaseHelper.mainDatabaseHelper.set_subscriptions_enabled(False, SendSerialAdapter.GetTypeName())
         else:
-            SettingsClass.SetSendSerialAdapterActive("False")
+            logging.info("Setting SetSendSerialAdapterActive False 2")
+            SettingsClass.SetSendSerialAdapterActive(False)
 
     @staticmethod
     def GetTypeName():
@@ -93,6 +96,6 @@ class SendSerialAdapter(object):
             logging.info("Sent to SI computer")
             return True
         else:
-            logging.info("Could not sent to SI computer, test connection failed")
+            logging.info("Could not send to SI computer, test connection failed")
             SendSerialAdapter.EnableDisableSubscription()
             return False

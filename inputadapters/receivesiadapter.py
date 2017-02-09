@@ -33,9 +33,9 @@ class ReceiveSIAdapter(object):
 
         ReceiveSIAdapter.Instances = newInstances
         if len(ReceiveSIAdapter.Instances) > 0:
-            SettingsClass.SetReceiveSIAdapterActive("True")
+            SettingsClass.SetReceiveSIAdapterActive(True)
         else:
-            SettingsClass.SetReceiveSIAdapterActive("False")
+            SettingsClass.SetReceiveSIAdapterActive(False)
         return ReceiveSIAdapter.Instances
 
     @staticmethod

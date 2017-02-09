@@ -49,7 +49,10 @@ class SettingsClass(object):
             sd = SettingData()
             sd.Key = key
         sd.Value = value
-        sd = DatabaseHelper.mainDatabaseHelper.save_setting(sd)
+        if web:
+            sd = DatabaseHelper.webDatabaseHelper.save_setting(sd)
+        else:
+            sd = DatabaseHelper.mainDatabaseHelper.save_setting(sd)
         SettingsClass.SetConfigurationDirty(key)
         return sd
 
@@ -184,7 +187,7 @@ class SettingsClass(object):
 
     @staticmethod
     def SetReceiveSIAdapterActive(val, web = False):
-        if (val == "True") == SettingsClass.receiveSIAdapterActive:
+        if val == SettingsClass.receiveSIAdapterActive:
             return None
 
         sett = SettingsClass.SetSetting('ReceiveSIAdapterActive', val, web)
@@ -207,7 +210,7 @@ class SettingsClass(object):
 
     @staticmethod
     def SetSendSerialAdapterActive(val, web = False):
-        if (val == "True") == SettingsClass.sendSerialAdapterActive:
+        if val == SettingsClass.sendSerialAdapterActive:
             return None
 
         sett = SettingsClass.SetSetting('SendSerialAdapterActive', val, web)
