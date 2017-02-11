@@ -126,6 +126,13 @@ class DatabaseHelper:
             transformData.id = rows[0].id
         return self.db.save_table_object(transformData)
 
+    def set_transform_enabled(self, enabled, transformName):
+        dbValue = DataMapping.get_database_value(enabled)
+        sql = ("UPDATE TransformData SET Enabled = " + str(dbValue) + " " +
+               "WHERE TransformData.Name = '" + transformName + "'")
+        logging.debug(sql)
+        self.db.execute_SQL(sql)
+
 #Subscriptions
     def save_subscription(self, subscriptionData):
         rows = self.db.get_table_objects_by_SQL(SubscriptionData, ("SELECT * FROM SubscriptionData WHERE "
@@ -139,7 +146,8 @@ class DatabaseHelper:
     def get_subscriptions_by_input_message_type_id(self, messageTypeId):
         sql = ("SELECT SubscriptionData.* FROM TransformData JOIN SubscriptionData "
                "ON TransformData.id = SubscriptionData.TransformId "
-               "WHERE InputMessageTypeID = " + str(messageTypeId))
+               "WHERE TransformData.Enabled = 1 AND SubscriptionData.Enabled = 1 "
+               "InputMessageTypeID = " + str(messageTypeId))
         rows = self.db.get_table_objects_by_SQL(SubscriptionData, sql)
         return rows
 
@@ -276,7 +284,8 @@ class DatabaseHelper:
                    "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
                    "JOIN MessageSubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
                    "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
-                   "WHERE SubscriptionData.Enabled IS NOT NULL "
+                   "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
+                   "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 "
                    "ORDER BY MessageSubscriptionData.NoOfSendTries asc, "
                    "MessageSubscriptionData.SentDate asc")
             return self.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
