@@ -244,7 +244,7 @@ if __name__ == '__main__':
                         filemode='w')
     # set a format which is simpler for console use
     formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-    rotFileHandler = logging.handlers.RotatingFileHandler('WiRoc.log', maxBytes=20000000, backupCount=5)
+    rotFileHandler = logging.handlers.RotatingFileHandler('WiRoc.log', maxBytes=20000000, backupCount=3)
     rotFileHandler.setFormatter(formatter)
 
     # define a Handler which writes INFO messages or higher to the sys.stderr

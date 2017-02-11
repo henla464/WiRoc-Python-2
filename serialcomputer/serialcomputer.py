@@ -34,6 +34,9 @@ class SerialComputer:
     def TestConnection(self):
         wasOpened = False
         if not self.compSerial.is_open:
+            self.compSerial.baudrate = 38400
+            self.compSerial.port = self.portName
+            self.compSerial.writeTimeout = 0.01
             self.compSerial.open()
             wasOpened = True
 
