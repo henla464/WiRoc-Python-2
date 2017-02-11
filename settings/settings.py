@@ -182,7 +182,7 @@ class SettingsClass(object):
             if sett is None:
                 SettingsClass.receiveSIAdapterActive = False
             else:
-                SettingsClass.receiveSIAdapterActive = (sett.Value == "True")
+                SettingsClass.receiveSIAdapterActive = (sett.Value == "1")
         return SettingsClass.receiveSIAdapterActive
 
     @staticmethod
@@ -191,7 +191,7 @@ class SettingsClass(object):
             return None
 
         sett = SettingsClass.SetSetting('ReceiveSIAdapterActive', val, web)
-        SettingsClass.receiveSIAdapterActive = (sett.Value == "True")
+        SettingsClass.receiveSIAdapterActive = (sett.Value == "1")
 
 
     @staticmethod
@@ -205,7 +205,7 @@ class SettingsClass(object):
             if sett is None:
                 SettingsClass.sendSerialAdapterActive = False
             else:
-                SettingsClass.sendSerialAdapterActive = (sett.Value == "True")
+                SettingsClass.sendSerialAdapterActive = (sett.Value == "1")
         return SettingsClass.sendSerialAdapterActive
 
     @staticmethod
@@ -214,7 +214,7 @@ class SettingsClass(object):
             return None
 
         sett = SettingsClass.SetSetting('SendSerialAdapterActive', val, web)
-        SettingsClass.sendSerialAdapterActive = (sett.Value == "True")
+        SettingsClass.sendSerialAdapterActive = (sett.Value == "1")
 
     @staticmethod
     def GetLoraMode():
@@ -224,7 +224,7 @@ class SettingsClass(object):
         elif SettingsClass.GetSendToMeosEnabled(): #and output = MEOS
             # configured to send to Meos over network/wifi
             return "RECEIVE"
-        elif False: # bluetooth out enabled
+        elif False: # todo: bluetooth out enabled
             return "RECEIVE"
         else:
             return "SEND"
