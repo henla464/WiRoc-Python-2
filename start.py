@@ -137,7 +137,7 @@ class Main:
                     inputData = inputAdapter.GetData()
                 except Exception as ex:
                     self.shouldReconfigure = True
-                    logging.error("InputAdapter error in GetData:")
+                    logging.error("InputAdapter error in GetData: " + str(inputAdapter.GetInstanceName()))
                     logging.error(ex)
 
                 if inputData is not None:

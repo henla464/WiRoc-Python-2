@@ -11,6 +11,7 @@ mySerial = serial.Serial()
 
 mySerial.baudrate = 38400
 mySerial.port = sys.argv[1]
+mySerial.writeTimeout = 1
 #mySerial.port = '/dev/ttyUSB3'
 #mySerial.port = '/dev/ttyGS0'
 mySerial.timeout = 5
