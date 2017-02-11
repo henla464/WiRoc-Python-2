@@ -151,7 +151,7 @@ Stop getty
 Gadget serial
 -------
 Stop kernel to write to it
-sudo systemctl stop getty@ttyGS0.service
+sudo systemctl stop serial-getty@ttyGS0.service
 
 -------
 

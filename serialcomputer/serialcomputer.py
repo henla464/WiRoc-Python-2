@@ -33,33 +33,29 @@ class SerialComputer:
 
     def TestConnection(self):
         wasOpened = False
+        if not self.compSerial.is_open:
+            self.compSerial.open()
+            wasOpened = True
+
         try:
-            if not self.compSerial.is_open:
-                logging.debug("TestConnection 1")
-                self.compSerial.open()
-                wasOpened = True
-                logging.debug("TestConnection 2")
-
             if self.compSerial.is_open:
-                logging.debug("TestConnection 3")
-                noOfBytes = self.compSerial.inWaiting()
-                logging.debug("TestConnection 4") # + str(noOfBytes)
-            else:
-                return False
-
+                logging.debug("TestConnection before write byte")
+                self.compSerial.write(bytes([0x41]))
+                logging.debug("TestConnection after write byte") # + str(noOfBytes)
+                if wasOpened:
+                    self.compSerial.close()
+                return True
+        except serial.serialutil.SerialTimeoutException as timeOutEx:
+            logging.error("TestConnection SI Computer, serial exception:")
+            logging.error(timeOutEx)
         except Exception as ex:
             logging.error("TestConnection SI Computer, serial exception:")
             logging.error(ex)
-            self.compSerial.close()
-            return False
 
         if wasOpened:
-            logging.debug("TestConnection 5")
             self.compSerial.close()
-            logging.debug("TestConnection 6")
 
-        logging.debug("TestConnection 7")
-        return True
+        return False
 
     def Init(self):
         if self.GetIsInitialized():
@@ -68,6 +64,7 @@ class SerialComputer:
         baudRate = 38400
         self.compSerial.baudrate = baudRate
         self.compSerial.port = self.portName
+        self.compSerial.writeTimeout = 0.01
         if not self.compSerial.is_open:
             try:
                 self.compSerial.open()
