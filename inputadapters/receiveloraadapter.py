@@ -17,7 +17,7 @@ class ReceiveLoraAdapter(object):
         uDevContext = pyudev.Context()
         for device in uDevContext.list_devices(subsystem='tty'):
             if 'ID_VENDOR_ID' in device:
-                logging.info('receiveloraadapter vendor' + device['ID_VENDOR_ID'].lower())
+                logging.debug('ReceiveLoraAdapter vendor: ' + device['ID_VENDOR_ID'].lower() + " model: " + device['ID_MODEL_ID'].lower())
                 if device['ID_VENDOR_ID'].lower() == '10c4' and \
                                 device['ID_MODEL_ID'].lower() == 'ea60':
                     serialPorts.append(device.device_node)

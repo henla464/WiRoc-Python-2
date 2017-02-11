@@ -54,6 +54,10 @@ class SendSerialAdapter(object):
     def GetTypeName():
         return "SERIAL"
 
+    @staticmethod
+    def EnableDisableTransforms():
+        return None
+
     def __init__(self, instanceNumber, portName):
         self.instanceNumber = instanceNumber
         self.portName = portName

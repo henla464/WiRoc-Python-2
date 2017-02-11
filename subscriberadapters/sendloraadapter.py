@@ -1,5 +1,6 @@
 from loraradio.loraradio import LoraRadio
 from settings.settings import SettingsClass
+from datamodel.db_helper import DatabaseHelper
 import inputadapters.receiveloraadapter
 import pyudev
 import logging
@@ -7,6 +8,7 @@ import socket
 
 class SendLoraAdapter(object):
     Instances = []
+    LoraMode = None
 
     @staticmethod
     def CreateInstances():
@@ -20,16 +22,17 @@ class SendLoraAdapter(object):
             uDevContext = pyudev.Context()
             for device in uDevContext.list_devices(subsystem='tty'):
                 if 'ID_VENDOR_ID' in device:
+                    logging.debug('SendLoraAdapter vendor: ' + device['ID_VENDOR_ID'].lower() + " model: " + device[
+                        'ID_MODEL_ID'].lower())
                     if device['ID_VENDOR_ID'].lower() == '10c4' and \
                                     device['ID_MODEL_ID'].lower() == 'ea60':
-                        #serialPorts.append(device.device_node)
-                        "asdf"
+                        serialPorts.append(device.device_node)
 
         highestInstanceNumber = 0
         newInstances = []
         for serialDev in serialPorts:
             # only set up one send adapter
-            if len(SendLoraAdapter.Instances) > 0:
+            if len(newInstances) > 0:
                 break
 
             alreadyCreated = False
@@ -60,6 +63,15 @@ class SendLoraAdapter(object):
     def GetTypeName():
         return "LORA"
 
+    @staticmethod
+    def EnableDisableTransforms():
+        if len(SendLoraAdapter.Instances) > 0:
+            if SendLoraAdapter.LoraMode is None or SendLoraAdapter.LoraMode != SettingsClass.GetLoraMode():
+                SendLoraAdapter.LoraMode = SettingsClass.GetLoraMode()
+                enableSendTransforms = (SendLoraAdapter.LoraMode == "SEND")
+                DatabaseHelper.mainDatabaseHelper.set_transform_enabled(enableSendTransforms, "SIToLoraTransform")
+                DatabaseHelper.mainDatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraToLoraAckTransform")
+
     def __init__(self, instanceNumber, portName):
         self.instanceNumber = instanceNumber
         self.portName = portName
@@ -80,13 +92,13 @@ class SendLoraAdapter(object):
         # check setting for ack
         return not SettingsClass.GetAcknowledgementRequested()
 
+    # return both receive and send transforms, they will be enabled/disabled automatically depending
+    # on lora mode
     def GetTransformNames(self):
         #"BLEToLoraTransform",
         transforms = []
-        if SettingsClass.GetLoraMode() == "SEND":
-            transforms.append("SIToLoraTransform")
-        else:
-            transforms.append("LoraToLoraAckTransform")
+        transforms.append("SIToLoraTransform")
+        transforms.append("LoraToLoraAckTransform")
         return transforms
 
     def SetTransform(self, transformClass):

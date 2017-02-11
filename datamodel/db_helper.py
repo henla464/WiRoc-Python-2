@@ -146,7 +146,7 @@ class DatabaseHelper:
     def get_subscriptions_by_input_message_type_id(self, messageTypeId):
         sql = ("SELECT SubscriptionData.* FROM TransformData JOIN SubscriptionData "
                "ON TransformData.id = SubscriptionData.TransformId "
-               "WHERE TransformData.Enabled = 1 AND SubscriptionData.Enabled = 1 "
+               "WHERE TransformData.Enabled = 1 AND SubscriptionData.Enabled = 1 AND "
                "InputMessageTypeID = " + str(messageTypeId))
         rows = self.db.get_table_objects_by_SQL(SubscriptionData, sql)
         return rows

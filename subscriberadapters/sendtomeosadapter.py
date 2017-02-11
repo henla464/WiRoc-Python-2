@@ -19,6 +19,10 @@ class SendToMeosAdapter(object):
     def GetTypeName():
         return "MEOS"
 
+    @staticmethod
+    def EnableDisableTransforms():
+        return None
+
     def __init__(self, instanceName):
         self.instanceName = instanceName
         self.transforms = {}

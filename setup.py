@@ -64,6 +64,7 @@ class Setup:
 
         for adapterObj in adapterObjects:
             adapterObj.SetIsDBInitialized()
+            adapterObj.EnableDisableTransforms()
             logging.debug("Before Init() subscriber adapter: " + str(adapterObj.GetInstanceName()))
             if not adapterObj.Init():
                 logging.error("Init adapter failed: " + adapterObj.GetInstanceName())
