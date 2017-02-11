@@ -64,7 +64,7 @@ class Setup:
 
         for adapterObj in adapterObjects:
             adapterObj.SetIsDBInitialized()
-            logging.debug("Before Init() subscriber adapter")
+            logging.debug("Before Init() subscriber adapter: " + str(adapterObj.GetInstanceName()))
             if not adapterObj.Init():
                 logging.error("Init adapter failed: " + adapterObj.GetInstanceName())
 
@@ -92,9 +92,9 @@ class Setup:
 
             adapterObjects.extend(instances)
 
-            for adapterObj in adapterObjects:
-                logging.debug("Before Init() input adapter")
-                adapterObj.Init()
+        for adapterObj in adapterObjects:
+            logging.debug("Before Init() input adapter: " + str(adapterObj.GetInstanceName()))
+            adapterObj.Init()
 
         return adapterObjects
 

@@ -37,15 +37,18 @@ class SendSerialAdapter(object):
         if len(SendSerialAdapter.Instances) > 0:
             if SendSerialAdapter.Instances[0].TestConnection():
                 logging.info("Setting SetSendSerialAdapterActive True")
-                SettingsClass.SetSendSerialAdapterActive(True)
-                DatabaseHelper.mainDatabaseHelper.set_subscriptions_enabled(True, SendSerialAdapter.GetTypeName())
+                if not SettingsClass.GetSendSerialAdapterActive():
+                    SettingsClass.SetSendSerialAdapterActive(True)
+                    DatabaseHelper.mainDatabaseHelper.set_subscriptions_enabled(True, SendSerialAdapter.GetTypeName())
             else:
                 logging.info("Setting SetSendSerialAdapterActive False")
-                SettingsClass.SetSendSerialAdapterActive(False)
-                DatabaseHelper.mainDatabaseHelper.set_subscriptions_enabled(False, SendSerialAdapter.GetTypeName())
+                if SettingsClass.GetSendSerialAdapterActive():
+                    SettingsClass.SetSendSerialAdapterActive(False)
+                    DatabaseHelper.mainDatabaseHelper.set_subscriptions_enabled(False, SendSerialAdapter.GetTypeName())
         else:
             logging.info("Setting SetSendSerialAdapterActive False 2")
-            SettingsClass.SetSendSerialAdapterActive(False)
+            if SettingsClass.GetSendSerialAdapterActive():
+                SettingsClass.SetSendSerialAdapterActive(False)
 
     @staticmethod
     def GetTypeName():

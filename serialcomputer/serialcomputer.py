@@ -12,6 +12,7 @@ class SerialComputer:
     @staticmethod
     def GetInstance(portName):
         for serialDevice in SerialComputer.Instances:
+            logging.debug(serialDevice.GetPortName() + "==" + portName)
             if serialDevice.GetPortName() == portName:
                 return serialDevice
         newInstance = SerialComputer(portName)
@@ -22,8 +23,6 @@ class SerialComputer:
         self.compSerial = serial.Serial()
         self.portName = portName
         self.isInitialized = False
-        self.channel = None
-        self.loraDataRate = None
 
     def GetIsInitialized(self):
         return self.isInitialized
@@ -66,11 +65,11 @@ class SerialComputer:
             return True
         logging.info("SI computer port name: " + self.portName)
         baudRate = 38400
-        self.compSerial.baudrate = baudRate
-        self.compSerial.port = self.portName
-        self.compSerial.writeTimeout = 0.01
         if not self.compSerial.is_open:
             try:
+                self.compSerial.baudrate = baudRate
+                self.compSerial.port = self.portName
+                self.compSerial.writeTimeout = 0.01
                 self.compSerial.open()
                 self.isInitialized = True
             except Exception as ex:
