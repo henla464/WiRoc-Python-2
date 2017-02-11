@@ -56,6 +56,7 @@ class SendSerialAdapter(object):
         self.portName = portName
         self.serialComputer = SerialComputer.GetInstance(portName)
         self.transforms = {}
+        self.isDBInitialized = False
 
     def GetInstanceNumber(self):
         return self.instanceNumber
@@ -85,6 +86,12 @@ class SendSerialAdapter(object):
 
     def GetIsInitialized(self):
         return self.serialComputer.GetIsInitialized()
+
+    def GetIsDBInitialized(self):
+        return self.isDBInitialized
+
+    def SetIsDBInitialized(self, val = True):
+        self.isDBInitialized = val
 
     def Init(self):
         return self.serialComputer.Init()

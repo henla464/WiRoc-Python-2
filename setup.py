@@ -18,6 +18,7 @@ class Setup:
             subscriberModules = Loader.ImportDirectory("subscriberadapters", False)
 
             for mod in subscriberModules:
+                logging.info(mod)
                 adapterClass = Loader.GetFirstClassFromModule(mod, "Adapter")
                 Setup.subscriberAdapterClasses.append(adapterClass)
 
@@ -27,7 +28,7 @@ class Setup:
             adapterObjects.extend(instances)
 
         for adapter in adapterObjects:
-            if not adapter.GetIsInitialized():
+            if not adapter.GetIsDBInitialized():
                 # add subscriber to the database
                 typeName = adapter.GetTypeName()
                 instanceName = adapter.GetInstanceName()
@@ -62,6 +63,7 @@ class Setup:
                             subscriptionData = DatabaseHelper.mainDatabaseHelper.save_subscription(subscriptionData)
 
         for adapterObj in adapterObjects:
+            adapterObj.SetDBInitialized()
             if not adapterObj.Init():
                 logging.error("Init adapter failed: " + adapterObj.GetInstanceName())
 

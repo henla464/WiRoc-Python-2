@@ -65,6 +65,7 @@ class SendLoraAdapter(object):
         self.portName = portName
         self.loraRadio = LoraRadio.GetInstance(portName)
         self.transforms = {}
+        self.isDBInitialized = False
 
     def GetInstanceNumber(self):
         return self.instanceNumber
@@ -99,6 +100,12 @@ class SendLoraAdapter(object):
         channel = SettingsClass.GetChannel()
         loraDataRate = SettingsClass.GetDataRate()
         return self.loraRadio.GetIsInitialized(channel, loraDataRate)
+
+    def GetIsDBInitialized(self):
+        return self.isDBInitialized
+
+    def SetIsDBInitialized(self, val = True):
+        self.isDBInitialized = val
 
     def Init(self):
         channel = SettingsClass.GetChannel()

@@ -49,15 +49,16 @@ class SerialComputer:
                     self.compSerial.close()
                 return True
         except serial.serialutil.SerialTimeoutException as timeOutEx:
-            logging.error("TestConnection SI Computer, serial exception:")
+            logging.error("TestConnection SI Computer, serial exception 1:")
             logging.error(timeOutEx)
         except Exception as ex:
-            logging.error("TestConnection SI Computer, serial exception:")
+            logging.error("TestConnection SI Computer, serial exception 2:")
             logging.error(ex)
 
         if wasOpened:
             self.compSerial.close()
 
+        self.isInitialized = False
         return False
 
     def Init(self):
@@ -90,6 +91,8 @@ class SerialComputer:
         return True
 
     def GetData(self):
+        if not self.GetIsInitialized():
+            return None
         if self.compSerial.inWaiting() == 0:
             return None
         logging.debug("Serial computer, data to fetch")

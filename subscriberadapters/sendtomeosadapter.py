@@ -24,6 +24,7 @@ class SendToMeosAdapter(object):
         self.transforms = {}
         self.sock = None
         self.isInitialized = False
+        self.isDBInitialized = False
 
     def GetInstanceName(self):
         return self.instanceName
@@ -33,6 +34,12 @@ class SendToMeosAdapter(object):
 
     def GetIsInitialized(self):
         return self.isInitialized
+
+    def GetIsDBInitialized(self):
+        return self.isDBInitialized
+
+    def SetIsDBInitialized(self, val = True):
+        self.isDBInitialized = val
 
     def GetTransformNames(self):
         #, "SIToMeosTransform", "BLEToMeosTransform"
