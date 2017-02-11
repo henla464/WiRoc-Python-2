@@ -63,7 +63,7 @@ class Setup:
                             subscriptionData = DatabaseHelper.mainDatabaseHelper.save_subscription(subscriptionData)
 
         for adapterObj in adapterObjects:
-            adapterObj.SetDBInitialized()
+            adapterObj.SetIsDBInitialized()
             if not adapterObj.Init():
                 logging.error("Init adapter failed: " + adapterObj.GetInstanceName())
 
