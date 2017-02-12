@@ -8,7 +8,7 @@ from setup import Setup
 import threading
 import time
 import logging, logging.handlers
-import datetime
+from datetime import datetime
 from webroutes.radioconfiguration import *
 from webroutes.meosconfiguration import *
 import cProfile
@@ -27,7 +27,7 @@ class Main:
 
     def __init__(self):
         self.shouldReconfigure = False
-        self.lastTimeReconfigured = time.time()
+        self.lastTimeReconfigured = datetime.now()
 
         #DatabaseHelper.mainDatabaseHelper.drop_all_tables()
         #DatabaseHelper.mainDatabaseHelper.truncate_setup_tables()
@@ -63,7 +63,7 @@ class Main:
             digitalWrite(7, int(SettingsClass.GetAcknowledgementRequested()))
 
     def timeToReconfigure(self):
-        currentTime = time.time()
+        currentTime = datetime.now()
         if currentTime - self.lastTimeReconfigured > 10 or self.shouldReconfigure:
             self.lastTimeReconfigured = currentTime
             self.shouldReconfigure = False
@@ -78,22 +78,22 @@ class Main:
         if (
             (lastSendTryDate >= lastFindAdapterTryDate and
                 (msgSub.NoOfSendTries == 0 or
-                (msgSub.NoOfSendTries == 1 and time.time() - lastSendTryDate > SettingsClass.GetFirstRetryDelay()) or
-                (msgSub.NoOfSendTries == 2 and time.time() - lastSendTryDate > SettingsClass.GetSecondRetryDelay()))
+                (msgSub.NoOfSendTries == 1 and datetime.now() - lastSendTryDate > SettingsClass.GetFirstRetryDelay()) or
+                (msgSub.NoOfSendTries == 2 and datetime.now() - lastSendTryDate > SettingsClass.GetSecondRetryDelay()))
             )
             or
                 ((msgSub.FindAdapterTries == 0 or
-                 (msgSub.FindAdapterTries == 1 and time.time() - msgSub.FindAdapterTryDate > SettingsClass.GetFirstRetryDelay()) or
-                 (msgSub.FindAdapterTries == 2 and time.time() - msgSub.FindAdapterTryDate > SettingsClass.GetSecondRetryDelay()))
+                 (msgSub.FindAdapterTries == 1 and datetime.now() - msgSub.FindAdapterTryDate > SettingsClass.GetFirstRetryDelay()) or
+                 (msgSub.FindAdapterTries == 2 and datetime.now() - msgSub.FindAdapterTryDate > SettingsClass.GetSecondRetryDelay()))
                 )):
             return True
         return False
 
     def shouldArchiveMessage(self, msgSub):
         if (
-            (msgSub.NoOfSendTries == 3 and time.time() - msgSub.SentDate >  SettingsClass.GetSecondRetryDelay())
+            (msgSub.NoOfSendTries == 3 and datetime.now() - msgSub.SentDate >  SettingsClass.GetSecondRetryDelay())
             or
-            (msgSub.FindAdapterTries == 3 and time.time() - msgSub.FindAdapterTryDate > SettingsClass.GetSecondRetryDelay())):
+            (msgSub.FindAdapterTries == 3 and datetime.now() - msgSub.FindAdapterTryDate > SettingsClass.GetSecondRetryDelay())):
             return True
         return False
 
