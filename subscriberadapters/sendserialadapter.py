@@ -80,7 +80,7 @@ class SendSerialAdapter(object):
 
     def GetTransformNames(self):
         #"BLEToSITransform", SIToSITransform
-        return ["LoraToSITransform"]
+        return ["LoraToSITransform", "SIToSITransform"]
 
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass
