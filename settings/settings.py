@@ -16,6 +16,8 @@ class SettingsClass(object):
     powerCycle = None
     receiveSIAdapterActive = None
     sendSerialAdapterActive = None
+    firstRetryDelay = None
+    secondRetryDelay = None
 
     @staticmethod
     def SetConfigurationDirty(settingsName=None):
