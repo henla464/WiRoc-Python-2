@@ -8,6 +8,7 @@ from setup import Setup
 import threading
 import time
 import logging, logging.handlers
+import datetime
 from webroutes.radioconfiguration import *
 from webroutes.meosconfiguration import *
 import cProfile
@@ -71,30 +72,28 @@ class Main:
             return False
 
     def timeToSendMessage(self, msgSub):
+        lastSendTryDate = max(msgSub.SentDate if msgSub.SentDate is not None else datetime.min,
+                       msgSub.SendFailedDate if msgSub.SendFailedDate is not None else datetime.min)
+        lastFindAdapterTryDate = msgSub.FindAdapterTryDate if msgSub.FindAdapterTryDate is not None else datetime.min
         if (
-            (msgSub.FindAdapterTryDate is None and
+            (lastSendTryDate >= lastFindAdapterTryDate and
                 (msgSub.NoOfSendTries == 0 or
-                 (msgSub.NoOfSendTries == 1 and time.time() - msgSub.SentDate > SettingsClass.GetFirstRetryDelay()) or
-                 (msgSub.NoOfSendTries == 2 and time.time() - msgSub.SentDate > SettingsClass.GetSecondRetryDelay()))
+                (msgSub.NoOfSendTries == 1 and time.time() - lastSendTryDate > SettingsClass.GetFirstRetryDelay()) or
+                (msgSub.NoOfSendTries == 2 and time.time() - lastSendTryDate > SettingsClass.GetSecondRetryDelay()))
             )
             or
-                (msgSub.FindAdapterTryDate is not None and
-                    (msgSub.FindAdapterTries == 0 or
-                    (msgSub.FindAdapterTries == 1 and time.time() - msgSub.FindAdapterTryDate > SettingsClass.GetFirstRetryDelay()) or
-                    (msgSub.FindAdapterTries == 2 and time.time() - msgSub.FindAdapterTryDate > SettingsClass.GetSecondRetryDelay()))
-                    )):
+                ((msgSub.FindAdapterTries == 0 or
+                 (msgSub.FindAdapterTries == 1 and time.time() - msgSub.FindAdapterTryDate > SettingsClass.GetFirstRetryDelay()) or
+                 (msgSub.FindAdapterTries == 2 and time.time() - msgSub.FindAdapterTryDate > SettingsClass.GetSecondRetryDelay()))
+                )):
             return True
         return False
 
     def shouldArchiveMessage(self, msgSub):
         if (
-            (msgSub.FindAdapterTryDate is None
-             and msgSub.NoOfSendTries == 3
-             and time.time() - msgSub.SentDate > 30)
+            (msgSub.NoOfSendTries == 3 and time.time() - msgSub.SentDate >  SettingsClass.GetSecondRetryDelay())
             or
-            (msgSub.FindAdapterTryDate is not None
-             and msgSub.FindAdapterTries == 3
-             and time.time() - msgSub.FindAdapterTryDate > SettingsClass.GetSecondRetryDelay())):
+            (msgSub.FindAdapterTries == 3 and time.time() - msgSub.FindAdapterTryDate > SettingsClass.GetSecondRetryDelay())):
             return True
         return False
 

@@ -252,7 +252,7 @@ class SettingsClass(object):
                     SettingsClass.firstRetryDelay = int(sett.Value)
                 except ValueError:
                     SettingsClass.firstRetryDelay = 20
-            return SettingsClass.firstRetryDelay
+        return SettingsClass.firstRetryDelay
 
     @staticmethod
     def GetSecondRetryDelay(web=False):
@@ -269,4 +269,4 @@ class SettingsClass(object):
                     SettingsClass.secondRetryDelay = int(sett.Value)
                 except ValueError:
                     SettingsClass.secondRetryDelay = 20
-            return SettingsClass.secondRetryDelay
+        return SettingsClass.secondRetryDelay
