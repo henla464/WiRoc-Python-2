@@ -2,9 +2,12 @@ __author__ = 'henla464'
 
 from datamodel.db_helper import DatabaseHelper
 from datamodel.datamodel import SettingData
+from datetime import datetime
 
 class SettingsClass(object):
     RadioIntervalLengthMicroSeconds = [4000000, 4000000, 4000000, 4000000, 4000000, 4000000]
+    timeOfLastMessageAdded = datetime.now()
+    statusMessageInterval = None
     configurationDirty = False
     MessagesToSendExists = True
     channel = None
@@ -18,9 +21,10 @@ class SettingsClass(object):
     sendSerialAdapterActive = None
     firstRetryDelay = None
     secondRetryDelay = None
+    sendStatusMessages = None
 
     @staticmethod
-    def SetConfigurationDirty(settingsName=None):
+    def SetConfigurationDirty(settingsName=None, markDirtyInDatabase = False):
         if settingsName == 'Channel':
             SettingsClass.channel = None
         if settingsName == 'DataRate':
@@ -39,33 +43,88 @@ class SettingsClass(object):
             SettingsClass.receiveSIAdapterActive = None
         if settingsName == 'SendSerialAdapterActive':
             SettingsClass.sendSerialAdapterActive = None
+        if settingsName == 'FirstRetryDelay':
+            SettingsClass.firstRetryDelay = None
+        if settingsName == 'SecondRetryDelay':
+            SettingsClass.secondRetryDelay = None
+        if settingsName == 'StatusMessageInterval':
+            SettingsClass.statusMessageInterval = None
+        if settingsName == 'SendStatusMessages':
+            SettingsClass.sendStatusMessages = None
+
+        if markDirtyInDatabase:
+            SettingsClass.SetSetting("ConfigDirty", True)
+
+    @staticmethod
+    def IsDirty(settingsName):
+        isDirty = SettingsClass.GetSetting("ConfigDirty")
+        if isDirty is not None and isDirty.lower() == "1":
+            SettingsClass.channel = None
+            SettingsClass.dataRate = None
+            SettingsClass.acknowledgementRequested = None
+            SettingsClass.sendToMeosEnabled = None
+            SettingsClass.sendToMeosIP = None
+            SettingsClass.sendToMeosIPPort = None
+            SettingsClass.powerCycle = None
+            SettingsClass.receiveSIAdapterActive = None
+            SettingsClass.sendSerialAdapterActive = None
+            SettingsClass.firstRetryDelay = None
+            SettingsClass.secondRetryDelay = None
+            SettingsClass.statusMessageInterval = None
+            SettingsClass.sendStatusMessages = None
+            return True
+        else:
+            if settingsName == 'Channel':
+                return SettingsClass.channel is None
+            if settingsName == 'DataRate':
+                return SettingsClass.dataRate is None
+            if settingsName == 'AcknowledgementRequested':
+                return SettingsClass.acknowledgementRequested is None
+            if settingsName == 'SendToMeosEnabled':
+                return SettingsClass.sendToMeosEnabled is None
+            if settingsName == 'SendToMeosIP':
+                return SettingsClass.sendToMeosIP is None
+            if settingsName == 'SendToMeosIPPort':
+                return SettingsClass.sendToMeosIPPort is None
+            if settingsName == 'PowerCycle':
+                return SettingsClass.powerCycle is None
+            if settingsName == 'ReceiveSIAdapterActive':
+                return SettingsClass.receiveSIAdapterActive is None
+            if settingsName == 'SendSerialAdapterActive':
+                return SettingsClass.sendSerialAdapterActive is None
+            if settingsName == 'FirstRetryDelay':
+                return SettingsClass.firstRetryDelay is None
+            if settingsName == 'SecondRetryDelay':
+                return SettingsClass.secondRetryDelay is None
+            if settingsName == 'StatusMessageInterval':
+                return SettingsClass.statusMessageInterval is None
+            if settingsName == 'SendStatusMessages':
+                return SettingsClass.sendStatusMessages is None
+
+        return True
 
     @staticmethod
     def SetSetting(key, value, web = False):
-        sd = None
-        if web:
-            sd = DatabaseHelper.webDatabaseHelper.get_setting_by_key(key)
-        else:
-            sd = DatabaseHelper.mainDatabaseHelper.get_setting_by_key(key)
+        sd = DatabaseHelper.mainDatabaseHelper.get_setting_by_key(key)
         if sd is None:
             sd = SettingData()
             sd.Key = key
         sd.Value = value
-        if web:
-            sd = DatabaseHelper.webDatabaseHelper.save_setting(sd)
-        else:
-            sd = DatabaseHelper.mainDatabaseHelper.save_setting(sd)
+        sd = DatabaseHelper.mainDatabaseHelper.save_setting(sd)
         SettingsClass.SetConfigurationDirty(key)
         return sd
 
     @staticmethod
+    def GetSetting(key):
+        sd = DatabaseHelper.mainDatabaseHelper.get_setting_by_key(key)
+        if sd is None:
+            return None
+        return sd.Value
+
+    @staticmethod
     def GetChannel(web = False):
-        if SettingsClass.channel is None:
-            sett = None
-            if web:
-                sett = DatabaseHelper.webDatabaseHelper.get_setting_by_key('Channel')
-            else:
-                sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('Channel')
+        if SettingsClass.IsDirty("Channel"):
+            sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('Channel')
             if sett is None:
                 SettingsClass.channel = 1
             else:
@@ -74,12 +133,8 @@ class SettingsClass(object):
 
     @staticmethod
     def GetDataRate(web = False):
-        if SettingsClass.dataRate is None:
-            sett = None
-            if web:
-                sett = DatabaseHelper.webDatabaseHelper.get_setting_by_key('DataRate')
-            else:
-                sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('DataRate')
+        if SettingsClass.IsDirty("DataRate"):
+            sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('DataRate')
             if sett is None:
                 SettingsClass.dataRate = 586
             else:
@@ -88,40 +143,28 @@ class SettingsClass(object):
 
     @staticmethod
     def GetAcknowledgementRequested(web = False):
-        if SettingsClass.acknowledgementRequested is None:
-            sett = None
-            if web:
-                sett = DatabaseHelper.webDatabaseHelper.get_setting_by_key('AcknowledgementRequested')
-            else:
-                sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('AcknowledgementRequested')
+        if SettingsClass.IsDirty("AcknowledgementRequested"):
+            sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('AcknowledgementRequested')
             if sett is None:
                 SettingsClass.acknowledgementRequested = False
             else:
-                SettingsClass.acknowledgementRequested = (sett.Value.lower() == "true")
+                SettingsClass.acknowledgementRequested = (sett.Value == "1")
         return SettingsClass.acknowledgementRequested
 
     @staticmethod
     def GetSendToMeosEnabled(web = False):
-        if SettingsClass.sendToMeosEnabled is None:
-            sett = None
-            if web:
-                sett = DatabaseHelper.webDatabaseHelper.get_setting_by_key('SendToMeosEnabled')
-            else:
-                sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SendToMeosEnabled')
+        if SettingsClass.IsDirty("SendToMeosEnabled"):
+            sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SendToMeosEnabled')
             if sett is None:
                 SettingsClass.sendToMeosEnabled = False
             else:
-                SettingsClass.sendToMeosEnabled = (sett.Value == "True")
+                SettingsClass.sendToMeosEnabled = (sett.Value == "1")
         return SettingsClass.sendToMeosEnabled
 
     @staticmethod
     def GetSendToMeosIP(web = False):
-        if SettingsClass.sendToMeosIP is None:
-            sett = None
-            if web:
-                sett = DatabaseHelper.webDatabaseHelper.get_setting_by_key('SendToMeosIP')
-            else:
-                sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SendToMeosIP')
+        if SettingsClass.IsDirty("SendToMeosIP"):
+            sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SendToMeosIP')
             if sett is None:
                 SettingsClass.sendToMeosIP = None
             else:
@@ -132,12 +175,8 @@ class SettingsClass(object):
 
     @staticmethod
     def GetSendToMeosIPPort(web = False):
-        if SettingsClass.sendToMeosIPPort is None:
-            sett = None
-            if web:
-                sett = DatabaseHelper.webDatabaseHelper.get_setting_by_key('SendToMeosIPPort')
-            else:
-                sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SendToMeosIPPort')
+        if SettingsClass.IsDirty("SendToMeosIPPort"):
+            sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SendToMeosIPPort')
             if sett is None:
                 SettingsClass.sendToMeosIPPort = 5000
             else:
@@ -149,12 +188,8 @@ class SettingsClass(object):
 
     @staticmethod
     def GetPowerCycle(web = False):
-        if SettingsClass.powerCycle is None:
-            sett = None
-            if web:
-                sett = DatabaseHelper.webDatabaseHelper.get_setting_by_key('PowerCycle')
-            else:
-                sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('PowerCycle')
+        if SettingsClass.IsDirty("PowerCycle"):
+            sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('PowerCycle')
             if sett is None:
                 SettingsClass.IncrementPowerCycle()
                 SettingsClass.powerCycle = 1
@@ -175,12 +210,8 @@ class SettingsClass(object):
 
     @staticmethod
     def GetReceiveSIAdapterActive(web = False):
-        if SettingsClass.receiveSIAdapterActive is None:
-            sett = None
-            if web:
-                sett = DatabaseHelper.webDatabaseHelper.get_setting_by_key('ReceiveSIAdapterActive')
-            else:
-                sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('ReceiveSIAdapterActive')
+        if SettingsClass.IsDirty("ReceiveSIAdapterActive"):
+            sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('ReceiveSIAdapterActive')
             if sett is None:
                 SettingsClass.receiveSIAdapterActive = False
             else:
@@ -198,14 +229,12 @@ class SettingsClass(object):
 
     @staticmethod
     def GetSendSerialAdapterActive(web = False):
-        if SettingsClass.sendSerialAdapterActive is None:
-            sett = None
-            if web:
-                sett = DatabaseHelper.webDatabaseHelper.get_setting_by_key('SendSerialAdapterActive')
-            else:
-                sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SendSerialAdapterActive')
+        if SettingsClass.IsDirty("SendSerialAdapterActive"):
+            sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SendSerialAdapterActive')
             if sett is None:
+                SettingsClass.SetSendSerialAdapterActive(False)
                 SettingsClass.sendSerialAdapterActive = False
+
             else:
                 SettingsClass.sendSerialAdapterActive = (sett.Value == "1")
         return SettingsClass.sendSerialAdapterActive
@@ -241,12 +270,8 @@ class SettingsClass(object):
 
     @staticmethod
     def GetFirstRetryDelay(web=False):
-        if SettingsClass.firstRetryDelay is None:
-            sett = None
-            if web:
-                sett = DatabaseHelper.webDatabaseHelper.get_setting_by_key('FirstRetryDelay')
-            else:
-                sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('FirstRetryDelay')
+        if SettingsClass.IsDirty("FirstRetryDelay"):
+            sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('FirstRetryDelay')
             if sett is None:
                 SettingsClass.firstRetryDelay = 20
             else:
@@ -258,12 +283,8 @@ class SettingsClass(object):
 
     @staticmethod
     def GetSecondRetryDelay(web=False):
-        if SettingsClass.secondRetryDelay is None:
-            sett = None
-            if web:
-                sett = DatabaseHelper.webDatabaseHelper.get_setting_by_key('SecondRetryDelay')
-            else:
-                sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SecondRetryDelay')
+        if SettingsClass.IsDirty("SecondRetryDelay"):
+            sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SecondRetryDelay')
             if sett is None:
                 SettingsClass.secondRetryDelay = 20
             else:
@@ -272,3 +293,34 @@ class SettingsClass(object):
                 except ValueError:
                     SettingsClass.secondRetryDelay = 20
         return SettingsClass.secondRetryDelay
+
+    @staticmethod
+    def GetSendStatusMessages():
+        if SettingsClass.IsDirty("SendStatusMessages"):
+            sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SendStatusMessages')
+            if sett is None:
+                SettingsClass.sendStatusMessages = True
+            else:
+                SettingsClass.sendStatusMessages = (sett.Value == "1")
+        return SettingsClass.sendStatusMessages
+
+    @staticmethod
+    def SetTimeOfLastMessageAdded():
+        SettingsClass.timeOfLastMessageAdded = datetime.now()
+
+    @staticmethod
+    def GetTimeOfLastMessageAdded():
+        return SettingsClass.timeOfLastMessageAdded
+
+    @staticmethod
+    def GetStatusMessageInterval():
+        if SettingsClass.IsDirty("StatusMessageInterval"):
+            sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('StatusMessageInterval')
+            if sett is None:
+                SettingsClass.statusMessageInterval = 10
+            else:
+                try:
+                    SettingsClass.statusMessageInterval = int(sett.Value)
+                except ValueError:
+                    SettingsClass.statusMessageInterval = 10
+        return SettingsClass.statusMessageInterval

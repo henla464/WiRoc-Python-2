@@ -18,6 +18,9 @@ class ReceiveSIAdapter(object):
                 if device['ID_VENDOR_ID'].lower() == '10c4' and \
                                 device['ID_MODEL_ID'].lower() == '800a':
                     serialPorts.append(device.device_node)
+                elif device['ID_VENDOR_ID'].lower() == '0525' and \
+                                device['ID_MODEL_ID'].lower() == 'a4aa':
+                    serialPorts.append(device.device_node)
 
         newInstances = []
         for serialDev in serialPorts:
@@ -66,7 +69,7 @@ class ReceiveSIAdapter(object):
         return len(data) == 9 and data[0] == STX and data[5] == 0x4D
 
     def Init(self):
-        if self.GetIsInitialized():
+        if self.GetIsInitialized() and self.siSerial.is_open:
             return True
         logging.info("SI Station port name: " + self.portName)
         baudRate = 38400
@@ -143,7 +146,8 @@ class ReceiveSIAdapter(object):
 
         if len(receivedData) != expectedLength:
             # throw away the data, isn't correct
-            logging.error("SI Station, data not of expected length (thrown away)")
+            dataInHex = ''.join(format(x, '02x') for x in receivedData)
+            logging.error("SI Station, data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + dataInHex)
             return None
 
         logging.info("SI message received!")

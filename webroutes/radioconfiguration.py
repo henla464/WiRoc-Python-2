@@ -10,28 +10,28 @@ import jsonpickle
 
 @app.route('/radioconfiguration/channel/', methods=['GET'])
 def getChannel():
-    channel = SettingsClass.GetChannel(True)
+    channel = SettingsClass.GetChannel()
     return jsonpickle.encode(MicroMock(Channel=channel))
 
 @app.route('/radioconfiguration/channel/<int:channel>/', methods=['GET'])
 def setChannel(channel):
-    sd = DatabaseHelper.webDatabaseHelper.get_setting_by_key('Channel')
+    sd = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('Channel')
     if sd is None:
         sd = SettingData()
         sd.Key = 'Channel'
     sd.Value = channel
-    sd = DatabaseHelper.webDatabaseHelper.save_setting(sd)
-    SettingsClass.SetConfigurationDirty('Channel')
+    sd = DatabaseHelper.mainDatabaseHelper.save_setting(sd)
+    SettingsClass.SetConfigurationDirty('Channel', True)
     return jsonpickle.encode(MicroMock(Channel=int(sd.Value)))
 
 @app.route('/radioconfiguration/datarate/', methods=['GET'])
 def getDataRate():
-   dataRate = SettingsClass.GetDataRate(True)
+   dataRate = SettingsClass.GetDataRate()
    return jsonpickle.encode(MicroMock(DataRate=dataRate))
 
 @app.route('/radioconfiguration/datarate/<int:dataRate>/', methods=['GET'])
 def setDataRate(dataRate):
-    sd = DatabaseHelper.webDatabaseHelper.get_setting_by_key('DataRate')
+    sd = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('DataRate')
     if sd is None:
         sd = SettingData()
         sd.Key = 'DataRate'
@@ -45,26 +45,26 @@ def setDataRate(dataRate):
         sd.Value = 2148
     else:
         sd.Value = 7032
-    sd = DatabaseHelper.webDatabaseHelper.save_setting(sd)
-    SettingsClass.SetConfigurationDirty('DataRate')
+    sd = DatabaseHelper.mainDatabaseHelper.save_setting(sd)
+    SettingsClass.SetConfigurationDirty('DataRate', True)
     return jsonpickle.encode(MicroMock(DataRate=int(sd.Value)))
 
 
 @app.route('/radioconfiguration/acknowledgementrequested/', methods=['GET'])
 def getAcknowledgementRequested():
-   acksRequested = SettingsClass.GetAcknowledgementRequested(True)
+   acksRequested = SettingsClass.GetAcknowledgementRequested()
    return jsonpickle.encode(MicroMock(AcknowledgementRequested=acksRequested))
 
 
 @app.route('/radioconfiguration/acknowledgementrequested/<ack>/', methods=['GET'])
 def setAcknowledgement(ack):
-    sd = DatabaseHelper.webDatabaseHelper.get_setting_by_key('AcknowledgementRequested')
+    sd = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('AcknowledgementRequested')
     if sd is None:
         sd = SettingData()
         sd.Key = 'AcknowledgementRequested'
-    sd.Value = 'True' if ack.lower() == 'true' else 'False'
-    sd = DatabaseHelper.webDatabaseHelper.save_setting(sd)
-    SettingsClass.SetConfigurationDirty('AcknowledgementRequested')
+    sd.Value = True if ack.lower() == 'true' else 'False'
+    sd = DatabaseHelper.mainDatabaseHelper.save_setting(sd)
+    SettingsClass.SetConfigurationDirty('AcknowledgementRequested', True)
     return jsonpickle.encode(MicroMock(AcknowledgementRequested=sd.Value.lower()=='true'))
 
 

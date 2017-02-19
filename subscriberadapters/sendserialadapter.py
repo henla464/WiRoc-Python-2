@@ -56,6 +56,13 @@ class SendSerialAdapter(object):
 
     @staticmethod
     def EnableDisableTransforms():
+        #if len(SendSerialAdapter.Instances) > 0:
+        #    if SendSerialAdapter.LoraMode is None or SendSerialAdapter.LoraMode != SettingsClass.GetLoraMode():
+        #       SendSerialAdapter.LoraMode = SettingsClass.GetLoraMode()
+        #        enableSerialSendTransforms = (SendSerialAdapter.LoraMode != "SEND")
+        #        DatabaseHelper.mainDatabaseHelper.set_transform_enabled(enableSerialSendTransforms, "SIToLoraTransform")
+        #        DatabaseHelper.mainDatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraToLoraAckTransform")
+
         return None
 
     def __init__(self, instanceNumber, portName):

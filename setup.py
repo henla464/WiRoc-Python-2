@@ -58,12 +58,13 @@ class Setup:
 
                             # add subscription to database
                             deleteAfterSent = adapter.GetDeleteAfterSent()
-                            enabled = True
+                            enabled = False
                             subscriptionData = SubscriptionData(deleteAfterSent, enabled, subscriberData.id, transformData.id)
                             subscriptionData = DatabaseHelper.mainDatabaseHelper.save_subscription(subscriptionData)
 
         for adapterObj in adapterObjects:
             adapterObj.SetIsDBInitialized()
+            adapterObj.EnableDisableSubscription()
             adapterObj.EnableDisableTransforms()
             logging.debug("Before Init() subscriber adapter: " + str(adapterObj.GetInstanceName()))
             if not adapterObj.Init():
@@ -111,3 +112,5 @@ class Setup:
             pinMode(5, OUTPUT)
             pinMode(6, OUTPUT)
             pinMode(7, OUTPUT)
+            pinModeNonXIO(139, OUTPUT)
+            digitalWriteNonXIO(139, 1)

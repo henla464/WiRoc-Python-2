@@ -372,5 +372,4 @@ class DatabaseHelper:
             self.save_channel(channel)
 
 
-DatabaseHelper.webDatabaseHelper = None
 DatabaseHelper.mainDatabaseHelper = None

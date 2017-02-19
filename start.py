@@ -1,30 +1,19 @@
 __author__ = 'henla464'
 
-from battery.battery import Battery
-#from constants import *
 from datamodel.datamodel import MessageBoxData
 from datamodel.datamodel import MessageSubscriptionData
 from setup import Setup
-import threading
+#import threading
 import time
 import logging, logging.handlers
 from datetime import datetime, timedelta
-from webroutes.radioconfiguration import *
 from webroutes.meosconfiguration import *
 import cProfile
 from chipGPIO.chipGPIO import *
 import socket
 
-battery = Battery()
 
 class Main:
-    #settings = None
-    #timeSlotManager = None
-    #nextCallTimeSlotMessage = None
-    #inboundRadioMode = None
-    #sock = None
-
-
     def __init__(self):
         self.shouldReconfigure = False
         self.lastTimeReconfigured = datetime.now()
@@ -64,7 +53,7 @@ class Main:
 
     def timeToReconfigure(self):
         currentTime = datetime.now()
-        if currentTime - self.lastTimeReconfigured > timedelta(seconds=1) or self.shouldReconfigure:
+        if currentTime - self.lastTimeReconfigured > timedelta(seconds=10) or self.shouldReconfigure:
             self.lastTimeReconfigured = currentTime
             self.shouldReconfigure = False
             return True
@@ -81,19 +70,21 @@ class Main:
                 (msgSub.NoOfSendTries == 1 and datetime.now() - lastSendTryDate > timedelta(seconds=SettingsClass.GetFirstRetryDelay())) or
                 (msgSub.NoOfSendTries == 2 and datetime.now() - lastSendTryDate > timedelta(seconds=SettingsClass.GetSecondRetryDelay())))
             )
-            or
+            or (lastSendTryDate < lastFindAdapterTryDate and
                 ((msgSub.FindAdapterTries == 0 or
                  (msgSub.FindAdapterTries == 1 and datetime.now() - msgSub.FindAdapterTryDate > timedelta(seconds=SettingsClass.GetFirstRetryDelay())) or
                  (msgSub.FindAdapterTries == 2 and datetime.now() - msgSub.FindAdapterTryDate > timedelta(seconds=SettingsClass.GetSecondRetryDelay())))
-                )):
+                ))):
             return True
         return False
 
     def shouldArchiveMessage(self, msgSub):
+        lastSendTryDate = max(msgSub.SentDate if msgSub.SentDate is not None else datetime.min,
+                              msgSub.SendFailedDate if msgSub.SendFailedDate is not None else datetime.min)
         if (
-            (msgSub.NoOfSendTries == 3 and datetime.now() - msgSub.SentDate >  timedelta(seconds=SettingsClass.GetSecondRetryDelay()))
+            (msgSub.NoOfSendTries >= 3 and datetime.now() - lastSendTryDate >  timedelta(seconds=SettingsClass.GetSecondRetryDelay()))
             or
-            (msgSub.FindAdapterTries == 3 and datetime.now() - msgSub.FindAdapterTryDate > timedelta(seconds=SettingsClass.GetSecondRetryDelay()))):
+            (msgSub.FindAdapterTries >= 3 and datetime.now() - msgSub.FindAdapterTryDate > timedelta(seconds=SettingsClass.GetSecondRetryDelay()))):
             return True
         return False
 
@@ -128,7 +119,6 @@ class Main:
                 self.subscriberAdapters = Setup.SetupSubscribers()
                 self.inputAdapters = Setup.SetupInputAdapters(False)
 
-
             time.sleep(0.05)
             for inputAdapter in self.inputAdapters:
                 inputData = None
@@ -153,7 +143,8 @@ class Main:
                         mbd.ChecksumOK = inputData["ChecksumOK"]
                         mbd.InstanceName = instanceName
                         mbd = DatabaseHelper.mainDatabaseHelper.save_message_box(mbd)
-
+                        SettingsClass.SetTimeOfLastMessageAdded()
+                        anySubscription = False
                         logging.debug("MessageTypeID: " + str(messageTypeId))
                         subscriptions = DatabaseHelper.mainDatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
                         for subscription in subscriptions:
@@ -161,7 +152,10 @@ class Main:
                             msgSubscription.MessageBoxId = mbd.id
                             msgSubscription.SubscriptionId = subscription.id
                             DatabaseHelper.mainDatabaseHelper.save_message_subscription(msgSubscription)
+                            anySubscription = True
                             SettingsClass.SetMessagesToSendExists(True)
+                        if not anySubscription:
+                            DatabaseHelper.mainDatabaseHelper.archive_message_box(mbd.id)
                     elif inputData["MessageType"] == "ACK":
                         messageNumber = inputData["MessageNumber"]
                         logging.debug("Received ack, for message number: " + str(messageNumber))
@@ -170,12 +164,9 @@ class Main:
             if SettingsClass.GetMessagesToSendExists():
                 msgSubscriptions = self.getMessageSubscriptionsToSend()
                 for msgSub in msgSubscriptions:
-                    logging.info("msg subscriptions")
                     #find the right adapter
                     adapterFound = False
-                    logging.info("msg subscriptions 2")
                     for subAdapter in self.subscriberAdapters:
-                        logging.info("sub adapter 1")
                         if (msgSub.SubscriberInstanceName == subAdapter.GetInstanceName() and
                                 msgSub.SubscriberTypeName == subAdapter.GetTypeName()):
                             adapterFound = True
@@ -193,7 +184,7 @@ class Main:
                                         DatabaseHelper.mainDatabaseHelper.increment_send_tries_and_set_sent_date(msgSub)
                                 else:
                                     # failed to send
-                                    logging.warning("Failed to send message")
+                                    logging.warning("Failed to send message: " + msgSub.SubscriberTypeName)
                                     DatabaseHelper.mainDatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub)
                             else:
                                 # shouldn't be sent, so just archive the message subscription
@@ -222,20 +213,6 @@ def startMain():
     run()
     #cProfile.run('run()')
 
-@app.route('/')
-def index():
-    return app.send_static_file('index.htm')
-
-@app.route('/commonsettings', methods=['GET', 'POST'])
-def common_settings():
-    personId = request.form['personId'] #request.form.get('personId', type=int)
-    return personId
-
-def startWebServer():
-    logging.info("Start web server")
-    DatabaseHelper.webDatabaseHelper = DatabaseHelper()
-    app.run(debug=True, host='0.0.0.0', use_reloader=False)
-
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
@@ -255,14 +232,15 @@ if __name__ == '__main__':
     logging.getLogger('').addHandler(console)
 
     #Create pid file for systemd service
-    pid = str(os.getpid())
-    f = open('/run/WiRocPython.pid', 'w')
-    f.write(pid)
-    f.close()
+    #pid = str(os.getpid())
+    #f = open('/run/WiRocPython.pid', 'w')
+    #f.write(pid)
+    #f.close()
 
     logging.info("Start")
-    threading.Thread(target=startMain).start()
-    startWebServer()
+    startMain()
+    #threading.Thread(target=startMain).start()
+    #startWebServer()
 
 
 

@@ -59,7 +59,8 @@ apt-get install bluetooth bluez libbluetooth-dev libudev-dev
 echo "WiRoc-Python-2"
 read line
 #install Python-2
-wget https://github.com/henla464/WiRoc-Python-2/raw/master/WiRoc-Python-2.tar.gz
+#wget https://github.com/henla464/WiRoc-Python-2/raw/master/WiRoc-Python-2.tar.gz
+wget -O WiRoc-Python-2.tar.gz https://drive.google.com/uc?id=0BzeOdzETDWYES1k3amVxbHJYTWs
 mkdir WiRoc-Python-2
 tar xvfz WiRoc-Python-2.tar.gz -C WiRoc-Python-2
 
@@ -87,11 +88,13 @@ chmod +x /home/chip/WiRoc-StartupScripts/Startup.sh
 wget -O /home/chip/WiRoc-StartupScripts/setGPIOuart2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/setGPIOuart2
 chmod +x /home/chip/WiRoc-StartupScripts/setGPIOuart2
 wget -O /etc/systemd/system/WiRocPython.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPython.service
+wget -O /etc/systemd/system/WiRocPythonWS.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPythonWS.service
 wget -O /etc/systemd/system/WiRocBLE.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocBLE.service
 wget -O /etc/systemd/system/WiRocStartup.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocStartup.service
 systemctl enable /etc/systemd/system/WiRocStartup.service
 systemctl enable /etc/systemd/system/WiRocBLE.service
 systemctl enable /etc/systemd/system/WiRocPython.service
+systemctl enable /etc/systemd/system/WiRocPythonWS.service
 
 
 

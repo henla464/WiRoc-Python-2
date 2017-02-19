@@ -176,7 +176,11 @@ https://bbs.nextthing.co/t/apt-get-update-fails-with-latest-image/11461/11
 log in with ssh
 -------
 
-
+Compile kernel
+---------
+http://www.chip-community.org/index.php/Compile_the_Linux_kernel_for_CHIP
+http://askubuntu.com/questions/515407/how-recipe-to-build-only-one-kernel-module
+http://unix.stackexchange.com/questions/60078/find-out-which-modules-are-associated-with-a-usb-device
 
 https://github.com/xtacocorex/CHIP_IO
 http://depado.markdownblog.com/2015-03-12-short-tutorial-raspbian-python3-4-rpi-gpio

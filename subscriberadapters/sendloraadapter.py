@@ -9,6 +9,7 @@ import socket
 class SendLoraAdapter(object):
     Instances = []
     LoraMode = None
+    SubscriptionsEnabled = None
 
     @staticmethod
     def CreateInstances():
@@ -62,6 +63,14 @@ class SendLoraAdapter(object):
     @staticmethod
     def GetTypeName():
         return "LORA"
+
+    @staticmethod
+    def EnableDisableSubscription():
+        if len(SendLoraAdapter.Instances) > 0:
+            isInitialized = SendLoraAdapter.Instances[0].GetIsInitialized()
+            if SendLoraAdapter.SubscriptionsEnabled != isInitialized:
+                logging.info("SendLoraAdapter subscription set enabled: " + str(isInitialized))
+                DatabaseHelper.mainDatabaseHelper.set_subscriptions_enabled(isInitialized, SendLoraAdapter.GetTypeName())
 
     @staticmethod
     def EnableDisableTransforms():

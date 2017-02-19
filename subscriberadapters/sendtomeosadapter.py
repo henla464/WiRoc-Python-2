@@ -1,4 +1,5 @@
 from settings.settings import SettingsClass
+from datamodel.db_helper import DatabaseHelper
 import time
 import socket
 import logging
@@ -18,6 +19,15 @@ class SendToMeosAdapter(object):
     @staticmethod
     def GetTypeName():
         return "MEOS"
+
+    @staticmethod
+    def EnableDisableSubscription():
+        if len(SendToMeosAdapter.Instances) > 0:
+            isInitialized = SendToMeosAdapter.Instances[0].GetIsInitialized()
+            if SendToMeosAdapter.SubscriptionsEnabled != isInitialized:
+                logging.info("SendToMeosAdapter subscription set enabled: " + str(isInitialized))
+                DatabaseHelper.mainDatabaseHelper.set_subscriptions_enabled(isInitialized, SendToMeosAdapter.GetTypeName())
+
 
     @staticmethod
     def EnableDisableTransforms():

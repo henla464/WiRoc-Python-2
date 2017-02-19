@@ -6,6 +6,7 @@ import logging
 from constants import *
 from datamodel.datamodel import LoraRadioMessage
 from datamodel.db_helper import DatabaseHelper
+from chipGPIO.chipGPIO import *
 
 class LoraRadio:
     Instances = []
@@ -108,7 +109,7 @@ class LoraRadio:
 
     def Init(self, channel, loraDataRate):
         logging.info("Init lora radio. Port name: " + self.portName + " Channel: " + str(channel) + " LoraDataRate: " + str(loraDataRate))
-
+        digitalWriteNonXIO(139, 0) #enable radio module
         self.channel = channel
         self.loraDataRate = loraDataRate
 
@@ -143,10 +144,13 @@ class LoraRadio:
             return True
         else:
             self.radioSerial.write(settingsArray)
-            time.sleep(1)
+            time.sleep(0.1)
             setResponse = self.getRadioSettingsReply()
             if setResponse[8:15] == settingsArray[8:15]:
                 self.isInitialized = True
+                digitalWriteNonXIO(139, 1) # disable/enable to make the setting stick
+                time.sleep(0.2)
+                digitalWriteNonXIO(139, 0)
                 logging.info("Lora radio now configured correctly")
                 return True
             else:

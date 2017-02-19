@@ -41,9 +41,9 @@ class SerialComputer:
 
         try:
             if self.compSerial.is_open:
-                logging.debug("TestConnection before write byte")
+                logging.debug("TestConnection before write byte: " + self.portName)
                 self.compSerial.write(bytes([0x41]))
-                logging.debug("TestConnection after write byte") # + str(noOfBytes)
+                logging.debug("TestConnection after write byte: " + self.portName) # + str(noOfBytes)
                 if wasOpened:
                     self.compSerial.close()
                 return True
@@ -117,7 +117,8 @@ class SerialComputer:
 
         if len(receivedData) != expectedLength:
             # throw away the data, isn't correct
-            logging.error("Serial computer, data not of expected length (thrown away)")
+            dataInHex = ''.join(format(x, '02x') for x in receivedData)
+            logging.error("Serial computer, data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + dataInHex)
             return None
 
         logging.info("Serial computer message received!")
