@@ -186,3 +186,8 @@ https://github.com/xtacocorex/CHIP_IO
 http://depado.markdownblog.com/2015-03-12-short-tutorial-raspbian-python3-4-rpi-gpio
 
 http://wiki.emacinc.com/wiki/EMAC_OE_USB_Gadget_Connections
+
+
+Remove file from history in github
+----------------------------------
+git filter-branch --force --index-filter 'git rm --cached --ignore-unmatch WiRoc-Python-2.tar.gz' --prune-empty --tag-name-filter cat -- --all
