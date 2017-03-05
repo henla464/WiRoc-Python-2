@@ -7,6 +7,7 @@ from constants import *
 from datamodel.datamodel import LoraRadioMessage
 from datamodel.db_helper import DatabaseHelper
 from chipGPIO.chipGPIO import *
+import socket
 
 class LoraRadio:
     Instances = []
@@ -100,6 +101,7 @@ class LoraRadio:
     def Disable(self):
         self.isInitialized = False
         self.radioSerial.close()
+        digitalWriteNonXIO(139, 1)  # disable radio module
 
     def GetChannel(self):
         return self.channel
@@ -109,7 +111,8 @@ class LoraRadio:
 
     def Init(self, channel, loraDataRate):
         logging.info("Init lora radio. Port name: " + self.portName + " Channel: " + str(channel) + " LoraDataRate: " + str(loraDataRate))
-        digitalWriteNonXIO(139, 0) #enable radio module
+        if socket.gethostname() == 'chip':
+            digitalWriteNonXIO(139, 0) #enable radio module
         self.channel = channel
         self.loraDataRate = loraDataRate
 

@@ -5,6 +5,7 @@ from datamodel.db_helper import DatabaseHelper
 from init import *
 from webroutes import radioconfiguration
 from webroutes import meosconfiguration
+from webroutes import misc
 
 def startWebServer():
     logging.info("Start web server")
@@ -14,7 +15,7 @@ def startWebServer():
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-                        filename='WiRoc.log',
+                        filename='WiRocWS.log',
                         filemode='w')
     # set a format which is simpler for console use
     formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')

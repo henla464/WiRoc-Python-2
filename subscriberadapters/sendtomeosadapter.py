@@ -6,6 +6,7 @@ import logging
 
 class SendToMeosAdapter(object):
     Instances = []
+    SubscriptionsEnabled = False
 
     @staticmethod
     def CreateInstances():
@@ -26,6 +27,7 @@ class SendToMeosAdapter(object):
             isInitialized = SendToMeosAdapter.Instances[0].GetIsInitialized()
             if SendToMeosAdapter.SubscriptionsEnabled != isInitialized:
                 logging.info("SendToMeosAdapter subscription set enabled: " + str(isInitialized))
+                SendToMeosAdapter.SubscriptionsEnabled = isInitialized
                 DatabaseHelper.mainDatabaseHelper.set_subscriptions_enabled(isInitialized, SendToMeosAdapter.GetTypeName())
 
 
@@ -49,6 +51,7 @@ class SendToMeosAdapter(object):
     def GetIsInitialized(self):
         return self.isInitialized
 
+    # has adapter, transforms, subscriptions etc been added to database?
     def GetIsDBInitialized(self):
         return self.isDBInitialized
 

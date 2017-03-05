@@ -17,6 +17,7 @@ class Main:
     def __init__(self):
         self.shouldReconfigure = False
         self.lastTimeReconfigured = datetime.now()
+        Setup.SetupPins()
 
         #DatabaseHelper.mainDatabaseHelper.drop_all_tables()
         #DatabaseHelper.mainDatabaseHelper.truncate_setup_tables()
@@ -27,7 +28,7 @@ class Main:
 
         self.subscriberAdapters = Setup.SetupSubscribers()
         self.inputAdapters = Setup.SetupInputAdapters(True)
-        Setup.SetupPins()
+
         self.runningOnChip = socket.gethostname() == 'chip'
 
     def displayChannel(self):
@@ -132,7 +133,7 @@ class Main:
                 if inputData is not None:
                     logging.info("input data")
                     if inputData["MessageType"] == "DATA":
-                        logging.info("Received data")
+                        logging.info("Received data from " + inputAdapter.GetInstanceName())
                         messageTypeName = inputAdapter.GetTypeName()
                         instanceName = inputAdapter.GetInstanceName()
                         messageTypeId = DatabaseHelper.mainDatabaseHelper.get_message_type(messageTypeName).id

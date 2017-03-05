@@ -34,7 +34,10 @@ class DatabaseHelper:
         self.db.ensure_table_created(table)
         table = MessageSubscriptionArchiveData()
         self.db.ensure_table_created(table)
-
+        table = InputAdapterInstances()
+        self.db.ensure_table_created(table)
+        table = BlenoPunchData()
+        self.db.ensure_table_created(table)
 
     def drop_all_tables(self):
         table = SettingData()
@@ -57,12 +60,17 @@ class DatabaseHelper:
         self.db.drop_table(table)
         table = MessageSubscriptionArchiveData()
         self.db.drop_table(table)
+        table = InputAdapterInstances()
+        self.db.drop_table(table)
+        table = BlenoPunchData()
+        self.db.drop_table(table)
 
     def truncate_setup_tables(self):
         self.db.execute_SQL("DELETE FROM SubscriberData")
         self.db.execute_SQL("DELETE FROM MessageTypeData")
         self.db.execute_SQL("DELETE FROM SubscriptionData")
         self.db.execute_SQL("DELETE FROM TransformData")
+        self.db.execute_SQL("DELETE FROM InputAdapterInstances")
         self.db.execute_SQL("DELETE FROM ChannelData")
 
 
@@ -81,6 +89,10 @@ class DatabaseHelper:
         sd = self.db.get_table_object(SettingData, str(id))
         return sd
 
+    def get_settings(self):
+        rows = self.db.get_table_objects(SettingData)
+        return rows
+
     def get_setting_by_key(self, key):
         row_list = self.db.get_table_objects_by_SQL(SettingData, "SELECT * FROM SettingData WHERE Key = '" + key + "'")
         if len(row_list) == 0:
@@ -98,7 +110,16 @@ class DatabaseHelper:
             #nothing to update
             return rows[0]
 
-
+    def get_subscribers(self):
+        rows = self.db.get_table_objects_by_SQL(SubscriberView, "SELECT "
+            "SubscriberData.id, SubscriberData.TypeName, SubscriberData.InstanceName, "
+            "SubscriptionData.Enabled, MsgIn.Name MessageInName, MsgOut.Name MessageOutName "
+            "from SubscriptionData JOIN SubscriberData "
+            "ON SubscriptionData.SubscriberId = SubscriberData.Id "
+            "JOIN TransformData ON TransformData.Id = SubscriptionData.TransformId "
+            "JOIN MessageTypeData MsgIn on MsgIn.Id = TransformData.InputMessageTypeId "
+            "JOIN MessageTypeData MsgOut on MsgOut.Id = TransformData.OutputMessageTypeId")
+        return rows
 
 #MessageTypes
     def get_message_type(self, messageTypeName):
@@ -308,6 +329,35 @@ class DatabaseHelper:
         self.db.save_table_object(messageBoxArchive)
         self.db.delete_table_object(MessageBoxData, msgBoxId)
 
+#InputAdapterInstances
+    def update_input_adapter_instances(self, inputAdapterObjects):
+        sql = ("UPDATE InputAdapterInstances SET ToBeDeleted = 1")
+        self.db.execute_SQL(sql)
+        for inputAdapter in inputAdapterObjects:
+            sql = ("WITH new (TypeName, InstanceName, ToBeDeleted) AS "
+                   "( VALUES('" + inputAdapter.GetTypeName() + "', '" + inputAdapter.GetInstanceName() + "', 0) ) "
+                    "INSERT OR REPLACE INTO InputAdapterInstances "
+                    "(id, TypeName, InstanceName, ToBeDeleted) "
+                    "SELECT old.id, new.TypeName, new.InstanceName, new.ToBeDeleted "
+                    "FROM new LEFT JOIN InputAdapterInstances AS old "
+                    "ON new.InstanceName = old.InstanceName")
+            self.db.execute_SQL(sql)
+        sql = ("DELETE FROM InputAdapterInstances WHERE ToBeDeleted = 1")
+        self.db.execute_SQL(sql)
+
+    def get_input_adapter_instances(self):
+        inputAdapterInstances = self.db.get_table_objects(InputAdapterInstances)
+        return inputAdapterInstances
+
+#BlenoPunchData
+    def save_bleno_punch_data(self, blenoPunchData):
+        return self.db.save_table_object(blenoPunchData)
+
+    def get_bleno_punches(self):
+        return self.db.get_table_objects(BlenoPunchData)
+
+    def delete_bleno_punch_data(self, rowId):
+        self.db.delete_table_object(BlenoPunchData, rowId)
 
 #Channels
     def get_channel(self, channel, dataRate):

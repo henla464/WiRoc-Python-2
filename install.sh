@@ -7,6 +7,11 @@ read line
 # update app list
 apt-get update
 
+#echo "unzip"
+#read line
+#Install unzip
+#apt-get install unzip
+
 echo "sqlite3"
 read line
 #Install sqlite3
@@ -60,9 +65,13 @@ echo "WiRoc-Python-2"
 read line
 #install Python-2
 #wget https://github.com/henla464/WiRoc-Python-2/raw/master/WiRoc-Python-2.tar.gz
-wget -O WiRoc-Python-2.tar.gz https://drive.google.com/uc?id=0BzeOdzETDWYES1k3amVxbHJYTWs
-mkdir WiRoc-Python-2
-tar xvfz WiRoc-Python-2.tar.gz -C WiRoc-Python-2
+#wget -O WiRoc-Python-2.tar.gz https://drive.google.com/uc?id=0BzeOdzETDWYES1k3amVxbHJYTWs
+wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v0.01.tar.gz
+#mkdir WiRoc-Python-2
+#tar xvfz WiRoc-Python-2.tar.gz -C WiRoc-Python-2
+rm -rf WiRoc-Python-2
+tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-0.01
+mv WiRoc-Python-2-0.01 WiRoc-Python-2
 
 echo "WiRoc-BLE"
 read line

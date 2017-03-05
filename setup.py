@@ -97,7 +97,7 @@ class Setup:
         for adapterObj in adapterObjects:
             logging.debug("Before Init() input adapter: " + str(adapterObj.GetInstanceName()))
             adapterObj.Init()
-
+        DatabaseHelper.mainDatabaseHelper.update_input_adapter_instances(adapterObjects)
         return adapterObjects
 
 

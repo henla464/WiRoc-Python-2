@@ -180,6 +180,36 @@ class MessageSubscriptionView(object):
         self.TransformName = None
         self.MessageData = None
 
+class SubscriberView(object):
+    columns = [("TypeName", str), ("InstanceName", str), ("Enabled", bool), ("MessageInName", str), ("MessageOutName", str)]
+
+    def __init__(self):
+        self.id = None
+        self.TypeName = None
+        self.InstanceName = None
+        self.Enabled = False
+        self.MessageInName = None
+        self.MessageOutName = None
+
+class InputAdapterInstances(object):
+    columns = [("TypeName", str), ("InstanceName", str), ("ToBeDeleted", bool)]
+
+    def __init__(self):
+        self.id = None
+        self.TypeName = None
+        self.InstanceName = None
+        self.ToBeDeleted = False
+
+class BlenoPunchData(object):
+    columns = [("StationNumber", int), ("SICardNumber", int), ("TwentyFourHour", int), ("TwelveHourTime", int), ("SubSecond", int)]
+
+    def __init__(self):
+        self.id = None
+        self.StationNumber = None
+        self.SICardNumber = None
+        self.TwentyFourHour = None
+        self.TwelveHourTime = None
+        self.SubSecond = None
 
 #class MessageSubscriptionArchiveData(object):
 #    columns = [("CustomData", str), ("SentDate", datetime),
@@ -216,7 +246,7 @@ class LoraRadioMessage(object):
                                               bytes([(ackReqBit << 7) | (batteryLowBit << 6) | messageType]),
                                               bytes([LoraRadioMessage.CurrentMessageNumber]),
                                               bytes([0])))
-            LoraRadioMessage.CurrentMessageNumber = LoraRadioMessage.CurrentMessageNumber + 1
+            LoraRadioMessage.CurrentMessageNumber = (LoraRadioMessage.CurrentMessageNumber + 1) % 256
         else:
             self.messageData = bytearray()
 
@@ -270,6 +300,7 @@ class LoraRadioMessage(object):
     def AddPayload(self, payloadArray):
         self.messageData.extend(payloadArray)
         self.UpdateChecksum()
+
 
 
 #--

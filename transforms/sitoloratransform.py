@@ -8,7 +8,7 @@ class SIToLoraTransform(object):
 
     @staticmethod
     def GetOutputMessageType():
-        return "Lora"
+        return "LORA"
 
     @staticmethod
     def GetName():

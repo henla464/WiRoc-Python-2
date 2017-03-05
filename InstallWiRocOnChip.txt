@@ -191,3 +191,9 @@ http://wiki.emacinc.com/wiki/EMAC_OE_USB_Gadget_Connections
 Remove file from history in github
 ----------------------------------
 git filter-branch --force --index-filter 'git rm --cached --ignore-unmatch WiRoc-Python-2.tar.gz' --prune-empty --tag-name-filter cat -- --all
+git push origin --force --all
+
+Download from github
+--------------------
+https://minhaskamal.github.io/DownGit/#/home
+https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/henla464/WiRoc-Python-2

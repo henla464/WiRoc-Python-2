@@ -22,6 +22,7 @@ class SettingsClass(object):
     firstRetryDelay = None
     secondRetryDelay = None
     sendStatusMessages = None
+    sendToBlenoEnabled = None
 
     @staticmethod
     def SetConfigurationDirty(settingsName=None, markDirtyInDatabase = False):
@@ -51,6 +52,8 @@ class SettingsClass(object):
             SettingsClass.statusMessageInterval = None
         if settingsName == 'SendStatusMessages':
             SettingsClass.sendStatusMessages = None
+        if settingsName == 'SendToBlenoEnabled':
+            SettingsClass.sendToBlenoEnabled = None
 
         if markDirtyInDatabase:
             SettingsClass.SetSetting("ConfigDirty", True)
@@ -72,6 +75,7 @@ class SettingsClass(object):
             SettingsClass.secondRetryDelay = None
             SettingsClass.statusMessageInterval = None
             SettingsClass.sendStatusMessages = None
+            SettingsClass.sendToBlenoEnabled = None
             return True
         else:
             if settingsName == 'Channel':
@@ -100,6 +104,8 @@ class SettingsClass(object):
                 return SettingsClass.statusMessageInterval is None
             if settingsName == 'SendStatusMessages':
                 return SettingsClass.sendStatusMessages is None
+            if settingsName == 'SendToBlenoEnabled':
+                return SettingsClass.sendToBlenoEnabled is None
 
         return True
 
@@ -185,6 +191,16 @@ class SettingsClass(object):
                  except ValueError:
                      SettingsClass.sendToMeosIPPort = 5000
         return SettingsClass.sendToMeosIPPort
+
+    @staticmethod
+    def GetSendToBlenoEnabled(web=False):
+        if SettingsClass.IsDirty("SendToBlenoEnabled"):
+            sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SendToBlenoEnabled')
+            if sett is None:
+                SettingsClass.sendToBlenoEnabled = False
+            else:
+                SettingsClass.sendToBlenoEnabled = (sett.Value == "1")
+        return SettingsClass.sendToBlenoEnabled
 
     @staticmethod
     def GetPowerCycle(web = False):

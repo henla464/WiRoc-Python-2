@@ -1,7 +1,7 @@
 class LoraToSITransform(object):
     @staticmethod
     def GetInputMessageType():
-        return "Lora"
+        return "LORA"
 
     @staticmethod
     def GetOutputMessageType():

@@ -1,6 +1,24 @@
 __author__ = 'henla464'
 
 from struct import pack
+import logging
+
+class PunchData(object):
+
+    def __init__(self, siPayloadData = None):
+        if siPayloadData is None:
+            self.StationNumber = None
+            self.SICardNumber = None
+            self.TwentyFourHour = None
+            self.TwelveHourTime = None
+            self.SubSecond = None
+        else:
+            self.StationNumber = (siPayloadData[3] << 8) + siPayloadData[4]
+            self.SICardNumber = Utils.DecodeCardNr(siPayloadData[5:9])
+            self.TwentyFourHour = siPayloadData[9] & 0x01
+            self.TwelveHourTime = siPayloadData[10:12]
+            self.SubSecond = int(siPayloadData[12] // 25.6)
+
 
 class Utils:
     CRC_POLYNOM = 0x8005
@@ -105,16 +123,23 @@ class Utils:
             return nr
 
     @staticmethod
+    def GetPunchDataFromSIData(siPayloadData):
+
+        return None
+
+    @staticmethod
     def GetMeosDataFromSIData(siPayloadData):
-        stationNumber = (siPayloadData[3] << 8) + siPayloadData[4]
-        siCardNumber = Utils.DecodeCardNr(siPayloadData[5:9])
-        twentyFourHour = siPayloadData[9] & 0x01
-        twelveHourTimer = siPayloadData[10:12]
-        subSecond = int(siPayloadData[12] // 25.6)
+        #todo: fix
+        punchData = PunchData(siPayloadData)
+        #stationNumber = (siPayloadData[3] << 8) + siPayloadData[4]
+        #siCardNumber = Utils.DecodeCardNr(siPayloadData[5:9])
+        #twentyFourHour = siPayloadData[9] & 0x01
+        #twelveHourTimer = siPayloadData[10:12]
+        #subSecond = int(siPayloadData[12] // 25.6)
         punch = 0  # type of data
         codeDay = 0  # obsolete
-        time = ((twelveHourTimer[0] << 8) + twelveHourTimer[1]) * 10 + subSecond
-        if twentyFourHour == 1:
+        time = ((punchData.TwelveHourTimer[0] << 8) + punchData.TwelveHourTimer[1]) * 10 + punchData.SubSecond
+        if punchData.TwentyFourHour == 1:
             time += 36000 * 12
-        byteArr = bytearray(pack("<cHIII", bytes([punch]), stationNumber, siCardNumber, codeDay, time))
+        byteArr = bytearray(pack("<cHIII", bytes([punch]), punchData.StationNumber, punchData.SICardNumber, codeDay, time))
         return byteArr

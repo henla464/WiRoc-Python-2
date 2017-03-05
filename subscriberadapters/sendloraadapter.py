@@ -122,6 +122,7 @@ class SendLoraAdapter(object):
         loraDataRate = SettingsClass.GetDataRate()
         return self.loraRadio.GetIsInitialized(channel, loraDataRate)
 
+    # has adapter, transforms, subscriptions etc been added to database?
     def GetIsDBInitialized(self):
         return self.isDBInitialized
 

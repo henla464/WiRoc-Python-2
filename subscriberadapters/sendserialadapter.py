@@ -101,6 +101,7 @@ class SendSerialAdapter(object):
     def GetIsInitialized(self):
         return self.serialComputer.GetIsInitialized()
 
+    # has adapter, transforms, subscriptions etc been added to database?
     def GetIsDBInitialized(self):
         return self.isDBInitialized
 
