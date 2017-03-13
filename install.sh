@@ -66,7 +66,7 @@ read line
 #install Python-2
 #wget https://github.com/henla464/WiRoc-Python-2/raw/master/WiRoc-Python-2.tar.gz
 #wget -O WiRoc-Python-2.tar.gz https://drive.google.com/uc?id=0BzeOdzETDWYES1k3amVxbHJYTWs
-wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v0.01.tar.gz
+wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v0.02.tar.gz
 #mkdir WiRoc-Python-2
 #tar xvfz WiRoc-Python-2.tar.gz -C WiRoc-Python-2
 rm -rf WiRoc-Python-2
