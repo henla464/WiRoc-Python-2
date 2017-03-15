@@ -140,9 +140,12 @@ class ReceiveSIAdapter(object):
                 receivedData.append(bytesRead[0])
                 if len(receivedData) == 3:
                     expectedLength = receivedData[2]+6
+                if len(receivedData) == expectedLength:
+                    break
                 if len(receivedData) < expectedLength and self.siSerial.inWaiting() == 0:
                     logging.debug("SI Station, sleep and wait for more bytes")
                     sleep(0.05)
+
 
         if len(receivedData) != expectedLength:
             # throw away the data, isn't correct
