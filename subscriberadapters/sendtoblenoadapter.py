@@ -21,16 +21,13 @@ class SendToBlenoAdapter(object):
 
     @staticmethod
     def EnableDisableSubscription():
-        logging.info("1")
         if len(SendToBlenoAdapter.Instances) > 0:
             enabled = SettingsClass.GetSendToBlenoEnabled()
             isInitialized = SendToBlenoAdapter.Instances[0].GetIsInitialized()
-            logging.info("2" + str(SettingsClass.GetSendToBlenoEnabled()))
-            logging.info("3" + str(isInitialized))
             if SendToBlenoAdapter.SubscriptionsEnabled != (isInitialized and enabled):
                 logging.info("SendToBlenoAdapter subscription set enabled: " + str(isInitialized and enabled))
                 SendToBlenoAdapter.SubscriptionsEnabled = (isInitialized and enabled)
-                DatabaseHelper.mainDatabaseHelper.set_subscriptions_enabled((isInitialized and enabled), SendToBlenoAdapter.GetTypeName())
+                DatabaseHelper.mainDatabaseHelper.update_subscriptions((isInitialized and enabled), SendToBlenoAdapter.GetDeleteAfterSent(), SendToBlenoAdapter.GetTypeName())
 
 
     @staticmethod
@@ -46,7 +43,8 @@ class SendToBlenoAdapter(object):
     def GetInstanceName(self):
         return self.instanceName
 
-    def GetDeleteAfterSent(self):
+    @staticmethod
+    def GetDeleteAfterSent():
         return True
 
     def GetIsInitialized(self):

@@ -68,9 +68,13 @@ class SendLoraAdapter(object):
     def EnableDisableSubscription():
         if len(SendLoraAdapter.Instances) > 0:
             isInitialized = SendLoraAdapter.Instances[0].GetIsInitialized()
-            if SendLoraAdapter.SubscriptionsEnabled != isInitialized:
+            deleteAfterSent = SendLoraAdapter.GetDeleteAfterSent()
+            if (SendLoraAdapter.SubscriptionsEnabled != isInitialized or
+                SendLoraAdapter.DeleteAfterSent != deleteAfterSent):
+                SendLoraAdapter.SubscriptionsEnabled = isInitialized
+                SendLoraAdapter.DeleteAfterSent = deleteAfterSent
                 logging.info("SendLoraAdapter subscription set enabled: " + str(isInitialized))
-                DatabaseHelper.mainDatabaseHelper.set_subscriptions_enabled(isInitialized, SendLoraAdapter.GetTypeName())
+                DatabaseHelper.mainDatabaseHelper.update_subscriptions(isInitialized, deleteAfterSent, SendLoraAdapter.GetTypeName())
 
     @staticmethod
     def EnableDisableTransforms():
@@ -97,7 +101,8 @@ class SendLoraAdapter(object):
     def GetSerialDevicePath(self):
         return self.portName
 
-    def GetDeleteAfterSent(self):
+    @staticmethod
+    def GetDeleteAfterSent():
         # check setting for ack
         return not SettingsClass.GetAcknowledgementRequested()
 

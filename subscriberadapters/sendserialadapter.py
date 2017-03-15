@@ -39,12 +39,12 @@ class SendSerialAdapter(object):
                 logging.info("Setting SetSendSerialAdapterActive True")
                 if not SettingsClass.GetSendSerialAdapterActive():
                     SettingsClass.SetSendSerialAdapterActive(True)
-                    DatabaseHelper.mainDatabaseHelper.set_subscriptions_enabled(True, SendSerialAdapter.GetTypeName())
+                    DatabaseHelper.mainDatabaseHelper.update_subscriptions(True, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
             else:
                 logging.info("Setting SetSendSerialAdapterActive False")
                 if SettingsClass.GetSendSerialAdapterActive():
                     SettingsClass.SetSendSerialAdapterActive(False)
-                    DatabaseHelper.mainDatabaseHelper.set_subscriptions_enabled(False, SendSerialAdapter.GetTypeName())
+                    DatabaseHelper.mainDatabaseHelper.update_subscriptions(False, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
         else:
             logging.info("Setting SetSendSerialAdapterActive False 2")
             if SettingsClass.GetSendSerialAdapterActive():
@@ -81,7 +81,8 @@ class SendSerialAdapter(object):
     def GetSerialDevicePath(self):
         return self.portName
 
-    def GetDeleteAfterSent(self):
+    @staticmethod
+    def GetDeleteAfterSent():
         # check setting for ack
         return True
 

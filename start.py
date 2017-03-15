@@ -131,7 +131,6 @@ class Main:
                     logging.error(ex)
 
                 if inputData is not None:
-                    logging.info("input data")
                     if inputData["MessageType"] == "DATA":
                         logging.info("Received data from " + inputAdapter.GetInstanceName())
                         messageTypeName = inputAdapter.GetTypeName()
@@ -190,7 +189,6 @@ class Main:
                             else:
                                 # shouldn't be sent, so just archive the message subscription
                                 DatabaseHelper.mainDatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
-                    logging.info("sub adapter if not found")
                     if not adapterFound:
                         logging.info("Send adapter not found for " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName)
                         DatabaseHelper.mainDatabaseHelper.increment_find_adapter_tries_and_set_find_adapter_try_date(msgSub)

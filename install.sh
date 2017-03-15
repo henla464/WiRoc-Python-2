@@ -70,8 +70,8 @@ wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive
 #mkdir WiRoc-Python-2
 #tar xvfz WiRoc-Python-2.tar.gz -C WiRoc-Python-2
 rm -rf WiRoc-Python-2
-tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-0.01
-mv WiRoc-Python-2-0.01 WiRoc-Python-2
+tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-0.02
+mv WiRoc-Python-2-0.02 WiRoc-Python-2
 
 echo "WiRoc-BLE"
 read line
@@ -79,6 +79,9 @@ read line
 wget https://github.com/henla464/WiRoc-BLE-Device/raw/master/WiRoc-BLE-Device.tar.gz
 mkdir WiRoc-BLE-Device
 tar xvfz WiRoc-BLE-Device.tar.gz -C WiRoc-BLE-Device
+
+#npm install -g node-gyp
+npm install bluetooth-hci-socket
 
 echo "install bleno"
 read line

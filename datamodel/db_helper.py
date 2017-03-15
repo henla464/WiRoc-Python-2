@@ -1,7 +1,6 @@
 __author__ = 'henla464'
 
 from datamodel.datamodel import *
-from constants import *
 from databaselib.db import DB
 from databaselib.datamapping import DataMapping
 from datetime import timedelta, datetime
@@ -172,14 +171,12 @@ class DatabaseHelper:
         rows = self.db.get_table_objects_by_SQL(SubscriptionData, sql)
         return rows
 
-    def set_subscriptions_enabled(self, enabled, subscriberTypeName):
-        sql = ("SELECT SubscriptionData.* FROM SubscriberData JOIN SubscriptionData "
-               "ON SubscriberData.id = SubscriptionData.SubscriberId "
-               "WHERE SubscriberData.TypeName = '" + str(subscriberTypeName) +"'")
-        rows = self.db.get_table_objects_by_SQL(SubscriptionData, sql)
-        for subscription in rows:
-            subscription.Enabled = enabled
-            self.db.save_table_object(subscription)
+    def update_subscriptions(self, enabled, deleteAfterSent, subscriberTypeName):
+        sql = ("UPDATE SubscriptionData SET Enabled = " + str(1 if enabled else 0) + ", "
+               "DeleteAfterSent = " + str(1 if deleteAfterSent else 0) + " WHERE SubscriberId IN "
+               "(SELECT id from SubscriberData WHERE SubscriberData.TypeName = '" + str(subscriberTypeName) + "')")
+        self.db.execute_SQL(sql)
+
 
 #MessageSubscriptions
     def get_no_of_message_subscriptions_by_message_box_id(self, msgBoxId):

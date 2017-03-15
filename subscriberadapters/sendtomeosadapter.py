@@ -28,7 +28,7 @@ class SendToMeosAdapter(object):
             if SendToMeosAdapter.SubscriptionsEnabled != isInitialized:
                 logging.info("SendToMeosAdapter subscription set enabled: " + str(isInitialized))
                 SendToMeosAdapter.SubscriptionsEnabled = isInitialized
-                DatabaseHelper.mainDatabaseHelper.set_subscriptions_enabled(isInitialized, SendToMeosAdapter.GetTypeName())
+                DatabaseHelper.mainDatabaseHelper.update_subscriptions(isInitialized, SendToMeosAdapter.GetDeleteAfterSent(), SendToMeosAdapter.GetTypeName())
 
 
     @staticmethod
@@ -45,7 +45,8 @@ class SendToMeosAdapter(object):
     def GetInstanceName(self):
         return self.instanceName
 
-    def GetDeleteAfterSent(self):
+    @staticmethod
+    def GetDeleteAfterSent():
         return True
 
     def GetIsInitialized(self):
