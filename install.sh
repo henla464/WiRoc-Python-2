@@ -64,21 +64,18 @@ apt-get install bluetooth bluez libbluetooth-dev libudev-dev
 echo "WiRoc-Python-2"
 read line
 #install Python-2
-#wget https://github.com/henla464/WiRoc-Python-2/raw/master/WiRoc-Python-2.tar.gz
-#wget -O WiRoc-Python-2.tar.gz https://drive.google.com/uc?id=0BzeOdzETDWYES1k3amVxbHJYTWs
-wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v0.02.tar.gz
-#mkdir WiRoc-Python-2
-#tar xvfz WiRoc-Python-2.tar.gz -C WiRoc-Python-2
+wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v0.03.tar.gz
 rm -rf WiRoc-Python-2
-tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-0.02
-mv WiRoc-Python-2-0.02 WiRoc-Python-2
+tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-0.03
+mv WiRoc-Python-2-0.03 WiRoc-Python-2
 
 echo "WiRoc-BLE"
 read line
 #install WiRoc-BLE
-wget https://github.com/henla464/WiRoc-BLE-Device/raw/master/WiRoc-BLE-Device.tar.gz
-mkdir WiRoc-BLE-Device
-tar xvfz WiRoc-BLE-Device.tar.gz -C WiRoc-BLE-Device
+wget -O WiRoc-BLE-Device.tar.gz https://github.com/henla464/WiRoc-BLE-Device/archive/v0.01.tar.gz
+rm -rf WiRoc-BLE-Device
+tar xvfz WiRoc-BLE-Device.tar.gz WiRoc-BLE-Device-0.01
+mv WiRoc-BLE-Device-0.01 WiRoc-BLE-Device
 
 #npm install -g node-gyp
 npm install bluetooth-hci-socket

@@ -67,7 +67,7 @@ class ReceiveSerialComputerAdapter(object):
                 return None
 
             replyMessage = bytearray()
-            commandCode = data["Data"][1];
+            commandCode = data["Data"][1]
             replyMessage.append(STX)  # STX
             replyMessage.append(commandCode)
             if commandCode == 0x83:

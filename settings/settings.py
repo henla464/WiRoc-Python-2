@@ -271,8 +271,6 @@ class SettingsClass(object):
         elif SettingsClass.GetSendToMeosEnabled(): #and output = MEOS
             # configured to send to Meos over network/wifi
             return "RECEIVE"
-        elif False: # todo: bluetooth out enabled
-            return "RECEIVE"
         else:
             return "SEND"
 

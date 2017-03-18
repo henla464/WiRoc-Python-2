@@ -82,10 +82,10 @@ class ReceiveSIAdapter(object):
                 logging.error("SI Station, opening serial exception:")
                 logging.error(ex)
                 return False
-
+        logging.debug("receivesiadapter 1")
         if self.siSerial.is_open:
             #set master - mode to direct
-
+            logging.debug("receivesiadapter 2")
             msdMode = bytes([0xFF, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
             self.siSerial.write(msdMode)
             sleep(0.1)

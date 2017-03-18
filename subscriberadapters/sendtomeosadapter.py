@@ -11,10 +11,7 @@ class SendToMeosAdapter(object):
     @staticmethod
     def CreateInstances():
         if len(SendToMeosAdapter.Instances) == 0:
-            enabled = SettingsClass.GetSendToMeosEnabled()
-            if enabled:
-                SendToMeosAdapter.Instances.append(SendToMeosAdapter('meos1'))
-
+            SendToMeosAdapter.Instances.append(SendToMeosAdapter('meos1'))
         return SendToMeosAdapter.Instances
 
     @staticmethod
@@ -25,10 +22,12 @@ class SendToMeosAdapter(object):
     def EnableDisableSubscription():
         if len(SendToMeosAdapter.Instances) > 0:
             isInitialized = SendToMeosAdapter.Instances[0].GetIsInitialized()
-            if SendToMeosAdapter.SubscriptionsEnabled != isInitialized:
-                logging.info("SendToMeosAdapter subscription set enabled: " + str(isInitialized))
-                SendToMeosAdapter.SubscriptionsEnabled = isInitialized
-                DatabaseHelper.mainDatabaseHelper.update_subscriptions(isInitialized, SendToMeosAdapter.GetDeleteAfterSent(), SendToMeosAdapter.GetTypeName())
+            enabled = SettingsClass.GetSendToMeosEnabled()
+            subscriptionShouldBeEnabled = (isInitialized and enabled)
+            if SendToMeosAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
+                logging.info("SendToMeosAdapter subscription set enabled: " + str(subscriptionShouldBeEnabled))
+                SendToMeosAdapter.SubscriptionsEnabled = subscriptionShouldBeEnabled
+                DatabaseHelper.mainDatabaseHelper.update_subscriptions(subscriptionShouldBeEnabled, SendToMeosAdapter.GetDeleteAfterSent(), SendToMeosAdapter.GetTypeName())
 
 
     @staticmethod

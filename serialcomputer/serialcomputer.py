@@ -111,6 +111,8 @@ class SerialComputer:
                         receivedData = receivedData[1:]
                 if len(receivedData) == 3:
                     expectedLength = receivedData[2] + 6
+                if len(receivedData) == expectedLength:
+                    break
                 if len(receivedData) < expectedLength and self.compSerial.inWaiting() == 0:
                     logging.debug("Serial computer, sleep and wait for more bytes")
                     sleep(0.05)
