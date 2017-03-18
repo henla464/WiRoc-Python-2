@@ -7,6 +7,7 @@ import os
 
 class SendSerialAdapter(object):
     Instances = []
+    SendSerialAdapterActive = None
 
     @staticmethod
     def CreateInstances():
@@ -36,17 +37,19 @@ class SendSerialAdapter(object):
     def EnableDisableSubscription():
         if len(SendSerialAdapter.Instances) > 0:
             if SendSerialAdapter.Instances[0].TestConnection():
-                logging.info("Setting SetSendSerialAdapterActive True")
-                if not SettingsClass.GetSendSerialAdapterActive():
+                logging.info("SendSerialAdapter::EnableDisableSubscription() Setting SetSendSerialAdapterActive True")
+                if SendSerialAdapter.SendSerialAdapterActive is None or not SendSerialAdapter.SendSerialAdapterActive:
+                    SendSerialAdapter.SendSerialAdapterActive = True
                     SettingsClass.SetSendSerialAdapterActive(True)
                     DatabaseHelper.mainDatabaseHelper.update_subscriptions(True, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
             else:
-                logging.info("Setting SetSendSerialAdapterActive False")
-                if SettingsClass.GetSendSerialAdapterActive():
+                logging.info("SendSerialAdapter::EnableDisableSubscription() Setting SetSendSerialAdapterActive False")
+                if SendSerialAdapter.SendSerialAdapterActive is None or SendSerialAdapter.SendSerialAdapterActive:
+                    SendSerialAdapter.SendSerialAdapterActive = False
                     SettingsClass.SetSendSerialAdapterActive(False)
                     DatabaseHelper.mainDatabaseHelper.update_subscriptions(False, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
         else:
-            logging.info("Setting SetSendSerialAdapterActive False 2")
+            logging.info("SendSerialAdapter::EnableDisableSubscription() Setting SetSendSerialAdapterActive False 2")
             if SettingsClass.GetSendSerialAdapterActive():
                 SettingsClass.SetSendSerialAdapterActive(False)
 
@@ -56,12 +59,6 @@ class SendSerialAdapter(object):
 
     @staticmethod
     def EnableDisableTransforms():
-        if len(SendSerialAdapter.Instances) > 0:
-            if SendSerialAdapter.LoraMode is None or SendSerialAdapter.LoraMode != SettingsClass.GetLoraMode():
-                SendSerialAdapter.LoraMode = SettingsClass.GetLoraMode()
-                enableSerialSendTransforms = (SendSerialAdapter.LoraMode != "SEND")
-                DatabaseHelper.mainDatabaseHelper.set_transform_enabled(enableSerialSendTransforms, "SIToLoraTransform")
-                DatabaseHelper.mainDatabaseHelper.set_transform_enabled(not enableSerialSendTransforms, "LoraToLoraAckTransform")
         return None
 
     def __init__(self, instanceNumber, portName):

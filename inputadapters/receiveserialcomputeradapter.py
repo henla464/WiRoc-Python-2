@@ -56,7 +56,7 @@ class ReceiveSerialComputerAdapter(object):
         return calculatedCRC == crcInMessage
 
     def Init(self):
-        self.serialComputer.Init()
+        return self.serialComputer.Init()
 
     # messageData is a bytearray
     def GetData(self):

@@ -88,7 +88,7 @@ class ReceiveSIAdapter(object):
             logging.debug("receivesiadapter 2")
             msdMode = bytes([0xFF, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
             self.siSerial.write(msdMode)
-            sleep(0.1)
+            sleep(0.2)
             response = bytearray()
             while self.siSerial.inWaiting() > 0:
                 bytesRead = self.siSerial.read(1)

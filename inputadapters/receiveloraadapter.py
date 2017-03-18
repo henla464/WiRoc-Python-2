@@ -5,6 +5,7 @@ from settings.settings import SettingsClass
 import subscriberadapters
 import time
 import logging
+import socket
 
 class ReceiveLoraAdapter(object):
 
@@ -13,21 +14,21 @@ class ReceiveLoraAdapter(object):
     def CreateInstances():
         # check the number of lora radios and return an instance for each
         serialPorts = []
-        # https://github.com/dhylands/usb-ser-mon/blob/master/find_port.py
-        uDevContext = pyudev.Context()
-        for device in uDevContext.list_devices(subsystem='tty'):
-            if 'ID_VENDOR_ID' in device:
-                logging.debug('ReceiveLoraAdapter vendor: ' + device['ID_VENDOR_ID'].lower() + " model: " + device['ID_MODEL_ID'].lower())
-                if device['ID_VENDOR_ID'].lower() == '10c4' and \
+        if socket.gethostname() == 'chip':
+            serialPorts.append('/dev/ttyS2')
+        else:
+            # https://github.com/dhylands/usb-ser-mon/blob/master/find_port.py
+            uDevContext = pyudev.Context()
+            for device in uDevContext.list_devices(subsystem='tty'):
+                if 'ID_VENDOR_ID' in device:
+                    logging.debug('ReceiveLoraAdapter vendor: ' + device['ID_VENDOR_ID'].lower() + " model: " + device['ID_MODEL_ID'].lower())
+                    if device['ID_VENDOR_ID'].lower() == '10c4' and \
                                 device['ID_MODEL_ID'].lower() == 'ea60':
-                    serialPorts.append(device.device_node)
+                        serialPorts.append(device.device_node)
+
         highestInstanceNumber = 0
         newInstances = []
         for serialDev in serialPorts:
-            # only set up one receive adapter
-            if len(ReceiveLoraAdapter.Instances) > 0:
-                break
-
             alreadyCreated = False
             for instance in ReceiveLoraAdapter.Instances:
                 if instance.GetSerialDevicePath() == serialDev:
@@ -35,11 +36,6 @@ class ReceiveLoraAdapter(object):
                     newInstances.append(instance)
                     if instance.GetInstanceNumber() > highestInstanceNumber:
                         highestInstanceNumber = instance.GetInstanceNumber()
-
-            # don't create both receive and send adapter for same serial port
-            for instance in subscriberadapters.sendloraadapter.SendLoraAdapter.Instances:
-                if instance.GetSerialDevicePath() == serialDev:
-                    alreadyCreated = True
 
             if not alreadyCreated:
                 highestInstanceNumber = highestInstanceNumber + 1

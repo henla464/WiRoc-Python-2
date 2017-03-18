@@ -23,8 +23,7 @@ class SendLoraAdapter(object):
             uDevContext = pyudev.Context()
             for device in uDevContext.list_devices(subsystem='tty'):
                 if 'ID_VENDOR_ID' in device:
-                    logging.debug('SendLoraAdapter vendor: ' + device['ID_VENDOR_ID'].lower() + " model: " + device[
-                        'ID_MODEL_ID'].lower())
+                    logging.debug('SendLoraAdapter vendor: ' + device['ID_VENDOR_ID'].lower() + " model: " + device['ID_MODEL_ID'].lower())
                     if device['ID_VENDOR_ID'].lower() == '10c4' and \
                                     device['ID_MODEL_ID'].lower() == 'ea60':
                         serialPorts.append(device.device_node)
@@ -38,21 +37,16 @@ class SendLoraAdapter(object):
 
             alreadyCreated = False
             for instance in SendLoraAdapter.Instances:
-                logging.info("SendLoraAdapter instance: " + instance.GetSerialDevicePath())
+                logging.info("SendLoraAdapter::CreateInstances() instance: " + instance.GetSerialDevicePath())
                 if instance.GetSerialDevicePath() == serialDev:
                     alreadyCreated = True
                     newInstances.append(instance)
                     if instance.GetInstanceNumber() > highestInstanceNumber:
                         highestInstanceNumber = instance.GetInstanceNumber()
 
-            #don't create both receive and send adapter for same serial port
-            #for instance in inputadapters.receiveloraadapter.ReceiveLoraAdapter.Instances:
-            #    if instance.GetSerialDevicePath() == serialDev:
-            #        alreadyCreated = True
-
             if not alreadyCreated:
                 highestInstanceNumber = highestInstanceNumber + 1
-                logging.info("SendLoraAdapter created: " + serialDev + " instanceNo: " + str(highestInstanceNumber))
+                logging.info("SendLoraAdapter::CreateInstances() created: " + serialDev + " instanceNo: " + str(highestInstanceNumber))
                 newInstances.append(
                     SendLoraAdapter(highestInstanceNumber, serialDev))
 
@@ -69,12 +63,13 @@ class SendLoraAdapter(object):
         if len(SendLoraAdapter.Instances) > 0:
             isInitialized = SendLoraAdapter.Instances[0].GetIsInitialized()
             deleteAfterSent = SendLoraAdapter.GetDeleteAfterSent()
-            if (SendLoraAdapter.SubscriptionsEnabled != isInitialized or
+            shouldSubscriptionBeEnabled = isInitialized and SettingsClass.GetLoraMode() == "SEND"
+            if (SendLoraAdapter.SubscriptionsEnabled != shouldSubscriptionBeEnabled or
                 SendLoraAdapter.DeleteAfterSent != deleteAfterSent):
-                SendLoraAdapter.SubscriptionsEnabled = isInitialized
+                SendLoraAdapter.SubscriptionsEnabled = shouldSubscriptionBeEnabled
                 SendLoraAdapter.DeleteAfterSent = deleteAfterSent
-                logging.info("SendLoraAdapter subscription set enabled: " + str(isInitialized))
-                DatabaseHelper.mainDatabaseHelper.update_subscriptions(isInitialized, deleteAfterSent, SendLoraAdapter.GetTypeName())
+                logging.info("SendLoraAdapter::CreateInstances() subscription set enabled: " + str(shouldSubscriptionBeEnabled))
+                DatabaseHelper.mainDatabaseHelper.update_subscriptions(shouldSubscriptionBeEnabled, deleteAfterSent, SendLoraAdapter.GetTypeName())
 
     @staticmethod
     def EnableDisableTransforms():

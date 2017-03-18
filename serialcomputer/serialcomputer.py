@@ -41,17 +41,17 @@ class SerialComputer:
 
         try:
             if self.compSerial.is_open:
-                logging.debug("TestConnection before write byte: " + self.portName)
+                logging.debug("SerialComputer::TestConnection() before write byte: " + self.portName)
                 self.compSerial.write(bytes([0x41]))
-                logging.debug("TestConnection after write byte: " + self.portName) # + str(noOfBytes)
+                logging.debug("SerialComputer::TestConnection() after write byte: " + self.portName) # + str(noOfBytes)
                 if wasOpened:
                     self.compSerial.close()
                 return True
         except serial.serialutil.SerialTimeoutException as timeOutEx:
-            logging.error("TestConnection SI Computer, serial exception 1:")
+            logging.error("SerialComputer::TestConnection() serial exception 1:")
             logging.error(timeOutEx)
         except Exception as ex:
-            logging.error("TestConnection SI Computer, serial exception 2:")
+            logging.error("SerialComputer::TestConnection() serial exception 2:")
             logging.error(ex)
 
         if wasOpened:
@@ -63,7 +63,7 @@ class SerialComputer:
     def Init(self):
         if self.GetIsInitialized():
             return True
-        logging.info("SI computer port name: " + self.portName)
+        logging.info("SerialComputer::Init() Computer port name: " + self.portName)
         baudRate = 38400
         if not self.compSerial.is_open:
             try:
@@ -73,7 +73,7 @@ class SerialComputer:
                 self.compSerial.open()
                 self.isInitialized = True
             except Exception as ex:
-                logging.error("SI Computer, opening serial exception:")
+                logging.error("SerialComputer::Init(), opening serial exception:")
                 logging.error(ex)
                 return False
         return True
@@ -86,7 +86,7 @@ class SerialComputer:
     def SendData(self, messageData):
         #print(binascii.hexlify(messageData))
         self.compSerial.write(messageData)
-        logging.info("Sent to SI computer")
+        logging.info("SerialComputer::SendData() Sent to computer")
         return True
 
     def GetData(self):
@@ -94,7 +94,7 @@ class SerialComputer:
             return None
         if self.compSerial.inWaiting() == 0:
             return None
-        logging.debug("Serial computer, data to fetch")
+        logging.debug("SerialComputer::GetData() data to fetch")
         expectedLength = 3
         receivedData = bytearray()
         startFound = False
@@ -114,14 +114,14 @@ class SerialComputer:
                 if len(receivedData) == expectedLength:
                     break
                 if len(receivedData) < expectedLength and self.compSerial.inWaiting() == 0:
-                    logging.debug("Serial computer, sleep and wait for more bytes")
+                    logging.debug("SerialComputer::GetData() sleep and wait for more bytes")
                     sleep(0.05)
 
         if len(receivedData) != expectedLength:
             # throw away the data, isn't correct
             dataInHex = ''.join(format(x, '02x') for x in receivedData)
-            logging.error("Serial computer, data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + dataInHex)
+            logging.error("SerialComputer::GetData() Data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + dataInHex)
             return None
 
-        logging.info("Serial computer message received!")
+        logging.info("SerialComputer::GetData() Message received!")
         return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}
