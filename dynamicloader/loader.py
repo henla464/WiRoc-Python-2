@@ -5,11 +5,11 @@ class Loader(object):
 
     @staticmethod
     def ImportModule(moduleAbsoluteName):
-        logging.info("Import module: " + moduleAbsoluteName)
+        logging.info("Loader::ImportModule() " + moduleAbsoluteName)
         try:
             return importlib.import_module(moduleAbsoluteName)
         except Exception as myex:
-            logging.error("Import exception")
+            logging.error("Loader::ImportModule() Import exception")
             pass
 
         return None
@@ -43,5 +43,5 @@ class Loader(object):
         for name, moduleObject in inspect.getmembers(module):
             if inspect.isclass(moduleObject):
                 if name.endswith(suffix):
-                    logging.debug("Module class name: "  + name)
+                    logging.debug("Loader::GetFirstClassFromModule() Class name: "  + name)
                     return moduleObject

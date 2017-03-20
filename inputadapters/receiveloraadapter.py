@@ -83,7 +83,7 @@ class ReceiveLoraAdapter(object):
         try:
             loraMessage = self.loraRadio.GetRadioData()
         except Exception as ex:
-            logging.error("Error reading from lora " + traceback.format_exc())
+            logging.error("ReceiveLoraAdapter::GetData() Error reading from lora " + traceback.format_exc())
             time.sleep(2)
 
         if loraMessage is not None:

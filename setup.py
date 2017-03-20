@@ -18,7 +18,6 @@ class Setup:
             subscriberModules = Loader.ImportDirectory("subscriberadapters", False)
 
             for mod in subscriberModules:
-                logging.info(mod)
                 adapterClass = Loader.GetFirstClassFromModule(mod, "Adapter")
                 Setup.subscriberAdapterClasses.append(adapterClass)
 
@@ -33,7 +32,7 @@ class Setup:
                 typeName = adapter.GetTypeName()
                 instanceName = adapter.GetInstanceName()
                 subscriberData = SubscriberData(typeName, instanceName)
-                subscriberData = DatabaseHelper.mainDatabaseHelper.save_subscriber(subscriberData)
+                subscriberDataId = DatabaseHelper.mainDatabaseHelper.save_subscriber(subscriberData)
 
                 # add message types, transforms and subscriptions to the database
                 transformNames = adapter.GetTransformNames()
@@ -42,33 +41,32 @@ class Setup:
                     if transModule is not None:
                         transformClass = Loader.GetFirstClassFromModule(transModule, "Transform")
                         if transformClass is not None:
-                            logging.debug(transformClass)
                             adapter.SetTransform(transformClass)
                             # add message types to database
                             messageTypeName = transformClass.GetInputMessageType()
                             messageTypeData = MessageTypeData(messageTypeName)
-                            inputMessageData = DatabaseHelper.mainDatabaseHelper.save_message_type(messageTypeData)
+                            inputMessageDataId = DatabaseHelper.mainDatabaseHelper.save_message_type(messageTypeData)
                             messageTypeName = transformClass.GetOutputMessageType()
                             messageTypeData = MessageTypeData(messageTypeName)
-                            outputMessageData = DatabaseHelper.mainDatabaseHelper.save_message_type(messageTypeData)
+                            outputMessageDataId = DatabaseHelper.mainDatabaseHelper.save_message_type(messageTypeData)
 
                             # add transform to database
-                            transformData = TransformData(transformClass.GetName(), inputMessageData.id, outputMessageData.id)
-                            transformData = DatabaseHelper.mainDatabaseHelper.save_transform(transformData)
+                            transformData = TransformData(transformClass.GetName(), inputMessageDataId, outputMessageDataId)
+                            transformDataId = DatabaseHelper.mainDatabaseHelper.save_transform(transformData)
 
                             # add subscription to database
                             deleteAfterSent = adapter.GetDeleteAfterSent()
                             enabled = False
-                            subscriptionData = SubscriptionData(deleteAfterSent, enabled, subscriberData.id, transformData.id)
-                            subscriptionData = DatabaseHelper.mainDatabaseHelper.save_subscription(subscriptionData)
+                            subscriptionData = SubscriptionData(deleteAfterSent, enabled, subscriberDataId, transformDataId)
+                            DatabaseHelper.mainDatabaseHelper.save_subscription(subscriptionData)
 
         for adapterObj in adapterObjects:
             adapterObj.SetIsDBInitialized()
             adapterObj.EnableDisableSubscription()
             adapterObj.EnableDisableTransforms()
-            logging.debug("Before Init() subscriber adapter: " + str(adapterObj.GetInstanceName()))
+            logging.debug("Setup::SetupSubscribers() Before Init() subscriber adapter: " + str(adapterObj.GetInstanceName()))
             if not adapterObj.Init():
-                logging.error("Init adapter failed: " + adapterObj.GetInstanceName())
+                logging.error("Setup::SetupSubscribers() Init adapter failed: " + adapterObj.GetInstanceName())
 
         return adapterObjects
 
@@ -78,7 +76,6 @@ class Setup:
             Setup.inputAdapterClasses = []
             modules = Loader.ImportDirectory("inputadapters", False)
             for mod in modules:
-                logging.info(mod)
                 adapterClass = Loader.GetFirstClassFromModule(mod, "Adapter")
                 Setup.inputAdapterClasses.append(adapterClass)
 
@@ -95,7 +92,7 @@ class Setup:
             adapterObjects.extend(instances)
 
         for adapterObj in adapterObjects:
-            logging.debug("Before Init() input adapter: " + str(adapterObj.GetInstanceName()))
+            logging.debug("Setup::SetupInputAdapters() Before Init() input adapter: " + str(adapterObj.GetInstanceName()))
             adapterObj.Init()
         DatabaseHelper.mainDatabaseHelper.update_input_adapter_instances(adapterObjects)
         return adapterObjects

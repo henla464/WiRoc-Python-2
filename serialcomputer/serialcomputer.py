@@ -86,8 +86,21 @@ class SerialComputer:
     def SendData(self, messageData):
         #print(binascii.hexlify(messageData))
         self.compSerial.write(messageData)
-        logging.info("SerialComputer::SendData() Sent to computer")
-        return True
+        try:
+            if self.compSerial.is_open:
+                self.compSerial.write(messageData)
+                return True
+            else:
+                logging.error("SerialComputer::SendData() Serial port not open")
+                return False
+        except serial.serialutil.SerialTimeoutException as timeOutEx:
+            logging.error("SerialComputer::SendData() serial exception 1:")
+            logging.error(timeOutEx)
+            return False
+        except Exception as ex:
+            logging.error("SerialComputer::SendData() serial exception 2:")
+            logging.error(ex)
+            return False
 
     def GetData(self):
         if not self.GetIsInitialized():

@@ -29,10 +29,10 @@ class LoraRadio:
         self.channel = None
         self.loraDataRate = None
 
-    def GetIsInitialized(self, channel=None, dataRate=None):
+    def GetIsInitialized(self, channel, dataRate):
         return self.isInitialized and \
-               (channel==None or channel == self.channel) and \
-               (dataRate==None or dataRate == self.loraDataRate)
+               channel == self.channel and \
+               dataRate == self.loraDataRate
 
     def GetPortName(self):
         return self.portName
@@ -53,10 +53,10 @@ class LoraRadio:
         frequencyThree = (frequency & 0xFF)
 
 
-        logging.debug("channel: " + str(channel))
-        logging.debug("loradatarate: " + str(loraDataRate))
-        logging.debug("rffactor: " + str(channelData.RfFactor))
-        logging.debug("rfBw: " + str(channelData.RfBw))
+        logging.debug("LoraRadio::getSettingsArray() channel: " + str(channel))
+        logging.debug("LoraRadio::getSettingsArray() loradatarate: " + str(loraDataRate))
+        logging.debug("LoraRadio::getSettingsArray() rffactor: " + str(channelData.RfFactor))
+        logging.debug("LoraRadio::getSettingsArray() rfBw: " + str(channelData.RfBw))
 
         settingsArray = bytearray([0xAF, 0xAF,    # sync word
                                    0x00, 0x00,  # id code
@@ -81,7 +81,7 @@ class LoraRadio:
 
     def getRadioSettingsReply(self):
         data = bytearray([])
-        logging.debug("LoraRadio settings reply response: ")
+        logging.debug("LoraRadio::getSettingsArray() LoraRadio settings reply response: ")
         while self.radioSerial.inWaiting() > 0:
             bytesRead = self.radioSerial.read(1)
             if len(bytesRead) > 0 and bytesRead[0] == 0xAF:
@@ -95,7 +95,7 @@ class LoraRadio:
 
                     time.sleep(2 / 1000)
                 break
-        logging.debug(data)
+        logging.debug("LoraRadio::getSettingsArray() " + str(data))
         return data
 
     def Disable(self):
@@ -110,7 +110,7 @@ class LoraRadio:
         return self.loraDataRate
 
     def Init(self, channel, loraDataRate):
-        logging.info("Init lora radio. Port name: " + self.portName + " Channel: " + str(channel) + " LoraDataRate: " + str(loraDataRate))
+        logging.info("LoraRadio::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraDataRate: " + str(loraDataRate))
         if socket.gethostname() == 'chip':
             digitalWriteNonXIO(139, 0) #enable radio module
         self.channel = channel
@@ -128,7 +128,6 @@ class LoraRadio:
                                   ])
 
         baudRate = 9600
-        logging.debug("Baud rate: " + str(baudRate))
         self.radioSerial.baudrate = baudRate
         self.radioSerial.port = self.portName
         if not self.radioSerial.is_open:
@@ -136,14 +135,14 @@ class LoraRadio:
         if self.radioSerial.is_open:
             self.radioSerial.write(readSettingArray)
 
-        time.sleep(1)
+        time.sleep(0.5)
         data = self.getRadioSettingsReply()
 
         settingsArray = LoraRadio.getSettingsArray(channel, loraDataRate)
 
         if data[8:16] == settingsArray[8:16]:
             self.isInitialized = True
-            logging.info("Lora radio already configured correctly")
+            logging.info("LoraRadio::Init() Lora radio already configured correctly")
             return True
         else:
             self.radioSerial.write(settingsArray)
@@ -154,11 +153,11 @@ class LoraRadio:
                 digitalWriteNonXIO(139, 1) # disable/enable to make the setting stick
                 time.sleep(0.2)
                 digitalWriteNonXIO(139, 0)
-                logging.info("Lora radio now configured correctly")
+                logging.info("LoraRadio::Init() Now configured correctly")
                 return True
             else:
                 self.isInitialized = False
-                logging.error("Lora radio, Error configuring")
+                logging.error("LoraRadio::Init() Error configuring")
                 return False
 
     def SendData(self, messageData):
@@ -169,7 +168,7 @@ class LoraRadio:
     def GetRadioData(self):
         if self.radioSerial.inWaiting() == 0:
             return None
-        logging.debug("Lora radio, data to fetch")
+        logging.debug("LoraRadio::GetRadioData() data to fetch")
         startFound = False
         while self.radioSerial.inWaiting() > 0:
             # print("looking for stx: ", end="")
@@ -179,16 +178,16 @@ class LoraRadio:
             if startFound:
                 self.receivedMessage.AddByte(bytesRead[0])
                 if not self.receivedMessage.IsFilled() and self.radioSerial.inWaiting() == 0:
-                    logging.info("Sleep, wait for more bytes")
+                    logging.info("LoraRadio::GetRadioData() Sleep, wait for more bytes")
                     time.sleep(0.05)
 
         if not self.receivedMessage.IsFilled():
             # throw away the data, isn't correct
             self.receivedMessage = LoraRadioMessage()
-            logging.error("Lora radio, received incorrect data")
+            logging.error("LoraRadio::GetRadioData() received incorrect data")
             return None
         else:
             message = self.receivedMessage
             self.receivedMessage = LoraRadioMessage()
-            logging.info("Lora radio, received message!")
+            logging.info("LoraRadio::GetRadioData() received message!")
             return message

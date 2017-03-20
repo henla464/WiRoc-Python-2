@@ -13,6 +13,7 @@ class DatabaseHelper:
         self.db = DB(DatabaseHelper.database_name, DataMapping())
 
     def ensure_tables_created(self):
+        logging.debug("DatabaseHelper::ensure_tables_created()")
         table = SettingData()
         self.db.ensure_table_created(table)
         table = ChannelData()
@@ -39,6 +40,7 @@ class DatabaseHelper:
         self.db.ensure_table_created(table)
 
     def drop_all_tables(self):
+        logging.debug("DatabaseHelper::drop_all_tables()")
         table = SettingData()
         self.db.drop_table(table)
         table = ChannelData()
@@ -65,6 +67,7 @@ class DatabaseHelper:
         self.db.drop_table(table)
 
     def truncate_setup_tables(self):
+        logging.debug("DatabaseHelper::truncate_setup_tables()")
         self.db.execute_SQL("DELETE FROM SubscriberData")
         self.db.execute_SQL("DELETE FROM MessageTypeData")
         self.db.execute_SQL("DELETE FROM SubscriptionData")
@@ -77,12 +80,11 @@ class DatabaseHelper:
     def save_setting(self, settingData):
         sd = self.get_setting_by_key(settingData.Key)
         if sd is None:
-            sd = self.db.save_table_object(settingData)
+            sd = self.db.save_table_object(settingData, True)
         else:
             sd.Value = settingData.Value
-            sd = self.db.save_table_object(sd)
-
-        return self.get_setting(sd.id)
+            sd = self.db.save_table_object(sd, True)
+        return sd
 
     def get_setting(self, id):
         sd = self.db.get_table_object(SettingData, str(id))
@@ -104,10 +106,10 @@ class DatabaseHelper:
                                     subscriberData.TypeName + "' and InstanceName = '" +
                                     subscriberData.InstanceName + "'")
         if len(rows) == 0:
-            return self.db.save_table_object(subscriberData)
+            return self.db.save_table_object(subscriberData, False)
         else:
             #nothing to update
-            return rows[0]
+            return rows[0].id
 
     def get_subscribers(self):
         rows = self.db.get_table_objects_by_SQL(SubscriberView, "SELECT "
@@ -133,10 +135,10 @@ class DatabaseHelper:
         rows = self.db.get_table_objects_by_SQL(MessageTypeData, "SELECT * FROM MessageTypeData WHERE Name = '" +
                                            messageTypeData.Name + "'")
         if len(rows) == 0:
-            return self.db.save_table_object(messageTypeData)
+            return self.db.save_table_object(messageTypeData, False)
         else:
             # nothing to update
-            return rows[0]
+            return rows[0].id
 
 #Transforms
     def save_transform(self, transformData):
@@ -144,7 +146,7 @@ class DatabaseHelper:
                                            transformData.Name + "'")
         if len(rows) > 0:
             transformData.id = rows[0].id
-        return self.db.save_table_object(transformData)
+        return self.db.save_table_object(transformData, False)
 
     def set_transform_enabled(self, enabled, transformName):
         dbValue = DataMapping.get_database_value(enabled)
@@ -160,7 +162,7 @@ class DatabaseHelper:
                                            " and TransformId = " + str(subscriptionData.TransformId)))
         if len(rows) > 0:
             subscriptionData.id = rows[0].id
-        return self.db.save_table_object(subscriptionData)
+        return self.db.save_table_object(subscriptionData, False)
 
 
     def get_subscriptions_by_input_message_type_id(self, messageTypeId):
@@ -186,7 +188,7 @@ class DatabaseHelper:
         return len(rows)
 
     def save_message_subscription(self, messageSubscription):
-        return self.db.save_table_object(messageSubscription)
+        self.db.save_table_object(messageSubscription, False)
 
     def archive_message_subscription_view_after_sent(self, messageSubscriptionView):
         msa = MessageSubscriptionArchiveData()
@@ -200,7 +202,7 @@ class DatabaseHelper:
         msa.AckReceivedDate = messageSubscriptionView.AckReceivedDate
         msa.MessageBoxId = messageSubscriptionView.MessageBoxId
         msa.SubscriptionId = messageSubscriptionView.SubscriptionId
-        self.db.save_table_object(msa)
+        self.db.save_table_object(msa, False)
         self.db.delete_table_object(MessageSubscriptionData, messageSubscriptionView.id)
         remainingMsgSub = self.get_no_of_message_subscriptions_by_message_box_id(messageSubscriptionView.MessageBoxId)
         if remainingMsgSub == 0:
@@ -219,7 +221,7 @@ class DatabaseHelper:
         msa.AckReceivedDate = messageSubscriptionView.AckReceivedDate
         msa.MessageBoxId = messageSubscriptionView.MessageBoxId
         msa.SubscriptionId = messageSubscriptionView.SubscriptionId
-        self.db.save_table_object(msa)
+        self.db.save_table_object(msa, False)
         self.db.delete_table_object(MessageSubscriptionData, messageSubscriptionView.id)
         remainingMsgSub = self.get_no_of_message_subscriptions_by_message_box_id(messageSubscriptionView.MessageBoxId)
         if remainingMsgSub == 0:
@@ -231,7 +233,7 @@ class DatabaseHelper:
         msa.NoOfSendTries = msa.NoOfSendTries + 1
         msa.FindAdapterTryDate = None
         msa.FindAdapterTries = 0
-        self.db.save_table_object(msa)
+        self.db.save_table_object(msa, False)
 
     def increment_send_tries_and_set_send_failed_date(self, messageSubscriptionView):
         msa = self.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
@@ -239,13 +241,13 @@ class DatabaseHelper:
         msa.NoOfSendTries = msa.NoOfSendTries + 1
         msa.FindAdapterTryDate = None
         msa.FindAdapterTries = 0
-        self.db.save_table_object(msa)
+        self.db.save_table_object(msa, False)
 
     def increment_find_adapter_tries_and_set_find_adapter_try_date(self, messageSubscriptionView):
         msa = self.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
         msa.FindAdapterTryDate = datetime.now()
         msa.FindAdapterTries = msa.FindAdapterTries + 1
-        self.db.save_table_object(msa)
+        self.db.save_table_object(msa, False)
 
     def archive_message_subscription_after_ack(self, messageNumber):
         thirtySecondsAgo = datetime.now() - timedelta(seconds=30)
@@ -268,7 +270,7 @@ class DatabaseHelper:
             msa.NoOfSendTries = msd.NoOfSendTries
             msa.AckReceivedDate = datetime.now()
             msa.MessageBoxId = msd.MessageBoxId
-            self.db.save_table_object(msa)
+            self.db.save_table_object(msa, False)
             self.db.delete_table_object(MessageSubscriptionData, msd.id)
             remainingMsgSub = self.get_no_of_message_subscriptions_by_message_box_id(msd.MessageBoxId)
             if remainingMsgSub == 0:
@@ -278,7 +280,7 @@ class DatabaseHelper:
 #MessageSubscriptionView
     def get_message_subscriptions_view(self):
         sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData")
-        cnt = self.db.get_scalar_by_SQL(MessageSubscriptionView, sql)
+        cnt = self.db.get_scalar_by_SQL(sql)
         if cnt > 0:
             sql = ("SELECT MessageSubscriptionData.id, "
                    "MessageSubscriptionData.CustomData, "
@@ -311,7 +313,7 @@ class DatabaseHelper:
 
 #MessageBox
     def save_message_box(self, messageBoxData):
-        return self.db.save_table_object(messageBoxData)
+        return self.db.save_table_object(messageBoxData, False)
 
     def archive_message_box(self, msgBoxId):
         messageBoxData = self.db.get_table_object(MessageBoxData, msgBoxId)
@@ -323,7 +325,7 @@ class DatabaseHelper:
         messageBoxArchive.ChecksumOK = messageBoxData.ChecksumOK
         messageBoxArchive.InstanceName = messageBoxData.InstanceName
         messageBoxArchive.MessageTypeId = messageBoxData.MessageTypeId
-        self.db.save_table_object(messageBoxArchive)
+        self.db.save_table_object(messageBoxArchive, False)
         self.db.delete_table_object(MessageBoxData, msgBoxId)
 
 #InputAdapterInstances
@@ -348,7 +350,7 @@ class DatabaseHelper:
 
 #BlenoPunchData
     def save_bleno_punch_data(self, blenoPunchData):
-        return self.db.save_table_object(blenoPunchData)
+        self.db.save_table_object(blenoPunchData, False)
 
     def get_bleno_punches(self):
         return self.db.get_table_objects(BlenoPunchData)
@@ -366,7 +368,7 @@ class DatabaseHelper:
         return None
 
     def save_channel(self, channel):
-        self.db.save_table_object(channel)
+        self.db.save_table_object(channel, False)
 
     def add_default_channels(self):
         channels = []

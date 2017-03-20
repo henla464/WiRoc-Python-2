@@ -30,27 +30,28 @@ class SendSerialAdapter(object):
                     SendSerialAdapter(1 + len(newInstances), serialDev))
 
         SendSerialAdapter.Instances = newInstances
-        SendSerialAdapter.EnableDisableSubscription()
         return SendSerialAdapter.Instances
 
     @staticmethod
     def EnableDisableSubscription():
+        logging.debug("SendSerialAdapter::EnableDisableSubscription()")
         if len(SendSerialAdapter.Instances) > 0:
             if SendSerialAdapter.Instances[0].TestConnection():
-                logging.info("SendSerialAdapter::EnableDisableSubscription() Setting SetSendSerialAdapterActive True")
                 if SendSerialAdapter.SendSerialAdapterActive is None or not SendSerialAdapter.SendSerialAdapterActive:
+                    logging.INFO("SendSerialAdapter::EnableDisableSubscription() update subscription enable")
                     SendSerialAdapter.SendSerialAdapterActive = True
                     SettingsClass.SetSendSerialAdapterActive(True)
                     DatabaseHelper.mainDatabaseHelper.update_subscriptions(True, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
             else:
-                logging.info("SendSerialAdapter::EnableDisableSubscription() Setting SetSendSerialAdapterActive False")
                 if SendSerialAdapter.SendSerialAdapterActive is None or SendSerialAdapter.SendSerialAdapterActive:
+                    logging.INFO("SendSerialAdapter::EnableDisableSubscription() update subscription disable")
                     SendSerialAdapter.SendSerialAdapterActive = False
                     SettingsClass.SetSendSerialAdapterActive(False)
                     DatabaseHelper.mainDatabaseHelper.update_subscriptions(False, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
         else:
-            logging.info("SendSerialAdapter::EnableDisableSubscription() Setting SetSendSerialAdapterActive False 2")
+            logging.debug("SendSerialAdapter::EnableDisableSubscription() Setting SetSendSerialAdapterActive False 2")
             if SettingsClass.GetSendSerialAdapterActive():
+                SendSerialAdapter.SendSerialAdapterActive = False
                 SettingsClass.SetSendSerialAdapterActive(False)
 
     @staticmethod
@@ -83,7 +84,6 @@ class SendSerialAdapter(object):
         return True
 
     def GetTransformNames(self):
-        #"BLEToSITransform", SIToSITransform
         return ["LoraToSITransform", "SIToSITransform"]
 
     def SetTransform(self, transformClass):
@@ -110,11 +110,10 @@ class SendSerialAdapter(object):
 
     # messageData is a bytearray
     def SendData(self, messageData):
-        if self.TestConnection():
-            self.serialComputer.SendData(messageData)
-            logging.info("Sent to SI computer")
+        if self.serialComputer.SendData(messageData):
+            logging.debug("SendSerialAdapter::SendData() Sent to computer")
             return True
         else:
-            logging.info("Could not send to SI computer, test connection failed")
+            logging.warning("SendSerialAdapter::SendData() Could not send to computer, call EnableDisableSubscription")
             SendSerialAdapter.EnableDisableSubscription()
             return False

@@ -3,7 +3,6 @@ __author__ = 'henla464'
 from datamodel.datamodel import MessageBoxData
 from datamodel.datamodel import MessageSubscriptionData
 from setup import Setup
-#import threading
 import time
 import logging, logging.handlers
 from datetime import datetime, timedelta
@@ -132,7 +131,7 @@ class Main:
 
                 if inputData is not None:
                     if inputData["MessageType"] == "DATA":
-                        logging.info("Received data from " + inputAdapter.GetInstanceName())
+                        logging.info("Start::Run() Received data from " + inputAdapter.GetInstanceName())
                         messageTypeName = inputAdapter.GetTypeName()
                         instanceName = inputAdapter.GetInstanceName()
                         messageTypeId = DatabaseHelper.mainDatabaseHelper.get_message_type(messageTypeName).id
@@ -142,23 +141,23 @@ class Main:
                         mbd.PowerCycleCreated = SettingsClass.GetPowerCycle()
                         mbd.ChecksumOK = inputData["ChecksumOK"]
                         mbd.InstanceName = instanceName
-                        mbd = DatabaseHelper.mainDatabaseHelper.save_message_box(mbd)
+                        mbdid = DatabaseHelper.mainDatabaseHelper.save_message_box(mbd)
                         SettingsClass.SetTimeOfLastMessageAdded()
                         anySubscription = False
                         logging.debug("MessageTypeID: " + str(messageTypeId))
                         subscriptions = DatabaseHelper.mainDatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
                         for subscription in subscriptions:
                             msgSubscription = MessageSubscriptionData()
-                            msgSubscription.MessageBoxId = mbd.id
+                            msgSubscription.MessageBoxId = mbdid
                             msgSubscription.SubscriptionId = subscription.id
                             DatabaseHelper.mainDatabaseHelper.save_message_subscription(msgSubscription)
                             anySubscription = True
                             SettingsClass.SetMessagesToSendExists(True)
                         if not anySubscription:
-                            DatabaseHelper.mainDatabaseHelper.archive_message_box(mbd.id)
+                            DatabaseHelper.mainDatabaseHelper.archive_message_box(mbdid)
                     elif inputData["MessageType"] == "ACK":
                         messageNumber = inputData["MessageNumber"]
-                        logging.debug("Received ack, for message number: " + str(messageNumber))
+                        logging.debug("Start::Run() Received ack, for message number: " + str(messageNumber))
                         DatabaseHelper.mainDatabaseHelper.archive_message_subscription_after_ack(messageNumber)
 
             if SettingsClass.GetMessagesToSendExists():
@@ -177,20 +176,22 @@ class Main:
                             if transformedData is not None:
                                 success = subAdapter.SendData(transformedData)
                                 if success:
-                                    logging.info("Message sent")
+                                    logging.info("Start::Run() Message sent to " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
                                     if msgSub.DeleteAfterSent: # move msgsub to archive
                                         DatabaseHelper.mainDatabaseHelper.archive_message_subscription_view_after_sent(msgSub)
                                     else: # set SentDate and increment NoOfSendTries
                                         DatabaseHelper.mainDatabaseHelper.increment_send_tries_and_set_sent_date(msgSub)
                                 else:
                                     # failed to send
-                                    logging.warning("Failed to send message: " + msgSub.SubscriberTypeName)
+                                    logging.warning("Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
                                     DatabaseHelper.mainDatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub)
                             else:
                                 # shouldn't be sent, so just archive the message subscription
+                                # (Probably a Lora message that doesn't request ack
+                                logging.debug("Start::Run() " + msgSub.TransformName + " return None so not sent")
                                 DatabaseHelper.mainDatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
                     if not adapterFound:
-                        logging.info("Send adapter not found for " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName)
+                        logging.warning("Start::Run() Send adapter not found for " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName)
                         DatabaseHelper.mainDatabaseHelper.increment_find_adapter_tries_and_set_find_adapter_try_date(msgSub)
 
 
@@ -198,7 +199,7 @@ class Main:
 
 main = None
 def main():
-    logging.info("Start main")
+    logging.info("Start::main() Start main")
     global main
     main = Main()
 
@@ -230,20 +231,5 @@ if __name__ == '__main__':
     logging.getLogger('').addHandler(rotFileHandler)
     logging.getLogger('').addHandler(console)
 
-    #Create pid file for systemd service
-    #pid = str(os.getpid())
-    #f = open('/run/WiRocPython.pid', 'w')
-    #f.write(pid)
-    #f.close()
-
     logging.info("Start")
     startMain()
-    #threading.Thread(target=startMain).start()
-    #startWebServer()
-
-
-
-
-
-
-

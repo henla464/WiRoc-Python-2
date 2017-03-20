@@ -1,7 +1,6 @@
 from loraradio.loraradio import LoraRadio
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
-import inputadapters.receiveloraadapter
 import pyudev
 import logging
 import socket
@@ -37,7 +36,6 @@ class SendLoraAdapter(object):
 
             alreadyCreated = False
             for instance in SendLoraAdapter.Instances:
-                logging.info("SendLoraAdapter::CreateInstances() instance: " + instance.GetSerialDevicePath())
                 if instance.GetSerialDevicePath() == serialDev:
                     alreadyCreated = True
                     newInstances.append(instance)
@@ -104,14 +102,12 @@ class SendLoraAdapter(object):
     # return both receive and send transforms, they will be enabled/disabled automatically depending
     # on lora mode
     def GetTransformNames(self):
-        #"BLEToLoraTransform",
         transforms = []
         transforms.append("SIToLoraTransform")
         transforms.append("LoraToLoraAckTransform")
         return transforms
 
     def SetTransform(self, transformClass):
-        logging.info("Add transform: " + transformClass.GetName())
         self.transforms[transformClass.GetName()] = transformClass
 
     def GetTransform(self, transformName):
@@ -138,6 +134,4 @@ class SendLoraAdapter(object):
 
     # messageData is a bytearray
     def SendData(self, messageData):
-        self.loraRadio.SendData(messageData)
-        logging.info("Sent to LORA")
-        return True
+        return self.loraRadio.SendData(messageData)

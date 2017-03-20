@@ -58,8 +58,7 @@ class SendToBlenoAdapter(object):
         self.isDBInitialized = val
 
     def GetTransformNames(self):
-        #, "SIToMeosTransform", "BLEToMeosTransform"
-        return ["SIToSITransform" ]
+        return ["SIToSITransform", "LoraToSITransform"]
 
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass

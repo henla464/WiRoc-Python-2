@@ -39,5 +39,5 @@ class CreateStatusAdapter(object):
 
     def GetData(self):
         if datetime.now() - SettingsClass.GetTimeOfLastMessageAdded() > timedelta(seconds=SettingsClass.GetStatusMessageInterval()):
-            logging.debug("Status, data to fetch")
+            logging.debug("CreateStatusAdapter::GetData() Data to fetch")
             return {"MessageType": "DATA", "Data": self.statusMsgData, "ChecksumOK": True}

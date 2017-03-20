@@ -71,7 +71,7 @@ class ReceiveSIAdapter(object):
     def Init(self):
         if self.GetIsInitialized() and self.siSerial.is_open:
             return True
-        logging.info("SI Station port name: " + self.portName)
+        logging.debug("ReceiveSIAdapter::Init() SI Station port name: " + self.portName)
         baudRate = 38400
         self.siSerial.baudrate = baudRate
         self.siSerial.port = self.portName
@@ -79,13 +79,13 @@ class ReceiveSIAdapter(object):
             try:
                 self.siSerial.open()
             except Exception as ex:
-                logging.error("SI Station, opening serial exception:")
+                logging.error("ReceiveSIAdapter::Init() opening serial exception:")
                 logging.error(ex)
                 return False
-        logging.debug("receivesiadapter 1")
+
         if self.siSerial.is_open:
             #set master - mode to direct
-            logging.debug("receivesiadapter 2")
+            logging.debug("ReceiveSIAdapter::Init() serial port open")
             msdMode = bytes([0xFF, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
             self.siSerial.write(msdMode)
             sleep(0.2)
@@ -96,7 +96,7 @@ class ReceiveSIAdapter(object):
 
             startIndex = response.find(bytearray(bytes([STX])))
             if startIndex >= 0 and self.isCorrectMSModeDirectResponse(response[startIndex:]):
-                logging.info("SI Station 38400 kbit/s works")
+                logging.info("ReceiveSIAdapter::Init() SI Station 38400 kbit/s works")
                 self.isInitialized = True
                 return True
 
@@ -116,18 +116,18 @@ class ReceiveSIAdapter(object):
 
             startIndex = response.find(bytearray(bytes([STX])))
             if startIndex >= 0 and self.isCorrectMSModeDirectResponse(response[startIndex:]):
-                logging.info("SI Station 4800 kbit/s works")
+                logging.info("ReceiveSIAdapter::Init() SI Station 4800 kbit/s works")
                 self.isInitialized = True
                 return True
 
-        logging.error("SI Station, could not communicate with master station")
+        logging.error("ReceiveSIAdapter::Init() could not communicate with master station")
         return False
 
     # messageData is a bytearray
     def GetData(self):
         if self.siSerial.inWaiting() == 0:
             return None
-        logging.debug("SI Station, data to fetch")
+        logging.debug("ReceiveSIAdapter::Init() Data to fetch")
         expectedLength = 3
         receivedData = bytearray()
         startFound = False
@@ -143,15 +143,15 @@ class ReceiveSIAdapter(object):
                 if len(receivedData) == expectedLength:
                     break
                 if len(receivedData) < expectedLength and self.siSerial.inWaiting() == 0:
-                    logging.debug("SI Station, sleep and wait for more bytes")
+                    logging.debug("ReceiveSIAdapter::Init() sleep and wait for more bytes")
                     sleep(0.05)
 
 
         if len(receivedData) != expectedLength:
             # throw away the data, isn't correct
             dataInHex = ''.join(format(x, '02x') for x in receivedData)
-            logging.error("SI Station, data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + dataInHex)
+            logging.error("ReceiveSIAdapter::Init() data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + dataInHex)
             return None
 
-        logging.info("SI message received!")
+        logging.debug("ReceiveSIAdapter::Init() SI message received!")
         return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}

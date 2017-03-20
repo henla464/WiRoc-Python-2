@@ -34,7 +34,6 @@ def getStatus():
     data['subscriberAdapters'] = subAdpts
     json_data = json.dumps(data)
     return json_data
-    #return jsonpickle.encode(obj)
 
 @app.route('/misc/settings/', methods=['GET'])
 def getSettings():

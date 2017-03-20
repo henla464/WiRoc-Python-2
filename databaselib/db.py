@@ -44,7 +44,7 @@ class DB:
             self.connection.execute(create_table_SQL_statement)
 
 
-    def save_table_object(self, table_object):
+    def save_table_object(self, table_object, returnObj = True):
         with self.connection:
             table_name = table_object.__class__.__name__
             rowid = table_object.id
@@ -65,11 +65,12 @@ class DB:
                                 for column_name, column_type in table_object.__class__.columns)
 
             db_cursor = self.connection.cursor()
-            logging.debug(SQL_statement)
             db_cursor.execute(SQL_statement, valuesTuple)
             if rowid is None:
                 rowid = db_cursor.lastrowid
-            return self.get_table_object(table_object.__class__, rowid)
+            if returnObj:
+                return self.get_table_object(table_object.__class__, rowid)
+            return rowid
 
 
     def get_table_object(self, table_class, rowid):
@@ -78,13 +79,12 @@ class DB:
             db_cursor = self.connection.cursor()
             table_name = table_class.__name__
             select_SQL_statement = "SELECT * FROM " + table_name + " WHERE id = " + str(rowid)
-            logging.debug(select_SQL_statement)
             db_cursor.execute(select_SQL_statement)
             row = db_cursor.fetchone()
             table_object = self._get_table_object(table_class, row)
             return table_object
 
-    def get_scalar_by_SQL(self, table_class, select_SQL_statement):
+    def get_scalar_by_SQL(self, select_SQL_statement):
         with self.connection:
             self.connection.row_factory = lite.Row
             db_cursor = self.connection.cursor()

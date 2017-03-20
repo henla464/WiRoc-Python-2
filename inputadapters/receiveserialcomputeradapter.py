@@ -63,7 +63,7 @@ class ReceiveSerialComputerAdapter(object):
         data = self.serialComputer.GetData()
         if data is not None:
             if not data["ChecksumOK"]:
-                logging.debug("Checksum not ok, message thrown away")
+                logging.debug("ReceiveSerialComputerAdapter::GetData() Checksum not ok, message thrown away")
                 return None
 
             replyMessage = bytearray()
@@ -99,6 +99,7 @@ class ReceiveSerialComputerAdapter(object):
             replyMessage.append(crc[0])  # crc1
             replyMessage.append(crc[1])  # crc0
             replyMessage.append(ETX)
+            logging.debug("ReceiveSerialComputerAdapter::GetData() Sending reply message")
             self.serialComputer.SendData(replyMessage)
 
         return None

@@ -25,7 +25,7 @@ class SendToMeosAdapter(object):
             enabled = SettingsClass.GetSendToMeosEnabled()
             subscriptionShouldBeEnabled = (isInitialized and enabled)
             if SendToMeosAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
-                logging.info("SendToMeosAdapter subscription set enabled: " + str(subscriptionShouldBeEnabled))
+                logging.info("SendToMeosAdapter::EnableDisableSubscription() subscription set enabled: " + str(subscriptionShouldBeEnabled))
                 SendToMeosAdapter.SubscriptionsEnabled = subscriptionShouldBeEnabled
                 DatabaseHelper.mainDatabaseHelper.update_subscriptions(subscriptionShouldBeEnabled, SendToMeosAdapter.GetDeleteAfterSent(), SendToMeosAdapter.GetTypeName())
 
@@ -59,8 +59,7 @@ class SendToMeosAdapter(object):
         self.isDBInitialized = val
 
     def GetTransformNames(self):
-        #, "SIToMeosTransform", "BLEToMeosTransform"
-        return ["LoraToMeosTransform" ]
+        return ["LoraToMeosTransform", "SIToMeosTransform" ]
 
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass
@@ -79,20 +78,20 @@ class SendToMeosAdapter(object):
         if self.sock is None:
             try:
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                logging.info("Address: " + SettingsClass.GetSendToMeosIP() + " Port: " + str(
+                logging.debug("SendToMeosAdapter::SendData() Address: " + SettingsClass.GetSendToMeosIP() + " Port: " + str(
                     SettingsClass.GetSendToMeosIPPort()))
                 server_address = (SettingsClass.GetSendToMeosIP(), SettingsClass.GetSendToMeosIPPort())
                 self.sock.settimeout(1)
                 self.sock.connect(server_address)
-                logging.debug("after connect")
+                logging.debug("SendToMeosAdapter::SendData() After connect")
             except socket.gaierror as msg:
-                logging.error("Address-related error connecting to server: " + str(msg))
+                logging.error("SendToMeosAdapter::SendData() Address-related error connecting to server: " + str(msg))
                 self.sock.close()
                 self.sock = None
                 time.sleep(0.1)
                 return False
             except socket.error as msg:
-                logging.error("Connection error: " + str(msg))
+                logging.error("SendToMeosAdapter::SendData() Connection error: " + str(msg))
                 self.sock.close()
                 self.sock = None
                 time.sleep(0.1)
@@ -101,7 +100,7 @@ class SendToMeosAdapter(object):
         try:
             # Send data
             self.sock.sendall(messageData)
-            logging.info("Sent to MEOS")
+            logging.debug("SendToMeosAdapter::SendData() Sent to MEOS")
             return True
         except socket.error as msg:
             logging.error(msg)
