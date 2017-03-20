@@ -10,13 +10,13 @@ class PunchData(object):
             self.StationNumber = None
             self.SICardNumber = None
             self.TwentyFourHour = None
-            self.TwelveHourTime = None
+            self.TwelveHourTimer = None
             self.SubSecond = None
         else:
             self.StationNumber = (siPayloadData[3] << 8) + siPayloadData[4]
             self.SICardNumber = Utils.DecodeCardNr(siPayloadData[5:9])
             self.TwentyFourHour = siPayloadData[9] & 0x01
-            self.TwelveHourTime = siPayloadData[10:12]
+            self.TwelveHourTimer = siPayloadData[10:12]
             self.SubSecond = int(siPayloadData[12] // 25.6)
 
 

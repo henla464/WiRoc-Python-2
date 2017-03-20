@@ -79,7 +79,7 @@ class SendToBlenoAdapter(object):
         blenoPunchData.StationNumber = punchData.StationNumber
         blenoPunchData.SICardNumber = punchData.SICardNumber
         blenoPunchData.TwentyFourHour = punchData.TwentyFourHour
-        blenoPunchData.TwelveHourTime = (punchData.TwelveHourTime[0] << 8) + punchData.TwelveHourTime[1]
+        blenoPunchData.TwelveHourTimer = (punchData.TwelveHourTimer[0] << 8) + punchData.TwelveHourTimer[1]
         blenoPunchData.SubSecond = punchData.SubSecond
         DatabaseHelper.mainDatabaseHelper.save_bleno_punch_data(blenoPunchData)
         return True

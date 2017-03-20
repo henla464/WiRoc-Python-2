@@ -38,13 +38,13 @@ class SendSerialAdapter(object):
         if len(SendSerialAdapter.Instances) > 0:
             if SendSerialAdapter.Instances[0].TestConnection():
                 if SendSerialAdapter.SendSerialAdapterActive is None or not SendSerialAdapter.SendSerialAdapterActive:
-                    logging.INFO("SendSerialAdapter::EnableDisableSubscription() update subscription enable")
+                    logging.info("SendSerialAdapter::EnableDisableSubscription() update subscription enable")
                     SendSerialAdapter.SendSerialAdapterActive = True
                     SettingsClass.SetSendSerialAdapterActive(True)
                     DatabaseHelper.mainDatabaseHelper.update_subscriptions(True, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
             else:
                 if SendSerialAdapter.SendSerialAdapterActive is None or SendSerialAdapter.SendSerialAdapterActive:
-                    logging.INFO("SendSerialAdapter::EnableDisableSubscription() update subscription disable")
+                    logging.info("SendSerialAdapter::EnableDisableSubscription() update subscription disable")
                     SendSerialAdapter.SendSerialAdapterActive = False
                     SettingsClass.SetSendSerialAdapterActive(False)
                     DatabaseHelper.mainDatabaseHelper.update_subscriptions(False, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
