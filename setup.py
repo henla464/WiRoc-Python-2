@@ -23,8 +23,11 @@ class Setup:
 
         adapterObjects = []
         for adapterClass in Setup.subscriberAdapterClasses:
-            instances = adapterClass.CreateInstances()
-            adapterObjects.extend(instances)
+            if adapterClass is None:
+                logging.debug("Setup::SetupSubscribers() couldn't load subscriber class")
+            else:
+                instances = adapterClass.CreateInstances()
+                adapterObjects.extend(instances)
 
         for adapter in adapterObjects:
             if not adapter.GetIsDBInitialized():

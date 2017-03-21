@@ -45,3 +45,7 @@ class Loader(object):
                 if name.endswith(suffix):
                     logging.debug("Loader::GetFirstClassFromModule() Class name: "  + name)
                     return moduleObject
+                else:
+                    logging.debug("Loader::GetFirstClassFromModule() Class name: " + name + " doesn't end in " + suffix)
+            else:
+                logging.debug("Loader::GetFirstClassFromModule() Class name: " + name + " isn't a class")
