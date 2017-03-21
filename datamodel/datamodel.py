@@ -208,7 +208,7 @@ class BlenoPunchData(object):
         self.StationNumber = None
         self.SICardNumber = None
         self.TwentyFourHour = None
-        self.TwelveHourTime = None
+        self.TwelveHourTimer = None
         self.SubSecond = None
 
 # Non database objects
