@@ -47,5 +47,9 @@ class Loader(object):
                     return moduleObject
                 else:
                     logging.debug("Loader::GetFirstClassFromModule() Class name: " + name + " doesn't end in " + suffix)
+                    return None
             else:
                 logging.debug("Loader::GetFirstClassFromModule() Class name: " + name + " isn't a class")
+                return None
+        logging.debug("Loader::GetFirstClassFromModule() No members found")
+        return None
