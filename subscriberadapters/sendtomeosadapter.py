@@ -81,28 +81,34 @@ class SendToMeosAdapter(object):
                 logging.debug("SendToMeosAdapter::SendData() Address: " + SettingsClass.GetSendToMeosIP() + " Port: " + str(
                     SettingsClass.GetSendToMeosIPPort()))
                 server_address = (SettingsClass.GetSendToMeosIP(), SettingsClass.GetSendToMeosIPPort())
-                self.sock.settimeout(1)
+                self.sock.settimeout(0.5)
                 self.sock.connect(server_address)
                 logging.debug("SendToMeosAdapter::SendData() After connect")
             except socket.gaierror as msg:
                 logging.error("SendToMeosAdapter::SendData() Address-related error connecting to server: " + str(msg))
                 self.sock.close()
                 self.sock = None
-                time.sleep(0.1)
+                #time.sleep(0.1)
                 return False
             except socket.error as msg:
                 logging.error("SendToMeosAdapter::SendData() Connection error: " + str(msg))
                 self.sock.close()
                 self.sock = None
-                time.sleep(0.1)
+                #time.sleep(0.1)
                 return False
 
         try:
             # Send data
             self.sock.sendall(messageData)
+            self.sock.close()
+            self.sock = None
             logging.debug("SendToMeosAdapter::SendData() Sent to MEOS")
             return True
         except socket.error as msg:
             logging.error(msg)
+            self.sock.close()
             self.sock = None
+            return False
+        except:
+            logging.error("SendToMeosAdapter::SendData() Exception")
             return False

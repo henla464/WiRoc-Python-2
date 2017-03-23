@@ -1,7 +1,5 @@
 from settings.settings import SettingsClass
 import logging
-from constants import *
-from time import sleep
 from datetime import datetime, timedelta
 
 class CreateStatusAdapter(object):

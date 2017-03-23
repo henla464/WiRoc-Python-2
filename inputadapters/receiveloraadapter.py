@@ -8,8 +8,8 @@ import logging
 import socket
 
 class ReceiveLoraAdapter(object):
-
     Instances = []
+
     @staticmethod
     def CreateInstances():
         # check the number of lora radios and return an instance for each

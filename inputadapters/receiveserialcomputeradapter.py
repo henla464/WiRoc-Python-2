@@ -1,9 +1,7 @@
-import serial
 from serialcomputer.serialcomputer import SerialComputer
 import socket, os
 import logging
 from constants import *
-from time import sleep
 from utils.utils import Utils
 
 class ReceiveSerialComputerAdapter(object):

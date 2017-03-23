@@ -10,6 +10,7 @@ class Loader(object):
             return importlib.import_module(moduleAbsoluteName)
         except Exception as myex:
             logging.error("Loader::ImportModule() Import exception")
+            logging.error(myex)
             pass
 
         return None
@@ -47,9 +48,7 @@ class Loader(object):
                     return moduleObject
                 else:
                     logging.debug("Loader::GetFirstClassFromModule() Class name: " + name + " doesn't end in " + suffix)
-                    return None
             else:
                 logging.debug("Loader::GetFirstClassFromModule() Class name: " + name + " isn't a class")
-                return None
-        logging.debug("Loader::GetFirstClassFromModule() No members found")
+        logging.debug("Loader::GetFirstClassFromModule() No class member found")
         return None

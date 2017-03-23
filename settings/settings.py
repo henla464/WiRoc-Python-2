@@ -184,12 +184,12 @@ class SettingsClass(object):
         if SettingsClass.IsDirty("SendToMeosIPPort"):
             sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SendToMeosIPPort')
             if sett is None:
-                SettingsClass.sendToMeosIPPort = 5000
+                SettingsClass.sendToMeosIPPort = 10000
             else:
                  try:
                      SettingsClass.sendToMeosIPPort = int(sett.Value)
                  except ValueError:
-                     SettingsClass.sendToMeosIPPort = 5000
+                     SettingsClass.sendToMeosIPPort = 10000
         return SettingsClass.sendToMeosIPPort
 
     @staticmethod
