@@ -225,7 +225,7 @@ if __name__ == '__main__':
 
     # define a Handler which writes INFO messages or higher to the sys.stderr
     console = logging.StreamHandler()
-    console.setLevel(logging.INFO)
+    console.setLevel(logging.DEBUG)
     console.setFormatter(formatter)
     # add the handler to the root logger
     logging.getLogger('').addHandler(rotFileHandler)

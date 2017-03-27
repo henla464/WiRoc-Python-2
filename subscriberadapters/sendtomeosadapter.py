@@ -1,6 +1,5 @@
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
-import time
 import socket
 import logging
 

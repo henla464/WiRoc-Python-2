@@ -62,9 +62,9 @@ class Setup:
                             enabled = False
                             subscriptionData = SubscriptionData(deleteAfterSent, enabled, subscriberDataId, transformDataId)
                             DatabaseHelper.mainDatabaseHelper.save_subscription(subscriptionData)
+                adapter.SetIsDBInitialized()
 
         for adapterObj in adapterObjects:
-            adapterObj.SetIsDBInitialized()
             adapterObj.EnableDisableSubscription()
             adapterObj.EnableDisableTransforms()
             logging.debug("Setup::SetupSubscribers() Before Init() subscriber adapter: " + str(adapterObj.GetInstanceName()))

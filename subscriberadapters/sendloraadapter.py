@@ -26,30 +26,36 @@ class SendLoraAdapter(object):
                     if device['ID_VENDOR_ID'].lower() == '10c4' and \
                                     device['ID_MODEL_ID'].lower() == 'ea60':
                         serialPorts.append(device.device_node)
+                        break
 
-        highestInstanceNumber = 0
-        newInstances = []
-        for serialDev in serialPorts:
+        if len(serialPorts) > 0:
+            if (len(SendLoraAdapter.Instances) > 0
+                    and SendLoraAdapter.Instances[0].GetSerialDevicePath() != serialPorts[0]):
+                SendLoraAdapter.Instances = []
+                SendLoraAdapter.Instances.append(SendLoraAdapter(1, serialPorts[0]))
+        else:
+            SendLoraAdapter.Instances = []
+
+        #highestInstanceNumber = 0
+        #newInstances = []
+        #for serialDev in serialPorts:
             # only set up one send adapter
-            if len(newInstances) > 0:
-                break
-
-            alreadyCreated = False
-            for instance in SendLoraAdapter.Instances:
-                if instance.GetSerialDevicePath() == serialDev:
-                    alreadyCreated = True
-                    newInstances.append(instance)
-                    if instance.GetInstanceNumber() > highestInstanceNumber:
-                        highestInstanceNumber = instance.GetInstanceNumber()
-
-            if not alreadyCreated:
-                highestInstanceNumber = highestInstanceNumber + 1
-                logging.info("SendLoraAdapter::CreateInstances() created: " + serialDev + " instanceNo: " + str(highestInstanceNumber))
-                newInstances.append(
-                    SendLoraAdapter(highestInstanceNumber, serialDev))
-
-        if len(newInstances) > 0:
-            SendLoraAdapter.Instances = newInstances
+        #    if len(newInstances) > 0:
+        #        break
+        #    alreadyCreated = False
+        #    for instance in SendLoraAdapter.Instances:
+        #        if instance.GetSerialDevicePath() == serialDev:
+        #            alreadyCreated = True
+        #            newInstances.append(instance)
+        #            if instance.GetInstanceNumber() > highestInstanceNumber:
+        #                highestInstanceNumber = instance.GetInstanceNumber()
+        #    if not alreadyCreated:
+        #        highestInstanceNumber = highestInstanceNumber + 1
+        #        logging.info("SendLoraAdapter::CreateInstances() created: " + serialDev + " instanceNo: " + str(highestInstanceNumber))
+        #        newInstances.append(
+        #            SendLoraAdapter(highestInstanceNumber, serialDev))
+        #if len(newInstances) > 0:
+        #    SendLoraAdapter.Instances = newInstances
         return SendLoraAdapter.Instances
 
     @staticmethod
