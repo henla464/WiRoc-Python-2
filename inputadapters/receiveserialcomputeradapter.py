@@ -97,7 +97,9 @@ class ReceiveSerialComputerAdapter(object):
             replyMessage.append(crc[0])  # crc1
             replyMessage.append(crc[1])  # crc0
             replyMessage.append(ETX)
-            logging.debug("ReceiveSerialComputerAdapter::GetData() Sending reply message")
-            self.serialComputer.SendData(replyMessage)
-
+            logging.debug("ReceiveSerialComputerAdapter::GetData() Received: " + str(data["Data"]) + " Sending reply message: " + str(replyMessage))
+            try:
+                self.serialComputer.SendData(replyMessage)
+            except:
+                logging.error("ReceiveSerialComputerAdapter::GetData() Error sending reply message")
         return None

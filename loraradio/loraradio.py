@@ -177,9 +177,13 @@ class LoraRadio:
                 startFound = True
             if startFound:
                 self.receivedMessage.AddByte(bytesRead[0])
+                if self.receivedMessage.IsFilled():
+                    break
                 if not self.receivedMessage.IsFilled() and self.radioSerial.inWaiting() == 0:
                     logging.info("LoraRadio::GetRadioData() Sleep, wait for more bytes")
                     time.sleep(0.05)
+                    if self.radioSerial.inWaiting() == 0:
+                        break
 
         if not self.receivedMessage.IsFilled():
             # throw away the data, isn't correct

@@ -129,6 +129,8 @@ class SerialComputer:
                 if len(receivedData) < expectedLength and self.compSerial.inWaiting() == 0:
                     logging.debug("SerialComputer::GetData() sleep and wait for more bytes")
                     sleep(0.05)
+                    if self.compSerial.inWaiting() == 0:
+                        break
 
         if len(receivedData) != expectedLength:
             # throw away the data, isn't correct
