@@ -23,6 +23,7 @@ class SettingsClass(object):
     secondRetryDelay = None
     sendStatusMessages = None
     sendToBlenoEnabled = None
+    wiRocDeviceName = None
 
     @staticmethod
     def SetConfigurationDirty(settingsName=None, markDirtyInDatabase = False):
@@ -54,6 +55,8 @@ class SettingsClass(object):
             SettingsClass.sendStatusMessages = None
         if settingsName == 'SendToBlenoEnabled':
             SettingsClass.sendToBlenoEnabled = None
+        if settingsName == 'WiRocDeviceName':
+            SettingsClass.wiRocDeviceName = None
 
         if markDirtyInDatabase:
             SettingsClass.SetSetting("ConfigDirty", True)
@@ -76,6 +79,8 @@ class SettingsClass(object):
             SettingsClass.statusMessageInterval = None
             SettingsClass.sendStatusMessages = None
             SettingsClass.sendToBlenoEnabled = None
+            SettingsClass.wiRocDeviceName = None
+            SettingsClass.SetSetting("ConfigDirty", "0")
             return True
         else:
             if settingsName == 'Channel':
@@ -106,6 +111,8 @@ class SettingsClass(object):
                 return SettingsClass.sendStatusMessages is None
             if settingsName == 'SendToBlenoEnabled':
                 return SettingsClass.sendToBlenoEnabled is None
+            if settingsName == 'WiRocDeviceName':
+                return SettingsClass.wiRocDeviceName is None
 
         return True
 
@@ -337,3 +344,13 @@ class SettingsClass(object):
                 except ValueError:
                     SettingsClass.statusMessageInterval = 10
         return SettingsClass.statusMessageInterval
+
+    @staticmethod
+    def GetWiRocDeviceName():
+        if SettingsClass.IsDirty("WiRocDeviceName"):
+            sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('WiRocDeviceName')
+            if sett is None:
+                SettingsClass.wiRocDeviceName = None
+            else:
+                SettingsClass.wiRocDeviceName = sett.Value
+        return SettingsClass.wiRocDeviceName

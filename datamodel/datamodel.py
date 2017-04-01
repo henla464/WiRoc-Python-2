@@ -201,7 +201,7 @@ class InputAdapterInstances(object):
         self.ToBeDeleted = False
 
 class BlenoPunchData(object):
-    columns = [("StationNumber", int), ("SICardNumber", int), ("TwentyFourHour", int), ("TwelveHourTime", int), ("SubSecond", int)]
+    columns = [("StationNumber", int), ("SICardNumber", int), ("TwentyFourHour", int), ("TwelveHourTimer", int), ("SubSecond", int)]
 
     def __init__(self):
         self.id = None

@@ -80,7 +80,7 @@ def getPunches():
         punch = {}
         punch['StationNumber'] = blenoPunch.StationNumber
         punch['SICardNumber'] = blenoPunch.SICardNumber
-        timeInSeconds = blenoPunch.TwelveHourTime
+        timeInSeconds = blenoPunch.TwelveHourTimer
         if blenoPunch.TwentyFourHour == 1:
             timeInSeconds += 3600 * 12
         hours = timeInSeconds // 3600
@@ -99,4 +99,9 @@ def getPunches():
 
     return json_data
 
+
+@app.route('/misc/wirocdevicename/', methods=['GET'])
+def getWiRocDeviceName():
+    deviceName = SettingsClass.GetWiRocDeviceName()
+    return jsonpickle.encode(MicroMock(WiRocDeviceName=deviceName))
 

@@ -72,12 +72,12 @@ class ReceiveSIAdapter(object):
         if self.GetIsInitialized() and self.siSerial.is_open:
             return True
         logging.debug("ReceiveSIAdapter::Init() SI Station port name: " + self.portName)
-        baudRate = 38400
-        self.siSerial.baudrate = baudRate
+        self.siSerial.baudrate = 38400
         self.siSerial.port = self.portName
         if not self.siSerial.is_open:
             try:
                 self.siSerial.open()
+                logging.error("ReceiveSIAdapter::Init() opened serial")
             except Exception as ex:
                 logging.error("ReceiveSIAdapter::Init() opening serial exception:")
                 logging.error(ex)
@@ -86,13 +86,13 @@ class ReceiveSIAdapter(object):
         if self.siSerial.is_open:
             #set master - mode to direct
             logging.debug("ReceiveSIAdapter::Init() serial port open")
-            msdMode = bytes([0xFF, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
+            msdMode = bytes([0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
             self.siSerial.write(msdMode)
-            sleep(0.2)
+            sleep(0.01)
             expectedLength = 3
             response = bytearray()
             startFound = False
-            while self.siSerial.inWaiting() > 0:
+            while self.siSerial.in_waiting > 0:
                 # print("looking for stx: ", end="")
                 bytesRead = self.siSerial.read(1)
 
@@ -104,10 +104,10 @@ class ReceiveSIAdapter(object):
                         expectedLength = response[2] + 6
                     if len(response) == expectedLength:
                         break
-                    if len(response) < expectedLength and self.siSerial.inWaiting() == 0:
+                    if len(response) < expectedLength and self.siSerial.in_waiting == 0:
                         logging.debug("ReceiveSIAdapter::Init() sleep and wait for more bytes")
                         sleep(0.05)
-                        if self.siSerial.inWaiting() == 0:
+                        if self.siSerial.in_waiting == 0:
                             break
 
             if self.isCorrectMSModeDirectResponse(response):
@@ -119,16 +119,15 @@ class ReceiveSIAdapter(object):
 
             # something wrong, try other baudrate
             self.siSerial.close()
-            baudRate = 4800
             self.siSerial.port = self.portName
-            self.siSerial.baudrate = baudRate
+            self.siSerial.baudrate = 4800
             self.siSerial.open()
             self.siSerial.write(msdMode)
-            sleep(0.1)
+            sleep(0.01)
             expectedLength = 3
             response = bytearray()
             startFound = False
-            while self.siSerial.inWaiting() > 0:
+            while self.siSerial.in_waiting > 0:
                 # print("looking for stx: ", end="")
                 bytesRead = self.siSerial.read(1)
 
@@ -140,10 +139,10 @@ class ReceiveSIAdapter(object):
                         expectedLength = response[2] + 6
                     if len(response) == expectedLength:
                         break
-                    if len(response) < expectedLength and self.siSerial.inWaiting() == 0:
+                    if len(response) < expectedLength and self.siSerial.in_waiting == 0:
                         logging.debug("ReceiveSIAdapter::Init() sleep and wait for more bytes")
                         sleep(0.05)
-                        if self.radioSerial.inWaiting() == 0:
+                        if self.radioSerial.in_waiting == 0:
                             break
 
             if self.isCorrectMSModeDirectResponse(response):
@@ -158,13 +157,13 @@ class ReceiveSIAdapter(object):
 
     # messageData is a bytearray
     def GetData(self):
-        if self.siSerial.inWaiting() == 0:
+        if self.siSerial.in_waiting == 0:
             return None
         logging.debug("ReceiveSIAdapter::GetData() Data to fetch")
         expectedLength = 3
         receivedData = bytearray()
         startFound = False
-        while self.siSerial.inWaiting() > 0:
+        while self.siSerial.in_waiting > 0:
             # print("looking for stx: ", end="")
             bytesRead = self.siSerial.read(1)
             if bytesRead[0] == STX:
@@ -175,10 +174,10 @@ class ReceiveSIAdapter(object):
                     expectedLength = receivedData[2]+6
                 if len(receivedData) == expectedLength:
                     break
-                if len(receivedData) < expectedLength and self.siSerial.inWaiting() == 0:
+                if len(receivedData) < expectedLength and self.siSerial.in_waiting == 0:
                     logging.debug("ReceiveSIAdapter::GetData() sleep and wait for more bytes")
                     sleep(0.05)
-                    if self.radioSerial.inWaiting() == 0:
+                    if self.radioSerial.in_waiting == 0:
                         break
 
 
