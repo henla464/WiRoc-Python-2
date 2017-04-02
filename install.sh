@@ -64,26 +64,28 @@ apt-get install bluetooth bluez libbluetooth-dev libudev-dev
 echo "WiRoc-Python-2"
 read line
 #install Python-2
-wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v0.07.tar.gz
+wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v0.08.tar.gz
 rm -rf WiRoc-Python-2
-tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-0.07
-mv WiRoc-Python-2-0.07 WiRoc-Python-2
+tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-0.08
+mv WiRoc-Python-2-0.08 WiRoc-Python-2
 
 echo "WiRoc-BLE"
 read line
 #install WiRoc-BLE
-wget -O WiRoc-BLE-Device.tar.gz https://github.com/henla464/WiRoc-BLE-Device/archive/v0.02.tar.gz
+wget -O WiRoc-BLE-Device.tar.gz https://github.com/henla464/WiRoc-BLE-Device/archive/v0.03.tar.gz
 rm -rf WiRoc-BLE-Device
-tar xvfz WiRoc-BLE-Device.tar.gz WiRoc-BLE-Device-0.02
-mv WiRoc-BLE-Device-0.02 WiRoc-BLE-Device
+tar xvfz WiRoc-BLE-Device.tar.gz WiRoc-BLE-Device-0.03
+mv WiRoc-BLE-Device-0.03 WiRoc-BLE-Device
 
 #npm install -g node-gyp
+echo "install bluetooth-hci-socket"
+cd /home/chip/WiRoc-BLE-Device/
 npm install bluetooth-hci-socket
 
 echo "install bleno"
 read line
 #install bleno
-cd /home/chip/WiRoc-BLE-Device/
+
 npm install bleno
 cd /home/chip
 
