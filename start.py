@@ -16,6 +16,7 @@ class Main:
     def __init__(self):
         self.shouldReconfigure = False
         self.lastTimeReconfigured = datetime.now()
+        self.previousChannel = None
         Setup.SetupPins()
 
         #DatabaseHelper.mainDatabaseHelper.drop_all_tables()
@@ -33,23 +34,36 @@ class Main:
     def displayChannel(self):
         if self.runningOnChip:
             channel = SettingsClass.GetChannel()
-            lightSegA = channel in [2,3,5,6,7,8,9]
-            lightSegB = channel in [1, 2, 3, 4, 7, 8, 9]
-            lightSegC = channel in [1, 3, 4, 5, 6, 7, 8, 9]
-            lightSegD = channel in [2, 3, 5, 6, 8]
-            lightSegE = channel in [2, 6, 8]
-            lightSegF = channel in [4, 5, 6, 8, 9]
-            lightSegG = channel in [2, 3, 4, 5, 6, 8, 9]
+            if channel != self.previousChannel:
+                self.previousChannel = channel
+                lightSegA = channel in [2,3,5,6,7,8,9]
+                lightSegB = channel in [1, 2, 3, 4, 7, 8, 9]
+                lightSegC = channel in [1, 3, 4, 5, 6, 7, 8, 9]
+                lightSegD = channel in [2, 3, 5, 6, 8]
+                lightSegE = channel in [2, 6, 8]
+                lightSegF = channel in [4, 5, 6, 8, 9]
+                lightSegG = channel in [2, 3, 4, 5, 6, 8, 9]
+                ackRequested = SettingsClass.GetAcknowledgementRequested()
 
-            digitalWrite(0, int(lightSegA))
-            digitalWrite(1, int(lightSegB))
-            digitalWrite(2, int(lightSegC))
-            digitalWrite(3, int(lightSegD))
-            digitalWrite(4, int(lightSegE))
-            digitalWrite(5, int(lightSegF))
-            digitalWrite(6, int(lightSegG))
+                if True:
+                    lightSegA = not lightSegA
+                    lightSegB = not lightSegB
+                    lightSegC = not lightSegC
+                    lightSegD = not lightSegD
+                    lightSegE = not lightSegE
+                    lightSegF = not lightSegF
+                    lightSegG = not lightSegG
+                    ackRequested = not ackRequested
 
-            digitalWrite(7, int(SettingsClass.GetAcknowledgementRequested()))
+                digitalWrite(0, int(lightSegA))
+                digitalWrite(1, int(lightSegB))
+                digitalWrite(2, int(lightSegC))
+                digitalWrite(3, int(lightSegD))
+                digitalWrite(4, int(lightSegE))
+                digitalWrite(5, int(lightSegF))
+                digitalWrite(6, int(lightSegG))
+
+                digitalWrite(7, int(ackRequested))
 
     def timeToReconfigure(self):
         currentTime = datetime.now()

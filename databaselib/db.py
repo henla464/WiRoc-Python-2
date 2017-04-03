@@ -18,7 +18,6 @@ class DB:
 
     def _get_table_object(self, table_class, row):
         table_object = table_class()
-
         for column_name in row.keys():
             python_type = DB._get_python_type(table_object, column_name)
             python_value = self.data_mapping.get_python_value(python_type, row[column_name])

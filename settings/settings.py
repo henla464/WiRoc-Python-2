@@ -289,7 +289,7 @@ class SettingsClass(object):
         return SettingsClass.MessagesToSendExists
 
     @staticmethod
-    def GetFirstRetryDelay(web=False):
+    def GetFirstRetryDelay():
         if SettingsClass.IsDirty("FirstRetryDelay"):
             sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('FirstRetryDelay')
             if sett is None:
@@ -302,7 +302,7 @@ class SettingsClass(object):
         return SettingsClass.firstRetryDelay
 
     @staticmethod
-    def GetSecondRetryDelay(web=False):
+    def GetSecondRetryDelay():
         if SettingsClass.IsDirty("SecondRetryDelay"):
             sett = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SecondRetryDelay')
             if sett is None:

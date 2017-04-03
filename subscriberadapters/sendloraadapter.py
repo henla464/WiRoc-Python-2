@@ -29,9 +29,11 @@ class SendLoraAdapter(object):
                         break
 
         if len(serialPorts) > 0:
-            if (len(SendLoraAdapter.Instances) > 0
-                    and SendLoraAdapter.Instances[0].GetSerialDevicePath() != serialPorts[0]):
-                SendLoraAdapter.Instances = []
+            if len(SendLoraAdapter.Instances) > 0:
+                if SendLoraAdapter.Instances[0].GetSerialDevicePath() != serialPorts[0]:
+                    SendLoraAdapter.Instances = []
+                    SendLoraAdapter.Instances.append(SendLoraAdapter(1, serialPorts[0]))
+            else:
                 SendLoraAdapter.Instances.append(SendLoraAdapter(1, serialPorts[0]))
         else:
             SendLoraAdapter.Instances = []
@@ -72,7 +74,7 @@ class SendLoraAdapter(object):
                 SendLoraAdapter.DeleteAfterSent != deleteAfterSent):
                 SendLoraAdapter.SubscriptionsEnabled = shouldSubscriptionBeEnabled
                 SendLoraAdapter.DeleteAfterSent = deleteAfterSent
-                logging.info("SendLoraAdapter::CreateInstances() subscription set enabled: " + str(shouldSubscriptionBeEnabled))
+                logging.info("SendLoraAdapter::EnableDisableSubscription() subscription set enabled: " + str(shouldSubscriptionBeEnabled))
                 DatabaseHelper.mainDatabaseHelper.update_subscriptions(shouldSubscriptionBeEnabled, deleteAfterSent, SendLoraAdapter.GetTypeName())
 
     @staticmethod
