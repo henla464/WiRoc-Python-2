@@ -1,4 +1,5 @@
 import serial
+import time
  # Module sys has to be imported:
 import sys
 
@@ -11,10 +12,10 @@ mySerial = serial.Serial()
 
 mySerial.baudrate = 38400
 mySerial.port = sys.argv[1]
-mySerial.writeTimeout = 1
-#mySerial.port = '/dev/ttyUSB3'
+#mySerial.writeTimeout = 1
+#mySerial.port = '/dev/ttyUSB5'
 #mySerial.port = '/dev/ttyGS0'
-mySerial.timeout = 5
+#mySerial.timeout = 5
 
 if mySerial.is_open:
     print("Serial is open")
@@ -40,8 +41,15 @@ if sys.argv[2] == '1':
 
 if sys.argv[2] == '2':
     print("Write a byte")
-    mySerial.write(bytearray(bytes([0xA1])))
+    msdMode = bytes([0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
+    mySerial.write(msdMode)
     print("After write a byte")
+    time.sleep(0.1)
+    while mySerial.in_waiting > 0:
+        # print("looking for stx: ", end="")
+        bytesRead = mySerial.read(1)
+        print(bytesRead)
+    print("After read a byte")
 
 if sys.argv[2] == '3':
     print("Read a byte")

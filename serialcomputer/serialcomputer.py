@@ -12,7 +12,7 @@ class SerialComputer:
     @staticmethod
     def GetInstance(portName):
         for serialDevice in SerialComputer.Instances:
-            logging.debug(serialDevice.GetPortName() + "==" + portName)
+            logging.debug("SerialComputer::GetInstance() " + serialDevice.GetPortName() + "==" + portName)
             if serialDevice.GetPortName() == portName:
                 return serialDevice
         newInstance = SerialComputer(portName)
@@ -85,7 +85,12 @@ class SerialComputer:
 
     def SendData(self, messageData):
         #print(binascii.hexlify(messageData))
-        self.compSerial.write(messageData)
+        #try:
+        #    self.compSerial.write(messageData)
+        #except Exception as ex:
+        #    logging.error("SerialComputer::SendData() serial exception 3:")
+        #    logging.error(ex)
+        #    return False
         try:
             if self.compSerial.is_open:
                 self.compSerial.write(messageData)
@@ -116,12 +121,15 @@ class SerialComputer:
             bytesRead = self.compSerial.read(1)
             if bytesRead[0] == STX:
                 startFound = True
+                if len(receivedData) == 1:
+                    # second STX found, discard
+                    continue
             if startFound:
                 receivedData.append(bytesRead[0])
-                if len(receivedData) == 2:
-                    if receivedData[0] == receivedData[1]:
-                        # Double STX sent, remove first
-                        receivedData = receivedData[1:]
+                #if len(receivedData) == 2:
+                #    if receivedData[0] == receivedData[1]:
+                #        # Double STX sent, remove first
+                #        receivedData = receivedData[1:]
                 if len(receivedData) == 3:
                     expectedLength = receivedData[2] + 6
                 if len(receivedData) == expectedLength:

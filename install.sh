@@ -64,10 +64,10 @@ apt-get install bluetooth bluez libbluetooth-dev libudev-dev
 echo "WiRoc-Python-2"
 read line
 #install Python-2
-wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v0.08.tar.gz
+wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v0.09.tar.gz
 rm -rf WiRoc-Python-2
-tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-0.08
-mv WiRoc-Python-2-0.08 WiRoc-Python-2
+tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-0.09
+mv WiRoc-Python-2-0.09 WiRoc-Python-2
 
 echo "WiRoc-BLE"
 read line
@@ -107,7 +107,8 @@ systemctl enable /etc/systemd/system/WiRocBLE.service
 systemctl enable /etc/systemd/system/WiRocPython.service
 systemctl enable /etc/systemd/system/WiRocPythonWS.service
 
-
+wget -O /etc/udev/rules.d/99-ttyexcludemm.rules https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/99-ttyexcludemm.rules
+udevadm control --reload-rules
 
 echo "install new dtb"
 read line

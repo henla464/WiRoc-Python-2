@@ -1,26 +1,30 @@
 from settings.settings import SettingsClass
 import serial
-import pyudev
+#import pyudev
 import logging
 from constants import *
 from time import sleep
 from utils.utils import Utils
+import serial.tools.list_ports
 
 class ReceiveSIAdapter(object):
     Instances = []
     @staticmethod
     def CreateInstances():
         serialPorts = []
+        portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa')
+        for portInfo in portInfoList:
+            serialPorts.append(portInfo.device)
         #https://github.com/dhylands/usb-ser-mon/blob/master/find_port.py
-        uDevContext = pyudev.Context()
-        for device in uDevContext.list_devices(subsystem='tty'):
-            if 'ID_VENDOR_ID' in device:
-                if device['ID_VENDOR_ID'].lower() == '10c4' and \
-                                device['ID_MODEL_ID'].lower() == '800a':
-                    serialPorts.append(device.device_node)
-                elif device['ID_VENDOR_ID'].lower() == '0525' and \
-                                device['ID_MODEL_ID'].lower() == 'a4aa':
-                    serialPorts.append(device.device_node)
+        #uDevContext = pyudev.Context()
+        #for device in uDevContext.list_devices(subsystem='tty'):
+        #    if 'ID_VENDOR_ID' in device:
+        #        if device['ID_VENDOR_ID'].lower() == '10c4' and \
+        #                        device['ID_MODEL_ID'].lower() == '800a':
+        #            serialPorts.append(device.device_node)
+        #        elif device['ID_VENDOR_ID'].lower() == '0525' and \
+        #                        device['ID_MODEL_ID'].lower() == 'a4aa':
+        #            serialPorts.append(device.device_node)
 
         newInstances = []
         for serialDev in serialPorts:
@@ -88,14 +92,14 @@ class ReceiveSIAdapter(object):
             logging.debug("ReceiveSIAdapter::Init() serial port open")
             msdMode = bytes([0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
             self.siSerial.write(msdMode)
-            sleep(0.01)
+            sleep(0.1)
             expectedLength = 3
             response = bytearray()
             startFound = False
             while self.siSerial.in_waiting > 0:
                 # print("looking for stx: ", end="")
                 bytesRead = self.siSerial.read(1)
-
+                print(bytesRead)
                 if bytesRead[0] == STX:
                     startFound = True
                 if startFound:
@@ -133,6 +137,9 @@ class ReceiveSIAdapter(object):
 
                 if bytesRead[0] == STX:
                     startFound = True
+                    if len(response)==1:
+                        #second STX found, discard
+                        continue
                 if startFound:
                     response.append(bytesRead[0])
                     if len(response) == 3:
@@ -177,9 +184,6 @@ class ReceiveSIAdapter(object):
                 if len(receivedData) < expectedLength and self.siSerial.in_waiting == 0:
                     logging.debug("ReceiveSIAdapter::GetData() sleep and wait for more bytes")
                     sleep(0.05)
-                    if self.radioSerial.in_waiting == 0:
-                        break
-
 
         if len(receivedData) != expectedLength:
             # throw away the data, isn't correct

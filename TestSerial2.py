@@ -5,6 +5,7 @@ import pyudev
 import time, os
 from serial import Serial
 from serial.serialutil import SerialException
+import serial.tools.list_ports
 
 mySerial = serial.Serial()
 
@@ -19,6 +20,7 @@ def _send_command():
 
         cmd = bytes([0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
         mySerial.write(cmd)
+        print("command sent")
     except (SerialException, OSError) as  msg:
         print('Could not send command: %s' % msg)
 
@@ -55,6 +57,8 @@ def _connect_reader(port):
         except:
             print('This module only works with BSM7/8 stations: %s')
 
+    time.sleep(0.5)
+    print("waiting in")
     while mySerial.in_waiting != 0:
         readBytes = mySerial.read()
         print(readBytes)
@@ -62,6 +66,12 @@ def _connect_reader(port):
 
 while True:
 
+    mylist = serial.tools.list_ports.grep('10c4:800a|0525:a4aa')
+    for a in mylist:
+        print(a.device)
+
+    time.sleep(5)
+    continue
 
     serialPort = None
     # https://github.com/dhylands/usb-ser-mon/blob/master/find_port.py
@@ -76,6 +86,7 @@ while True:
                 serialPort = device.device_node
     if serialPort is not None:
         _connect_reader(serialPort)
+        time.sleep(10)
         continue
         mySerial.baudrate = 38400
         mySerial.port = serialPort
@@ -112,7 +123,7 @@ while True:
 
         #mySerial.flushOutput()
         #mySerial.flushInput()
-        time.sleep(0.1)
+        time.sleep(1)
         print("written: " + str(a))
         print("Check if any bytes out waiting")
         #noOfBytes = mySerial.out_waiting
@@ -141,5 +152,5 @@ while True:
                         break
 
         print("ReceiveSIAdapter::Init() received: " + str(response))
-        time.sleep(1)
+        time.sleep(10)
         #mySerial.close()
