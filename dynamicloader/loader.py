@@ -5,7 +5,7 @@ class Loader(object):
 
     @staticmethod
     def ImportModule(moduleAbsoluteName):
-        logging.info("Loader::ImportModule() " + moduleAbsoluteName)
+        logging.debug("Loader::ImportModule() " + moduleAbsoluteName)
         try:
             return importlib.import_module(moduleAbsoluteName)
         except Exception as myex:

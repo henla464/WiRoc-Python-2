@@ -78,13 +78,13 @@ class ReceiveSerialComputerAdapter(object):
                 replyMessage.append(address) #index 5
                 for addr in range(address,address+numberOfBytesRequested):
                     if addr == 0x71: #index 7
-                        logging.info("Addr: " + str(addr) + " val 0x02")
+                        logging.debug("Addr: " + str(addr) + " val 0x02")
                         replyMessage.append(0x02) # control 0x02 (dec 2)
                     elif addr == 0x74: #index 10
-                        logging.info("Addr: " + str(addr) + " val 0x03")
+                        logging.debug("Addr: " + str(addr) + " val 0x03")
                         replyMessage.append(0x03) # 00000011, autosend and extended protocol
                     else: #index 6, 8, 9, 11
-                        logging.info("Addr: " + str(addr) + " val 0x00")
+                        logging.debug("Addr: " + str(addr) + " val 0x00")
                         replyMessage.append(0x00)
             elif commandCode == 0xF0:
                 #set transfer mode

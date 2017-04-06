@@ -158,7 +158,6 @@ class Main:
                         mbdid = DatabaseHelper.mainDatabaseHelper.save_message_box(mbd)
                         SettingsClass.SetTimeOfLastMessageAdded()
                         anySubscription = False
-                        logging.debug("MessageTypeID: " + str(messageTypeId))
                         subscriptions = DatabaseHelper.mainDatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
                         for subscription in subscriptions:
                             msgSubscription = MessageSubscriptionData()
