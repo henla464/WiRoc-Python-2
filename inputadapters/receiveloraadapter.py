@@ -2,7 +2,7 @@ import pyudev
 import traceback
 from loraradio.loraradio import LoraRadio
 from settings.settings import SettingsClass
-import subscriberadapters
+import serial
 import time
 import logging
 import socket
@@ -17,15 +17,19 @@ class ReceiveLoraAdapter(object):
         if socket.gethostname() == 'chip':
             serialPorts.append('/dev/ttyS2')
         else:
+            portInfoList = serial.tools.list_ports.grep('10c4:ea60')
+            for portInfo in portInfoList:
+                serialPorts.append(portInfo.device)
             # https://github.com/dhylands/usb-ser-mon/blob/master/find_port.py
-            uDevContext = pyudev.Context()
-            for device in uDevContext.list_devices(subsystem='tty'):
-                if 'ID_VENDOR_ID' in device:
-                    logging.debug('ReceiveLoraAdapter vendor: ' + device['ID_VENDOR_ID'].lower() + " model: " + device['ID_MODEL_ID'].lower())
-                    if device['ID_VENDOR_ID'].lower() == '10c4' and \
-                                device['ID_MODEL_ID'].lower() == 'ea60':
-                        serialPorts.append(device.device_node)
+            #uDevContext = pyudev.Context()
+            #for device in uDevContext.list_devices(subsystem='tty'):
+            #    if 'ID_VENDOR_ID' in device:
+            #        logging.debug('ReceiveLoraAdapter vendor: ' + device['ID_VENDOR_ID'].lower() + " model: " + device['ID_MODEL_ID'].lower())
+            #        if device['ID_VENDOR_ID'].lower() == '10c4' and \
+            #                    device['ID_MODEL_ID'].lower() == 'ea60':
+            #            serialPorts.append(device.device_node)
 
+        newInstancesFoundOrRemoved = False
         highestInstanceNumber = 0
         newInstances = []
         for serialDev in serialPorts:
@@ -38,12 +42,19 @@ class ReceiveLoraAdapter(object):
                         highestInstanceNumber = instance.GetInstanceNumber()
 
             if not alreadyCreated:
+                newInstancesFoundOrRemoved = True
                 highestInstanceNumber = highestInstanceNumber + 1
                 newInstances.append(
                     ReceiveLoraAdapter(highestInstanceNumber, serialDev))
 
-        ReceiveLoraAdapter.Instances = newInstances
-        return ReceiveLoraAdapter.Instances
+        if len(newInstances) != ReceiveLoraAdapter.Instances:
+            newInstancesFoundOrRemoved = True
+
+        if newInstancesFoundOrRemoved:
+            ReceiveLoraAdapter.Instances = newInstances
+            return True
+        else:
+            return False
 
 
     @staticmethod
@@ -84,7 +95,7 @@ class ReceiveLoraAdapter(object):
             loraMessage = self.loraRadio.GetRadioData()
         except Exception as ex:
             logging.error("ReceiveLoraAdapter::GetData() Error reading from lora " + traceback.format_exc())
-            time.sleep(2)
+            time.sleep(0.5)
 
         if loraMessage is not None:
             receivedData = loraMessage.GetByteArray()

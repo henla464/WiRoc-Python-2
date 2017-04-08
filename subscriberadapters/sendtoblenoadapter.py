@@ -27,7 +27,7 @@ class SendToBlenoAdapter(object):
             if SendToBlenoAdapter.SubscriptionsEnabled != (isInitialized and enabled):
                 logging.info("SendToBlenoAdapter subscription set enabled: " + str(isInitialized and enabled))
                 SendToBlenoAdapter.SubscriptionsEnabled = (isInitialized and enabled)
-                DatabaseHelper.mainDatabaseHelper.update_subscriptions((isInitialized and enabled), SendToBlenoAdapter.GetDeleteAfterSent(), SendToBlenoAdapter.GetTypeName())
+                DatabaseHelper.update_subscriptions((isInitialized and enabled), SendToBlenoAdapter.GetDeleteAfterSent(), SendToBlenoAdapter.GetTypeName())
 
 
     @staticmethod
@@ -81,5 +81,5 @@ class SendToBlenoAdapter(object):
         blenoPunchData.TwentyFourHour = punchData.TwentyFourHour
         blenoPunchData.TwelveHourTimer = (punchData.TwelveHourTimer[0] << 8) + punchData.TwelveHourTimer[1]
         blenoPunchData.SubSecond = punchData.SubSecond
-        DatabaseHelper.mainDatabaseHelper.save_bleno_punch_data(blenoPunchData)
+        DatabaseHelper.save_bleno_punch_data(blenoPunchData)
         return True

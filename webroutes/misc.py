@@ -10,7 +10,7 @@ import json
 
 @app.route('/misc/status/', methods=['GET'])
 def getStatus():
-    subscribersView = DatabaseHelper.mainDatabaseHelper.get_subscribers()
+    subscribersView = DatabaseHelper.get_subscribers()
     subAdpts = []
     for sub in subscribersView:
         subscriberAdapter = {}
@@ -21,7 +21,7 @@ def getStatus():
         subscriberAdapter['MessageOutName'] = sub.MessageOutName
         subAdpts.append(subscriberAdapter)
 
-    inputAdaptersInstances = DatabaseHelper.mainDatabaseHelper.get_input_adapter_instances()
+    inputAdaptersInstances = DatabaseHelper.get_input_adapter_instances()
     inputAdapters = []
     for sub in inputAdaptersInstances:
         inputAdapter = {}
@@ -37,7 +37,7 @@ def getStatus():
 
 @app.route('/misc/settings/', methods=['GET'])
 def getSettings():
-    settings = DatabaseHelper.mainDatabaseHelper.get_settings()
+    settings = DatabaseHelper.get_settings()
     setts = []
     for setting in settings:
         sett = {}
@@ -58,7 +58,7 @@ def setSetting(keyandvalue):
         settingData = SettingData()
         settingData.Key = keyandvaluelist[0]
         settingData.Value = keyandvaluelist[1]
-        settingData = DatabaseHelper.mainDatabaseHelper.save_setting(settingData)
+        settingData = DatabaseHelper.save_setting(settingData)
 
     if settingData is None:
         return ''
@@ -66,7 +66,7 @@ def setSetting(keyandvalue):
     settingData2 = SettingData()
     settingData2.Key = 'ConfigDirty'
     settingData2.Value = '1'
-    settingData2 = DatabaseHelper.mainDatabaseHelper.save_setting(settingData2)
+    settingData2 = DatabaseHelper.save_setting(settingData2)
     if settingData2 is None:
         return ''
 
@@ -74,7 +74,7 @@ def setSetting(keyandvalue):
 
 @app.route('/misc/punches/', methods=['GET'])
 def getPunches():
-    blenoPunches = DatabaseHelper.mainDatabaseHelper.get_bleno_punches()
+    blenoPunches = DatabaseHelper.get_bleno_punches()
     punches = []
     for blenoPunch in blenoPunches:
         punch = {}
@@ -95,7 +95,7 @@ def getPunches():
     json_data = json.dumps(data)
 
     for blenoPunch in blenoPunches:
-        DatabaseHelper.mainDatabaseHelper.delete_bleno_punch_data(blenoPunch.id)
+        DatabaseHelper.delete_bleno_punch_data(blenoPunch.id)
 
     return json_data
 

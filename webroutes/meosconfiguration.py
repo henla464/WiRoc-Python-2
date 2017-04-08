@@ -15,12 +15,12 @@ def GetSendToMeosEnabled():
 
 @app.route('/meosconfiguration/sendtomeosenabled/<enabled>/', methods=['GET'])
 def SetSendToMeosEnabled(enabled):
-    sd = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SendToMeosEnabled')
+    sd = DatabaseHelper.get_setting_by_key('SendToMeosEnabled')
     if sd is None:
         sd = SettingData()
         sd.Key = 'SendToMeosEnabled'
     sd.Value = True if enabled.lower() == 'true' else 'False'
-    sd = DatabaseHelper.mainDatabaseHelper.save_setting(sd)
+    sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetConfigurationDirty('SendToMeosEnabled', True)
     return jsonpickle.encode(MicroMock(SendToMeosEnabled=sd.Value.lower()=='true'))
 
@@ -31,12 +31,12 @@ def GetSendToMeosIP():
 
 @app.route('/meosconfiguration/sendtomeosip/<ip>/', methods=['GET'])
 def SetSendToMeosIP(ip):
-    sd = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SendToMeosIP')
+    sd = DatabaseHelper.get_setting_by_key('SendToMeosIP')
     if sd is None:
         sd = SettingData()
         sd.Key = 'SendToMeosIP'
     sd.Value = ip
-    sd = DatabaseHelper.mainDatabaseHelper.save_setting(sd)
+    sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetConfigurationDirty('SendToMeosIP', True)
     return jsonpickle.encode(MicroMock(SendToMeosIP=sd.Value))
 
@@ -49,12 +49,12 @@ def getSendToMeosIPPort():
 
 @app.route('/meosconfiguration/sendtomeosipport/<port>/', methods=['GET'])
 def setSendToMeosIPPort(port):
-    sd = DatabaseHelper.mainDatabaseHelper.get_setting_by_key('SendToMeosIPPort')
+    sd = DatabaseHelper.get_setting_by_key('SendToMeosIPPort')
     if sd is None:
         sd = SettingData()
         sd.Key = 'SendToMeosIPPort'
     sd.Value = port
-    sd = DatabaseHelper.mainDatabaseHelper.save_setting(sd)
+    sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetConfigurationDirty('SendToMeosIPPort', True)
     return jsonpickle.encode(MicroMock(SendToMeosIPPort=sd.Value))
 

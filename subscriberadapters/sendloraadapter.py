@@ -2,6 +2,7 @@ from loraradio.loraradio import LoraRadio
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
 import pyudev
+import serial
 import logging
 import socket
 
@@ -19,14 +20,17 @@ class SendLoraAdapter(object):
             serialPorts.append('/dev/ttyS2')
         else:
             # https://github.com/dhylands/usb-ser-mon/blob/master/find_port.py
-            uDevContext = pyudev.Context()
-            for device in uDevContext.list_devices(subsystem='tty'):
-                if 'ID_VENDOR_ID' in device:
-                    logging.debug('SendLoraAdapter vendor: ' + device['ID_VENDOR_ID'].lower() + " model: " + device['ID_MODEL_ID'].lower())
-                    if device['ID_VENDOR_ID'].lower() == '10c4' and \
-                                    device['ID_MODEL_ID'].lower() == 'ea60':
-                        serialPorts.append(device.device_node)
-                        break
+            #uDevContext = pyudev.Context()
+            #for device in uDevContext.list_devices(subsystem='tty'):
+            #    if 'ID_VENDOR_ID' in device:
+            #        logging.debug('SendLoraAdapter vendor: ' + device['ID_VENDOR_ID'].lower() + " model: " + device['ID_MODEL_ID'].lower())
+            #        if device['ID_VENDOR_ID'].lower() == '10c4' and \
+            #                        device['ID_MODEL_ID'].lower() == 'ea60':
+            #            serialPorts.append(device.device_node)
+            #            break
+            portInfoList = serial.tools.list_ports.grep('10c4:ea60')
+            for portInfo in portInfoList:
+                serialPorts.append(portInfo.device)
 
         if len(serialPorts) > 0:
             if len(SendLoraAdapter.Instances) > 0:
@@ -75,7 +79,7 @@ class SendLoraAdapter(object):
                 SendLoraAdapter.SubscriptionsEnabled = shouldSubscriptionBeEnabled
                 SendLoraAdapter.DeleteAfterSent = deleteAfterSent
                 logging.info("SendLoraAdapter::EnableDisableSubscription() subscription set enabled: " + str(shouldSubscriptionBeEnabled))
-                DatabaseHelper.mainDatabaseHelper.update_subscriptions(shouldSubscriptionBeEnabled, deleteAfterSent, SendLoraAdapter.GetTypeName())
+                DatabaseHelper.update_subscriptions(shouldSubscriptionBeEnabled, deleteAfterSent, SendLoraAdapter.GetTypeName())
 
     @staticmethod
     def EnableDisableTransforms():
@@ -83,8 +87,8 @@ class SendLoraAdapter(object):
             if SendLoraAdapter.LoraMode is None or SendLoraAdapter.LoraMode != SettingsClass.GetLoraMode():
                 SendLoraAdapter.LoraMode = SettingsClass.GetLoraMode()
                 enableSendTransforms = (SendLoraAdapter.LoraMode == "SEND")
-                DatabaseHelper.mainDatabaseHelper.set_transform_enabled(enableSendTransforms, "SIToLoraTransform")
-                DatabaseHelper.mainDatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraToLoraAckTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "SIToLoraTransform")
+                DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraToLoraAckTransform")
 
     def __init__(self, instanceNumber, portName):
         self.instanceNumber = instanceNumber

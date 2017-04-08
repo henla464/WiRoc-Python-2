@@ -9,26 +9,28 @@ class ReceiveSerialComputerAdapter(object):
     Instances = []
     @staticmethod
     def CreateInstances():
-        serialPorts = []
+        serialPort = None
 
         if socket.gethostname() == 'chip':
             if os.path.exists('/dev/ttyGS0'):
-                serialPorts.append('/dev/ttyGS0')
+                serialPort = '/dev/ttyGS0'
 
-        newInstances = []
-        for serialDev in serialPorts:
-            alreadyCreated = False
-            for instance in ReceiveSerialComputerAdapter.Instances:
-                if instance.GetSerialDevicePath() == serialDev:
-                    alreadyCreated = True
-                    newInstances.append(instance)
-
-            if not alreadyCreated:
-                newInstances.append(
-                    ReceiveSerialComputerAdapter('rcvSer' + str(1 + len(newInstances)), serialDev))
-
-                ReceiveSerialComputerAdapter.Instances = newInstances
-        return ReceiveSerialComputerAdapter.Instances
+        if serialPort is None:
+            if len(ReceiveSerialComputerAdapter.Instances) == 0:
+                return False
+            else:
+                ReceiveSerialComputerAdapter.Instances = []
+                return True
+        else:
+            if len(ReceiveSerialComputerAdapter.Instances) == 0:
+                ReceiveSerialComputerAdapter.Instances.append(
+                    ReceiveSerialComputerAdapter('rcvSer1', serialPort))
+                return True
+            elif (ReceiveSerialComputerAdapter.Instances[0].GetSerialDevicePath() == serialPort):
+                return False
+            else:
+                ReceiveSerialComputerAdapter.Instances[0] = ReceiveSerialComputerAdapter('rcvSer1', serialPort)
+                return True
 
     @staticmethod
     def GetTypeName():

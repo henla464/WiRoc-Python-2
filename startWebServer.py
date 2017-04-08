@@ -9,7 +9,6 @@ from webroutes import misc
 
 def startWebServer():
     logging.info("startWebServer() Start web server")
-    DatabaseHelper.mainDatabaseHelper = DatabaseHelper()
     app.run(debug=True, host='0.0.0.0', use_reloader=False)
 
 if __name__ == '__main__':

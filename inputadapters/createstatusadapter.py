@@ -1,5 +1,6 @@
 from settings.settings import SettingsClass
 import logging
+import time
 from datetime import datetime, timedelta
 
 class CreateStatusAdapter(object):
@@ -36,6 +37,7 @@ class CreateStatusAdapter(object):
         return True
 
     def GetData(self):
-        if datetime.now() - SettingsClass.GetTimeOfLastMessageAdded() > timedelta(seconds=SettingsClass.GetStatusMessageInterval()):
+        currentTime = time.monotonic()
+        if currentTime - SettingsClass.GetTimeOfLastMessageAdded() > SettingsClass.GetStatusMessageInterval():
             logging.debug("CreateStatusAdapter::GetData() Data to fetch")
             return {"MessageType": "DATA", "Data": self.statusMsgData, "ChecksumOK": True}

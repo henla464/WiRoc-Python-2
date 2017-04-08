@@ -46,7 +46,7 @@ class LoraRadio:
 
     @staticmethod
     def getSettingsArray(channel, loraDataRate):
-        channelData = DatabaseHelper.mainDatabaseHelper.get_channel(channel, loraDataRate)
+        channelData = DatabaseHelper.get_channel(channel, loraDataRate)
         frequency = int(channelData.Frequency / 61.035)
         frequencyOne = ((frequency & 0xFF0000)>>16)
         frequencyTwo = ((frequency & 0xFF00)>>8)
@@ -166,11 +166,11 @@ class LoraRadio:
         return True
 
     def GetRadioData(self):
-        if self.radioSerial.inWaiting() == 0:
+        if self.radioSerial.in_waiting == 0:
             return None
         logging.debug("LoraRadio::GetRadioData() data to fetch")
         startFound = False
-        while self.radioSerial.inWaiting() > 0:
+        while self.radioSerial.in_waiting > 0:
             # print("looking for stx: ", end="")
             bytesRead = self.radioSerial.read(1)
             if bytesRead[0] == STX:
@@ -179,10 +179,10 @@ class LoraRadio:
                 self.receivedMessage.AddByte(bytesRead[0])
                 if self.receivedMessage.IsFilled():
                     break
-                if not self.receivedMessage.IsFilled() and self.radioSerial.inWaiting() == 0:
+                if not self.receivedMessage.IsFilled() and self.radioSerial.in_waiting == 0:
                     logging.info("LoraRadio::GetRadioData() Sleep, wait for more bytes")
                     time.sleep(0.05)
-                    if self.radioSerial.inWaiting() == 0:
+                    if self.radioSerial.in_waiting == 0:
                         break
 
         if not self.receivedMessage.IsFilled():

@@ -26,6 +26,7 @@ class ReceiveSIAdapter(object):
         #                        device['ID_MODEL_ID'].lower() == 'a4aa':
         #            serialPorts.append(device.device_node)
 
+            newInstancesFoundOrRemoved = False
         newInstances = []
         for serialDev in serialPorts:
             alreadyCreated = False
@@ -35,15 +36,22 @@ class ReceiveSIAdapter(object):
                     newInstances.append(instance)
 
             if not alreadyCreated:
+                newInstancesFoundOrRemoved = True
                 newInstances.append(
                     ReceiveSIAdapter('si' + str(1+len(newInstances)), serialDev))
 
-        ReceiveSIAdapter.Instances = newInstances
-        if len(ReceiveSIAdapter.Instances) > 0:
-            SettingsClass.SetReceiveSIAdapterActive(True)
+        if len(newInstances) != ReceiveSIAdapter.Instances:
+            newInstancesFoundOrRemoved = True
+
+        if newInstancesFoundOrRemoved:
+            ReceiveSIAdapter.Instances = newInstances
+            if len(ReceiveSIAdapter.Instances) > 0:
+                SettingsClass.SetReceiveSIAdapterActive(True)
+            else:
+                SettingsClass.SetReceiveSIAdapterActive(False)
+            return True
         else:
-            SettingsClass.SetReceiveSIAdapterActive(False)
-        return ReceiveSIAdapter.Instances
+            return False
 
     @staticmethod
     def GetTypeName():
@@ -175,6 +183,9 @@ class ReceiveSIAdapter(object):
             bytesRead = self.siSerial.read(1)
             if bytesRead[0] == STX:
                 startFound = True
+                if len(receivedData) == 1:
+                    # second STX found, discard
+                    continue
             if startFound:
                 receivedData.append(bytesRead[0])
                 if len(receivedData) == 3:
@@ -196,3 +207,4 @@ class ReceiveSIAdapter(object):
             return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}
         else:
             logging.debug("ReceiveSIAdapter::GetData() Unknown SI message received!")
+            return None

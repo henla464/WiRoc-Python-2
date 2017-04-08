@@ -11,7 +11,8 @@ class SendToMeosAdapter(object):
     def CreateInstances():
         if len(SendToMeosAdapter.Instances) == 0:
             SendToMeosAdapter.Instances.append(SendToMeosAdapter('meos1'))
-        return SendToMeosAdapter.Instances
+            return True
+        return False
 
     @staticmethod
     def GetTypeName():
@@ -26,7 +27,7 @@ class SendToMeosAdapter(object):
             if SendToMeosAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
                 logging.info("SendToMeosAdapter::EnableDisableSubscription() subscription set enabled: " + str(subscriptionShouldBeEnabled))
                 SendToMeosAdapter.SubscriptionsEnabled = subscriptionShouldBeEnabled
-                DatabaseHelper.mainDatabaseHelper.update_subscriptions(subscriptionShouldBeEnabled, SendToMeosAdapter.GetDeleteAfterSent(), SendToMeosAdapter.GetTypeName())
+                DatabaseHelper.update_subscriptions(subscriptionShouldBeEnabled, SendToMeosAdapter.GetDeleteAfterSent(), SendToMeosAdapter.GetTypeName())
 
 
     @staticmethod

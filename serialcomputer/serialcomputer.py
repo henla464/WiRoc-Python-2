@@ -108,9 +108,9 @@ class SerialComputer:
             return False
 
     def GetData(self):
-        if not self.GetIsInitialized():
+        if not self.isInitialized:
             return None
-        if self.compSerial.inWaiting() == 0:
+        if self.compSerial.in_waiting == 0:
             return None
         logging.debug("SerialComputer::GetData() data to fetch")
         expectedLength = 3

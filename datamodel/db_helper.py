@@ -8,111 +8,124 @@ from datetime import timedelta, datetime
 
 class DatabaseHelper:
     database_name = "radiomessages.db"
+    db = DB("radiomessages.db", DataMapping())
 
-    def __init__(self):
-        self.db = DB(DatabaseHelper.database_name, DataMapping())
+    #def __init__(self):
+    #    self.db = DB(DatabaseHelper.database_name, DataMapping())
 
-    def ensure_tables_created(self):
+    @classmethod
+    def ensure_tables_created(cls):
         logging.debug("DatabaseHelper::ensure_tables_created()")
+        db = cls.db
         table = SettingData()
-        self.db.ensure_table_created(table)
+        db.ensure_table_created(table)
         table = ChannelData()
-        self.db.ensure_table_created(table)
+        db.ensure_table_created(table)
         table = MessageBoxData()
-        self.db.ensure_table_created(table)
+        db.ensure_table_created(table)
         table = MessageBoxArchiveData()
-        self.db.ensure_table_created(table)
+        db.ensure_table_created(table)
         table = SubscriberData()
-        self.db.ensure_table_created(table)
+        db.ensure_table_created(table)
         table = MessageTypeData()
-        self.db.ensure_table_created(table)
+        db.ensure_table_created(table)
         table = TransformData()
-        self.db.ensure_table_created(table)
+        db.ensure_table_created(table)
         table = SubscriptionData()
-        self.db.ensure_table_created(table)
+        db.ensure_table_created(table)
         table = MessageSubscriptionData()
-        self.db.ensure_table_created(table)
+        db.ensure_table_created(table)
         table = MessageSubscriptionArchiveData()
-        self.db.ensure_table_created(table)
+        db.ensure_table_created(table)
         table = InputAdapterInstances()
-        self.db.ensure_table_created(table)
+        db.ensure_table_created(table)
         table = BlenoPunchData()
-        self.db.ensure_table_created(table)
+        db.ensure_table_created(table)
 
-    def drop_all_tables(self):
+    @classmethod
+    def drop_all_tables(cls):
         logging.debug("DatabaseHelper::drop_all_tables()")
+        db = cls.db
         table = SettingData()
-        self.db.drop_table(table)
+        db.drop_table(table)
         table = ChannelData()
-        self.db.drop_table(table)
+        db.drop_table(table)
         table = MessageBoxData()
-        self.db.drop_table(table)
+        db.drop_table(table)
         table = MessageBoxArchiveData()
-        self.db.drop_table(table)
+        db.drop_table(table)
         table = SubscriberData()
-        self.db.drop_table(table)
+        db.drop_table(table)
         table = MessageTypeData()
-        self.db.drop_table(table)
+        db.drop_table(table)
         table = TransformData()
-        self.db.drop_table(table)
+        db.drop_table(table)
         table = SubscriptionData()
-        self.db.drop_table(table)
+        db.drop_table(table)
         table = MessageSubscriptionData()
-        self.db.drop_table(table)
+        db.drop_table(table)
         table = MessageSubscriptionArchiveData()
-        self.db.drop_table(table)
+        db.drop_table(table)
         table = InputAdapterInstances()
-        self.db.drop_table(table)
+        db.drop_table(table)
         table = BlenoPunchData()
-        self.db.drop_table(table)
+        db.drop_table(table)
 
-    def truncate_setup_tables(self):
+    @classmethod
+    def truncate_setup_tables(cls):
         logging.debug("DatabaseHelper::truncate_setup_tables()")
-        self.db.execute_SQL("DELETE FROM SubscriberData")
-        self.db.execute_SQL("DELETE FROM MessageTypeData")
-        self.db.execute_SQL("DELETE FROM SubscriptionData")
-        self.db.execute_SQL("DELETE FROM TransformData")
-        self.db.execute_SQL("DELETE FROM InputAdapterInstances")
-        self.db.execute_SQL("DELETE FROM ChannelData")
+        db = cls.db
+        db.execute_SQL("DELETE FROM SubscriberData")
+        db.execute_SQL("DELETE FROM MessageTypeData")
+        db.execute_SQL("DELETE FROM SubscriptionData")
+        db.execute_SQL("DELETE FROM TransformData")
+        db.execute_SQL("DELETE FROM InputAdapterInstances")
+        db.execute_SQL("DELETE FROM ChannelData")
 
 
 #Settings
-    def save_setting(self, settingData):
-        sd = self.get_setting_by_key(settingData.Key)
+    @classmethod
+    def save_setting(cls, settingData):
+        sd = cls.get_setting_by_key(settingData.Key)
         if sd is None:
-            sd = self.db.save_table_object(settingData, True)
+            sd = cls.db.save_table_object(settingData, True)
         else:
             sd.Value = settingData.Value
-            sd = self.db.save_table_object(sd, True)
+            sd = cls.db.save_table_object(sd, True)
         return sd
 
-    def get_setting(self, id):
-        sd = self.db.get_table_object(SettingData, str(id))
+    @classmethod
+    def get_setting(cls, id):
+        sd = cls.db.get_table_object(SettingData, str(id))
         return sd
 
-    def get_settings(self):
-        rows = self.db.get_table_objects(SettingData)
+    @classmethod
+    def get_settings(cls):
+        rows = cls.db.get_table_objects(SettingData)
         return rows
 
-    def get_setting_by_key(self, key):
-        row_list = self.db.get_table_objects_by_SQL(SettingData, "SELECT * FROM SettingData WHERE Key = '" + key + "'")
+    @classmethod
+    def get_setting_by_key(cls, key):
+        row_list = cls.db.get_table_objects_by_SQL(SettingData, "SELECT * FROM SettingData WHERE Key = '" + key + "'")
         if len(row_list) == 0:
             return None
         return row_list[0]
 
 #Subscriber
-    def save_subscriber(self, subscriberData):
-        rows = self.db.get_table_objects_by_SQL(SubscriberData, "SELECT * FROM SubscriberData WHERE TypeName = '" +
+    @classmethod
+    def save_subscriber(cls, subscriberData):
+        rows = cls.db.get_table_objects_by_SQL(SubscriberData, "SELECT * FROM SubscriberData WHERE TypeName = '" +
                                     subscriberData.TypeName + "' and InstanceName = '" +
                                     subscriberData.InstanceName + "'")
         if len(rows) == 0:
-            return self.db.save_table_object(subscriberData, False)
+            return cls.db.save_table_object(subscriberData, False)
         else:
             #nothing to update
             return rows[0].id
 
-    def get_subscribers(self):
-        rows = self.db.get_table_objects_by_SQL(SubscriberView, "SELECT "
+    @classmethod
+    def get_subscribers(cls):
+        rows = cls.db.get_table_objects_by_SQL(SubscriberView, "SELECT "
             "SubscriberData.id, SubscriberData.TypeName, SubscriberData.InstanceName, "
             "SubscriptionData.Enabled, MsgIn.Name MessageInName, MsgOut.Name MessageOutName "
             "from SubscriptionData JOIN SubscriberData "
@@ -123,74 +136,82 @@ class DatabaseHelper:
         return rows
 
 #MessageTypes
-    def get_message_type(self, messageTypeName):
+    @classmethod
+    def get_message_type(cls, messageTypeName):
         sql = "SELECT * FROM MessageTypeData WHERE Name = '" + messageTypeName + "'"
-        rows = self.db.get_table_objects_by_SQL(MessageTypeData, sql)
+        rows = cls.db.get_table_objects_by_SQL(MessageTypeData, sql)
         if len(rows) >= 1:
             return rows[0]
         return None
 
-
-    def save_message_type(self, messageTypeData):
-        rows = self.db.get_table_objects_by_SQL(MessageTypeData, "SELECT * FROM MessageTypeData WHERE Name = '" +
+    @classmethod
+    def save_message_type(cls, messageTypeData):
+        rows = cls.db.get_table_objects_by_SQL(MessageTypeData, "SELECT * FROM MessageTypeData WHERE Name = '" +
                                            messageTypeData.Name + "'")
         if len(rows) == 0:
-            return self.db.save_table_object(messageTypeData, False)
+            return cls.db.save_table_object(messageTypeData, False)
         else:
             # nothing to update
             return rows[0].id
 
 #Transforms
-    def save_transform(self, transformData):
-        rows = self.db.get_table_objects_by_SQL(TransformData, "SELECT * FROM TransformData WHERE Name = '" +
+
+    @classmethod
+    def save_transform(cls, transformData):
+        rows = cls.db.get_table_objects_by_SQL(TransformData, "SELECT * FROM TransformData WHERE Name = '" +
                                            transformData.Name + "'")
         if len(rows) > 0:
             transformData.id = rows[0].id
-        return self.db.save_table_object(transformData, False)
+        return cls.db.save_table_object(transformData, False)
 
-    def set_transform_enabled(self, enabled, transformName):
+    @classmethod
+    def set_transform_enabled(cls, enabled, transformName):
         dbValue = DataMapping.get_database_value(enabled)
         sql = ("UPDATE TransformData SET Enabled = " + str(dbValue) + " " +
                "WHERE TransformData.Name = '" + transformName + "'")
         logging.debug(sql)
-        self.db.execute_SQL(sql)
+        cls.db.execute_SQL(sql)
 
 #Subscriptions
-    def save_subscription(self, subscriptionData):
-        rows = self.db.get_table_objects_by_SQL(SubscriptionData, ("SELECT * FROM SubscriptionData WHERE "
+    @classmethod
+    def save_subscription(cls, subscriptionData):
+        rows = cls.db.get_table_objects_by_SQL(SubscriptionData, ("SELECT * FROM SubscriptionData WHERE "
                                            "SubscriberId = " + str(subscriptionData.SubscriberId) +
                                            " and TransformId = " + str(subscriptionData.TransformId)))
         if len(rows) > 0:
             subscriptionData.id = rows[0].id
-        return self.db.save_table_object(subscriptionData, False)
+        return cls.db.save_table_object(subscriptionData, False)
 
-
-    def get_subscriptions_by_input_message_type_id(self, messageTypeId):
+    @classmethod
+    def get_subscriptions_by_input_message_type_id(cls, messageTypeId):
         sql = ("SELECT SubscriptionData.* FROM TransformData JOIN SubscriptionData "
                "ON TransformData.id = SubscriptionData.TransformId "
                "WHERE TransformData.Enabled = 1 AND SubscriptionData.Enabled = 1 AND "
                "InputMessageTypeID = " + str(messageTypeId))
-        rows = self.db.get_table_objects_by_SQL(SubscriptionData, sql)
+        rows = cls.db.get_table_objects_by_SQL(SubscriptionData, sql)
         return rows
 
-    def update_subscriptions(self, enabled, deleteAfterSent, subscriberTypeName):
+    @classmethod
+    def update_subscriptions(cls, enabled, deleteAfterSent, subscriberTypeName):
         sql = ("UPDATE SubscriptionData SET Enabled = " + str(1 if enabled else 0) + ", "
                "DeleteAfterSent = " + str(1 if deleteAfterSent else 0) + " WHERE SubscriberId IN "
                "(SELECT id from SubscriberData WHERE SubscriberData.TypeName = '" + str(subscriberTypeName) + "')")
-        self.db.execute_SQL(sql)
+        cls.db.execute_SQL(sql)
 
 
 #MessageSubscriptions
-    def get_no_of_message_subscriptions_by_message_box_id(self, msgBoxId):
-        rows = self.db.get_table_objects_by_SQL(MessageSubscriptionData, ("SELECT * FROM "
-                                                                     "MessageSubscriptionData WHERE "
-                                                                     "MessageBoxId = " + str(msgBoxId)))
-        return len(rows)
+    @classmethod
+    def get_no_of_message_subscriptions_by_message_box_id(cls, msgBoxId):
+        sql = "SELECT count(*) FROM MessageSubscriptionData WHERE MessageBoxId = %s" %(msgBoxId)
+        no = cls.db.get_scalar_by_SQL(sql)
+        return no
 
-    def save_message_subscription(self, messageSubscription):
-        self.db.save_table_object(messageSubscription, False)
+    @classmethod
+    def save_message_subscription(cls, messageSubscription):
+        cls.db.save_table_object(messageSubscription, False)
 
-    def archive_message_subscription_view_after_sent(self, messageSubscriptionView):
+    @classmethod
+    def archive_message_subscription_view_after_sent(cls, messageSubscriptionView):
         msa = MessageSubscriptionArchiveData()
         msa.OrigId = messageSubscriptionView.id
         msa.CustomData = messageSubscriptionView.CustomData
@@ -202,14 +223,14 @@ class DatabaseHelper:
         msa.AckReceivedDate = messageSubscriptionView.AckReceivedDate
         msa.MessageBoxId = messageSubscriptionView.MessageBoxId
         msa.SubscriptionId = messageSubscriptionView.SubscriptionId
-        self.db.save_table_object(msa, False)
-        self.db.delete_table_object(MessageSubscriptionData, messageSubscriptionView.id)
-        remainingMsgSub = self.get_no_of_message_subscriptions_by_message_box_id(messageSubscriptionView.MessageBoxId)
+        cls.db.save_table_object(msa, False)
+        cls.db.delete_table_object(MessageSubscriptionData, messageSubscriptionView.id)
+        remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(messageSubscriptionView.MessageBoxId)
         if remainingMsgSub == 0:
-            self.archive_message_box(messageSubscriptionView.MessageBoxId)
+            cls.archive_message_box(messageSubscriptionView.MessageBoxId)
 
-
-    def archive_message_subscription_view_not_sent(self, messageSubscriptionView):
+    @classmethod
+    def archive_message_subscription_view_not_sent(cls, messageSubscriptionView):
         msa = MessageSubscriptionArchiveData()
         msa.OrigId = messageSubscriptionView.id
         msa.CustomData = messageSubscriptionView.CustomData
@@ -221,37 +242,41 @@ class DatabaseHelper:
         msa.AckReceivedDate = messageSubscriptionView.AckReceivedDate
         msa.MessageBoxId = messageSubscriptionView.MessageBoxId
         msa.SubscriptionId = messageSubscriptionView.SubscriptionId
-        self.db.save_table_object(msa, False)
-        self.db.delete_table_object(MessageSubscriptionData, messageSubscriptionView.id)
-        remainingMsgSub = self.get_no_of_message_subscriptions_by_message_box_id(messageSubscriptionView.MessageBoxId)
+        cls.db.save_table_object(msa, False)
+        cls.db.delete_table_object(MessageSubscriptionData, messageSubscriptionView.id)
+        remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(messageSubscriptionView.MessageBoxId)
         if remainingMsgSub == 0:
-            self.archive_message_box(messageSubscriptionView.MessageBoxId)
+            cls.archive_message_box(messageSubscriptionView.MessageBoxId)
 
-    def increment_send_tries_and_set_sent_date(self, messageSubscriptionView):
-        msa = self.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
+    @classmethod
+    def increment_send_tries_and_set_sent_date(cls, messageSubscriptionView):
+        msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
         msa.SentDate = datetime.now()
         msa.NoOfSendTries = msa.NoOfSendTries + 1
         msa.FindAdapterTryDate = None
         msa.FindAdapterTries = 0
-        self.db.save_table_object(msa, False)
+        cls.db.save_table_object(msa, False)
 
-    def increment_send_tries_and_set_send_failed_date(self, messageSubscriptionView):
-        msa = self.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
+    @classmethod
+    def increment_send_tries_and_set_send_failed_date(cls, messageSubscriptionView):
+        msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
         msa.SendFailedDate = datetime.now()
         msa.NoOfSendTries = msa.NoOfSendTries + 1
         msa.FindAdapterTryDate = None
         msa.FindAdapterTries = 0
-        self.db.save_table_object(msa, False)
+        cls.db.save_table_object(msa, False)
 
-    def increment_find_adapter_tries_and_set_find_adapter_try_date(self, messageSubscriptionView):
-        msa = self.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
+    @classmethod
+    def increment_find_adapter_tries_and_set_find_adapter_try_date(cls, messageSubscriptionView):
+        msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
         msa.FindAdapterTryDate = datetime.now()
         msa.FindAdapterTries = msa.FindAdapterTries + 1
-        self.db.save_table_object(msa, False)
+        cls.db.save_table_object(msa, False)
 
-    def archive_message_subscription_after_ack(self, messageNumber):
+    @classmethod
+    def archive_message_subscription_after_ack(cls, messageNumber):
         thirtySecondsAgo = datetime.now() - timedelta(seconds=30)
-        rows = self.db.get_table_objects_by_SQL(MessageSubscriptionData,
+        rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData,
                                                           ("SELECT MessageSubscriptionData.* FROM "
                                                            "MessageSubscriptionData WHERE "
                                                            "CustomData = " + str(messageNumber) + " AND "
@@ -270,17 +295,19 @@ class DatabaseHelper:
             msa.NoOfSendTries = msd.NoOfSendTries
             msa.AckReceivedDate = datetime.now()
             msa.MessageBoxId = msd.MessageBoxId
-            self.db.save_table_object(msa, False)
-            self.db.delete_table_object(MessageSubscriptionData, msd.id)
-            remainingMsgSub = self.get_no_of_message_subscriptions_by_message_box_id(msd.MessageBoxId)
+            cls.db.save_table_object(msa, False)
+            cls.db.delete_table_object(MessageSubscriptionData, msd.id)
+            remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(msd.MessageBoxId)
             if remainingMsgSub == 0:
-                self.archive_message_box(msd.MessageBoxId)
+                cls.archive_message_box(msd.MessageBoxId)
 
 
 #MessageSubscriptionView
-    def get_message_subscriptions_view(self):
+
+    @classmethod
+    def get_message_subscriptions_view(cls):
         sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData")
-        cnt = self.db.get_scalar_by_SQL(sql)
+        cnt = cls.db.get_scalar_by_SQL(sql)
         if cnt > 0:
             sql = ("SELECT MessageSubscriptionData.id, "
                    "MessageSubscriptionData.CustomData, "
@@ -308,69 +335,84 @@ class DatabaseHelper:
                    "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 "
                    "ORDER BY MessageSubscriptionData.NoOfSendTries asc, "
                    "MessageSubscriptionData.SentDate asc")
-            return self.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
+            return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
         return []
 
 #MessageBox
-    def save_message_box(self, messageBoxData):
-        return self.db.save_table_object(messageBoxData, False)
+    @classmethod
+    def save_message_box(cls, messageBoxData):
+        return cls.db.save_table_object(messageBoxData, False)
 
-    def archive_message_box(self, msgBoxId):
-        messageBoxData = self.db.get_table_object(MessageBoxData, msgBoxId)
-        messageBoxArchive = MessageBoxArchiveData()
-        messageBoxArchive.OrigId = messageBoxData.id
-        messageBoxArchive.MessageData = messageBoxData.MessageData
-        messageBoxArchive.PowerCycleCreated = messageBoxData.PowerCycleCreated
-        messageBoxArchive.CreatedDate = messageBoxData.CreatedDate
-        messageBoxArchive.ChecksumOK = messageBoxData.ChecksumOK
-        messageBoxArchive.InstanceName = messageBoxData.InstanceName
-        messageBoxArchive.MessageTypeId = messageBoxData.MessageTypeId
-        self.db.save_table_object(messageBoxArchive, False)
-        self.db.delete_table_object(MessageBoxData, msgBoxId)
+    @classmethod
+    def archive_message_box(cls, msgBoxId):
+        sql = "INSERT INTO MessageBoxArchiveData (OrigId, MessageData, PowerCycleCreated," \
+              "CreatedDate, ChecksumOK, InstanceName, MessageTypeId) SELECT id, MessageData," \
+              "PowerCycleCreated, CreatedDate, ChecksumOK, InstanceName, MessageTypeId FROM " \
+              "MessageBoxData"
+        cls.db.execute_SQL(sql)
+        #messageBoxData = cls.db.get_table_object(MessageBoxData, msgBoxId)
+        #messageBoxArchive = MessageBoxArchiveData()
+        #messageBoxArchive.OrigId = messageBoxData.id
+        #messageBoxArchive.MessageData = messageBoxData.MessageData
+        #messageBoxArchive.PowerCycleCreated = messageBoxData.PowerCycleCreated
+        #messageBoxArchive.CreatedDate = messageBoxData.CreatedDate
+        #messageBoxArchive.ChecksumOK = messageBoxData.ChecksumOK
+        #messageBoxArchive.InstanceName = messageBoxData.InstanceName
+        #messageBoxArchive.MessageTypeId = messageBoxData.MessageTypeId
+        #cls.db.save_table_object(messageBoxArchive, False)
+        cls.db.delete_table_object(MessageBoxData, msgBoxId)
 
 #InputAdapterInstances
-    def update_input_adapter_instances(self, inputAdapterObjects):
+    @classmethod
+    def update_input_adapter_instances(cls, inputAdapterObjects):
         sql = ("UPDATE InputAdapterInstances SET ToBeDeleted = 1")
-        self.db.execute_SQL(sql)
+        cls.db.execute_SQL_no_commit(sql)
         for inputAdapter in inputAdapterObjects:
             sql = ("WITH new (TypeName, InstanceName, ToBeDeleted) AS "
-                   "( VALUES('" + inputAdapter.GetTypeName() + "', '" + inputAdapter.GetInstanceName() + "', 0) ) "
+                   "( VALUES('%s', '%s', 0) ) "
                     "INSERT OR REPLACE INTO InputAdapterInstances "
                     "(id, TypeName, InstanceName, ToBeDeleted) "
                     "SELECT old.id, new.TypeName, new.InstanceName, new.ToBeDeleted "
                     "FROM new LEFT JOIN InputAdapterInstances AS old "
-                    "ON new.InstanceName = old.InstanceName")
-            self.db.execute_SQL(sql)
+                    "ON new.InstanceName = old.InstanceName") % (inputAdapter.GetTypeName(), inputAdapter.GetInstanceName())
+            cls.db.execute_SQL_no_commit(sql)
         sql = ("DELETE FROM InputAdapterInstances WHERE ToBeDeleted = 1")
-        self.db.execute_SQL(sql)
+        cls.db.execute_SQL(sql)
 
-    def get_input_adapter_instances(self):
-        inputAdapterInstances = self.db.get_table_objects(InputAdapterInstances)
+    @classmethod
+    def get_input_adapter_instances(cls):
+        inputAdapterInstances = cls.db.get_table_objects(InputAdapterInstances)
         return inputAdapterInstances
 
 #BlenoPunchData
-    def save_bleno_punch_data(self, blenoPunchData):
-        self.db.save_table_object(blenoPunchData, False)
+    @classmethod
+    def save_bleno_punch_data(cls, blenoPunchData):
+        cls.db.save_table_object(blenoPunchData, False)
 
-    def get_bleno_punches(self):
-        return self.db.get_table_objects(BlenoPunchData)
+    @classmethod
+    def get_bleno_punches(cls):
+        return cls.db.get_table_objects(BlenoPunchData)
 
-    def delete_bleno_punch_data(self, rowId):
-        self.db.delete_table_object(BlenoPunchData, rowId)
+    @classmethod
+    def delete_bleno_punch_data(cls, rowId):
+        cls.db.delete_table_object(BlenoPunchData, rowId)
 
 #Channels
-    def get_channel(self, channel, dataRate):
+    @classmethod
+    def get_channel(cls, channel, dataRate):
         sql = ("SELECT * FROM ChannelData WHERE Channel = " + str(channel) +
                " and DataRate = " + str(dataRate))
-        rows = self.db.get_table_objects_by_SQL(ChannelData, sql)
+        rows = cls.db.get_table_objects_by_SQL(ChannelData, sql)
         if len(rows) >= 1:
             return rows[0]
         return None
 
-    def save_channel(self, channel):
-        self.db.save_table_object(channel, False)
+    @classmethod
+    def save_channel(cls, channel):
+        cls.db.save_table_object(channel, False)
 
-    def add_default_channels(self):
+    @classmethod
+    def add_default_channels(cls):
         channels = []
         channels.append(ChannelData(1, 146, 439700000, 72333, 22, 12, 6))
         channels.append(ChannelData(2, 146, 439725000, 72333, 22, 12, 6))
@@ -418,7 +460,7 @@ class DatabaseHelper:
         channels.append(ChannelData(8, 7032, 439950000, 2500, 15, 10, 9))
         channels.append(ChannelData(9, 7032, 439975000, 2500, 15, 10, 9))
         for channel in channels:
-            self.save_channel(channel)
+            cls.save_channel(channel)
 
 
-DatabaseHelper.mainDatabaseHelper = None
+
