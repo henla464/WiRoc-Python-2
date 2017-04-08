@@ -170,6 +170,9 @@ class ReceiveSIAdapter(object):
         logging.error("ReceiveSIAdapter::Init() could not communicate with master station")
         return False
 
+    def UpdateInfreqently(self):
+        return True
+
     # messageData is a bytearray
     def GetData(self):
         if self.siSerial.in_waiting == 0:

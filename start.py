@@ -142,11 +142,14 @@ class Main:
 
                 if Setup.SetupInputAdapters(False):
                     self.inputAdapters = Setup.InputAdapters
-                #return
+                return
 
-            for i in repeat(None, 20):
-                time.sleep(0.05)
-                for inputAdapter in self.inputAdapters:
+            activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
+                                   if inputAdapter.UpdateInfreqently() and inputAdapter.GetIsInitialized()]
+
+            for i in repeat(None, 10000):
+                #time.sleep(0.05)
+                for inputAdapter in activeInputAdapters:
                     inputData = None
                     try:
                         inputData = inputAdapter.GetData()

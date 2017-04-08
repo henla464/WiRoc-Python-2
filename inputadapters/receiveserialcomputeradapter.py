@@ -58,6 +58,9 @@ class ReceiveSerialComputerAdapter(object):
     def Init(self):
         return self.serialComputer.Init()
 
+    def UpdateInfreqently(self):
+        return True
+
     # messageData is a bytearray
     def GetData(self):
         data = self.serialComputer.GetData()

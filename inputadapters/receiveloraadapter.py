@@ -87,6 +87,8 @@ class ReceiveLoraAdapter(object):
             return True
         self.loraRadio.Init(channel, loraDataRate)
 
+    def UpdateInfreqently(self):
+        return True
 
     # messageData is a bytearray
     def GetData(self):
