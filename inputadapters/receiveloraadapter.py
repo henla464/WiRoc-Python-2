@@ -47,7 +47,7 @@ class ReceiveLoraAdapter(object):
                 newInstances.append(
                     ReceiveLoraAdapter(highestInstanceNumber, serialDev))
 
-        if len(newInstances) != ReceiveLoraAdapter.Instances:
+        if len(newInstances) != len(ReceiveLoraAdapter.Instances):
             newInstancesFoundOrRemoved = True
 
         if newInstancesFoundOrRemoved:

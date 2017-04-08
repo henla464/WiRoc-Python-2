@@ -12,9 +12,18 @@ class ReceiveSIAdapter(object):
     @staticmethod
     def CreateInstances():
         serialPorts = []
-        portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa')
-        for portInfo in portInfoList:
-            serialPorts.append(portInfo.device)
+
+        for port, desc, hwid in serial.tools.list_ports.comports():
+            logging.error(hwid)
+            if "10c4:800a" in hwid or "0525:a4aa" in hwid:
+                serialPorts.append(port)
+                logging.error(port)
+
+
+        #portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa')
+        #for portInfo in portInfoList:
+        #    serialPorts.append(portInfo.device)
+
         #https://github.com/dhylands/usb-ser-mon/blob/master/find_port.py
         #uDevContext = pyudev.Context()
         #for device in uDevContext.list_devices(subsystem='tty'):
@@ -26,7 +35,7 @@ class ReceiveSIAdapter(object):
         #                        device['ID_MODEL_ID'].lower() == 'a4aa':
         #            serialPorts.append(device.device_node)
 
-            newInstancesFoundOrRemoved = False
+        newInstancesFoundOrRemoved = False
         newInstances = []
         for serialDev in serialPorts:
             alreadyCreated = False
@@ -40,7 +49,7 @@ class ReceiveSIAdapter(object):
                 newInstances.append(
                     ReceiveSIAdapter('si' + str(1+len(newInstances)), serialDev))
 
-        if len(newInstances) != ReceiveSIAdapter.Instances:
+        if len(newInstances) != len(ReceiveSIAdapter.Instances):
             newInstancesFoundOrRemoved = True
 
         if newInstancesFoundOrRemoved:
