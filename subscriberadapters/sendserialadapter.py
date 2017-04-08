@@ -17,20 +17,19 @@ class SendSerialAdapter(object):
             if os.path.exists('/dev/ttyGS0'):
                 serialPorts.append('/dev/ttyGS0')
 
-        newInstances = []
-        for serialDev in serialPorts:
-            alreadyCreated = False
-            for instance in SendSerialAdapter.Instances:
-                if instance.GetSerialDevicePath() == serialDev:
-                    alreadyCreated = True
-                    newInstances.append(instance)
-
-            if not alreadyCreated:
-                newInstances.append(
-                    SendSerialAdapter(1 + len(newInstances), serialDev))
-
-        SendSerialAdapter.Instances = newInstances
-        return SendSerialAdapter.Instances
+        if len(serialPorts) > 0:
+            if len(SendSerialAdapter.Instances) > 0:
+                if SendSerialAdapter.Instances[0].GetSerialDevicePath() != serialPorts[0]:
+                    SendSerialAdapter.Instances[0] = SendSerialAdapter(1, serialPorts[0])
+                    return True
+            else:
+                SendSerialAdapter.Instances.append(SendSerialAdapter(1, serialPorts[0]))
+                return True
+        else:
+            if len(SendSerialAdapter.Instances) > 0:
+                SendSerialAdapter.Instances = []
+                return True
+        return False
 
     @staticmethod
     def EnableDisableSubscription():

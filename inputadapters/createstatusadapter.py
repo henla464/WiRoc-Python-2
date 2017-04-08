@@ -1,7 +1,6 @@
 from settings.settings import SettingsClass
 import logging
 import time
-from datetime import datetime, timedelta
 
 class CreateStatusAdapter(object):
     Instances = []
@@ -10,9 +9,12 @@ class CreateStatusAdapter(object):
         if SettingsClass.GetSendStatusMessages():
             if len(CreateStatusAdapter.Instances) == 0:
                 CreateStatusAdapter.Instances.append(CreateStatusAdapter("status1"))
+                return True
         else:
-            CreateStatusAdapter.Instances = []
-        return CreateStatusAdapter.Instances
+            if len(CreateStatusAdapter.Instances)>0:
+                CreateStatusAdapter.Instances = []
+                return True
+        return False
 
     @staticmethod
     def GetTypeName():

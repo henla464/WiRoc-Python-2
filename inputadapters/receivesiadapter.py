@@ -89,7 +89,7 @@ class ReceiveSIAdapter(object):
         if not self.siSerial.is_open:
             try:
                 self.siSerial.open()
-                logging.error("ReceiveSIAdapter::Init() opened serial")
+                logging.debug("ReceiveSIAdapter::Init() opened serial")
             except Exception as ex:
                 logging.error("ReceiveSIAdapter::Init() opening serial exception:")
                 logging.error(ex)

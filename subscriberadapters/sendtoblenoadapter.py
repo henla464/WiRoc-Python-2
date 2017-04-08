@@ -12,8 +12,8 @@ class SendToBlenoAdapter(object):
     def CreateInstances():
         if len(SendToBlenoAdapter.Instances) == 0:
             SendToBlenoAdapter.Instances.append(SendToBlenoAdapter('bleno1'))
-
-        return SendToBlenoAdapter.Instances
+            return True
+        return False
 
     @staticmethod
     def GetTypeName():

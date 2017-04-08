@@ -48,11 +48,11 @@ class SerialComputer:
                     self.compSerial.close()
                 return True
         except serial.serialutil.SerialTimeoutException as timeOutEx:
-            logging.error("SerialComputer::TestConnection() serial exception 1:")
-            logging.error(timeOutEx)
+            logging.debug("SerialComputer::TestConnection() serial exception 1:")
+            logging.debug(timeOutEx)
         except Exception as ex:
-            logging.error("SerialComputer::TestConnection() serial exception 2:")
-            logging.error(ex)
+            logging.debug("SerialComputer::TestConnection() serial exception 2:")
+            logging.debug(ex)
 
         if wasOpened:
             self.compSerial.close()

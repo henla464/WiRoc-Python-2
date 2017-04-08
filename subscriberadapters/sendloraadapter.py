@@ -35,13 +35,16 @@ class SendLoraAdapter(object):
         if len(serialPorts) > 0:
             if len(SendLoraAdapter.Instances) > 0:
                 if SendLoraAdapter.Instances[0].GetSerialDevicePath() != serialPorts[0]:
-                    SendLoraAdapter.Instances = []
-                    SendLoraAdapter.Instances.append(SendLoraAdapter(1, serialPorts[0]))
+                    SendLoraAdapter.Instances[0] = SendLoraAdapter(1, serialPorts[0])
+                    return True
             else:
                 SendLoraAdapter.Instances.append(SendLoraAdapter(1, serialPorts[0]))
+                return True
         else:
-            SendLoraAdapter.Instances = []
-
+            if len(SendLoraAdapter.Instances) > 0:
+                SendLoraAdapter.Instances = []
+                return True
+        return False
         #highestInstanceNumber = 0
         #newInstances = []
         #for serialDev in serialPorts:
