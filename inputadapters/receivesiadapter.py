@@ -11,18 +11,8 @@ class ReceiveSIAdapter(object):
     Instances = []
     @staticmethod
     def CreateInstances():
-        serialPorts = []
-
-        for port, desc, hwid in serial.tools.list_ports.comports():
-            logging.error(hwid)
-            if "10c4:800a" in hwid or "0525:a4aa" in hwid:
-                serialPorts.append(port)
-                logging.error(port)
-
-
-        #portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa')
-        #for portInfo in portInfoList:
-        #    serialPorts.append(portInfo.device)
+        portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa')
+        serialPorts = [portInfo.device for portInfo in portInfoList]
 
         #https://github.com/dhylands/usb-ser-mon/blob/master/find_port.py
         #uDevContext = pyudev.Context()

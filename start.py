@@ -238,11 +238,11 @@ def run():
 
 def startMain():
     main()
-    #run()
-    cProfile.run('run()')
+    run()
+    #cProfile.run('run()')
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG,
+    logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         filename='WiRoc.log',
                         filemode='w')

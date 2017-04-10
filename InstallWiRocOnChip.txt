@@ -197,3 +197,8 @@ Download from github
 --------------------
 https://minhaskamal.github.io/DownGit/#/home
 https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/henla464/WiRoc-Python-2
+
+Bleno advertising interval in ms
+--------------------------------
+sudo BLENO_ADVERTISING_INTERVAL=500 node <your file>.js
+
