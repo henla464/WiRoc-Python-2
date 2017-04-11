@@ -20,26 +20,43 @@ class Setup:
     SubscriberAdapters = None
     InputAdapters = None
     @staticmethod
-    def SetupSubscribers():
-        adapterObjects = []
+    def SetupAdapters(createMessageTypeIfNotExist = False):
+        subscriberObjects = []
         change1 = SendLoraAdapter.CreateInstances()
         change2 = SendSerialAdapter.CreateInstances()
         change3 = SendToBlenoAdapter.CreateInstances()
         change4 = SendToMeosAdapter.CreateInstances()
-        if change1 or change2 or change3 or change4:
-            adapterObjects.extend(SendLoraAdapter.Instances)
-            adapterObjects.extend(SendSerialAdapter.Instances)
-            adapterObjects.extend(SendToBlenoAdapter.Instances)
-            adapterObjects.extend(SendToMeosAdapter.Instances)
-        else:
-            allInitialized = True
-            for inst in adapterObjects:
-                if not inst.GetIsInitialized():
-                    allInitialized = False
-            if allInitialized:
-                return False
+        subscriberObjects.extend(SendLoraAdapter.Instances)
+        subscriberObjects.extend(SendSerialAdapter.Instances)
+        subscriberObjects.extend(SendToBlenoAdapter.Instances)
+        subscriberObjects.extend(SendToMeosAdapter.Instances)
 
-        for adapter in adapterObjects:
+        inputObjects = []
+        inChange1 = CreateStatusAdapter.CreateInstances()
+        inChange2 = ReceiveLoraAdapter.CreateInstances()
+        inChange3 = ReceiveSerialComputerAdapter.CreateInstances()
+        inChange4 = ReceiveSIAdapter.CreateInstances()
+        inputObjects.extend(CreateStatusAdapter.Instances)
+        inputObjects.extend(ReceiveLoraAdapter.Instances)
+        inputObjects.extend(ReceiveSerialComputerAdapter.Instances)
+        inputObjects.extend(ReceiveSIAdapter.Instances)
+
+
+        allInitialized = True
+        for inst in subscriberObjects:
+            if not inst.GetIsInitialized():
+                allInitialized = False
+
+        for inst in inputObjects:
+            if not inst.GetIsInitialized():
+                allInitialized = False
+
+        if (allInitialized
+            and not change1 and not change2 and not change3 and not change4 and
+            not inChange1 and not inChange2 and not inChange3 and not inChange4):
+            return False
+
+        for adapter in subscriberObjects:
             if not adapter.GetIsDBInitialized():
                 # add subscriber to the database
                 typeName = adapter.GetTypeName()
@@ -74,40 +91,20 @@ class Setup:
                             DatabaseHelper.save_subscription(subscriptionData)
                 adapter.SetIsDBInitialized()
 
-        for adapterObj in adapterObjects:
+        for adapterObj in subscriberObjects:
             logging.debug("Setup::SetupSubscribers() Before Init() subscriber adapter: " + str(adapterObj.GetInstanceName()))
             if not adapterObj.Init():
                 logging.error("Setup::SetupSubscribers() Init adapter failed: " + adapterObj.GetInstanceName())
             adapterObj.EnableDisableSubscription()
             adapterObj.EnableDisableTransforms()
 
+        for adapterObj in inputObjects:
+            logging.debug("Setup::SetupInputAdapters() Before Init() input adapter: " + str(adapterObj.GetInstanceName()))
+            adapterObj.Init()
+        DatabaseHelper.update_input_adapter_instances(inputObjects)
 
-
-        Setup.SubscriberAdapters = adapterObjects
-        return True
-
-    @staticmethod
-    def SetupInputAdapters(createMessageTypeIfNotExist):
-        #if Setup.inputAdapterClasses is None:
-        #    Setup.inputAdapterClasses = []
-        #    modules = Loader.ImportDirectory("inputadapters", False)
-        #    for mod in modules:
-        #        adapterClass = Loader.GetFirstClassFromModule(mod, "Adapter")
-        #        Setup.inputAdapterClasses.append(adapterClass)
-
-
-        adapterObjects = []
-        change1 = CreateStatusAdapter.CreateInstances()
-        change2 = ReceiveLoraAdapter.CreateInstances()
-        change3 = ReceiveSerialComputerAdapter.CreateInstances()
-        change4 = ReceiveSIAdapter.CreateInstances()
-        if change1 or change2 or change3 or change4:
-            adapterObjects.extend(CreateStatusAdapter.Instances)
-            adapterObjects.extend(ReceiveLoraAdapter.Instances)
-            adapterObjects.extend(ReceiveSerialComputerAdapter.Instances)
-            adapterObjects.extend(ReceiveSIAdapter.Instances)
-        else:
-            return False
+        Setup.InputAdapters = inputObjects
+        Setup.SubscriberAdapters = subscriberObjects
 
         if createMessageTypeIfNotExist:
             # add message types to database
@@ -127,11 +124,6 @@ class Setup:
             messageTypeData = MessageTypeData(messageTypeName)
             DatabaseHelper.save_message_type(messageTypeData)
 
-        for adapterObj in adapterObjects:
-            logging.debug("Setup::SetupInputAdapters() Before Init() input adapter: " + str(adapterObj.GetInstanceName()))
-            adapterObj.Init()
-        DatabaseHelper.update_input_adapter_instances(adapterObjects)
-        Setup.InputAdapters = adapterObjects
         return True
 
 

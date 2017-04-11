@@ -84,13 +84,6 @@ class SerialComputer:
         return calculatedCRC == crcInMessage
 
     def SendData(self, messageData):
-        #print(binascii.hexlify(messageData))
-        #try:
-        #    self.compSerial.write(messageData)
-        #except Exception as ex:
-        #    logging.error("SerialComputer::SendData() serial exception 3:")
-        #    logging.error(ex)
-        #    return False
         try:
             if self.compSerial.is_open:
                 self.compSerial.write(messageData)

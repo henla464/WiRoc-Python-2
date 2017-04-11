@@ -70,17 +70,17 @@ class DatabaseHelper:
         db.drop_table(table)
         table = BlenoPunchData()
         db.drop_table(table)
+        db.execute_SQL("DELETE FROM ChannelData")
+        db.execute_SQL("DELETE FROM MessageTypeData")
+        db.execute_SQL("DELETE FROM SubscriberData")
 
     @classmethod
     def truncate_setup_tables(cls):
         logging.debug("DatabaseHelper::truncate_setup_tables()")
         db = cls.db
-        db.execute_SQL("DELETE FROM SubscriberData")
-        db.execute_SQL("DELETE FROM MessageTypeData")
         db.execute_SQL("DELETE FROM SubscriptionData")
         db.execute_SQL("DELETE FROM TransformData")
         db.execute_SQL("DELETE FROM InputAdapterInstances")
-        db.execute_SQL("DELETE FROM ChannelData")
 
 
 #Settings

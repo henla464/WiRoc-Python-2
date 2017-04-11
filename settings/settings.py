@@ -331,12 +331,13 @@ class SettingsClass(object):
         if SettingsClass.statusMessageInterval is None: #skip isDirty call, check directly
             sett = DatabaseHelper.get_setting_by_key('StatusMessageInterval')
             if sett is None:
-                SettingsClass.statusMessageInterval = 10
+                SettingsClass.SetSetting('StatusMessageInterval', 60)
+                SettingsClass.statusMessageInterval = 60
             else:
                 try:
                     SettingsClass.statusMessageInterval = int(sett.Value)
                 except ValueError:
-                    SettingsClass.statusMessageInterval = 10
+                    SettingsClass.statusMessageInterval = 60
         return SettingsClass.statusMessageInterval
 
     @staticmethod

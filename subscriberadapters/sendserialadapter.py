@@ -114,5 +114,5 @@ class SendSerialAdapter(object):
             return True
         else:
             logging.warning("SendSerialAdapter::SendData() Could not send to computer, call EnableDisableSubscription")
-            SendSerialAdapter.EnableDisableSubscription()
+            #SendSerialAdapter.EnableDisableSubscription()
             return False

@@ -16,22 +16,22 @@ from itertools import repeat
 class Main:
     def __init__(self):
         self.shouldReconfigure = False
+        self.forceReconfigure = False
         #self.lastTimeReconfigured = datetime.now()
         self.nextTimeToReconfigure = time.monotonic() + 10
         self.messagesToSendExists = True
         self.previousChannel = None
+
         Setup.SetupPins()
 
         #DatabaseHelper.drop_all_tables()
-        #DatabaseHelper.truncate_setup_tables()
+        DatabaseHelper.truncate_setup_tables()
         DatabaseHelper.ensure_tables_created()
         DatabaseHelper.add_default_channels()
         SettingsClass.IncrementPowerCycle()
 
-        if Setup.SetupSubscribers():
+        if Setup.SetupAdapters(True):
             self.subscriberAdapters = Setup.SubscriberAdapters
-
-        if Setup.SetupInputAdapters(True):
             self.inputAdapters = Setup.InputAdapters
 
         self.runningOnChip = socket.gethostname() == 'chip'
@@ -137,10 +137,8 @@ class Main:
                 #SettingsClass.SetMessagesToSendExists(True)
                 self.archiveFailedMessages()
                 self.displayChannel()
-                if Setup.SetupSubscribers():
+                if Setup.SetupAdapters(False):
                     self.subscriberAdapters = Setup.SubscriberAdapters
-
-                if Setup.SetupInputAdapters(False):
                     self.inputAdapters = Setup.InputAdapters
                 #return
 
@@ -242,7 +240,7 @@ def startMain():
     #cProfile.run('run()')
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO,
+    logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         filename='WiRoc.log',
                         filemode='w')
@@ -253,7 +251,7 @@ if __name__ == '__main__':
 
     # define a Handler which writes INFO messages or higher to the sys.stderr
     console = logging.StreamHandler()
-    console.setLevel(logging.INFO)
+    console.setLevel(logging.DEBUG)
     console.setFormatter(formatter)
     # add the handler to the root logger
     logging.getLogger('').addHandler(rotFileHandler)
