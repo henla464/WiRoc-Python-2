@@ -129,13 +129,10 @@ class Utils:
 
     @staticmethod
     def GetMeosDataFromSIData(siPayloadData):
-        #todo: fix
+        if len(siPayloadData) < 12:
+            logging.error("Utils::GetMeosDataFromSIData() length siPayloadData less than 12")
+            return None
         punchData = PunchData(siPayloadData)
-        #stationNumber = (siPayloadData[3] << 8) + siPayloadData[4]
-        #siCardNumber = Utils.DecodeCardNr(siPayloadData[5:9])
-        #twentyFourHour = siPayloadData[9] & 0x01
-        #twelveHourTimer = siPayloadData[10:12]
-        #subSecond = int(siPayloadData[12] // 25.6)
         punch = 0  # type of data
         codeDay = 0  # obsolete
         time = ((punchData.TwelveHourTimer[0] << 8) + punchData.TwelveHourTimer[1]) * 10 + punchData.SubSecond

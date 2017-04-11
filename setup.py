@@ -21,22 +21,6 @@ class Setup:
     InputAdapters = None
     @staticmethod
     def SetupSubscribers():
-        #if Setup.subscriberAdapterClasses is None:
-        #    Setup.subscriberAdapterClasses = []
-        #    subscriberModules = Loader.ImportDirectory("subscriberadapters", False)
-
-        #    for mod in subscriberModules:
-        #        adapterClass = Loader.GetFirstClassFromModule(mod, "Adapter")
-        #        Setup.subscriberAdapterClasses.append(adapterClass)
-
-        #adapterObjects = []
-        #for adapterClass in Setup.subscriberAdapterClasses:
-        #    if adapterClass is None:
-        #        logging.debug("Setup::SetupSubscribers() couldn't load subscriber class")
-        #    else:
-        #        instances = adapterClass.CreateInstances()
-        #        adapterObjects.extend(instances)
-
         adapterObjects = []
         change1 = SendLoraAdapter.CreateInstances()
         change2 = SendSerialAdapter.CreateInstances()
@@ -48,7 +32,12 @@ class Setup:
             adapterObjects.extend(SendToBlenoAdapter.Instances)
             adapterObjects.extend(SendToMeosAdapter.Instances)
         else:
-            return False
+            allInitialized = True
+            for inst in adapterObjects:
+                if not inst.GetIsInitialized():
+                    allInitialized = False
+            if allInitialized:
+                return False
 
         for adapter in adapterObjects:
             if not adapter.GetIsDBInitialized():
