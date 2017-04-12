@@ -15,6 +15,7 @@ from inputadapters.receivesiadapter import ReceiveSIAdapter
 import logging
 from chipGPIO.chipGPIO import *
 import socket
+from settings.settings import SettingsClass
 
 class Setup:
     SubscriberAdapters = None
@@ -51,7 +52,7 @@ class Setup:
             if not inst.GetIsInitialized():
                 allInitialized = False
 
-        if (allInitialized
+        if (allInitialized and not SettingsClass.GetForceReconfigure()
             and not change1 and not change2 and not change3 and not change4 and
             not inChange1 and not inChange2 and not inChange3 and not inChange4):
             return False

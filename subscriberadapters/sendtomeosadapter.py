@@ -9,8 +9,15 @@ class SendToMeosAdapter(object):
 
     @staticmethod
     def CreateInstances():
+        SettingsClass.GetSendToMeosEnabled()
         if len(SendToMeosAdapter.Instances) == 0:
             SendToMeosAdapter.Instances.append(SendToMeosAdapter('meos1'))
+            return True
+        # check if enabled changed => let init/enabledisablesubscription run
+        isInitialized = SendToMeosAdapter.Instances[0].GetIsInitialized()
+        enabled = SettingsClass.GetSendToMeosEnabled()
+        subscriptionShouldBeEnabled = (isInitialized and enabled)
+        if SendToMeosAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
             return True
         return False
 

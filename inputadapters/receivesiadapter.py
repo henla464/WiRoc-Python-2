@@ -106,7 +106,7 @@ class ReceiveSIAdapter(object):
             while self.siSerial.in_waiting > 0:
                 # print("looking for stx: ", end="")
                 bytesRead = self.siSerial.read(1)
-                print(bytesRead)
+                #print(bytesRead)
                 if bytesRead[0] == STX:
                     startFound = True
                 if startFound:

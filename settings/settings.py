@@ -24,6 +24,7 @@ class SettingsClass(object):
     sendStatusMessages = None
     sendToBlenoEnabled = None
     wiRocDeviceName = None
+    forceReconfigure = False
 
     @staticmethod
     def SetConfigurationDirty(settingsName=None, markDirtyInDatabase = False):
@@ -325,6 +326,15 @@ class SettingsClass(object):
     @staticmethod
     def GetTimeOfLastMessageAdded():
         return SettingsClass.timeOfLastMessageAdded
+
+    @staticmethod
+    def SetForceReconfigure(val):
+        SettingsClass.forceReconfigure = val
+
+    @staticmethod
+    def GetForceReconfigure():
+        return SettingsClass.forceReconfigure
+
 
     @staticmethod
     def GetStatusMessageInterval():

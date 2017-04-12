@@ -41,17 +41,20 @@ class SendSerialAdapter(object):
                     SendSerialAdapter.SendSerialAdapterActive = True
                     SettingsClass.SetSendSerialAdapterActive(True)
                     DatabaseHelper.update_subscriptions(True, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
+                    SettingsClass.SetForceReconfigure(True)
             else:
                 if SendSerialAdapter.SendSerialAdapterActive is None or SendSerialAdapter.SendSerialAdapterActive:
                     logging.info("SendSerialAdapter::EnableDisableSubscription() update subscription disable")
                     SendSerialAdapter.SendSerialAdapterActive = False
                     SettingsClass.SetSendSerialAdapterActive(False)
                     DatabaseHelper.update_subscriptions(False, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
+                    SettingsClass.SetForceReconfigure(True)
         else:
             logging.debug("SendSerialAdapter::EnableDisableSubscription() Setting SetSendSerialAdapterActive False 2")
             if SettingsClass.GetSendSerialAdapterActive():
                 SendSerialAdapter.SendSerialAdapterActive = False
                 SettingsClass.SetSendSerialAdapterActive(False)
+                SettingsClass.SetForceReconfigure(True)
 
     @staticmethod
     def GetTypeName():

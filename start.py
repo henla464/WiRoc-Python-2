@@ -25,8 +25,8 @@ class Main:
         Setup.SetupPins()
 
         #DatabaseHelper.drop_all_tables()
-        DatabaseHelper.truncate_setup_tables()
         DatabaseHelper.ensure_tables_created()
+        DatabaseHelper.truncate_setup_tables()
         DatabaseHelper.add_default_channels()
         SettingsClass.IncrementPowerCycle()
 

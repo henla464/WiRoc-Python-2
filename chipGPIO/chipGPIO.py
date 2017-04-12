@@ -32,13 +32,13 @@ def pinMode(pin,mode):
         pinMapped = str(pin+get_xio_base())
         os.system("sudo sh -c 'echo "+pinMapped+" > /sys/class/gpio/export' > /dev/null 2>&1")
         os.system("sudo sh -c 'echo "+mode+" > /sys/class/gpio/gpio"+pinMapped+"/direction'")
-        sys.stdout.write("XIO-P"+str(pin)+" set to "+str(mode)+".\n")
+        # sys.stdout.write("XIO-P"+str(pin)+" set to "+str(mode)+".\n")
 
 def pinModeNonXIO(pin, mode):
     pinMapped = str(pin)
     os.system("sudo sh -c 'echo "+pinMapped+" > /sys/class/gpio/export' > /dev/null 2>&1")
     os.system("sudo sh -c 'echo "+mode+" > /sys/class/gpio/gpio"+pinMapped+"/direction'")
-    sys.stdout.write("NONXIO"+str(pin)+" set to "+str(mode)+".\n")
+    #sys.stdout.write("NONXIO"+str(pin)+" set to "+str(mode)+".\n")
 
 def digitalWrite(pin,state):
     pinMapped = str(pin+get_xio_base())

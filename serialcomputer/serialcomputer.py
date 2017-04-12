@@ -90,14 +90,17 @@ class SerialComputer:
                 return True
             else:
                 logging.error("SerialComputer::SendData() Serial port not open")
+                self.isInitialized = False
                 return False
         except serial.serialutil.SerialTimeoutException as timeOutEx:
             logging.error("SerialComputer::SendData() serial exception 1:")
             logging.error(timeOutEx)
+            self.isInitialized = False
             return False
         except Exception as ex:
             logging.error("SerialComputer::SendData() serial exception 2:")
             logging.error(ex)
+            self.isInitialized = False
             return False
 
     def GetData(self):
