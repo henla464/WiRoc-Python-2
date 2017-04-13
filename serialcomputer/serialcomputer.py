@@ -122,10 +122,6 @@ class SerialComputer:
                     continue
             if startFound:
                 receivedData.append(bytesRead[0])
-                #if len(receivedData) == 2:
-                #    if receivedData[0] == receivedData[1]:
-                #        # Double STX sent, remove first
-                #        receivedData = receivedData[1:]
                 if len(receivedData) == 3:
                     expectedLength = receivedData[2] + 6
                 if len(receivedData) == expectedLength:
