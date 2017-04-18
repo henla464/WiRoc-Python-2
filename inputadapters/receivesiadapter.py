@@ -70,16 +70,18 @@ class ReceiveSIAdapter(object):
         if self.GetIsInitialized() and self.siSerial.is_open:
             return True
         logging.debug("ReceiveSIAdapter::Init() SI Station port name: " + self.portName)
+        self.siSerial.close()
         self.siSerial.baudrate = 38400
         self.siSerial.port = self.portName
-        if not self.siSerial.is_open:
-            try:
-                self.siSerial.open()
-                logging.debug("ReceiveSIAdapter::Init() opened serial")
-            except Exception as ex:
-                logging.error("ReceiveSIAdapter::Init() opening serial exception:")
-                logging.error(ex)
-                return False
+        try:
+            self.siSerial.open()
+            self.siSerial.reset_input_buffer()
+            self.siSerial.reset_output_buffer()
+            logging.debug("ReceiveSIAdapter::Init() opened serial")
+        except Exception as ex:
+            logging.error("ReceiveSIAdapter::Init() opening serial exception:")
+            logging.error(ex)
+            return False
 
         if self.siSerial.is_open:
             #set master - mode to direct
@@ -89,10 +91,12 @@ class ReceiveSIAdapter(object):
             sleep(0.2)
             expectedLength = 3
             response = bytearray()
+            allBytesReceived = bytearray()
             startFound = False
             while self.siSerial.in_waiting > 0:
                 # print("looking for stx: ", end="")
                 bytesRead = self.siSerial.read(1)
+                allBytesReceived.append(bytesRead[0])
                 #print(bytesRead)
                 if bytesRead[0] == STX:
                     startFound = True
@@ -116,22 +120,25 @@ class ReceiveSIAdapter(object):
                 self.isInitialized = True
                 return True
             else:
-                logging.info("ReceiveSIAdapter::Init() received: " + str(response))
+                logging.info("ReceiveSIAdapter::Init() received: " + str(allBytesReceived))
 
             # something wrong, try other baudrate
             self.siSerial.close()
             self.siSerial.port = self.portName
             self.siSerial.baudrate = 4800
             self.siSerial.open()
+            self.siSerial.reset_input_buffer()
+            self.siSerial.reset_output_buffer()
             self.siSerial.write(msdMode)
             sleep(0.2)
             expectedLength = 3
             response = bytearray()
+            allBytesReceived = bytearray()
             startFound = False
             while self.siSerial.in_waiting > 0:
                 # print("looking for stx: ", end="")
                 bytesRead = self.siSerial.read(1)
-
+                allBytesReceived.append(bytesRead[0])
                 if bytesRead[0] == STX:
                     startFound = True
                     if len(response)==1:
@@ -154,7 +161,7 @@ class ReceiveSIAdapter(object):
                 self.isInitialized = True
                 return True
             else:
-                logging.info("ReceiveSIAdapter::Init() received: " + str(response))
+                logging.info("ReceiveSIAdapter::Init() received: " + str(allBytesReceived))
 
         logging.error("ReceiveSIAdapter::Init() could not communicate with master station")
         return False
@@ -197,6 +204,14 @@ class ReceiveSIAdapter(object):
         if receivedData[1] == 0xD3:
             logging.debug("ReceiveSIAdapter::GetData() SI message received!")
             return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}
+        elif receivedData[1] == 0x01:
+            checksumOK = self.IsChecksumOK(receivedData)
+            if checksumOK:
+                logging.debug("ReceiveSIAdapter::GetData() I am a WiRoc message received!")
+                self.siSerial.write(receivedData)
+            else:
+                logging.error("ReceiveSIAdapter::GetData() I am a WiRoc message, WRONG CHECKSUM!")
+            return None
         else:
             logging.debug("ReceiveSIAdapter::GetData() Unknown SI message received!")
             return None

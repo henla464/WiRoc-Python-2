@@ -97,6 +97,12 @@ class ReceiveSerialComputerAdapter(object):
                 replyMessage.append(0x03) #station number 3E7 == 999
                 replyMessage.append(0xE7)
                 replyMessage.append(0x4D) #direct communication
+            elif commandCode == 0x01:
+                # other WiRoc replied to the I'm a WiRoc device message
+                # disable charging to avoid draining the other WiRocs battery
+                # remember time when charging disabled, in settings. restore in reconfigure
+                logging.debug("ReceiveSerialComputerAdapter::GetData() Disable charging...")
+                abc = 1
 
             crc = Utils.CalculateCRC(replyMessage[1:])
             replyMessage.append(crc[0])  # crc1
