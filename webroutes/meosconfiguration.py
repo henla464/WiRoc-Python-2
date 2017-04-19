@@ -10,7 +10,7 @@ import jsonpickle
 
 @app.route('/meosconfiguration/sendtomeosenabled/', methods=['GET'])
 def GetSendToMeosEnabled():
-    enabled = SettingsClass.GetSendToMeosEnabled()
+    enabled = SettingsClass.GetSendToMeosEnabled(False)
     return jsonpickle.encode(MicroMock(SendToMeosEnabled=enabled))
 
 @app.route('/meosconfiguration/sendtomeosenabled/<enabled>/', methods=['GET'])
@@ -26,7 +26,7 @@ def SetSendToMeosEnabled(enabled):
 
 @app.route('/meosconfiguration/sendtomeosip/', methods=['GET'])
 def GetSendToMeosIP():
-   ip = SettingsClass.GetSendToMeosIP()
+   ip = SettingsClass.GetSendToMeosIP(False)
    return jsonpickle.encode(MicroMock(SendToMeosIP=ip))
 
 @app.route('/meosconfiguration/sendtomeosip/<ip>/', methods=['GET'])
@@ -43,7 +43,7 @@ def SetSendToMeosIP(ip):
 
 @app.route('/meosconfiguration/sendtomeosipport/', methods=['GET'])
 def getSendToMeosIPPort():
-   port = SettingsClass.GetSendToMeosIPPort()
+   port = SettingsClass.GetSendToMeosIPPort(False)
    return jsonpickle.encode(MicroMock(SendToMeosIPPort=port))
 
 

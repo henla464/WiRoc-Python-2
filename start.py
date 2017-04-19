@@ -133,7 +133,7 @@ class Main:
         while True:
 
             if self.timeToReconfigure():
-                SettingsClass.IsDirty("StatusMessageInterval", True) #force check dirty in db
+                SettingsClass.IsDirty("StatusMessageInterval", True, True) #force check dirty in db
                 #SettingsClass.SetMessagesToSendExists(True)
                 self.archiveFailedMessages()
                 self.displayChannel()

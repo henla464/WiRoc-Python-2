@@ -10,7 +10,7 @@ import jsonpickle
 
 @app.route('/radioconfiguration/channel/', methods=['GET'])
 def getChannel():
-    channel = SettingsClass.GetChannel()
+    channel = SettingsClass.GetChannel(False)
     return jsonpickle.encode(MicroMock(Channel=channel))
 
 @app.route('/radioconfiguration/channel/<int:channel>/', methods=['GET'])
@@ -26,7 +26,7 @@ def setChannel(channel):
 
 @app.route('/radioconfiguration/datarate/', methods=['GET'])
 def getDataRate():
-   dataRate = SettingsClass.GetDataRate()
+   dataRate = SettingsClass.GetDataRate(False)
    return jsonpickle.encode(MicroMock(DataRate=dataRate))
 
 @app.route('/radioconfiguration/datarate/<int:dataRate>/', methods=['GET'])
@@ -52,7 +52,7 @@ def setDataRate(dataRate):
 
 @app.route('/radioconfiguration/acknowledgementrequested/', methods=['GET'])
 def getAcknowledgementRequested():
-   acksRequested = SettingsClass.GetAcknowledgementRequested()
+   acksRequested = SettingsClass.GetAcknowledgementRequested(False)
    return jsonpickle.encode(MicroMock(AcknowledgementRequested=acksRequested))
 
 

@@ -9,7 +9,6 @@ class SendToMeosAdapter(object):
 
     @staticmethod
     def CreateInstances():
-        SettingsClass.GetSendToMeosEnabled()
         if len(SendToMeosAdapter.Instances) == 0:
             SendToMeosAdapter.Instances.append(SendToMeosAdapter('meos1'))
             return True

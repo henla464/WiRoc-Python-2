@@ -102,6 +102,6 @@ def getPunches():
 
 @app.route('/misc/wirocdevicename/', methods=['GET'])
 def getWiRocDeviceName():
-    deviceName = SettingsClass.GetWiRocDeviceName()
+    deviceName = SettingsClass.GetWiRocDeviceName(False)
     return jsonpickle.encode(MicroMock(WiRocDeviceName=deviceName))
 
