@@ -60,7 +60,7 @@ class SettingsClass(object):
             SettingsClass.wiRocDeviceName = None
 
         if markDirtyInDatabase:
-            SettingsClass.SetSetting("ConfigDirty", True)
+            SettingsClass.SetSetting("ConfigDirty", "1")
 
     @staticmethod
     def IsDirty(settingsName, checkSettingForDirty = True):

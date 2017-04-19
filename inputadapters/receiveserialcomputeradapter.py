@@ -103,6 +103,10 @@ class ReceiveSerialComputerAdapter(object):
                 # remember time when charging disabled, in settings. restore in reconfigure
                 logging.debug("ReceiveSerialComputerAdapter::GetData() Disable charging...")
                 abc = 1
+                return None
+            else:
+                logging.debug("ReceiveSerialComputerAdapter::GetData() Unknown command received")
+                return None
 
             crc = Utils.CalculateCRC(replyMessage[1:])
             replyMessage.append(crc[0])  # crc1
