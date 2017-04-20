@@ -60,12 +60,16 @@ class SettingsClass(object):
 
         if markDirtyInDatabase:
             SettingsClass.SetSetting("ConfigDirty", "1")
+            SettingsClass.SetSetting("WebConfigDirty", "1")
 
     @staticmethod
-    def IsDirty(settingsName, checkSettingForDirty = True, resetConfigDirty = True):
+    def IsDirty(settingsName, checkSettingForDirty = True, mainConfigDirty = True):
         isDirty = "0"
         if checkSettingForDirty:
-            isDirty = SettingsClass.GetSetting("ConfigDirty")
+            if mainConfigDirty:
+                isDirty = SettingsClass.GetSetting("ConfigDirty")
+            else:
+                isDirty = SettingsClass.GetSetting("WebConfigDirty")
         if isDirty is not None and isDirty == "1":
             SettingsClass.channel = None
             SettingsClass.dataRate = None
@@ -82,8 +86,10 @@ class SettingsClass(object):
             SettingsClass.sendStatusMessages = None
             SettingsClass.sendToBlenoEnabled = None
             SettingsClass.wiRocDeviceName = None
-            if resetConfigDirty:
+            if mainConfigDirty:
                 SettingsClass.SetSetting("ConfigDirty", "0")
+            else:
+                SettingsClass.SetSetting("WebConfigDirty", "0")
             return True
         else:
             if settingsName == 'StatusMessageInterval':
@@ -138,8 +144,8 @@ class SettingsClass(object):
         return sd.Value
 
     @staticmethod
-    def GetChannel(resetConfigDirty = True):
-        if SettingsClass.IsDirty("Channel", True, resetConfigDirty):
+    def GetChannel(mainConfigDirty = True):
+        if SettingsClass.IsDirty("Channel", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('Channel')
             if sett is None:
                 SettingsClass.channel = 1
@@ -148,8 +154,8 @@ class SettingsClass(object):
         return SettingsClass.channel
 
     @staticmethod
-    def GetDataRate(resetConfigDirty = True):
-        if SettingsClass.IsDirty("DataRate", True, resetConfigDirty):
+    def GetDataRate(mainConfigDirty = True):
+        if SettingsClass.IsDirty("DataRate", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('DataRate')
             if sett is None:
                 SettingsClass.dataRate = 586
@@ -158,8 +164,8 @@ class SettingsClass(object):
         return SettingsClass.dataRate
 
     @staticmethod
-    def GetAcknowledgementRequested(resetConfigDirty = True):
-        if SettingsClass.IsDirty("AcknowledgementRequested", True, resetConfigDirty):
+    def GetAcknowledgementRequested(mainConfigDirty = True):
+        if SettingsClass.IsDirty("AcknowledgementRequested", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
             if sett is None:
                 SettingsClass.acknowledgementRequested = False
@@ -168,8 +174,8 @@ class SettingsClass(object):
         return SettingsClass.acknowledgementRequested
 
     @staticmethod
-    def GetSendToMeosEnabled(resetConfigDirty = True):
-        if SettingsClass.IsDirty("SendToMeosEnabled", True, resetConfigDirty):
+    def GetSendToMeosEnabled(mainConfigDirty = True):
+        if SettingsClass.IsDirty("SendToMeosEnabled", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('SendToMeosEnabled')
             if sett is None:
                 SettingsClass.sendToMeosEnabled = False
@@ -178,8 +184,8 @@ class SettingsClass(object):
         return SettingsClass.sendToMeosEnabled
 
     @staticmethod
-    def GetSendToMeosIP(resetConfigDirty = True):
-        if SettingsClass.IsDirty("SendToMeosIP", True, resetConfigDirty):
+    def GetSendToMeosIP(mainConfigDirty = True):
+        if SettingsClass.IsDirty("SendToMeosIP", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('SendToMeosIP')
             if sett is None:
                 SettingsClass.sendToMeosIP = None
@@ -190,8 +196,8 @@ class SettingsClass(object):
 
 
     @staticmethod
-    def GetSendToMeosIPPort(resetConfigDirty = True):
-        if SettingsClass.IsDirty("SendToMeosIPPort", True, resetConfigDirty):
+    def GetSendToMeosIPPort(mainConfigDirty = True):
+        if SettingsClass.IsDirty("SendToMeosIPPort", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('SendToMeosIPPort')
             if sett is None:
                 SettingsClass.sendToMeosIPPort = 10000
@@ -203,8 +209,8 @@ class SettingsClass(object):
         return SettingsClass.sendToMeosIPPort
 
     @staticmethod
-    def GetSendToBlenoEnabled(resetConfigDirty = True):
-        if SettingsClass.IsDirty("SendToBlenoEnabled", True, resetConfigDirty):
+    def GetSendToBlenoEnabled(mainConfigDirty = True):
+        if SettingsClass.IsDirty("SendToBlenoEnabled", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('SendToBlenoEnabled')
             if sett is None:
                 SettingsClass.sendToBlenoEnabled = False
@@ -213,8 +219,8 @@ class SettingsClass(object):
         return SettingsClass.sendToBlenoEnabled
 
     @staticmethod
-    def GetPowerCycle(resetConfigDirty = True):
-        if SettingsClass.IsDirty("PowerCycle", True, resetConfigDirty):
+    def GetPowerCycle(mainConfigDirty = True):
+        if SettingsClass.IsDirty("PowerCycle", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('PowerCycle')
             if sett is None:
                 SettingsClass.IncrementPowerCycle()
@@ -235,8 +241,8 @@ class SettingsClass(object):
         DatabaseHelper.save_setting(sett)
 
     @staticmethod
-    def GetReceiveSIAdapterActive(resetConfigDirty = True):
-        if SettingsClass.IsDirty("ReceiveSIAdapterActive", True, resetConfigDirty):
+    def GetReceiveSIAdapterActive(mainConfigDirty = True):
+        if SettingsClass.IsDirty("ReceiveSIAdapterActive", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('ReceiveSIAdapterActive')
             if sett is None:
                 SettingsClass.receiveSIAdapterActive = False
@@ -254,8 +260,8 @@ class SettingsClass(object):
 
 
     @staticmethod
-    def GetSendSerialAdapterActive(resetConfigDirty = True):
-        if SettingsClass.IsDirty("SendSerialAdapterActive", True, resetConfigDirty):
+    def GetSendSerialAdapterActive(mainConfigDirty = True):
+        if SettingsClass.IsDirty("SendSerialAdapterActive", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('SendSerialAdapterActive')
             if sett is None:
                 SettingsClass.SetSendSerialAdapterActive(False)
@@ -284,8 +290,8 @@ class SettingsClass(object):
             return "SEND"
 
     @staticmethod
-    def GetFirstRetryDelay(resetConfigDirty = True):
-        if SettingsClass.IsDirty("FirstRetryDelay", True, resetConfigDirty):
+    def GetFirstRetryDelay(mainConfigDirty = True):
+        if SettingsClass.IsDirty("FirstRetryDelay", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('FirstRetryDelay')
             if sett is None:
                 SettingsClass.firstRetryDelay = 20
@@ -297,8 +303,8 @@ class SettingsClass(object):
         return SettingsClass.firstRetryDelay
 
     @staticmethod
-    def GetSecondRetryDelay(resetConfigDirty = True):
-        if SettingsClass.IsDirty("SecondRetryDelay", True, resetConfigDirty):
+    def GetSecondRetryDelay(mainConfigDirty = True):
+        if SettingsClass.IsDirty("SecondRetryDelay", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('SecondRetryDelay')
             if sett is None:
                 SettingsClass.secondRetryDelay = 20
@@ -310,8 +316,8 @@ class SettingsClass(object):
         return SettingsClass.secondRetryDelay
 
     @staticmethod
-    def GetSendStatusMessages(resetConfigDirty = True):
-        if SettingsClass.IsDirty("SendStatusMessages", True, resetConfigDirty):
+    def GetSendStatusMessages(mainConfigDirty = True):
+        if SettingsClass.IsDirty("SendStatusMessages", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('SendStatusMessages')
             if sett is None:
                 SettingsClass.sendStatusMessages = True
@@ -351,8 +357,8 @@ class SettingsClass(object):
         return SettingsClass.statusMessageInterval
 
     @staticmethod
-    def GetWiRocDeviceName(resetConfigDirty = True):
-        if SettingsClass.IsDirty("WiRocDeviceName", True, resetConfigDirty):
+    def GetWiRocDeviceName(mainConfigDirty = True):
+        if SettingsClass.IsDirty("WiRocDeviceName", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
             if sett is None:
                 SettingsClass.wiRocDeviceName = None
