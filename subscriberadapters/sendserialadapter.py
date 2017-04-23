@@ -110,6 +110,9 @@ class SendSerialAdapter(object):
     def Init(self):
         return self.serialComputer.Init()
 
+    def IsReadyToSend(self):
+        return True
+
     # messageData is a bytearray
     def SendData(self, messageData):
         if self.serialComputer.SendData(messageData):

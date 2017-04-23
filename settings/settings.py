@@ -8,6 +8,7 @@ class SettingsClass(object):
     RadioIntervalLengthMicroSeconds = [4000000, 4000000, 4000000, 4000000, 4000000, 4000000]
     timeOfLastMessageAdded = time.monotonic()
     statusMessageInterval = None
+    loraAckMessageWaitTimeout = None
     MessagesToSendExists = True
     channel = None
     dataRate = None
@@ -51,10 +52,12 @@ class SettingsClass(object):
             SettingsClass.secondRetryDelay = None
         if settingsName == 'StatusMessageInterval':
             SettingsClass.statusMessageInterval = None
-        if settingsName == 'SendStatusMessages':
-            SettingsClass.sendStatusMessages = None
+        if settingsName == 'LoraAckMessageWaitTimeout':
+            SettingsClass.loraAckMessageWaitTimeout = None
         if settingsName == 'SendToBlenoEnabled':
             SettingsClass.sendToBlenoEnabled = None
+        if settingsName == 'WiRocDeviceName':
+            SettingsClass.wiRocDeviceName = None
         if settingsName == 'WiRocDeviceName':
             SettingsClass.wiRocDeviceName = None
 
@@ -83,6 +86,7 @@ class SettingsClass(object):
             SettingsClass.firstRetryDelay = None
             SettingsClass.secondRetryDelay = None
             SettingsClass.statusMessageInterval = None
+            SettingsClass.loraAckMessageWaitTimeout = None
             SettingsClass.sendStatusMessages = None
             SettingsClass.sendToBlenoEnabled = None
             SettingsClass.wiRocDeviceName = None
@@ -92,8 +96,6 @@ class SettingsClass(object):
                 SettingsClass.SetSetting("WebConfigDirty", "0")
             return True
         else:
-            if settingsName == 'StatusMessageInterval':
-                return SettingsClass.statusMessageInterval is None
             if settingsName == 'Channel':
                 return SettingsClass.channel is None
             if settingsName == 'DataRate':
@@ -116,6 +118,10 @@ class SettingsClass(object):
                 return SettingsClass.firstRetryDelay is None
             if settingsName == 'SecondRetryDelay':
                 return SettingsClass.secondRetryDelay is None
+            if settingsName == 'StatusMessageInterval':
+                return SettingsClass.statusMessageInterval is None
+            if settingsName == 'LoraAckMessageWaitTimeout':
+                return SettingsClass.loraAckMessageWaitTimeout is None
             if settingsName == 'SendStatusMessages':
                 return SettingsClass.sendStatusMessages is None
             if settingsName == 'SendToBlenoEnabled':
@@ -341,6 +347,21 @@ class SettingsClass(object):
     def GetForceReconfigure():
         return SettingsClass.forceReconfigure
 
+    currentTime = time.monotonic()
+
+    @staticmethod
+    def GetLoraAckMessageWaitTimeout():
+        if SettingsClass.loraAckMessageWaitTimeout is None:  # skip isDirty call, check directly
+            sett = DatabaseHelper.get_setting_by_key('LoraAckMessageWaitTimeout')
+            if sett is None:
+                SettingsClass.SetSetting('LoraAckMessageWaitTimeout', 3.0)
+                SettingsClass.loraAckMessageWaitTimeout = 3.0
+            else:
+                try:
+                    SettingsClass.loraAckMessageWaitTimeout = float(sett.Value)
+                except ValueError:
+                    SettingsClass.loraAckMessageWaitTimeout = 3.0
+        return SettingsClass.loraAckMessageWaitTimeout
 
     @staticmethod
     def GetStatusMessageInterval():

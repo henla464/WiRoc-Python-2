@@ -72,6 +72,9 @@ class SendToBlenoAdapter(object):
         self.isInitialized = True
         return True
 
+    def IsReadyToSend(self):
+        return True
+
     # messageData is a bytearray
     def SendData(self, messageData):
         punchData = PunchData(messageData)

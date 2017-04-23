@@ -280,13 +280,11 @@ class DatabaseHelper:
 
     @classmethod
     def archive_message_subscription_after_ack(cls, messageNumber):
-        thirtySecondsAgo = datetime.now() - timedelta(seconds=30)
-        rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData,
-                                                          ("SELECT MessageSubscriptionData.* FROM "
-                                                           "MessageSubscriptionData WHERE "
-                                                           "CustomData = " + str(messageNumber) + " AND "
-                                                           "SentDate > '" + str(thirtySecondsAgo) + "' "
-                                                           "ORDER BY SentDate desc LIMIT 1"))
+        sixtySecondsAgo = datetime.now() - timedelta(seconds=60)
+        sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData WHERE "
+                                       "CustomData = '%s' AND  SentDate > '%s' "
+                                        "ORDER BY SentDate desc LIMIT 1") % (messageNumber, sixtySecondsAgo)
+        rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql)
 
         if len(rows) > 0:
             msd = rows[0]
@@ -355,16 +353,6 @@ class DatabaseHelper:
               "PowerCycleCreated, CreatedDate, ChecksumOK, InstanceName, MessageTypeId FROM " \
               "MessageBoxData"
         cls.db.execute_SQL(sql)
-        #messageBoxData = cls.db.get_table_object(MessageBoxData, msgBoxId)
-        #messageBoxArchive = MessageBoxArchiveData()
-        #messageBoxArchive.OrigId = messageBoxData.id
-        #messageBoxArchive.MessageData = messageBoxData.MessageData
-        #messageBoxArchive.PowerCycleCreated = messageBoxData.PowerCycleCreated
-        #messageBoxArchive.CreatedDate = messageBoxData.CreatedDate
-        #messageBoxArchive.ChecksumOK = messageBoxData.ChecksumOK
-        #messageBoxArchive.InstanceName = messageBoxData.InstanceName
-        #messageBoxArchive.MessageTypeId = messageBoxData.MessageTypeId
-        #cls.db.save_table_object(messageBoxArchive, False)
         cls.db.delete_table_object(MessageBoxData, msgBoxId)
 
 #InputAdapterInstances

@@ -118,6 +118,9 @@ class SendLoraAdapter(object):
             return True
         return self.loraRadio.Init(channel, loraDataRate)
 
+    def IsReadyToSend(self):
+        return self.loraRadio.IsReadyToSend()
+
     # messageData is a bytearray
     def SendData(self, messageData):
         return self.loraRadio.SendData(messageData)

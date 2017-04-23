@@ -79,6 +79,9 @@ class SendToMeosAdapter(object):
         self.isInitialized = True
         return True
 
+    def IsReadyToSend(self):
+        return True
+
     # messageData is a bytearray
     def SendData(self, messageData):
         if self.sock is None:

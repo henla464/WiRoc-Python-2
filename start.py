@@ -192,29 +192,30 @@ class Main:
                                     msgSub.SubscriberTypeName == subAdapter.GetTypeName()):
                                 adapterFound = True
 
-                                # transform the data before sending
-                                transformClass = subAdapter.GetTransform(msgSub.TransformName)
-                                transformedData = transformClass.Transform(msgSub.MessageData)
-                                if transformedData is not None:
-                                    if transformedData["CustomData"] is not None:
-                                        DatabaseHelper.update_customdata(msgSub.id, transformedData["CustomData"])
+                                if subAdapter.IsReadyToSend():
+                                    # transform the data before sending
+                                    transformClass = subAdapter.GetTransform(msgSub.TransformName)
+                                    transformedData = transformClass.Transform(msgSub.MessageData)
+                                    if transformedData is not None:
+                                        if transformedData["CustomData"] is not None:
+                                            DatabaseHelper.update_customdata(msgSub.id, transformedData["CustomData"])
 
-                                    success = subAdapter.SendData(transformedData["Data"])
-                                    if success:
-                                        logging.info("Start::Run() Message sent to " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
-                                        if msgSub.DeleteAfterSent: # move msgsub to archive
-                                            DatabaseHelper.archive_message_subscription_view_after_sent(msgSub)
-                                        else: # set SentDate and increment NoOfSendTries
-                                            DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub)
+                                        success = subAdapter.SendData(transformedData["Data"])
+                                        if success:
+                                            logging.info("Start::Run() Message sent to " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
+                                            if msgSub.DeleteAfterSent: # move msgsub to archive
+                                                DatabaseHelper.archive_message_subscription_view_after_sent(msgSub)
+                                            else: # set SentDate and increment NoOfSendTries
+                                                DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub)
+                                        else:
+                                            # failed to send
+                                            logging.warning("Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
+                                            DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub)
                                     else:
-                                        # failed to send
-                                        logging.warning("Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
-                                        DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub)
-                                else:
-                                    # shouldn't be sent, so just archive the message subscription
-                                    # (Probably a Lora message that doesn't request ack
-                                    logging.debug("Start::Run() " + msgSub.TransformName + " return None so not sent")
-                                    DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
+                                        # shouldn't be sent, so just archive the message subscription
+                                        # (Probably a Lora message that doesn't request ack
+                                        logging.debug("Start::Run() " + msgSub.TransformName + " return None so not sent")
+                                        DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
                         if not adapterFound:
                             logging.warning("Start::Run() Send adapter not found for " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName)
                             DatabaseHelper.increment_find_adapter_tries_and_set_find_adapter_try_date(msgSub)

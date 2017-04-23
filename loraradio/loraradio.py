@@ -7,6 +7,7 @@ from constants import *
 from datamodel.datamodel import LoraRadioMessage
 from datamodel.db_helper import DatabaseHelper
 from chipGPIO.chipGPIO import *
+from settings.settings import SettingsClass
 import socket
 
 class LoraRadio:
@@ -28,6 +29,7 @@ class LoraRadio:
         self.isInitialized = False
         self.channel = None
         self.loraDataRate = None
+        self.lastMessageSentDate = None
 
     def GetIsInitialized(self, channel, dataRate):
         return self.isInitialized and \
@@ -160,8 +162,21 @@ class LoraRadio:
                 logging.error("LoraRadio::Init() Error configuring")
                 return False
 
+    # delay sending next message if we are waiting for an ack message
+    def IsReadyToSend(self):
+        if SettingsClass.GetAcknowledgementRequested():
+            currentTime = time.monotonic()
+            if self.lastMessageSentDate is None or\
+                self.lastMessageSentDate < currentTime - SettingsClass.GetLoraAckMessageWaitTimeout():
+                return True
+            else:
+                return False
+        else:
+            return True
+
     def SendData(self, messageData):
         #print(binascii.hexlify(messageData))
+        self.lastMessageSentDate =  time.monotonic()
         self.radioSerial.write(messageData)
         return True
 
@@ -184,6 +199,9 @@ class LoraRadio:
                     time.sleep(0.05)
                     if self.radioSerial.in_waiting == 0:
                         break
+
+        # reset so that a messages can be sent. The received message could be an ack that we were waiting for
+        self.lastMessageSentDate = None
 
         if not self.receivedMessage.IsFilled():
             # throw away the data, isn't correct
