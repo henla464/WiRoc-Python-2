@@ -19,7 +19,7 @@ def SetSendToMeosEnabled(enabled):
     if sd is None:
         sd = SettingData()
         sd.Key = 'SendToMeosEnabled'
-    sd.Value = True if enabled.lower() == 'true' else 'False'
+    sd.Value = '1' if enabled.lower() == 'true' else '0'
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetConfigurationDirty('SendToMeosEnabled', True)
     return jsonpickle.encode(MicroMock(SendToMeosEnabled=sd.Value.lower()=='true'))

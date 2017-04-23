@@ -20,4 +20,4 @@ class LoraToMeosTransform(object):
     def Transform(payloadData):
         loraHeaderSize = datamodel.datamodel.LoraRadioMessage.GetHeaderSize()
         siPayloadData = payloadData[loraHeaderSize:]
-        return Utils.GetMeosDataFromSIData(siPayloadData)
+        return {"Data": Utils.GetMeosDataFromSIData(siPayloadData), "CustomData": None}

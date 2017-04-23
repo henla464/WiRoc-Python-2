@@ -14,4 +14,4 @@ class LoraToSITransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(payloadData):
-        return payloadData[5:]
+        return {"Data":payloadData[5:], "CustomData": None}

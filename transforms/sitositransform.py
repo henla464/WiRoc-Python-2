@@ -16,4 +16,4 @@ class SIToSITransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(payloadData):
-        return payloadData
+        return {"Data":payloadData, "CustomData": None}

@@ -11,7 +11,6 @@ import cProfile
 from chipGPIO.chipGPIO import *
 import socket
 from itertools import repeat
-from utils.utils import Utils
 
 class Main:
     def __init__(self):
@@ -116,9 +115,6 @@ class Main:
                 self.messagesToSendExists = False
             else:
                 msgSubsToSend = [msgSub for msgSub in msgSubscriptions if self.timeToSendMessage(msgSub)]
-                #for msgSub in msgSubscriptions:
-                #    if self.timeToSendMessage(msgSub):
-                #        msgSubsToSend.append(msgSub)
         return msgSubsToSend
 
     def archiveFailedMessages(self):
@@ -200,7 +196,10 @@ class Main:
                                 transformClass = subAdapter.GetTransform(msgSub.TransformName)
                                 transformedData = transformClass.Transform(msgSub.MessageData)
                                 if transformedData is not None:
-                                    success = subAdapter.SendData(transformedData)
+                                    if transformedData["CustomData"] is not None:
+                                        DatabaseHelper.update_customdata(msgSub.id, transformedData["CustomData"])
+
+                                    success = subAdapter.SendData(transformedData["Data"])
                                     if success:
                                         logging.info("Start::Run() Message sent to " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
                                         if msgSub.DeleteAfterSent: # move msgsub to archive

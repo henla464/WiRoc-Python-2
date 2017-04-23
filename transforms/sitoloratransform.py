@@ -1,4 +1,5 @@
 from datamodel.datamodel import LoraRadioMessage
+from settings.settings import SettingsClass
 
 class SIToLoraTransform(object):
 
@@ -20,7 +21,7 @@ class SIToLoraTransform(object):
         payloadDataLength = len(payloadData)
         messageType = LoraRadioMessage.MessageTypeSIPunch
         batteryLow = False
-        ackReq = False
+        ackReq = SettingsClass.GetAcknowledgementRequested()
         loraMessage = LoraRadioMessage(payloadDataLength, messageType, batteryLow, ackReq)
         loraMessage.AddPayload(payloadData)
-        return loraMessage.GetByteArray()
+        return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageNumber()}

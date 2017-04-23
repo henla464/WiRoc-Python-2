@@ -18,4 +18,4 @@ class SIToMeosTransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(payloadData):
-        return Utils.GetMeosDataFromSIData(payloadData)
+        return {"Data": Utils.GetMeosDataFromSIData(payloadData), "CustomData": None}

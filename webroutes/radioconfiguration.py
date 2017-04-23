@@ -62,7 +62,7 @@ def setAcknowledgement(ack):
     if sd is None:
         sd = SettingData()
         sd.Key = 'AcknowledgementRequested'
-    sd.Value = True if ack.lower() == 'true' else 'False'
+    sd.Value = '1' if ack.lower() == 'true' else '0'
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetConfigurationDirty('AcknowledgementRequested', True)
     return jsonpickle.encode(MicroMock(AcknowledgementRequested=sd.Value.lower()=='true'))

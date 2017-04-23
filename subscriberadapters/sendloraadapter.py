@@ -46,7 +46,8 @@ class SendLoraAdapter(object):
         if len(SendLoraAdapter.Instances) > 0:
             isInitialized = SendLoraAdapter.Instances[0].GetIsInitialized()
             deleteAfterSent = SendLoraAdapter.GetDeleteAfterSent()
-            shouldSubscriptionBeEnabled = isInitialized and SettingsClass.GetLoraMode() == "SEND"
+            shouldSubscriptionBeEnabled = isInitialized
+            #and SettingsClass.GetLoraMode() == "SEND"
             if (SendLoraAdapter.SubscriptionsEnabled != shouldSubscriptionBeEnabled or
                 SendLoraAdapter.DeleteAfterSent != deleteAfterSent):
                 SendLoraAdapter.SubscriptionsEnabled = shouldSubscriptionBeEnabled

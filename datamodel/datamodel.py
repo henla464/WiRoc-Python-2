@@ -235,6 +235,9 @@ class LoraRadioMessage(object):
         else:
             self.messageData = bytearray()
 
+    def GetMessageNumber(self):
+        return self.messageData[3]
+
     @staticmethod
     def getHeaderFormatString():
         return "<ccccc"
