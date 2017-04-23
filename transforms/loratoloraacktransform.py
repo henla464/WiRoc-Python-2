@@ -1,4 +1,5 @@
 from datamodel.datamodel import LoraRadioMessage
+import time
 
 class LoraToLoraAckTransform(object):
 
@@ -19,6 +20,7 @@ class LoraToLoraAckTransform(object):
     def Transform(payloadData):
         ackRequested = (payloadData[2] & 0x80) > 0
         if ackRequested:
+            time.sleep(0.05)
             messageNumberToAck = payloadData[3]
             messageType = LoraRadioMessage.MessageTypeLoraAck
             loraMessage = LoraRadioMessage(1, messageType, False, False)

@@ -105,8 +105,8 @@ class ReceiveLoraAdapter(object):
             if isChecksumOK:
                 messageType = loraMessage.GetMessageType()
                 if messageType == 1: #ack
-                    messageNumber = loraMessage.GetMessageNumber()
-                    return {"MessageType": "ACK", "MessageNumber": messageNumber, "ChecksumOK": True}
+                    messageNumberAcked =  loraMessage.GetByteArray()[loraMessage.GetHeaderSize()]
+                    return {"MessageType": "ACK", "MessageNumber": messageNumberAcked, "ChecksumOK": True}
                 else:
                     return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": True}
             else:
