@@ -3,6 +3,7 @@ import socket, os
 import logging
 from constants import *
 from utils.utils import Utils
+from battery import Battery
 
 class ReceiveSerialComputerAdapter(object):
 
@@ -100,9 +101,15 @@ class ReceiveSerialComputerAdapter(object):
             elif commandCode == 0x01:
                 # other WiRoc replied to the I'm a WiRoc device message
                 # disable charging to avoid draining the other WiRocs battery
-                # remember time when charging disabled, in settings. restore in reconfigure
-                logging.debug("ReceiveSerialComputerAdapter::GetData() Disable charging...")
-                abc = 1
+                # or slow the charging. Battery class remember time when charging disabled
+                # and restores it in reconfigure call to Tick
+                if data[3] == 0x01:
+                    # Host WiRoc has power supplied so lets charge too, but slowly
+                    logging.debug("ReceiveSerialComputerAdapter::GetData() Change to slow charging...")
+                    Battery.SetSlowCharging()
+                else:
+                    logging.debug("ReceiveSerialComputerAdapter::GetData() Disable charging...")
+                    Battery.DisableCharging()
                 return None
             else:
                 logging.debug("ReceiveSerialComputerAdapter::GetData() Unknown command received")

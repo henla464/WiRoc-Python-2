@@ -270,7 +270,7 @@ class SettingsClass(object):
         if SettingsClass.IsDirty("SendSerialAdapterActive", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('SendSerialAdapterActive')
             if sett is None:
-                SettingsClass.SetSendSerialAdapterActive(False)
+                SettingsClass.SetSendSerialAdapterActive("0")
                 SettingsClass.sendSerialAdapterActive = False
             else:
                 SettingsClass.sendSerialAdapterActive = (sett.Value == "1")
@@ -386,3 +386,7 @@ class SettingsClass(object):
             else:
                 SettingsClass.wiRocDeviceName = sett.Value
         return SettingsClass.wiRocDeviceName
+
+    @staticmethod
+    def GetReconfigureInterval():
+        return 10

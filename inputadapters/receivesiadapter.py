@@ -4,6 +4,7 @@ import logging
 from constants import *
 from time import sleep
 from utils.utils import Utils
+from battery import Battery
 import serial.tools.list_ports
 
 class ReceiveSIAdapter(object):
@@ -208,7 +209,12 @@ class ReceiveSIAdapter(object):
             checksumOK = self.IsChecksumOK(receivedData)
             if checksumOK:
                 logging.debug("ReceiveSIAdapter::GetData() I am a WiRoc message received!")
-                self.siSerial.write(receivedData)
+                powerSupplied = int(Battery.IsPowerSupplied())
+                imAWiRocReply = bytearray([0x02, 0x01, 0x01, powerSupplied, 0x00, 0x00, 0x03])
+                calculatedCRC = Utils.CalculateCRC(imAWiRocReply[1:-3])
+                imAWiRocReply[4] = calculatedCRC[0]
+                imAWiRocReply[5] = calculatedCRC[1]
+                self.siSerial.write(imAWiRocReply)
             else:
                 logging.error("ReceiveSIAdapter::GetData() I am a WiRoc message, WRONG CHECKSUM!")
             return None

@@ -127,7 +127,8 @@ class DatabaseHelper:
     def get_subscribers(cls):
         rows = cls.db.get_table_objects_by_SQL(SubscriberView, "SELECT "
             "SubscriberData.id, SubscriberData.TypeName, SubscriberData.InstanceName, "
-            "SubscriptionData.Enabled, MsgIn.Name MessageInName, MsgOut.Name MessageOutName "
+            "SubscriptionData.Enabled, MsgIn.Name MessageInName, MsgOut.Name MessageOutName, "
+            "TransformData.Enabled as TransformEnabled "
             "from SubscriptionData JOIN SubscriberData "
             "ON SubscriptionData.SubscriberId = SubscriberData.Id "
             "JOIN TransformData ON TransformData.Id = SubscriptionData.TransformId "

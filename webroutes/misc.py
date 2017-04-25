@@ -16,7 +16,7 @@ def getStatus():
         subscriberAdapter = {}
         subscriberAdapter['TypeName'] = sub.TypeName
         subscriberAdapter['InstanceName'] = sub.InstanceName
-        subscriberAdapter['Enabled'] = sub.Enabled
+        subscriberAdapter['Enabled'] = sub.Enabled and sub.TransformEnabled
         subscriberAdapter['MessageInName'] = sub.MessageInName
         subscriberAdapter['MessageOutName'] = sub.MessageOutName
         subAdpts.append(subscriberAdapter)

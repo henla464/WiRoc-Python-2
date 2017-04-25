@@ -181,7 +181,8 @@ class MessageSubscriptionView(object):
         self.MessageData = None
 
 class SubscriberView(object):
-    columns = [("TypeName", str), ("InstanceName", str), ("Enabled", bool), ("MessageInName", str), ("MessageOutName", str)]
+    columns = [("TypeName", str), ("InstanceName", str), ("Enabled", bool), ("MessageInName", str),
+               ("MessageOutName", str), ("TransformEnabled", str)]
 
     def __init__(self):
         self.id = None
@@ -190,6 +191,7 @@ class SubscriberView(object):
         self.Enabled = False
         self.MessageInName = None
         self.MessageOutName = None
+        self.TransformEnabled = False
 
 class InputAdapterInstances(object):
     columns = [("TypeName", str), ("InstanceName", str), ("ToBeDeleted", bool)]

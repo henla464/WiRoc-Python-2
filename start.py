@@ -11,6 +11,7 @@ import cProfile
 from chipGPIO.chipGPIO import *
 import socket
 from itertools import repeat
+from battery import Battery
 
 class Main:
     def __init__(self):
@@ -20,7 +21,9 @@ class Main:
         self.nextTimeToReconfigure = time.monotonic() + 10
         self.messagesToSendExists = True
         self.previousChannel = None
+        self.previousAckRequested = None
 
+        Battery.Setup()
         Setup.SetupPins()
 
         #DatabaseHelper.drop_all_tables()
@@ -38,8 +41,10 @@ class Main:
     def displayChannel(self):
         if self.runningOnChip:
             channel = SettingsClass.GetChannel()
-            if channel != self.previousChannel:
+            ackRequested = SettingsClass.GetAcknowledgementRequested()
+            if channel != self.previousChannel or ackRequested != self.previousAckRequested:
                 self.previousChannel = channel
+                self.previousAckRequested = ackRequested
                 lightSegA = channel in [2,3,5,6,7,8,9]
                 lightSegB = channel in [1, 2, 3, 4, 7, 8, 9]
                 lightSegC = channel in [1, 3, 4, 5, 6, 7, 8, 9]
@@ -47,8 +52,8 @@ class Main:
                 lightSegE = channel in [2, 6, 8]
                 lightSegF = channel in [4, 5, 6, 8, 9]
                 lightSegG = channel in [2, 3, 4, 5, 6, 8, 9]
-                ackRequested = SettingsClass.GetAcknowledgementRequested()
 
+                logging.error("ACKREQESTED: " + str(ackRequested))
                 if True:
                     lightSegA = not lightSegA
                     lightSegB = not lightSegB
@@ -72,8 +77,7 @@ class Main:
     def timeToReconfigure(self):
         currentTime = time.monotonic()
         if currentTime > self.nextTimeToReconfigure or self.shouldReconfigure:
-            #self.lastTimeReconfigured = currentTime
-            self.nextTimeToReconfigure = currentTime + 10
+            self.nextTimeToReconfigure = currentTime + SettingsClass.GetReconfigureInterval()
             self.shouldReconfigure = False
             return True
         else:
@@ -133,10 +137,11 @@ class Main:
                 #SettingsClass.SetMessagesToSendExists(True)
                 self.archiveFailedMessages()
                 self.displayChannel()
+                Battery.Tick()
                 if Setup.SetupAdapters(False):
                     self.subscriberAdapters = Setup.SubscriberAdapters
                     self.inputAdapters = Setup.InputAdapters
-                #return
+
 
             activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
                                    if inputAdapter.UpdateInfreqently() and inputAdapter.GetIsInitialized()]
