@@ -217,8 +217,13 @@ class BlenoPunchData(object):
 
 # Non database objects
 class LoraRadioMessage(object):
+    # Six bits for message type
     MessageTypeSIPunch = 0
     MessageTypeLoraAck = 1
+    # Payload for LoraAck is 1 byte with the message number that is acked
+    MessageTypeStatus = 2
+    # Payload is two bytes, 4 bits of battery %, 12 bits ID number
+    # (consisting of 9 bits SI station code + 3 bit number increased with each WiRoc in the path)
 
     CurrentMessageNumber = 0
 
@@ -230,17 +235,17 @@ class LoraRadioMessage(object):
                 batteryLowBit = 1
             if ackReq:
                 ackReqBit = 1
-            self.messageData = bytearray(pack(LoraRadioMessage.getHeaderFormatString(), bytes([STX]),
+            self.MessageData = bytearray(pack(LoraRadioMessage.getHeaderFormatString(), bytes([STX]),
                                               bytes([payloadDataLength]),
                                               bytes([(ackReqBit << 7) | (batteryLowBit << 6) | messageType]),
                                               bytes([LoraRadioMessage.CurrentMessageNumber]),
                                               bytes([0])))
             LoraRadioMessage.CurrentMessageNumber = (LoraRadioMessage.CurrentMessageNumber + 1) % 256
         else:
-            self.messageData = bytearray()
+            self.MessageData = bytearray()
 
     def GetMessageNumber(self):
-        return self.messageData[3]
+        return self.MessageData[3]
 
     @staticmethod
     def getHeaderFormatString():
@@ -251,46 +256,170 @@ class LoraRadioMessage(object):
         return calcsize(LoraRadioMessage.getHeaderFormatString())
 
     def GetMessageType(self):
-        if len(self.messageData) >= 3:
-            return self.messageData[2] & 0x3F
+        if len(self.MessageData) >= 3:
+            return self.MessageData[2] & 0x3F
         return None
 
     def GetIsChecksumOK(self):
         if self.IsFilled():
-            crcInMessage = self.messageData[4]
-            self.messageData[4] = 0
-            calculatedCrc = Utils.CalculateCRC(self.messageData)
+            crcInMessage = self.MessageData[4]
+            self.MessageData[4] = 0
+            calculatedCrc = Utils.CalculateCRC(self.MessageData)
             oneByteCalculatedCrc = calculatedCrc[0] ^ calculatedCrc[1]
             isOK = (crcInMessage == oneByteCalculatedCrc)
-            self.messageData[4] = crcInMessage #restore the message
+            self.MessageData[4] = crcInMessage #restore the message
             return isOK
         return False
 
     def UpdateChecksum(self):
         if self.IsFilled():
-            self.messageData[4] = 0
-            crc = Utils.CalculateCRC(self.messageData)
-            self.messageData[4] = crc[0] ^ crc[1]
+            self.MessageData[4] = 0
+            crc = Utils.CalculateCRC(self.MessageData)
+            self.MessageData[4] = crc[0] ^ crc[1]
             return True
         return False
 
+    def UpdateLength(self):
+        self.MessageData[1] = len(self.MessageData) - self.GetHeaderSize()
+
+    def SetBatteryLowBit(self, batteryLow):
+        if batteryLow:
+            self.MessageData[2] = 0x40 | self.MessageData[2]
+        else:
+            self.MessageData[2] = 0xBF & self.MessageData[2]
+
+    def GetBatteryLowBit(self):
+        return (self.MessageData[2] & 0x40) > 0
+
+    def SetAcknowledgementRequested(self, ackReq):
+        if ackReq:
+            self.MessageData[2] = 0x80 | self.MessageData[2]
+        else:
+            self.MessageData[2] = 0x7F & self.MessageData[2]
+
+    def GetAcknowledgementRequested(self):
+        return (self.MessageData[2] & 0x80) > 0
+
     def IsFilled(self):
-        if len(self.messageData) >= 2:
-            if len(self.messageData) == self.messageData[1] + 5:
+        if len(self.MessageData) >= 2:
+            if len(self.MessageData) == self.MessageData[1] + 5:
                 return True
         return False
 
     def GetByteArray(self):
-        return self.messageData
+        return self.MessageData
 
     def AddByte(self, newByte):
         if self.IsFilled():
             logging.error("Error, trying to fill RadioMessageData with bytes, but it is already full")
         else:
-            self.messageData.append(newByte)
+            self.MessageData.append(newByte)
 
     def AddPayload(self, payloadArray):
-        self.messageData.extend(payloadArray)
+        self.MessageData.extend(payloadArray)
+        self.UpdateChecksum()
+
+    def AddThisWiRocToStatusMessage(self, siStationNumber, batteryPercent4Bits):
+        if self.GetMessageType() != LoraRadioMessage.MessageTypeStatus:
+            raise Exception('Lora message is not a status message!')
+
+        lengthPayload = len(self.MessageData) - self.GetHeaderSize()
+        wiRocPathNo = lengthPayload / 2
+        # we limit the payload length so when there are too many WiRocs in the path
+        # then the path no will not match the index in the payload
+        realWiRocPathNo = wiRocPathNo
+        if wiRocPathNo > 0:
+            highBytePrevWiRocIndex = self.GetHeaderSize() + (wiRocPathNo - 1) * 2
+            realWiRocPathNo = (self.MessageData[highBytePrevWiRocIndex + 1] & 0x07) + 1
+            if siStationNumber == 0:
+                siStationNumber = ((self.MessageData[highBytePrevWiRocIndex] & 0x0F) << 5) | \
+                                  ((self.MessageData[highBytePrevWiRocIndex + 1] & 0xF8) >> 3)
+
+        highByte = batteryPercent4Bits << 4 | ((siStationNumber & 0x1E0) >> 5)
+        lowByte = ((siStationNumber & 0x1F) << 3) | realWiRocPathNo
+        if wiRocPathNo <= 3:
+            self.AddByte(highByte)
+            self.AddByte(lowByte)
+        else:
+            # overwrite last bytes instead, to limit message size
+            self.MessageData[-2] = highByte
+            self.MessageData[-1] = lowByte
+        self.UpdateLength()
         self.UpdateChecksum()
 
 
+
+class SIMessage(object):
+    WiRocToWiRoc = 0x02
+    IAmAWiRocDevice = 0x01
+    SIPunch = 0xD3
+
+    def __init__(self):
+        self.MessageData = bytearray()
+
+    def AddHeader(self, msgType):
+        if len(self.MessageData):
+            self.MessageData.append(0x02)
+            self.MessageData.append(msgType)
+            self.MessageData.append(None)  # length
+
+    def GetHeaderSize(self):
+        return 3
+
+    def GetFooterSize(self):
+        return 3
+
+    def GetMessageType(self):
+        if len(self.MessageData) >= 2:
+            return self.MessageData[1]
+        return None
+
+    def GetIsChecksumOK(self):
+        if self.IsFilled():
+            crcInMessage1 = self.MessageData[-3]
+            crcInMessage2 = self.MessageData[-2]
+            partToCalculateCRSOn = self.MessageData[1:-3]
+            calculatedCrc = Utils.CalculateCRC(partToCalculateCRSOn)
+            isOK = (crcInMessage1 == calculatedCrc[0] and crcInMessage2 == calculatedCrc[1])
+            return isOK
+        return False
+
+    def UpdateChecksum(self):
+        if self.IsFilled():
+            partToCalculateCRSOn = self.MessageData[1:-3]
+            crc = Utils.CalculateCRC(partToCalculateCRSOn)
+            self.MessageData[-3] = crc[0]
+            self.MessageData[-2] = crc[1]
+            return True
+        return False
+
+    def UpdateLength(self):
+        self.MessageData[2] = len(self.MessageData) - self.GetHeaderSize() - self.GetFooterSize()
+
+    def IsFilled(self):
+        if len(self.MessageData) >= 3:
+            if self.MessageData[2] is not None and \
+                            len(self.MessageData) == self.MessageData[2] + self.GetHeaderSize() + self.GetFooterSize():
+                return True
+        return False
+
+    def GetByteArray(self):
+        return self.MessageData
+
+    def AddByte(self, newByte):
+        if self.IsFilled():
+            logging.error("Error, trying to fill SIMessageData with bytes, but it is already full")
+        else:
+            self.MessageData.append(newByte)
+
+    def AddPayload(self, payloadArray):
+        self.MessageData.extend(payloadArray)
+
+    def AddFooter(self):
+        if self.MessageData[2] is None or \
+                (len(self.MessageData) == self.MessageData[2] + self.GetHeaderSize()):
+            self.MessageData.append(0x00)  # crc1
+            self.MessageData.append(0x00)  # crc2
+            self.MessageData.append(0x03)  # ETX
+            self.UpdateLength()
+            self.UpdateChecksum()

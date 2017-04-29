@@ -138,6 +138,7 @@ class Main:
                 self.archiveFailedMessages()
                 self.displayChannel()
                 Battery.Tick()
+                SettingsClass.Tick()
                 if Setup.SetupAdapters(False):
                     self.subscriberAdapters = Setup.SubscriberAdapters
                     self.inputAdapters = Setup.InputAdapters

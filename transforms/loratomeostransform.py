@@ -1,4 +1,5 @@
 from utils.utils import Utils
+from datamodel.datamodel import LoraRadioMessage
 import datamodel.datamodel
 
 class LoraToMeosTransform(object):
@@ -18,6 +19,10 @@ class LoraToMeosTransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(payloadData):
-        loraHeaderSize = datamodel.datamodel.LoraRadioMessage.GetHeaderSize()
-        siPayloadData = payloadData[loraHeaderSize:]
-        return {"Data": Utils.GetMeosDataFromSIData(siPayloadData), "CustomData": None}
+        msg = LoraRadioMessage()
+        msg.AddPayload(payloadData)
+        if msg.GetMessageType() == LoraRadioMessage.MessageTypeSIPunch:
+            loraHeaderSize = datamodel.datamodel.LoraRadioMessage.GetHeaderSize()
+            siPayloadData = payloadData[loraHeaderSize:]
+            return {"Data": Utils.GetMeosDataFromSIData(siPayloadData), "CustomData": None}
+        return None

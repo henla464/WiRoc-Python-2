@@ -5,6 +5,7 @@ from constants import *
 from time import sleep
 from utils.utils import Utils
 from battery import Battery
+from datamodel.datamodel import SIMessage
 import serial.tools.list_ports
 
 class ReceiveSIAdapter(object):
@@ -49,6 +50,7 @@ class ReceiveSIAdapter(object):
         self.portName = portName
         self.siSerial = serial.Serial()
         self.isInitialized = False
+        self.siStationNumber = 0
 
     def GetInstanceName(self):
         return self.instanceName
@@ -172,6 +174,7 @@ class ReceiveSIAdapter(object):
             return False
 
     def UpdateInfreqently(self):
+        SettingsClass.SetSIStationNumber(self.siStationNumber)
         return True
 
     # messageData is a bytearray
@@ -206,10 +209,12 @@ class ReceiveSIAdapter(object):
             logging.error("ReceiveSIAdapter::GetData() data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + dataInHex)
             return None
 
-        if receivedData[1] == 0xD3:
+        if receivedData[1] == SIMessage.SIPunch:
             logging.debug("ReceiveSIAdapter::GetData() SI message received!")
+            # save the station number; it will be updated to SettingsClass as long as this object exists
+            self.siStationNumber = (receivedData[3] << 8) + receivedData[4]
             return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}
-        elif receivedData[1] == 0x01:
+        elif receivedData[1] == SIMessage.IAmAWiRocDevice:
             checksumOK = self.IsChecksumOK(receivedData)
             if checksumOK:
                 logging.debug("ReceiveSIAdapter::GetData() I am a WiRoc message received!")
@@ -222,6 +227,9 @@ class ReceiveSIAdapter(object):
             else:
                 logging.error("ReceiveSIAdapter::GetData() I am a WiRoc message, WRONG CHECKSUM!")
             return None
+        elif receivedData[1] == SIMessage.WiRocToWiRoc: # Generic WiRoc to WiRoc data message
+            logging.debug("ReceiveSIAdapter::GetData() WiRoc to WiRoc data message!")
+            return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}
         else:
             logging.debug("ReceiveSIAdapter::GetData() Unknown SI message received!")
             return None

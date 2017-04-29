@@ -26,6 +26,10 @@ class SettingsClass(object):
     wiRocDeviceName = None
     forceReconfigure = False
 
+    connectedComputerIsWiRocDevice = False
+    timeConnectedComputerIsWiRocDeviceChanged = None
+    siStationNumber = 0
+
     @staticmethod
     def SetConfigurationDirty(settingsName=None, markDirtyInDatabase = False):
         if settingsName == 'Channel':
@@ -390,3 +394,34 @@ class SettingsClass(object):
     @staticmethod
     def GetReconfigureInterval():
         return 10
+
+    @staticmethod
+    def SetConnectedComputerIsWiRocDevice():
+        SettingsClass.connectedComputerIsWiRocDevice = True
+        SettingsClass.timeConnectedComputerIsWiRocDeviceChanged = time.monotonic()
+
+    @staticmethod
+    def GetConnectedComputerIsWiRocDevice():
+        return SettingsClass.connectedComputerIsWiRocDevice
+
+    @staticmethod
+    def Tick():
+        if SettingsClass.timeConnectedComputerIsWiRocDeviceChanged is not None and \
+                           time.monotonic() > SettingsClass.timeConnectedComputerIsWiRocDeviceChanged + 6 * SettingsClass.GetReconfigureInterval():
+            SettingsClass.timeConnectedComputerIsWiRocDeviceChanged = None
+            SettingsClass.connectedComputerIsWiRocDevice = False
+        if SettingsClass.timeSIStationNumberChanged is not None and \
+                        time.monotonic() > SettingsClass.timeSIStationNumberChanged + 6 * SettingsClass.GetReconfigureInterval():
+            SettingsClass.timeSIStationNumberChanged = None
+            SettingsClass.siStationNumber = 0
+
+    @staticmethod
+    def SetSIStationNumber(stationNumber):
+        # Is refreshed from receiveSIadapter
+        if stationNumber >= SettingsClass.siStationNumber:
+            SettingsClass.timeSIStationNumberChanged = time.monotonic()
+            SettingsClass.siStationNumber = stationNumber
+
+    @staticmethod
+    def GetSIStationNumber():
+        return SettingsClass.siStationNumber

@@ -4,6 +4,7 @@ import logging
 from constants import *
 from utils.utils import Utils
 from battery import Battery
+from settings.settings import SettingsClass
 
 class ReceiveSerialComputerAdapter(object):
 
@@ -110,6 +111,7 @@ class ReceiveSerialComputerAdapter(object):
                 else:
                     logging.debug("ReceiveSerialComputerAdapter::GetData() Disable charging...")
                     Battery.DisableCharging()
+                SettingsClass.SetConnectedComputerIsWiRocDevice()
                 return None
             else:
                 logging.debug("ReceiveSerialComputerAdapter::GetData() Unknown command received")

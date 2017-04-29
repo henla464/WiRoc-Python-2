@@ -123,11 +123,6 @@ class Utils:
             return nr
 
     @staticmethod
-    def GetPunchDataFromSIData(siPayloadData):
-
-        return None
-
-    @staticmethod
     def GetMeosDataFromSIData(siPayloadData):
         if len(siPayloadData) < 12:
             logging.error("Utils::GetMeosDataFromSIData() length siPayloadData less than 12")

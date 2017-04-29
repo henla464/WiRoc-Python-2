@@ -64,3 +64,33 @@ class Battery(object):
             isPowerSupplied = (intValue & 0x10) > 0
             return isPowerSupplied
         return False
+
+    @classmethod
+    def GetIsBatteryLow(cls):
+        if cls.isRunningOnChip:
+            logging.debug("Battery::GetIsBatteryLow")
+            strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
+            intPercentValue = int(strPercentValue, 16)
+            isBatteryLow = (intPercentValue < 30)
+            return isBatteryLow
+        return False
+
+    @classmethod
+    def GetBatteryPercent(cls):
+        if cls.isRunningOnChip:
+            logging.debug("Battery::GetBatteryPercent")
+            strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
+            intPercentValue = int(strPercentValue, 16)
+            return intPercentValue
+        return 100
+
+
+    @classmethod
+    def GetBatteryPercent4Bits(cls):
+        if cls.isRunningOnChip:
+            logging.debug("Battery::GetBatteryPercent4Bits")
+            strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
+            intPercentValue = int(strPercentValue, 16)
+            batteryPercent4Bit = int(intPercentValue * 15 / 100)
+            return batteryPercent4Bit
+        return 15

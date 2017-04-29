@@ -91,6 +91,7 @@ class SendLoraAdapter(object):
         transforms = []
         transforms.append("SIToLoraTransform")
         transforms.append("LoraToLoraAckTransform")
+        transforms.append("StatusToLoraTransform")
         return transforms
 
     def SetTransform(self, transformClass):
