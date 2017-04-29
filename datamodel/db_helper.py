@@ -7,11 +7,7 @@ from datetime import timedelta, datetime
 
 
 class DatabaseHelper:
-    database_name = "radiomessages.db"
-    db = DB("radiomessages.db", DataMapping())
-
-    #def __init__(self):
-    #    self.db = DB(DatabaseHelper.database_name, DataMapping())
+    db = DB("WiRoc.db", DataMapping())
 
     @classmethod
     def ensure_tables_created(cls):
@@ -70,9 +66,6 @@ class DatabaseHelper:
         db.drop_table(table)
         table = BlenoPunchData()
         db.drop_table(table)
-        db.execute_SQL("DELETE FROM ChannelData")
-        db.execute_SQL("DELETE FROM MessageTypeData")
-        db.execute_SQL("DELETE FROM SubscriberData")
 
     @classmethod
     def truncate_setup_tables(cls):
@@ -81,7 +74,19 @@ class DatabaseHelper:
         db.execute_SQL("DELETE FROM SubscriptionData")
         db.execute_SQL("DELETE FROM TransformData")
         db.execute_SQL("DELETE FROM InputAdapterInstances")
+        db.execute_SQL("DELETE FROM SubscriberData")
+        db.execute_SQL("DELETE FROM MessageTypeData")
 
+
+    @classmethod
+    def delete_punches(cls):
+        logging.debug("DatabaseHelper::delete_punches()")
+        db = cls.db
+        db.execute_SQL("DELETE FROM BlenoPunchData")
+        db.execute_SQL("DELETE FROM MessageSubscriptionArchiveData")
+        db.execute_SQL("DELETE FROM MessageSubscriptionData")
+        db.execute_SQL("DELETE FROM MessageBoxArchiveData")
+        db.execute_SQL("DELETE FROM MessageBoxData")
 
 #Settings
     @classmethod

@@ -50,7 +50,6 @@ class MessageBoxData(object):
         self.CreatedDate = CreatedDate
 
 
-
 class MessageBoxArchiveData(object):
     columns = [("OrigId", int), ("MessageData", bytes), ("PowerCycleCreated", int),
                ("MessageTypeId", int), ("InstanceName", str),
@@ -180,6 +179,7 @@ class MessageSubscriptionView(object):
         self.TransformName = None
         self.MessageData = None
 
+
 class SubscriberView(object):
     columns = [("TypeName", str), ("InstanceName", str), ("Enabled", bool), ("MessageInName", str),
                ("MessageOutName", str), ("TransformEnabled", str)]
@@ -193,6 +193,7 @@ class SubscriberView(object):
         self.MessageOutName = None
         self.TransformEnabled = False
 
+
 class InputAdapterInstances(object):
     columns = [("TypeName", str), ("InstanceName", str), ("ToBeDeleted", bool)]
 
@@ -201,6 +202,7 @@ class InputAdapterInstances(object):
         self.TypeName = None
         self.InstanceName = None
         self.ToBeDeleted = False
+
 
 class BlenoPunchData(object):
     columns = [("StationNumber", int), ("SICardNumber", int), ("TwentyFourHour", int), ("TwelveHourTimer", int), ("SubSecond", int)]

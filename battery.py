@@ -49,8 +49,8 @@ class Battery(object):
     def IsCharging(cls):
         if cls.isRunningOnChip:
             logging.debug("Battery::IsCharging")
-            strValue = os.popen("sudo sh -c /usr/sbin/i2cget -f -y 0 0x34 0x01").read()
-            intValue = int(strValue)
+            strValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x01").read()
+            intValue = int(strValue, 16)
             isCharging = (intValue & 0x40) > 0
             return isCharging
         return False
@@ -59,8 +59,8 @@ class Battery(object):
     def IsPowerSupplied(cls):
         if cls.isRunningOnChip:
             logging.debug("Battery::IsPowerSupplied")
-            strValue = os.popen("sudo sh -c /usr/sbin/i2cget -f -y 0 0x34 0x00").read()
-            intValue = int(strValue)
-            isPowerSupplied = (intValue & 0x80) > 0
+            strValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x00").read()
+            intValue = int(strValue, 16)
+            isPowerSupplied = (intValue & 0x10) > 0
             return isPowerSupplied
         return False

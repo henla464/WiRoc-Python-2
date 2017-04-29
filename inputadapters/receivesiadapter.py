@@ -68,104 +68,108 @@ class ReceiveSIAdapter(object):
         return len(data) == 9 and data[0] == STX and data[5] == 0x4D
 
     def Init(self):
-        if self.GetIsInitialized() and self.siSerial.is_open:
-            return True
-        logging.debug("ReceiveSIAdapter::Init() SI Station port name: " + self.portName)
-        self.siSerial.close()
-        self.siSerial.baudrate = 38400
-        self.siSerial.port = self.portName
         try:
-            self.siSerial.open()
-            self.siSerial.reset_input_buffer()
-            self.siSerial.reset_output_buffer()
-            logging.debug("ReceiveSIAdapter::Init() opened serial")
-        except Exception as ex:
-            logging.error("ReceiveSIAdapter::Init() opening serial exception:")
-            logging.error(ex)
-            return False
-
-        if self.siSerial.is_open:
-            #set master - mode to direct
-            logging.debug("ReceiveSIAdapter::Init() serial port open")
-            msdMode = bytes([0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
-            self.siSerial.write(msdMode)
-            sleep(0.2)
-            expectedLength = 3
-            response = bytearray()
-            allBytesReceived = bytearray()
-            startFound = False
-            while self.siSerial.in_waiting > 0:
-                # print("looking for stx: ", end="")
-                bytesRead = self.siSerial.read(1)
-                allBytesReceived.append(bytesRead[0])
-                #print(bytesRead)
-                if bytesRead[0] == STX:
-                    startFound = True
-                    if len(response) == 1:
-                        # second STX found, discard
-                        continue
-                if startFound:
-                    response.append(bytesRead[0])
-                    if len(response) == 3:
-                        expectedLength = response[2] + 6
-                    if len(response) == expectedLength:
-                        break
-                    if len(response) < expectedLength and self.siSerial.in_waiting == 0:
-                        logging.debug("ReceiveSIAdapter::Init() sleep and wait for more bytes")
-                        sleep(0.05)
-                        if self.siSerial.in_waiting == 0:
-                            break
-
-            if self.isCorrectMSModeDirectResponse(response):
-                logging.info("ReceiveSIAdapter::Init() SI Station 38400 kbit/s works")
-                self.isInitialized = True
+            if self.GetIsInitialized() and self.siSerial.is_open:
                 return True
-            else:
-                logging.info("ReceiveSIAdapter::Init() received: " + str(allBytesReceived))
-
-            # something wrong, try other baudrate
+            logging.debug("ReceiveSIAdapter::Init() SI Station port name: " + self.portName)
             self.siSerial.close()
+            self.siSerial.baudrate = 38400
             self.siSerial.port = self.portName
-            self.siSerial.baudrate = 4800
-            self.siSerial.open()
-            self.siSerial.reset_input_buffer()
-            self.siSerial.reset_output_buffer()
-            self.siSerial.write(msdMode)
-            sleep(0.2)
-            expectedLength = 3
-            response = bytearray()
-            allBytesReceived = bytearray()
-            startFound = False
-            while self.siSerial.in_waiting > 0:
-                # print("looking for stx: ", end="")
-                bytesRead = self.siSerial.read(1)
-                allBytesReceived.append(bytesRead[0])
-                if bytesRead[0] == STX:
-                    startFound = True
-                    if len(response)==1:
-                        #second STX found, discard
-                        continue
-                if startFound:
-                    response.append(bytesRead[0])
-                    if len(response) == 3:
-                        expectedLength = response[2] + 6
-                    if len(response) == expectedLength:
-                        break
-                    if len(response) < expectedLength and self.siSerial.in_waiting == 0:
-                        logging.debug("ReceiveSIAdapter::Init() sleep and wait for more bytes")
-                        sleep(0.05)
-                        if self.radioSerial.in_waiting == 0:
+            try:
+                self.siSerial.open()
+                self.siSerial.reset_input_buffer()
+                self.siSerial.reset_output_buffer()
+                logging.debug("ReceiveSIAdapter::Init() opened serial")
+            except Exception as ex:
+                logging.error("ReceiveSIAdapter::Init() opening serial exception:")
+                logging.error(ex)
+                return False
+
+            if self.siSerial.is_open:
+                #set master - mode to direct
+                logging.debug("ReceiveSIAdapter::Init() serial port open")
+                msdMode = bytes([0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
+                self.siSerial.write(msdMode)
+                sleep(0.2)
+                expectedLength = 3
+                response = bytearray()
+                allBytesReceived = bytearray()
+                startFound = False
+                while self.siSerial.in_waiting > 0:
+                    # print("looking for stx: ", end="")
+                    bytesRead = self.siSerial.read(1)
+                    allBytesReceived.append(bytesRead[0])
+                    #print(bytesRead)
+                    if bytesRead[0] == STX:
+                        startFound = True
+                        if len(response) == 1:
+                            # second STX found, discard
+                            continue
+                    if startFound:
+                        response.append(bytesRead[0])
+                        if len(response) == 3:
+                            expectedLength = response[2] + 6
+                        if len(response) == expectedLength:
                             break
+                        if len(response) < expectedLength and self.siSerial.in_waiting == 0:
+                            logging.debug("ReceiveSIAdapter::Init() sleep and wait for more bytes")
+                            sleep(0.05)
+                            if self.siSerial.in_waiting == 0:
+                                break
 
-            if self.isCorrectMSModeDirectResponse(response):
-                logging.info("ReceiveSIAdapter::Init() SI Station 4800 kbit/s works")
-                self.isInitialized = True
-                return True
-            else:
-                logging.info("ReceiveSIAdapter::Init() received: " + str(allBytesReceived))
+                if self.isCorrectMSModeDirectResponse(response):
+                    logging.info("ReceiveSIAdapter::Init() SI Station 38400 kbit/s works")
+                    self.isInitialized = True
+                    return True
+                else:
+                    logging.info("ReceiveSIAdapter::Init() received: " + str(allBytesReceived))
 
-        logging.error("ReceiveSIAdapter::Init() could not communicate with master station")
-        return False
+                # something wrong, try other baudrate
+                self.siSerial.close()
+                self.siSerial.port = self.portName
+                self.siSerial.baudrate = 4800
+                self.siSerial.open()
+                self.siSerial.reset_input_buffer()
+                self.siSerial.reset_output_buffer()
+                self.siSerial.write(msdMode)
+                sleep(0.2)
+                expectedLength = 3
+                response = bytearray()
+                allBytesReceived = bytearray()
+                startFound = False
+                while self.siSerial.in_waiting > 0:
+                    # print("looking for stx: ", end="")
+                    bytesRead = self.siSerial.read(1)
+                    allBytesReceived.append(bytesRead[0])
+                    if bytesRead[0] == STX:
+                        startFound = True
+                        if len(response)==1:
+                            #second STX found, discard
+                            continue
+                    if startFound:
+                        response.append(bytesRead[0])
+                        if len(response) == 3:
+                            expectedLength = response[2] + 6
+                        if len(response) == expectedLength:
+                            break
+                        if len(response) < expectedLength and self.siSerial.in_waiting == 0:
+                            logging.debug("ReceiveSIAdapter::Init() sleep and wait for more bytes")
+                            sleep(0.05)
+                            if self.radioSerial.in_waiting == 0:
+                                break
+
+                if self.isCorrectMSModeDirectResponse(response):
+                    logging.info("ReceiveSIAdapter::Init() SI Station 4800 kbit/s works")
+                    self.isInitialized = True
+                    return True
+                else:
+                    logging.info("ReceiveSIAdapter::Init() received: " + str(allBytesReceived))
+
+            logging.error("ReceiveSIAdapter::Init() could not communicate with master station")
+            return False
+        except (Exception) as msg:
+            logging.error("ReceiveSIAdapter::Init() Exception: " + str(msg))
+            return False
 
     def UpdateInfreqently(self):
         return True

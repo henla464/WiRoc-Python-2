@@ -103,7 +103,7 @@ class ReceiveSerialComputerAdapter(object):
                 # disable charging to avoid draining the other WiRocs battery
                 # or slow the charging. Battery class remember time when charging disabled
                 # and restores it in reconfigure call to Tick
-                if data[3] == 0x01:
+                if data["Data"][3] == 0x01:
                     # Host WiRoc has power supplied so lets charge too, but slowly
                     logging.debug("ReceiveSerialComputerAdapter::GetData() Change to slow charging...")
                     Battery.SetSlowCharging()

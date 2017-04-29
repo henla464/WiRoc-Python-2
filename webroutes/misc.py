@@ -105,3 +105,13 @@ def getWiRocDeviceName():
     deviceName = SettingsClass.GetWiRocDeviceName(False)
     return jsonpickle.encode(MicroMock(WiRocDeviceName=deviceName))
 
+@app.route('/misc/database/<operation>/', methods=['GET'])
+def deletePunches(operation):
+    if operation.lower() == "deletepunches":
+        DatabaseHelper.delete_punches()
+        return jsonpickle.encode(MicroMock(Status="OK"))
+    elif operation.lower() == "dropalltables":
+        DatabaseHelper.drop_all_tables()
+        return jsonpickle.encode(MicroMock(Status="OK"))
+    else:
+        return jsonpickle.encode(MicroMock(Status="Operation not found"))
