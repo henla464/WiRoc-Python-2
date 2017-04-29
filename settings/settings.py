@@ -29,6 +29,7 @@ class SettingsClass(object):
     connectedComputerIsWiRocDevice = False
     timeConnectedComputerIsWiRocDeviceChanged = None
     siStationNumber = 0
+    timeSIStationNumberChanged = None
 
     @staticmethod
     def SetConfigurationDirty(settingsName=None, markDirtyInDatabase = False):

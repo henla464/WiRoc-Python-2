@@ -90,7 +90,7 @@ class Battery(object):
         if cls.isRunningOnChip:
             logging.debug("Battery::GetBatteryPercent4Bits")
             strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
-            intPercentValue = int(strPercentValue, 16)
+            intPercentValue = min(int(strPercentValue, 16), 100)
             batteryPercent4Bit = int(intPercentValue * 15 / 100)
             return batteryPercent4Bit
         return 15

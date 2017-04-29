@@ -311,7 +311,7 @@ class LoraRadioMessage(object):
 
     def AddByte(self, newByte):
         if self.IsFilled():
-            logging.error("Error, trying to fill RadioMessageData with bytes, but it is already full")
+            logging.error("Error, trying to fill LoraRadioMessage with bytes, but it is already full")
         else:
             self.MessageData.append(newByte)
 
@@ -324,7 +324,7 @@ class LoraRadioMessage(object):
             raise Exception('Lora message is not a status message!')
 
         lengthPayload = len(self.MessageData) - self.GetHeaderSize()
-        wiRocPathNo = lengthPayload / 2
+        wiRocPathNo = int(lengthPayload / 2)
         # we limit the payload length so when there are too many WiRocs in the path
         # then the path no will not match the index in the payload
         realWiRocPathNo = wiRocPathNo
@@ -338,6 +338,7 @@ class LoraRadioMessage(object):
         highByte = batteryPercent4Bits << 4 | ((siStationNumber & 0x1E0) >> 5)
         lowByte = ((siStationNumber & 0x1F) << 3) | realWiRocPathNo
         if wiRocPathNo <= 3:
+            self.MessageData[1] = 255 # set length to 255 to allow adding bytes
             self.AddByte(highByte)
             self.AddByte(lowByte)
         else:
@@ -361,7 +362,7 @@ class SIMessage(object):
         if len(self.MessageData):
             self.MessageData.append(0x02)
             self.MessageData.append(msgType)
-            self.MessageData.append(None)  # length
+            self.MessageData.append(255)  # set max length temporarily
 
     def GetHeaderSize(self):
         return 3
@@ -398,8 +399,7 @@ class SIMessage(object):
 
     def IsFilled(self):
         if len(self.MessageData) >= 3:
-            if self.MessageData[2] is not None and \
-                            len(self.MessageData) == self.MessageData[2] + self.GetHeaderSize() + self.GetFooterSize():
+            if len(self.MessageData) == self.MessageData[2] + self.GetHeaderSize() + self.GetFooterSize():
                 return True
         return False
 

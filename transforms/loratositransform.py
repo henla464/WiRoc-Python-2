@@ -19,7 +19,8 @@ class LoraToSITransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(payloadData):
-        loraMessage = LoraRadioMessage(payloadData)
+        loraMessage = LoraRadioMessage()
+        loraMessage.AddPayload(payloadData)
         if loraMessage.GetMessageType() == LoraRadioMessage.MessageTypeStatus:
             if SettingsClass.GetConnectedComputerIsWiRocDevice():
                 loraMessage.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())

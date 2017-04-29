@@ -53,7 +53,6 @@ class Main:
                 lightSegF = channel in [4, 5, 6, 8, 9]
                 lightSegG = channel in [2, 3, 4, 5, 6, 8, 9]
 
-                logging.error("ACKREQESTED: " + str(ackRequested))
                 if True:
                     lightSegA = not lightSegA
                     lightSegB = not lightSegB
