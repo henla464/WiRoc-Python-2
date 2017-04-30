@@ -92,6 +92,8 @@ class SerialComputer:
     def SendData(self, messageData):
         try:
             if self.compSerial.is_open:
+                dataInHex = ''.join(format(x, '02x') for x in messageData)
+                logging.debug("SerialComputer::SendData() data: " + dataInHex)
                 self.compSerial.write(messageData)
                 return True
             else:

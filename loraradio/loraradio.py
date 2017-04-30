@@ -9,6 +9,7 @@ from datamodel.db_helper import DatabaseHelper
 from chipGPIO.chipGPIO import *
 from settings.settings import SettingsClass
 import socket
+import binascii
 
 class LoraRadio:
     Instances = []
@@ -175,7 +176,8 @@ class LoraRadio:
             return True
 
     def SendData(self, messageData):
-        #print(binascii.hexlify(messageData))
+        dataInHex = ''.join(format(x, '02x') for x in messageData)
+        logging.debug("LoraRadio::SendData() send data: " + dataInHex)
         self.lastMessageSentDate =  time.monotonic()
         self.radioSerial.write(messageData)
         return True
@@ -185,9 +187,11 @@ class LoraRadio:
             return None
         logging.debug("LoraRadio::GetRadioData() data to fetch")
         startFound = False
+        allReceivedData = bytearray()
         while self.radioSerial.in_waiting > 0:
             # print("looking for stx: ", end="")
             bytesRead = self.radioSerial.read(1)
+            allReceivedData.append(bytesRead[0])
             if bytesRead[0] == STX:
                 startFound = True
             if startFound:
@@ -202,11 +206,12 @@ class LoraRadio:
 
         # reset so that a messages can be sent. The received message could be an ack that we were waiting for
         self.lastMessageSentDate = None
-
+        dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
+        logging.debug("LoraRadio::GetRadioData() received data, got: " + dataInHex)
         if not self.receivedMessage.IsFilled():
             # throw away the data, isn't correct
-            self.receivedMessage = LoraRadioMessage()
             logging.error("LoraRadio::GetRadioData() received incorrect data")
+            self.receivedMessage = LoraRadioMessage()
             return None
         else:
             message = self.receivedMessage

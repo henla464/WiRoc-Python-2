@@ -38,11 +38,13 @@ class SIToLoraTransform(object):
             if loraMessage.GetMessageType() == LoraRadioMessage.MessageTypeStatus:
                 # We received a status message wrapped in a WiRoc to WiRoc message
                 # We want to send it on, but add information about this WiRoc
-                loraMessage.AddThisWiRocToStatusMessage()
+                loraMessage.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(),
+                                                        Battery.GetBatteryPercent4Bits())
                 batteryLow = Battery.GetIsBatteryLow() or loraMessage.GetBatteryLowBit()
                 loraMessage.SetBatteryLowBit(batteryLow)
                 ackReq = SettingsClass.GetAcknowledgementRequested()
                 loraMessage.SetAcknowledgementRequested(ackReq)
+                loraMessage.UpdateMessageNumber()
                 return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageNumber()}
             else:
                 return None

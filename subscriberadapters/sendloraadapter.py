@@ -62,6 +62,7 @@ class SendLoraAdapter(object):
                 SendLoraAdapter.LoraMode = SettingsClass.GetLoraMode()
                 enableSendTransforms = (SendLoraAdapter.LoraMode == "SEND")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SIToLoraTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "StatusToLoraTransform")
                 DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraToLoraAckTransform")
 
     def __init__(self, instanceNumber, portName):

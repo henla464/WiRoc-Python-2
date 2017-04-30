@@ -184,10 +184,12 @@ class ReceiveSIAdapter(object):
         logging.debug("ReceiveSIAdapter::GetData() Data to fetch")
         expectedLength = 3
         receivedData = bytearray()
+        allReceivedData = bytearray()
         startFound = False
         while self.siSerial.in_waiting > 0:
             # print("looking for stx: ", end="")
             bytesRead = self.siSerial.read(1)
+            allReceivedData.append(bytesRead[0])
             if bytesRead[0] == STX:
                 startFound = True
                 if len(receivedData) == 1:
@@ -205,7 +207,7 @@ class ReceiveSIAdapter(object):
 
         if len(receivedData) != expectedLength:
             # throw away the data, isn't correct
-            dataInHex = ''.join(format(x, '02x') for x in receivedData)
+            dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
             logging.error("ReceiveSIAdapter::GetData() data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + dataInHex)
             return None
 
@@ -231,5 +233,6 @@ class ReceiveSIAdapter(object):
             logging.debug("ReceiveSIAdapter::GetData() WiRoc to WiRoc data message!")
             return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}
         else:
-            logging.debug("ReceiveSIAdapter::GetData() Unknown SI message received!")
+            dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
+            logging.error("ReceiveSIAdapter::GetData() Unknown SI message received! Data: " + dataInHex)
             return None

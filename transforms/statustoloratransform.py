@@ -22,4 +22,5 @@ class LoraToLoraAckTransform(object):
         loraMessage = LoraRadioMessage()
         loraMessage.AddPayload(payloadData)
         loraMessage.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())
+        loraMessage.UpdateMessageNumber()
         return {"Data": loraMessage.GetByteArray(), "CustomData": None}

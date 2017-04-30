@@ -116,7 +116,8 @@ class SendSerialAdapter(object):
     # messageData is a bytearray
     def SendData(self, messageData):
         if self.serialComputer.SendData(messageData):
-            logging.debug("SendSerialAdapter::SendData() Sent to computer")
+            dataInHex = ''.join(format(x, '02x') for x in messageData)
+            logging.debug("SendSerialAdapter::SendData() Sent to computer, data: " + dataInHex)
             return True
         else:
             logging.warning("SendSerialAdapter::SendData() Could not send to computer, call EnableDisableSubscription")

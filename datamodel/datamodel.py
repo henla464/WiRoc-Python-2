@@ -247,6 +247,10 @@ class LoraRadioMessage(object):
     def GetMessageNumber(self):
         return self.MessageData[3]
 
+    def UpdateMessageNumber(self):
+        self.MessageData[3] = LoraRadioMessage.CurrentMessageNumber
+        LoraRadioMessage.CurrentMessageNumber = (LoraRadioMessage.CurrentMessageNumber + 1) % 256
+
     @staticmethod
     def getHeaderFormatString():
         return "<ccccc"
@@ -272,12 +276,10 @@ class LoraRadioMessage(object):
         return False
 
     def UpdateChecksum(self):
-        if self.IsFilled():
-            self.MessageData[4] = 0
-            crc = Utils.CalculateCRC(self.MessageData)
-            self.MessageData[4] = crc[0] ^ crc[1]
-            return True
-        return False
+        self.MessageData[4] = 0
+        crc = Utils.CalculateCRC(self.MessageData)
+        self.MessageData[4] = crc[0] ^ crc[1]
+        return True
 
     def UpdateLength(self):
         self.MessageData[1] = len(self.MessageData) - self.GetHeaderSize()
@@ -351,15 +353,17 @@ class LoraRadioMessage(object):
 
 
 class SIMessage(object):
-    WiRocToWiRoc = 0x02
     IAmAWiRocDevice = 0x01
+    # 0x02 is used for STX
+    # 0x03 is used for ETX
+    WiRocToWiRoc = 0x04
     SIPunch = 0xD3
 
     def __init__(self):
         self.MessageData = bytearray()
 
     def AddHeader(self, msgType):
-        if len(self.MessageData):
+        if len(self.MessageData) == 0:
             self.MessageData.append(0x02)
             self.MessageData.append(msgType)
             self.MessageData.append(255)  # set max length temporarily
@@ -416,10 +420,8 @@ class SIMessage(object):
         self.MessageData.extend(payloadArray)
 
     def AddFooter(self):
-        if self.MessageData[2] is None or \
-                (len(self.MessageData) == self.MessageData[2] + self.GetHeaderSize()):
-            self.MessageData.append(0x00)  # crc1
-            self.MessageData.append(0x00)  # crc2
-            self.MessageData.append(0x03)  # ETX
-            self.UpdateLength()
-            self.UpdateChecksum()
+        self.MessageData.append(0x00)  # crc1
+        self.MessageData.append(0x00)  # crc2
+        self.MessageData.append(0x03)  # ETX
+        self.UpdateLength()
+        self.UpdateChecksum()
