@@ -1,3 +1,4 @@
+from datamodel.datamodel import SIMessage
 
 class SIToSITransform(object):
 
@@ -16,4 +17,8 @@ class SIToSITransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(payloadData):
-        return {"Data":payloadData, "CustomData": None}
+        siMsg = SIMessage()
+        siMsg.AddPayload(payloadData)
+        if siMsg.GetMessageType() == SIMessage.SIPunch:
+            return {"Data":payloadData, "CustomData": None}
+        return None

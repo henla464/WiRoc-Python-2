@@ -37,7 +37,7 @@ class LoraToSITransform(object):
                 logging.debug("LoraToSITransform::Transform() return None, not connected to wiroc device")
                 return None
         elif loraMessage.GetMessageType() == LoraRadioMessage.MessageTypeSIPunch:
-            logging.debug("LoraToSITransform::Transform() return None, not connected to wiroc device")
+            logging.debug("LoraToSITransform::Transform() MessageTypeSIPunch")
             return {"Data":payloadData[LoraRadioMessage.GetHeaderSize():], "CustomData": None}
         else:
             logging.error("LoraToSITransform::Transform() return None, unknown lora message type")
