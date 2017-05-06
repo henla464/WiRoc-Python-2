@@ -67,10 +67,10 @@ mv WiRoc-Python-2-0.29 WiRoc-Python-2
 echo "WiRoc-BLE"
 #read line
 #install WiRoc-BLE
-wget -O WiRoc-BLE-Device.tar.gz https://github.com/henla464/WiRoc-BLE-Device/archive/v0.05.tar.gz
+wget -O WiRoc-BLE-Device.tar.gz https://github.com/henla464/WiRoc-BLE-Device/archive/v0.06.tar.gz
 rm -rf WiRoc-BLE-Device
-tar xvfz WiRoc-BLE-Device.tar.gz WiRoc-BLE-Device-0.05
-mv WiRoc-BLE-Device-0.05 WiRoc-BLE-Device
+tar xvfz WiRoc-BLE-Device.tar.gz WiRoc-BLE-Device-0.06
+mv WiRoc-BLE-Device-0.06 WiRoc-BLE-Device
 
 #npm install -g node-gyp
 echo "install bluetooth-hci-socket"
