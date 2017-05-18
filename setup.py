@@ -3,6 +3,7 @@ from datamodel.datamodel import SubscriberData
 from datamodel.datamodel import MessageTypeData
 from datamodel.datamodel import SubscriptionData
 from datamodel.datamodel import TransformData
+from datamodel.datamodel import MessageSubscriptionData
 from datamodel.db_helper import DatabaseHelper
 from subscriberadapters.sendloraadapter import SendLoraAdapter
 from subscriberadapters.sendserialadapter import SendSerialAdapter
@@ -21,7 +22,7 @@ class Setup:
     SubscriberAdapters = None
     InputAdapters = None
     @staticmethod
-    def SetupAdapters(createMessageTypeIfNotExist = False):
+    def SetupAdapters(): #createMessageTypeIfNotExist = False):
         subscriberObjects = []
         change1 = SendLoraAdapter.CreateInstances()
         change2 = SendSerialAdapter.CreateInstances()
@@ -56,6 +57,8 @@ class Setup:
             and not change1 and not change2 and not change3 and not change4 and
             not inChange1 and not inChange2 and not inChange3 and not inChange4):
             return False
+
+        SettingsClass.SetForceReconfigure(False)
 
         for adapter in subscriberObjects:
             if not adapter.GetIsDBInitialized():
@@ -107,26 +110,26 @@ class Setup:
         Setup.InputAdapters = inputObjects
         Setup.SubscriberAdapters = subscriberObjects
 
-        if createMessageTypeIfNotExist:
-            # add message types to database
-            messageTypeName = CreateStatusAdapter.GetTypeName()
-            messageTypeData = MessageTypeData(messageTypeName)
-            DatabaseHelper.save_message_type(messageTypeData)
-
-            messageTypeName = ReceiveLoraAdapter.GetTypeName()
-            messageTypeData = MessageTypeData(messageTypeName)
-            DatabaseHelper.save_message_type(messageTypeData)
-
-            messageTypeName = ReceiveSerialComputerAdapter.GetTypeName()
-            messageTypeData = MessageTypeData(messageTypeName)
-            DatabaseHelper.save_message_type(messageTypeData)
-
-            messageTypeName = ReceiveSIAdapter.GetTypeName()
-            messageTypeData = MessageTypeData(messageTypeName)
-            DatabaseHelper.save_message_type(messageTypeData)
-
         return True
 
+    @staticmethod
+    def AddMessageTypes():
+        #add message types to database
+        messageTypeName = CreateStatusAdapter.GetTypeName()
+        messageTypeData = MessageTypeData(messageTypeName)
+        DatabaseHelper.save_message_type(messageTypeData)
+
+        messageTypeName = ReceiveLoraAdapter.GetTypeName()
+        messageTypeData = MessageTypeData(messageTypeName)
+        DatabaseHelper.save_message_type(messageTypeData)
+
+        messageTypeName = ReceiveSerialComputerAdapter.GetTypeName()
+        messageTypeData = MessageTypeData(messageTypeName)
+        DatabaseHelper.save_message_type(messageTypeData)
+
+        messageTypeName = ReceiveSIAdapter.GetTypeName()
+        messageTypeData = MessageTypeData(messageTypeName)
+        DatabaseHelper.save_message_type(messageTypeData)
 
     @staticmethod
     def SetupPins():

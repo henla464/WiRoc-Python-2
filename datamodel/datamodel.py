@@ -35,16 +35,16 @@ class ChannelData(object):
 
 class MessageBoxData(object):
     columns = [("MessageData", bytearray), ("PowerCycleCreated", int),
-               ("MessageTypeId", int), ("InstanceName", str),
+               ("MessageTypeName", str), ("InstanceName", str),
                ("ChecksumOK", bool), ("CreatedDate", datetime)]
 
     def __init__(self, MessageData=None, PowerCycleCreated=None,
-                 MessageTypeId=None, InstanceName = None,
+                 MessageTypeName=None, InstanceName = None,
                  ChecksumOK=None, CreatedDate=None):
         self.id = None
         self.MessageData = MessageData
         self.PowerCycleCreated = PowerCycleCreated
-        self.MessageTypeId = MessageTypeId
+        self.MessageTypeName = MessageTypeName
         self.InstanceName = InstanceName
         self.ChecksumOK = ChecksumOK
         self.CreatedDate = CreatedDate
@@ -52,16 +52,16 @@ class MessageBoxData(object):
 
 class MessageBoxArchiveData(object):
     columns = [("OrigId", int), ("MessageData", bytes), ("PowerCycleCreated", int),
-               ("MessageTypeId", int), ("InstanceName", str),
+               ("MessageTypeName", str), ("InstanceName", str),
                ("ChecksumOK", bool), ("CreatedDate", datetime)]
 
     def __init__(self, OrigId=None, MessageData=None, PowerCycleCreated=None,
-                 MessageTypeId=None, InstanceName=None, ChecksumOK=None, CreatedDate=None):
+                 MessageTypeName=None, InstanceName=None, ChecksumOK=None, CreatedDate=None):
         self.id = None
         self.OrigId = OrigId
         self.MessageData = MessageData
         self.PowerCycleCreated = PowerCycleCreated
-        self.MessageTypeId = MessageTypeId
+        self.MessageTypeName = MessageTypeName
         self.InstanceName = InstanceName
         self.ChecksumOK = ChecksumOK
         self.CreatedDate = CreatedDate
@@ -128,17 +128,18 @@ class MessageSubscriptionData(object):
         self.MessageBoxId = MessageBoxId
         self.SubscriptionId = SubscriptionId
 
-
 class MessageSubscriptionArchiveData(object):
     columns = [ ("OrigId", int), ("CustomData", str),
                 ("SentDate", datetime), ("SendFailedDate", datetime),
                 ("FindAdapterTryDate", datetime),("FindAdapterTries", int),
                 ("NoOfSendTries", int), ("AckReceivedDate", datetime),
-                ("MessageBoxId", int), ("SubscriptionId", int)]
+                ("MessageBoxId", int), ("SubscriptionId", int),
+                ("SubscriberTypeName", str), ("TransformName", str),]
 
     def __init__(self, CustomData=None, SentDate=None, SendFailedDate=None,
                  FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
-                 NoOfSendTries=0, MessageBoxId=None, SubscriptionId=None):
+                 NoOfSendTries=0, MessageBoxId=None, SubscriptionId=None,
+                 SubscriberTypeName = None, TransformName = None):
         self.id = None
         self.CustomData = CustomData
         self.SentDate = SentDate
@@ -149,6 +150,8 @@ class MessageSubscriptionArchiveData(object):
         self.AckReceivedDate = AckReceivedDate
         self.MessageBoxId = MessageBoxId
         self.SubscriptionId = SubscriptionId
+        self.SubscriberTypeName = SubscriberTypeName
+        self.TransformName = TransformName
 
 
 class MessageSubscriptionView(object):
@@ -182,7 +185,7 @@ class MessageSubscriptionView(object):
 
 class SubscriberView(object):
     columns = [("TypeName", str), ("InstanceName", str), ("Enabled", bool), ("MessageInName", str),
-               ("MessageOutName", str), ("TransformEnabled", str)]
+               ("MessageOutName", str), ("TransformEnabled", str), ("TransformName", str)]
 
     def __init__(self):
         self.id = None
@@ -192,6 +195,7 @@ class SubscriberView(object):
         self.MessageInName = None
         self.MessageOutName = None
         self.TransformEnabled = False
+        self.TransformName = False
 
 
 class InputAdapterInstances(object):
@@ -321,25 +325,35 @@ class LoraRadioMessage(object):
         self.MessageData.extend(payloadArray)
         self.UpdateChecksum()
 
+    def GetLastRelayPathNoFromStatusMessage(self):
+        if self.GetMessageType() != LoraRadioMessage.MessageTypeStatus:
+            raise Exception('Lora message is not a status message!')
+
+        relayPathNo = (self.MessageData[-1] & 0x07) + 1
+        return relayPathNo
+
     def AddThisWiRocToStatusMessage(self, siStationNumber, batteryPercent4Bits):
         if self.GetMessageType() != LoraRadioMessage.MessageTypeStatus:
             raise Exception('Lora message is not a status message!')
 
+        # batteryPercent | siStationNo      |  pathNo  |
+        #      ####            ####  #####      ###    |
+        #       high byte          |       low byte    |
         lengthPayload = len(self.MessageData) - self.GetHeaderSize()
-        wiRocPathNo = int(lengthPayload / 2)
+        wiRocRelayPathNo = int(lengthPayload / 2)
         # we limit the payload length so when there are too many WiRocs in the path
         # then the path no will not match the index in the payload
-        realWiRocPathNo = wiRocPathNo
-        if wiRocPathNo > 0:
-            highBytePrevWiRocIndex = self.GetHeaderSize() + (wiRocPathNo - 1) * 2
-            realWiRocPathNo = (self.MessageData[highBytePrevWiRocIndex + 1] & 0x07) + 1
+        realWiRocRelayPathNo = wiRocRelayPathNo
+        if wiRocRelayPathNo > 0:
+            highBytePrevWiRocIndex = self.GetHeaderSize() + (wiRocRelayPathNo - 1) * 2
+            realWiRocRelayPathNo = (self.MessageData[highBytePrevWiRocIndex + 1] & 0x07) + 1
             if siStationNumber == 0:
                 siStationNumber = ((self.MessageData[highBytePrevWiRocIndex] & 0x0F) << 5) | \
                                   ((self.MessageData[highBytePrevWiRocIndex + 1] & 0xF8) >> 3)
 
         highByte = batteryPercent4Bits << 4 | ((siStationNumber & 0x1E0) >> 5)
-        lowByte = ((siStationNumber & 0x1F) << 3) | realWiRocPathNo
-        if wiRocPathNo <= 3:
+        lowByte = ((siStationNumber & 0x1F) << 3) | realWiRocRelayPathNo
+        if wiRocRelayPathNo <= 3:
             self.MessageData[1] = 255 # set length to 255 to allow adding bytes
             self.AddByte(highByte)
             self.AddByte(lowByte)

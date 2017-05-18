@@ -22,6 +22,7 @@ class Main:
         self.messagesToSendExists = True
         self.previousChannel = None
         self.previousAckRequested = None
+        self.wifiPowerSaving = False
 
         Battery.Setup()
         Setup.SetupPins()
@@ -31,10 +32,22 @@ class Main:
         DatabaseHelper.truncate_setup_tables()
         DatabaseHelper.add_default_channels()
         SettingsClass.IncrementPowerCycle()
+        Setup.AddMessageTypes()
 
-        if Setup.SetupAdapters(True):
+        if Setup.SetupAdapters():
             self.subscriberAdapters = Setup.SubscriberAdapters
             self.inputAdapters = Setup.InputAdapters
+
+            # recreate message subscriptions after reboot for messages in the messagebox
+            messages = DatabaseHelper.get_message_box_messages()
+            for msg in messages:
+                messageTypeId = DatabaseHelper.get_message_type(msg.MessageTypeName).id
+                subscriptions = DatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
+                for subscription in subscriptions:
+                    msgSubscription = MessageSubscriptionData()
+                    msgSubscription.MessageBoxId = msg.id
+                    msgSubscription.SubscriptionId = subscription.id
+                    DatabaseHelper.save_message_subscription(msgSubscription)
 
         self.runningOnChip = socket.gethostname() == 'chip'
 
@@ -89,26 +102,25 @@ class Main:
         if (
             (lastSendTryDate >= lastFindAdapterTryDate and
                 (msgSub.NoOfSendTries == 0 or
-                (msgSub.NoOfSendTries == 1 and datetime.now() - lastSendTryDate > timedelta(seconds=SettingsClass.GetFirstRetryDelay())) or
-                (msgSub.NoOfSendTries == 2 and datetime.now() - lastSendTryDate > timedelta(seconds=SettingsClass.GetSecondRetryDelay())))
+                (msgSub.NoOfSendTries < SettingsClass.GetMaxRetries() and datetime.now() - lastSendTryDate > timedelta(microseconds=SettingsClass.GetRetryDelay(msgSub.NoOfSendTries))))
             )
             or (lastSendTryDate < lastFindAdapterTryDate and
-                ((msgSub.FindAdapterTries == 0 or
-                 (msgSub.FindAdapterTries == 1 and datetime.now() - msgSub.FindAdapterTryDate > timedelta(seconds=SettingsClass.GetFirstRetryDelay())) or
-                 (msgSub.FindAdapterTries == 2 and datetime.now() - msgSub.FindAdapterTryDate > timedelta(seconds=SettingsClass.GetSecondRetryDelay())))
-                ))):
+                (msgSub.FindAdapterTries == 0 or
+                 (msgSub.FindAdapterTries < SettingsClass.GetMaxRetries() and datetime.now() - msgSub.FindAdapterTryDate > timedelta(microseconds=SettingsClass.GetRetryDelay(msgSub.FindAdapterTries))))
+                )):
             return True
         return False
 
     def shouldArchiveMessage(self, msgSub):
-        lastSendTryDate = max(msgSub.SentDate if msgSub.SentDate is not None else datetime.min,
-                              msgSub.SendFailedDate if msgSub.SendFailedDate is not None else datetime.min)
-        if (
-            (msgSub.NoOfSendTries >= 3 and datetime.now() - lastSendTryDate >  timedelta(seconds=SettingsClass.GetSecondRetryDelay()))
-            or
-            (msgSub.FindAdapterTries >= 3 and datetime.now() - msgSub.FindAdapterTryDate > timedelta(seconds=SettingsClass.GetSecondRetryDelay()))):
-            return True
-        return False
+        #lastSendTryDate = max(msgSub.SentDate if msgSub.SentDate is not None else datetime.min,
+        #                      msgSub.SendFailedDate if msgSub.SendFailedDate is not None else datetime.min)
+        #if (
+        #    (msgSub.NoOfSendTries >= 3 and datetime.now() - lastSendTryDate >  timedelta(seconds=SettingsClass.GetSecondRetryDelay()))
+        #    or
+        #    (msgSub.FindAdapterTries >= 3 and datetime.now() - msgSub.FindAdapterTryDate > timedelta(seconds=SettingsClass.GetSecondRetryDelay()))):
+        #    return True
+        #return False
+        return msgSub.NoOfSendTries >= SettingsClass.GetMaxRetries() or msgSub.FindAdapterTries >= SettingsClass.GetMaxRetries()
 
     def getMessageSubscriptionsToSend(self):
         msgSubsToSend = []
@@ -127,18 +139,29 @@ class Main:
                 if self.shouldArchiveMessage(msgSub):
                     DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
 
+    def updateWifiPowerSaving(self):
+        if self.runningOnChip:
+            sendToMeos = SettingsClass.GetSendToMeosEnabled()
+            if sendToMeos and self.wifiPowerSaving:
+                # disable power saving
+                os.system("sudo iw wlan0 set power_save off")
+            elif not sendToMeos and not self.wifiPowerSaving:
+                # enable power saving
+                os.system("sudo iw wlan0 set power_save on")
+
 
     def Run(self):
         while True:
 
             if self.timeToReconfigure():
-                SettingsClass.IsDirty("StatusMessageInterval", True, True) #force check dirty in db
+                SettingsClass.IsDirty("StatusMessageBaseInterval", True, True) #force check dirty in db
                 #SettingsClass.SetMessagesToSendExists(True)
                 self.archiveFailedMessages()
                 self.displayChannel()
+                self.updateWifiPowerSaving()
                 Battery.Tick()
                 SettingsClass.Tick()
-                if Setup.SetupAdapters(False):
+                if Setup.SetupAdapters():
                     self.subscriberAdapters = Setup.SubscriberAdapters
                     self.inputAdapters = Setup.InputAdapters
 
@@ -162,16 +185,16 @@ class Main:
                             logging.info("Start::Run() Received data from " + inputAdapter.GetInstanceName())
                             messageTypeName = inputAdapter.GetTypeName()
                             instanceName = inputAdapter.GetInstanceName()
-                            messageTypeId = DatabaseHelper.get_message_type(messageTypeName).id
                             mbd = MessageBoxData()
                             mbd.MessageData = inputData["Data"]
-                            mbd.MessageTypeId = messageTypeId
+                            mbd.MessageTypeName = messageTypeName
                             mbd.PowerCycleCreated = SettingsClass.GetPowerCycle()
                             mbd.ChecksumOK = inputData["ChecksumOK"]
                             mbd.InstanceName = instanceName
                             mbdid = DatabaseHelper.save_message_box(mbd)
                             SettingsClass.SetTimeOfLastMessageAdded()
                             anySubscription = False
+                            messageTypeId = DatabaseHelper.get_message_type(messageTypeName).id
                             subscriptions = DatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
                             for subscription in subscriptions:
                                 msgSubscription = MessageSubscriptionData()

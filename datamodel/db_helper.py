@@ -133,12 +133,28 @@ class DatabaseHelper:
         rows = cls.db.get_table_objects_by_SQL(SubscriberView, "SELECT "
             "SubscriberData.id, SubscriberData.TypeName, SubscriberData.InstanceName, "
             "SubscriptionData.Enabled, MsgIn.Name MessageInName, MsgOut.Name MessageOutName, "
-            "TransformData.Enabled as TransformEnabled "
+            "TransformData.Enabled as TransformEnabled, "
+            "TransformData.Name as TransformName "
             "from SubscriptionData JOIN SubscriberData "
             "ON SubscriptionData.SubscriberId = SubscriberData.Id "
             "JOIN TransformData ON TransformData.Id = SubscriptionData.TransformId "
             "JOIN MessageTypeData MsgIn on MsgIn.Id = TransformData.InputMessageTypeId "
             "JOIN MessageTypeData MsgOut on MsgOut.Id = TransformData.OutputMessageTypeId")
+        return rows
+
+    @classmethod
+    def get_subscriber_by_subscription_id(cls, subscriptionId):
+        rows = cls.db.get_table_objects_by_SQL(SubscriberView, "SELECT "
+            "SubscriberData.id, SubscriberData.TypeName, SubscriberData.InstanceName, "
+            "SubscriptionData.Enabled, MsgIn.Name MessageInName, MsgOut.Name MessageOutName, "
+            "TransformData.Enabled as TransformEnabled, "
+            "TransformData.Name as TransformName "
+            "from SubscriptionData JOIN SubscriberData "
+            "ON SubscriptionData.SubscriberId = SubscriberData.Id "
+            "JOIN TransformData ON TransformData.Id = SubscriptionData.TransformId "
+            "JOIN MessageTypeData MsgIn on MsgIn.Id = TransformData.InputMessageTypeId "
+            "JOIN MessageTypeData MsgOut on MsgOut.Id = TransformData.OutputMessageTypeId "
+            "WHERE SubscriptionData.id = %s") % subscriptionId
         return rows
 
 #MessageTypes
@@ -234,6 +250,8 @@ class DatabaseHelper:
         msa.AckReceivedDate = messageSubscriptionView.AckReceivedDate
         msa.MessageBoxId = messageSubscriptionView.MessageBoxId
         msa.SubscriptionId = messageSubscriptionView.SubscriptionId
+        msa.SubscriberTypeName = messageSubscriptionView.SubscriberTypeName
+        msa.TransformName = messageSubscriptionView.TransformName
         cls.db.save_table_object(msa, False)
         cls.db.delete_table_object(MessageSubscriptionData, messageSubscriptionView.id)
         remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(messageSubscriptionView.MessageBoxId)
@@ -253,6 +271,8 @@ class DatabaseHelper:
         msa.AckReceivedDate = messageSubscriptionView.AckReceivedDate
         msa.MessageBoxId = messageSubscriptionView.MessageBoxId
         msa.SubscriptionId = messageSubscriptionView.SubscriptionId
+        msa.SubscriberTypeName = messageSubscriptionView.SubscriberTypeName
+        msa.TransformName = messageSubscriptionView.TransformName
         cls.db.save_table_object(msa, False)
         cls.db.delete_table_object(MessageSubscriptionData, messageSubscriptionView.id)
         remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(messageSubscriptionView.MessageBoxId)
@@ -304,6 +324,10 @@ class DatabaseHelper:
             msa.NoOfSendTries = msd.NoOfSendTries
             msa.AckReceivedDate = datetime.now()
             msa.MessageBoxId = msd.MessageBoxId
+            msa.SubscriptionId = msd.SubscriptionId
+            subscriberView = DatabaseHelper.get_subscriber_by_subscription_id(msd.SubscriptionId)
+            msa.SubscriberTypeName = subscriberView.SubscriberTypeName
+            msa.TransformName = subscriberView.TransformName
             cls.db.save_table_object(msa, False)
             cls.db.delete_table_object(MessageSubscriptionData, msd.id)
             remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(msd.MessageBoxId)
@@ -353,11 +377,15 @@ class DatabaseHelper:
         return cls.db.save_table_object(messageBoxData, False)
 
     @classmethod
+    def get_message_box_messages(cls):
+        return cls.db.get_table_objects(MessageBoxData)
+
+    @classmethod
     def archive_message_box(cls, msgBoxId):
         sql = "INSERT INTO MessageBoxArchiveData (OrigId, MessageData, PowerCycleCreated," \
-              "CreatedDate, ChecksumOK, InstanceName, MessageTypeId) SELECT id, MessageData," \
-              "PowerCycleCreated, CreatedDate, ChecksumOK, InstanceName, MessageTypeId FROM " \
-              "MessageBoxData"
+              "CreatedDate, ChecksumOK, InstanceName, MessageTypeName) SELECT id, MessageData," \
+              "PowerCycleCreated, CreatedDate, ChecksumOK, InstanceName, MessageTypeName FROM " \
+              "MessageBoxData WHERE Id = %s" % msgBoxId
         cls.db.execute_SQL(sql)
         cls.db.delete_table_object(MessageBoxData, msgBoxId)
 

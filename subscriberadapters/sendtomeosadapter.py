@@ -120,4 +120,6 @@ class SendToMeosAdapter(object):
             return False
         except:
             logging.error("SendToMeosAdapter::SendData() Exception")
+            self.sock.close()
+            self.sock = None
             return False

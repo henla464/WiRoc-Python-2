@@ -31,6 +31,10 @@ class LoraRadio:
         self.channel = None
         self.loraDataRate = None
         self.lastMessageSentDate = None
+        self.totalNumberOfMessagesSent = 0
+        self.totalNumberOfAcksReceived = 0
+        self.acksReceivedSinceLastMessageSent = 0
+        self.runningAveragePercentageAcked = 0.5
 
     def GetIsInitialized(self, channel, dataRate):
         return self.isInitialized and \
@@ -163,6 +167,15 @@ class LoraRadio:
                 logging.error("LoraRadio::Init() Error configuring")
                 return False
 
+    def UpdateSentStats(self):
+        self.totalNumberOfMessagesSent += 1
+        self.runningAveragePercentageAcked = self.runningAveragePercentageAcked*0.9 + 0.1*self.acksReceivedSinceLastMessageSent
+        self.acksReceivedSinceLastMessageSent = 0
+
+    def UpdateAcksReceivedStats(self):
+        self.totalNumberOfMessagesSent += 1
+        self.acksReceivedSinceLastMessageSent += 1
+
     # delay sending next message if we are waiting for an ack message
     def IsReadyToSend(self):
         if SettingsClass.GetAcknowledgementRequested():
@@ -178,6 +191,7 @@ class LoraRadio:
     def SendData(self, messageData):
         dataInHex = ''.join(format(x, '02x') for x in messageData)
         logging.debug("LoraRadio::SendData() send data: " + dataInHex)
+        #self.UpdateSentStats() of use?
         self.lastMessageSentDate =  time.monotonic()
         self.radioSerial.write(messageData)
         return True
@@ -216,5 +230,7 @@ class LoraRadio:
         else:
             message = self.receivedMessage
             self.receivedMessage = LoraRadioMessage()
+            #if message.GetMessageType() == LoraRadioMessage.MessageTypeLoraAck:
+            #    self.UpdateAcksReceivedStats() of use?
             logging.info("LoraRadio::GetRadioData() received message!")
             return message

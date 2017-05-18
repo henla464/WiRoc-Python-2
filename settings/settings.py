@@ -3,11 +3,12 @@ __author__ = 'henla464'
 from datamodel.db_helper import DatabaseHelper
 from datamodel.datamodel import SettingData
 import time
+import math
 
 class SettingsClass(object):
     RadioIntervalLengthMicroSeconds = [4000000, 4000000, 4000000, 4000000, 4000000, 4000000]
     timeOfLastMessageAdded = time.monotonic()
-    statusMessageInterval = None
+    statusMessageBaseInterval = None
     loraAckMessageWaitTimeout = None
     MessagesToSendExists = True
     channel = None
@@ -55,8 +56,8 @@ class SettingsClass(object):
             SettingsClass.firstRetryDelay = None
         if settingsName == 'SecondRetryDelay':
             SettingsClass.secondRetryDelay = None
-        if settingsName == 'StatusMessageInterval':
-            SettingsClass.statusMessageInterval = None
+        if settingsName == 'StatusMessageBaseInterval':
+            SettingsClass.statusMessageBaseInterval = None
         if settingsName == 'LoraAckMessageWaitTimeout':
             SettingsClass.loraAckMessageWaitTimeout = None
         if settingsName == 'SendToBlenoEnabled':
@@ -90,7 +91,7 @@ class SettingsClass(object):
             SettingsClass.sendSerialAdapterActive = None
             SettingsClass.firstRetryDelay = None
             SettingsClass.secondRetryDelay = None
-            SettingsClass.statusMessageInterval = None
+            SettingsClass.statusMessageBaseInterval = None
             SettingsClass.loraAckMessageWaitTimeout = None
             SettingsClass.sendStatusMessages = None
             SettingsClass.sendToBlenoEnabled = None
@@ -123,8 +124,8 @@ class SettingsClass(object):
                 return SettingsClass.firstRetryDelay is None
             if settingsName == 'SecondRetryDelay':
                 return SettingsClass.secondRetryDelay is None
-            if settingsName == 'StatusMessageInterval':
-                return SettingsClass.statusMessageInterval is None
+            if settingsName == 'StatusMessageBaseInterval':
+                return SettingsClass.statusMessageBaseInterval is None
             if settingsName == 'LoraAckMessageWaitTimeout':
                 return SettingsClass.loraAckMessageWaitTimeout is None
             if settingsName == 'SendStatusMessages':
@@ -300,31 +301,49 @@ class SettingsClass(object):
         else:
             return "SEND"
 
+    channelData = None
+    microSecondsToSendAMessage = None
     @staticmethod
-    def GetFirstRetryDelay(mainConfigDirty = True):
-        if SettingsClass.IsDirty("FirstRetryDelay", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('FirstRetryDelay')
-            if sett is None:
-                SettingsClass.firstRetryDelay = 20
-            else:
-                try:
-                    SettingsClass.firstRetryDelay = int(sett.Value)
-                except ValueError:
-                    SettingsClass.firstRetryDelay = 20
-        return SettingsClass.firstRetryDelay
+    def GetRetryDelay(retryNumber, mainConfigDirty = True):
+        if SettingsClass.IsDirty("Channel", True, mainConfigDirty) \
+                or SettingsClass.channelData is None:
+            dataRate = SettingsClass.GetDataRate()
+            channel = SettingsClass.GetChannel()
+            SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
+            messageLengthInBytes = 24 # typical length
+            SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData)
+        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2 * math.pow(1.2, retryNumber)
+        return microSecondsDelay
 
     @staticmethod
-    def GetSecondRetryDelay(mainConfigDirty = True):
-        if SettingsClass.IsDirty("SecondRetryDelay", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('SecondRetryDelay')
-            if sett is None:
-                SettingsClass.secondRetryDelay = 20
-            else:
-                try:
-                    SettingsClass.secondRetryDelay = int(sett.Value)
-                except ValueError:
-                    SettingsClass.secondRetryDelay = 20
-        return SettingsClass.secondRetryDelay
+    def GetMaxRetries():
+        return 5
+
+#    @staticmethod
+#    def GetFirstRetryDelay(mainConfigDirty = True):
+#        if SettingsClass.IsDirty("FirstRetryDelay", True, mainConfigDirty):
+#            sett = DatabaseHelper.get_setting_by_key('FirstRetryDelay')
+#            if sett is None:
+#                SettingsClass.firstRetryDelay = 20
+#            else:
+#                try:
+#                    SettingsClass.firstRetryDelay = int(sett.Value)
+#                except ValueError:
+#                    SettingsClass.firstRetryDelay = 20
+#        return SettingsClass.firstRetryDelay
+
+ #   @staticmethod
+ #   def GetSecondRetryDelay(mainConfigDirty = True):
+ #       if SettingsClass.IsDirty("SecondRetryDelay", True, mainConfigDirty):
+ #           sett = DatabaseHelper.get_setting_by_key('SecondRetryDelay')
+ #           if sett is None:
+ #               SettingsClass.secondRetryDelay = 20
+ #           else:
+ #               try:
+ #                   SettingsClass.secondRetryDelay = int(sett.Value)
+ #               except ValueError:
+ #                   SettingsClass.secondRetryDelay = 20
+ #       return SettingsClass.secondRetryDelay
 
     @staticmethod
     def GetSendStatusMessages(mainConfigDirty = True):
@@ -356,31 +375,49 @@ class SettingsClass(object):
 
     @staticmethod
     def GetLoraAckMessageWaitTimeout():
-        if SettingsClass.loraAckMessageWaitTimeout is None:  # skip isDirty call, check directly
-            sett = DatabaseHelper.get_setting_by_key('LoraAckMessageWaitTimeout')
-            if sett is None:
-                SettingsClass.SetSetting('LoraAckMessageWaitTimeout', 3.0)
-                SettingsClass.loraAckMessageWaitTimeout = 3.0
-            else:
-                try:
-                    SettingsClass.loraAckMessageWaitTimeout = float(sett.Value)
-                except ValueError:
-                    SettingsClass.loraAckMessageWaitTimeout = 3.0
-        return SettingsClass.loraAckMessageWaitTimeout
+        if SettingsClass.microSecondsToSendAMessage is None:
+            dataRate = SettingsClass.GetDataRate()
+            channel = SettingsClass.GetChannel()
+            SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
+            messageLengthInBytes = 24  # typical length
+            SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData)
+
+        return SettingsClass.microSecondsToSendAMessage * 2.5
+            #if SettingsClass.loraAckMessageWaitTimeout is None:  # skip isDirty call, check directly
+        #    sett = DatabaseHelper.get_setting_by_key('LoraAckMessageWaitTimeout')
+        #    if sett is None:
+        #        SettingsClass.SetSetting('LoraAckMessageWaitTimeout', 3.0)
+        #        SettingsClass.loraAckMessageWaitTimeout = 3.0
+        #    else:
+        #        try:
+        #            SettingsClass.loraAckMessageWaitTimeout = float(sett.Value)
+        #        except ValueError:
+        #            SettingsClass.loraAckMessageWaitTimeout = 3.0
+        #return SettingsClass.loraAckMessageWaitTimeout
+
+    relayPathNo = 0
+    @staticmethod
+    def UpdateRelayPathNumber(sequenceNo):
+        if sequenceNo > SettingsClass.relayPathNo:
+            SettingsClass.relayPathNo = sequenceNo
+
+    @staticmethod
+    def GetRelayPathNumber():
+        return SettingsClass.relayPathNo
 
     @staticmethod
     def GetStatusMessageInterval():
-        if SettingsClass.statusMessageInterval is None: #skip isDirty call, check directly
-            sett = DatabaseHelper.get_setting_by_key('StatusMessageInterval')
+        if SettingsClass.statusMessageBaseInterval is None: #skip isDirty call, check directly
+            sett = DatabaseHelper.get_setting_by_key('StatusMessageBaseInterval')
             if sett is None:
-                SettingsClass.SetSetting('StatusMessageInterval', 60)
-                SettingsClass.statusMessageInterval = 60
+                SettingsClass.SetSetting('StatusMessageBaseInterval', 60)
+                SettingsClass.statusMessageBaseInterval = 60
             else:
                 try:
-                    SettingsClass.statusMessageInterval = int(sett.Value)
+                    SettingsClass.statusMessageBaseInterval = int(sett.Value)
                 except ValueError:
-                    SettingsClass.statusMessageInterval = 60
-        return SettingsClass.statusMessageInterval
+                    SettingsClass.statusMessageBaseInterval = 60
+        return SettingsClass.statusMessageBaseInterval + SettingsClass.GetRelayPathNumber()
 
     @staticmethod
     def GetWiRocDeviceName(mainConfigDirty = True):

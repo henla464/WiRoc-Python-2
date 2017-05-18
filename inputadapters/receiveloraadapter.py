@@ -1,6 +1,7 @@
 import pyudev
 import traceback
 from loraradio.loraradio import LoraRadio
+from datamodel.datamodel import LoraRadioMessage
 from settings.settings import SettingsClass
 import serial
 import time
@@ -96,9 +97,14 @@ class ReceiveLoraAdapter(object):
             isChecksumOK = loraMessage.GetIsChecksumOK()
             if isChecksumOK:
                 messageType = loraMessage.GetMessageType()
-                if messageType == 1: #ack
+                if messageType == LoraRadioMessage.MessageTypeLoraAck:
                     messageNumberAcked =  loraMessage.GetByteArray()[loraMessage.GetHeaderSize()]
                     return {"MessageType": "ACK", "MessageNumber": messageNumberAcked, "ChecksumOK": True}
+                elif messageType == LoraRadioMessage.MessageTypeStatus:
+                    #todo: save sequence no
+                    relayPathNo = loraMessage.GetLastRelayPathNoFromStatusMessage()
+                    SettingsClass.UpdateRelayPathNumber(relayPathNo)
+                    return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": True}
                 else:
                     return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": True}
             else:
