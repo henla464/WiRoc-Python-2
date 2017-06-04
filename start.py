@@ -112,14 +112,6 @@ class Main:
         return False
 
     def shouldArchiveMessage(self, msgSub):
-        #lastSendTryDate = max(msgSub.SentDate if msgSub.SentDate is not None else datetime.min,
-        #                      msgSub.SendFailedDate if msgSub.SendFailedDate is not None else datetime.min)
-        #if (
-        #    (msgSub.NoOfSendTries >= 3 and datetime.now() - lastSendTryDate >  timedelta(seconds=SettingsClass.GetSecondRetryDelay()))
-        #    or
-        #    (msgSub.FindAdapterTries >= 3 and datetime.now() - msgSub.FindAdapterTryDate > timedelta(seconds=SettingsClass.GetSecondRetryDelay()))):
-        #    return True
-        #return False
         return msgSub.NoOfSendTries >= SettingsClass.GetMaxRetries() or msgSub.FindAdapterTries >= SettingsClass.GetMaxRetries()
 
     def getMessageSubscriptionsToSend(self):
@@ -193,6 +185,7 @@ class Main:
                             mbd.InstanceName = instanceName
                             mbdid = DatabaseHelper.save_message_box(mbd)
                             SettingsClass.SetTimeOfLastMessageAdded()
+                            inputAdapter.AddedToMessageBox(mbdid)
                             anySubscription = False
                             messageTypeId = DatabaseHelper.get_message_type(messageTypeName).id
                             subscriptions = DatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
@@ -223,7 +216,7 @@ class Main:
                                 if subAdapter.IsReadyToSend():
                                     # transform the data before sending
                                     transformClass = subAdapter.GetTransform(msgSub.TransformName)
-                                    transformedData = transformClass.Transform(msgSub.MessageData)
+                                    transformedData = transformClass.Transform(msgSub)
                                     if transformedData is not None:
                                         if transformedData["CustomData"] is not None:
                                             DatabaseHelper.update_customdata(msgSub.id, transformedData["CustomData"])

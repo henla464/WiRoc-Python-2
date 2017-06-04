@@ -52,3 +52,6 @@ class CreateStatusAdapter(object):
             self.loraRadioMessage.UpdateChecksum()
             logging.debug("CreateStatusAdapter::GetData() Data to fetch")
             return {"MessageType": "DATA", "Data": self.loraRadioMessage.GetByteArray(), "ChecksumOK": True}
+
+    def AddedToMessageBox(self, mbid):
+        return None

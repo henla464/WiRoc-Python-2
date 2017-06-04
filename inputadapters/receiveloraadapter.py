@@ -111,3 +111,6 @@ class ReceiveLoraAdapter(object):
                 return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": False}
 
         return None
+
+    def AddedToMessageBox(self, mbid):
+        return None

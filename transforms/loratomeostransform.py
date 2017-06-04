@@ -18,7 +18,8 @@ class LoraToMeosTransform(object):
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(payloadData):
+    def Transform(msgSub):
+        payloadData = msgSub.MessageData
         msg = LoraRadioMessage()
         msg.AddPayload(payloadData)
         if msg.GetMessageType() == LoraRadioMessage.MessageTypeSIPunch:

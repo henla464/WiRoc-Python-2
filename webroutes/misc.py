@@ -7,6 +7,7 @@ from init import *
 from flask import request
 import jsonpickle
 import json
+import time
 
 @app.route('/misc/status/', methods=['GET'])
 def getStatus():
@@ -115,3 +116,50 @@ def deletePunches(operation):
         return jsonpickle.encode(MicroMock(Status="OK"))
     else:
         return jsonpickle.encode(MicroMock(Status="Operation not found"))
+
+@app.route('/misc/testpunches/gettestpunches/<testBatchGuid>/<includeAll>/', methods=['GET'])
+def getTestPunches(testBatchGuid, includeAll):
+    testPunches = None
+    if includeAll == "true":
+        testPunches = DatabaseHelper.get_test_punches(testBatchGuid)
+    else:
+        testPunches = DatabaseHelper.get_test_punches_not_fetched(testBatchGuid)
+    punches = []
+    for testPunch in testPunches:
+        punch = {}
+        punch['Id'] = testPunch.id
+        punch['MsgId'] = testPunch.MessageBoxId
+        punch['Status'] = testPunch.Status
+        punch['SINo'] = testPunch.SICardNumber
+        punch['NoOfSendTries'] = testPunch.NoOfSendTries
+        punch['SubscrId'] = testPunch.SubscriptionId
+        timeInSeconds = testPunch.TwelveHourTimer
+        if testPunch.TwentyFourHour == 1:
+            timeInSeconds += 3600 * 12
+        hours = timeInSeconds // 3600
+        remainingSeconds = timeInSeconds % 3600
+        minutes = remainingSeconds // 60
+        seconds = remainingSeconds % 60
+        punch['Time'] = str(hours) + ':' + str(minutes).zfill(2) +':' + str(seconds).zfill(2)
+        punches.append(punch)
+
+    data = {}
+    data['punches'] = punches
+    json_data = json.dumps(data)
+    return json_data
+
+@app.route('/misc/testpunches/addtestpunch/<testBatchGuid>/<SINo>/<ackReq>/', methods=['GET'])
+def addTestPunch(testBatchGuid, SINo, ackReq):
+    localtime = time.localtime(time.time())
+    twelveHourTimer = 0
+    twentyFourHour = 0
+    if localtime.tm_hour >= 12:
+        twelveHourTimer = (localtime.tm_hour-12) * 3600 + localtime.tm_min * 60 + localtime.tm_sec
+        twentyFourHour = 1
+    else:
+        twelveHourTimer = localtime.tm_hour * 3600 + localtime.tm_min * 60 + localtime.tm_sec
+    DatabaseHelper.add_test_punch(testBatchGuid, SINo, twelveHourTimer, twentyFourHour, ackReq)
+
+    json_data = jsonpickle.encode(MicroMock(Status="OK"))
+    return json_data
+

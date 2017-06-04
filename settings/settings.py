@@ -311,7 +311,7 @@ class SettingsClass(object):
             channel = SettingsClass.GetChannel()
             SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
             messageLengthInBytes = 24 # typical length
-            SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData)
+            SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
         microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2 * math.pow(1.2, retryNumber)
         return microSecondsDelay
 

@@ -13,6 +13,7 @@ from inputadapters.createstatusadapter import CreateStatusAdapter
 from inputadapters.receiveloraadapter import ReceiveLoraAdapter
 from inputadapters.receiveserialcomputeradapter import ReceiveSerialComputerAdapter
 from inputadapters.receivesiadapter import ReceiveSIAdapter
+from inputadapters.receivetestpunchesadapter import ReceiveTestPunchesAdapter
 import logging
 from chipGPIO.chipGPIO import *
 import socket
@@ -38,10 +39,12 @@ class Setup:
         inChange2 = ReceiveLoraAdapter.CreateInstances()
         inChange3 = ReceiveSerialComputerAdapter.CreateInstances()
         inChange4 = ReceiveSIAdapter.CreateInstances()
+        inChange5 = ReceiveTestPunchesAdapter.CreateInstances()
         inputObjects.extend(CreateStatusAdapter.Instances)
         inputObjects.extend(ReceiveLoraAdapter.Instances)
         inputObjects.extend(ReceiveSerialComputerAdapter.Instances)
         inputObjects.extend(ReceiveSIAdapter.Instances)
+        inputObjects.extend(ReceiveTestPunchesAdapter.Instances)
 
 
         allInitialized = True
@@ -55,7 +58,7 @@ class Setup:
 
         if (allInitialized and not SettingsClass.GetForceReconfigure()
             and not change1 and not change2 and not change3 and not change4 and
-            not inChange1 and not inChange2 and not inChange3 and not inChange4):
+            not inChange1 and not inChange2 and not inChange3 and not inChange4 and not inChange5):
             return False
 
         SettingsClass.SetForceReconfigure(False)
@@ -128,6 +131,10 @@ class Setup:
         DatabaseHelper.save_message_type(messageTypeData)
 
         messageTypeName = ReceiveSIAdapter.GetTypeName()
+        messageTypeData = MessageTypeData(messageTypeName)
+        DatabaseHelper.save_message_type(messageTypeData)
+
+        messageTypeName = ReceiveTestPunchesAdapter.GetTypeName()
         messageTypeData = MessageTypeData(messageTypeName)
         DatabaseHelper.save_message_type(messageTypeData)
 

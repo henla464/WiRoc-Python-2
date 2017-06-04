@@ -37,6 +37,8 @@ class DatabaseHelper:
         db.ensure_table_created(table)
         table = BlenoPunchData()
         db.ensure_table_created(table)
+        table = TestPunchData()
+        db.ensure_table_created(table)
 
     @classmethod
     def drop_all_tables(cls):
@@ -66,6 +68,8 @@ class DatabaseHelper:
         db.drop_table(table)
         table = BlenoPunchData()
         db.drop_table(table)
+        table = TestPunchData()
+        db.drop_table(table)
 
     @classmethod
     def truncate_setup_tables(cls):
@@ -76,7 +80,7 @@ class DatabaseHelper:
         db.execute_SQL("DELETE FROM InputAdapterInstances")
         db.execute_SQL("DELETE FROM SubscriberData")
         db.execute_SQL("DELETE FROM MessageTypeData")
-
+        db.execute_SQL("DELETE FROM MessageSubscriptionData")
 
     @classmethod
     def delete_punches(cls):
@@ -87,6 +91,7 @@ class DatabaseHelper:
         db.execute_SQL("DELETE FROM MessageSubscriptionData")
         db.execute_SQL("DELETE FROM MessageBoxArchiveData")
         db.execute_SQL("DELETE FROM MessageBoxData")
+        db.execute_SQL("DELETE FROM TestPunchData")
 
 #Settings
     @classmethod
@@ -358,7 +363,8 @@ class DatabaseHelper:
                    "SubscriberData.TypeName as SubscriberTypeName, "
                    "SubscriberData.InstanceName as SubscriberInstanceName, "
                    "TransformData.Name as TransformName, "
-                   "MessageBoxData.MessageData "
+                   "MessageBoxData.MessageData,"
+                   "MessageBoxData.id as MessageBoxId "
                    "FROM TransformData JOIN SubscriptionData "
                    "ON TransformData.id = SubscriptionData.TransformId "
                    "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
@@ -423,6 +429,80 @@ class DatabaseHelper:
     @classmethod
     def delete_bleno_punch_data(cls, rowId):
         cls.db.delete_table_object(BlenoPunchData, rowId)
+
+#TestPunchData
+    @classmethod
+    def add_test_punch(cls, testBatchGuid, SINo, twelveHourTimer, twentyFourHour, ackReq):
+        testPunch = TestPunchData()
+        testPunch.BatchGuid = testBatchGuid
+        testPunch.MessageBoxId = None
+        testPunch.TwelveHourTimer = twelveHourTimer
+        testPunch.TwentyFourHour = twentyFourHour
+        testPunch.SICardNumber = SINo
+        testPunch.AckReq = ackReq
+        cls.db.save_table_object(testPunch, False)
+
+    @classmethod
+    def get_test_punch_to_add(cls):
+        testPunches = cls.db.get_table_objects_by_SQL(TestPunchData, "SELECT * FROM TestPunchData WHERE AddedToMessageBox = 0 ORDER BY TwentyFourHour, TwelveHourTimer LIMIT 1")
+        if len(testPunches) > 0:
+            return testPunches[0]
+        return None
+
+    @classmethod
+    def get_test_punch_ack_req(cls, msgId):
+        testPunches = cls.db.get_table_objects_by_SQL(TestPunchData,
+                                                      "SELECT * FROM TestPunchData WHERE MessageBoxId = %s" % msgId)
+        if len(testPunches) > 0:
+            return testPunches.AckReq
+        return False
+
+    @classmethod
+    def set_test_punch_added_to_message_box(cls, messageBoxId, testPunchId):
+        cls.db.execute_SQL("UPDATE TestPunchData SET AddedToMessageBox = 1, MessageBoxId = %s WHERE id = %s" % (messageBoxId, testPunchId))
+        return None
+
+    @classmethod
+    def get_test_punches(cls, testBatchGuid):
+        testPunchesView = cls.db.get_table_objects_by_SQL(TestPunchView,
+         "SELECT TestPunchData.id, TestPunchData.SICardNumber, TestPunchData.TwentyFourHour, "
+         "TestPunchData.TwelveHourTimer, TestPunchData.Fetched, TestPunchData.MessageBoxId, CASE "
+           "WHEN MessageSubscriptionData.id is not null THEN MessageSubscriptionData.SubscriptionId "
+           "WHEN MessageSubscriptionArchiveData.id is not null THEN MessageSubscriptionArchiveData.SubscriptionId "
+           "ELSE -1 "
+         "END SubscriptionId, CASE "
+           "WHEN MessageSubscriptionData.id is not null THEN MessageSubscriptionData.NoOfSendTries "
+           "WHEN MessageSubscriptionArchiveData.id is not null THEN MessageSubscriptionArchiveData.NoOfSendTries "
+           "ELSE 0 "
+         "END NoOfSendTries, CASE "
+           "WHEN MessageBoxData.id is null and MessageBoxArchiveData.id is null THEN 'Not added' "
+           "WHEN MessageSubscriptionData.id is not null "
+             "and MessageSubscriptionData.SentDate is null THEN 'Added' "
+           "WHEN MessageSubscriptionData.id is not null "
+             "and MessageSubscriptionData.SentDate is not null and MessageSubscriptionData.AckReceivedDate is null THEN 'Sent' "
+           "WHEN MessageSubscriptionArchiveData.id is not null "
+             "and MessageSubscriptionArchiveData.SentDate is null THEN 'Not sent' "
+           "WHEN MessageSubscriptionArchiveData.id is not null "
+             "and MessageSubscriptionArchiveData.SentDate is not null and MessageSubscriptionArchiveData.AckReceivedDate is null THEN 'Not acked' "
+           "WHEN MessageSubscriptionArchiveData.id is not null "
+             "and MessageSubscriptionArchiveData.SentDate is not null and MessageSubscriptionArchiveData.AckReceivedDate is not null THEN 'Acked' "
+           "ELSE 'No subscr.' "
+         "END Status "
+         "FROM TestPunchData LEFT JOIN MessageBoxData ON TestPunchData.MessageBoxId = MessageBoxData.id "
+         "LEFT JOIN MessageSubscriptionData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
+         "LEFT JOIN MessageBoxArchiveData ON TestPunchData.MessageBoxId = MessageBoxArchiveData.OrigId "
+         "LEFT JOIN MessageSubscriptionArchiveData ON MessageBoxArchiveData.OrigId = MessageSubscriptionArchiveData.MessageBoxId "
+         "WHERE BatchGuid = '%s'" % testBatchGuid)
+        return testPunchesView
+
+    @classmethod
+    def get_test_punches_not_fetched(cls, testBatchGuid):
+        allPunches = cls.get_test_punches(testBatchGuid)
+        notFetchedPunches = list(filter(lambda p: not p.Fetched, allPunches))
+        for punch in notFetchedPunches:
+            if punch.Status == 'Not sent' or punch.Status == 'No subscr.' or punch.Status == 'Acked' or punch.Status == 'Not acked':
+                cls.db.execute_SQL("UPDATE TestPunchData SET Fetched = 1 WHERE id = %s" % punch.id)
+        return notFetchedPunches
 
 #Channels
     @classmethod

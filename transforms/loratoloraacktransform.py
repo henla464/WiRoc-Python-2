@@ -17,7 +17,8 @@ class LoraToLoraAckTransform(object):
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(payloadData):
+    def Transform(msgSub):
+        payloadData = msgSub.MessageData
         ackRequested = (payloadData[2] & 0x80) > 0
         if ackRequested:
             time.sleep(0.05)

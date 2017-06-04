@@ -127,3 +127,6 @@ class ReceiveSerialComputerAdapter(object):
             except:
                 logging.error("ReceiveSerialComputerAdapter::GetData() Error sending reply message")
         return None
+
+    def AddedToMessageBox(self, mbid):
+        return None

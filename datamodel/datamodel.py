@@ -219,6 +219,36 @@ class BlenoPunchData(object):
         self.TwelveHourTimer = None
         self.SubSecond = None
 
+class TestPunchData(object):
+    columns = [("BatchGuid", str), ("MessageBoxId", int), ("TwentyFourHour", int),("TwelveHourTimer", int),("SICardNumber", int), ("AddedToMessageBox", bool), ("Fetched", bool), ("AckReq", bool)]
+
+    def __init__(self):
+        self.id = None
+        self.BatchGuid = None
+        self.MessageBoxId = None
+        self.TwentyFourHour = 1
+        self.TwelveHourTimer = 0
+        self.SICardNumber = 0
+        self.AddedToMessageBox = 0
+        self.Fetched = 0
+        self.AckReq = 0
+
+class TestPunchView(object):
+    columns = [("BatchGuid", str), ("MessageBoxId", int), ("TwentyFourHour", int), ("TwelveHourTimer", int),
+               ("SICardNumber", int), ("Fetched", bool), ("NoOfSendTries", int), ("Status", str)]
+
+    def __init__(self):
+        self.id = None
+        self.BatchGuid = None
+        self.MessageBoxId = None
+        self.TwentyFourHour = 1
+        self.TwelveHourTimer = 0
+        self.SICardNumber = 0
+        self.Fetched = 0
+        self.NoOfSendTries = 0
+        self.Status = None
+
+
 # Non database objects
 class LoraRadioMessage(object):
     # Six bits for message type

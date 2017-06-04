@@ -236,3 +236,6 @@ class ReceiveSIAdapter(object):
             dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
             logging.error("ReceiveSIAdapter::GetData() Unknown SI message received! Data: " + dataInHex)
             return None
+
+        def AddedToMessageBox(self, mbid):
+            return None
