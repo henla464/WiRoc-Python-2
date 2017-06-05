@@ -312,38 +312,12 @@ class SettingsClass(object):
             SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
             messageLengthInBytes = 24 # typical length
             SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
-        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2 * math.pow(1.2, retryNumber)
+        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber)
         return microSecondsDelay
 
     @staticmethod
     def GetMaxRetries():
         return 5
-
-#    @staticmethod
-#    def GetFirstRetryDelay(mainConfigDirty = True):
-#        if SettingsClass.IsDirty("FirstRetryDelay", True, mainConfigDirty):
-#            sett = DatabaseHelper.get_setting_by_key('FirstRetryDelay')
-#            if sett is None:
-#                SettingsClass.firstRetryDelay = 20
-#            else:
-#                try:
-#                    SettingsClass.firstRetryDelay = int(sett.Value)
-#                except ValueError:
-#                    SettingsClass.firstRetryDelay = 20
-#        return SettingsClass.firstRetryDelay
-
- #   @staticmethod
- #   def GetSecondRetryDelay(mainConfigDirty = True):
- #       if SettingsClass.IsDirty("SecondRetryDelay", True, mainConfigDirty):
- #           sett = DatabaseHelper.get_setting_by_key('SecondRetryDelay')
- #           if sett is None:
- #               SettingsClass.secondRetryDelay = 20
- #           else:
- #               try:
- #                   SettingsClass.secondRetryDelay = int(sett.Value)
- #               except ValueError:
- #                   SettingsClass.secondRetryDelay = 20
- #       return SettingsClass.secondRetryDelay
 
     @staticmethod
     def GetSendStatusMessages(mainConfigDirty = True):
@@ -374,26 +348,15 @@ class SettingsClass(object):
     currentTime = time.monotonic()
 
     @staticmethod
-    def GetLoraAckMessageWaitTimeout():
+    def GetLoraAckMessageWaitTimeoutS():
         if SettingsClass.microSecondsToSendAMessage is None:
             dataRate = SettingsClass.GetDataRate()
             channel = SettingsClass.GetChannel()
             SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
             messageLengthInBytes = 24  # typical length
-            SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData)
+            SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
 
-        return SettingsClass.microSecondsToSendAMessage * 2.5
-            #if SettingsClass.loraAckMessageWaitTimeout is None:  # skip isDirty call, check directly
-        #    sett = DatabaseHelper.get_setting_by_key('LoraAckMessageWaitTimeout')
-        #    if sett is None:
-        #        SettingsClass.SetSetting('LoraAckMessageWaitTimeout', 3.0)
-        #        SettingsClass.loraAckMessageWaitTimeout = 3.0
-        #    else:
-        #        try:
-        #            SettingsClass.loraAckMessageWaitTimeout = float(sett.Value)
-        #        except ValueError:
-        #            SettingsClass.loraAckMessageWaitTimeout = 3.0
-        #return SettingsClass.loraAckMessageWaitTimeout
+        return (SettingsClass.microSecondsToSendAMessage * 2.5)/1000000
 
     relayPathNo = 0
     @staticmethod

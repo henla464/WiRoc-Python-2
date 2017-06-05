@@ -185,7 +185,7 @@ class MessageSubscriptionView(object):
 
 class SubscriberView(object):
     columns = [("TypeName", str), ("InstanceName", str), ("Enabled", bool), ("MessageInName", str),
-               ("MessageOutName", str), ("TransformEnabled", str), ("TransformName", str)]
+               ("MessageOutName", str), ("TransformEnabled", bool), ("TransformName", str)]
 
     def __init__(self):
         self.id = None

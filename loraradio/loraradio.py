@@ -181,7 +181,7 @@ class LoraRadio:
         if SettingsClass.GetAcknowledgementRequested():
             currentTime = time.monotonic()
             if self.lastMessageSentDate is None or\
-                self.lastMessageSentDate < currentTime - SettingsClass.GetLoraAckMessageWaitTimeout():
+                self.lastMessageSentDate < currentTime - SettingsClass.GetLoraAckMessageWaitTimeoutS():
                 return True
             else:
                 return False

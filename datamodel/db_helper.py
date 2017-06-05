@@ -268,7 +268,7 @@ class DatabaseHelper:
         msa = MessageSubscriptionArchiveData()
         msa.OrigId = messageSubscriptionView.id
         msa.CustomData = messageSubscriptionView.CustomData
-        msa.SentDate = None
+        msa.SentDate = messageSubscriptionView.SentDate
         msa.SendFailedDate = messageSubscriptionView.SendFailedDate
         msa.FindAdapterTryDate = messageSubscriptionView.FindAdapterTryDate
         msa.FindAdapterTries = messageSubscriptionView.FindAdapterTries
@@ -454,7 +454,7 @@ class DatabaseHelper:
         testPunches = cls.db.get_table_objects_by_SQL(TestPunchData,
                                                       "SELECT * FROM TestPunchData WHERE MessageBoxId = %s" % msgId)
         if len(testPunches) > 0:
-            return testPunches.AckReq
+            return testPunches[0].AckReq
         return False
 
     @classmethod
