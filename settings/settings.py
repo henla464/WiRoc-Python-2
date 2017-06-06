@@ -356,7 +356,7 @@ class SettingsClass(object):
             messageLengthInBytes = 24  # typical length
             SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
 
-        return (SettingsClass.microSecondsToSendAMessage * 2.5)/1000000
+        return 1+(SettingsClass.microSecondsToSendAMessage * 2.1)/1000000
 
     relayPathNo = 0
     @staticmethod

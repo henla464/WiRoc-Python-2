@@ -117,7 +117,7 @@ class Main:
     def getMessageSubscriptionsToSend(self):
         msgSubsToSend = []
         if self.messagesToSendExists:
-            msgSubscriptions = DatabaseHelper.get_message_subscriptions_view()
+            msgSubscriptions = DatabaseHelper.get_message_subscriptions_view(1)
             if len(msgSubscriptions) == 0:
                 self.messagesToSendExists = False
             else:
@@ -126,7 +126,7 @@ class Main:
 
     def archiveFailedMessages(self):
         if self.messagesToSendExists:
-            msgSubscriptions = DatabaseHelper.get_message_subscriptions_view()
+            msgSubscriptions = DatabaseHelper.get_message_subscriptions_view(100)
             for msgSub in msgSubscriptions:
                 if self.shouldArchiveMessage(msgSub):
                     DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)

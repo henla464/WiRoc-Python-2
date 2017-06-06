@@ -47,8 +47,12 @@ def digitalWriteNonXIO(pin, state):
     pinMapped = str(pin)
     os.system("sudo sh -c 'echo " + str(state) + " > /sys/class/gpio/gpio" + pinMapped + "/value'")
 
+def digitalReadNonXIO(pin):
+    pinMapped = str(pin)
+    value = os.popen("cat /sys/class/gpio/gpio" + pinMapped + "/value").read()
+    return int(value)
 
 def digitalRead(pin):
-        pinMapped = str(pin+get_xio_base())
-        value = os.popen("cat /sys/class/gpio/gpio"+pinMapped+"/value").read()
-        return int(value)
+    pinMapped = str(pin+get_xio_base())
+    value = os.popen("cat /sys/class/gpio/gpio"+pinMapped+"/value").read()
+    return int(value)

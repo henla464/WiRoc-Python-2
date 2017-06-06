@@ -22,6 +22,22 @@ class SendSerialAdapter(object):
                 if SendSerialAdapter.Instances[0].GetSerialDevicePath() != serialPorts[0]:
                     SendSerialAdapter.Instances[0] = SendSerialAdapter(1, serialPorts[0])
                     return True
+                else:
+                    SendSerialAdapter.Instances[0].GetIsInitialized
+                    if SendSerialAdapter.SendSerialAdapterActive is None:
+                        return True
+                    if SendSerialAdapter.Instances[0].TestConnection():
+                        if not SendSerialAdapter.SendSerialAdapterActive:
+                            SendSerialAdapter.SendSerialAdapterActive = True
+                            return True
+                        else:
+                            return False
+                    else:
+                        if SendSerialAdapter.SendSerialAdapterActive:
+                            SendSerialAdapter.SendSerialAdapterActive = False
+                            return True
+                        else:
+                            return False
             else:
                 SendSerialAdapter.Instances.append(SendSerialAdapter(1, serialPorts[0]))
                 return True

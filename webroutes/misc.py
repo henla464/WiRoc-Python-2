@@ -158,6 +158,7 @@ def addTestPunch(testBatchGuid, SINo, ackReq):
         twentyFourHour = 1
     else:
         twelveHourTimer = localtime.tm_hour * 3600 + localtime.tm_min * 60 + localtime.tm_sec
+    DatabaseHelper.delete_other_test_punches(testBatchGuid)
     DatabaseHelper.add_test_punch(testBatchGuid, SINo, twelveHourTimer, twentyFourHour, ackReq)
 
     json_data = jsonpickle.encode(MicroMock(Status="OK"))

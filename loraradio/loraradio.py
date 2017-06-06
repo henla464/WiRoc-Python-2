@@ -35,6 +35,7 @@ class LoraRadio:
         self.totalNumberOfAcksReceived = 0
         self.acksReceivedSinceLastMessageSent = 0
         self.runningAveragePercentageAcked = 0.5
+        self.chip = False
 
     def GetIsInitialized(self, channel, dataRate):
         return self.isInitialized and \
@@ -120,6 +121,7 @@ class LoraRadio:
         logging.info("LoraRadio::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraDataRate: " + str(loraDataRate))
         if socket.gethostname() == 'chip':
             digitalWriteNonXIO(139, 0) #enable radio module
+            self.chip = True
         self.channel = channel
         self.loraDataRate = loraDataRate
 
@@ -178,6 +180,9 @@ class LoraRadio:
 
     # delay sending next message if we are waiting for an ack message
     def IsReadyToSend(self):
+        if self.chip:
+            if digitalReadNonXIO(138) == 0:
+                return False
         if SettingsClass.GetAcknowledgementRequested():
             currentTime = time.monotonic()
             if self.lastMessageSentDate is None or\

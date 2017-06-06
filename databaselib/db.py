@@ -10,6 +10,7 @@ class DB:
         self.connection = lite.connect(database_file_path, timeout=100)
         self.connection.row_factory = lite.Row
         self.data_mapping = data_mapping
+        self.execute_SQL("PRAGMA journal_mode=WAL")
 
     @staticmethod
     def _get_python_type(table_object, column_name):

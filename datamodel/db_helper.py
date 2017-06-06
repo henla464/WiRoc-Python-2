@@ -159,7 +159,7 @@ class DatabaseHelper:
             "JOIN TransformData ON TransformData.Id = SubscriptionData.TransformId "
             "JOIN MessageTypeData MsgIn on MsgIn.Id = TransformData.InputMessageTypeId "
             "JOIN MessageTypeData MsgOut on MsgOut.Id = TransformData.OutputMessageTypeId "
-            "WHERE SubscriptionData.id = %s") % subscriptionId
+            "WHERE SubscriptionData.id = %s" % subscriptionId)
         return rows
 
 #MessageTypes
@@ -313,7 +313,7 @@ class DatabaseHelper:
     def archive_message_subscription_after_ack(cls, messageNumber):
         sixtySecondsAgo = datetime.now() - timedelta(seconds=60)
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData WHERE "
-                                       "CustomData = '%s' AND  SentDate > '%s' "
+                                       "CustomData = '%s' AND SentDate > '%s' "
                                         "ORDER BY SentDate desc LIMIT 1") % (messageNumber, sixtySecondsAgo)
         rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql)
 
@@ -331,8 +331,9 @@ class DatabaseHelper:
             msa.MessageBoxId = msd.MessageBoxId
             msa.SubscriptionId = msd.SubscriptionId
             subscriberView = DatabaseHelper.get_subscriber_by_subscription_id(msd.SubscriptionId)
-            msa.SubscriberTypeName = subscriberView.SubscriberTypeName
-            msa.TransformName = subscriberView.TransformName
+            if len(subscriberView) > 0:
+                msa.SubscriberTypeName = subscriberView[0].TypeName
+                msa.TransformName = subscriberView[0].TransformName
             cls.db.save_table_object(msa, False)
             cls.db.delete_table_object(MessageSubscriptionData, msd.id)
             remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(msd.MessageBoxId)
@@ -343,7 +344,7 @@ class DatabaseHelper:
 #MessageSubscriptionView
 
     @classmethod
-    def get_message_subscriptions_view(cls):
+    def get_message_subscriptions_view(cls, limit = 100):
         sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData")
         cnt = cls.db.get_scalar_by_SQL(sql)
         if cnt > 0:
@@ -373,7 +374,7 @@ class DatabaseHelper:
                    "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
                    "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 "
                    "ORDER BY MessageSubscriptionData.NoOfSendTries asc, "
-                   "MessageSubscriptionData.SentDate asc")
+                   "MessageSubscriptionData.SentDate asc LIMIT %s") % limit
             return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
         return []
 
@@ -443,6 +444,10 @@ class DatabaseHelper:
         cls.db.save_table_object(testPunch, False)
 
     @classmethod
+    def delete_other_test_punches(cls, testBatchGuid):
+        cls.db.execute_SQL("DELETE FROM TestPunchData WHERE BatchGuid <> %s" % testBatchGuid)
+
+    @classmethod
     def get_test_punch_to_add(cls):
         testPunches = cls.db.get_table_objects_by_SQL(TestPunchData, "SELECT * FROM TestPunchData WHERE AddedToMessageBox = 0 ORDER BY TwentyFourHour, TwelveHourTimer LIMIT 1")
         if len(testPunches) > 0:
@@ -500,7 +505,7 @@ class DatabaseHelper:
         allPunches = cls.get_test_punches(testBatchGuid)
         notFetchedPunches = list(filter(lambda p: not p.Fetched, allPunches))
         for punch in notFetchedPunches:
-            if punch.Status == 'Not sent' or punch.Status == 'No subscr.' or punch.Status == 'Acked' or punch.Status == 'Not acked':
+            if punch.Status == 'Not sent' or punch.Status == 'Acked' or punch.Status == 'Not acked':
                 cls.db.execute_SQL("UPDATE TestPunchData SET Fetched = 1 WHERE id = %s" % punch.id)
         return notFetchedPunches
 

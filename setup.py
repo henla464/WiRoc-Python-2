@@ -149,5 +149,6 @@ class Setup:
             pinMode(5, OUTPUT)
             pinMode(6, OUTPUT)
             pinMode(7, OUTPUT)
+            pinModeNonXIO(138, INPUT)
             pinModeNonXIO(139, OUTPUT)
             digitalWriteNonXIO(139, 1)
