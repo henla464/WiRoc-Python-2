@@ -50,7 +50,7 @@ class Setup:
         anyShouldBeInitialized = False
         for inst in subscriberObjects:
             if inst.ShouldBeInitialized():
-                allInitialized = True
+                anyShouldBeInitialized = True
 
         for inst in inputObjects:
             if inst.ShouldBeInitialized():
