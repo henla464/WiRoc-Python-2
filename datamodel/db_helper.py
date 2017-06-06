@@ -318,6 +318,7 @@ class DatabaseHelper:
         rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql)
 
         if len(rows) > 0:
+            now = datetime.now()
             msd = rows[0]
             msa = MessageSubscriptionArchiveData()
             msa.OrigId = msd.id
@@ -327,7 +328,7 @@ class DatabaseHelper:
             msa.FindAdapterTryDate = msd.FindAdapterTryDate
             msa.FindAdapterTries = msd.FindAdapterTries
             msa.NoOfSendTries = msd.NoOfSendTries
-            msa.AckReceivedDate = datetime.now()
+            msa.AckReceivedDate = now
             msa.MessageBoxId = msd.MessageBoxId
             msa.SubscriptionId = msd.SubscriptionId
             subscriberView = DatabaseHelper.get_subscriber_by_subscription_id(msd.SubscriptionId)
