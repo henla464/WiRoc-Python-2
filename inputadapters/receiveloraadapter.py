@@ -73,6 +73,11 @@ class ReceiveLoraAdapter(object):
         loraDataRate = SettingsClass.GetDataRate()
         return self.loraRadio.GetIsInitialized(channel, loraDataRate)
 
+    def ShouldBeInitialized(self):
+        channel = SettingsClass.GetChannel()
+        loraDataRate = SettingsClass.GetDataRate()
+        return not self.loraRadio.GetIsInitialized(channel, loraDataRate)
+
     def Init(self):
         channel = SettingsClass.GetChannel()
         loraDataRate = SettingsClass.GetDataRate()
@@ -106,6 +111,14 @@ class ReceiveLoraAdapter(object):
                     SettingsClass.UpdateRelayPathNumber(relayPathNo)
                     return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": True}
                 else:
+                    ackRequested = (receivedData[2] & 0x80) > 0
+                    if ackRequested:
+                        time.sleep(0.05)
+                        messageNumberToAck = receivedData[3]
+                        messageType = LoraRadioMessage.MessageTypeLoraAck
+                        loraMessage = LoraRadioMessage(1, messageType, False, False)
+                        loraMessage.AddPayload(bytearray([messageNumberToAck]))
+                        self.loraRadio.SendData(loraMessage.GetByteArray())
                     return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": True}
             else:
                 return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": False}

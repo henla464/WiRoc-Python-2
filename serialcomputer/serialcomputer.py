@@ -58,7 +58,7 @@ class SerialComputer:
             logging.debug("SerialComputer::TestConnection() serial exception 2:")
             logging.debug(ex)
 
-        self.compSerial.close()
+        #self.compSerial.close()
         self.isInitialized = False
         return False
 
@@ -104,13 +104,17 @@ class SerialComputer:
             logging.error("SerialComputer::SendData() serial exception 1:")
             logging.error(timeOutEx)
             self.isInitialized = False
-            self.compSerial.close()
+            #self.compSerial.reset_input_buffer()
+            #self.compSerial.reset_output_buffer()
+            #self.compSerial.close()
             return False
         except Exception as ex:
             logging.error("SerialComputer::SendData() serial exception 2:")
             logging.error(ex)
             self.isInitialized = False
-            self.compSerial.close()
+            #self.compSerial.reset_input_buffer()
+            #self.compSerial.reset_output_buffer()
+            #self.compSerial.close()
             return False
 
     def GetData(self):

@@ -47,16 +47,16 @@ class Setup:
         inputObjects.extend(ReceiveTestPunchesAdapter.Instances)
 
 
-        allInitialized = True
+        anyShouldBeInitialized = False
         for inst in subscriberObjects:
-            if not inst.GetIsInitialized():
-                allInitialized = False
+            if inst.ShouldBeInitialized():
+                allInitialized = True
 
         for inst in inputObjects:
-            if not inst.GetIsInitialized():
-                allInitialized = False
+            if inst.ShouldBeInitialized():
+                anyShouldBeInitialized = True
 
-        if (allInitialized and not SettingsClass.GetForceReconfigure()
+        if (not anyShouldBeInitialized and not SettingsClass.GetForceReconfigure()
             and not change1 and not change2 and not change3 and not change4 and
             not inChange1 and not inChange2 and not inChange3 and not inChange4 and not inChange5):
             return False

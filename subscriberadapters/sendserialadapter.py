@@ -136,6 +136,6 @@ class SendSerialAdapter(object):
             logging.debug("SendSerialAdapter::SendData() Sent to computer, data: " + dataInHex)
             return True
         else:
-            logging.warning("SendSerialAdapter::SendData() Could not send to computer, call EnableDisableSubscription")
+            logging.warning("SendSerialAdapter::SendData() Could not send to computer")
             #SendSerialAdapter.EnableDisableSubscription()
             return False

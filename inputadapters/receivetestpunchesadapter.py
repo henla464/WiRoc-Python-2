@@ -28,6 +28,9 @@ class ReceiveTestPunchesAdapter(object):
     def GetIsInitialized(self):
         return self.isInitialized
 
+    def ShouldBeInitialized(self):
+        return not self.isInitialized
+
     def Init(self):
         if self.GetIsInitialized():
             return True

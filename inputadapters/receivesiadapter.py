@@ -61,6 +61,9 @@ class ReceiveSIAdapter(object):
     def GetIsInitialized(self):
         return self.isInitialized
 
+    def ShouldBeInitialized(self):
+        return not self.isInitialized
+
     def IsChecksumOK(self, receivedData):
         calculatedCRC = Utils.CalculateCRC(receivedData[1:-3])
         crcInMessage = receivedData[-3:-1]

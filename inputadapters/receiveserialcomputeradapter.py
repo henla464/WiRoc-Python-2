@@ -52,6 +52,9 @@ class ReceiveSerialComputerAdapter(object):
     def GetIsInitialized(self):
         return self.serialComputer.GetIsInitialized()
 
+    def ShouldBeInitialized(self):
+        return not self.serialComputer.GetIsInitialized() and self.serialComputer.TestConnection()
+
     def IsChecksumOK(self, receivedData):
         calculatedCRC = Utils.CalculateCRC(receivedData[1:-3])
         crcInMessage = receivedData[-3:-1]

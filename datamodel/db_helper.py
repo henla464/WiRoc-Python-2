@@ -373,7 +373,7 @@ class DatabaseHelper:
                    "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
                    "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
                    "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 "
-                   "ORDER BY MessageSubscriptionData.NoOfSendTries asc, "
+                   "ORDER BY SubscriptionData.id, MessageSubscriptionData.NoOfSendTries asc, " #temporary, figure out better way to prioritize ACK messages
                    "MessageSubscriptionData.SentDate asc LIMIT %s") % limit
             return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
         return []
@@ -445,7 +445,8 @@ class DatabaseHelper:
 
     @classmethod
     def delete_other_test_punches(cls, testBatchGuid):
-        cls.db.execute_SQL("DELETE FROM TestPunchData WHERE BatchGuid <> %s" % testBatchGuid)
+        cls.db.execute_SQL("DELETE FROM TestPunchData WHERE BatchGuid <> '%s'" % testBatchGuid)
+        return None
 
     @classmethod
     def get_test_punch_to_add(cls):

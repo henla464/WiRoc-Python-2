@@ -50,6 +50,9 @@ class SendToBlenoAdapter(object):
     def GetIsInitialized(self):
         return self.isInitialized
 
+    def ShouldBeInitialized(self):
+        return not self.isInitialized
+
     # has adapter, transforms, subscriptions etc been added to database?
     def GetIsDBInitialized(self):
         return self.isDBInitialized

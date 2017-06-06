@@ -92,7 +92,7 @@ class SendLoraAdapter(object):
         transforms = []
         transforms.append("SIToLoraTransform")
         transforms.append("SITestToLoraTransform")
-        transforms.append("LoraToLoraAckTransform")
+        #transforms.append("LoraToLoraAckTransform")
         transforms.append("StatusToLoraTransform")
         return transforms
 
