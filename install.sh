@@ -10,13 +10,13 @@ apt-get update
 echo "sqlite3"
 #read line
 #Install sqlite3
-apt-get install libsqlite3-dev
+apt-get -y install libsqlite3-dev
 
 echo "python/pip"
 #read line
 #Install python/pip
-apt-get install python3
-apt-get install python3-pip
+apt-get -y install python3
+apt-get -y install python3-pip
 
 echo "flask"
 #read line
@@ -49,12 +49,12 @@ ln -s /usr/local/bin/npm /usr/bin/npm
 echo "Install python 2"
 #read line
 #Install python 2
-apt-get install python
+apt-get -y install python
 
 echo "Install bluetooth stuff"
 #read line
 #Install bluetooth stuff
-apt-get install bluetooth bluez libbluetooth-dev libudev-dev
+apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev
 
 echo "WiRoc-Python-2"
 #read line
