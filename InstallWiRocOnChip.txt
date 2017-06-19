@@ -202,3 +202,7 @@ Bleno advertising interval in ms
 --------------------------------
 sudo BLENO_ADVERTISING_INTERVAL=500 node <your file>.js
 
+
+---
+sudo hciconfig hci0 reset
+

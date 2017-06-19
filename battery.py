@@ -7,8 +7,9 @@ import logging
 import socket
 
 class Battery(object):
-    timeChargingChangedFromNormal = None
+    timeChargingOrMaxCurrentDrawChangedFromNormal = None
     currentMode = None
+    limitCurrentMode = None
     isRunningOnChip = False
 
     @classmethod
@@ -16,12 +17,44 @@ class Battery(object):
         cls.isRunningOnChip = (socket.gethostname() == 'chip')
 
     @classmethod
+    def LimitCurrentDrawTo100IfBatteryOK(cls):
+        if cls.isRunningOnChip:
+            if cls.limitCurrentMode != "100":
+                if cls.GetBatteryPercent() > 20:
+                    logging.info("Battery::LimitCurrentDrawTo100 Set to draw max 100mA from USB")
+                    os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x30 0x62'")
+                    cls.limitCurrentMode = "100"
+                else:
+                    logging.debug("Battery::LimitCurrentDrawTo100 Low battery so don't change max draw from USB")
+            else:
+                if cls.GetBatteryPercent() <= 20:
+                    logging.info("Battery::LimitCurrentDrawTo100 Already 100 mA, but battery is low so set to 900")
+                    cls.LimitCurrentDrawTo900()
+        cls.timeChargingOrMaxCurrentDrawChangedFromNormal = time.monotonic()
+
+    @classmethod
+    def LimitCurrentDrawTo900(cls):
+        if cls.isRunningOnChip and cls.limitCurrentMode != "900":
+            logging.info("Battery::LimitCurrentDrawTo100 Set to draw max 900mA from USB")
+            os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x30 0x60'")
+            cls.limitCurrentMode = "900"
+        cls.timeChargingOrMaxCurrentDrawChangedFromNormal = time.monotonic()
+
+    @classmethod
     def DisableCharging(cls):
-        if cls.isRunningOnChip and cls.currentMode != "DISABLED":
-            logging.info("Battery::DisableCharging Disable charging")
-            os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x33 0x49'")
-            cls.currentMode = "DISABLED"
-        cls.timeChargingChangedFromNormal = time.monotonic()
+        if cls.isRunningOnChip:
+            if cls.currentMode != "DISABLED":
+                if cls.GetBatteryPercent() > 15:
+                    logging.info("Battery::DisableCharging Disable charging")
+                    os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x33 0x49'")
+                    cls.currentMode = "DISABLED"
+                else:
+                    logging.debug("Battery::DisableCharging Low battery so don't disable charging")
+            else:
+                if cls.GetBatteryPercent() <= 15:
+                    logging.info("Battery::DisableCharging Already disabled, but battery is low so enable charging")
+                    cls.SetNormalCharging()
+        cls.timeChargingOrMaxCurrentDrawChangedFromNormal = time.monotonic()
 
     @classmethod
     def SetSlowCharging(cls):
@@ -29,7 +62,7 @@ class Battery(object):
             logging.info("Battery::SetSlowCharging Charging set to slow")
             os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x33 0xC1'")
             cls.currentMode = "SLOW"
-        cls.timeChargingChangedFromNormal = time.monotonic()
+        cls.timeChargingOrMaxCurrentDrawChangedFromNormal = time.monotonic()
 
     @classmethod
     def SetNormalCharging(cls):
@@ -37,13 +70,14 @@ class Battery(object):
             logging.info("Battery::SetNormalCharging Charging set to normal")
             os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x33 0xC9'")
             cls.currentMode = "NORMAL"
-        cls.timeChargingChangedFromNormal = None
+        cls.timeChargingOrMaxCurrentDrawChangedFromNormal = None
 
     @classmethod
     def Tick(cls):
-        if cls.timeChargingChangedFromNormal is not None and \
-                        time.monotonic() > cls.timeChargingChangedFromNormal + 6 * SettingsClass.GetReconfigureInterval():
+        if cls.timeChargingOrMaxCurrentDrawChangedFromNormal is not None and \
+                        time.monotonic() > cls.timeChargingOrMaxCurrentDrawChangedFromNormal + 6 * SettingsClass.GetReconfigureInterval():
             cls.SetNormalCharging()
+            cls.LimitCurrentDrawTo900()
 
     @classmethod
     def IsCharging(cls):

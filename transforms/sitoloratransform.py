@@ -46,6 +46,7 @@ class SIToLoraTransform(object):
                 ackReq = SettingsClass.GetAcknowledgementRequested()
                 loraMessage.SetAcknowledgementRequested(ackReq)
                 loraMessage.UpdateMessageNumber()
+                loraMessage.UpdateChecksum()
                 return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageNumber()}
             else:
                 return None

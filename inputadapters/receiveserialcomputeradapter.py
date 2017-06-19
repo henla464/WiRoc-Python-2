@@ -111,9 +111,11 @@ class ReceiveSerialComputerAdapter(object):
                     # Host WiRoc has power supplied so lets charge too, but slowly
                     logging.debug("ReceiveSerialComputerAdapter::GetData() Change to slow charging...")
                     Battery.SetSlowCharging()
+                    Battery.LimitCurrentDrawTo100IfBatteryOK()
                 else:
                     logging.debug("ReceiveSerialComputerAdapter::GetData() Disable charging...")
                     Battery.DisableCharging()
+                    Battery.LimitCurrentDrawTo100IfBatteryOK()
                 SettingsClass.SetConnectedComputerIsWiRocDevice()
                 return None
             else:

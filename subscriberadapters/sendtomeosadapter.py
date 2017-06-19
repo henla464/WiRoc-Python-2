@@ -68,7 +68,7 @@ class SendToMeosAdapter(object):
         self.isDBInitialized = val
 
     def GetTransformNames(self):
-        return ["LoraToMeosTransform", "SIToMeosTransform" ]
+        return ["LoraToMeosTransform", "SIToMeosTransform", "SITestToMeosTransform" ]
 
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass

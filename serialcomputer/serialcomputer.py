@@ -5,6 +5,7 @@ from time import sleep
 from utils.utils import Utils
 import logging
 from constants import *
+import os
 
 class SerialComputer:
     Instances = []
@@ -23,6 +24,7 @@ class SerialComputer:
         self.compSerial = serial.Serial()
         self.portName = portName
         self.isInitialized = False
+        self.noOfTimesUSBCableInserted = 0
 
     def GetIsInitialized(self):
         return self.isInitialized
@@ -31,36 +33,50 @@ class SerialComputer:
         return self.portName
 
     def TestConnection(self):
-        wasOpened = False
-        if not self.compSerial.is_open:
-            self.compSerial.baudrate = 38400
-            self.compSerial.port = self.portName
-            self.compSerial.writeTimeout = 0.01
-            self.compSerial.open()
-            self.compSerial.reset_input_buffer()
-            self.compSerial.reset_output_buffer()
-            wasOpened = True
+        shouldTest = False
+        if self.GetIsInitialized():
+            shouldTest = True
+        else:
+            strNoOfTimesUSBCableInserted = os.popen('dmesg | grep "g_cdc gadget: high-speed config" | wc -l').read()
+            noOfTimesUSBCableInserted = int(strNoOfTimesUSBCableInserted)
+            logging.debug("SerialComputer::TestConnection() noOfTimesUSBCableInserted " + str(noOfTimesUSBCableInserted) + " last time: " + str(self.noOfTimesUSBCableInserted))
+            if noOfTimesUSBCableInserted > self.noOfTimesUSBCableInserted:
+                shouldTest = True
+                self.noOfTimesUSBCableInserted = noOfTimesUSBCableInserted
 
-        try:
-            if self.compSerial.is_open:
-                # I'm a WiRoc device, code 0x01, len 0x01, "random data byte": 0x55, crc0 crc1
-                imAWiRoc = bytearray([0x02, 0x01, 0x01, 0x55, 0x53, 0x06, 0x03])
-                logging.debug("SerialComputer::TestConnection() before write byte: " + self.portName)
-                self.compSerial.write(imAWiRoc)
-                logging.debug("SerialComputer::TestConnection() after write byte: " + self.portName) # + str(noOfBytes)
-                if wasOpened:
-                    self.compSerial.close()
-                return True
-        except serial.serialutil.SerialTimeoutException as timeOutEx:
-            logging.debug("SerialComputer::TestConnection() serial exception 1:")
-            logging.debug(timeOutEx)
-        except Exception as ex:
-            logging.debug("SerialComputer::TestConnection() serial exception 2:")
-            logging.debug(ex)
+        if shouldTest:
+            #wasOpened = False
+            if not self.compSerial.is_open:
+                self.compSerial.baudrate = 38400
+                self.compSerial.port = self.portName
+                self.compSerial.writeTimeout = 0.01
+                self.compSerial.open()
+                self.compSerial.reset_input_buffer()
+                self.compSerial.reset_output_buffer()
+                #wasOpened = True
 
-        #self.compSerial.close()
-        self.isInitialized = False
-        return False
+            try:
+                if self.compSerial.is_open:
+                    # I'm a WiRoc device, code 0x01, len 0x01, "random data byte": 0x55, crc0 crc1
+                    imAWiRoc = bytearray([0x02, 0x01, 0x01, 0x55, 0x53, 0x06, 0x03])
+                    logging.debug("SerialComputer::TestConnection() before write byte: " + self.portName)
+                    self.compSerial.write(imAWiRoc)
+                    logging.debug("SerialComputer::TestConnection() after write byte: " + self.portName) # + str(noOfBytes)
+                    #if wasOpened:
+                    #    self.compSerial.close()
+                    self.isInitialized = True
+                    return True
+            except serial.serialutil.SerialTimeoutException as timeOutEx:
+                logging.debug("SerialComputer::TestConnection() serial exception 1:")
+                logging.debug(timeOutEx)
+            except Exception as ex:
+                logging.debug("SerialComputer::TestConnection() serial exception 2:")
+                logging.debug(ex)
+
+            #self.compSerial.close()
+            self.isInitialized = False
+            return False
+        return self.isInitialized
 
     def Init(self):
         if self.GetIsInitialized():
@@ -102,7 +118,7 @@ class SerialComputer:
                 return False
         except serial.serialutil.SerialTimeoutException as timeOutEx:
             logging.error("SerialComputer::SendData() serial exception 1:")
-            logging.error(timeOutEx)
+            logging.error("SerialComputer::SendData(): " + str(timeOutEx))
             self.isInitialized = False
             #self.compSerial.reset_input_buffer()
             #self.compSerial.reset_output_buffer()
@@ -110,7 +126,7 @@ class SerialComputer:
             return False
         except Exception as ex:
             logging.error("SerialComputer::SendData() serial exception 2:")
-            logging.error(ex)
+            logging.error("SerialComputer::SendData(): " + str(ex))
             self.isInitialized = False
             #self.compSerial.reset_input_buffer()
             #self.compSerial.reset_output_buffer()

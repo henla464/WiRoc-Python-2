@@ -22,7 +22,7 @@ class Main:
         self.messagesToSendExists = True
         self.previousChannel = None
         self.previousAckRequested = None
-        self.wifiPowerSaving = False
+        self.wifiPowerSaving = None
 
         Battery.Setup()
         Setup.SetupPins()
@@ -48,6 +48,9 @@ class Main:
                     msgSubscription.MessageBoxId = msg.id
                     msgSubscription.SubscriptionId = subscription.id
                     DatabaseHelper.save_message_subscription(msgSubscription)
+
+            # archive the messages that does not have subscriptions
+            DatabaseHelper.archive_message_box_without_subscriptions()
 
         self.runningOnChip = socket.gethostname() == 'chip'
 
@@ -129,17 +132,22 @@ class Main:
             msgSubscriptions = DatabaseHelper.get_message_subscriptions_view(100)
             for msgSub in msgSubscriptions:
                 if self.shouldArchiveMessage(msgSub):
+                    logging.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
                     DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
 
     def updateWifiPowerSaving(self):
         if self.runningOnChip:
             sendToMeos = SettingsClass.GetSendToMeosEnabled()
-            if sendToMeos and self.wifiPowerSaving:
+            if sendToMeos and (self.wifiPowerSaving or self.wifiPowerSaving is None):
                 # disable power saving
+                logging.info("Start::updateWifiPowerSaving() Disable WiFi power saving")
                 os.system("sudo iw wlan0 set power_save off")
-            elif not sendToMeos and not self.wifiPowerSaving:
+                self.wifiPowerSaving = False
+            elif not sendToMeos and (not self.wifiPowerSaving or self.wifiPowerSaving is None):
                 # enable power saving
+                logging.info("Start::updateWifiPowerSaving() Enable WiFi power saving")
                 os.system("sudo iw wlan0 set power_save on")
+                self.wifiPowerSaving = True
 
 
     def Run(self):
@@ -197,6 +205,7 @@ class Main:
                                 anySubscription = True
                                 self.messagesToSendExists = True
                             if not anySubscription:
+                                logging.info("Start::Run() Message has no subsribers, being archived, msgid: " + str(mbdid))
                                 DatabaseHelper.archive_message_box(mbdid)
                         elif inputData["MessageType"] == "ACK":
                             messageNumber = inputData["MessageNumber"]
@@ -264,10 +273,11 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         filename='WiRoc.log',
-                        filemode='w')
+                        filemode='a')
     # set a format which is simpler for console use
     formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
     rotFileHandler = logging.handlers.RotatingFileHandler('WiRoc.log', maxBytes=20000000, backupCount=3)
+    rotFileHandler.doRollover()
     rotFileHandler.setFormatter(formatter)
 
     # define a Handler which writes INFO messages or higher to the sys.stderr

@@ -24,5 +24,7 @@ class StatusToLoraTransform(object):
         loraMessage.AddPayload(payloadData)
         loraMessage.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())
         loraMessage.UpdateMessageNumber()
+        ackReq = SettingsClass.GetAcknowledgementRequested()
+        loraMessage.SetAcknowledgementRequested(ackReq)
         loraMessage.UpdateChecksum()
         return {"Data": loraMessage.GetByteArray(), "CustomData": None}

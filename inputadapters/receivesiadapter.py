@@ -119,8 +119,6 @@ class ReceiveSIAdapter(object):
                         if len(response) < expectedLength and self.siSerial.in_waiting == 0:
                             logging.debug("ReceiveSIAdapter::Init() sleep and wait for more bytes")
                             sleep(0.05)
-                            if self.siSerial.in_waiting == 0:
-                                break
 
                 if self.isCorrectMSModeDirectResponse(response):
                     logging.info("ReceiveSIAdapter::Init() SI Station 38400 kbit/s works")
@@ -160,8 +158,6 @@ class ReceiveSIAdapter(object):
                         if len(response) < expectedLength and self.siSerial.in_waiting == 0:
                             logging.debug("ReceiveSIAdapter::Init() sleep and wait for more bytes")
                             sleep(0.05)
-                            if self.radioSerial.in_waiting == 0:
-                                break
 
                 if self.isCorrectMSModeDirectResponse(response):
                     logging.info("ReceiveSIAdapter::Init() SI Station 4800 kbit/s works")
@@ -215,7 +211,11 @@ class ReceiveSIAdapter(object):
             return None
 
         if receivedData[1] == SIMessage.SIPunch:
-            logging.debug("ReceiveSIAdapter::GetData() SI message received!")
+            dataInHex = ''.join(format(x, '02x') for x in receivedData)
+            logging.debug("ReceiveSIAdapter::GetData() SI message received! data: " + dataInHex)
+            if len(allReceivedData) != len(receivedData):
+                allDataInHex = ''.join(format(x, '02x') for x in allReceivedData)
+                logging.error("ReceiveSIAdapter::GetData() Received more data than expected, all data: " + allDataInHex)
             # save the station number; it will be updated to SettingsClass as long as this object exists
             self.siStationNumber = (receivedData[3] << 8) + receivedData[4]
             return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}

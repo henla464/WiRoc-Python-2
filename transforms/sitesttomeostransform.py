@@ -1,19 +1,20 @@
 from utils.utils import Utils
 from datamodel.datamodel import SIMessage
 
-class SIToMeosTransform(object):
+
+class SITestToLoraTransform(object):
 
     @staticmethod
     def GetInputMessageType():
-        return "SI"
+        return "SITEST"
 
     @staticmethod
     def GetOutputMessageType():
-        return "MEOS"
+        return "LORA"
 
     @staticmethod
     def GetName():
-        return "SIToMeosTransform"
+        return "SITestToMeosTransform"
 
     #payloadData is a bytearray
     @staticmethod

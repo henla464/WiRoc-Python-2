@@ -1,6 +1,8 @@
 __author__ = 'henla464'
 
 from datamodel.db_helper import DatabaseHelper
+from databaselib.db import DB
+from databaselib.datamapping import DataMapping
 from settings.settings import SettingsClass
 from datamodel.datamodel import SettingData
 from init import *
@@ -103,6 +105,7 @@ def getPunches():
 
 @app.route('/misc/wirocdevicename/', methods=['GET'])
 def getWiRocDeviceName():
+    DatabaseHelper.db = DB("WiRoc.db", DataMapping())
     deviceName = SettingsClass.GetWiRocDeviceName(False)
     return jsonpickle.encode(MicroMock(WiRocDeviceName=deviceName))
 
@@ -148,8 +151,8 @@ def getTestPunches(testBatchGuid, includeAll):
     json_data = json.dumps(data)
     return json_data
 
-@app.route('/misc/testpunches/addtestpunch/<testBatchGuid>/<SINo>/<ackReq>/', methods=['GET'])
-def addTestPunch(testBatchGuid, SINo, ackReq):
+@app.route('/misc/testpunches/addtestpunch/<testBatchGuid>/<SINo>', methods=['GET'])
+def addTestPunch(testBatchGuid, SINo):
     localtime = time.localtime(time.time())
     twelveHourTimer = 0
     twentyFourHour = 0
@@ -159,7 +162,7 @@ def addTestPunch(testBatchGuid, SINo, ackReq):
     else:
         twelveHourTimer = localtime.tm_hour * 3600 + localtime.tm_min * 60 + localtime.tm_sec
     DatabaseHelper.delete_other_test_punches(testBatchGuid)
-    DatabaseHelper.add_test_punch(testBatchGuid, SINo, twelveHourTimer, twentyFourHour, ackReq)
+    DatabaseHelper.add_test_punch(testBatchGuid, SINo, twelveHourTimer, twentyFourHour)
 
     json_data = jsonpickle.encode(MicroMock(Status="OK"))
     return json_data

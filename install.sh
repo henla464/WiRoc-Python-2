@@ -38,6 +38,8 @@ echo "pyudev"
 #Install pyudev
 pip3 install pyudev
 
+pip3 install daemonize
+
 echo "newer nodejs"
 #read line
 #Install newer nodejs
@@ -74,14 +76,14 @@ mv WiRoc-BLE-Device-0.08 WiRoc-BLE-Device
 
 #npm install -g node-gyp
 echo "install bluetooth-hci-socket"
-cd /home/chip/WiRoc-BLE-Device/
+cd /home/chip/
 npm install bluetooth-hci-socket
 
 echo "install bleno"
 #read line
 #install bleno
 npm install bleno
-cd /home/chip
+#cd /home/chip
 
 
 echo "install startup scripts"
@@ -96,6 +98,8 @@ wget -O /etc/systemd/system/WiRocPython.service https://raw.githubusercontent.co
 wget -O /etc/systemd/system/WiRocPythonWS.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPythonWS.service
 wget -O /etc/systemd/system/WiRocBLE.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocBLE.service
 wget -O /etc/systemd/system/WiRocStartup.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocStartup.service
+#wget -O /etc/systemd/system/ifup-wait-all-auto.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/ifup-wait-all-auto.service
+#systemctl enable /etc/systemd/system/ifup-wait-all-auto.service
 systemctl enable /etc/systemd/system/WiRocStartup.service
 systemctl enable /etc/systemd/system/WiRocBLE.service
 systemctl enable /etc/systemd/system/WiRocPython.service

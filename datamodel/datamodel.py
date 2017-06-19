@@ -220,7 +220,7 @@ class BlenoPunchData(object):
         self.SubSecond = None
 
 class TestPunchData(object):
-    columns = [("BatchGuid", str), ("MessageBoxId", int), ("TwentyFourHour", int),("TwelveHourTimer", int),("SICardNumber", int), ("AddedToMessageBox", bool), ("Fetched", bool), ("AckReq", bool)]
+    columns = [("BatchGuid", str), ("MessageBoxId", int), ("TwentyFourHour", int),("TwelveHourTimer", int),("SICardNumber", int), ("AddedToMessageBox", bool), ("Fetched", bool)]
 
     def __init__(self):
         self.id = None
@@ -231,7 +231,7 @@ class TestPunchData(object):
         self.SICardNumber = 0
         self.AddedToMessageBox = 0
         self.Fetched = 0
-        self.AckReq = 0
+
 
 class TestPunchView(object):
     columns = [("BatchGuid", str), ("MessageBoxId", int), ("TwentyFourHour", int), ("TwelveHourTimer", int),

@@ -28,6 +28,8 @@ class SendLoraAdapter(object):
                 if SendLoraAdapter.Instances[0].GetSerialDevicePath() != serialPorts[0]:
                     SendLoraAdapter.Instances[0] = SendLoraAdapter(1, serialPorts[0])
                     return True
+                elif SendLoraAdapter.LoraMode is None or SendLoraAdapter.LoraMode != SettingsClass.GetLoraMode():
+                    return True
             else:
                 SendLoraAdapter.Instances.append(SendLoraAdapter(1, serialPorts[0]))
                 return True
