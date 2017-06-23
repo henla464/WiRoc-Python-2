@@ -32,7 +32,7 @@ class SendSerialAdapter(object):
                             return False
                     else:
                         if SendSerialAdapter.SendSerialAdapterActive:
-                            return True
+                            return True # change, so setup will call init
                         else:
                             return False
             else:

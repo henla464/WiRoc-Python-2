@@ -2,6 +2,7 @@ __author__ = 'henla464'
 
 import logging, logging.handlers
 from init import *
+import os
 from daemonize import Daemonize
 from webroutes import radioconfiguration
 from webroutes import meosconfiguration
@@ -31,15 +32,16 @@ if __name__ == '__main__':
     logging.getLogger('').addHandler(console)
 
     keep_fds = [rotFileHandler.stream.fileno()]
-
+    wd = os.getcwd()
     logging.info("before daemonize")
     pidfile = "/var/run/WiRocPythonWS.pid"
     daemon = Daemonize(app="WiRocPythonWS",
                        pid=pidfile,
                        logger=logging.getLogger(''),
-                       foreground=False,
+                       foreground=True,
                        action=startWebServer,
-                       chdir="/home/chip/WiRoc-Python-2",
+                       #chdir="/home/chip/WiRoc-Python-2",
+                       chdir=wd, #"/home/henla464/Documents/WiRoc/WiRoc-Python-2"
                        keep_fds=keep_fds)
     daemon.start()
 

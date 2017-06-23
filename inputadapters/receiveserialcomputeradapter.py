@@ -17,22 +17,13 @@ class ReceiveSerialComputerAdapter(object):
             if os.path.exists('/dev/ttyGS0'):
                 serialPort = '/dev/ttyGS0'
 
-        if serialPort is None:
-            if len(ReceiveSerialComputerAdapter.Instances) == 0:
-                return False
-            else:
-                ReceiveSerialComputerAdapter.Instances = []
-                return True
-        else:
+        if serialPort is not None:
             if len(ReceiveSerialComputerAdapter.Instances) == 0:
                 ReceiveSerialComputerAdapter.Instances.append(
                     ReceiveSerialComputerAdapter('rcvSer1', serialPort))
                 return True
-            elif (ReceiveSerialComputerAdapter.Instances[0].GetSerialDevicePath() == serialPort):
-                return False
             else:
-                ReceiveSerialComputerAdapter.Instances[0] = ReceiveSerialComputerAdapter('rcvSer1', serialPort)
-                return True
+                return False
 
     @staticmethod
     def GetTypeName():
@@ -110,11 +101,11 @@ class ReceiveSerialComputerAdapter(object):
                 if data["Data"][3] == 0x01:
                     # Host WiRoc has power supplied so lets charge too, but slowly
                     logging.debug("ReceiveSerialComputerAdapter::GetData() Change to slow charging...")
-                    Battery.SetSlowCharging()
+                    Battery.DisableChargingIfBatteryOK()
                     Battery.LimitCurrentDrawTo100IfBatteryOK()
                 else:
                     logging.debug("ReceiveSerialComputerAdapter::GetData() Disable charging...")
-                    Battery.DisableCharging()
+                    Battery.DisableChargingIfBatteryOK()
                     Battery.LimitCurrentDrawTo100IfBatteryOK()
                 SettingsClass.SetConnectedComputerIsWiRocDevice()
                 return None
@@ -126,7 +117,9 @@ class ReceiveSerialComputerAdapter(object):
             replyMessage.append(crc[0])  # crc1
             replyMessage.append(crc[1])  # crc0
             replyMessage.append(ETX)
-            logging.debug("ReceiveSerialComputerAdapter::GetData() Received: " + str(data["Data"]) + " Sending reply message: " + str(replyMessage))
+            dataInHex = ''.join(format(x, '02x') for x in data["Data"])
+            replyInHex = ''.join(format(x, '02x') for x in replyMessage)
+            logging.debug("ReceiveSerialComputerAdapter::GetData() Received: " + dataInHex + " Sending reply message: " + replyInHex)
             try:
                 self.serialComputer.SendData(replyMessage)
             except:

@@ -27,7 +27,7 @@ class Battery(object):
                 else:
                     logging.debug("Battery::LimitCurrentDrawTo100 Low battery so don't change max draw from USB")
             else:
-                if cls.GetBatteryPercent() <= 20:
+                if cls.GetBatteryPercent() <= 18:
                     logging.info("Battery::LimitCurrentDrawTo100 Already 100 mA, but battery is low so set to 900")
                     cls.LimitCurrentDrawTo900()
         cls.timeChargingOrMaxCurrentDrawChangedFromNormal = time.monotonic()
@@ -41,7 +41,7 @@ class Battery(object):
         cls.timeChargingOrMaxCurrentDrawChangedFromNormal = time.monotonic()
 
     @classmethod
-    def DisableCharging(cls):
+    def DisableChargingIfBatteryOK(cls):
         if cls.isRunningOnChip:
             if cls.currentMode != "DISABLED":
                 if cls.GetBatteryPercent() > 15:
@@ -51,7 +51,7 @@ class Battery(object):
                 else:
                     logging.debug("Battery::DisableCharging Low battery so don't disable charging")
             else:
-                if cls.GetBatteryPercent() <= 15:
+                if cls.GetBatteryPercent() <= 13:
                     logging.info("Battery::DisableCharging Already disabled, but battery is low so enable charging")
                     cls.SetNormalCharging()
         cls.timeChargingOrMaxCurrentDrawChangedFromNormal = time.monotonic()
@@ -87,7 +87,7 @@ class Battery(object):
             intValue = int(strValue, 16)
             isCharging = (intValue & 0x40) > 0
             return isCharging
-        return False
+        return True
 
     @classmethod
     def IsPowerSupplied(cls):

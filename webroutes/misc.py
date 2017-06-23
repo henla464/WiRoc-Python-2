@@ -5,6 +5,7 @@ from databaselib.db import DB
 from databaselib.datamapping import DataMapping
 from settings.settings import SettingsClass
 from datamodel.datamodel import SettingData
+from battery import Battery
 from init import *
 from flask import request
 import jsonpickle
@@ -167,3 +168,7 @@ def addTestPunch(testBatchGuid, SINo):
     json_data = jsonpickle.encode(MicroMock(Status="OK"))
     return json_data
 
+@app.route('/misc/ischarging/', methods=['GET'])
+def getIsCharging():
+   isCharging = Battery.IsCharging()
+   return jsonpickle.encode(MicroMock(IsCharging=isCharging))
