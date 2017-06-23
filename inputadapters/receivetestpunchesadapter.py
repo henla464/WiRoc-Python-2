@@ -1,5 +1,6 @@
 from datamodel.datamodel import SIMessage
 from datamodel.db_helper import DatabaseHelper
+from utils.utils import Utils
 from struct import *
 import logging
 
@@ -51,8 +52,8 @@ class ReceiveTestPunchesAdapter(object):
                 siMessage.AddHeader(SIMessage.SIPunch)
                 stationCode = 999
                 subSecond = 0
-                payload = bytearray(pack("<HIcHcccc", stationCode,
-                                                punchToAdd.SICardNumber,
+                payload = bytearray(pack(">HIcHcccc", stationCode,
+                                                Utils.EncodeCardNr(punchToAdd.SICardNumber),
                                                 bytes([punchToAdd.TwentyFourHour]),
                                                 punchToAdd.TwelveHourTimer,
                                                 bytes([subSecond]),
@@ -63,6 +64,8 @@ class ReceiveTestPunchesAdapter(object):
                 siMessage.AddPayload(payload)
                 siMessage.AddFooter()
                 logging.debug("ReceiveTestPunchesAdapter::GetData() Data to fetch")
+                dataInHex = ''.join(format(x, '02x') for x in siMessage.GetByteArray())
+                logging.debug(dataInHex)
                 return {"MessageType": "DATA", "Data": siMessage.GetByteArray(), "ChecksumOK": True}
         return None
 

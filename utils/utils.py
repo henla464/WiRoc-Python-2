@@ -123,6 +123,20 @@ class Utils:
             return nr
 
     @staticmethod
+    def EncodeCardNr(number):
+        if number > 200000 and number <= 265000:
+            return (number - 200000) + 0x20000
+        elif number > 300000 and number <= 365000:
+            return (number - 300000) + 0x30000
+        elif number > 400000 and number <= 465000:
+            return (number - 400000) + 0x40000
+        elif number  > 65000 and number < 500000:
+            return 0
+        else:
+            return number
+
+
+    @staticmethod
     def GetMeosDataFromSIData(siPayloadData):
         if len(siPayloadData) < 12:
             logging.error("Utils::GetMeosDataFromSIData() length siPayloadData less than 12")

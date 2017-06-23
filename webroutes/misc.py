@@ -152,7 +152,7 @@ def getTestPunches(testBatchGuid, includeAll):
     json_data = json.dumps(data)
     return json_data
 
-@app.route('/misc/testpunches/addtestpunch/<testBatchGuid>/<SINo>', methods=['GET'])
+@app.route('/misc/testpunches/addtestpunch/<testBatchGuid>/<SINo>/', methods=['GET'])
 def addTestPunch(testBatchGuid, SINo):
     localtime = time.localtime(time.time())
     twelveHourTimer = 0
