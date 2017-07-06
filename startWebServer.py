@@ -38,7 +38,7 @@ if __name__ == '__main__':
     daemon = Daemonize(app="WiRocPythonWS",
                        pid=pidfile,
                        logger=logging.getLogger(''),
-                       foreground=True,
+                       foreground=False,
                        action=startWebServer,
                        #chdir="/home/chip/WiRoc-Python-2",
                        chdir=wd, #"/home/henla464/Documents/WiRoc/WiRoc-Python-2"
