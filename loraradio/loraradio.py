@@ -156,7 +156,7 @@ class LoraRadio:
             return True
         else:
             self.radioSerial.write(settingsArray)
-            time.sleep(0.1)
+            time.sleep(0.5)
             setResponse = self.getRadioSettingsReply()
             if setResponse[8:15] == settingsArray[8:15]:
                 self.isInitialized = True
