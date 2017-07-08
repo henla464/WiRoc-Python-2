@@ -27,4 +27,4 @@ class StatusToLoraTransform(object):
         ackReq = SettingsClass.GetAcknowledgementRequested()
         loraMessage.SetAcknowledgementRequested(ackReq)
         loraMessage.UpdateChecksum()
-        return {"Data": loraMessage.GetByteArray(), "CustomData": None}
+        return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageNumber()}

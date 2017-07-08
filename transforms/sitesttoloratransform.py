@@ -29,7 +29,6 @@ class SITestToLoraTransform(object):
             messageType = LoraRadioMessage.MessageTypeSIPunch
             batteryLow = Battery.GetIsBatteryLow()
             ackReq = SettingsClass.GetAcknowledgementRequested()
-            DatabaseHelper.get_test_punch_ack_req(msgSub.MessageBoxId)
             loraMessage = LoraRadioMessage(payloadDataLength, messageType, batteryLow, ackReq)
             loraMessage.AddPayload(payloadData)
             return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageNumber()}

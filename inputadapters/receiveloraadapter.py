@@ -112,9 +112,9 @@ class ReceiveLoraAdapter(object):
                         time.sleep(0.05)
                         messageNumberToAck = receivedData[3]
                         messageType = LoraRadioMessage.MessageTypeLoraAck
-                        loraMessage = LoraRadioMessage(1, messageType, False, False)
-                        loraMessage.AddPayload(bytearray([messageNumberToAck]))
-                        self.loraRadio.SendData(loraMessage.GetByteArray())
+                        loraMessage2 = LoraRadioMessage(1, messageType, False, False)
+                        loraMessage2.AddPayload(bytearray([messageNumberToAck]))
+                        self.loraRadio.SendData(loraMessage2.GetByteArray())
                     relayPathNo = loraMessage.GetLastRelayPathNoFromStatusMessage()
                     SettingsClass.UpdateRelayPathNumber(relayPathNo)
                     return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": True}

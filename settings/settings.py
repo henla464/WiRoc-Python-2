@@ -4,6 +4,7 @@ from datamodel.db_helper import DatabaseHelper
 from datamodel.datamodel import SettingData
 import time
 import math
+import random
 
 class SettingsClass(object):
     RadioIntervalLengthMicroSeconds = [4000000, 4000000, 4000000, 4000000, 4000000, 4000000]
@@ -312,7 +313,7 @@ class SettingsClass(object):
             SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
             messageLengthInBytes = 24 # typical length
             SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
-        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber)
+        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 1)*SettingsClass.microSecondsToSendAMessage
         return microSecondsDelay
 
     @staticmethod
@@ -380,7 +381,7 @@ class SettingsClass(object):
                     SettingsClass.statusMessageBaseInterval = int(sett.Value)
                 except ValueError:
                     SettingsClass.statusMessageBaseInterval = 60
-        return SettingsClass.statusMessageBaseInterval + SettingsClass.GetRelayPathNumber()
+        return SettingsClass.statusMessageBaseInterval + (7*SettingsClass.GetRelayPathNumber()) + random.randint(0, 9)
 
     @staticmethod
     def GetWiRocDeviceName(mainConfigDirty = True):
