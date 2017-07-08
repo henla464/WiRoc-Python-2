@@ -181,7 +181,7 @@ class SettingsClass(object):
         if SettingsClass.IsDirty("AcknowledgementRequested", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
             if sett is None:
-                SettingsClass.acknowledgementRequested = False
+                SettingsClass.acknowledgementRequested = True
             else:
                 SettingsClass.acknowledgementRequested = (sett.Value == "1")
         return SettingsClass.acknowledgementRequested

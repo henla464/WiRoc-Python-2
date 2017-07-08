@@ -10,6 +10,7 @@ class SendLoraAdapter(object):
     Instances = []
     LoraMode = None
     SubscriptionsEnabled = None
+    AdapterInitialized = None
 
     @staticmethod
     def CreateInstances():
@@ -112,7 +113,9 @@ class SendLoraAdapter(object):
     def ShouldBeInitialized(self):
         channel = SettingsClass.GetChannel()
         loraDataRate = SettingsClass.GetDataRate()
-        return not self.loraRadio.GetIsInitialized(channel, loraDataRate)
+        loraRadioInitialized = self.loraRadio.GetIsInitialized(channel, loraDataRate)
+        # initialize if loraRadio isn't initialized yet, or if the loraradio initialization status changed
+        return not loraRadioInitialized or SendLoraAdapter.Instances[0].AdapterInitialized != loraRadioInitialized
 
     # has adapter, transforms, subscriptions etc been added to database?
     def GetIsDBInitialized(self):
@@ -124,9 +127,14 @@ class SendLoraAdapter(object):
     def Init(self):
         channel = SettingsClass.GetChannel()
         loraDataRate = SettingsClass.GetDataRate()
+        # set the AdapterInitialized to same value as loraRadios initialized
+        # if loraRadio changes initialize value later we can detect this.
         if self.loraRadio.GetIsInitialized(channel, loraDataRate):
+            SendLoraAdapter.Instances[0].AdapterInitialized = True
             return True
-        return self.loraRadio.Init(channel, loraDataRate)
+        loraInitialized = self.loraRadio.Init(channel, loraDataRate)
+        SendLoraAdapter.Instances[0].AdapterInitialized = loraInitialized
+        return loraInitialized
 
     def IsReadyToSend(self):
         return self.loraRadio.IsReadyToSend()

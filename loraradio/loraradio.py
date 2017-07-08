@@ -122,6 +122,7 @@ class LoraRadio:
         if socket.gethostname() == 'chip':
             digitalWriteNonXIO(139, 0) #enable radio module
             self.chip = True
+            time.sleep(0.1)
         self.channel = channel
         self.loraDataRate = loraDataRate
 
