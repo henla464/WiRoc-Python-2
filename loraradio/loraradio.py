@@ -180,7 +180,7 @@ class LoraRadio:
         self.acksReceivedSinceLastMessageSent += 1
 
     # delay sending next message if we are waiting for an ack message
-    def IsReadyToSend(self, msgSub):
+    def IsReadyToSend(self):
         if self.chip:
             if digitalReadNonXIO(138) == 0:
                 return False

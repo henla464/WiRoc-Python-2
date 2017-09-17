@@ -118,13 +118,9 @@ class Main:
     #    return msgSub.NoOfSendTries >= SettingsClass.GetMaxRetries() or msgSub.FindAdapterTries >= SettingsClass.GetMaxRetries()
 
     def getMessageSubscriptionsToSend(self):
-        msgSubsToSend = []
-        if self.messagesToSendExists:
-            msgSubscriptions = DatabaseHelper.get_message_subscriptions_view_to_send(SettingsClass.GetMaxRetries(), 1)
-            if len(msgSubscriptions) == 0:
-                self.messagesToSendExists = False
-            #else:
-            #    msgSubsToSend = [msgSub for msgSub in msgSubscriptions if self.timeToSendMessage(msgSub)]
+        cnt, msgSubsToSend = DatabaseHelper.get_message_subscriptions_view_to_send(SettingsClass.GetMaxRetries(), 1)
+        if cnt == 0:
+           self.messagesToSendExists = False
         return msgSubsToSend
 
     def archiveFailedMessages(self):
@@ -200,11 +196,11 @@ class Main:
                             messageTypeId = DatabaseHelper.get_message_type(messageTypeName).id
                             subscriptions = DatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
                             for subscription in subscriptions:
+                                msgSubscription = MessageSubscriptionData()
                                 if subscription.WaitUntilAckSent and mbd.MessageSource == "WiRoc":
                                     msgSubscription.ScheduledTime = datetime.now() + timedelta(seconds=SettingsClass.GetLoraAckMessageWaitTimeoutS())
                                 else:
                                     msgSubscription.ScheduledTime = datetime.now()
-                                msgSubscription = MessageSubscriptionData()
                                 msgSubscription.MessageBoxId = mbdid
                                 msgSubscription.SubscriptionId = subscription.id
                                 DatabaseHelper.save_message_subscription(msgSubscription)

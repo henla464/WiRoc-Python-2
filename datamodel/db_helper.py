@@ -387,8 +387,8 @@ class DatabaseHelper:
     @classmethod
     def get_message_subscriptions_view_to_send(cls, maxRetries, limit = 100):
         now = datetime.now()
-        sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData "
-               "WHERE MessageSubscriptionData.ScheduledTime < '%s'") % now
+        sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData")
+
         cls.init()
         cnt = cls.db.get_scalar_by_SQL(sql)
         if cnt > 0:
@@ -417,13 +417,13 @@ class DatabaseHelper:
                    "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
                    "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
                    "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
-                   "MessageSubscriptionData.ScheduledTime < %s AND "
+                   "MessageSubscriptionData.ScheduledTime < '%s' AND "
                    "MessageSubscriptionData.NoOfSendTries < %s AND "
-                   "MessageSubscriptionData.FindAdapterTries < %s) "
-                   "ORDER BY MessageSubscriptionData.ScheduledTime asc "
+                   "MessageSubscriptionData.FindAdapterTries < %s "
+                   "ORDER BY MessageSubscriptionData.ScheduledTime asc, "
                    "MessageSubscriptionData.SentDate asc LIMIT %s") % (now, maxRetries, maxRetries, limit)
-            return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
-        return []
+            return cnt, cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
+        return cnt, []
 
     @classmethod
     def get_message_subscriptions_view_to_archive(cls, maxRetries, limit=100):

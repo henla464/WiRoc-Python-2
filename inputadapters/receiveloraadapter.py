@@ -104,7 +104,7 @@ class ReceiveLoraAdapter(object):
                 messageType = loraMessage.GetMessageType()
                 if messageType == LoraRadioMessage.MessageTypeLoraAck:
                     messageNumberAcked =  loraMessage.GetByteArray()[loraMessage.GetHeaderSize()]
-                    return {"MessageType": "ACK", "MessageSubTypeName": "Ack", "MessageNumber": messageNumberAcked, "ChecksumOK": True}
+                    return {"MessageType": "ACK", "MessageSource":"Lora", "MessageSubTypeName": "Ack", "MessageNumber": messageNumberAcked, "ChecksumOK": True}
                 elif messageType == LoraRadioMessage.MessageTypeStatus:
                     ackRequested = (receivedData[2] & 0x80) > 0
                     if ackRequested:
@@ -116,7 +116,7 @@ class ReceiveLoraAdapter(object):
                         self.loraRadio.SendData(loraMessage2.GetByteArray())
                     relayPathNo = loraMessage.GetLastRelayPathNoFromStatusMessage()
                     SettingsClass.UpdateRelayPathNumber(relayPathNo)
-                    return {"MessageType": "DATA", "MessageSubTypeName": "Status", "Data": receivedData, "ChecksumOK": True}
+                    return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "Status", "Data": receivedData, "ChecksumOK": True}
                 else:
                     ackRequested = (receivedData[2] & 0x80) > 0
                     if ackRequested:
@@ -126,9 +126,9 @@ class ReceiveLoraAdapter(object):
                         loraMessage = LoraRadioMessage(1, messageType, False, False)
                         loraMessage.AddPayload(bytearray([messageNumberToAck]))
                         self.loraRadio.SendData(loraMessage.GetByteArray())
-                    return {"MessageType": "DATA", "MessageSubTypeName": "SIMessage", "Data": receivedData, "ChecksumOK": True}
+                    return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "SIMessage", "Data": receivedData, "ChecksumOK": True}
             else:
-                return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": False}
+                return {"MessageType": "DATA", "MessageSource":"Lora", "Data": receivedData, "ChecksumOK": False}
 
         return None
 
