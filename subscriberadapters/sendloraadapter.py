@@ -65,6 +65,7 @@ class SendLoraAdapter(object):
                 SendLoraAdapter.LoraMode = SettingsClass.GetLoraMode()
                 enableSendTransforms = (SendLoraAdapter.LoraMode == "SEND")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SIToLoraTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "StatusToLoraTransform")
                 DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraToLoraAckTransform")
 
@@ -88,6 +89,12 @@ class SendLoraAdapter(object):
     def GetDeleteAfterSent():
         # check setting for ack
         return not SettingsClass.GetAcknowledgementRequested()
+
+    # when receiving from other WiRoc device, should we wait until the other
+    # WiRoc device sent an ack to aviod sending at same time
+    @staticmethod
+    def GetWaitUntilAckSent():
+        return True
 
     # return both receive and send transforms, they will be enabled/disabled automatically depending
     # on lora mode

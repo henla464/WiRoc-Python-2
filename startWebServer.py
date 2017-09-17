@@ -3,6 +3,7 @@ __author__ = 'henla464'
 import logging, logging.handlers
 from init import *
 import os
+from battery import Battery
 from daemonize import Daemonize
 from webroutes import radioconfiguration
 from webroutes import meosconfiguration
@@ -10,6 +11,7 @@ from webroutes import misc
 
 def startWebServer():
     logging.info("startWebServer() Start web server")
+    Battery.Setup()
     app.run(debug=True, host='0.0.0.0', use_reloader=False)
 
 if __name__ == '__main__':

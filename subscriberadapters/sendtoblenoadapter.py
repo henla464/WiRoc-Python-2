@@ -1,7 +1,7 @@
 from settings.settings import SettingsClass
 from datamodel.datamodel import BlenoPunchData
 from datamodel.db_helper import DatabaseHelper
-from utils.utils import PunchData
+from datamodel.db_helper import SIMessage
 import logging
 
 class SendToBlenoAdapter(object):
@@ -47,6 +47,12 @@ class SendToBlenoAdapter(object):
     def GetDeleteAfterSent():
         return True
 
+    # when receiving from other WiRoc device, should we wait until the other
+    # WiRoc device sent an ack to aviod sending at same time
+    @staticmethod
+    def GetWaitUntilAckSent():
+        return False
+
     def GetIsInitialized(self):
         return self.isInitialized
 
@@ -80,12 +86,14 @@ class SendToBlenoAdapter(object):
 
     # messageData is a bytearray
     def SendData(self, messageData):
-        punchData = PunchData(messageData)
+        SIMsg = SIMessage()
+        SIMsg.AddPayload(messageData)
+        #punchData = PunchData(messageData)
         blenoPunchData = BlenoPunchData()
-        blenoPunchData.StationNumber = punchData.StationNumber
-        blenoPunchData.SICardNumber = punchData.SICardNumber
-        blenoPunchData.TwentyFourHour = punchData.TwentyFourHour
-        blenoPunchData.TwelveHourTimer = (punchData.TwelveHourTimer[0] << 8) + punchData.TwelveHourTimer[1]
-        blenoPunchData.SubSecond = punchData.SubSecond
+        blenoPunchData.StationNumber = SIMsg.GetStationNumber()
+        blenoPunchData.SICardNumber = SIMsg.GetSICardNumber()
+        blenoPunchData.TwentyFourHour = SIMsg.GetTwentyFourHour()
+        blenoPunchData.TwelveHourTimer = (SIMsg.GetTwelveHourTimer()[0] << 8) + SIMsg.GetTwelveHourTimer()[1]
+        blenoPunchData.SubSecond = SIMsg.GetSubSecondAsTenthOfSeconds()
         DatabaseHelper.save_bleno_punch_data(blenoPunchData)
         return True

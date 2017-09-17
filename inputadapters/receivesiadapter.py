@@ -10,6 +10,7 @@ import serial.tools.list_ports
 
 class ReceiveSIAdapter(object):
     Instances = []
+
     @staticmethod
     def CreateInstances():
         portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa')
@@ -51,6 +52,8 @@ class ReceiveSIAdapter(object):
         self.siSerial = serial.Serial()
         self.isInitialized = False
         self.siStationNumber = 0
+        self.isConnectedToWiRocDevice = False
+        self.hasTimeBeenSet = False
 
     def GetInstanceName(self):
         return self.instanceName
@@ -210,19 +213,30 @@ class ReceiveSIAdapter(object):
             logging.error("ReceiveSIAdapter::GetData() data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + dataInHex)
             return None
 
-        if receivedData[1] == SIMessage.SIPunch:
+        SIMsg = SIMessage()
+        SIMsg.AddPayload(receivedData)
+        if SIMsg.GetMessageType() == SIMessage.SIPunch:
             dataInHex = ''.join(format(x, '02x') for x in receivedData)
             logging.debug("ReceiveSIAdapter::GetData() SI message received! data: " + dataInHex)
             if len(allReceivedData) != len(receivedData):
                 allDataInHex = ''.join(format(x, '02x') for x in allReceivedData)
                 logging.error("ReceiveSIAdapter::GetData() Received more data than expected, all data: " + allDataInHex)
             # save the station number; it will be updated to SettingsClass as long as this object exists
-            self.siStationNumber = (receivedData[3] << 8) + receivedData[4]
-            return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}
-        elif receivedData[1] == SIMessage.IAmAWiRocDevice:
+            self.siStationNumber = SIMsg.GetStationNumber()
+            if not self.hasTimeBeenSet:
+                logging.debug("time not set: " + str(SIMsg.GetHour()) + ":"+ str(SIMsg.GetMinute()) + ":"+ str(SIMsg.GetSeconds()))
+                self.hasTimeBeenSet = True
+                Utils.SetTime(SIMsg.GetHour(), SIMsg.GetMinute(), SIMsg.GetSeconds())
+
+            source = "WiRoc" if self.isConnectedToWiRocDevice else "SIStation"
+            return {"MessageType": "DATA", "MessageSource": source,
+                    "MessageSubTypeName": "SIMessage", "Data": receivedData,
+                    "ChecksumOK": self.IsChecksumOK(receivedData)}
+        elif SIMsg.GetMessageType() == SIMessage.IAmAWiRocDevice:
             checksumOK = self.IsChecksumOK(receivedData)
             if checksumOK:
                 logging.debug("ReceiveSIAdapter::GetData() I am a WiRoc message received!")
+                self.isConnectedToWiRocDevice = True
                 powerSupplied = int(Battery.IsPowerSupplied())
                 imAWiRocReply = bytearray([0x02, 0x01, 0x01, powerSupplied, 0x00, 0x00, 0x03])
                 calculatedCRC = Utils.CalculateCRC(imAWiRocReply[1:-3])
@@ -232,9 +246,11 @@ class ReceiveSIAdapter(object):
             else:
                 logging.error("ReceiveSIAdapter::GetData() I am a WiRoc message, WRONG CHECKSUM!")
             return None
-        elif receivedData[1] == SIMessage.WiRocToWiRoc: # Generic WiRoc to WiRoc data message
+        elif SIMsg.GetMessageType() == SIMessage.WiRocToWiRoc: # Generic WiRoc to WiRoc data message
             logging.debug("ReceiveSIAdapter::GetData() WiRoc to WiRoc data message!")
-            return {"MessageType": "DATA", "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}
+            return {"MessageType": "DATA", "MessageSource": "WiRoc",
+                    "MessageSubTypeName": "LoraRadioMessage",
+                    "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}
         else:
             dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
             logging.error("ReceiveSIAdapter::GetData() Unknown SI message received! Data: " + dataInHex)

@@ -111,6 +111,12 @@ systemctl enable /etc/systemd/system/WiRocPythonWS.service
 wget -O /etc/udev/rules.d/99-ttyexcludemm.rules https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/99-ttyexcludemm.rules
 udevadm control --reload-rules
 
+
+mkdir /lib/modules/4.4.13-ntc-mlc/kernel/drivers/usb/class
+wget -O /lib/modules/4.4.13-ntc-mlc/kernel/drivers/usb/class/cdc-acm.ko https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/cdc-acm.ko
+depmod
+modprobe cdc-acm
+
 echo "install new dtb"
 #read line
 #Install the new dtb on chip

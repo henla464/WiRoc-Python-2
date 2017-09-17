@@ -54,7 +54,7 @@ class CreateStatusAdapter(object):
             self.loraRadioMessage.SetBatteryLowBit(Battery.GetIsBatteryLow())
             self.loraRadioMessage.UpdateChecksum()
             logging.debug("CreateStatusAdapter::GetData() Data to fetch")
-            return {"MessageType": "DATA", "Data": self.loraRadioMessage.GetByteArray(), "ChecksumOK": True}
+            return {"MessageType": "DATA", "MessageSubTypeName": "Status", "MessageSource":"Status", "Data": self.loraRadioMessage.GetByteArray(), "ChecksumOK": True}
 
     def AddedToMessageBox(self, mbid):
         return None

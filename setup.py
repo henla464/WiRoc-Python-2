@@ -93,8 +93,9 @@ class Setup:
 
                             # add subscription to database
                             deleteAfterSent = adapter.GetDeleteAfterSent()
+                            waitUntilAckSent = adapter.GetWaitUntilAckSent()
                             enabled = False
-                            subscriptionData = SubscriptionData(deleteAfterSent, enabled, subscriberDataId, transformDataId)
+                            subscriptionData = SubscriptionData(deleteAfterSent, enabled, subscriberDataId, transformDataId, waitUntilAckSent)
                             DatabaseHelper.save_subscription(subscriptionData)
                 adapter.SetIsDBInitialized()
 

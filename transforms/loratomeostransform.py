@@ -1,6 +1,6 @@
 from utils.utils import Utils
 from datamodel.datamodel import LoraRadioMessage
-import datamodel.datamodel
+from datamodel.datamodel import SIMessage
 
 class LoraToMeosTransform(object):
 
@@ -23,7 +23,9 @@ class LoraToMeosTransform(object):
         msg = LoraRadioMessage()
         msg.AddPayload(payloadData)
         if msg.GetMessageType() == LoraRadioMessage.MessageTypeSIPunch:
-            loraHeaderSize = datamodel.datamodel.LoraRadioMessage.GetHeaderSize()
+            loraHeaderSize = LoraRadioMessage.GetHeaderSize()
             siPayloadData = payloadData[loraHeaderSize:]
-            return {"Data": Utils.GetMeosDataFromSIData(siPayloadData), "CustomData": None}
+            siMsg = SIMessage()
+            siMsg.AddPayload(siPayloadData)
+            return {"Data": Utils.GetMeosDataFromSIData(siMsg), "CustomData": None}
         return None

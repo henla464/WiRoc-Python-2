@@ -98,6 +98,12 @@ class SendSerialAdapter(object):
         # check setting for ack
         return True
 
+    # when receiving from other WiRoc device, should we wait until the other
+    # WiRoc device sent an ack to aviod sending at same time
+    @staticmethod
+    def GetWaitUntilAckSent():
+        return False
+
     def GetTransformNames(self):
         return ["LoraToSITransform", "SIToSITransform"]
 

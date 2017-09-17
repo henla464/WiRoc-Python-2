@@ -66,7 +66,7 @@ class ReceiveTestPunchesAdapter(object):
                 logging.debug("ReceiveTestPunchesAdapter::GetData() Data to fetch")
                 dataInHex = ''.join(format(x, '02x') for x in siMessage.GetByteArray())
                 logging.debug(dataInHex)
-                return {"MessageType": "DATA", "Data": siMessage.GetByteArray(), "ChecksumOK": True}
+                return {"MessageType": "DATA", "MessageSubTypeName": "Test", "Data": siMessage.GetByteArray(), "ChecksumOK": True}
         return None
 
     def AddedToMessageBox(self, mbid):

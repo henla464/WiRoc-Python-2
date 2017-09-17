@@ -79,7 +79,7 @@ class LoraRadio:
                                    0x00,        # Mode (0=standard, 1=central, 2=node)
                                    channelData.RfBw,       # rf_bw (6=62.5k, 7=125k, 8=250k, 9=500k)
                                    0x00, 0x00,   # ID
-                                   0x00,        # NetID
+                                   channel,        # NetID
                                    0x07,        # RF power
                                    0x00,        # CS (calculate and set)
                                    0x0D, 0x0A   # end code
@@ -89,7 +89,7 @@ class LoraRadio:
 
     def getRadioSettingsReply(self):
         data = bytearray([])
-        logging.debug("LoraRadio::getSettingsArray() LoraRadio settings reply response: ")
+        logging.debug("LoraRadio::getSettingsReply() LoraRadio settings reply response: ")
         while self.radioSerial.inWaiting() > 0:
             bytesRead = self.radioSerial.read(1)
             if len(bytesRead) > 0 and bytesRead[0] == 0xAF:
@@ -103,7 +103,7 @@ class LoraRadio:
 
                     time.sleep(2 / 1000)
                 break
-        logging.debug("LoraRadio::getSettingsArray() " + str(data))
+        logging.debug("LoraRadio::getSettingsReply() " + str(data))
         return data
 
     def Disable(self):
@@ -180,10 +180,19 @@ class LoraRadio:
         self.acksReceivedSinceLastMessageSent += 1
 
     # delay sending next message if we are waiting for an ack message
-    def IsReadyToSend(self):
+    def IsReadyToSend(self, msgSub):
         if self.chip:
             if digitalReadNonXIO(138) == 0:
                 return False
+        #if wirocMessage:
+        #    currentTime = time.monotonic()
+        #    msgSub
+        #    if msgSub.CreatedDate is None or\
+        #        msgSub.CreatedDate < currentTime - SettingsClass.GetLoraAckMessageWaitTimeoutS():
+        #        return True
+        #    else:
+        #        return False
+
         if SettingsClass.GetAcknowledgementRequested():
             currentTime = time.monotonic()
             if self.lastMessageSentDate is None or\

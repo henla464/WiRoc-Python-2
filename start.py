@@ -98,42 +98,42 @@ class Main:
         else:
             return False
 
-    def timeToSendMessage(self, msgSub):
-        lastSendTryDate = max(msgSub.SentDate if msgSub.SentDate is not None else datetime.min,
-                       msgSub.SendFailedDate if msgSub.SendFailedDate is not None else datetime.min)
-        lastFindAdapterTryDate = msgSub.FindAdapterTryDate if msgSub.FindAdapterTryDate is not None else datetime.min
-        if (
-            (lastSendTryDate >= lastFindAdapterTryDate and
-                (msgSub.NoOfSendTries == 0 or
-                (msgSub.NoOfSendTries < SettingsClass.GetMaxRetries() and datetime.now() - lastSendTryDate > timedelta(microseconds=SettingsClass.GetRetryDelay(msgSub.NoOfSendTries))))
-            )
-            or (lastSendTryDate < lastFindAdapterTryDate and
-                (msgSub.FindAdapterTries == 0 or
-                 (msgSub.FindAdapterTries < SettingsClass.GetMaxRetries() and datetime.now() - msgSub.FindAdapterTryDate > timedelta(microseconds=SettingsClass.GetRetryDelay(msgSub.FindAdapterTries))))
-                )):
-            return True
-        return False
+    #def timeToSendMessage(self, msgSub):
+        # lastSendTryDate = max(msgSub.SentDate if msgSub.SentDate is not None else datetime.min,
+        #                msgSub.SendFailedDate if msgSub.SendFailedDate is not None else datetime.min)
+        # lastFindAdapterTryDate = msgSub.FindAdapterTryDate if msgSub.FindAdapterTryDate is not None else datetime.min
+        # if (
+        #     (lastSendTryDate >= lastFindAdapterTryDate and
+        #         (msgSub.NoOfSendTries == 0 or
+        #         (msgSub.NoOfSendTries < SettingsClass.GetMaxRetries() and datetime.now() - lastSendTryDate > timedelta(microseconds=SettingsClass.GetRetryDelay(msgSub.NoOfSendTries))))
+        #     )
+        #     or (lastSendTryDate < lastFindAdapterTryDate and
+        #         (msgSub.FindAdapterTries == 0 or
+        #          (msgSub.FindAdapterTries < SettingsClass.GetMaxRetries() and datetime.now() - msgSub.FindAdapterTryDate > timedelta(microseconds=SettingsClass.GetRetryDelay(msgSub.FindAdapterTries))))
+        #         )):
+        #     return True
+        # return False
 
-    def shouldArchiveMessage(self, msgSub):
-        return msgSub.NoOfSendTries >= SettingsClass.GetMaxRetries() or msgSub.FindAdapterTries >= SettingsClass.GetMaxRetries()
+    #def shouldArchiveMessage(self, msgSub):
+    #    return msgSub.NoOfSendTries >= SettingsClass.GetMaxRetries() or msgSub.FindAdapterTries >= SettingsClass.GetMaxRetries()
 
     def getMessageSubscriptionsToSend(self):
         msgSubsToSend = []
         if self.messagesToSendExists:
-            msgSubscriptions = DatabaseHelper.get_message_subscriptions_view(1)
+            msgSubscriptions = DatabaseHelper.get_message_subscriptions_view_to_send(SettingsClass.GetMaxRetries(), 1)
             if len(msgSubscriptions) == 0:
                 self.messagesToSendExists = False
-            else:
-                msgSubsToSend = [msgSub for msgSub in msgSubscriptions if self.timeToSendMessage(msgSub)]
+            #else:
+            #    msgSubsToSend = [msgSub for msgSub in msgSubscriptions if self.timeToSendMessage(msgSub)]
         return msgSubsToSend
 
     def archiveFailedMessages(self):
-        if self.messagesToSendExists:
-            msgSubscriptions = DatabaseHelper.get_message_subscriptions_view(100)
-            for msgSub in msgSubscriptions:
-                if self.shouldArchiveMessage(msgSub):
-                    logging.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
-                    DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
+        #if self.messagesToSendExists:
+        msgSubscriptions = DatabaseHelper.get_message_subscriptions_view_to_archive(SettingsClass.GetMaxRetries(), 100)
+        for msgSub in msgSubscriptions:
+            #if self.shouldArchiveMessage(msgSub):
+            logging.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
+            DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
 
     def updateWifiPowerSaving(self):
         if self.runningOnChip:
@@ -191,6 +191,8 @@ class Main:
                             mbd.PowerCycleCreated = SettingsClass.GetPowerCycle()
                             mbd.ChecksumOK = inputData["ChecksumOK"]
                             mbd.InstanceName = instanceName
+                            mbd.MessageSubTypeName = inputData["MessageSubTypeName"]
+                            mbd.MessageSource = inputData["MessageSource"]
                             mbdid = DatabaseHelper.save_message_box(mbd)
                             SettingsClass.SetTimeOfLastMessageAdded()
                             inputAdapter.AddedToMessageBox(mbdid)
@@ -198,6 +200,10 @@ class Main:
                             messageTypeId = DatabaseHelper.get_message_type(messageTypeName).id
                             subscriptions = DatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
                             for subscription in subscriptions:
+                                if subscription.WaitUntilAckSent and mbd.MessageSource == "WiRoc":
+                                    msgSubscription.ScheduledTime = datetime.now() + timedelta(seconds=SettingsClass.GetLoraAckMessageWaitTimeoutS())
+                                else:
+                                    msgSubscription.ScheduledTime = datetime.now()
                                 msgSubscription = MessageSubscriptionData()
                                 msgSubscription.MessageBoxId = mbdid
                                 msgSubscription.SubscriptionId = subscription.id
@@ -236,11 +242,13 @@ class Main:
                                             if msgSub.DeleteAfterSent: # move msgsub to archive
                                                 DatabaseHelper.archive_message_subscription_view_after_sent(msgSub)
                                             else: # set SentDate and increment NoOfSendTries
-                                                DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub)
+                                                retryDelay = SettingsClass.GetRetryDelay(msgSub.NoOfSendTries+1)
+                                                DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub, retryDelay)
                                         else:
                                             # failed to send
                                             logging.warning("Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
-                                            DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub)
+                                            retryDelay = SettingsClass.GetRetryDelay(msgSub.NoOfSendTries+1)
+                                            DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub, retryDelay)
                                     else:
                                         # shouldn't be sent, so just archive the message subscription
                                         # (Probably a Lora message that doesn't request ack
@@ -248,7 +256,8 @@ class Main:
                                         DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
                         if not adapterFound:
                             logging.warning("Start::Run() Send adapter not found for " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName)
-                            DatabaseHelper.increment_find_adapter_tries_and_set_find_adapter_try_date(msgSub)
+                            retryDelay = SettingsClass.GetRetryDelay(msgSub.FindAdapterTries+1)
+                            DatabaseHelper.increment_find_adapter_tries_and_set_find_adapter_try_date(msgSub, retryDelay)
 
 
 

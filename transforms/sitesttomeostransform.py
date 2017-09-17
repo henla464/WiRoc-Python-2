@@ -10,7 +10,7 @@ class SITestToLoraTransform(object):
 
     @staticmethod
     def GetOutputMessageType():
-        return "LORA"
+        return "MEOS"
 
     @staticmethod
     def GetName():
@@ -23,5 +23,5 @@ class SITestToLoraTransform(object):
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
         if siMsg.GetMessageType() == SIMessage.SIPunch:
-            return {"Data": Utils.GetMeosDataFromSIData(payloadData), "CustomData": None}
+            return {"Data": Utils.GetMeosDataFromSIData(siMsg), "CustomData": None}
         return None

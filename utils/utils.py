@@ -1,23 +1,23 @@
 __author__ = 'henla464'
 
 from struct import pack
-import logging
+from datetime import datetime
+import logging, os
 
-class PunchData(object):
-
-    def __init__(self, siPayloadData = None):
-        if siPayloadData is None:
-            self.StationNumber = None
-            self.SICardNumber = None
-            self.TwentyFourHour = None
-            self.TwelveHourTimer = None
-            self.SubSecond = None
-        else:
-            self.StationNumber = (siPayloadData[3] << 8) + siPayloadData[4]
-            self.SICardNumber = Utils.DecodeCardNr(siPayloadData[5:9])
-            self.TwentyFourHour = siPayloadData[9] & 0x01
-            self.TwelveHourTimer = siPayloadData[10:12]
-            self.SubSecond = int(siPayloadData[12] // 25.6)
+#class PunchData(object):
+#    def __init__(self, siPayloadData = None):
+#        if siPayloadData is None:
+#            self.StationNumber = None
+#            self.SICardNumber = None
+#            self.TwentyFourHour = None
+#            self.TwelveHourTimer = None
+#            self.SubSecond = None
+#        else:
+#            self.StationNumber = (siPayloadData[3] << 8) + siPayloadData[4]
+#            self.SICardNumber = Utils.DecodeCardNr(siPayloadData[5:9])
+#            self.TwentyFourHour = siPayloadData[9] & 0x01
+#            self.TwelveHourTimer = siPayloadData[10:12]
+#            self.SubSecond = int(siPayloadData[12] // 25.6)
 
 
 class Utils:
@@ -137,15 +137,53 @@ class Utils:
 
 
     @staticmethod
-    def GetMeosDataFromSIData(siPayloadData):
-        if len(siPayloadData) < 12:
-            logging.error("Utils::GetMeosDataFromSIData() length siPayloadData less than 12")
-            return None
-        punchData = PunchData(siPayloadData)
+    def GetMeosDataFromSIData(siMessage):
+        #if len(siPayloadData) < 12:
+        #    logging.error("Utils::GetMeosDataFromSIData() length siPayloadData less than 12")
+        #    return None
+        #punchData = PunchData(siPayloadData)
         punch = 0  # type of data
         codeDay = 0  # obsolete
-        time = ((punchData.TwelveHourTimer[0] << 8) + punchData.TwelveHourTimer[1]) * 10 + punchData.SubSecond
-        if punchData.TwentyFourHour == 1:
-            time += 36000 * 12
-        byteArr = bytearray(pack("<cHIII", bytes([punch]), punchData.StationNumber, punchData.SICardNumber, codeDay, time))
+        #time = ((punchData.TwelveHourTimer[0] << 8) + punchData.TwelveHourTimer[1]) * 10 + punchData.SubSecond
+        time = siMessage.GetTimeAsTenthOfSeconds()
+        #if punchData.TwentyFourHour == 1:
+        #    time += 36000 * 12
+        byteArr = bytearray(pack("<cHIII", bytes([punch]), siMessage.GetStationNumber(), siMessage.GetSICardNumber(), codeDay, time))
         return byteArr
+
+    @staticmethod
+    def SetTime(hour, minute, second):
+        import ctypes
+        import ctypes.util
+        import time
+
+        # /usr/include/linux/time.h:
+        #
+        # define CLOCK_REALTIME                     0
+        CLOCK_REALTIME = 0
+
+        # /usr/include/time.h
+        #
+        # struct timespec
+        #  {
+        #    __time_t tv_sec;            /* Seconds.  */
+        #    long int tv_nsec;           /* Nanoseconds.  */
+        #  };
+        class timespec(ctypes.Structure):
+            _fields_ = [("tv_sec", ctypes.c_long),
+                        ("tv_nsec", ctypes.c_long)]
+
+        librt = ctypes.CDLL(ctypes.util.find_library("rt"))
+
+        today = datetime.today()
+        year = today.year
+        month = today.month
+        day = today.day
+        ts = timespec()
+        ts.tv_sec = int(time.mktime(datetime(year, month, day, hour, minute, second).timetuple()))
+        ts.tv_nsec = 0
+
+        # http://linux.die.net/man/3/clock_settime
+        logging.debug("before time set: "+ str(datetime.now()))
+        librt.clock_settime(CLOCK_REALTIME, ctypes.byref(ts))
+        logging.debug("after time set: " + str(datetime.now()))

@@ -36,16 +36,19 @@ class ChannelData(object):
 class MessageBoxData(object):
     columns = [("MessageData", bytearray), ("PowerCycleCreated", int),
                ("MessageTypeName", str), ("InstanceName", str),
+               ("MessageSubTypeName", str),
                ("ChecksumOK", bool), ("CreatedDate", datetime)]
 
     def __init__(self, MessageData=None, PowerCycleCreated=None,
                  MessageTypeName=None, InstanceName = None,
+                 MessageSubTypeName=None,
                  ChecksumOK=None, CreatedDate=None):
         self.id = None
         self.MessageData = MessageData
         self.PowerCycleCreated = PowerCycleCreated
         self.MessageTypeName = MessageTypeName
         self.InstanceName = InstanceName
+        self.MessageSubTypeName = MessageSubTypeName
         self.ChecksumOK = ChecksumOK
         self.CreatedDate = CreatedDate
 
@@ -53,16 +56,20 @@ class MessageBoxData(object):
 class MessageBoxArchiveData(object):
     columns = [("OrigId", int), ("MessageData", bytes), ("PowerCycleCreated", int),
                ("MessageTypeName", str), ("InstanceName", str),
+               ("MessageSubTypeName", str),
                ("ChecksumOK", bool), ("CreatedDate", datetime)]
 
     def __init__(self, OrigId=None, MessageData=None, PowerCycleCreated=None,
-                 MessageTypeName=None, InstanceName=None, ChecksumOK=None, CreatedDate=None):
+                 MessageTypeName=None, InstanceName=None,
+                 MessageSubTypeName=None,
+                 ChecksumOK=None, CreatedDate=None):
         self.id = None
         self.OrigId = OrigId
         self.MessageData = MessageData
         self.PowerCycleCreated = PowerCycleCreated
         self.MessageTypeName = MessageTypeName
         self.InstanceName = InstanceName
+        self.MessageSubTypeName = MessageSubTypeName
         self.ChecksumOK = ChecksumOK
         self.CreatedDate = CreatedDate
 
@@ -97,26 +104,29 @@ class TransformData(object):
 
 class SubscriptionData(object):
     columns = [("DeleteAfterSent", bool), ("Enabled", bool),
-               ("SubscriberId", int), ("TransformId", int)]
+               ("SubscriberId", int), ("TransformId", int),
+               ("WaitUntilAckSent", bool)]
 
     def __init__(self, DeleteAfterSent=None, Enabled=None,
-                 SubscriberId=None, TransformId=None, ):
+                 SubscriberId=None, TransformId=None, WaitUntilAckSent = False):
         self.id = None
         self.DeleteAfterSent = DeleteAfterSent
         self.Enabled = Enabled
         self.SubscriberId = SubscriberId
         self.TransformId = TransformId
+        self.WaitUntilAckSent = WaitUntilAckSent
 
 
 class MessageSubscriptionData(object):
     columns = [("CustomData", str), ("SentDate", datetime), ("SendFailedDate", datetime),
                ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
-               ("NoOfSendTries", int), ("AckReceivedDate", datetime), ("MessageBoxId", int),
+               ("NoOfSendTries", int), ("AckReceivedDate", datetime),
+               ("ScheduledTime", datetime), ("MessageBoxId", int),
                ("SubscriptionId", int)]
 
     def __init__(self, CustomData=None, SentDate=None, SendFailedDate=None,
                  FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
-                 NoOfSendTries=0, MessageBoxId=None, SubscriptionId=None):
+                 NoOfSendTries=0, ScheduledTime=None, MessageBoxId=None, SubscriptionId=None):
         self.id = None
         self.CustomData = CustomData
         self.SentDate = SentDate
@@ -125,6 +135,7 @@ class MessageSubscriptionData(object):
         self.FindAdapterTryDate = FindAdapterTryDate
         self.FindAdapterTries = FindAdapterTries
         self.AckReceivedDate = AckReceivedDate
+        self.ScheduledTime = ScheduledTime
         self.MessageBoxId = MessageBoxId
         self.SubscriptionId = SubscriptionId
 
@@ -133,12 +144,14 @@ class MessageSubscriptionArchiveData(object):
                 ("SentDate", datetime), ("SendFailedDate", datetime),
                 ("FindAdapterTryDate", datetime),("FindAdapterTries", int),
                 ("NoOfSendTries", int), ("AckReceivedDate", datetime),
-                ("MessageBoxId", int), ("SubscriptionId", int),
+                ("ScheduledTime", datetime), ("MessageBoxId", int),
+                ("SubscriptionId", int),
                 ("SubscriberTypeName", str), ("TransformName", str),]
 
     def __init__(self, CustomData=None, SentDate=None, SendFailedDate=None,
                  FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
-                 NoOfSendTries=0, MessageBoxId=None, SubscriptionId=None,
+                 NoOfSendTries=0, ScheduledTime=None, MessageBoxId=None,
+                 SubscriptionId=None,
                  SubscriberTypeName = None, TransformName = None):
         self.id = None
         self.CustomData = CustomData
@@ -149,6 +162,7 @@ class MessageSubscriptionArchiveData(object):
         self.NoOfSendTries = NoOfSendTries
         self.AckReceivedDate = AckReceivedDate
         self.MessageBoxId = MessageBoxId
+        self.ScheduledTime = ScheduledTime
         self.SubscriptionId = SubscriptionId
         self.SubscriberTypeName = SubscriberTypeName
         self.TransformName = TransformName
@@ -161,7 +175,9 @@ class MessageSubscriptionView(object):
                ("SubscriptionId", int),
                ("DeleteAfterSent", bool), ("Enabled", bool), ("SubscriberId", int),
                ("SubscriberTypeName", str), ("SubscriberInstanceName", str),
-               ("TransformName", str), ("MessageData", bytearray)]
+               ("TransformName", str), ("MessageData", bytearray),
+               #("CreatedDate", datetime)
+               ]
 
     def __init__(self):
         self.id = None
@@ -181,6 +197,7 @@ class MessageSubscriptionView(object):
         self.SubscriberInstanceName = None
         self.TransformName = None
         self.MessageData = None
+        self.CreatedDate = None
 
 
 class SubscriberView(object):
@@ -469,3 +486,37 @@ class SIMessage(object):
         self.MessageData.append(0x03)  # ETX
         self.UpdateLength()
         self.UpdateChecksum()
+
+    def GetStationNumber(self):
+        return (self.MessageData[3] << 8) + self.MessageData[4]
+
+    def GetSICardNumber(self):
+        return Utils.DecodeCardNr(self.MessageData[5:9])
+
+    def GetTwentyFourHour(self):
+        return self.MessageData[9] & 0x01
+
+    def GetTwelveHourTimer(self):
+        return self.MessageData[10:12]
+
+    def GetSubSecondAsTenthOfSeconds(self):
+        return int(self.MessageData[12] // 25.6)
+
+    def GetTimeAsTenthOfSeconds(self):
+        time = ((self.GetTwelveHourTimer()[0] << 8) + self.GetTwelveHourTimer()[1]) * 10 + self.GetSubSecondAsTenthOfSeconds()
+        if self.GetTwentyFourHour() == 1:
+            time += 36000 * 12
+        return time
+
+    def GetHour(self):
+        return int(self.GetTimeAsTenthOfSeconds() // 36000)
+
+    def GetMinute(self):
+        tenthOfSecs = self.GetTimeAsTenthOfSeconds()
+        numberOfMinutesInTenthOfSecs = (tenthOfSecs - self.GetHour()*36000)
+        return numberOfMinutesInTenthOfSecs // 600
+
+    def GetSeconds(self):
+        tenthOfSecs = self.GetTimeAsTenthOfSeconds()
+        numberOfSecondsInTenthOfSecs = (tenthOfSecs - self.GetHour() * 36000 - self.GetMinute()*600)
+        return numberOfSecondsInTenthOfSecs // 10

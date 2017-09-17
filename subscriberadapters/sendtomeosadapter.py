@@ -54,6 +54,12 @@ class SendToMeosAdapter(object):
     def GetDeleteAfterSent():
         return True
 
+    # when receiving from other WiRoc device, should we wait until the other
+    # WiRoc device sent an ack to aviod sending at same time
+    @staticmethod
+    def GetWaitUntilAckSent():
+        return False
+
     def GetIsInitialized(self):
         return self.isInitialized
 

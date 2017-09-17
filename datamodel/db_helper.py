@@ -4,6 +4,8 @@ from datamodel.datamodel import *
 from databaselib.db import DB
 from databaselib.datamapping import DataMapping
 from datetime import timedelta, datetime
+#from settings.settings import SettingsClass
+import time
 
 
 class DatabaseHelper:
@@ -313,31 +315,37 @@ class DatabaseHelper:
             cls.archive_message_box(messageSubscriptionView.MessageBoxId)
 
     @classmethod
-    def increment_send_tries_and_set_sent_date(cls, messageSubscriptionView):
+    def increment_send_tries_and_set_sent_date(cls, messageSubscriptionView, retryDelay):
         cls.init()
         msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
         msa.SentDate = datetime.now()
         msa.NoOfSendTries = msa.NoOfSendTries + 1
         msa.FindAdapterTryDate = None
         msa.FindAdapterTries = 0
+        msa.ScheduledTime = max(msa.ScheduledTime if msa.ScheduledTime is not None else datetime.min,
+                                datetime.now() + timedelta(microseconds=retryDelay))
         cls.db.save_table_object(msa, False)
 
     @classmethod
-    def increment_send_tries_and_set_send_failed_date(cls, messageSubscriptionView):
+    def increment_send_tries_and_set_send_failed_date(cls, messageSubscriptionView, retryDelay):
         cls.init()
         msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
         msa.SendFailedDate = datetime.now()
         msa.NoOfSendTries = msa.NoOfSendTries + 1
         msa.FindAdapterTryDate = None
         msa.FindAdapterTries = 0
+        msa.ScheduledTime = max(msa.ScheduledTime if msa.ScheduledTime is not None else datetime.min,
+                                datetime.now() + timedelta(microseconds=retryDelay))
         cls.db.save_table_object(msa, False)
 
     @classmethod
-    def increment_find_adapter_tries_and_set_find_adapter_try_date(cls, messageSubscriptionView):
+    def increment_find_adapter_tries_and_set_find_adapter_try_date(cls, messageSubscriptionView, retryDelay):
         cls.init()
         msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
         msa.FindAdapterTryDate = datetime.now()
         msa.FindAdapterTries = msa.FindAdapterTries + 1
+        msa.ScheduledTime = max(msa.ScheduledTime if msa.ScheduledTime is not None else datetime.min,
+                                datetime.now() + timedelta(microseconds=retryDelay))
         cls.db.save_table_object(msa, False)
 
     @classmethod
@@ -377,8 +385,10 @@ class DatabaseHelper:
 #MessageSubscriptionView
 
     @classmethod
-    def get_message_subscriptions_view(cls, limit = 100):
-        sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData")
+    def get_message_subscriptions_view_to_send(cls, maxRetries, limit = 100):
+        now = datetime.now()
+        sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData "
+               "WHERE MessageSubscriptionData.ScheduledTime < '%s'") % now
         cls.init()
         cnt = cls.db.get_scalar_by_SQL(sql)
         if cnt > 0:
@@ -406,9 +416,49 @@ class DatabaseHelper:
                    "JOIN MessageSubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
                    "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
                    "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
-                   "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 "
-                   "ORDER BY SubscriptionData.id, MessageSubscriptionData.NoOfSendTries asc, " #temporary, figure out better way to prioritize ACK messages
-                   "MessageSubscriptionData.SentDate asc LIMIT %s") % limit
+                   "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
+                   "MessageSubscriptionData.ScheduledTime < %s AND "
+                   "MessageSubscriptionData.NoOfSendTries < %s AND "
+                   "MessageSubscriptionData.FindAdapterTries < %s) "
+                   "ORDER BY MessageSubscriptionData.ScheduledTime asc "
+                   "MessageSubscriptionData.SentDate asc LIMIT %s") % (now, maxRetries, maxRetries, limit)
+            return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
+        return []
+
+    @classmethod
+    def get_message_subscriptions_view_to_archive(cls, maxRetries, limit=100):
+        now = datetime.now()
+        sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData ")
+        cls.init()
+        cnt = cls.db.get_scalar_by_SQL(sql)
+        if cnt > 0:
+            sql = ("SELECT MessageSubscriptionData.id, "
+                   "MessageSubscriptionData.CustomData, "
+                   "MessageSubscriptionData.SentDate, "
+                   "MessageSubscriptionData.SendFailedDate, "
+                   "MessageSubscriptionData.FindAdapterTryDate, "
+                   "MessageSubscriptionData.FindAdapterTries, "
+                   "MessageSubscriptionData.NoOfSendTries, "
+                   "MessageSubscriptionData.AckReceivedDate, "
+                   "MessageSubscriptionData.MessageBoxId, "
+                   "MessageSubscriptionData.SubscriptionId, "
+                   "SubscriptionData.DeleteAfterSent, "
+                   "SubscriptionData.Enabled, "
+                   "SubscriptionData.SubscriberId, "
+                   "SubscriberData.TypeName as SubscriberTypeName, "
+                   "SubscriberData.InstanceName as SubscriberInstanceName, "
+                   "TransformData.Name as TransformName, "
+                   "MessageBoxData.MessageData,"
+                   "MessageBoxData.id as MessageBoxId "
+                   "FROM TransformData JOIN SubscriptionData "
+                   "ON TransformData.id = SubscriptionData.TransformId "
+                   "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
+                   "JOIN MessageSubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
+                   "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
+                   "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
+                   "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
+                   "(MessageSubscriptionData.NoOfSendTries >= %s or MessageSubscriptionData.FindAdapterTries >= %s) "
+                   "ORDER BY MessageSubscriptionData.ScheduledTime desc LIMIT %s") % (maxRetries, maxRetries, limit)
             return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
         return []
 
@@ -591,51 +641,87 @@ class DatabaseHelper:
     def add_default_channels(cls):
         cls.init()
         channels = []
-        channels.append(ChannelData(1, 146, 439700000, 72333, 22, 12, 6))
-        channels.append(ChannelData(2, 146, 439725000, 72333, 22, 12, 6))
-        channels.append(ChannelData(3, 146, 439775000, 72333, 22, 12, 6))
-        channels.append(ChannelData(4, 146, 439800000, 72333, 22, 12, 6))
-        channels.append(ChannelData(5, 146, 439850000, 72333, 22, 12, 6))
-        channels.append(ChannelData(6, 146, 439875000, 72333, 22, 12, 6))
-        channels.append(ChannelData(7, 146, 439925000, 72333, 22, 12, 6))
-        channels.append(ChannelData(8, 146, 439950000, 72333, 22, 12, 6))
-        channels.append(ChannelData(9, 146, 439975000, 72333, 22, 12, 6))
-        channels.append(ChannelData(1, 293, 439700000, 52590, 16, 12, 7))
-        channels.append(ChannelData(2, 293, 439725000, 52590, 16, 12, 7))
-        channels.append(ChannelData(3, 293, 439775000, 52590, 16, 12, 7))
-        channels.append(ChannelData(4, 293, 439800000, 52590, 16, 12, 7))
+        channels.append(ChannelData(1, 293, 439750000, 52590, 16, 12, 7))
+        channels.append(ChannelData(2, 293, 439775000, 52590, 16, 12, 7))
+        channels.append(ChannelData(3, 293, 439800000, 52590, 16, 12, 7))
+        channels.append(ChannelData(4, 293, 439825000, 52590, 16, 12, 7))
         channels.append(ChannelData(5, 293, 439850000, 52590, 16, 12, 7))
         channels.append(ChannelData(6, 293, 439875000, 52590, 16, 12, 7))
-        channels.append(ChannelData(7, 293, 439925000, 52590, 16, 12, 7))
-        channels.append(ChannelData(8, 293, 439950000, 52590, 16, 12, 7))
-        channels.append(ChannelData(9, 293, 439975000, 52590, 16, 12, 7))
-        channels.append(ChannelData(1, 586, 439700000, 26332, 16, 12, 8))
-        channels.append(ChannelData(2, 586, 439725000, 26332, 16, 12, 8))
-        channels.append(ChannelData(3, 586, 439775000, 26332, 16, 12, 8))
-        channels.append(ChannelData(4, 586, 439800000, 26332, 16, 12, 8))
-        channels.append(ChannelData(5, 586, 439850000, 26332, 16, 12, 8))
-        channels.append(ChannelData(6, 586, 439875000, 26332, 16, 12, 8))
-        channels.append(ChannelData(7, 586, 439925000, 26332, 16, 12, 8))
-        channels.append(ChannelData(8, 586, 439950000, 26332, 16, 12, 8))
-        channels.append(ChannelData(9, 586, 439975000, 26332, 16, 12, 8))
-        channels.append(ChannelData(1, 2148, 439700000, 7132, 15, 11, 9))
-        channels.append(ChannelData(2, 2148, 439725000, 7132, 15, 11, 9))
-        channels.append(ChannelData(3, 2148, 439775000, 7132, 15, 11, 9))
-        channels.append(ChannelData(4, 2148, 439800000, 7132, 15, 11, 9))
-        channels.append(ChannelData(5, 2148, 439850000, 7132, 15, 11, 9))
-        channels.append(ChannelData(6, 2148, 439875000, 7132, 15, 11, 9))
-        channels.append(ChannelData(7, 2148, 439925000, 7132, 15, 11, 9))
-        channels.append(ChannelData(8, 2148, 439950000, 7132, 15, 11, 9))
-        channels.append(ChannelData(9, 2148, 439975000, 7132, 15, 11, 9))
-        channels.append(ChannelData(1, 7032, 439700000, 2500, 15, 10, 9))
-        channels.append(ChannelData(2, 7032, 439725000, 2500, 15, 10, 9))
-        channels.append(ChannelData(3, 7032, 439775000, 2500, 15, 10, 9))
-        channels.append(ChannelData(4, 7032, 439800000, 2500, 15, 10, 9))
-        channels.append(ChannelData(5, 7032, 439850000, 2500, 15, 10, 9))
-        channels.append(ChannelData(6, 7032, 439875000, 2500, 15, 10, 9))
-        channels.append(ChannelData(7, 7032, 439925000, 2500, 15, 10, 9))
-        channels.append(ChannelData(8, 7032, 439950000, 2500, 15, 10, 9))
-        channels.append(ChannelData(9, 7032, 439975000, 2500, 15, 10, 9))
+        channels.append(ChannelData(7, 293, 439900000, 52590, 16, 12, 7))
+        channels.append(ChannelData(8, 293, 439250000, 52590, 16, 12, 7))
+
+        channels.append(ChannelData(1, 537, 439750000, 24130, 16, 11, 7))
+        channels.append(ChannelData(2, 537, 439775000, 24130, 16, 11, 7))
+        channels.append(ChannelData(3, 537, 439800000, 24130, 16, 11, 7))
+        channels.append(ChannelData(4, 537, 439825000, 24130, 16, 11, 7))
+        channels.append(ChannelData(5, 537, 439850000, 24130, 16, 11, 7))
+        channels.append(ChannelData(6, 537, 439875000, 24130, 16, 11, 7))
+        channels.append(ChannelData(7, 537, 439900000, 24130, 16, 11, 7))
+        channels.append(ChannelData(8, 537, 439250000, 24130, 16, 11, 7))
+
+        channels.append(ChannelData(1, 977, 439750000, 15680, 16, 10, 7))
+        channels.append(ChannelData(2, 977, 439775000, 15680, 16, 10, 7))
+        channels.append(ChannelData(3, 977, 439800000, 15680, 16, 10, 7))
+        channels.append(ChannelData(4, 977, 439825000, 15680, 16, 10, 7))
+        channels.append(ChannelData(5, 977, 439850000, 15680, 16, 10, 7))
+        channels.append(ChannelData(6, 977, 439875000, 15680, 16, 10, 7))
+        channels.append(ChannelData(7, 977, 439900000, 15680, 16, 10, 7))
+        channels.append(ChannelData(8, 977, 439250000, 15680, 16, 10, 7))
+
+        channels.append(ChannelData(1, 1758, 439750000, 8714, 15, 9, 7))
+        channels.append(ChannelData(2, 1758, 439775000, 8714, 15, 9, 7))
+        channels.append(ChannelData(3, 1758, 439800000, 8714, 15, 9, 7))
+        channels.append(ChannelData(4, 1758, 439825000, 8714, 15, 9, 7))
+        channels.append(ChannelData(5, 1758, 439850000, 8714, 15, 9, 7))
+        channels.append(ChannelData(6, 1758, 439875000, 8714, 15, 9, 7))
+        channels.append(ChannelData(7, 1758, 439900000, 8714, 15, 9, 7))
+        channels.append(ChannelData(8, 1758, 439250000, 8714, 15, 9, 7))
+
+        # channels.append(ChannelData(1, 146, 439700000, 72333, 22, 12, 6))
+        # channels.append(ChannelData(2, 146, 439725000, 72333, 22, 12, 6))
+        # channels.append(ChannelData(3, 146, 439775000, 72333, 22, 12, 6))
+        # channels.append(ChannelData(4, 146, 439800000, 72333, 22, 12, 6))
+        # channels.append(ChannelData(5, 146, 439850000, 72333, 22, 12, 6))
+        # channels.append(ChannelData(6, 146, 439875000, 72333, 22, 12, 6))
+        # channels.append(ChannelData(7, 146, 439925000, 72333, 22, 12, 6))
+        # channels.append(ChannelData(8, 146, 439950000, 72333, 22, 12, 6))
+        # channels.append(ChannelData(9, 146, 439975000, 72333, 22, 12, 6))
+        # channels.append(ChannelData(1, 293, 439700000, 52590, 16, 12, 7))
+        # channels.append(ChannelData(2, 293, 439725000, 52590, 16, 12, 7))
+        # channels.append(ChannelData(3, 293, 439775000, 52590, 16, 12, 7))
+        # channels.append(ChannelData(4, 293, 439800000, 52590, 16, 12, 7))
+        # channels.append(ChannelData(5, 293, 439850000, 52590, 16, 12, 7))
+        # channels.append(ChannelData(6, 293, 439875000, 52590, 16, 12, 7))
+        # channels.append(ChannelData(7, 293, 439925000, 52590, 16, 12, 7))
+        # channels.append(ChannelData(8, 293, 439950000, 52590, 16, 12, 7))
+        # channels.append(ChannelData(9, 293, 439975000, 52590, 16, 12, 7))
+        # channels.append(ChannelData(1, 586, 439700000, 26332, 16, 12, 8))
+        # channels.append(ChannelData(2, 586, 439725000, 26332, 16, 12, 8))
+        # channels.append(ChannelData(3, 586, 439775000, 26332, 16, 12, 8))
+        # channels.append(ChannelData(4, 586, 439800000, 26332, 16, 12, 8))
+        # channels.append(ChannelData(5, 586, 439850000, 26332, 16, 12, 8))
+        # channels.append(ChannelData(6, 586, 439875000, 26332, 16, 12, 8))
+        # channels.append(ChannelData(7, 586, 439925000, 26332, 16, 12, 8))
+        # channels.append(ChannelData(8, 586, 439950000, 26332, 16, 12, 8))
+        # channels.append(ChannelData(9, 586, 439975000, 26332, 16, 12, 8))
+        # channels.append(ChannelData(1, 2148, 439700000, 7132, 15, 11, 9))
+        # channels.append(ChannelData(2, 2148, 439725000, 7132, 15, 11, 9))
+        # channels.append(ChannelData(3, 2148, 439775000, 7132, 15, 11, 9))
+        # channels.append(ChannelData(4, 2148, 439800000, 7132, 15, 11, 9))
+        # channels.append(ChannelData(5, 2148, 439850000, 7132, 15, 11, 9))
+        # channels.append(ChannelData(6, 2148, 439875000, 7132, 15, 11, 9))
+        # channels.append(ChannelData(7, 2148, 439925000, 7132, 15, 11, 9))
+        # channels.append(ChannelData(8, 2148, 439950000, 7132, 15, 11, 9))
+        # channels.append(ChannelData(9, 2148, 439975000, 7132, 15, 11, 9))
+        # channels.append(ChannelData(1, 7032, 439700000, 2500, 15, 10, 9))
+        # channels.append(ChannelData(2, 7032, 439725000, 2500, 15, 10, 9))
+        # channels.append(ChannelData(3, 7032, 439775000, 2500, 15, 10, 9))
+        # channels.append(ChannelData(4, 7032, 439800000, 2500, 15, 10, 9))
+        # channels.append(ChannelData(5, 7032, 439850000, 2500, 15, 10, 9))
+        # channels.append(ChannelData(6, 7032, 439875000, 2500, 15, 10, 9))
+        # channels.append(ChannelData(7, 7032, 439925000, 2500, 15, 10, 9))
+        # channels.append(ChannelData(8, 7032, 439950000, 2500, 15, 10, 9))
+        # channels.append(ChannelData(9, 7032, 439975000, 2500, 15, 10, 9))
         for channel in channels:
             cls.save_channel(channel)
 
