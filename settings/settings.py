@@ -304,10 +304,12 @@ class SettingsClass(object):
 
     channelData = None
     microSecondsToSendAMessage = None
+    microSecondsToSendAnAckMessage = None
     @staticmethod
     def GetRetryDelay(retryNumber, mainConfigDirty = True):
         if SettingsClass.IsDirty("Channel", True, mainConfigDirty) \
-                or SettingsClass.channelData is None:
+                or SettingsClass.channelData is None \
+                or SettingsClass.microSecondsToSendAMessage is None:
             dataRate = SettingsClass.GetDataRate()
             channel = SettingsClass.GetChannel()
             SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
@@ -358,6 +360,17 @@ class SettingsClass(object):
             SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
 
         return 1+(SettingsClass.microSecondsToSendAMessage * 2.1)/1000000
+
+    @staticmethod
+    def GetLoraAckMessageSendingTimeS():
+        if SettingsClass.microSecondsToSendAnAckMessage is None:
+            dataRate = SettingsClass.GetDataRate()
+            channel = SettingsClass.GetChannel()
+            SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
+            messageLengthInBytes = 6  # typical length
+            SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
+
+        return 0.2+(SettingsClass.microSecondsToSendAnAckMessage)/1000000
 
     relayPathNo = 0
     @staticmethod

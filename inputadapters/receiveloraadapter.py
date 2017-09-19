@@ -128,7 +128,7 @@ class ReceiveLoraAdapter(object):
                         self.loraRadio.SendData(loraMessage.GetByteArray())
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "SIMessage", "Data": receivedData, "ChecksumOK": True}
             else:
-                return {"MessageType": "DATA", "MessageSource":"Lora", "Data": receivedData, "ChecksumOK": False}
+                return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName":"Unknown", "Data": receivedData, "ChecksumOK": False}
 
         return None
 

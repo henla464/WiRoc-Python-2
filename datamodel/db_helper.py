@@ -386,12 +386,11 @@ class DatabaseHelper:
 
     @classmethod
     def get_message_subscriptions_view_to_send(cls, maxRetries, limit = 100):
-        now = datetime.now()
         sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData")
-
         cls.init()
         cnt = cls.db.get_scalar_by_SQL(sql)
         if cnt > 0:
+            now = datetime.now()
             sql = ("SELECT MessageSubscriptionData.id, "
                    "MessageSubscriptionData.CustomData, "
                    "MessageSubscriptionData.SentDate, "

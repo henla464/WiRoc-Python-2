@@ -198,7 +198,7 @@ class Main:
                             for subscription in subscriptions:
                                 msgSubscription = MessageSubscriptionData()
                                 if subscription.WaitUntilAckSent and mbd.MessageSource == "WiRoc":
-                                    msgSubscription.ScheduledTime = datetime.now() + timedelta(seconds=SettingsClass.GetLoraAckMessageWaitTimeoutS())
+                                    msgSubscription.ScheduledTime = datetime.now() + timedelta(seconds=SettingsClass.GetLoraAckMessageSendingTimeS())
                                 else:
                                     msgSubscription.ScheduledTime = datetime.now()
                                 msgSubscription.MessageBoxId = mbdid
