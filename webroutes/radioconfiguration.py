@@ -35,16 +35,7 @@ def setDataRate(dataRate):
     if sd is None:
         sd = SettingData()
         sd.Key = 'DataRate'
-    if dataRate <= 219:
-        sd.Value = 146
-    elif dataRate <= 439:
-        sd.Value = 293
-    elif dataRate <= 1367:
-        sd.Value = 586
-    elif dataRate <= 4590:
-        sd.Value = 2148
-    else:
-        sd.Value = 7032
+    sd.Value = dataRate
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetConfigurationDirty('DataRate', True)
     return jsonpickle.encode(MicroMock(DataRate=int(sd.Value)))

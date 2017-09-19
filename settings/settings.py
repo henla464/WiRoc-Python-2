@@ -171,7 +171,7 @@ class SettingsClass(object):
         if SettingsClass.IsDirty("DataRate", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('DataRate')
             if sett is None:
-                SettingsClass.dataRate = 586
+                SettingsClass.dataRate = 293
             else:
                 SettingsClass.dataRate = int(sett.Value)
         return SettingsClass.dataRate
