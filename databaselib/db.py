@@ -89,9 +89,12 @@ class DB:
         db_cursor.execute(select_SQL_statement)
         return db_cursor.fetchone()[0]
 
-    def get_table_objects_by_SQL(self, table_class, select_SQL_statement):
+    def get_table_objects_by_SQL(self, table_class, select_SQL_statement, parameters=None):
         db_cursor = self.connection.cursor()
-        db_cursor.execute(select_SQL_statement)
+        if parameters == None:
+            db_cursor.execute(select_SQL_statement)
+        else:
+            db_cursor.execute(select_SQL_statement, parameters)
         rows = db_cursor.fetchall()
         get_table_object_func = self._get_table_object
         table_objects = [get_table_object_func(table_class, row) for row in rows]

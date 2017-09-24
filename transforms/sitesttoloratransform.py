@@ -31,5 +31,5 @@ class SITestToLoraTransform(object):
             ackReq = SettingsClass.GetAcknowledgementRequested()
             loraMessage = LoraRadioMessage(payloadDataLength, messageType, batteryLow, ackReq)
             loraMessage.AddPayload(payloadData)
-            return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageNumber()}
+            return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageID()}
         return None

@@ -30,7 +30,7 @@ class SIToLoraTransform(object):
             ackReq = SettingsClass.GetAcknowledgementRequested()
             loraMessage = LoraRadioMessage(payloadDataLength, messageType, batteryLow, ackReq)
             loraMessage.AddPayload(payloadData)
-            return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageNumber()}
+            return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageID()}
         elif siMsg.GetMessageType() == SIMessage.WiRocToWiRoc:
             unwrappedMessage = payloadData[3:-3]
             # Assume it is a LoraRadioMessage that is wrapped
@@ -47,7 +47,7 @@ class SIToLoraTransform(object):
                 loraMessage.SetAcknowledgementRequested(ackReq)
                 loraMessage.UpdateMessageNumber()
                 loraMessage.UpdateChecksum()
-                return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageNumber()}
+                return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageID()}
             else:
                 return None
         return None

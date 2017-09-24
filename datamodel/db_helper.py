@@ -349,12 +349,12 @@ class DatabaseHelper:
         cls.db.save_table_object(msa, False)
 
     @classmethod
-    def archive_message_subscription_after_ack(cls, messageNumber):
+    def archive_message_subscription_after_ack(cls, customData):
         cls.init()
         sixtySecondsAgo = datetime.now() - timedelta(seconds=60)
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData WHERE "
-                                       "CustomData = '%s' AND SentDate > '%s' "
-                                        "ORDER BY SentDate desc LIMIT 1") % (messageNumber, sixtySecondsAgo)
+                                       "CustomData = ? AND SentDate > ? "
+                                        "ORDER BY SentDate desc LIMIT 1") % (customData, sixtySecondsAgo)
         rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql)
 
         if len(rows) > 0:

@@ -103,17 +103,16 @@ class ReceiveLoraAdapter(object):
             if isChecksumOK:
                 messageType = loraMessage.GetMessageType()
                 if messageType == LoraRadioMessage.MessageTypeLoraAck:
-                    messageNumberAcked =  loraMessage.GetByteArray()[loraMessage.GetHeaderSize()]
-                    return {"MessageType": "ACK", "MessageSource":"Lora", "MessageSubTypeName": "Ack", "MessageNumber": messageNumberAcked, "ChecksumOK": True}
+                    customData =  loraMessage.GetMessageIDThatIsAcked()
+                    return {"MessageType": "ACK", "MessageSource":"Lora", "MessageSubTypeName": "Ack", "CustomData": customData, "ChecksumOK": True}
                 elif messageType == LoraRadioMessage.MessageTypeStatus:
-                    ackRequested = (receivedData[2] & 0x80) > 0
-                    if ackRequested:
-                        time.sleep(0.05)
-                        messageNumberToAck = receivedData[3]
-                        messageType = LoraRadioMessage.MessageTypeLoraAck
-                        loraMessage2 = LoraRadioMessage(1, messageType, False, False)
-                        loraMessage2.AddPayload(bytearray([messageNumberToAck]))
-                        self.loraRadio.SendData(loraMessage2.GetByteArray())
+                    #ackRequested = (receivedData[2] & 0x80) > 0
+                    #if ackRequested:
+                    #    time.sleep(0.05)
+                    #    messageType = LoraRadioMessage.MessageTypeLoraAck
+                    #    loraMessage2 = LoraRadioMessage(5, messageType, False, False)
+                    #    loraMessage2.SetMessageIDToAck(loraMessage.GetMessageID())
+                    #    self.loraRadio.SendData(loraMessage2.GetByteArray())
                     relayPathNo = loraMessage.GetLastRelayPathNoFromStatusMessage()
                     SettingsClass.UpdateRelayPathNumber(relayPathNo)
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "Status", "Data": receivedData, "ChecksumOK": True}
@@ -121,11 +120,10 @@ class ReceiveLoraAdapter(object):
                     ackRequested = (receivedData[2] & 0x80) > 0
                     if ackRequested:
                         time.sleep(0.05)
-                        messageNumberToAck = receivedData[3]
                         messageType = LoraRadioMessage.MessageTypeLoraAck
-                        loraMessage = LoraRadioMessage(1, messageType, False, False)
-                        loraMessage.AddPayload(bytearray([messageNumberToAck]))
-                        self.loraRadio.SendData(loraMessage.GetByteArray())
+                        loraMessage2 = LoraRadioMessage(5, messageType, False, False)
+                        loraMessage2.SetMessageIDToAck(loraMessage.GetMessageID())
+                        self.loraRadio.SendData(loraMessage2.GetByteArray())
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "SIMessage", "Data": receivedData, "ChecksumOK": True}
             else:
                 return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName":"Unknown", "Data": receivedData, "ChecksumOK": False}

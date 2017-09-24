@@ -210,9 +210,9 @@ class Main:
                                 logging.info("Start::Run() Message has no subsribers, being archived, msgid: " + str(mbdid))
                                 DatabaseHelper.archive_message_box(mbdid)
                         elif inputData["MessageType"] == "ACK":
-                            messageNumber = inputData["MessageNumber"]
-                            logging.debug("Start::Run() Received ack, for message number: " + str(messageNumber))
-                            DatabaseHelper.archive_message_subscription_after_ack(messageNumber)
+                            customData = inputData["CustomData"]
+                            logging.debug("Start::Run() Received ack, for message number: " + str(customData[0]))
+                            DatabaseHelper.archive_message_subscription_after_ack(customData)
 
                 if self.messagesToSendExists:
                     msgSubscriptions = self.getMessageSubscriptionsToSend()

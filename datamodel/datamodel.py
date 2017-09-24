@@ -118,7 +118,7 @@ class SubscriptionData(object):
 
 
 class MessageSubscriptionData(object):
-    columns = [("CustomData", str), ("SentDate", datetime), ("SendFailedDate", datetime),
+    columns = [("CustomData", bytes), ("SentDate", datetime), ("SendFailedDate", datetime),
                ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
                ("NoOfSendTries", int), ("AckReceivedDate", datetime),
                ("ScheduledTime", datetime), ("MessageBoxId", int),
@@ -140,7 +140,7 @@ class MessageSubscriptionData(object):
         self.SubscriptionId = SubscriptionId
 
 class MessageSubscriptionArchiveData(object):
-    columns = [ ("OrigId", int), ("CustomData", str),
+    columns = [ ("OrigId", int), ("CustomData", bytes),
                 ("SentDate", datetime), ("SendFailedDate", datetime),
                 ("FindAdapterTryDate", datetime),("FindAdapterTries", int),
                 ("NoOfSendTries", int), ("AckReceivedDate", datetime),
@@ -169,7 +169,7 @@ class MessageSubscriptionArchiveData(object):
 
 
 class MessageSubscriptionView(object):
-    columns = [("CustomData", str), ("SentDate", datetime), ("SendFailedDate", datetime),
+    columns = [("CustomData", bytes), ("SentDate", datetime), ("SendFailedDate", datetime),
                ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
                ("NoOfSendTries", int), ("AckReceivedDate", datetime), ("MessageBoxId", int),
                ("SubscriptionId", int),
@@ -289,9 +289,8 @@ class LoraRadioMessage(object):
             self.MessageData = bytearray(pack(LoraRadioMessage.getHeaderFormatString(), bytes([STX]),
                                               bytes([payloadDataLength]),
                                               bytes([(ackReqBit << 7) | (batteryLowBit << 6) | messageType]),
-                                              bytes([LoraRadioMessage.CurrentMessageNumber]),
+                                              bytes([0]),
                                               bytes([0])))
-            LoraRadioMessage.CurrentMessageNumber = (LoraRadioMessage.CurrentMessageNumber + 1) % 256
         else:
             self.MessageData = bytearray()
 
@@ -314,6 +313,28 @@ class LoraRadioMessage(object):
         if len(self.MessageData) >= 3:
             return self.MessageData[2] & 0x3F
         return None
+
+    def SetMessageIDToAck(self, customData):
+        self.MessageData[3] = customData[0]
+        self.AddPayload(customData[1:])
+
+    def GetMessageID(self):
+        if self.GetMessageType() == LoraRadioMessage.MessageTypeSIPunch:
+            return bytearray(bytes([self.MessageData[3],self.MessageData[9],self.MessageData[10],
+                                    self.MessageData[11],self.MessageData[12],self.MessageData[13]]))
+        elif self.GetMessageType() == LoraRadioMessage.MessageTypeStatus:
+            return bytearray(bytes([self.MessageData[3]]))
+        elif self.GetMessageType() == LoraRadioMessage.MessageTypeLoraAck:
+            return None
+
+    def GetMessageIDThatIsAcked(self):
+        if self.GetMessageType() == LoraRadioMessage.MessageTypeSIPunch:
+            return None
+        elif self.GetMessageType() == LoraRadioMessage.MessageTypeStatus:
+            return None
+        elif self.GetMessageType() == LoraRadioMessage.MessageTypeLoraAck:
+            return bytearray(bytes([self.MessageData[3],self.MessageData[5],self.MessageData[6],
+                                    self.MessageData[7],self.MessageData[8],self.MessageData[9]]))
 
     def GetIsChecksumOK(self):
         if self.IsFilled():
