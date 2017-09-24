@@ -112,7 +112,10 @@ class DB:
 
     def execute_SQL(self, SQL_statement, parameters = None):
         #with self.connection:
-        self.connection.execute(SQL_statement, parameters)
+        if parameters == None:
+            self.connection.execute(SQL_statement)
+        else:
+            self.connection.execute(SQL_statement, parameters)
         self.connection.commit()
 
     def execute_SQL_no_commit(self, SQL_statement):
