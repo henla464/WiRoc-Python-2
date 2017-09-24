@@ -110,9 +110,9 @@ class DB:
         self.connection.commit()
 
 
-    def execute_SQL(self, SQL_statement):
+    def execute_SQL(self, SQL_statement, parameters = None):
         #with self.connection:
-        self.connection.execute(SQL_statement)
+        self.connection.execute(SQL_statement, parameters)
         self.connection.commit()
 
     def execute_SQL_no_commit(self, SQL_statement):

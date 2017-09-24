@@ -262,8 +262,8 @@ class DatabaseHelper:
     @classmethod
     def update_customdata(cls, subscriptionId, customData):
         cls.init()
-        sql = "UPDATE MessageSubscriptionData SET CustomData = '%s' WHERE id = %s" % (customData, subscriptionId)
-        cls.db.execute_SQL(sql)
+        sql = "UPDATE MessageSubscriptionData SET CustomData = ? WHERE id = ?"
+        cls.db.execute_SQL(sql,(customData, subscriptionId))
 
     @classmethod
     def save_message_subscription(cls, messageSubscription):
@@ -354,8 +354,8 @@ class DatabaseHelper:
         sixtySecondsAgo = datetime.now() - timedelta(seconds=60)
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData WHERE "
                                        "CustomData = ? AND SentDate > ? "
-                                        "ORDER BY SentDate desc LIMIT 1") % (customData, sixtySecondsAgo)
-        rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql)
+                                        "ORDER BY SentDate desc LIMIT 1")
+        rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (customData, sixtySecondsAgo))
 
         if len(rows) > 0:
             now = datetime.now()
