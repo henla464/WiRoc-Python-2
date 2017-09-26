@@ -111,7 +111,6 @@ class DB:
 
 
     def execute_SQL(self, SQL_statement, parameters = None):
-        #with self.connection:
         if parameters == None:
             self.connection.execute(SQL_statement)
         else:

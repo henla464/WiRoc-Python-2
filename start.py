@@ -98,25 +98,6 @@ class Main:
         else:
             return False
 
-    #def timeToSendMessage(self, msgSub):
-        # lastSendTryDate = max(msgSub.SentDate if msgSub.SentDate is not None else datetime.min,
-        #                msgSub.SendFailedDate if msgSub.SendFailedDate is not None else datetime.min)
-        # lastFindAdapterTryDate = msgSub.FindAdapterTryDate if msgSub.FindAdapterTryDate is not None else datetime.min
-        # if (
-        #     (lastSendTryDate >= lastFindAdapterTryDate and
-        #         (msgSub.NoOfSendTries == 0 or
-        #         (msgSub.NoOfSendTries < SettingsClass.GetMaxRetries() and datetime.now() - lastSendTryDate > timedelta(microseconds=SettingsClass.GetRetryDelay(msgSub.NoOfSendTries))))
-        #     )
-        #     or (lastSendTryDate < lastFindAdapterTryDate and
-        #         (msgSub.FindAdapterTries == 0 or
-        #          (msgSub.FindAdapterTries < SettingsClass.GetMaxRetries() and datetime.now() - msgSub.FindAdapterTryDate > timedelta(microseconds=SettingsClass.GetRetryDelay(msgSub.FindAdapterTries))))
-        #         )):
-        #     return True
-        # return False
-
-    #def shouldArchiveMessage(self, msgSub):
-    #    return msgSub.NoOfSendTries >= SettingsClass.GetMaxRetries() or msgSub.FindAdapterTries >= SettingsClass.GetMaxRetries()
-
     def getMessageSubscriptionsToSend(self):
         cnt, msgSubsToSend = DatabaseHelper.get_message_subscriptions_view_to_send(SettingsClass.GetMaxRetries(), 1)
         if cnt == 0:
