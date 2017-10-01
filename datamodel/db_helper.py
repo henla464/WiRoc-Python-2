@@ -47,6 +47,8 @@ class DatabaseHelper:
         db.ensure_table_created(table)
         table = TestPunchData()
         db.ensure_table_created(table)
+        table = RepeaterMessageBoxData()
+        db.ensure_table_created(table)
 
     @classmethod
     def drop_all_tables(cls):
