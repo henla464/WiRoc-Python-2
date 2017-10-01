@@ -381,9 +381,39 @@ class DatabaseHelper:
             if remainingMsgSub == 0:
                 cls.archive_message_box(msd.MessageBoxId)
 
+    @classmethod
+    def repeater_message_acked(cls, customData):
+        cls.init()
+        sql = ("SELECT RepeaterMessageBoxData.* FROM RepeaterMessageBoxData WHERE "
+               "MessageID = ?")
+        rows = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData, sql, (customData))
+        if len(rows) > 0:
+            msgToUpdate = rows[0]
+            if msgToUpdate.AddedToMessageBoxTime is not None:
+                msgToUpdate.Acked = True
+                msgToUpdate.AckedTime = datetime.now
+            else:
+                msgToUpdate.NoOfTimesAckSeen = msgToUpdate.NoOfTimesAckSeen + 1
+            return cls.db.save_table_object(msgToUpdate, False)
+
+    @classmethod
+    def get_repeater_message_to_add(cls):
+        cls.init()
+        repeaterMessages = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData,
+                                                      "SELECT * FROM RepeaterMessageBoxData WHERE "
+                                                      "(RelayRequested = 1 or NoOfTimesSeen > 1) and AddedToMessageBoxTime IS NULL ORDER BY "
+                                                      "SportIdentHour, SportIdentMinute, SportIdentSeconds LIMIT 1")
+        if len(repeaterMessages) > 0:
+            return repeaterMessages[0]
+        return None
+
+    @classmethod
+    def set_relay_message_added_to_message_box(cls, messageBoxId, repeaterMessageBoxId):
+        cls.init()
+        cls.db.execute_SQL("UPDATE RepeaterMessageBoxData SET AddedToMessageBoxTime = ?, MessageBoxId = ? WHERE Id = ?", (datetime.now(), messageBoxId, repeaterMessageBoxId))
+        return None
 
 #MessageSubscriptionView
-
     @classmethod
     def get_message_subscriptions_view_to_send(cls, maxRetries, limit = 100):
         sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData")
@@ -496,7 +526,22 @@ class DatabaseHelper:
               "MessageSubscriptionData.MessageboxId WHERE MessageSubscriptionData.id IS NULL)"
         cls.db.execute_SQL(sql)
 
-#InputAdapterInstances
+#RepeaterMessageBox
+    @classmethod
+    def save_repeater_message_box(cls, repeaterMessageBoxData):
+        cls.init()
+        sql = ("SELECT RepeaterMessageBoxData.* FROM RepeaterMessageBoxData WHERE "
+               "MessageID = ?")
+        rows = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData, sql, (repeaterMessageBoxData.MessageID))
+        if len(rows) > 0:
+            msgToUpdate = rows[0]
+            msgToUpdate.NoOfTimesSeen = msgToUpdate.NoOfTimesSeen + 1
+            msgToUpdate.LastSeenTime = datetime.now
+            return cls.db.save_table_object(msgToUpdate, False)
+        else:
+            return cls.db.save_table_object(repeaterMessageBoxData, False)
+
+    #InputAdapterInstances
     @classmethod
     def update_input_adapter_instances(cls, inputAdapterObjects):
         cls.init()

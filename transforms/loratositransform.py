@@ -17,6 +17,10 @@ class LoraToSITransform(object):
     def GetName():
         return "LoraToSITransform"
 
+    @staticmethod
+    def GetWaitThisNumberOfBytes():
+        return 0
+
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSub):

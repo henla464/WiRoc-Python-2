@@ -1,6 +1,7 @@
 __author__ = 'henla464'
 
 from datamodel.datamodel import MessageBoxData
+from datamodel.datamodel import RepeaterMessageBoxData
 from datamodel.datamodel import MessageSubscriptionData
 from setup import Setup
 import time
@@ -162,38 +163,76 @@ class Main:
                             logging.info("Start::Run() Received data from " + inputAdapter.GetInstanceName())
                             messageTypeName = inputAdapter.GetTypeName()
                             instanceName = inputAdapter.GetInstanceName()
-                            mbd = MessageBoxData()
-                            mbd.MessageData = inputData["Data"]
-                            mbd.MessageTypeName = messageTypeName
-                            mbd.PowerCycleCreated = SettingsClass.GetPowerCycle()
-                            mbd.ChecksumOK = inputData["ChecksumOK"]
-                            mbd.InstanceName = instanceName
-                            mbd.MessageSubTypeName = inputData["MessageSubTypeName"]
-                            mbd.MessageSource = inputData["MessageSource"]
-                            mbdid = DatabaseHelper.save_message_box(mbd)
-                            SettingsClass.SetTimeOfLastMessageAdded()
-                            inputAdapter.AddedToMessageBox(mbdid)
-                            anySubscription = False
-                            messageTypeId = DatabaseHelper.get_message_type(messageTypeName).id
-                            subscriptions = DatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
-                            for subscription in subscriptions:
-                                msgSubscription = MessageSubscriptionData()
-                                if subscription.WaitUntilAckSent and mbd.MessageSource == "WiRoc":
-                                    msgSubscription.ScheduledTime = datetime.now() + timedelta(seconds=SettingsClass.GetLoraAckMessageSendingTimeS())
-                                else:
-                                    msgSubscription.ScheduledTime = datetime.now()
-                                msgSubscription.MessageBoxId = mbdid
-                                msgSubscription.SubscriptionId = subscription.id
-                                DatabaseHelper.save_message_subscription(msgSubscription)
-                                anySubscription = True
-                                self.messagesToSendExists = True
-                            if not anySubscription:
-                                logging.info("Start::Run() Message has no subsribers, being archived, msgid: " + str(mbdid))
-                                DatabaseHelper.archive_message_box(mbdid)
+                            if messageTypeName == "LORA" and \
+                                    not SettingsClass.GetReceiveSIAdapterActive() and \
+                                    not SettingsClass.GetSendToMeosEnabled() and \
+                                    not SettingsClass.GetSendSerialAdapterActive():
+                                # WiRoc is in repeater mode and received a LORA message
+                                logging.info("Start::Run() In repeater mode")
+                                loraMessage = inputData["LoraRadioMessage"]
+                                rmbd = RepeaterMessageBoxData()
+                                rmbd.MessageData = inputData["Data"]
+                                rmbd.MessageTypeName = messageTypeName
+                                rmbd.PowerCycleCreated = SettingsClass.GetPowerCycle()
+                                rmbd.InstanceName = instanceName
+                                rmbd.MessageSubTypeName = inputData["MessageSubTypeName"]
+                                rmbd.ChecksumOK = inputData["ChecksumOK"]
+                                rmbd.MessageSource = inputData["MessageSource"]
+                                rmbd.SICardNumber = loraMessage.GetSICardNumber()
+                                rmbd.SportIdentHour = loraMessage.GetHour()
+                                rmbd.SportIdentMinute = loraMessage.GetMinute()
+                                rmbd.SportIdentSecond = loraMessage.GetSeconds()
+                                rmbd.MessageID = inputData["CustomData"]
+                                rmbd.AckRequested = loraMessage.GetAckRequested()
+                                rmbd.RelayRequested = loraMessage.GetRelayRequested()
+                                rmbd.NoOfTimesSeen = None
+                                rmbd.NoOfTimesAckSeen = None
+                                rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
+                            else:
+                                logging.info("Start::Run() Received data from " + inputAdapter.GetInstanceName())
+                                mbd = MessageBoxData()
+                                mbd.MessageData = inputData["Data"]
+                                mbd.MessageTypeName = messageTypeName
+                                mbd.PowerCycleCreated = SettingsClass.GetPowerCycle()
+                                mbd.ChecksumOK = inputData["ChecksumOK"]
+                                mbd.InstanceName = instanceName
+                                mbd.MessageSubTypeName = inputData["MessageSubTypeName"]
+                                mbd.MessageSource = inputData["MessageSource"]
+                                mbdid = DatabaseHelper.save_message_box(mbd)
+                                SettingsClass.SetTimeOfLastMessageAdded()
+                                inputAdapter.AddedToMessageBox(mbdid)
+                                anySubscription = False
+                                messageTypeId = DatabaseHelper.get_message_type(messageTypeName).id
+                                subscriptions = DatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
+                                for subscription in subscriptions:
+                                    msgSubscription = MessageSubscriptionData()
+                                    now = datetime.now()
+                                    if subscription.WaitUntilAckSent and mbd.MessageSource == "WiRoc":
+                                        msgSubscription.ScheduledTime = now + timedelta(seconds=SettingsClass.GetLoraAckMessageSendingTimeS())
+                                    elif subscription.WaitThisNumberOfBytes > 0:
+                                        msgSubscription.ScheduledTime = now + timedelta(
+                                            seconds=SettingsClass.GetLoraMessageTimeSendingTimeS(subscription.WaitThisNumberOfBytes))
+                                    else:
+                                        msgSubscription.ScheduledTime = now
+                                    msgSubscription.MessageBoxId = mbdid
+                                    msgSubscription.SubscriptionId = subscription.id
+                                    DatabaseHelper.save_message_subscription(msgSubscription)
+                                    anySubscription = True
+                                    self.messagesToSendExists = True
+                                if not anySubscription:
+                                    logging.info("Start::Run() Message has no subsribers, being archived, msgid: " + str(mbdid))
+                                    DatabaseHelper.archive_message_box(mbdid)
                         elif inputData["MessageType"] == "ACK":
                             customData = inputData["CustomData"]
                             logging.debug("Start::Run() Received ack, for message number: " + str(customData[0]))
-                            DatabaseHelper.archive_message_subscription_after_ack(customData)
+                            if not SettingsClass.GetReceiveSIAdapterActive() and \
+                                    not SettingsClass.GetSendToMeosEnabled() and \
+                                    not SettingsClass.GetSendSerialAdapterActive():
+                                # WiRoc is in repeater mode and received an ack message
+                                logging.info("Start::Run() In repeater mode")
+                                DatabaseHelper.repeater_message_acked(customData)
+                            else:
+                                DatabaseHelper.archive_message_subscription_after_ack(customData)
 
                 if self.messagesToSendExists:
                     msgSubscriptions = self.getMessageSubscriptionsToSend()

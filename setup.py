@@ -14,6 +14,7 @@ from inputadapters.receiveloraadapter import ReceiveLoraAdapter
 from inputadapters.receiveserialcomputeradapter import ReceiveSerialComputerAdapter
 from inputadapters.receivesiadapter import ReceiveSIAdapter
 from inputadapters.receivetestpunchesadapter import ReceiveTestPunchesAdapter
+from inputadapters.receiverepeatermessagesadapter import ReceiveRepeaterMessagesAdapter
 import logging
 from chipGPIO.chipGPIO import *
 import socket
@@ -40,11 +41,13 @@ class Setup:
         inChange3 = ReceiveSerialComputerAdapter.CreateInstances()
         inChange4 = ReceiveSIAdapter.CreateInstances()
         inChange5 = ReceiveTestPunchesAdapter.CreateInstances()
+        inChange6 = ReceiveRepeaterMessagesAdapter.CreateInstances()
         inputObjects.extend(CreateStatusAdapter.Instances)
         inputObjects.extend(ReceiveLoraAdapter.Instances)
         inputObjects.extend(ReceiveSerialComputerAdapter.Instances)
         inputObjects.extend(ReceiveSIAdapter.Instances)
         inputObjects.extend(ReceiveTestPunchesAdapter.Instances)
+        inputObjects.extend(ReceiveRepeaterMessagesAdapter.Instances)
 
 
         anyShouldBeInitialized = False
@@ -58,7 +61,8 @@ class Setup:
 
         if (not anyShouldBeInitialized and not SettingsClass.GetForceReconfigure()
             and not change1 and not change2 and not change3 and not change4 and
-            not inChange1 and not inChange2 and not inChange3 and not inChange4 and not inChange5):
+            not inChange1 and not inChange2 and not inChange3 and not inChange4
+            and not inChange5 and not inChange6):
             return False
 
         SettingsClass.SetForceReconfigure(False)
@@ -94,8 +98,9 @@ class Setup:
                             # add subscription to database
                             deleteAfterSent = adapter.GetDeleteAfterSent()
                             waitUntilAckSent = adapter.GetWaitUntilAckSent()
+                            waitThisNumberOfBytes = transformClass.GetWaitThisNumberOfBytes()
                             enabled = False
-                            subscriptionData = SubscriptionData(deleteAfterSent, enabled, subscriberDataId, transformDataId, waitUntilAckSent)
+                            subscriptionData = SubscriptionData(deleteAfterSent, enabled, subscriberDataId, transformDataId, waitUntilAckSent, waitThisNumberOfBytes)
                             DatabaseHelper.save_subscription(subscriptionData)
                 adapter.SetIsDBInitialized()
 
@@ -136,6 +141,10 @@ class Setup:
         DatabaseHelper.save_message_type(messageTypeData)
 
         messageTypeName = ReceiveTestPunchesAdapter.GetTypeName()
+        messageTypeData = MessageTypeData(messageTypeName)
+        DatabaseHelper.save_message_type(messageTypeData)
+
+        messageTypeName = ReceiveRepeaterMessagesAdapter.GetTypeName()
         messageTypeData = MessageTypeData(messageTypeName)
         DatabaseHelper.save_message_type(messageTypeData)
 

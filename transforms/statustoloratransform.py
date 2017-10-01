@@ -16,6 +16,10 @@ class StatusToLoraTransform(object):
     def GetName():
         return "StatusToLoraTransform"
 
+    @staticmethod
+    def GetWaitThisNumberOfBytes():
+        return 0
+
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSub):

@@ -367,10 +367,18 @@ class SettingsClass(object):
             dataRate = SettingsClass.GetDataRate()
             channel = SettingsClass.GetChannel()
             SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
-            messageLengthInBytes = 6  # typical length
+            messageLengthInBytes = 10  # typical length
             SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
 
         return 0.2+(SettingsClass.microSecondsToSendAnAckMessage)/1000000
+
+    @staticmethod
+    def GetLoraMessageTimeSendingTimeS(noOfBytes):
+        dataRate = SettingsClass.GetDataRate()
+        channel = SettingsClass.GetChannel()
+        SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
+        microSecs = SettingsClass.channelData.SlopeCoefficient * (noOfBytes + SettingsClass.channelData.M)
+        return microSecs/1000000
 
     relayPathNo = 0
     @staticmethod

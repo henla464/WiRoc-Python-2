@@ -15,6 +15,10 @@ class SIToMeosTransform(object):
     def GetName():
         return "SIToMeosTransform"
 
+    @staticmethod
+    def GetWaitThisNumberOfBytes():
+        return 0
+
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSub):

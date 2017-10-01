@@ -14,6 +14,10 @@ class SIToSITransform(object):
     def GetName():
         return "SIToSITransform"
 
+    @staticmethod
+    def GetWaitThisNumberOfBytes():
+        return 0
+
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSub):

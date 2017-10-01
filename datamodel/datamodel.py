@@ -74,6 +74,42 @@ class MessageBoxArchiveData(object):
         self.CreatedDate = CreatedDate
 
 
+class RepeaterMessageBoxData(object):
+    columns = [("MessageData", bytes), ("MessageTypeName", str), ("PowerCycleCreated", int),
+               ("InstanceName", str), ("MessageSubTypeName", str), ("ChecksumOK", bool),
+               ("MessageSource", str), ("SICardNumber", int), ("SportIdentHour", int),
+               ("SportIdentMinute", int), ("SportIdentSecond", int), ("MessageID", bytes),
+               ("AckRequested", bool),
+               ("RelayRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", bytes),
+               ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int),
+               ("AddedToMessageBoxTime", datetime), ("LastSeenTime", datetime), ("CreatedDate", datetime)]
+
+    def __init__(self):
+        self.id = None
+        self.MessageData = None
+        self.MessageTypeName = None
+        self.PowerCycleCreated = None
+        self.InstanceName = None
+        self.MessageSubTypeName = None
+        self.ChecksumOK = None
+        self.MessageSource = None
+        self.SICardNumber = None
+        self.SportIdentHour = None
+        self.SportIdentMinute = None
+        self.SportIdentSecond = None
+        self.MessageID = None
+        self.AckRequested = None
+        self.RelayRequested = None
+        self.NoOfTimesSeen = None
+        self.NoOfTimesAckSeen = None
+        self.Acked = False
+        self.AckedTime = None
+        self.MessageBoxId = None
+        self.AddedToMessageBoxTime = None
+        self.LastSeenTime = None
+        self.CreatedDate = None
+
+
 class SubscriberData(object):
     columns = [("TypeName", str), ("InstanceName", str)]
 
@@ -105,16 +141,17 @@ class TransformData(object):
 class SubscriptionData(object):
     columns = [("DeleteAfterSent", bool), ("Enabled", bool),
                ("SubscriberId", int), ("TransformId", int),
-               ("WaitUntilAckSent", bool)]
+               ("WaitUntilAckSent", bool), ("WaitThisNumberOfBytes", int)]
 
     def __init__(self, DeleteAfterSent=None, Enabled=None,
-                 SubscriberId=None, TransformId=None, WaitUntilAckSent = False):
+                 SubscriberId=None, TransformId=None, WaitUntilAckSent = False, WaitThisNumberOfBytes = 0):
         self.id = None
         self.DeleteAfterSent = DeleteAfterSent
         self.Enabled = Enabled
         self.SubscriberId = SubscriberId
         self.TransformId = TransformId
         self.WaitUntilAckSent = WaitUntilAckSent
+        self.WaitThisNumberOfBytes = WaitThisNumberOfBytes
 
 
 class MessageSubscriptionData(object):
@@ -326,6 +363,12 @@ class LoraRadioMessage(object):
             return bytearray(bytes([self.MessageData[3]]))
         elif self.GetMessageType() == LoraRadioMessage.MessageTypeLoraAck:
             return None
+
+    def GetAckRequested(self):
+        return self.MessageData[2] & 0x80
+
+    def GetRelayRequested(self):
+        return self.MessageData[2] & 0x20
 
     def GetMessageIDThatIsAcked(self):
         if self.GetMessageType() == LoraRadioMessage.MessageTypeSIPunch:
