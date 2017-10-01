@@ -3,6 +3,8 @@ __author__ = 'henla464'
 from datamodel.datamodel import MessageBoxData
 from datamodel.datamodel import RepeaterMessageBoxData
 from datamodel.datamodel import MessageSubscriptionData
+from datamodel.datamodel import LoraRadioMessage
+from datamodel.datamodel import SIMessage
 from setup import Setup
 import time
 import logging, logging.handlers
@@ -178,10 +180,15 @@ class Main:
                                 rmbd.MessageSubTypeName = inputData["MessageSubTypeName"]
                                 rmbd.ChecksumOK = inputData["ChecksumOK"]
                                 rmbd.MessageSource = inputData["MessageSource"]
-                                rmbd.SICardNumber = loraMessage.GetSICardNumber()
-                                rmbd.SportIdentHour = loraMessage.GetHour()
-                                rmbd.SportIdentMinute = loraMessage.GetMinute()
-                                rmbd.SportIdentSecond = loraMessage.GetSeconds()
+                                if loraMessage.GetMessageType() == LoraRadioMessage.MessageTypeSIPunch:
+                                    loraHeaderSize = LoraRadioMessage.GetHeaderSize()
+                                    siPayloadData = loraMessage.GetByteArray()[loraHeaderSize:]
+                                    siMsg = SIMessage()
+                                    siMsg.AddPayload(siPayloadData)
+                                    rmbd.SICardNumber = siMsg.GetSICardNumber()
+                                    rmbd.SportIdentHour = siMsg.GetHour()
+                                    rmbd.SportIdentMinute = siMsg.GetMinute()
+                                    rmbd.SportIdentSecond = siMsg.GetSeconds()
                                 rmbd.MessageID = inputData["CustomData"]
                                 rmbd.AckRequested = loraMessage.GetAckRequested()
                                 rmbd.RelayRequested = loraMessage.GetRelayRequested()

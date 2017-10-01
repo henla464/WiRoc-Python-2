@@ -292,15 +292,28 @@ class SettingsClass(object):
         SettingsClass.sendSerialAdapterActive = (sett.Value == "1")
 
     @staticmethod
-    def GetLoraMode():
+    def GetWiRocMode():
         if SettingsClass.GetSendSerialAdapterActive(): #and output = SERIAL
             # connected to computer or other WiRoc
             return "RECEIVE"
         elif SettingsClass.GetSendToMeosEnabled(): #and output = MEOS
             # configured to send to Meos over network/wifi
             return "RECEIVE"
-        else:
+        elif SettingsClass.GetReceiveSIAdapterActive():
             return "SEND"
+        else:
+            return "REPEATER"
+
+    #@staticmethod
+    #def GetLoraMode():
+    #    if SettingsClass.GetSendSerialAdapterActive(): #and output = SERIAL
+    #        # connected to computer or other WiRoc
+    #        return "RECEIVE"
+    #    elif SettingsClass.GetSendToMeosEnabled(): #and output = MEOS
+    #        # configured to send to Meos over network/wifi
+    #        return "RECEIVE"
+    #    else:
+    #        return "SEND"
 
     channelData = None
     microSecondsToSendAMessage = None

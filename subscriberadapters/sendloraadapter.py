@@ -8,7 +8,7 @@ import socket
 
 class SendLoraAdapter(object):
     Instances = []
-    LoraMode = None
+    WiRocMode = None
     SubscriptionsEnabled = None
     AdapterInitialized = None
 
@@ -29,7 +29,7 @@ class SendLoraAdapter(object):
                 if SendLoraAdapter.Instances[0].GetSerialDevicePath() != serialPorts[0]:
                     SendLoraAdapter.Instances[0] = SendLoraAdapter(1, serialPorts[0])
                     return True
-                elif SendLoraAdapter.LoraMode is None or SendLoraAdapter.LoraMode != SettingsClass.GetLoraMode():
+                elif SendLoraAdapter.WiRocMode is None or SendLoraAdapter.WiRocMode != SettingsClass.GetWiRocMode():
                     return True
             else:
                 SendLoraAdapter.Instances.append(SendLoraAdapter(1, serialPorts[0]))
@@ -50,7 +50,6 @@ class SendLoraAdapter(object):
             isInitialized = SendLoraAdapter.Instances[0].GetIsInitialized()
             deleteAfterSent = SendLoraAdapter.GetDeleteAfterSent()
             shouldSubscriptionBeEnabled = isInitialized
-            #and SettingsClass.GetLoraMode() == "SEND"
             if (SendLoraAdapter.SubscriptionsEnabled != shouldSubscriptionBeEnabled or
                 SendLoraAdapter.DeleteAfterSent != deleteAfterSent):
                 SendLoraAdapter.SubscriptionsEnabled = shouldSubscriptionBeEnabled
@@ -61,13 +60,15 @@ class SendLoraAdapter(object):
     @staticmethod
     def EnableDisableTransforms():
         if len(SendLoraAdapter.Instances) > 0:
-            if SendLoraAdapter.LoraMode is None or SendLoraAdapter.LoraMode != SettingsClass.GetLoraMode():
-                SendLoraAdapter.LoraMode = SettingsClass.GetLoraMode()
-                enableSendTransforms = (SendLoraAdapter.LoraMode == "SEND")
+            if SendLoraAdapter.WiRocMode is None or SendLoraAdapter.WiRocMode != SettingsClass.GetWiRocMode():
+                SendLoraAdapter.WiRocMode = SettingsClass.GetWiRocMode()
+                enableSendTransforms = (SendLoraAdapter.WiRocMode == "SEND" or SendLoraAdapter.WiRocMode == "REPEATER")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SIToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "StatusToLoraTransform")
-                DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraToLoraAckTransform")
+                #DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraToLoraAckTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterToLoraAckTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterToLoraTransform")
 
     def __init__(self, instanceNumber, portName):
         self.instanceNumber = instanceNumber

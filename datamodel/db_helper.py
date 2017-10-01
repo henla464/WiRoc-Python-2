@@ -388,7 +388,7 @@ class DatabaseHelper:
         cls.init()
         sql = ("SELECT RepeaterMessageBoxData.* FROM RepeaterMessageBoxData WHERE "
                "MessageID = ?")
-        rows = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData, sql, (customData))
+        rows = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData, sql, (customData, ))
         if len(rows) > 0:
             msgToUpdate = rows[0]
             if msgToUpdate.AddedToMessageBoxTime is not None:
@@ -532,9 +532,9 @@ class DatabaseHelper:
     @classmethod
     def save_repeater_message_box(cls, repeaterMessageBoxData):
         cls.init()
-        sql = ("SELECT RepeaterMessageBoxData.* FROM RepeaterMessageBoxData WHERE "
-               "MessageID = ?")
-        rows = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData, sql, (repeaterMessageBoxData.MessageID))
+        msgID = repeaterMessageBoxData.MessageID
+        sql = ("SELECT RepeaterMessageBoxData.* FROM RepeaterMessageBoxData WHERE MessageID = ?")
+        rows = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData, sql, (msgID,))
         if len(rows) > 0:
             msgToUpdate = rows[0]
             msgToUpdate.NoOfTimesSeen = msgToUpdate.NoOfTimesSeen + 1
