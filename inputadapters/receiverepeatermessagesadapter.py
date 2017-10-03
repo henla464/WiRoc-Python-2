@@ -9,7 +9,7 @@ class ReceiveRepeaterMessagesAdapter(object):
     @staticmethod
     def CreateInstances():
         if len(ReceiveRepeaterMessagesAdapter.Instances) == 0:
-            ReceiveRepeaterMessagesAdapter.Instances.append(ReceiveRepeaterMessagesAdapter("repeater1"))
+            ReceiveRepeaterMessagesAdapter.Instances.append(ReceiveRepeaterMessagesAdapter("rcvRepeater1"))
             return True
         return False
 
@@ -38,21 +38,21 @@ class ReceiveRepeaterMessagesAdapter(object):
         return True
 
     def UpdateInfreqently(self):
-        return None
+        return True
 
     def GetData(self):
+        logging.debug("repeater getdata")
         messageToAdd = DatabaseHelper.get_repeater_message_to_add()
         if messageToAdd is not None:
+            logging.debug("repeater message to add")
             self.lastRepeaterMessageBoxIdAdded = messageToAdd.id
 
             logging.debug("ReceiveRepeaterMessagesAdapter::GetData() Data to fetch")
             dataInHex = ''.join(format(x, '02x') for x in messageToAdd.MessageData)
             logging.debug(dataInHex)
             return {"MessageType": "DATA", "MessageSource":"Repeater", "MessageSubTypeName": "SIMessage", "Data": messageToAdd.MessageData, "ChecksumOK": True}
-        return {"MessageType": "DATA", "MessageSource": "Repeater", "MessageSubTypeName": "Ack",
-                "Data": messageToAdd.MessageData, "ChecksumOK": True}
         return None
 
     def AddedToMessageBox(self, mbid):
-        DatabaseHelper.set_relay_message_added_to_message_box(self.LastPunchIdAdded, mbid)
+        DatabaseHelper.set_relay_message_added_to_message_box(self.lastRepeaterMessageBoxIdAdded, mbid)
         return None

@@ -192,8 +192,8 @@ class Main:
                                 rmbd.MessageID = inputData["CustomData"]
                                 rmbd.AckRequested = loraMessage.GetAckRequested()
                                 rmbd.RelayRequested = loraMessage.GetRelayRequested()
-                                rmbd.NoOfTimesSeen = None
-                                rmbd.NoOfTimesAckSeen = None
+                                rmbd.NoOfTimesSeen = 1
+                                rmbd.NoOfTimesAckSeen = 0
                                 rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
                             else:
                                 logging.info("Start::Run() Received data from " + inputAdapter.GetInstanceName())

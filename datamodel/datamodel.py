@@ -80,7 +80,7 @@ class RepeaterMessageBoxData(object):
                ("MessageSource", str), ("SICardNumber", int), ("SportIdentHour", int),
                ("SportIdentMinute", int), ("SportIdentSecond", int), ("MessageID", bytes),
                ("AckRequested", bool),
-               ("RelayRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", bytes),
+               ("RelayRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", int),
                ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int),
                ("AddedToMessageBoxTime", datetime), ("LastSeenTime", datetime), ("CreatedDate", datetime)]
 

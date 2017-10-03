@@ -404,15 +404,15 @@ class DatabaseHelper:
         repeaterMessages = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData,
                                                       "SELECT * FROM RepeaterMessageBoxData WHERE "
                                                       "(RelayRequested = 1 or NoOfTimesSeen > 1) and AddedToMessageBoxTime IS NULL ORDER BY "
-                                                      "SportIdentHour, SportIdentMinute, SportIdentSeconds LIMIT 1")
+                                                      "SportIdentHour, SportIdentMinute, SportIdentSecond LIMIT 1")
         if len(repeaterMessages) > 0:
             return repeaterMessages[0]
         return None
 
     @classmethod
-    def set_relay_message_added_to_message_box(cls, messageBoxId, repeaterMessageBoxId):
+    def set_relay_message_added_to_message_box(cls, repeaterMessageId, messageBoxId):
         cls.init()
-        cls.db.execute_SQL("UPDATE RepeaterMessageBoxData SET AddedToMessageBoxTime = ?, MessageBoxId = ? WHERE Id = ?", (datetime.now(), messageBoxId, repeaterMessageBoxId))
+        cls.db.execute_SQL("UPDATE RepeaterMessageBoxData SET AddedToMessageBoxTime = ?, MessageBoxId = ? WHERE MessageId = ?", (datetime.now(), messageBoxId, repeaterMessageId))
         return None
 
 #MessageSubscriptionView
@@ -538,7 +538,7 @@ class DatabaseHelper:
         if len(rows) > 0:
             msgToUpdate = rows[0]
             msgToUpdate.NoOfTimesSeen = msgToUpdate.NoOfTimesSeen + 1
-            msgToUpdate.LastSeenTime = datetime.now
+            msgToUpdate.LastSeenTime = datetime.now()
             return cls.db.save_table_object(msgToUpdate, False)
         else:
             return cls.db.save_table_object(repeaterMessageBoxData, False)

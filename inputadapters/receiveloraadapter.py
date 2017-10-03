@@ -117,7 +117,7 @@ class ReceiveLoraAdapter(object):
                     SettingsClass.UpdateRelayPathNumber(relayPathNo)
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "Status", "Data": receivedData, "CustomData": None, "LoraRadioMessage": loraMessage, "ChecksumOK": True}
                 else:
-                    customData = loraMessage.GetMessageIDThatIsAcked()
+                    customData = loraMessage.GetMessageID()
                     SettingsClass.GetWiRocMode()
                     if SettingsClass.GetWiRocMode() != "REPEATER":
                         ackRequested = loraMessage.GetAcknowledgementRequested()
@@ -125,7 +125,7 @@ class ReceiveLoraAdapter(object):
                             time.sleep(0.05)
                             messageType = LoraRadioMessage.MessageTypeLoraAck
                             loraMessage2 = LoraRadioMessage(5, messageType, False, False)
-                            loraMessage2.SetMessageIDToAck(loraMessage.GetMessageID())
+                            loraMessage2.SetMessageIDToAck(customData)
                             self.loraRadio.SendData(loraMessage2.GetByteArray())
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "SIMessage", "Data": receivedData, "CustomData": customData, "LoraRadioMessage": loraMessage, "ChecksumOK": True}
             else:
