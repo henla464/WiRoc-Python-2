@@ -118,14 +118,15 @@ class ReceiveLoraAdapter(object):
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "Status", "Data": receivedData, "CustomData": None, "LoraRadioMessage": loraMessage, "ChecksumOK": True}
                 else:
                     customData = loraMessage.GetMessageIDThatIsAcked()
-                    ackRequested = loraMessage.GetAcknowledgementRequested()
                     SettingsClass.GetWiRocMode()
-                    if ackRequested:
-                        time.sleep(0.05)
-                        messageType = LoraRadioMessage.MessageTypeLoraAck
-                        loraMessage2 = LoraRadioMessage(5, messageType, False, False)
-                        loraMessage2.SetMessageIDToAck(loraMessage.GetMessageID())
-                        self.loraRadio.SendData(loraMessage2.GetByteArray())
+                    if SettingsClass.GetWiRocMode() != "REPEATER":
+                        ackRequested = loraMessage.GetAcknowledgementRequested()
+                        if ackRequested:
+                            time.sleep(0.05)
+                            messageType = LoraRadioMessage.MessageTypeLoraAck
+                            loraMessage2 = LoraRadioMessage(5, messageType, False, False)
+                            loraMessage2.SetMessageIDToAck(loraMessage.GetMessageID())
+                            self.loraRadio.SendData(loraMessage2.GetByteArray())
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "SIMessage", "Data": receivedData, "CustomData": customData, "LoraRadioMessage": loraMessage, "ChecksumOK": True}
             else:
                 return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName":"Unknown", "Data": receivedData, "CustomData":None, "ChecksumOK": False}
