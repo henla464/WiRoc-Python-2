@@ -106,13 +106,13 @@ class ReceiveLoraAdapter(object):
                     customData =  loraMessage.GetMessageIDThatIsAcked()
                     return {"MessageType": "ACK", "MessageSource":"Lora", "MessageSubTypeName": "Ack", "CustomData": customData, "ChecksumOK": True}
                 elif messageType == LoraRadioMessage.MessageTypeStatus:
-                    #ackRequested = (receivedData[2] & 0x80) > 0
-                    #if ackRequested:
-                    #    time.sleep(0.05)
-                    #    messageType = LoraRadioMessage.MessageTypeLoraAck
-                    #    loraMessage2 = LoraRadioMessage(5, messageType, False, False)
-                    #    loraMessage2.SetMessageIDToAck(loraMessage.GetMessageID())
-                    #    self.loraRadio.SendData(loraMessage2.GetByteArray())
+                    ackRequested = (receivedData[2] & 0x80) > 0
+                    if ackRequested:
+                        time.sleep(0.05)
+                        messageType = LoraRadioMessage.MessageTypeLoraAck
+                        loraMessage2 = LoraRadioMessage(5, messageType, False, False)
+                        loraMessage2.SetMessageIDToAck(loraMessage.GetMessageID())
+                        self.loraRadio.SendData(loraMessage2.GetByteArray())
                     relayPathNo = loraMessage.GetLastRelayPathNoFromStatusMessage()
                     SettingsClass.UpdateRelayPathNumber(relayPathNo)
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "Status", "Data": receivedData, "CustomData": loraMessage.GetMessageID(), "LoraRadioMessage": loraMessage, "ChecksumOK": True}
