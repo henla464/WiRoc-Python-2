@@ -41,10 +41,8 @@ class ReceiveRepeaterMessagesAdapter(object):
         return True
 
     def GetData(self):
-        logging.debug("repeater getdata")
         messageToAdd = DatabaseHelper.get_repeater_message_to_add()
         if messageToAdd is not None:
-            logging.debug("repeater message to add")
             self.lastRepeaterMessageBoxIdAdded = messageToAdd.id
 
             logging.debug("ReceiveRepeaterMessagesAdapter::GetData() Data to fetch")

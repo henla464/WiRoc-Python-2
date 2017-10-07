@@ -410,9 +410,9 @@ class DatabaseHelper:
         return None
 
     @classmethod
-    def set_relay_message_added_to_message_box(cls, repeaterMessageId, messageBoxId):
+    def set_relay_message_added_to_message_box(cls, repeaterMessageBoxId, messageBoxId):
         cls.init()
-        cls.db.execute_SQL("UPDATE RepeaterMessageBoxData SET AddedToMessageBoxTime = ?, MessageBoxId = ? WHERE MessageId = ?", (datetime.now(), messageBoxId, repeaterMessageId))
+        cls.db.execute_SQL("UPDATE RepeaterMessageBoxData SET AddedToMessageBoxTime = ?, MessageBoxId = ? WHERE id = ?", (datetime.now(), messageBoxId, repeaterMessageBoxId))
         return None
 
 #MessageSubscriptionView

@@ -196,7 +196,6 @@ class Main:
                                 rmbd.NoOfTimesAckSeen = 0
                                 rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
                             else:
-                                logging.info("Start::Run() Received data from " + inputAdapter.GetInstanceName())
                                 mbd = MessageBoxData()
                                 mbd.MessageData = inputData["Data"]
                                 mbd.MessageTypeName = messageTypeName
