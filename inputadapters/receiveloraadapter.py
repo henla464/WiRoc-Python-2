@@ -119,7 +119,7 @@ class ReceiveLoraAdapter(object):
                 else:
                     customData = loraMessage.GetMessageID()
                     SettingsClass.GetWiRocMode()
-                    if SettingsClass.GetWiRocMode() != "REPEATER":
+                    if SettingsClass.GetWiRocMode() == "RECEIVE":
                         ackRequested = loraMessage.GetAcknowledgementRequested()
                         if ackRequested:
                             time.sleep(0.05)
