@@ -21,6 +21,14 @@ class SIToLoraTransform(object):
     def GetWaitThisNumberOfBytes():
         return 10 #ack 10, waiting for the destination wiroc to reply with ack
 
+    @staticmethod
+    def GetDeleteAfterSent():
+        return True
+
+    @staticmethod
+    def GetDeleteAfterSentChanged():
+        return False
+
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSub):

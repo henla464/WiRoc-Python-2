@@ -252,6 +252,15 @@ class DatabaseHelper:
                "(SELECT id from SubscriberData WHERE SubscriberData.TypeName = '" + str(subscriberTypeName) + "')")
         cls.db.execute_SQL(sql)
 
+    @classmethod
+    def update_subscription(cls, enabled, deleteAfterSent, subscriberTypeName, transformName):
+        cls.init()
+        sql = ("UPDATE SubscriptionData SET Enabled = " + str(1 if enabled else 0) + ", "
+               "DeleteAfterSent = " + str(1 if deleteAfterSent else 0) + " WHERE SubscriberId IN "
+               "(SELECT id from SubscriberData WHERE SubscriberData.TypeName = '" + str(subscriberTypeName) + "') "
+               "AND TransformId IN "
+                "(SELECT id from TransformData WHERE TransformData.Name = '" + str(transformName) + "') ")
+        cls.db.execute_SQL(sql)
 
 #MessageSubscriptions
     @classmethod

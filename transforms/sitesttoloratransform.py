@@ -5,6 +5,7 @@ from datamodel.db_helper import DatabaseHelper
 from settings.settings import SettingsClass
 
 class SITestToLoraTransform(object):
+    DeleteAfterSent = False
 
     @staticmethod
     def GetInputMessageType():
@@ -21,6 +22,16 @@ class SITestToLoraTransform(object):
     @staticmethod
     def GetWaitThisNumberOfBytes():
         return 0
+
+    @staticmethod
+    def GetDeleteAfterSent():
+        # check setting for ack
+        SITestToLoraTransform.DeleteAfterSent = not SettingsClass.GetAcknowledgementRequested()
+        return SITestToLoraTransform.DeleteAfterSent
+
+    @staticmethod
+    def GetDeleteAfterSentChanged():
+        return SITestToLoraTransform.DeleteAfterSent != (not SettingsClass.GetAcknowledgementRequested())
 
     #payloadData is a bytearray
     @staticmethod

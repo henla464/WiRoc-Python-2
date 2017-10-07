@@ -3,6 +3,7 @@ from settings.settings import SettingsClass
 from battery import Battery
 
 class StatusToLoraTransform(object):
+    DeleteAfterSent = False
 
     @staticmethod
     def GetInputMessageType():
@@ -20,6 +21,15 @@ class StatusToLoraTransform(object):
     def GetWaitThisNumberOfBytes():
         return 0
 
+    @staticmethod
+    def GetDeleteAfterSent():
+        StatusToLoraTransform.DeleteAfterSent = not SettingsClass.GetStatusAcknowledgementRequested()
+        return StatusToLoraTransform.DeleteAfterSent
+
+    @staticmethod
+    def GetDeleteAfterSentChanged():
+        return StatusToLoraTransform.DeleteAfterSent != (not SettingsClass.GetStatusAcknowledgementRequested())
+
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSub):
@@ -28,7 +38,7 @@ class StatusToLoraTransform(object):
         loraMessage.AddPayload(payloadData)
         loraMessage.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())
         loraMessage.UpdateMessageNumber()
-        ackReq = SettingsClass.GetAcknowledgementRequested()
+        ackReq = SettingsClass.GetStatusAcknowledgementRequested()
         loraMessage.SetAcknowledgementRequested(ackReq)
         loraMessage.UpdateChecksum()
         return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageID()}

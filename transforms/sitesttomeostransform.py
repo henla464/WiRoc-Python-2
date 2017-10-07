@@ -20,6 +20,14 @@ class SITestToLoraTransform(object):
     def GetWaitThisNumberOfBytes():
         return 0
 
+    @staticmethod
+    def GetDeleteAfterSent():
+        return True
+
+    @staticmethod
+    def GetDeleteAfterSentChanged():
+        return False
+
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSub):

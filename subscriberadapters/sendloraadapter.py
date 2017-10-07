@@ -47,15 +47,28 @@ class SendLoraAdapter(object):
     @staticmethod
     def EnableDisableSubscription():
         if len(SendLoraAdapter.Instances) > 0:
-            isInitialized = SendLoraAdapter.Instances[0].GetIsInitialized()
-            deleteAfterSent = SendLoraAdapter.GetDeleteAfterSent()
-            shouldSubscriptionBeEnabled = isInitialized
-            if (SendLoraAdapter.SubscriptionsEnabled != shouldSubscriptionBeEnabled or
-                SendLoraAdapter.DeleteAfterSent != deleteAfterSent):
-                SendLoraAdapter.SubscriptionsEnabled = shouldSubscriptionBeEnabled
-                SendLoraAdapter.DeleteAfterSent = deleteAfterSent
-                logging.info("SendLoraAdapter::EnableDisableSubscription() subscription set enabled: " + str(shouldSubscriptionBeEnabled))
-                DatabaseHelper.update_subscriptions(shouldSubscriptionBeEnabled, deleteAfterSent, SendLoraAdapter.GetTypeName())
+            #isInitialized = SendLoraAdapter.Instances[0].GetIsInitialized()
+            #deleteAfterSent = SendLoraAdapter.GetDeleteAfterSent()
+            #shouldSubscriptionBeEnabled = isInitialized
+            #if (SendLoraAdapter.SubscriptionsEnabled != shouldSubscriptionBeEnabled or
+            #    SendLoraAdapter.DeleteAfterSent != deleteAfterSent):
+            #    SendLoraAdapter.SubscriptionsEnabled = shouldSubscriptionBeEnabled
+            #    SendLoraAdapter.DeleteAfterSent = deleteAfterSent
+            #    logging.info("SendLoraAdapter::EnableDisableSubscription() subscription set enabled: " + str(shouldSubscriptionBeEnabled))
+            #    DatabaseHelper.update_subscriptions(shouldSubscriptionBeEnabled, deleteAfterSent, SendLoraAdapter.GetTypeName())
+            for transf in SendLoraAdapter.Instances[0].transforms:
+                shouldSubscriptionBeEnabled = SendLoraAdapter.Instances[0].GetIsInitialized()
+                if (SendLoraAdapter.SubscriptionsEnabled != shouldSubscriptionBeEnabled or
+                            transf.GetDeleteAfterSentChanged()):
+                    SendLoraAdapter.SubscriptionsEnabled = shouldSubscriptionBeEnabled
+                    deleteAfterSent = transf.GetDeleteAfterSent()
+                    logging.info("SendLoraAdapter::EnableDisableSubscription() subscription set enabled: " + str(
+                        shouldSubscriptionBeEnabled))
+                    DatabaseHelper.update_subscription(shouldSubscriptionBeEnabled, deleteAfterSent,
+                                                        SendLoraAdapter.GetTypeName(), transf.GetName())
+
+
+
 
     @staticmethod
     def EnableDisableTransforms():

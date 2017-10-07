@@ -187,6 +187,10 @@ class SettingsClass(object):
         return SettingsClass.acknowledgementRequested
 
     @staticmethod
+    def GetStatusAcknowledgementRequested(mainConfigDirty = True):
+        return False
+
+    @staticmethod
     def GetSendToMeosEnabled(mainConfigDirty = True):
         if SettingsClass.IsDirty("SendToMeosEnabled", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('SendToMeosEnabled')

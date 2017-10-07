@@ -96,7 +96,8 @@ class Setup:
                             transformDataId = DatabaseHelper.save_transform(transformData)
 
                             # add subscription to database
-                            deleteAfterSent = adapter.GetDeleteAfterSent()
+                            #deleteAfterSent = adapter.GetDeleteAfterSent()
+                            deleteAfterSent = transformClass.GetDeleteAfterSent()
                             waitUntilAckSent = adapter.GetWaitUntilAckSent()
                             waitThisNumberOfBytes = transformClass.GetWaitThisNumberOfBytes()
                             enabled = False

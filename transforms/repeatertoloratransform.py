@@ -4,6 +4,7 @@ from battery import Battery
 from settings.settings import SettingsClass
 
 class SIToLoraTransform(object):
+    DeleteAfterSent = False
 
     @staticmethod
     def GetInputMessageType():
@@ -20,6 +21,16 @@ class SIToLoraTransform(object):
     @staticmethod
     def GetWaitThisNumberOfBytes():
         return 35 #ack 10 + simessage 23 + 2 extra
+
+    @staticmethod
+    def GetDeleteAfterSent():
+        # check setting for ack
+        SIToLoraTransform.DeleteAfterSent = not SettingsClass.GetAcknowledgementRequested()
+        return SIToLoraTransform.DeleteAfterSent
+
+    @staticmethod
+    def GetDeleteAfterSentChanged():
+        return SIToLoraTransform.DeleteAfterSent != (not SettingsClass.GetAcknowledgementRequested())
 
     #payloadData is a bytearray
     @staticmethod
