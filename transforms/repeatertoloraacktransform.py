@@ -47,7 +47,6 @@ class SIToLoraTransform(object):
                 messageType = LoraRadioMessage.MessageTypeLoraAck
                 loraMessage2 = LoraRadioMessage(5, messageType, False, False)
                 loraMessage2.SetMessageIDToAck(loraMsg.GetMessageID())
-                #loraMessage2.UpdateMessageNumber()
                 loraMessage2.UpdateChecksum()
             return {"Data": loraMessage2.GetByteArray(), "CustomData": loraMsg.GetMessageID()}
         return None

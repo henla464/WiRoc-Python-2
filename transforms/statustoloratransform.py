@@ -37,7 +37,7 @@ class StatusToLoraTransform(object):
         loraMessage = LoraRadioMessage()
         loraMessage.AddPayload(payloadData)
         loraMessage.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())
-        loraMessage.UpdateMessageNumber()
+        loraMessage.SetMessageNumber(msgSub.MessageNumber)
         ackReq = SettingsClass.GetStatusAcknowledgementRequested()
         loraMessage.SetAcknowledgementRequested(ackReq)
         loraMessage.UpdateChecksum()

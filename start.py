@@ -222,6 +222,7 @@ class Main:
                                         msgSubscription.ScheduledTime = now
                                     msgSubscription.MessageBoxId = mbdid
                                     msgSubscription.SubscriptionId = subscription.id
+                                    msgSubscription.MessageNumber = MessageSubscriptionData.GetNextMessageNumber()
                                     DatabaseHelper.save_message_subscription(msgSubscription)
                                     anySubscription = True
                                     self.messagesToSendExists = True

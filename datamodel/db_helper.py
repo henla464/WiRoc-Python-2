@@ -400,11 +400,10 @@ class DatabaseHelper:
         rows = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData, sql, (customData, ))
         if len(rows) > 0:
             msgToUpdate = rows[0]
-            if msgToUpdate.AddedToMessageBoxTime is not None:
-                msgToUpdate.Acked = True
-                msgToUpdate.AckedTime = datetime.now
-            else:
-                msgToUpdate.NoOfTimesAckSeen = msgToUpdate.NoOfTimesAckSeen + 1
+            msgToUpdate.Acked = True
+            msgToUpdate.NoOfTimesAckSeen = msgToUpdate.NoOfTimesAckSeen + 1
+            if msgToUpdate.AckedTime is None:
+                msgToUpdate.AckedTime = datetime.now()
             return cls.db.save_table_object(msgToUpdate, False)
 
     @classmethod
@@ -434,6 +433,7 @@ class DatabaseHelper:
             now = datetime.now()
             sql = ("SELECT MessageSubscriptionData.id, "
                    "MessageSubscriptionData.CustomData, "
+                   "MessageSubscriptionData.MessageNumber, "
                    "MessageSubscriptionData.SentDate, "
                    "MessageSubscriptionData.SendFailedDate, "
                    "MessageSubscriptionData.FindAdapterTryDate, "
@@ -474,6 +474,7 @@ class DatabaseHelper:
         if cnt > 0:
             sql = ("SELECT MessageSubscriptionData.id, "
                    "MessageSubscriptionData.CustomData, "
+                   "MessageSubscriptionData.MessageNumber, "
                    "MessageSubscriptionData.SentDate, "
                    "MessageSubscriptionData.SendFailedDate, "
                    "MessageSubscriptionData.FindAdapterTryDate, "

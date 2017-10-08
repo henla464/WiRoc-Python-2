@@ -155,17 +155,20 @@ class SubscriptionData(object):
 
 
 class MessageSubscriptionData(object):
-    columns = [("CustomData", bytes), ("SentDate", datetime), ("SendFailedDate", datetime),
+    columns = [("CustomData", bytes), ("MessageNumber", int), ("SentDate", datetime),
+               ("SendFailedDate", datetime),
                ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
                ("NoOfSendTries", int), ("AckReceivedDate", datetime),
                ("ScheduledTime", datetime), ("MessageBoxId", int),
                ("SubscriptionId", int)]
+    CurrentMessageNumber = 0
 
-    def __init__(self, CustomData=None, SentDate=None, SendFailedDate=None,
+    def __init__(self, CustomData=None, MessageNumber=None, SentDate=None, SendFailedDate=None,
                  FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
                  NoOfSendTries=0, ScheduledTime=None, MessageBoxId=None, SubscriptionId=None):
         self.id = None
         self.CustomData = CustomData
+        self.MessageNumber = MessageNumber
         self.SentDate = SentDate
         self.SendFailedDate = SendFailedDate
         self.NoOfSendTries = NoOfSendTries
@@ -176,8 +179,14 @@ class MessageSubscriptionData(object):
         self.MessageBoxId = MessageBoxId
         self.SubscriptionId = SubscriptionId
 
+    @staticmethod
+    def GetNextMessageNumber():
+        MessageSubscriptionData.CurrentMessageNumber = (MessageSubscriptionData.CurrentMessageNumber + 1) % 256
+        return MessageSubscriptionData.CurrentMessageNumber
+
+
 class MessageSubscriptionArchiveData(object):
-    columns = [ ("OrigId", int), ("CustomData", bytes),
+    columns = [ ("OrigId", int), ("CustomData", bytes), ("MessageNumber", int),
                 ("SentDate", datetime), ("SendFailedDate", datetime),
                 ("FindAdapterTryDate", datetime),("FindAdapterTries", int),
                 ("NoOfSendTries", int), ("AckReceivedDate", datetime),
@@ -185,13 +194,14 @@ class MessageSubscriptionArchiveData(object):
                 ("SubscriptionId", int),
                 ("SubscriberTypeName", str), ("TransformName", str),]
 
-    def __init__(self, CustomData=None, SentDate=None, SendFailedDate=None,
+    def __init__(self, CustomData=None, MessageNumber=None, SentDate=None, SendFailedDate=None,
                  FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
                  NoOfSendTries=0, ScheduledTime=None, MessageBoxId=None,
                  SubscriptionId=None,
                  SubscriberTypeName = None, TransformName = None):
         self.id = None
         self.CustomData = CustomData
+        self.MessageNumber = MessageNumber
         self.SentDate = SentDate
         self.SendFailedDate = SendFailedDate
         self.FindAdapterTryDate = FindAdapterTryDate
@@ -206,7 +216,7 @@ class MessageSubscriptionArchiveData(object):
 
 
 class MessageSubscriptionView(object):
-    columns = [("CustomData", bytes), ("SentDate", datetime), ("SendFailedDate", datetime),
+    columns = [("CustomData", bytes),  ("MessageNumber", int), ("SentDate", datetime), ("SendFailedDate", datetime),
                ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
                ("NoOfSendTries", int), ("AckReceivedDate", datetime), ("MessageBoxId", int),
                ("SubscriptionId", int),
@@ -219,6 +229,7 @@ class MessageSubscriptionView(object):
     def __init__(self):
         self.id = None
         self.CustomData = None
+        self.MessageNumber = None
         self.SentDate = None
         self.SendFailedDate = None
         self.FindAdapterTryDate = None
@@ -334,9 +345,13 @@ class LoraRadioMessage(object):
     def GetMessageNumber(self):
         return self.MessageData[3]
 
-    def UpdateMessageNumber(self):
-        self.MessageData[3] = LoraRadioMessage.CurrentMessageNumber
+    @staticmethod
+    def GetNextMessageNumber(self):
         LoraRadioMessage.CurrentMessageNumber = (LoraRadioMessage.CurrentMessageNumber + 1) % 256
+        return LoraRadioMessage.CurrentMessageNumber
+
+    def SetMessageNumber(self, messageNumber):
+        self.MessageData[3] = messageNumber
 
     @staticmethod
     def getHeaderFormatString():

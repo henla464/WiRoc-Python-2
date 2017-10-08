@@ -3,7 +3,7 @@ from datamodel.datamodel import SIMessage
 from battery import Battery
 from settings.settings import SettingsClass
 
-class SIToLoraTransform(object):
+class RepeaterToLoraTransform(object):
     DeleteAfterSent = False
 
     @staticmethod
@@ -25,12 +25,12 @@ class SIToLoraTransform(object):
     @staticmethod
     def GetDeleteAfterSent():
         # check setting for ack
-        SIToLoraTransform.DeleteAfterSent = not SettingsClass.GetAcknowledgementRequested()
-        return SIToLoraTransform.DeleteAfterSent
+        RepeaterToLoraTransform.DeleteAfterSent = not SettingsClass.GetAcknowledgementRequested()
+        return RepeaterToLoraTransform.DeleteAfterSent
 
     @staticmethod
     def GetDeleteAfterSentChanged():
-        return SIToLoraTransform.DeleteAfterSent != (not SettingsClass.GetAcknowledgementRequested())
+        return RepeaterToLoraTransform.DeleteAfterSent != (not SettingsClass.GetAcknowledgementRequested())
 
     #payloadData is a bytearray
     @staticmethod
@@ -43,7 +43,7 @@ class SIToLoraTransform(object):
             ackReq = SettingsClass.GetAcknowledgementRequested()
             loraMsg.SetAcknowledgementRequested(ackReq)
             loraMsg.SetBatteryLowBit(batteryLow)
-            loraMsg.UpdateMessageNumber()
+            loraMsg.SetMessageNumber(msgSub.MessageNumber)
             loraMsg.UpdateChecksum()
             return {"Data": loraMsg.GetByteArray(), "CustomData": loraMsg.GetMessageID()}
         elif loraMsg.GetMessageType() == loraMsg.MessageTypeStatus:
@@ -53,7 +53,7 @@ class SIToLoraTransform(object):
             loraMsg.SetBatteryLowBit(batteryLow)
             ackReq = SettingsClass.GetAcknowledgementRequested()
             loraMsg.SetAcknowledgementRequested(ackReq)
-            loraMsg.UpdateMessageNumber()
+            loraMsg.SetMessageNumber(msgSub.MessageNumber)
             loraMsg.UpdateChecksum()
             return {"Data": loraMsg.GetByteArray(), "CustomData": loraMsg.GetMessageID()}
         return None
