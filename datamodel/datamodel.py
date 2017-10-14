@@ -382,8 +382,14 @@ class LoraRadioMessage(object):
     def GetAckRequested(self):
         return self.MessageData[2] & 0x80
 
-    def GetRelayRequested(self):
+    def GetRepeaterBit(self):
         return self.MessageData[2] & 0x20
+
+    def SetRepeaterBit(self, reqRepeaterOrRepeaterAck):
+        if reqRepeaterOrRepeaterAck:
+            self.MessageData[2] = 0x20 | self.MessageData[2]
+        else:
+            self.MessageData[2] = 0xDF & self.MessageData[2]
 
     def GetMessageIDThatIsAcked(self):
         if self.GetMessageType() == LoraRadioMessage.MessageTypeSIPunch:

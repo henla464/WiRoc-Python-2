@@ -1,10 +1,13 @@
 from loraradio.loraradio import LoraRadio
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
-import pyudev
+#import pyudev
 import serial
 import logging
 import socket
+import collections
+from datetime import datetime, timedelta
+from datamodel.datamodel import LoraRadioMessage
 
 class SendLoraAdapter(object):
     Instances = []
@@ -77,6 +80,11 @@ class SendLoraAdapter(object):
         self.loraRadio = LoraRadio.GetInstance(portName)
         self.transforms = {}
         self.isDBInitialized = False
+        self.lastMessageRepeaterBit = False
+        self.sentQueueWithoutRepeaterBit = collections.deque()
+        self.sentQueueWithRepeaterBit = collections.deque()
+        self.successWithoutRepeaterBitQueue = collections.deque()
+        self.successWithRepeaterBitQueue = collections.deque()
 
     def GetInstanceNumber(self):
         return self.instanceNumber
@@ -149,6 +157,73 @@ class SendLoraAdapter(object):
     def IsReadyToSend(self):
         return self.loraRadio.IsReadyToSend()
 
+    def GetDelayAfterMessageSent(self):
+        wMode = SettingsClass.GetWiRocMode()
+        noOfBytesToDelay = 25
+        if SettingsClass.GetAcknowledgementRequested():
+            noOfBytesToDelay += 10  # one message 23 + one ack 10 + 2 bytes extra
+        if wMode == "SEND":
+            if not self.GetShouldRequestRepeater() and \
+                SettingsClass.GetHasReceivedMessageFromRepeater():
+                noOfBytesToDelay += 10 # wait also for repeaters ack
+                # (if repeater ack is received then the time will extended again)
+        timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(noOfBytesToDelay)
+        return timeS
+
+    def AddSuccessWithoutRepeaterBit(self):
+        self.successWithoutRepeaterBitQueue.append(datetime.now())
+        if len(self.successWithoutRepeaterBitQueue) > 20:
+            self.successWithoutRepeaterBitQueue.popleft()
+
+    def AddSuccessWithRepeaterBit(self):
+        # we received and ack from the repeater, only
+        # count it as success if we requested it
+        if self.lastMessageRepeaterBit:
+            self.successWithRepeaterBitQueue.append(datetime.now())
+            if len(self.successWithRepeaterBitQueue) > 20:
+                self.successWithRepeaterBitQueue.popleft()
+
+    def AddSentWithoutRepeaterBit(self):
+        self.lastMessageRepeaterBit = False
+        self.sentQueueWithoutRepeaterBit.append(datetime.now())
+        if len(self.sentQueueWithoutRepeaterBit) > 20:
+            self.sentQueueWithoutRepeaterBit.popleft()
+
+    def AddSentWithRepeaterBit(self):
+        self.lastMessageRepeaterBit = True
+        self.sentQueueWithRepeaterBit.append(datetime.now())
+        if len(self.sentQueueWithRepeaterBit) > 20:
+            self.sentQueueWithRepeaterBit.popleft()
+
+    def GetSuccessRateToDestination(self):
+        dateTimeToUse = max(self.successWithoutRepeaterBitQueue[-1], self.sentQueueWithoutRepeaterBit[-1], datetime.now() - timedelta(minutes=30))
+        successCount = sum(1 for successDate in self.successWithoutRepeaterBitQueue if successDate > dateTimeToUse)
+        sentCount = sum(1 for sentDate in self.sentQueueWithoutRepeaterBit if sentDate > dateTimeToUse)
+        return int((successCount / sentCount)*100)
+
+    def GetSuccessRateToRepeater(self):
+        dateTimeToUse = max(self.successWithRepeaterBitQueue[-1], self.sentQueueWithRepeaterBit[-1],
+                            datetime.now() - timedelta(minutes=30))
+        successCount = sum(1 for successDate in self.successWithRepeaterBitQueue if successDate > dateTimeToUse)
+        sentCount = sum(1 for sentDate in self.sentQueueWithRepeaterBit if sentDate > dateTimeToUse)
+        return int((successCount / sentCount) * 100)
+
+    def GetShouldRequestRepeater(self):
+        reqRepeater = False
+        successDestination = self.GetSuccessRateToDestination()
+        successRepeater = self.GetSuccessRateToRepeater()
+        if SettingsClass.GetHasReceivedMessageFromRepeater() and \
+                        successDestination < 85 \
+                and successRepeater > successDestination:
+            reqRepeater = True
+        return reqRepeater
+
     # messageData is a bytearray
     def SendData(self, messageData):
+        msg = LoraRadioMessage()
+        msg.AddPayload(messageData)
+        if msg.GetRepeaterBit():
+            self.AddSentNormal()
+        else:
+            self.AddSentWithRepeaterBit()
         return self.loraRadio.SendData(messageData)

@@ -28,10 +28,12 @@ class SettingsClass(object):
     wiRocDeviceName = None
     forceReconfigure = False
 
+
     connectedComputerIsWiRocDevice = False
     timeConnectedComputerIsWiRocDeviceChanged = None
     siStationNumber = 0
     timeSIStationNumberChanged = None
+    hasReceivedMessageFromRepeater = False
 
     @staticmethod
     def SetConfigurationDirty(settingsName=None, markDirtyInDatabase = False):
@@ -185,6 +187,14 @@ class SettingsClass(object):
             else:
                 SettingsClass.acknowledgementRequested = (sett.Value == "1")
         return SettingsClass.acknowledgementRequested
+
+    @staticmethod
+    def SetHasReceivedMessageFromRepeater():
+        SettingsClass.hasReceivedMessageFromRepeater = True
+
+    @staticmethod
+    def GetHasReceivedMessageFromRepeater():
+        return SettingsClass.hasReceivedMessageFromRepeater
 
     @staticmethod
     def GetStatusAcknowledgementRequested(mainConfigDirty = True):
@@ -465,3 +475,7 @@ class SettingsClass(object):
     @staticmethod
     def GetSIStationNumber():
         return SettingsClass.siStationNumber
+
+    #@staticmethod
+    #def GetShouldRequestRepeater():
+    #    return False

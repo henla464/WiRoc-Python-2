@@ -31,7 +31,7 @@ class LoraToSITransform(object):
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSub):
+    def Transform(msgSub, subscriberAdapter):
         payloadData = msgSub.MessageData
         loraMessage = LoraRadioMessage()
         loraMessage.AddPayload(payloadData)

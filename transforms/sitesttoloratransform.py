@@ -35,7 +35,7 @@ class SITestToLoraTransform(object):
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSub):
+    def Transform(msgSub, subscriberAdapter):
         payloadData = msgSub.MessageData
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
@@ -47,6 +47,8 @@ class SITestToLoraTransform(object):
             loraMessage = LoraRadioMessage(payloadDataLength, messageType, batteryLow, ackReq)
             loraMessage.AddPayload(payloadData)
             loraMessage.SetMessageNumber(msgSub.MessageNumber)
+            reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
+            loraMessage.SetRepeaterBit(reqRepeater)
             loraMessage.UpdateChecksum()
             return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageID()}
         return None

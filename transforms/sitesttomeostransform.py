@@ -30,7 +30,7 @@ class SITestToLoraTransform(object):
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSub):
+    def Transform(msgSub, subscriberAdapter):
         payloadData = msgSub.MessageData
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)

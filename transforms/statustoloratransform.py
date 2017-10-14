@@ -32,7 +32,7 @@ class StatusToLoraTransform(object):
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSub):
+    def Transform(msgSub, subscriberAdapter):
         payloadData = msgSub.MessageData
         loraMessage = LoraRadioMessage()
         loraMessage.AddPayload(payloadData)
@@ -40,5 +40,7 @@ class StatusToLoraTransform(object):
         loraMessage.SetMessageNumber(msgSub.MessageNumber)
         ackReq = SettingsClass.GetStatusAcknowledgementRequested()
         loraMessage.SetAcknowledgementRequested(ackReq)
+        reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
+        loraMessage.SetRepeaterBit(reqRepeater)
         loraMessage.UpdateChecksum()
         return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageID()}

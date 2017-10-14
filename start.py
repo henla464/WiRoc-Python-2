@@ -165,10 +165,7 @@ class Main:
                             logging.info("Start::Run() Received data from " + inputAdapter.GetInstanceName())
                             messageTypeName = inputAdapter.GetTypeName()
                             instanceName = inputAdapter.GetInstanceName()
-                            if messageTypeName == "LORA" and \
-                                    not SettingsClass.GetReceiveSIAdapterActive() and \
-                                    not SettingsClass.GetSendToMeosEnabled() and \
-                                    not SettingsClass.GetSendSerialAdapterActive():
+                            if messageTypeName == "LORA" and SettingsClass.GetWiRocMode() == "REPEATER":
                                 # WiRoc is in repeater mode and received a LORA message
                                 logging.info("Start::Run() In repeater mode")
                                 loraMessage = inputData["LoraRadioMessage"]
@@ -191,7 +188,7 @@ class Main:
                                     rmbd.SportIdentSecond = siMsg.GetSeconds()
                                 rmbd.MessageID = inputData["CustomData"]
                                 rmbd.AckRequested = loraMessage.GetAckRequested()
-                                rmbd.RelayRequested = loraMessage.GetRelayRequested()
+                                rmbd.RelayRequested = loraMessage.GetRepeaterBit()
                                 rmbd.NoOfTimesSeen = 1
                                 rmbd.NoOfTimesAckSeen = 0
                                 rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
@@ -232,14 +229,26 @@ class Main:
                         elif inputData["MessageType"] == "ACK":
                             customData = inputData["CustomData"]
                             logging.debug("Start::Run() Received ack, for message number: " + str(customData[0]))
-                            if not SettingsClass.GetReceiveSIAdapterActive() and \
-                                    not SettingsClass.GetSendToMeosEnabled() and \
-                                    not SettingsClass.GetSendSerialAdapterActive():
-                                # WiRoc is in repeater mode and received an ack message
+                            wirocMode = SettingsClass.GetWiRocMode()
+                            if wirocMode == "REPEATER":
                                 logging.info("Start::Run() In repeater mode")
                                 DatabaseHelper.repeater_message_acked(customData)
                             else:
                                 DatabaseHelper.archive_message_subscription_after_ack(customData)
+
+                            loraMessage = inputData["LoraRadioMessage"]
+                            receivedFromRepeater = loraMessage.GetRepeaterBit()
+                            if receivedFromRepeater:
+                                subAdapter.AddSuccessWithRepeaterBit()
+                            else:
+                                subAdapter.AddSuccessWithoutRepeaterBit()
+
+                            if wirocMode == "SEND" and receivedFromRepeater:
+                                # delay an extra message + ack, same as a normal delay after a message is sent
+                                # because the repeater should also send and receive ack
+                                timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(35) # message 23 + ack 10 + 2 extra
+                                DatabaseHelper.increase_scheduled_time(timeS)
+
 
                 if self.messagesToSendExists:
                     msgSubscriptions = self.getMessageSubscriptionsToSend()
@@ -254,7 +263,7 @@ class Main:
                                 if subAdapter.IsReadyToSend():
                                     # transform the data before sending
                                     transformClass = subAdapter.GetTransform(msgSub.TransformName)
-                                    transformedData = transformClass.Transform(msgSub)
+                                    transformedData = transformClass.Transform(msgSub, subAdapter)
                                     if transformedData is not None:
                                         if transformedData["CustomData"] is not None:
                                             DatabaseHelper.update_customdata(msgSub.id, transformedData["CustomData"])
@@ -267,6 +276,7 @@ class Main:
                                             else: # set SentDate and increment NoOfSendTries
                                                 retryDelay = SettingsClass.GetRetryDelay(msgSub.NoOfSendTries+1)
                                                 DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub, retryDelay)
+                                                DatabaseHelper.increase_scheduled_time_for_other_subscriptions(msgSub, subAdapter.GetDelayAfterMessageSent())
                                         else:
                                             # failed to send
                                             logging.warning("Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)

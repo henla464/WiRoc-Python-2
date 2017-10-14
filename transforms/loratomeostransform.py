@@ -30,7 +30,7 @@ class LoraToMeosTransform(object):
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSub):
+    def Transform(msgSub, subscriberAdapter):
         payloadData = msgSub.MessageData
         msg = LoraRadioMessage()
         msg.AddPayload(payloadData)

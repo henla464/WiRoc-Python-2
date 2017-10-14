@@ -120,8 +120,11 @@ class ReceiveLoraAdapter(object):
                     customData = loraMessage.GetMessageID()
                     SettingsClass.GetWiRocMode()
                     if SettingsClass.GetWiRocMode() == "RECEIVE":
+                        #todo if repeater is requested we should let repeater ack instead and
+                        #only send ack if we don't receive an ack from the repeater
+                        repeaterRequested = loraMessage.GetRepeaterBit()
                         ackRequested = loraMessage.GetAcknowledgementRequested()
-                        if ackRequested:
+                        if not repeaterRequested and ackRequested:
                             time.sleep(0.05)
                             messageType = LoraRadioMessage.MessageTypeLoraAck
                             loraMessage2 = LoraRadioMessage(5, messageType, False, False)

@@ -105,6 +105,7 @@ class DatabaseHelper:
         db.execute_SQL("DELETE FROM MessageBoxArchiveData")
         db.execute_SQL("DELETE FROM MessageBoxData")
         db.execute_SQL("DELETE FROM TestPunchData")
+        db.execute_SQL("DELETE FROM RepeaterMessageBoxData")
 
 #Settings
     @classmethod
@@ -338,6 +339,19 @@ class DatabaseHelper:
         cls.db.save_table_object(msa, False)
 
     @classmethod
+    def increase_scheduled_time_for_other_subscriptions(cls, messageSubscriptionView, delaySeconds):
+        cls.init()
+        sql = ("SELECT * FROM MessageSubscriptionData WHERE "
+               "SubscriberTypeName = ? AND Id <> ?")
+        parameters = (messageSubscriptionView.SubscriberTypeName, messageSubscriptionView.id)
+        subs = cls.db.get_table_objects_by_SQL(sql, parameters)
+        for sub in subs:
+            sub.ScheduledTime = max(sub.ScheduledTime if sub.ScheduledTime is not None else datetime.min,
+                                    datetime.now() + timedelta(seconds=delaySeconds))
+            cls.db.save_table_object(sub, False)
+
+
+    @classmethod
     def increment_send_tries_and_set_send_failed_date(cls, messageSubscriptionView, retryDelay):
         cls.init()
         msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
@@ -405,6 +419,18 @@ class DatabaseHelper:
             if msgToUpdate.AckedTime is None:
                 msgToUpdate.AckedTime = datetime.now()
             return cls.db.save_table_object(msgToUpdate, False)
+
+    @classmethod
+    def increase_scheduled_time(cls, timeS):
+        cls.init()
+        sql = ("SELECT * FROM MessageSubscriptionData WHERE "
+               "SubscriberTypeName = 'LORA'")
+        subs = cls.db.get_table_objects_by_SQL(sql)
+        for sub in subs:
+            sub.ScheduledTime = timedelta(seconds=timeS) + \
+                                max(sub.ScheduledTime if sub.ScheduledTime is not None else datetime.min,
+                                    datetime.now())
+            cls.db.save_table_object(sub, False)
 
     @classmethod
     def get_repeater_message_to_add(cls):

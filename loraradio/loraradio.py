@@ -193,15 +193,15 @@ class LoraRadio:
         #    else:
         #        return False
 
-        if SettingsClass.GetAcknowledgementRequested():
-            currentTime = time.monotonic()
-            if self.lastMessageSentDate is None or\
-                self.lastMessageSentDate < currentTime - SettingsClass.GetLoraAckMessageWaitTimeoutS():
-                return True
-            else:
-                return False
-        else:
-            return True
+        #if SettingsClass.GetAcknowledgementRequested():
+        #    currentTime = time.monotonic()
+        #    if self.lastMessageSentDate is None or\
+        #        self.lastMessageSentDate < currentTime - SettingsClass.GetLoraAckMessageWaitTimeoutS():
+        #        return True
+        #    else:
+        #        return False
+        #else:
+        #    return True
 
     def SendData(self, messageData):
         dataInHex = ''.join(format(x, '02x') for x in messageData)
