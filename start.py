@@ -224,7 +224,7 @@ class Main:
                                     anySubscription = True
                                     self.messagesToSendExists = True
                                 if not anySubscription:
-                                    logging.info("Start::Run() Message has no subsribers, being archived, msgid: " + str(mbdid))
+                                    logging.info("Start::Run() Message has no subscribers, being archived, msgid: " + str(mbdid))
                                     DatabaseHelper.archive_message_box(mbdid)
                         elif inputData["MessageType"] == "ACK":
                             customData = inputData["CustomData"]

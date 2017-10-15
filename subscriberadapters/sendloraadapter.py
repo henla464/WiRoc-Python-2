@@ -228,6 +228,7 @@ class SendLoraAdapter(object):
     def SendData(self, messageData):
         msg = LoraRadioMessage()
         msg.AddPayload(messageData)
+        SettingsClass.SetTimeOfLastMessageSentToLora()
         if SettingsClass.GetWiRocMode() == "SEND" and msg.GetRepeaterBit():
             self.AddSentWithRepeaterBit()
         else:

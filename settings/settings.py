@@ -9,6 +9,7 @@ import random
 class SettingsClass(object):
     RadioIntervalLengthMicroSeconds = [4000000, 4000000, 4000000, 4000000, 4000000, 4000000]
     timeOfLastMessageAdded = time.monotonic()
+    timeOfLastMessageSentToLora = time.monotonic()
     statusMessageBaseInterval = None
     loraAckMessageWaitTimeout = None
     MessagesToSendExists = True
@@ -358,6 +359,14 @@ class SettingsClass(object):
             else:
                 SettingsClass.sendStatusMessages = (sett.Value == "1")
         return SettingsClass.sendStatusMessages
+
+    @staticmethod
+    def SetTimeOfLastMessageSentToLora():
+        SettingsClass.timeOfLastMessageSentToLora = time.monotonic()
+
+    @staticmethod
+    def GetTimeOfLastMessageSentToLora():
+        return SettingsClass.timeOfLastMessageSentToLora
 
     @staticmethod
     def SetTimeOfLastMessageAdded():

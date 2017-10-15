@@ -26,6 +26,7 @@ class CreateStatusAdapter(object):
         self.instanceName = instanceName
         self.isInitialized = False
         self.TimeToFetch = False
+        self.LastTimeCreated = time.monotonic()
         self.loraRadioMessage = LoraRadioMessage(payloadDataLength = 0, messageType = LoraRadioMessage.MessageTypeStatus, batteryLow = False, ackReq = False)
 
     def GetInstanceName(self):
@@ -45,11 +46,12 @@ class CreateStatusAdapter(object):
 
     def UpdateInfreqently(self):
         currentTime = time.monotonic()
-        self.TimeToFetch = (currentTime - SettingsClass.GetTimeOfLastMessageAdded() > SettingsClass.GetStatusMessageInterval())
+        self.TimeToFetch = (currentTime - max(SettingsClass.GetTimeOfLastMessageSentToLora(), self.LastTimeCreated) > SettingsClass.GetStatusMessageInterval())
         return self.TimeToFetch
 
     def GetData(self):
         if self.TimeToFetch:
+            self.LastTimeCreated = time.monotonic()
             self.TimeToFetch = False
             self.loraRadioMessage.SetBatteryLowBit(Battery.GetIsBatteryLow())
             self.loraRadioMessage.UpdateChecksum()
