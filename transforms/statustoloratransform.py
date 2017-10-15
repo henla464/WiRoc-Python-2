@@ -1,6 +1,7 @@
 from datamodel.datamodel import LoraRadioMessage
 from settings.settings import SettingsClass
 from battery import Battery
+import logging
 
 class StatusToLoraTransform(object):
     DeleteAfterSent = False

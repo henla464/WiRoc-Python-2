@@ -108,20 +108,21 @@ class ReceiveLoraAdapter(object):
                 messageType = loraMessage.GetMessageType()
                 if messageType == LoraRadioMessage.MessageTypeLoraAck:
                     customData =  loraMessage.GetMessageIDThatIsAcked()
-                    return {"MessageType": "ACK", "MessageSource":"Lora", "MessageSubTypeName": "Ack", "CustomData": customData, "ChecksumOK": True}
+                    return {"MessageType": "ACK", "MessageSource":"Lora", "MessageSubTypeName": "Ack", "CustomData": customData, "ChecksumOK": True, "LoraRadioMessage": loraMessage}
                 elif messageType == LoraRadioMessage.MessageTypeStatus:
-                    if ackRequested:
-                        time.sleep(0.05)
-                        messageType = LoraRadioMessage.MessageTypeLoraAck
-                        loraMessage2 = LoraRadioMessage(5, messageType, False, False)
-                        loraMessage2.SetMessageIDToAck(loraMessage.GetMessageID())
-                        self.loraRadio.SendData(loraMessage2.GetByteArray())
+                    if SettingsClass.GetWiRocMode() == "RECEIVE":
+                        if not repeaterRequested and ackRequested:
+                            time.sleep(0.05)
+                            messageType = LoraRadioMessage.MessageTypeLoraAck
+                            loraMessage2 = LoraRadioMessage(0, messageType, False, False)
+                            loraMessage2.SetMessageIDToAck(loraMessage.GetMessageID())
+                            loraMessage2.UpdateChecksum()
+                            self.loraRadio.SendData(loraMessage2.GetByteArray())
                     relayPathNo = loraMessage.GetLastRelayPathNoFromStatusMessage()
                     SettingsClass.UpdateRelayPathNumber(relayPathNo)
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "Status", "Data": receivedData, "CustomData": loraMessage.GetMessageID(), "LoraRadioMessage": loraMessage, "ChecksumOK": True}
                 else:
                     customData = loraMessage.GetMessageID()
-                    SettingsClass.GetWiRocMode()
                     if SettingsClass.GetWiRocMode() == "RECEIVE":
                         #todo if repeater is requested we should let repeater ack instead and
                         #only send ack if we don't receive an ack from the repeater
@@ -130,6 +131,7 @@ class ReceiveLoraAdapter(object):
                             messageType = LoraRadioMessage.MessageTypeLoraAck
                             loraMessage2 = LoraRadioMessage(5, messageType, False, False)
                             loraMessage2.SetMessageIDToAck(customData)
+                            loraMessage2.UpdateChecksum()
                             self.loraRadio.SendData(loraMessage2.GetByteArray())
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "SIMessage", "Data": receivedData, "CustomData": customData, "LoraRadioMessage": loraMessage, "ChecksumOK": True}
             else:

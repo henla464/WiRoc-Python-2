@@ -342,9 +342,9 @@ class DatabaseHelper:
     def increase_scheduled_time_for_other_subscriptions(cls, messageSubscriptionView, delaySeconds):
         cls.init()
         sql = ("SELECT * FROM MessageSubscriptionData WHERE "
-               "SubscriberTypeName = ? AND Id <> ?")
+               "SubscriptionId in (select Id from SubscriberData where TypeName = ?) AND Id <> ?")
         parameters = (messageSubscriptionView.SubscriberTypeName, messageSubscriptionView.id)
-        subs = cls.db.get_table_objects_by_SQL(sql, parameters)
+        subs = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, parameters)
         for sub in subs:
             sub.ScheduledTime = max(sub.ScheduledTime if sub.ScheduledTime is not None else datetime.min,
                                     datetime.now() + timedelta(seconds=delaySeconds))
@@ -424,8 +424,8 @@ class DatabaseHelper:
     def increase_scheduled_time(cls, timeS):
         cls.init()
         sql = ("SELECT * FROM MessageSubscriptionData WHERE "
-               "SubscriberTypeName = 'LORA'")
-        subs = cls.db.get_table_objects_by_SQL(sql)
+               "SubscriptionId in (select Id from SubscriberData where TypeName = 'LORA')")
+        subs = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql)
         for sub in subs:
             sub.ScheduledTime = timedelta(seconds=timeS) + \
                                 max(sub.ScheduledTime if sub.ScheduledTime is not None else datetime.min,

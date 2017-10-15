@@ -199,7 +199,7 @@ class SettingsClass(object):
 
     @staticmethod
     def GetStatusAcknowledgementRequested(mainConfigDirty = True):
-        return False
+        return True
 
     @staticmethod
     def GetSendToMeosEnabled(mainConfigDirty = True):

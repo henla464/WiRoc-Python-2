@@ -178,7 +178,7 @@ class SendLoraAdapter(object):
     def AddSuccessWithoutRepeaterBit(self):
         self.successWithoutRepeaterBitQueue.appendleft(datetime.now())
         if len(self.successWithoutRepeaterBitQueue) > 20:
-            self.successWithoutRepeaterBitQueue.popright()
+            self.successWithoutRepeaterBitQueue.pop()
 
     def AddSuccessWithRepeaterBit(self):
         # we received and ack from the repeater, only
@@ -186,19 +186,19 @@ class SendLoraAdapter(object):
         if self.lastMessageRepeaterBit:
             self.successWithRepeaterBitQueue.appendleft(datetime.now())
             if len(self.successWithRepeaterBitQueue) > 20:
-                self.successWithRepeaterBitQueue.popright()
+                self.successWithRepeaterBitQueue.pop()
 
     def AddSentWithoutRepeaterBit(self):
         self.lastMessageRepeaterBit = False
         self.sentQueueWithoutRepeaterBit.appendleft(datetime.now())
         if len(self.sentQueueWithoutRepeaterBit) > 20:
-            self.sentQueueWithoutRepeaterBit.popright()
+            self.sentQueueWithoutRepeaterBit.pop()
 
     def AddSentWithRepeaterBit(self):
         self.lastMessageRepeaterBit = True
         self.sentQueueWithRepeaterBit.appendleft(datetime.now())
         if len(self.sentQueueWithRepeaterBit) > 20:
-            self.sentQueueWithRepeaterBit.popright()
+            self.sentQueueWithRepeaterBit.pop()
 
     def GetSuccessRateToDestination(self):
         dateTimeToUse = max(min(self.successWithoutRepeaterBitQueue[-1], self.sentQueueWithoutRepeaterBit[-1]), datetime.now() - timedelta(minutes=30))

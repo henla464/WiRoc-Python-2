@@ -36,18 +36,14 @@ class SIToLoraTransform(object):
         loraMsg = LoraRadioMessage()
         loraMsg.AddPayload(payloadData)
 
-        messageType = LoraRadioMessage.MessageTypeLoraAck
-        loraMessage2 = LoraRadioMessage(5, messageType, False, False)
-        loraMessage2.SetMessageIDToAck(loraMsg.GetMessageID())
-
-
-        if loraMsg.GetMessageType() == loraMsg.MessageTypeSIPunch \
-            or loraMsg.GetMessageType() == loraMsg.MessageTypeStatus:
-            if loraMsg.GetAcknowledgementRequested():
-                messageType = LoraRadioMessage.MessageTypeLoraAck
-                loraMessage2 = LoraRadioMessage(5, messageType, False, False)
-                loraMessage2.SetRepeaterBit(True) # indicate this ack comes from repeater
-                loraMessage2.SetMessageIDToAck(loraMsg.GetMessageID())
-                loraMessage2.UpdateChecksum()
-            return {"Data": loraMessage2.GetByteArray(), "CustomData": loraMsg.GetMessageID()}
+        if loraMsg.GetAcknowledgementRequested():
+            incomingMsgType = loraMsg.GetMessageType()
+            messageType = LoraRadioMessage.MessageTypeLoraAck
+            loraMessage2 = LoraRadioMessage(5, messageType, False, False)
+            if incomingMsgType == loraMsg.MessageTypeStatus:
+                loraMessage2 = LoraRadioMessage(0, messageType, False, False)
+            loraMessage2.SetRepeaterBit(True)  # indicate this ack comes from repeater
+            loraMessage2.SetMessageIDToAck(loraMsg.GetMessageID())
+            loraMessage2.UpdateChecksum()
+            return {"Data": loraMessage2.GetByteArray(), "CustomData": loraMessage2.GetMessageID()}
         return None

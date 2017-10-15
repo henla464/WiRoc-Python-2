@@ -397,8 +397,13 @@ class LoraRadioMessage(object):
         elif self.GetMessageType() == LoraRadioMessage.MessageTypeStatus:
             return None
         elif self.GetMessageType() == LoraRadioMessage.MessageTypeLoraAck:
-            return bytearray(bytes([self.MessageData[3],self.MessageData[5],self.MessageData[6],
+            if len(self.MessageData)>=10:
+                #ack on a si message
+                return bytearray(bytes([self.MessageData[3],self.MessageData[5],self.MessageData[6],
                                     self.MessageData[7],self.MessageData[8],self.MessageData[9]]))
+            else:
+                #ack on a status message
+                return bytearray(bytes([self.MessageData[3]]))
 
     def GetIsChecksumOK(self):
         if self.IsFilled():

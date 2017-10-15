@@ -238,10 +238,13 @@ class Main:
 
                             loraMessage = inputData["LoraRadioMessage"]
                             receivedFromRepeater = loraMessage.GetRepeaterBit()
-                            if receivedFromRepeater:
-                                subAdapter.AddSuccessWithRepeaterBit()
-                            else:
-                                subAdapter.AddSuccessWithoutRepeaterBit()
+                            loraSubAdapters = [subAdapter for subAdapter in self.subscriberAdapters if subAdapter.GetTypeName == "LORA"]
+                            if len(loraSubAdapters) > 0:
+                                loraSubAdapter = loraSubAdapters[0]
+                                if receivedFromRepeater:
+                                    loraSubAdapter.AddSuccessWithRepeaterBit()
+                                else:
+                                    loraSubAdapter.AddSuccessWithoutRepeaterBit()
 
                             if wirocMode == "SEND" and receivedFromRepeater:
                                 # delay an extra message + ack, same as a normal delay after a message is sent
