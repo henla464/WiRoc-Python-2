@@ -40,7 +40,9 @@ class StatusToLoraTransform(object):
         loraMessage.SetMessageNumber(msgSub.MessageNumber)
         ackReq = SettingsClass.GetStatusAcknowledgementRequested()
         loraMessage.SetAcknowledgementRequested(ackReq)
-        reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
+        reqRepeater = False
+        if SettingsClass.GetWiRocMode() == "SEND":
+            reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
         loraMessage.SetRepeaterBit(reqRepeater)
         loraMessage.UpdateChecksum()
         return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageID()}

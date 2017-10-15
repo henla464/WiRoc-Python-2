@@ -176,29 +176,29 @@ class SendLoraAdapter(object):
         return timeS
 
     def AddSuccessWithoutRepeaterBit(self):
-        self.successWithoutRepeaterBitQueue.append(datetime.now())
+        self.successWithoutRepeaterBitQueue.appendleft(datetime.now())
         if len(self.successWithoutRepeaterBitQueue) > 20:
-            self.successWithoutRepeaterBitQueue.popleft()
+            self.successWithoutRepeaterBitQueue.popright()
 
     def AddSuccessWithRepeaterBit(self):
         # we received and ack from the repeater, only
         # count it as success if we requested it
         if self.lastMessageRepeaterBit:
-            self.successWithRepeaterBitQueue.append(datetime.now())
+            self.successWithRepeaterBitQueue.appendleft(datetime.now())
             if len(self.successWithRepeaterBitQueue) > 20:
-                self.successWithRepeaterBitQueue.popleft()
+                self.successWithRepeaterBitQueue.popright()
 
     def AddSentWithoutRepeaterBit(self):
         self.lastMessageRepeaterBit = False
-        self.sentQueueWithoutRepeaterBit.append(datetime.now())
+        self.sentQueueWithoutRepeaterBit.appendleft(datetime.now())
         if len(self.sentQueueWithoutRepeaterBit) > 20:
-            self.sentQueueWithoutRepeaterBit.popleft()
+            self.sentQueueWithoutRepeaterBit.popright()
 
     def AddSentWithRepeaterBit(self):
         self.lastMessageRepeaterBit = True
-        self.sentQueueWithRepeaterBit.append(datetime.now())
+        self.sentQueueWithRepeaterBit.appendleft(datetime.now())
         if len(self.sentQueueWithRepeaterBit) > 20:
-            self.sentQueueWithRepeaterBit.popleft()
+            self.sentQueueWithRepeaterBit.popright()
 
     def GetSuccessRateToDestination(self):
         dateTimeToUse = max(min(self.successWithoutRepeaterBitQueue[-1], self.sentQueueWithoutRepeaterBit[-1]), datetime.now() - timedelta(minutes=30))
@@ -228,8 +228,8 @@ class SendLoraAdapter(object):
     def SendData(self, messageData):
         msg = LoraRadioMessage()
         msg.AddPayload(messageData)
-        if msg.GetRepeaterBit():
-            self.AddSentNormal()
-        else:
+        if SettingsClass.GetWiRocMode() == "SEND" and msg.GetRepeaterBit():
             self.AddSentWithRepeaterBit()
+        else:
+            self.AddSentWithoutRepeaterBit()
         return self.loraRadio.SendData(messageData)
