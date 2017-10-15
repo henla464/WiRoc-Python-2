@@ -184,24 +184,7 @@ class LoraRadio:
         if self.chip:
             if digitalReadNonXIO(138) == 0:
                 return False
-        #if wirocMessage:
-        #    currentTime = time.monotonic()
-        #    msgSub
-        #    if msgSub.CreatedDate is None or\
-        #        msgSub.CreatedDate < currentTime - SettingsClass.GetLoraAckMessageWaitTimeoutS():
-        #        return True
-        #    else:
-        #        return False
-
-        #if SettingsClass.GetAcknowledgementRequested():
-        #    currentTime = time.monotonic()
-        #    if self.lastMessageSentDate is None or\
-        #        self.lastMessageSentDate < currentTime - SettingsClass.GetLoraAckMessageWaitTimeoutS():
-        #        return True
-        #    else:
-        #        return False
-        #else:
-        #    return True
+        return True
 
     def SendData(self, messageData):
         dataInHex = ''.join(format(x, '02x') for x in messageData)
