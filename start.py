@@ -166,12 +166,13 @@ class Main:
                     if inputData is not None:
                         if inputData["MessageType"] == "DATA":
                             logging.info("Start::Run() Received data from " + inputAdapter.GetInstanceName())
+                            messageID = inputData.get("MessageID", None)
                             messageTypeName = inputAdapter.GetTypeName()
                             instanceName = inputAdapter.GetInstanceName()
                             if messageTypeName == "LORA" and SettingsClass.GetWiRocMode() == "REPEATER":
                                 # WiRoc is in repeater mode and received a LORA message
                                 logging.info("Start::Run() In repeater mode")
-                                loraMessage = inputData["LoraRadioMessage"]
+                                loraMessage = inputData.get("LoraRadioMessage", None)
                                 rmbd = RepeaterMessageBoxData()
                                 rmbd.MessageData = inputData["Data"]
                                 rmbd.MessageTypeName = messageTypeName
@@ -189,15 +190,21 @@ class Main:
                                     rmbd.SportIdentHour = siMsg.GetHour()
                                     rmbd.SportIdentMinute = siMsg.GetMinute()
                                     rmbd.SportIdentSecond = siMsg.GetSeconds()
-                                rmbd.MessageID = inputData["MessageID"]
+                                rmbd.MessageID = messageID
                                 rmbd.AckRequested = loraMessage.GetAcknowledgementRequested()
                                 rmbd.RelayRequested = loraMessage.GetRepeaterBit()
                                 rmbd.NoOfTimesSeen = 1
                                 rmbd.NoOfTimesAckSeen = 0
                                 rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
                             else:
-                                #if messageTypeName == "LORA" and SettingsClass.GetWiRocMode() == "RECEIVE":
-                                #    DatabaseHelper.archive_repeater_lora_message_subscription_after_ack(messageID)
+
+                                if messageTypeName == "LORA" and \
+                                    SettingsClass.GetWiRocMode() == "RECEIVE":
+                                    loraMessage = loraMessage = inputData.get("LoraRadioMessage", None)
+                                    if loraMessage.GetRepeaterBit():
+                                        # Message received from repeater. Archive any already scheduled ack message
+                                        # from previously received message (directly from sender)
+                                        DatabaseHelper.archive_lora_ack_message_subscription(messageID)
 
                                 mbd = MessageBoxData()
                                 mbd.MessageData = inputData["Data"]
@@ -225,7 +232,7 @@ class Main:
                                         msgSubscription.ScheduledTime = now
                                     msgSubscription.MessageBoxId = mbdid
                                     msgSubscription.SubscriptionId = subscription.id
-                                    msgSubscription.MessageID = inputData.get("MessageID", None) # used for messages from repeater table
+                                    msgSubscription.MessageID = messageID # used for messages from repeater table
                                     msgSubscription.MessageNumber = MessageSubscriptionData.GetNextMessageNumber()
                                     DatabaseHelper.save_message_subscription(msgSubscription)
                                     anySubscription = True
@@ -262,7 +269,7 @@ class Main:
                                     # delay an extra message + ack, same as a normal delay after a message is sent
                                     # because the repeater should also send and receive ack
                                     timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(35) # message 23 + ack 10 + 2 extra
-                                    DatabaseHelper.increase_scheduled_time(timeS)
+                                    DatabaseHelper.increase_scheduled_time_if_less_than(timeS)
 
 
                 if self.messagesToSendExists:

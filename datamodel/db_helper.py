@@ -395,6 +395,7 @@ class DatabaseHelper:
         if len(rows) > 0:
             msd = rows[0]
             msd.AckReceivedFromReceiver = True
+            logging.debug("DatabaseHelper::set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(): The ack sent from repeater to sender should indicate the message has been received by receiver")
             cls.db.save_table_object(msd, False)
 
     @classmethod
@@ -425,6 +426,7 @@ class DatabaseHelper:
             if len(subscriberView) > 0:
                 msa.SubscriberTypeName = subscriberView[0].TypeName
                 msa.TransformName = subscriberView[0].TransformName
+            logging.debug("DatabaseHelper::archive_lora_ack_message_subscription(): Archive ack message because it was already sent when SIMessage was received")
             cls.db.save_table_object(msa, False)
             cls.db.delete_table_object(MessageSubscriptionData, msd.id)
             remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(msd.MessageBoxId)
@@ -460,6 +462,7 @@ class DatabaseHelper:
             if len(subscriberView) > 0:
                 msa.SubscriberTypeName = subscriberView[0].TypeName
                 msa.TransformName = subscriberView[0].TransformName
+            logging.debug("DatabaseHelper::archive_repeater_lora_message_subscription_after_ack(): Archive message because it was already received by receiver")
             cls.db.save_table_object(msa, False)
             cls.db.delete_table_object(MessageSubscriptionData, msd.id)
             remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(msd.MessageBoxId)
@@ -493,6 +496,7 @@ class DatabaseHelper:
             if len(subscriberView) > 0:
                 msa.SubscriberTypeName = subscriberView[0].TypeName
                 msa.TransformName = subscriberView[0].TransformName
+            logging.debug("DatabaseHelper::archive_message_subscription_after_ack(): Archive message")
             cls.db.save_table_object(msa, False)
             cls.db.delete_table_object(MessageSubscriptionData, msd.id)
             remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(msd.MessageBoxId)
@@ -511,6 +515,7 @@ class DatabaseHelper:
             msgToUpdate.NoOfTimesAckSeen = msgToUpdate.NoOfTimesAckSeen + 1
             if msgToUpdate.AckedTime is None:
                 msgToUpdate.AckedTime = datetime.now()
+            logging.debug("DatabaseHelper::repeater_message_acked(): Marking RepeaterMessageBoxData message as acked")
             return cls.db.save_table_object(msgToUpdate, False)
 
     @classmethod
@@ -545,7 +550,7 @@ class DatabaseHelper:
         cls.db.delete_table_object(RepeaterMessageBoxData, repeaterMessageBox.id)
 
     @classmethod
-    def increase_scheduled_time(cls, timeS):
+    def increase_scheduled_time_if_less_than(cls, timeS):
         cls.init()
         sql = ("SELECT * FROM MessageSubscriptionData WHERE "
                "SubscriptionId in (select Id from SubscriberData where TypeName = 'LORA')")
@@ -553,6 +558,7 @@ class DatabaseHelper:
         for sub in subs:
             sub.ScheduledTime = max(sub.ScheduledTime if sub.ScheduledTime is not None else datetime.min,
                                     datetime.now()+ timedelta(seconds=timeS))
+            logging.debug("DatabaseHelper::increase_scheduled_time_if_less_than(): Set to: " + str(sub.ScheduledTime))
             cls.db.save_table_object(sub, False)
 
     #@classmethod

@@ -111,8 +111,9 @@ class ReceiveLoraAdapter(object):
                     return {"MessageType": "ACK", "MessageSource":"Lora", "MessageSubTypeName": "Ack", "MessageID": messageID, "ChecksumOK": True, "LoraRadioMessage": loraMessage}
                 elif messageType == LoraRadioMessage.MessageTypeStatus:
                     if ackRequested and \
-                            ((SettingsClass.GetWiRocMode() == "RECEIVE" and not repeaterRequested)\
+                            ((SettingsClass.GetWiRocMode() == "RECEIVE" and not repeaterRequested)
                             or (SettingsClass.GetWiRocMode() == "REPEATER" and repeaterRequested)):
+                            logging.debug("Lora status message received, send ack. WiRocMode: " + SettingsClass.GetWiRocMode() + " Repeater requested: " + str(repeaterRequested))
                             messageType = LoraRadioMessage.MessageTypeLoraAck
                             loraMessage2 = LoraRadioMessage(0, messageType, False, False)
                             loraMessage2.SetMessageIDToAck(loraMessage.GetMessageID())
@@ -123,11 +124,10 @@ class ReceiveLoraAdapter(object):
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "Status", "Data": receivedData, "MessageID": loraMessage.GetMessageID(), "LoraRadioMessage": loraMessage, "ChecksumOK": True}
                 else:
                     messageID = loraMessage.GetMessageID()
-                    if SettingsClass.GetWiRocMode() == "RECEIVE":
-                        #todo if repeater is requested we should let repeater ack instead and
-                        #only send ack if we don't receive an ack from the repeater
-                        if not repeaterRequested and ackRequested:
-                            time.sleep(0.05)
+                    if ackRequested and \
+                            ((SettingsClass.GetWiRocMode() == "RECEIVE" and not repeaterRequested)
+                             or (SettingsClass.GetWiRocMode() == "REPEATER" and repeaterRequested)):
+                            logging.debug("Lora message received, send ack. WiRocMode: " + SettingsClass.GetWiRocMode() + " Repeater requested: " + str(repeaterRequested))
                             messageType = LoraRadioMessage.MessageTypeLoraAck
                             loraMessage2 = LoraRadioMessage(5, messageType, False, False)
                             loraMessage2.SetAcknowledgementRequested(True) # indicate this is receiver acking
