@@ -198,11 +198,12 @@ class MessageSubscriptionData(object):
                ("SubscriptionId", int)]
     CurrentMessageNumber = 0
 
-    def __init__(self, MessageID=None, MessageNumber=None, SentDate=None, SendFailedDate=None,
+    def __init__(self, MessageID=None, AckReceivedFromReceiver=False, MessageNumber=None, SentDate=None, SendFailedDate=None,
                  FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
                  NoOfSendTries=0, ScheduledTime=None, MessageBoxId=None, SubscriptionId=None):
         self.id = None
         self.MessageID = MessageID
+        self.AckReceivedFromReceiver = AckReceivedFromReceiver
         self.MessageNumber = MessageNumber
         self.SentDate = SentDate
         self.SendFailedDate = SendFailedDate

@@ -225,8 +225,7 @@ class Main:
                                         msgSubscription.ScheduledTime = now
                                     msgSubscription.MessageBoxId = mbdid
                                     msgSubscription.SubscriptionId = subscription.id
-                                    if inputData["MessageID"]:
-                                        msgSubscription.MessageID = inputData["MessageID"] # used for messages from repeater table
+                                    msgSubscription.MessageID = inputData.get("MessageID", None) # used for messages from repeater table
                                     msgSubscription.MessageNumber = MessageSubscriptionData.GetNextMessageNumber()
                                     DatabaseHelper.save_message_subscription(msgSubscription)
                                     anySubscription = True
