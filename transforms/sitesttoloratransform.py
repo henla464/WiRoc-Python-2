@@ -50,5 +50,5 @@ class SITestToLoraTransform(object):
             reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
             loraMessage.SetRepeaterBit(reqRepeater)
             loraMessage.UpdateChecksum()
-            return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageID()}
+            return {"Data": loraMessage.GetByteArray(), "MessageID": loraMessage.GetMessageID()}
         return None

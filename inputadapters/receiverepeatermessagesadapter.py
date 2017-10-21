@@ -48,9 +48,9 @@ class ReceiveRepeaterMessagesAdapter(object):
             logging.debug("ReceiveRepeaterMessagesAdapter::GetData() Data to fetch")
             dataInHex = ''.join(format(x, '02x') for x in messageToAdd.MessageData)
             logging.debug(dataInHex)
-            return {"MessageType": "DATA", "MessageSource":"Repeater", "MessageSubTypeName": "SIMessage", "Data": messageToAdd.MessageData, "ChecksumOK": True}
+            return {"MessageType": "DATA", "MessageSource":"Repeater", "MessageSubTypeName": "SIMessage", "Data": messageToAdd.MessageData, "MessageID": messageToAdd.MessageID, "ChecksumOK": True}
         return None
 
     def AddedToMessageBox(self, mbid):
-        DatabaseHelper.set_relay_message_added_to_message_box(self.lastRepeaterMessageBoxIdAdded, mbid)
+        DatabaseHelper.archive_repeater_message_after_added_to_message_box(self.lastRepeaterMessageBoxIdAdded, mbid)
         return None

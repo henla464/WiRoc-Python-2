@@ -39,5 +39,5 @@ class LoraToMeosTransform(object):
             siPayloadData = payloadData[loraHeaderSize:]
             siMsg = SIMessage()
             siMsg.AddPayload(siPayloadData)
-            return {"Data": Utils.GetMeosDataFromSIData(siMsg), "CustomData": None}
+            return {"Data": Utils.GetMeosDataFromSIData(siMsg), "MessageID": None}
         return None

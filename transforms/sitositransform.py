@@ -33,5 +33,5 @@ class SIToSITransform(object):
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
         if siMsg.GetMessageType() == SIMessage.SIPunch:
-            return {"Data":payloadData, "CustomData": None}
+            return {"Data":payloadData, "MessageID": None}
         return None

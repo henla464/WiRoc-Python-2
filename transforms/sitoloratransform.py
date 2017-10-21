@@ -49,7 +49,7 @@ class SIToLoraTransform(object):
             reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
             loraMessage.SetRepeaterBit(reqRepeater)
             loraMessage.UpdateChecksum()
-            return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageID()}
+            return {"Data": loraMessage.GetByteArray(), "MessageID": loraMessage.GetMessageID()}
         elif siMsg.GetMessageType() == SIMessage.WiRocToWiRoc:
             unwrappedMessage = payloadData[3:-3]
             # Assume it is a LoraRadioMessage that is wrapped
@@ -68,7 +68,7 @@ class SIToLoraTransform(object):
                 reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
                 loraMessage.SetRepeaterBit(reqRepeater)
                 loraMessage.UpdateChecksum()
-                return {"Data": loraMessage.GetByteArray(), "CustomData": loraMessage.GetMessageID()}
+                return {"Data": loraMessage.GetByteArray(), "MessageID": loraMessage.GetMessageID()}
             else:
                 return None
         return None

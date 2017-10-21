@@ -49,6 +49,8 @@ class DatabaseHelper:
         db.ensure_table_created(table)
         table = RepeaterMessageBoxData()
         db.ensure_table_created(table)
+        table = RepeaterMessageBoxArchiveData()
+        db.ensure_table_created(table)
 
     @classmethod
     def drop_all_tables(cls):
@@ -81,6 +83,10 @@ class DatabaseHelper:
         db.drop_table(table)
         table = TestPunchData()
         db.drop_table(table)
+        table = RepeaterMessageBoxData()
+        db.drop_table(table)
+        table = RepeaterMessageBoxArchiveData()
+        db.drop_table(table)
 
     @classmethod
     def truncate_setup_tables(cls):
@@ -106,6 +112,7 @@ class DatabaseHelper:
         db.execute_SQL("DELETE FROM MessageBoxData")
         db.execute_SQL("DELETE FROM TestPunchData")
         db.execute_SQL("DELETE FROM RepeaterMessageBoxData")
+        db.execute_SQL("DELETE FROM RepeaterMessageBoxArchiveData")
 
 #Settings
     @classmethod
@@ -272,10 +279,10 @@ class DatabaseHelper:
         return no
 
     @classmethod
-    def update_customdata(cls, subscriptionId, customData):
+    def update_messageid(cls, subscriptionId, messageID):
         cls.init()
-        sql = "UPDATE MessageSubscriptionData SET CustomData = ? WHERE id = ?"
-        cls.db.execute_SQL(sql,(customData, subscriptionId))
+        sql = "UPDATE MessageSubscriptionData SET MessageID = ? WHERE id = ?"
+        cls.db.execute_SQL(sql,(messageID, subscriptionId))
 
     @classmethod
     def save_message_subscription(cls, messageSubscription):
@@ -287,7 +294,7 @@ class DatabaseHelper:
         cls.init()
         msa = MessageSubscriptionArchiveData()
         msa.OrigId = messageSubscriptionView.id
-        msa.CustomData = messageSubscriptionView.CustomData
+        msa.MessageID = messageSubscriptionView.MessageID
         msa.SentDate = datetime.now()
         msa.NoOfSendTries = messageSubscriptionView.NoOfSendTries + 1
         msa.FindAdapterTryDate = messageSubscriptionView.FindAdapterTryDate
@@ -309,7 +316,7 @@ class DatabaseHelper:
         cls.init()
         msa = MessageSubscriptionArchiveData()
         msa.OrigId = messageSubscriptionView.id
-        msa.CustomData = messageSubscriptionView.CustomData
+        msa.MessageID = messageSubscriptionView.MessageID
         msa.SentDate = messageSubscriptionView.SentDate
         msa.SendFailedDate = messageSubscriptionView.SendFailedDate
         msa.FindAdapterTryDate = messageSubscriptionView.FindAdapterTryDate
@@ -373,21 +380,74 @@ class DatabaseHelper:
                                 datetime.now() + timedelta(microseconds=retryDelay))
         cls.db.save_table_object(msa, False)
 
+
+
     @classmethod
-    def archive_message_subscription_after_ack(cls, customData):
+    def set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(cls, messageID):
         cls.init()
-        sixtySecondsAgo = datetime.now() - timedelta(seconds=60)
-        sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData WHERE "
-                                       "CustomData = ? AND SentDate > ? "
-                                        "ORDER BY SentDate desc LIMIT 1")
-        rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (customData, sixtySecondsAgo))
+        sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData JOIN SubscriptionData "
+               "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
+               "JOIN TransformData ON SubscriptionData.TransformId = TransformData.id "
+               "WHERE TransformData.Name = 'RepeaterToLoraAckTransform' AND "
+               "MessageSubscriptionData.MessageID = ? ORDER BY SentDate desc LIMIT 1")
+        rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID,))
+
+        if len(rows) > 0:
+            msd = rows[0]
+            msd.AckReceivedFromReceiver = True
+            cls.db.save_table_object(msd, False)
+
+    @classmethod
+    def archive_lora_ack_message_subscription(cls, messageID):
+        cls.init()
+        sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData JOIN SubscriptionData "
+                "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
+                "JOIN TransformData ON SubscriptionData.TransformId = TransformData.id "
+                "WHERE TransformData.Name = 'LoraToLoraTransform' AND "
+                "hex(MessageSubscriptionData.MessageID) like '__' + hex(?)")
+        rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID, ))
 
         if len(rows) > 0:
             now = datetime.now()
             msd = rows[0]
             msa = MessageSubscriptionArchiveData()
             msa.OrigId = msd.id
-            msa.CustomData = msd.CustomData
+            msa.MessageID = msd.MessageID
+            msa.SentDate = msd.SentDate
+            msa.SendFailedDate = msd.SendFailedDate
+            msa.FindAdapterTryDate = msd.FindAdapterTryDate
+            msa.FindAdapterTries = msd.FindAdapterTries
+            msa.NoOfSendTries = msd.NoOfSendTries
+            msa.AckReceivedDate = now
+            msa.MessageBoxId = msd.MessageBoxId
+            msa.SubscriptionId = msd.SubscriptionId
+            subscriberView = DatabaseHelper.get_subscriber_by_subscription_id(msd.SubscriptionId)
+            if len(subscriberView) > 0:
+                msa.SubscriberTypeName = subscriberView[0].TypeName
+                msa.TransformName = subscriberView[0].TransformName
+            cls.db.save_table_object(msa, False)
+            cls.db.delete_table_object(MessageSubscriptionData, msd.id)
+            remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(msd.MessageBoxId)
+            if remainingMsgSub == 0:
+                cls.archive_message_box(msd.MessageBoxId)
+
+
+    @classmethod
+    def archive_repeater_lora_message_subscription_after_ack(cls, messageID):
+        cls.init()
+        sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData JOIN SubscriptionData "
+                "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
+                "JOIN TransformData ON SubscriptionData.TransformId = TransformData.id "
+                "WHERE TransformData.Name = 'RepeaterToLoraTransform' AND "
+                "MessageSubscriptionData.MessageID = ? ORDER BY SentDate desc LIMIT 1")
+        rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID, ))
+
+        if len(rows) > 0:
+            now = datetime.now()
+            msd = rows[0]
+            msa = MessageSubscriptionArchiveData()
+            msa.OrigId = msd.id
+            msa.MessageID = msd.MessageID
             msa.SentDate = msd.SentDate
             msa.SendFailedDate = msd.SendFailedDate
             msa.FindAdapterTryDate = msd.FindAdapterTryDate
@@ -407,11 +467,44 @@ class DatabaseHelper:
                 cls.archive_message_box(msd.MessageBoxId)
 
     @classmethod
-    def repeater_message_acked(cls, customData):
+    def archive_message_subscription_after_ack(cls, messageID):
+        cls.init()
+        sixtySecondsAgo = datetime.now() - timedelta(seconds=60)
+        sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData WHERE "
+                                       "MessageID = ? AND SentDate > ? "
+                                        "ORDER BY SentDate desc LIMIT 1")
+        rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID, sixtySecondsAgo))
+
+        if len(rows) > 0:
+            now = datetime.now()
+            msd = rows[0]
+            msa = MessageSubscriptionArchiveData()
+            msa.OrigId = msd.id
+            msa.MessageID = msd.MessageID
+            msa.SentDate = msd.SentDate
+            msa.SendFailedDate = msd.SendFailedDate
+            msa.FindAdapterTryDate = msd.FindAdapterTryDate
+            msa.FindAdapterTries = msd.FindAdapterTries
+            msa.NoOfSendTries = msd.NoOfSendTries
+            msa.AckReceivedDate = now
+            msa.MessageBoxId = msd.MessageBoxId
+            msa.SubscriptionId = msd.SubscriptionId
+            subscriberView = DatabaseHelper.get_subscriber_by_subscription_id(msd.SubscriptionId)
+            if len(subscriberView) > 0:
+                msa.SubscriberTypeName = subscriberView[0].TypeName
+                msa.TransformName = subscriberView[0].TransformName
+            cls.db.save_table_object(msa, False)
+            cls.db.delete_table_object(MessageSubscriptionData, msd.id)
+            remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(msd.MessageBoxId)
+            if remainingMsgSub == 0:
+                cls.archive_message_box(msd.MessageBoxId)
+
+    @classmethod
+    def repeater_message_acked(cls, messageID):
         cls.init()
         sql = ("SELECT RepeaterMessageBoxData.* FROM RepeaterMessageBoxData WHERE "
                "MessageID = ?")
-        rows = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData, sql, (customData, ))
+        rows = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData, sql, (messageID, ))
         if len(rows) > 0:
             msgToUpdate = rows[0]
             msgToUpdate.Acked = True
@@ -421,33 +514,52 @@ class DatabaseHelper:
             return cls.db.save_table_object(msgToUpdate, False)
 
     @classmethod
+    def archive_repeater_message_after_added_to_message_box(cls, repeaterMessageBoxId, messageBoxId):
+        cls.init()
+        repeaterMessageBox = cls.db.get_table_object(RepeaterMessageBoxData, repeaterMessageBoxId)
+        msa = RepeaterMessageBoxArchiveData()
+        msa.OrigId = repeaterMessageBox.id
+        msa.MessageData = repeaterMessageBox.MessageData
+        msa.MessageTypeName = repeaterMessageBox.MessageTypeName
+        msa.PowerCycleCreated = repeaterMessageBox.PowerCycleCreated
+        msa.InstanceName = repeaterMessageBox.InstanceName
+        msa.MessageSubTypeName = repeaterMessageBox.MessageSubTypeName
+        msa.ChecksumOK = repeaterMessageBox.ChecksumOK
+        msa.MessageSource = repeaterMessageBox.MessageSource
+        msa.SICardNumber = repeaterMessageBox.SICardNumber
+        msa.SportIdentHour = repeaterMessageBox.SportIdentHour
+        msa.SportIdentMinute = repeaterMessageBox.SportIdentMinute
+        msa.SportIdentSecond = repeaterMessageBox.SportIdentSecond
+        msa.MessageID = repeaterMessageBox.MessageID
+        msa.AckRequested = repeaterMessageBox.AckRequested
+        msa.RelayRequested = repeaterMessageBox.RelayRequested
+        msa.NoOfTimesSeen = repeaterMessageBox.NoOfTimesSeen
+        msa.NoOfTimesAckSeen = repeaterMessageBox.NoOfTimesAckSeen
+        msa.Acked = repeaterMessageBox.Acked
+        msa.AckedTime = repeaterMessageBox.AckedTime
+        msa.MessageBoxId = repeaterMessageBox.MessageBoxId
+        msa.AddedToMessageBoxTime = repeaterMessageBox.AddedToMessageBoxTime #todo
+        msa.LastSeenTime = repeaterMessageBox.LastSeenTime
+        msa.CreatedDate = repeaterMessageBox.CreatedDate
+        cls.db.save_table_object(msa, False)
+        cls.db.delete_table_object(RepeaterMessageBoxData, repeaterMessageBox.id)
+
+    @classmethod
     def increase_scheduled_time(cls, timeS):
         cls.init()
         sql = ("SELECT * FROM MessageSubscriptionData WHERE "
                "SubscriptionId in (select Id from SubscriberData where TypeName = 'LORA')")
         subs = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql)
         for sub in subs:
-            sub.ScheduledTime = timedelta(seconds=timeS) + \
-                                max(sub.ScheduledTime if sub.ScheduledTime is not None else datetime.min,
-                                    datetime.now())
+            sub.ScheduledTime = max(sub.ScheduledTime if sub.ScheduledTime is not None else datetime.min,
+                                    datetime.now()+ timedelta(seconds=timeS))
             cls.db.save_table_object(sub, False)
 
-    @classmethod
-    def get_repeater_message_to_add(cls):
-        cls.init()
-        repeaterMessages = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData,
-                                                      "SELECT * FROM RepeaterMessageBoxData WHERE "
-                                                      "(RelayRequested = 1 or NoOfTimesSeen > 1) and AddedToMessageBoxTime IS NULL ORDER BY "
-                                                      "SportIdentHour, SportIdentMinute, SportIdentSecond LIMIT 1")
-        if len(repeaterMessages) > 0:
-            return repeaterMessages[0]
-        return None
-
-    @classmethod
-    def set_relay_message_added_to_message_box(cls, repeaterMessageBoxId, messageBoxId):
-        cls.init()
-        cls.db.execute_SQL("UPDATE RepeaterMessageBoxData SET AddedToMessageBoxTime = ?, MessageBoxId = ? WHERE id = ?", (datetime.now(), messageBoxId, repeaterMessageBoxId))
-        return None
+    #@classmethod
+    #def set_relay_message_added_to_message_box(cls, repeaterMessageBoxId, messageBoxId):
+    #    cls.init()
+    #    cls.db.execute_SQL("UPDATE RepeaterMessageBoxData SET AddedToMessageBoxTime = ?, MessageBoxId = ? WHERE id = ?", (datetime.now(), messageBoxId, repeaterMessageBoxId))
+    #    return None
 
 #MessageSubscriptionView
     @classmethod
@@ -458,7 +570,7 @@ class DatabaseHelper:
         if cnt > 0:
             now = datetime.now()
             sql = ("SELECT MessageSubscriptionData.id, "
-                   "MessageSubscriptionData.CustomData, "
+                   "MessageSubscriptionData.MessageID, "
                    "MessageSubscriptionData.MessageNumber, "
                    "MessageSubscriptionData.SentDate, "
                    "MessageSubscriptionData.SendFailedDate, "
@@ -483,7 +595,7 @@ class DatabaseHelper:
                    "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
                    "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
                    "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
-                   "MessageSubscriptionData.ScheduledTime < '%s' AND "
+                   "(MessageSubscriptionData.ScheduledTime IS NULL OR MessageSubscriptionData.ScheduledTime < '%s') AND "
                    "MessageSubscriptionData.NoOfSendTries < %s AND "
                    "MessageSubscriptionData.FindAdapterTries < %s "
                    "ORDER BY MessageSubscriptionData.ScheduledTime asc, "
@@ -499,7 +611,7 @@ class DatabaseHelper:
         cnt = cls.db.get_scalar_by_SQL(sql)
         if cnt > 0:
             sql = ("SELECT MessageSubscriptionData.id, "
-                   "MessageSubscriptionData.CustomData, "
+                   "MessageSubscriptionData.MessageID, "
                    "MessageSubscriptionData.MessageNumber, "
                    "MessageSubscriptionData.SentDate, "
                    "MessageSubscriptionData.SendFailedDate, "
@@ -577,9 +689,36 @@ class DatabaseHelper:
             msgToUpdate.LastSeenTime = datetime.now()
             return cls.db.save_table_object(msgToUpdate, False)
         else:
+            repeaterMessageBoxData.LastSeenTime = datetime.now()
             return cls.db.save_table_object(repeaterMessageBoxData, False)
 
-    #InputAdapterInstances
+    @classmethod
+    def archive_old_repeater_message(cls):
+        cls.init()
+        fiveMinutesAgo = datetime.now() - timedelta(seconds=300)
+        sql = ("INSERT INTO RepeaterMessageBoxArchiveData SELECT NULL, "
+               "id as OrigId, MessageData, MessageTypeName, PowerCycleCreated, "
+                "InstanceName, MessageSubTypeName, ChecksumOK, MessageSource, "
+                "SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, "
+                "MessageID, AckRequested, RelayRequested, NoOfTimesSeen, NoOfTimesAckSeen, "
+                "Acked, AckedTime, MessageBoxId, AddedToMessageBoxTime,LastSeenTime, CreatedDate "
+                "FROM RepeaterMessageBoxData WHERE LastSeenTime < ?")
+        cls.db.execute_SQL(sql, (fiveMinutesAgo,))
+        sql = ("DELETE FROM RepeaterMessageBoxData WHERE LastSeenTime < ? ")
+        cls.db.execute_SQL(sql, (fiveMinutesAgo,))
+
+    @classmethod
+    def get_repeater_message_to_add(cls):
+        cls.init()
+        repeaterMessages = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData,
+                                                      "SELECT * FROM RepeaterMessageBoxData WHERE "
+                                                      "(RelayRequested = 1 or NoOfTimesSeen > 1) and AddedToMessageBoxTime IS NULL ORDER BY "
+                                                      "SportIdentHour, SportIdentMinute, SportIdentSecond LIMIT 1")
+        if len(repeaterMessages) > 0:
+            return repeaterMessages[0]
+        return None
+
+#InputAdapterInstances
     @classmethod
     def update_input_adapter_instances(cls, inputAdapterObjects):
         cls.init()

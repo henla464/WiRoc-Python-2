@@ -3,7 +3,7 @@ from datamodel.datamodel import SIMessage
 from battery import Battery
 from settings.settings import SettingsClass
 
-class SIToLoraTransform(object):
+class RepeaterToLoraAckTransform(object):
 
     @staticmethod
     def GetInputMessageType():
@@ -42,8 +42,9 @@ class SIToLoraTransform(object):
             loraMessage2 = LoraRadioMessage(5, messageType, False, False)
             if incomingMsgType == loraMsg.MessageTypeStatus:
                 loraMessage2 = LoraRadioMessage(0, messageType, False, False)
+            loraMessage2.SetAcknowledgementRequested(msgSub.AckReceivedFromReceiver)  # indicate ack received from receiver
             loraMessage2.SetRepeaterBit(True)  # indicate this ack comes from repeater
             loraMessage2.SetMessageIDToAck(loraMsg.GetMessageID())
             loraMessage2.UpdateChecksum()
-            return {"Data": loraMessage2.GetByteArray(), "CustomData": loraMessage2.GetMessageID()}
+            return {"Data": loraMessage2.GetByteArray(), "MessageID": loraMessage2.GetMessageID()}
         return None

@@ -50,6 +50,8 @@ class Main:
                     msgSubscription = MessageSubscriptionData()
                     msgSubscription.MessageBoxId = msg.id
                     msgSubscription.SubscriptionId = subscription.id
+                    msgSubscription.ScheduledTime = datetime.now()
+                    msgSubscription.MessageNumber = MessageSubscriptionData.GetNextMessageNumber()
                     DatabaseHelper.save_message_subscription(msgSubscription)
 
             # archive the messages that does not have subscriptions
@@ -137,6 +139,7 @@ class Main:
                 SettingsClass.IsDirty("StatusMessageBaseInterval", True, True) #force check dirty in db
                 #SettingsClass.SetMessagesToSendExists(True)
                 self.archiveFailedMessages()
+                DatabaseHelper.archive_old_repeater_message()
                 self.displayChannel()
                 self.updateWifiPowerSaving()
                 Battery.Tick()
@@ -186,13 +189,16 @@ class Main:
                                     rmbd.SportIdentHour = siMsg.GetHour()
                                     rmbd.SportIdentMinute = siMsg.GetMinute()
                                     rmbd.SportIdentSecond = siMsg.GetSeconds()
-                                rmbd.MessageID = inputData["CustomData"]
-                                rmbd.AckRequested = loraMessage.GetAckRequested()
+                                rmbd.MessageID = inputData["MessageID"]
+                                rmbd.AckRequested = loraMessage.GetAcknowledgementRequested()
                                 rmbd.RelayRequested = loraMessage.GetRepeaterBit()
                                 rmbd.NoOfTimesSeen = 1
                                 rmbd.NoOfTimesAckSeen = 0
                                 rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
                             else:
+                                #if messageTypeName == "LORA" and SettingsClass.GetWiRocMode() == "RECEIVE":
+                                #    DatabaseHelper.archive_repeater_lora_message_subscription_after_ack(messageID)
+
                                 mbd = MessageBoxData()
                                 mbd.MessageData = inputData["Data"]
                                 mbd.MessageTypeName = messageTypeName
@@ -219,6 +225,8 @@ class Main:
                                         msgSubscription.ScheduledTime = now
                                     msgSubscription.MessageBoxId = mbdid
                                     msgSubscription.SubscriptionId = subscription.id
+                                    if inputData["MessageID"]:
+                                        msgSubscription.MessageID = inputData["MessageID"] # used for messages from repeater table
                                     msgSubscription.MessageNumber = MessageSubscriptionData.GetNextMessageNumber()
                                     DatabaseHelper.save_message_subscription(msgSubscription)
                                     anySubscription = True
@@ -227,16 +235,20 @@ class Main:
                                     logging.info("Start::Run() Message has no subscribers, being archived, msgid: " + str(mbdid))
                                     DatabaseHelper.archive_message_box(mbdid)
                         elif inputData["MessageType"] == "ACK":
-                            customData = inputData["CustomData"]
-                            logging.debug("Start::Run() Received ack, for message number: " + str(customData[0]))
+                            messageID = inputData["MessageID"]
+                            logging.debug("Start::Run() Received ack, for message number: " + str(messageID[0]))
+                            loraMessage = inputData["LoraRadioMessage"]
+                            destinationHasAcked = loraMessage.GetAcknowledgementRequested()
                             wirocMode = SettingsClass.GetWiRocMode()
                             if wirocMode == "REPEATER":
                                 logging.info("Start::Run() In repeater mode")
-                                DatabaseHelper.repeater_message_acked(customData)
+                                DatabaseHelper.repeater_message_acked(messageID)
+                                DatabaseHelper.archive_repeater_lora_message_subscription_after_ack(messageID)
+                                if destinationHasAcked:
+                                    DatabaseHelper.set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(messageID)
                             else:
-                                DatabaseHelper.archive_message_subscription_after_ack(customData)
+                                DatabaseHelper.archive_message_subscription_after_ack(messageID)
 
-                            loraMessage = inputData["LoraRadioMessage"]
                             receivedFromRepeater = loraMessage.GetRepeaterBit()
                             loraSubAdapters = [subAdapter for subAdapter in self.subscriberAdapters if subAdapter.GetTypeName == "LORA"]
                             if len(loraSubAdapters) > 0:
@@ -247,10 +259,11 @@ class Main:
                                     loraSubAdapter.AddSuccessWithoutRepeaterBit()
 
                             if wirocMode == "SEND" and receivedFromRepeater:
-                                # delay an extra message + ack, same as a normal delay after a message is sent
-                                # because the repeater should also send and receive ack
-                                timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(35) # message 23 + ack 10 + 2 extra
-                                DatabaseHelper.increase_scheduled_time(timeS)
+                                if not destinationHasAcked:
+                                    # delay an extra message + ack, same as a normal delay after a message is sent
+                                    # because the repeater should also send and receive ack
+                                    timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(35) # message 23 + ack 10 + 2 extra
+                                    DatabaseHelper.increase_scheduled_time(timeS)
 
 
                 if self.messagesToSendExists:
@@ -268,8 +281,8 @@ class Main:
                                     transformClass = subAdapter.GetTransform(msgSub.TransformName)
                                     transformedData = transformClass.Transform(msgSub, subAdapter)
                                     if transformedData is not None:
-                                        if transformedData["CustomData"] is not None:
-                                            DatabaseHelper.update_customdata(msgSub.id, transformedData["CustomData"])
+                                        if transformedData["MessageID"] is not None:
+                                            DatabaseHelper.update_messageid(msgSub.id, transformedData["MessageID"])
 
                                         success = subAdapter.SendData(transformedData["Data"])
                                         if success:

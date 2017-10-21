@@ -45,13 +45,13 @@ class LoraToSITransform(object):
                 siMsg.AddFooter()
                 dataInHex = ''.join(format(x, '02x') for x in siMsg.GetByteArray())
                 logging.debug("LoraToSITransform::Transform() data: " + dataInHex)
-                return {"Data": siMsg.GetByteArray(), "CustomData": None}
+                return {"Data": siMsg.GetByteArray(), "MessageID": None}
             else:
                 logging.debug("LoraToSITransform::Transform() return None, not connected to wiroc device")
                 return None
         elif loraMessage.GetMessageType() == LoraRadioMessage.MessageTypeSIPunch:
             logging.debug("LoraToSITransform::Transform() MessageTypeSIPunch")
-            return {"Data":payloadData[LoraRadioMessage.GetHeaderSize():], "CustomData": None}
+            return {"Data":payloadData[LoraRadioMessage.GetHeaderSize():], "MessageID": None}
         else:
             logging.error("LoraToSITransform::Transform() return None, unknown lora message type")
             return None

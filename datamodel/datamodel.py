@@ -109,6 +109,41 @@ class RepeaterMessageBoxData(object):
         self.LastSeenTime = None
         self.CreatedDate = None
 
+class RepeaterMessageBoxArchiveData(object):
+    columns = [("OrigId", int) ,("MessageData", bytes), ("MessageTypeName", str), ("PowerCycleCreated", int),
+               ("InstanceName", str), ("MessageSubTypeName", str), ("ChecksumOK", bool),
+               ("MessageSource", str), ("SICardNumber", int), ("SportIdentHour", int),
+               ("SportIdentMinute", int), ("SportIdentSecond", int), ("MessageID", bytes),
+               ("AckRequested", bool),
+               ("RelayRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", int),
+               ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int),
+               ("AddedToMessageBoxTime", datetime), ("LastSeenTime", datetime), ("CreatedDate", datetime)]
+
+    def __init__(self):
+        self.id = None
+        self.OrigId = None
+        self.MessageData = None
+        self.MessageTypeName = None
+        self.PowerCycleCreated = None
+        self.InstanceName = None
+        self.MessageSubTypeName = None
+        self.ChecksumOK = None
+        self.MessageSource = None
+        self.SICardNumber = None
+        self.SportIdentHour = None
+        self.SportIdentMinute = None
+        self.SportIdentSecond = None
+        self.MessageID = None
+        self.AckRequested = None
+        self.RelayRequested = None
+        self.NoOfTimesSeen = None
+        self.NoOfTimesAckSeen = None
+        self.Acked = False
+        self.AckedTime = None
+        self.MessageBoxId = None
+        self.AddedToMessageBoxTime = None
+        self.LastSeenTime = None
+        self.CreatedDate = None
 
 class SubscriberData(object):
     columns = [("TypeName", str), ("InstanceName", str)]
@@ -155,19 +190,19 @@ class SubscriptionData(object):
 
 
 class MessageSubscriptionData(object):
-    columns = [("CustomData", bytes), ("MessageNumber", int), ("SentDate", datetime),
-               ("SendFailedDate", datetime),
+    columns = [("MessageID", bytes), ("AckReceivedFromReceiver", bool), ("MessageNumber", int),
+               ("SentDate", datetime), ("SendFailedDate", datetime),
                ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
                ("NoOfSendTries", int), ("AckReceivedDate", datetime),
                ("ScheduledTime", datetime), ("MessageBoxId", int),
                ("SubscriptionId", int)]
     CurrentMessageNumber = 0
 
-    def __init__(self, CustomData=None, MessageNumber=None, SentDate=None, SendFailedDate=None,
+    def __init__(self, MessageID=None, MessageNumber=None, SentDate=None, SendFailedDate=None,
                  FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
                  NoOfSendTries=0, ScheduledTime=None, MessageBoxId=None, SubscriptionId=None):
         self.id = None
-        self.CustomData = CustomData
+        self.MessageID = MessageID
         self.MessageNumber = MessageNumber
         self.SentDate = SentDate
         self.SendFailedDate = SendFailedDate
@@ -186,7 +221,7 @@ class MessageSubscriptionData(object):
 
 
 class MessageSubscriptionArchiveData(object):
-    columns = [ ("OrigId", int), ("CustomData", bytes), ("MessageNumber", int),
+    columns = [ ("OrigId", int), ("MessageID", bytes), ("MessageNumber", int),
                 ("SentDate", datetime), ("SendFailedDate", datetime),
                 ("FindAdapterTryDate", datetime),("FindAdapterTries", int),
                 ("NoOfSendTries", int), ("AckReceivedDate", datetime),
@@ -194,13 +229,13 @@ class MessageSubscriptionArchiveData(object):
                 ("SubscriptionId", int),
                 ("SubscriberTypeName", str), ("TransformName", str),]
 
-    def __init__(self, CustomData=None, MessageNumber=None, SentDate=None, SendFailedDate=None,
+    def __init__(self, MessageID=None, MessageNumber=None, SentDate=None, SendFailedDate=None,
                  FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
                  NoOfSendTries=0, ScheduledTime=None, MessageBoxId=None,
                  SubscriptionId=None,
                  SubscriberTypeName = None, TransformName = None):
         self.id = None
-        self.CustomData = CustomData
+        self.MessageID = MessageID
         self.MessageNumber = MessageNumber
         self.SentDate = SentDate
         self.SendFailedDate = SendFailedDate
@@ -216,7 +251,7 @@ class MessageSubscriptionArchiveData(object):
 
 
 class MessageSubscriptionView(object):
-    columns = [("CustomData", bytes),  ("MessageNumber", int), ("SentDate", datetime), ("SendFailedDate", datetime),
+    columns = [("MessageID", bytes),  ("MessageNumber", int), ("SentDate", datetime), ("SendFailedDate", datetime),
                ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
                ("NoOfSendTries", int), ("AckReceivedDate", datetime), ("MessageBoxId", int),
                ("SubscriptionId", int),
@@ -228,7 +263,7 @@ class MessageSubscriptionView(object):
 
     def __init__(self):
         self.id = None
-        self.CustomData = None
+        self.MessageID = None
         self.MessageNumber = None
         self.SentDate = None
         self.SendFailedDate = None
@@ -363,12 +398,12 @@ class LoraRadioMessage(object):
 
     def GetMessageType(self):
         if len(self.MessageData) >= 3:
-            return self.MessageData[2] & 0x3F
+            return self.MessageData[2] & 0x1F
         return None
 
-    def SetMessageIDToAck(self, customData):
-        self.MessageData[3] = customData[0]
-        self.AddPayload(customData[1:])
+    def SetMessageIDToAck(self, messageID):
+        self.MessageData[3] = messageID[0]
+        self.AddPayload(messageID[1:])
 
     def GetMessageID(self):
         if self.GetMessageType() == LoraRadioMessage.MessageTypeSIPunch:
@@ -378,9 +413,6 @@ class LoraRadioMessage(object):
             return bytearray(bytes([self.MessageData[3]]))
         elif self.GetMessageType() == LoraRadioMessage.MessageTypeLoraAck:
             return None
-
-    def GetAckRequested(self):
-        return self.MessageData[2] & 0x80
 
     def GetRepeaterBit(self):
         return self.MessageData[2] & 0x20

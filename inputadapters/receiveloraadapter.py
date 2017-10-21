@@ -107,12 +107,12 @@ class ReceiveLoraAdapter(object):
                     SettingsClass.SetHasReceivedMessageFromRepeater()
                 messageType = loraMessage.GetMessageType()
                 if messageType == LoraRadioMessage.MessageTypeLoraAck:
-                    customData =  loraMessage.GetMessageIDThatIsAcked()
-                    return {"MessageType": "ACK", "MessageSource":"Lora", "MessageSubTypeName": "Ack", "CustomData": customData, "ChecksumOK": True, "LoraRadioMessage": loraMessage}
+                    messageID =  loraMessage.GetMessageIDThatIsAcked()
+                    return {"MessageType": "ACK", "MessageSource":"Lora", "MessageSubTypeName": "Ack", "MessageID": messageID, "ChecksumOK": True, "LoraRadioMessage": loraMessage}
                 elif messageType == LoraRadioMessage.MessageTypeStatus:
-                    if SettingsClass.GetWiRocMode() == "RECEIVE":
-                        if not repeaterRequested and ackRequested:
-                            time.sleep(0.05)
+                    if ackRequested and \
+                            ((SettingsClass.GetWiRocMode() == "RECEIVE" and not repeaterRequested)\
+                            or (SettingsClass.GetWiRocMode() == "REPEATER" and repeaterRequested)):
                             messageType = LoraRadioMessage.MessageTypeLoraAck
                             loraMessage2 = LoraRadioMessage(0, messageType, False, False)
                             loraMessage2.SetMessageIDToAck(loraMessage.GetMessageID())
@@ -120,9 +120,9 @@ class ReceiveLoraAdapter(object):
                             self.loraRadio.SendData(loraMessage2.GetByteArray())
                     relayPathNo = loraMessage.GetLastRelayPathNoFromStatusMessage()
                     SettingsClass.UpdateRelayPathNumber(relayPathNo)
-                    return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "Status", "Data": receivedData, "CustomData": loraMessage.GetMessageID(), "LoraRadioMessage": loraMessage, "ChecksumOK": True}
+                    return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "Status", "Data": receivedData, "MessageID": loraMessage.GetMessageID(), "LoraRadioMessage": loraMessage, "ChecksumOK": True}
                 else:
-                    customData = loraMessage.GetMessageID()
+                    messageID = loraMessage.GetMessageID()
                     if SettingsClass.GetWiRocMode() == "RECEIVE":
                         #todo if repeater is requested we should let repeater ack instead and
                         #only send ack if we don't receive an ack from the repeater
@@ -130,12 +130,13 @@ class ReceiveLoraAdapter(object):
                             time.sleep(0.05)
                             messageType = LoraRadioMessage.MessageTypeLoraAck
                             loraMessage2 = LoraRadioMessage(5, messageType, False, False)
-                            loraMessage2.SetMessageIDToAck(customData)
+                            loraMessage2.SetAcknowledgementRequested(True) # indicate this is receiver acking
+                            loraMessage2.SetMessageIDToAck(messageID)
                             loraMessage2.UpdateChecksum()
                             self.loraRadio.SendData(loraMessage2.GetByteArray())
-                    return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "SIMessage", "Data": receivedData, "CustomData": customData, "LoraRadioMessage": loraMessage, "ChecksumOK": True}
+                    return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "SIMessage", "Data": receivedData, "MessageID": messageID, "LoraRadioMessage": loraMessage, "ChecksumOK": True}
             else:
-                return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName":"Unknown", "Data": receivedData, "CustomData":None, "ChecksumOK": False}
+                return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName":"Unknown", "Data": receivedData, "MessageID":None, "ChecksumOK": False}
 
         return None
 

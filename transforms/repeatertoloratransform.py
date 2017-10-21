@@ -46,7 +46,7 @@ class RepeaterToLoraTransform(object):
             loraMsg.SetMessageNumber(msgSub.MessageNumber)
             loraMsg.SetRepeaterBit(False)
             loraMsg.UpdateChecksum()
-            return {"Data": loraMsg.GetByteArray(), "CustomData": loraMsg.GetMessageID()}
+            return {"Data": loraMsg.GetByteArray(), "MessageID": loraMsg.GetMessageID()}
         elif loraMsg.GetMessageType() == loraMsg.MessageTypeStatus:
             loraMsg.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(),
                                                     Battery.GetBatteryPercent4Bits())
@@ -57,5 +57,5 @@ class RepeaterToLoraTransform(object):
             loraMsg.SetMessageNumber(msgSub.MessageNumber)
             loraMsg.SetRepeaterBit(False)
             loraMsg.UpdateChecksum()
-            return {"Data": loraMsg.GetByteArray(), "CustomData": loraMsg.GetMessageID()}
+            return {"Data": loraMsg.GetByteArray(), "MessageID": loraMsg.GetMessageID()}
         return None

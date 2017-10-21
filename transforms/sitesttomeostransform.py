@@ -35,5 +35,5 @@ class SITestToLoraTransform(object):
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
         if siMsg.GetMessageType() == SIMessage.SIPunch:
-            return {"Data": Utils.GetMeosDataFromSIData(siMsg), "CustomData": None}
+            return {"Data": Utils.GetMeosDataFromSIData(siMsg), "MessageID": None}
         return None

@@ -70,7 +70,7 @@ class SendLoraAdapter(object):
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SIToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "StatusToLoraTransform")
-                #DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraToLoraAckTransform")
+                DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraToLoraAckTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterToLoraAckTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterToLoraTransform")
 
@@ -120,6 +120,7 @@ class SendLoraAdapter(object):
         transforms.append("StatusToLoraTransform")
         transforms.append("RepeaterToLoraAckTransform")
         transforms.append("RepeaterToLoraTransform")
+        transforms.append("LoraToLoraAckTransform")
         return transforms
 
     def SetTransform(self, transformClass):
@@ -167,10 +168,10 @@ class SendLoraAdapter(object):
         noOfBytesToDelay = 25
         if SettingsClass.GetAcknowledgementRequested():
             noOfBytesToDelay += 10  # one message 23 + one ack 10 + 2 bytes extra
-        if wMode == "SEND":
-            if not self.GetShouldRequestRepeater() and \
-                SettingsClass.GetHasReceivedMessageFromRepeater():
-                noOfBytesToDelay += 10 # wait also for repeaters ack
+        #if wMode == "SEND":
+        #    if self.GetShouldRequestRepeater() and \
+        #        SettingsClass.GetHasReceivedMessageFromRepeater():
+        #        noOfBytesToDelay += 10 # wait also for repeaters ack
                 # (if repeater ack is received then the time will extended again)
         timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(noOfBytesToDelay)
         return timeS
