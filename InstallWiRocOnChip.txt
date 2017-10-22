@@ -206,3 +206,14 @@ sudo BLENO_ADVERTISING_INTERVAL=500 node <your file>.js
 ---
 sudo hciconfig hci0 reset
 
+---
+Display
+
+
+#http://pillow.readthedocs.io/en/3.0.x/installation.html
+#pip3 install Pillow 
+#sudo apt-get install libtiff5-dev libjpeg8-dev zlib1g-dev \
+#    libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python-tk
+
+sudo apt-get install libfreetype6-dev
+sudo apt-get install python-imaging
