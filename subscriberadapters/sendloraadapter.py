@@ -205,6 +205,8 @@ class SendLoraAdapter(object):
         dateTimeToUse = max(min(self.successWithoutRepeaterBitQueue[-1], self.sentQueueWithoutRepeaterBit[-1]), datetime.now() - timedelta(minutes=30))
         successCount = sum(1 for successDate in self.successWithoutRepeaterBitQueue if successDate >= dateTimeToUse)
         sentCount = sum(1 for sentDate in self.sentQueueWithoutRepeaterBit if sentDate >= dateTimeToUse)
+        if sentCount == 0:
+            sentCount = 1
         return int((successCount / sentCount)*100)
 
     def GetSuccessRateToRepeater(self):
@@ -212,6 +214,8 @@ class SendLoraAdapter(object):
                             datetime.now() - timedelta(minutes=30))
         successCount = sum(1 for successDate in self.successWithRepeaterBitQueue if successDate >= dateTimeToUse)
         sentCount = sum(1 for sentDate in self.sentQueueWithRepeaterBit if sentDate >= dateTimeToUse)
+        if sentCount == 0:
+            sentCount = 1
         return int((successCount / sentCount) * 100)
 
     def GetShouldRequestRepeater(self):
