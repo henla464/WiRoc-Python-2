@@ -234,7 +234,7 @@ class SendLoraAdapter(object):
         msg = LoraRadioMessage()
         msg.AddPayload(messageData)
         SettingsClass.SetTimeOfLastMessageSentToLora()
-        if SettingsClass.GetWiRocMode() == "SEND" and msg.GetRepeaterBit():
+        if SendLoraAdapter.WiRocMode == "SEND" and msg.GetRepeaterBit():
             self.AddSentWithRepeaterBit()
         else:
             self.AddSentWithoutRepeaterBit()

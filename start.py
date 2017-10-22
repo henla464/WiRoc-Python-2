@@ -15,6 +15,7 @@ from chipGPIO.chipGPIO import *
 import socket
 from itertools import repeat
 from battery import Battery
+from utils.utils import Utils
 
 class Main:
     def __init__(self):
@@ -242,7 +243,10 @@ class Main:
                                     DatabaseHelper.archive_message_box(mbdid)
                         elif inputData["MessageType"] == "ACK":
                             messageID = inputData["MessageID"]
-                            logging.debug("Start::Run() Received ack, for message number: " + str(messageID[0]))
+                            if len(messageID) == 6:
+                                logging.debug("Start::Run() Received ack, for status message number: " + str(messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6])))
+                            else:
+                                logging.debug("Start::Run() Received ack, for status message number: " + str(messageID[0]))
                             loraMessage = inputData["LoraRadioMessage"]
                             destinationHasAcked = loraMessage.GetAcknowledgementRequested()
                             wirocMode = SettingsClass.GetWiRocMode()

@@ -431,13 +431,13 @@ class SettingsClass(object):
         if SettingsClass.statusMessageBaseInterval is None: #skip isDirty call, check directly
             sett = DatabaseHelper.get_setting_by_key('StatusMessageBaseInterval')
             if sett is None:
-                SettingsClass.SetSetting('StatusMessageBaseInterval', 60)
-                SettingsClass.statusMessageBaseInterval = 60
+                SettingsClass.SetSetting('StatusMessageBaseInterval', 300)
+                SettingsClass.statusMessageBaseInterval = 300
             else:
                 try:
                     SettingsClass.statusMessageBaseInterval = int(sett.Value)
                 except ValueError:
-                    SettingsClass.statusMessageBaseInterval = 60
+                    SettingsClass.statusMessageBaseInterval = 300
         return SettingsClass.statusMessageBaseInterval + (7*SettingsClass.GetRelayPathNumber()) + random.randint(0, 9)
 
     @staticmethod
