@@ -577,6 +577,7 @@ class DatabaseHelper:
             now = datetime.now()
             sql = ("SELECT MessageSubscriptionData.id, "
                    "MessageSubscriptionData.MessageID, "
+                   "MessageSubscriptionData.AckReceivedFromReceiver, "
                    "MessageSubscriptionData.MessageNumber, "
                    "MessageSubscriptionData.SentDate, "
                    "MessageSubscriptionData.SendFailedDate, "

@@ -252,7 +252,7 @@ class MessageSubscriptionArchiveData(object):
 
 
 class MessageSubscriptionView(object):
-    columns = [("MessageID", bytes),  ("MessageNumber", int), ("SentDate", datetime), ("SendFailedDate", datetime),
+    columns = [("MessageID", bytes),  ("AckReceivedFromReceiver", bool), ("MessageNumber", int), ("SentDate", datetime), ("SendFailedDate", datetime),
                ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
                ("NoOfSendTries", int), ("AckReceivedDate", datetime), ("MessageBoxId", int),
                ("SubscriptionId", int),
@@ -265,6 +265,7 @@ class MessageSubscriptionView(object):
     def __init__(self):
         self.id = None
         self.MessageID = None
+        self.AckReceivedFromReceiver = None
         self.MessageNumber = None
         self.SentDate = None
         self.SendFailedDate = None
