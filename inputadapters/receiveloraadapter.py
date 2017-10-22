@@ -107,8 +107,9 @@ class ReceiveLoraAdapter(object):
                     SettingsClass.SetHasReceivedMessageFromRepeater()
                 messageType = loraMessage.GetMessageType()
                 if messageType == LoraRadioMessage.MessageTypeLoraAck:
-                    messageID =  loraMessage.GetMessageIDThatIsAcked()
-                    return {"MessageType": "ACK", "MessageSource":"Lora", "MessageSubTypeName": "Ack", "MessageID": messageID, "ChecksumOK": True, "LoraRadioMessage": loraMessage}
+                    if ((SettingsClass.GetWiRocMode() == "SEND") or (SettingsClass.GetWiRocMode() == "REPEATER")):
+                        messageID =  loraMessage.GetMessageIDThatIsAcked()
+                        return {"MessageType": "ACK", "MessageSource":"Lora", "MessageSubTypeName": "Ack", "MessageID": messageID, "ChecksumOK": True, "LoraRadioMessage": loraMessage}
                 elif messageType == LoraRadioMessage.MessageTypeStatus:
                     if ackRequested and \
                             ((SettingsClass.GetWiRocMode() == "RECEIVE" and not repeaterRequested)
