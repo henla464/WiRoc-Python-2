@@ -80,9 +80,9 @@ class RepeaterMessageBoxData(object):
                ("MessageSource", str), ("SICardNumber", int), ("SportIdentHour", int),
                ("SportIdentMinute", int), ("SportIdentSecond", int), ("MessageID", bytes),
                ("AckRequested", bool),
-               ("RelayRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", int),
+               ("RepeaterRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", int),
                ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int),
-               ("AddedToMessageBoxTime", datetime), ("LastSeenTime", datetime), ("CreatedDate", datetime)]
+               ("LastSeenTime", datetime), ("CreatedDate", datetime)]
 
     def __init__(self):
         self.id = None
@@ -99,7 +99,7 @@ class RepeaterMessageBoxData(object):
         self.SportIdentSecond = None
         self.MessageID = None
         self.AckRequested = None
-        self.RelayRequested = None
+        self.RepeaterRequested = None
         self.NoOfTimesSeen = None
         self.NoOfTimesAckSeen = None
         self.Acked = False
@@ -115,9 +115,10 @@ class RepeaterMessageBoxArchiveData(object):
                ("MessageSource", str), ("SICardNumber", int), ("SportIdentHour", int),
                ("SportIdentMinute", int), ("SportIdentSecond", int), ("MessageID", bytes),
                ("AckRequested", bool),
-               ("RelayRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", int),
+               ("RepeaterRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", int),
                ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int),
-               ("AddedToMessageBoxTime", datetime), ("LastSeenTime", datetime), ("CreatedDate", datetime)]
+               ("AddedToMessageBoxTime", datetime), ("LastSeenTime", datetime), ("OrigCreatedDate", datetime),
+               ("CreatedDate", datetime)]
 
     def __init__(self):
         self.id = None
@@ -135,7 +136,7 @@ class RepeaterMessageBoxArchiveData(object):
         self.SportIdentSecond = None
         self.MessageID = None
         self.AckRequested = None
-        self.RelayRequested = None
+        self.RepeaterRequested = None
         self.NoOfTimesSeen = None
         self.NoOfTimesAckSeen = None
         self.Acked = False
@@ -143,6 +144,7 @@ class RepeaterMessageBoxArchiveData(object):
         self.MessageBoxId = None
         self.AddedToMessageBoxTime = None
         self.LastSeenTime = None
+        self.OrigCreatedDate = None
         self.CreatedDate = None
 
 class SubscriberData(object):
@@ -417,7 +419,7 @@ class LoraRadioMessage(object):
             return None
 
     def GetRepeaterBit(self):
-        return self.MessageData[2] & 0x20
+        return (self.MessageData[2] & 0x20) > 0
 
     def SetRepeaterBit(self, reqRepeaterOrRepeaterAck):
         if reqRepeaterOrRepeaterAck:

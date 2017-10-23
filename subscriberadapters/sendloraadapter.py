@@ -66,7 +66,7 @@ class SendLoraAdapter(object):
         if len(SendLoraAdapter.Instances) > 0:
             if SendLoraAdapter.WiRocMode is None or SendLoraAdapter.WiRocMode != SettingsClass.GetWiRocMode():
                 SendLoraAdapter.WiRocMode = SettingsClass.GetWiRocMode()
-                enableSendTransforms = (SendLoraAdapter.WiRocMode == "SEND" or SendLoraAdapter.WiRocMode == "REPEATER")
+                enableSendTransforms = (SendLoraAdapter.WiRocMode == "SENDER" or SendLoraAdapter.WiRocMode == "REPEATER")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SIToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "StatusToLoraTransform")
@@ -168,7 +168,7 @@ class SendLoraAdapter(object):
         noOfBytesToDelay = 25
         if SettingsClass.GetAcknowledgementRequested():
             noOfBytesToDelay += 10  # one message 23 + one ack 10 + 2 bytes extra
-        #if wMode == "SEND":
+        #if wMode == "SENDER":
         #    if self.GetShouldRequestRepeater() and \
         #        SettingsClass.GetHasReceivedMessageFromRepeater():
         #        noOfBytesToDelay += 10 # wait also for repeaters ack
@@ -206,7 +206,7 @@ class SendLoraAdapter(object):
         successCount = sum(1 for successDate in self.successWithoutRepeaterBitQueue if successDate >= dateTimeToUse)
         sentCount = sum(1 for sentDate in self.sentQueueWithoutRepeaterBit if sentDate >= dateTimeToUse)
         if sentCount == 0:
-            sentCount = 1
+            return 100
         return int((successCount / sentCount)*100)
 
     def GetSuccessRateToRepeater(self):
@@ -215,7 +215,7 @@ class SendLoraAdapter(object):
         successCount = sum(1 for successDate in self.successWithRepeaterBitQueue if successDate >= dateTimeToUse)
         sentCount = sum(1 for sentDate in self.sentQueueWithRepeaterBit if sentDate >= dateTimeToUse)
         if sentCount == 0:
-            sentCount = 1
+            return 100
         return int((successCount / sentCount) * 100)
 
     def GetShouldRequestRepeater(self):
@@ -234,7 +234,7 @@ class SendLoraAdapter(object):
         msg = LoraRadioMessage()
         msg.AddPayload(messageData)
         SettingsClass.SetTimeOfLastMessageSentToLora()
-        if SendLoraAdapter.WiRocMode == "SEND" and msg.GetRepeaterBit():
+        if SendLoraAdapter.WiRocMode == "SENDER" and msg.GetRepeaterBit():
             self.AddSentWithRepeaterBit()
         else:
             self.AddSentWithoutRepeaterBit()

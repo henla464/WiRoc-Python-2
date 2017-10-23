@@ -193,14 +193,14 @@ class Main:
                                     rmbd.SportIdentSecond = siMsg.GetSeconds()
                                 rmbd.MessageID = messageID
                                 rmbd.AckRequested = loraMessage.GetAcknowledgementRequested()
-                                rmbd.RelayRequested = loraMessage.GetRepeaterBit()
+                                rmbd.RepeaterRequested = loraMessage.GetRepeaterBit()
                                 rmbd.NoOfTimesSeen = 1
                                 rmbd.NoOfTimesAckSeen = 0
                                 rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
                             else:
 
                                 if messageTypeName == "LORA" and \
-                                    SettingsClass.GetWiRocMode() == "RECEIVE":
+                                    SettingsClass.GetWiRocMode() == "RECEIVER":
                                     loraMessage = loraMessage = inputData.get("LoraRadioMessage", None)
                                     if loraMessage.GetRepeaterBit():
                                         # Message received from repeater. Archive any already scheduled ack message
@@ -244,7 +244,7 @@ class Main:
                         elif inputData["MessageType"] == "ACK":
                             messageID = inputData["MessageID"]
                             if len(messageID) == 6:
-                                logging.debug("Start::Run() Received ack, for status message number: " + str(messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6])))
+                                logging.debug("Start::Run() Received ack, for message number: " + str(messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6])))
                             else:
                                 logging.debug("Start::Run() Received ack, for status message number: " + str(messageID[0]))
                             loraMessage = inputData["LoraRadioMessage"]
@@ -268,7 +268,7 @@ class Main:
                                 else:
                                     loraSubAdapter.AddSuccessWithoutRepeaterBit()
 
-                            if wirocMode == "SEND" and receivedFromRepeater:
+                            if wirocMode == "SENDER" and receivedFromRepeater:
                                 if not destinationHasAcked:
                                     # delay an extra message + ack, same as a normal delay after a message is sent
                                     # because the repeater should also send and receive ack

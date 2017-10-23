@@ -107,12 +107,12 @@ class ReceiveLoraAdapter(object):
                     SettingsClass.SetHasReceivedMessageFromRepeater()
                 messageType = loraMessage.GetMessageType()
                 if messageType == LoraRadioMessage.MessageTypeLoraAck:
-                    if ((SettingsClass.GetWiRocMode() == "SEND") or (SettingsClass.GetWiRocMode() == "REPEATER")):
+                    if ((SettingsClass.GetWiRocMode() == "SENDER") or (SettingsClass.GetWiRocMode() == "REPEATER")):
                         messageID =  loraMessage.GetMessageIDThatIsAcked()
                         return {"MessageType": "ACK", "MessageSource":"Lora", "MessageSubTypeName": "Ack", "MessageID": messageID, "ChecksumOK": True, "LoraRadioMessage": loraMessage}
                 elif messageType == LoraRadioMessage.MessageTypeStatus:
                     if ackRequested and \
-                            ((SettingsClass.GetWiRocMode() == "RECEIVE" and not repeaterRequested)
+                            ((SettingsClass.GetWiRocMode() == "RECEIVER" and not repeaterRequested)
                             or (SettingsClass.GetWiRocMode() == "REPEATER" and repeaterRequested)):
                             logging.debug("Lora status message received, send ack. WiRocMode: " + SettingsClass.GetWiRocMode() + " Repeater requested: " + str(repeaterRequested))
                             messageType = LoraRadioMessage.MessageTypeLoraAck
@@ -126,7 +126,7 @@ class ReceiveLoraAdapter(object):
                 else:
                     messageID = loraMessage.GetMessageID()
                     if ackRequested and \
-                            ((SettingsClass.GetWiRocMode() == "RECEIVE" and not repeaterRequested)
+                            ((SettingsClass.GetWiRocMode() == "RECEIVER" and not repeaterRequested)
                              or (SettingsClass.GetWiRocMode() == "REPEATER" and repeaterRequested)):
                             logging.debug("Lora message received, send ack. WiRocMode: " + SettingsClass.GetWiRocMode() + " Repeater requested: " + str(repeaterRequested))
                             messageType = LoraRadioMessage.MessageTypeLoraAck

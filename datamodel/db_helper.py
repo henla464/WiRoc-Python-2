@@ -537,15 +537,15 @@ class DatabaseHelper:
         msa.SportIdentSecond = repeaterMessageBox.SportIdentSecond
         msa.MessageID = repeaterMessageBox.MessageID
         msa.AckRequested = repeaterMessageBox.AckRequested
-        msa.RelayRequested = repeaterMessageBox.RelayRequested
+        msa.RepeaterRequested = repeaterMessageBox.RepeaterRequested
         msa.NoOfTimesSeen = repeaterMessageBox.NoOfTimesSeen
         msa.NoOfTimesAckSeen = repeaterMessageBox.NoOfTimesAckSeen
         msa.Acked = repeaterMessageBox.Acked
         msa.AckedTime = repeaterMessageBox.AckedTime
         msa.MessageBoxId = repeaterMessageBox.MessageBoxId
-        msa.AddedToMessageBoxTime = repeaterMessageBox.AddedToMessageBoxTime #todo
+        msa.AddedToMessageBoxTime = datetime.now()
         msa.LastSeenTime = repeaterMessageBox.LastSeenTime
-        msa.CreatedDate = repeaterMessageBox.CreatedDate
+        msa.OrigCreatedDate = repeaterMessageBox.CreatedDate
         cls.db.save_table_object(msa, False)
         cls.db.delete_table_object(RepeaterMessageBoxData, repeaterMessageBox.id)
 
@@ -560,12 +560,6 @@ class DatabaseHelper:
                                     datetime.now()+ timedelta(seconds=timeS))
             logging.debug("DatabaseHelper::increase_scheduled_time_if_less_than(): Set to: " + str(sub.ScheduledTime))
             cls.db.save_table_object(sub, False)
-
-    #@classmethod
-    #def set_relay_message_added_to_message_box(cls, repeaterMessageBoxId, messageBoxId):
-    #    cls.init()
-    #    cls.db.execute_SQL("UPDATE RepeaterMessageBoxData SET AddedToMessageBoxTime = ?, MessageBoxId = ? WHERE id = ?", (datetime.now(), messageBoxId, repeaterMessageBoxId))
-    #    return None
 
 #MessageSubscriptionView
     @classmethod
@@ -707,10 +701,11 @@ class DatabaseHelper:
                "id as OrigId, MessageData, MessageTypeName, PowerCycleCreated, "
                 "InstanceName, MessageSubTypeName, ChecksumOK, MessageSource, "
                 "SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, "
-                "MessageID, AckRequested, RelayRequested, NoOfTimesSeen, NoOfTimesAckSeen, "
-                "Acked, AckedTime, MessageBoxId, AddedToMessageBoxTime,LastSeenTime, CreatedDate "
+                "MessageID, AckRequested, RepeaterRequested, NoOfTimesSeen, NoOfTimesAckSeen, "
+                "Acked, AckedTime, MessageBoxId, ? as AddedToMessageBoxTime,LastSeenTime, "
+                "CreatedDate as OrigCreatedDate, ? as CreatedDate "
                 "FROM RepeaterMessageBoxData WHERE LastSeenTime < ?")
-        cls.db.execute_SQL(sql, (fiveMinutesAgo,))
+        cls.db.execute_SQL(sql, (datetime.now(), datetime.now(), fiveMinutesAgo))
         sql = ("DELETE FROM RepeaterMessageBoxData WHERE LastSeenTime < ? ")
         cls.db.execute_SQL(sql, (fiveMinutesAgo,))
 
@@ -719,7 +714,7 @@ class DatabaseHelper:
         cls.init()
         repeaterMessages = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData,
                                                       "SELECT * FROM RepeaterMessageBoxData WHERE "
-                                                      "(RelayRequested = 1 or NoOfTimesSeen > 1) and AddedToMessageBoxTime IS NULL ORDER BY "
+                                                      "(RepeaterRequested = 1 or NoOfTimesSeen > 1) ORDER BY "
                                                       "SportIdentHour, SportIdentMinute, SportIdentSecond LIMIT 1")
         if len(repeaterMessages) > 0:
             return repeaterMessages[0]

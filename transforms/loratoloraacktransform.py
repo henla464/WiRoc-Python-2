@@ -41,9 +41,12 @@ class LoraToLoraAckTransform(object):
             payloadData = msgSub.MessageData
             loraMsg = LoraRadioMessage()
             loraMsg.AddPayload(payloadData)
+            incomingMsgType = loraMsg.GetMessageType()
 
-            if loraMsg.GetRepeaterBit() and loraMsg.GetAcknowledgementRequested():
-                incomingMsgType = loraMsg.GetMessageType()
+            if (incomingMsgType == LoraRadioMessage.MessageTypeSIPunch or
+                incomingMsgType == LoraRadioMessage.MessageTypeStatus) and \
+                loraMsg.GetRepeaterBit() and loraMsg.GetAcknowledgementRequested():
+
                 messageType = LoraRadioMessage.MessageTypeLoraAck
                 loraMessage2 = LoraRadioMessage(5, messageType, False, False)
                 if incomingMsgType == loraMsg.MessageTypeStatus:
