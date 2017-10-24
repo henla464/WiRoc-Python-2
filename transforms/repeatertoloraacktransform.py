@@ -36,7 +36,8 @@ class RepeaterToLoraAckTransform(object):
         loraMsg = LoraRadioMessage()
         loraMsg.AddPayload(payloadData)
 
-        if loraMsg.GetAcknowledgementRequested():
+        # when repeater is requested ack is sent directly from receiveloraadapter
+        if loraMsg.GetAcknowledgementRequested() and not loraMsg.GetRepeaterBit():
             incomingMsgType = loraMsg.GetMessageType()
             messageType = LoraRadioMessage.MessageTypeLoraAck
             loraMessage2 = LoraRadioMessage(5, messageType, False, False)

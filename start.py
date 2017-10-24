@@ -243,20 +243,23 @@ class Main:
                                     DatabaseHelper.archive_message_box(mbdid)
                         elif inputData["MessageType"] == "ACK":
                             messageID = inputData["MessageID"]
-                            if len(messageID) == 6:
-                                logging.debug("Start::Run() Received ack, for message number: " + str(messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6])))
-                            else:
-                                logging.debug("Start::Run() Received ack, for status message number: " + str(messageID[0]))
                             loraMessage = inputData["LoraRadioMessage"]
                             destinationHasAcked = loraMessage.GetAcknowledgementRequested()
                             wirocMode = SettingsClass.GetWiRocMode()
-                            if wirocMode == "REPEATER":
-                                logging.info("Start::Run() In repeater mode")
+                            if wirocMode == "REPEATER" and len(messageID) == 6:
+                                logging.debug("Start::Run() Received ack, for repeater message number: " + str(
+                                    messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6])))
                                 DatabaseHelper.repeater_message_acked(messageID)
                                 DatabaseHelper.archive_repeater_lora_message_subscription_after_ack(messageID)
                                 if destinationHasAcked:
                                     DatabaseHelper.set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(messageID)
                             else:
+                                if len(messageID) == 6:
+                                    logging.debug("Start::Run() Received ack, for message number: " + str(
+                                        messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6])))
+                                else:
+                                    logging.debug(
+                                        "Start::Run() Received ack, for status message number: " + str(messageID[0]))
                                 DatabaseHelper.archive_message_subscription_after_ack(messageID)
 
                             receivedFromRepeater = loraMessage.GetRepeaterBit()
