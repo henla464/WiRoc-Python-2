@@ -85,10 +85,11 @@ class Setup:
                             adapter.SetTransform(transformClass)
                             # add message types to database
                             messageTypeName = transformClass.GetInputMessageType()
-                            messageTypeData = MessageTypeData(messageTypeName)
+                            messageSubTypeName = transformClass.GetInputMessageSubType()
+                            messageTypeData = MessageTypeData(messageTypeName, messageSubTypeName)
                             inputMessageDataId = DatabaseHelper.save_message_type(messageTypeData)
                             messageTypeName = transformClass.GetOutputMessageType()
-                            messageTypeData = MessageTypeData(messageTypeName)
+                            messageTypeData = MessageTypeData(messageTypeName, "OUT")
                             outputMessageDataId = DatabaseHelper.save_message_type(messageTypeData)
 
                             # add transform to database
@@ -96,12 +97,9 @@ class Setup:
                             transformDataId = DatabaseHelper.save_transform(transformData)
 
                             # add subscription to database
-                            #deleteAfterSent = adapter.GetDeleteAfterSent()
                             deleteAfterSent = transformClass.GetDeleteAfterSent()
-                            waitUntilAckSent = adapter.GetWaitUntilAckSent()
-                            waitThisNumberOfBytes = transformClass.GetWaitThisNumberOfBytes()
                             enabled = False
-                            subscriptionData = SubscriptionData(deleteAfterSent, enabled, subscriberDataId, transformDataId, waitUntilAckSent, waitThisNumberOfBytes)
+                            subscriptionData = SubscriptionData(deleteAfterSent, enabled, subscriberDataId, transformDataId)
                             DatabaseHelper.save_subscription(subscriptionData)
                 adapter.SetIsDBInitialized()
 
@@ -126,27 +124,43 @@ class Setup:
     def AddMessageTypes():
         #add message types to database
         messageTypeName = CreateStatusAdapter.GetTypeName()
-        messageTypeData = MessageTypeData(messageTypeName)
+        messageSubTypeName = "Status"
+        messageTypeData = MessageTypeData(messageTypeName, messageSubTypeName)
         DatabaseHelper.save_message_type(messageTypeData)
 
         messageTypeName = ReceiveLoraAdapter.GetTypeName()
-        messageTypeData = MessageTypeData(messageTypeName)
+        messageSubTypeName = "SIMessage"
+        messageTypeData = MessageTypeData(messageTypeName, messageSubTypeName)
+        DatabaseHelper.save_message_type(messageTypeData)
+        messageSubTypeName = "Status"
+        messageTypeData = MessageTypeData(messageTypeName, messageSubTypeName)
+        DatabaseHelper.save_message_type(messageTypeData)
+        messageSubTypeName = "Ack"
+        messageTypeData = MessageTypeData(messageTypeName, messageSubTypeName)
         DatabaseHelper.save_message_type(messageTypeData)
 
-        messageTypeName = ReceiveSerialComputerAdapter.GetTypeName()
-        messageTypeData = MessageTypeData(messageTypeName)
-        DatabaseHelper.save_message_type(messageTypeData)
+        #messageTypeName = ReceiveSerialComputerAdapter.GetTypeName()
+        #messageSubTypeName = "Ack"
+        #messageTypeData = MessageTypeData(messageTypeName, messageSubTypeName)
+        #DatabaseHelper.save_message_type(messageTypeData)
 
         messageTypeName = ReceiveSIAdapter.GetTypeName()
-        messageTypeData = MessageTypeData(messageTypeName)
+        messageSubTypeName = "LoraRadioMessage"
+        messageTypeData = MessageTypeData(messageTypeName, messageSubTypeName)
+        DatabaseHelper.save_message_type(messageTypeData)
+        messageSubTypeName = "SIMessage"
+        messageTypeData = MessageTypeData(messageTypeName, messageSubTypeName)
         DatabaseHelper.save_message_type(messageTypeData)
 
+
         messageTypeName = ReceiveTestPunchesAdapter.GetTypeName()
-        messageTypeData = MessageTypeData(messageTypeName)
+        messageSubTypeName = "Test"
+        messageTypeData = MessageTypeData(messageTypeName, messageSubTypeName)
         DatabaseHelper.save_message_type(messageTypeData)
 
         messageTypeName = ReceiveRepeaterMessagesAdapter.GetTypeName()
-        messageTypeData = MessageTypeData(messageTypeName)
+        messageSubTypeName = "SIMessage"
+        messageTypeData = MessageTypeData(messageTypeName, messageSubTypeName)
         DatabaseHelper.save_message_type(messageTypeData)
 
     @staticmethod

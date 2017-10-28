@@ -3,11 +3,15 @@ from datamodel.datamodel import SIMessage
 from battery import Battery
 from settings.settings import SettingsClass
 
-class RepeaterToLoraAckTransform(object):
+class RepeaterSIMessageToLoraAckTransform(object):
 
     @staticmethod
     def GetInputMessageType():
         return "REPEATER"
+
+    @staticmethod
+    def GetInputMessageSubType():
+        return "SIMessage"
 
     @staticmethod
     def GetOutputMessageType():
@@ -15,10 +19,10 @@ class RepeaterToLoraAckTransform(object):
 
     @staticmethod
     def GetName():
-        return "RepeaterToLoraAckTransform"
+        return "RepeaterSIMessageToLoraAckTransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes():
+    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
         return 10 #ack 10, waiting for the destination wiroc to reply with ack
 
     @staticmethod

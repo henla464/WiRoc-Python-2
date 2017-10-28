@@ -157,11 +157,12 @@ class SubscriberData(object):
 
 
 class MessageTypeData(object):
-    columns = [("Name", str)]
+    columns = [("Name", str), ("MessageSubTypeName", str)]
 
-    def __init__(self, Name=None):
+    def __init__(self, Name=None, MessageSubTypeName=None):
         self.id = None
         self.Name = Name
+        self.MessageSubTypeName = MessageSubTypeName
 
 
 class TransformData(object):
@@ -177,19 +178,29 @@ class TransformData(object):
 
 class SubscriptionData(object):
     columns = [("DeleteAfterSent", bool), ("Enabled", bool),
-               ("SubscriberId", int), ("TransformId", int),
-               ("WaitUntilAckSent", bool), ("WaitThisNumberOfBytes", int)]
+               ("SubscriberId", int), ("TransformId", int)]
 
     def __init__(self, DeleteAfterSent=None, Enabled=None,
-                 SubscriberId=None, TransformId=None, WaitUntilAckSent = False, WaitThisNumberOfBytes = 0):
+                 SubscriberId=None, TransformId=None):
         self.id = None
         self.DeleteAfterSent = DeleteAfterSent
         self.Enabled = Enabled
         self.SubscriberId = SubscriberId
         self.TransformId = TransformId
-        self.WaitUntilAckSent = WaitUntilAckSent
-        self.WaitThisNumberOfBytes = WaitThisNumberOfBytes
 
+
+class SubscriptionViewData(object):
+    columns = [("DeleteAfterSent", bool), ("Enabled", bool),
+               ("SubscriberId", int), ("TransformId", int),
+               ("TransformName", str)]
+
+    def __init__(self):
+        self.id = None
+        self.DeleteAfterSent = None
+        self.Enabled = None
+        self.SubscriberId = None
+        self.TransformId = None
+        self.TransformName = None
 
 class MessageSubscriptionData(object):
     columns = [("MessageID", bytes), ("AckReceivedFromReceiver", bool), ("MessageNumber", int),

@@ -45,7 +45,7 @@ class Main:
             # recreate message subscriptions after reboot for messages in the messagebox
             messages = DatabaseHelper.get_message_box_messages()
             for msg in messages:
-                messageTypeId = DatabaseHelper.get_message_type(msg.MessageTypeName).id
+                messageTypeId = DatabaseHelper.get_message_type(msg.MessageTypeName, msg.MessageSubTypeName).id
                 subscriptions = DatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
                 for subscription in subscriptions:
                     msgSubscription = MessageSubscriptionData()
@@ -207,30 +207,48 @@ class Main:
                                         # from previously received message (directly from sender)
                                         DatabaseHelper.archive_lora_ack_message_subscription(messageID)
 
+                                messageSubTypeName = inputData["MessageSubTypeName"]
                                 mbd = MessageBoxData()
                                 mbd.MessageData = inputData["Data"]
                                 mbd.MessageTypeName = messageTypeName
                                 mbd.PowerCycleCreated = SettingsClass.GetPowerCycle()
                                 mbd.ChecksumOK = inputData["ChecksumOK"]
                                 mbd.InstanceName = instanceName
-                                mbd.MessageSubTypeName = inputData["MessageSubTypeName"]
+                                mbd.MessageSubTypeName = messageSubTypeName
                                 mbd.MessageSource = inputData["MessageSource"]
                                 mbdid = DatabaseHelper.save_message_box(mbd)
                                 SettingsClass.SetTimeOfLastMessageAdded()
                                 inputAdapter.AddedToMessageBox(mbdid)
                                 anySubscription = False
-                                messageTypeId = DatabaseHelper.get_message_type(messageTypeName).id
-                                subscriptions = DatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
+
+                                messageTypeId = DatabaseHelper.get_message_type(messageTypeName, messageSubTypeName).id
+                                subscriptions = DatabaseHelper.get_subscription_view_by_input_message_type_id(messageTypeId)
                                 for subscription in subscriptions:
                                     msgSubscription = MessageSubscriptionData()
                                     now = datetime.now()
-                                    if subscription.WaitUntilAckSent and mbd.MessageSource == "WiRoc":
-                                        msgSubscription.ScheduledTime = now + timedelta(seconds=SettingsClass.GetLoraAckMessageSendingTimeS())
-                                    elif subscription.WaitThisNumberOfBytes > 0:
+
+                                    subAdapters = [subAdapter for subAdapter in self.subscriberAdapters if
+                                                       subAdapter.GetTypeName() == subscription.SubscriberInstanceName]
+                                    if len(subAdapters) > 0:
+                                        subAdapter = subAdapters[0]
+                                        transform = subAdapter.GetTransform(subscription.TransformName)
+                                        noOfBytesToWait = transform.GetWaitThisNumberOfBytes(mbd, msgSubscription, subAdapter)
                                         msgSubscription.ScheduledTime = now + timedelta(
-                                            seconds=SettingsClass.GetLoraMessageTimeSendingTimeS(subscription.WaitThisNumberOfBytes))
+                                            seconds=SettingsClass.GetLoraMessageTimeSendingTimeS(noOfBytesToWait))
                                     else:
-                                        msgSubscription.ScheduledTime = now
+                                        logging.error("Start::Run() SubAdapter not found")
+
+                                    #todo: remove WaitUntilAckSent, WaitThisNumberOfBytes columns from database
+                                    #todo: add the new types to the subadapters
+                                    #if subscription.WaitUntilAckSent and mbd.MessageSource == "WiRoc":
+                                    #    msgSubscription.ScheduledTime = now + timedelta(seconds=SettingsClass.GetLoraAckMessageSendingTimeS())
+                                    #elif subscription.WaitThisNumberOfBytes > 0:
+                                        #todo: no of bytes needs to be done at runtime, it is different for different
+                                        # submessages (RepeaterToLoraTransform) Or subscriptions changed to be messagetype+submessagetype.
+                                    #    msgSubscription.ScheduledTime = now + timedelta(
+                                    #        seconds=SettingsClass.GetLoraMessageTimeSendingTimeS(subscription.WaitThisNumberOfBytes))
+                                    #else:
+                                    #    msgSubscription.ScheduledTime = now
                                     msgSubscription.MessageBoxId = mbdid
                                     msgSubscription.SubscriptionId = subscription.id
                                     msgSubscription.MessageID = messageID # used for messages from repeater table
@@ -263,7 +281,7 @@ class Main:
                                 DatabaseHelper.archive_message_subscription_after_ack(messageID)
 
                             receivedFromRepeater = loraMessage.GetRepeaterBit()
-                            loraSubAdapters = [subAdapter for subAdapter in self.subscriberAdapters if subAdapter.GetTypeName == "LORA"]
+                            loraSubAdapters = [subAdapter for subAdapter in self.subscriberAdapters if subAdapter.GetTypeName() == "LORA"]
                             if len(loraSubAdapters) > 0:
                                 loraSubAdapter = loraSubAdapters[0]
                                 if receivedFromRepeater:

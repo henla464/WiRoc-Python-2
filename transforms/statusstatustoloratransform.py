@@ -3,7 +3,7 @@ from settings.settings import SettingsClass
 from battery import Battery
 import logging
 
-class StatusToLoraTransform(object):
+class StatusStatusToLoraTransform(object):
     DeleteAfterSent = False
 
     @staticmethod
@@ -11,25 +11,29 @@ class StatusToLoraTransform(object):
         return "STATUS"
 
     @staticmethod
+    def GetInputMessageSubType():
+        return "Status"
+
+    @staticmethod
     def GetOutputMessageType():
         return "LORA"
 
     @staticmethod
     def GetName():
-        return "StatusToLoraTransform"
+        return "StatusStatusToLoraTransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes():
+    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
         return 0
 
     @staticmethod
     def GetDeleteAfterSent():
-        StatusToLoraTransform.DeleteAfterSent = not SettingsClass.GetStatusAcknowledgementRequested()
-        return StatusToLoraTransform.DeleteAfterSent
+        StatusStatusToLoraTransform.DeleteAfterSent = not SettingsClass.GetStatusAcknowledgementRequested()
+        return StatusStatusToLoraTransform.DeleteAfterSent
 
     @staticmethod
     def GetDeleteAfterSentChanged():
-        return StatusToLoraTransform.DeleteAfterSent != (not SettingsClass.GetStatusAcknowledgementRequested())
+        return StatusStatusToLoraTransform.DeleteAfterSent != (not SettingsClass.GetStatusAcknowledgementRequested())
 
     #payloadData is a bytearray
     @staticmethod

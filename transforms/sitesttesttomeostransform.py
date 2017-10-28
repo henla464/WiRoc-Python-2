@@ -1,21 +1,27 @@
+from utils.utils import Utils
 from datamodel.datamodel import SIMessage
 
-class SIToSITransform(object):
+
+class SITestTestToLoraTransform(object):
 
     @staticmethod
     def GetInputMessageType():
-        return "SI"
+        return "SITEST"
+
+    @staticmethod
+    def GetInputMessageSubType():
+        return "Test"
 
     @staticmethod
     def GetOutputMessageType():
-        return "SI"
+        return "MEOS"
 
     @staticmethod
     def GetName():
-        return "SIToSITransform"
+        return "SITestTestToMeosTransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes():
+    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
         return 0
 
     @staticmethod
@@ -32,6 +38,4 @@ class SIToSITransform(object):
         payloadData = msgSub.MessageData
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
-        if siMsg.GetMessageType() == SIMessage.SIPunch:
-            return {"Data":payloadData, "MessageID": None}
-        return None
+        return {"Data": Utils.GetMeosDataFromSIData(siMsg), "MessageID": None}

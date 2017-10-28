@@ -2,11 +2,15 @@ from utils.utils import Utils
 from datamodel.datamodel import LoraRadioMessage
 from datamodel.datamodel import SIMessage
 
-class LoraToMeosTransform(object):
+class LoraSIMessageToMeosTransform(object):
 
     @staticmethod
     def GetInputMessageType():
         return "LORA"
+
+    @staticmethod
+    def GetInputMessageSubType():
+        return "SIMessage"
 
     @staticmethod
     def GetOutputMessageType():
@@ -14,10 +18,10 @@ class LoraToMeosTransform(object):
 
     @staticmethod
     def GetName():
-        return "LoraToMeosTransform"
+        return "LoraSIMessageToMeosTransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes():
+    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
         return 0
 
     @staticmethod
@@ -34,10 +38,8 @@ class LoraToMeosTransform(object):
         payloadData = msgSub.MessageData
         msg = LoraRadioMessage()
         msg.AddPayload(payloadData)
-        if msg.GetMessageType() == LoraRadioMessage.MessageTypeSIPunch:
-            loraHeaderSize = LoraRadioMessage.GetHeaderSize()
-            siPayloadData = payloadData[loraHeaderSize:]
-            siMsg = SIMessage()
-            siMsg.AddPayload(siPayloadData)
-            return {"Data": Utils.GetMeosDataFromSIData(siMsg), "MessageID": None}
-        return None
+        loraHeaderSize = LoraRadioMessage.GetHeaderSize()
+        siPayloadData = payloadData[loraHeaderSize:]
+        siMsg = SIMessage()
+        siMsg.AddPayload(siPayloadData)
+        return {"Data": Utils.GetMeosDataFromSIData(siMsg), "MessageID": None}

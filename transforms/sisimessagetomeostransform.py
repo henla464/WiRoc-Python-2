@@ -1,11 +1,15 @@
 from utils.utils import Utils
 from datamodel.datamodel import SIMessage
 
-class SIToMeosTransform(object):
+class SISIMessageToMeosTransform(object):
 
     @staticmethod
     def GetInputMessageType():
         return "SI"
+
+    @staticmethod
+    def GetInputMessageSubType():
+        return "SIMessage"
 
     @staticmethod
     def GetOutputMessageType():
@@ -13,10 +17,10 @@ class SIToMeosTransform(object):
 
     @staticmethod
     def GetName():
-        return "SIToMeosTransform"
+        return "SISIMessageToMeosTransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes():
+    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
         return 0
 
     @staticmethod
@@ -33,6 +37,4 @@ class SIToMeosTransform(object):
         payloadData = msgSub.MessageData
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
-        if siMsg.GetMessageType() == SIMessage.SIPunch:
-            return {"Data": Utils.GetMeosDataFromSIData(siMsg), "MessageID": None}
-        return None
+        return {"Data": Utils.GetMeosDataFromSIData(siMsg), "MessageID": None}

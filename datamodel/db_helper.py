@@ -164,7 +164,8 @@ class DatabaseHelper:
         cls.init()
         rows = cls.db.get_table_objects_by_SQL(SubscriberView, "SELECT "
             "SubscriberData.id, SubscriberData.TypeName, SubscriberData.InstanceName, "
-            "SubscriptionData.Enabled, MsgIn.Name MessageInName, MsgOut.Name MessageOutName, "
+            "SubscriptionData.Enabled, MsgIn.Name MessageInName, MsgIn.MessageSubTypeName MessageInSubTypeName, "
+            "MsgOut.Name MessageOutName, MsgOut.MessageSubTypeName MessageOutSubTypeName, "
             "TransformData.Enabled as TransformEnabled, "
             "TransformData.Name as TransformName "
             "from SubscriptionData JOIN SubscriberData "
@@ -179,7 +180,8 @@ class DatabaseHelper:
         cls.init()
         rows = cls.db.get_table_objects_by_SQL(SubscriberView, "SELECT "
             "SubscriberData.id, SubscriberData.TypeName, SubscriberData.InstanceName, "
-            "SubscriptionData.Enabled, MsgIn.Name MessageInName, MsgOut.Name MessageOutName, "
+            "SubscriptionData.Enabled, MsgIn.Name MessageInName, MsgIn.MessageSubTypeName MessageInSubTypeName, "
+            "MsgOut.Name MessageOutName, MsgOut.MessageSubTypeName MessageOutSubTypeName, "
             "TransformData.Enabled as TransformEnabled, "
             "TransformData.Name as TransformName "
             "from SubscriptionData JOIN SubscriberData "
@@ -192,10 +194,10 @@ class DatabaseHelper:
 
 #MessageTypes
     @classmethod
-    def get_message_type(cls, messageTypeName):
+    def get_message_type(cls, messageTypeName, messageSubTypeName):
         cls.init()
-        sql = "SELECT * FROM MessageTypeData WHERE Name = '" + messageTypeName + "'"
-        rows = cls.db.get_table_objects_by_SQL(MessageTypeData, sql)
+        sql = "SELECT * FROM MessageTypeData WHERE Name = ? AND MessageSubTypeName = ?"
+        rows = cls.db.get_table_objects_by_SQL(MessageTypeData, sql, (messageTypeName, messageSubTypeName))
         if len(rows) >= 1:
             return rows[0]
         return None
@@ -203,8 +205,8 @@ class DatabaseHelper:
     @classmethod
     def save_message_type(cls, messageTypeData):
         cls.init()
-        rows = cls.db.get_table_objects_by_SQL(MessageTypeData, "SELECT * FROM MessageTypeData WHERE Name = '" +
-                                           messageTypeData.Name + "'")
+        sql = "SELECT * FROM MessageTypeData WHERE Name = ? AND MessageSubTypeName = ?"
+        rows = cls.db.get_table_objects_by_SQL(MessageTypeData, sql, (messageTypeData.Name, messageTypeData.MessageSubTypeName))
         if len(rows) == 0:
             return cls.db.save_table_object(messageTypeData, False)
         else:
@@ -250,6 +252,16 @@ class DatabaseHelper:
                "WHERE TransformData.Enabled = 1 AND SubscriptionData.Enabled = 1 AND "
                "InputMessageTypeID = " + str(messageTypeId))
         rows = cls.db.get_table_objects_by_SQL(SubscriptionData, sql)
+        return rows
+
+    @classmethod
+    def get_subscription_view_by_input_message_type_id(cls, messageTypeId):
+        cls.init()
+        sql = ("SELECT SubscriptionData.*, TransformData.Name as TransformName FROM TransformData JOIN SubscriptionData "
+               "ON TransformData.id = SubscriptionData.TransformId "
+               "WHERE TransformData.Enabled = 1 AND SubscriptionData.Enabled = 1 AND "
+               "InputMessageTypeID = " + str(messageTypeId))
+        rows = cls.db.get_table_objects_by_SQL(SubscriptionViewData, sql)
         return rows
 
     @classmethod

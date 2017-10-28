@@ -3,11 +3,15 @@ from datamodel.datamodel import SIMessage
 from battery import Battery
 from settings.settings import SettingsClass
 
-class LoraToLoraAckTransform(object):
+class LoraSIMessageToLoraAckTransform(object):
 
     @staticmethod
     def GetInputMessageType():
         return "LORA"
+
+    @staticmethod
+    def GetInputMessageSubType():
+        return "SIMessage"
 
     @staticmethod
     def GetOutputMessageType():
@@ -15,10 +19,10 @@ class LoraToLoraAckTransform(object):
 
     @staticmethod
     def GetName():
-        return "LoraToLoraAckTransform"
+        return "LoraSIMessageToLoraAckTransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes():
+    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
         # ack (10), waiting for repeater to reply with ack
         # and send message (23) to receiver
         # + little delay
@@ -43,10 +47,7 @@ class LoraToLoraAckTransform(object):
             loraMsg.AddPayload(payloadData)
             incomingMsgType = loraMsg.GetMessageType()
 
-            if (incomingMsgType == LoraRadioMessage.MessageTypeSIPunch or
-                incomingMsgType == LoraRadioMessage.MessageTypeStatus) and \
-                loraMsg.GetRepeaterBit() and loraMsg.GetAcknowledgementRequested():
-
+            if loraMsg.GetRepeaterBit() and loraMsg.GetAcknowledgementRequested():
                 messageType = LoraRadioMessage.MessageTypeLoraAck
                 loraMessage2 = LoraRadioMessage(5, messageType, False, False)
                 if incomingMsgType == loraMsg.MessageTypeStatus:

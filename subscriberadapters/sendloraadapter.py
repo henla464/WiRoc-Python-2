@@ -67,12 +67,16 @@ class SendLoraAdapter(object):
             if SendLoraAdapter.WiRocMode is None or SendLoraAdapter.WiRocMode != SettingsClass.GetWiRocMode():
                 SendLoraAdapter.WiRocMode = SettingsClass.GetWiRocMode()
                 enableSendTransforms = (SendLoraAdapter.WiRocMode == "SENDER" or SendLoraAdapter.WiRocMode == "REPEATER")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "SIToLoraTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestToLoraTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "StatusToLoraTransform")
-                DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraToLoraAckTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterToLoraAckTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterToLoraTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "SISIMessageToLoraTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestTestToLoraTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "StatusStatusToLoraTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "SILoraRadioMessageToLoraTransform")
+                DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraSIMessageToLoraAckTransform")
+                DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraStatusToLoraAckTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraAckTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterStatusToLoraAckTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterStatusToLoraTransform")
 
     def __init__(self, instanceNumber, portName):
         self.instanceNumber = instanceNumber
@@ -115,12 +119,16 @@ class SendLoraAdapter(object):
     # on lora mode
     def GetTransformNames(self):
         transforms = []
-        transforms.append("SIToLoraTransform")
-        transforms.append("SITestToLoraTransform")
-        transforms.append("StatusToLoraTransform")
-        transforms.append("RepeaterToLoraAckTransform")
-        transforms.append("RepeaterToLoraTransform")
-        transforms.append("LoraToLoraAckTransform")
+        transforms.append("SISIMessageToLoraTransform")
+        transforms.append("SITestTestToLoraTransform")
+        transforms.append("StatusStatusToLoraTransform")
+        transforms.append("SILoraRadioMessageToLoraTransform") # status message received through serial wiroc-wiroc
+        transforms.append("RepeaterSIMessageToLoraAckTransform")
+        transforms.append("RepeaterSIMessageToLoraTransform")
+        transforms.append("RepeaterStatusToLoraAckTransform")
+        transforms.append("RepeaterStatusToLoraTransform")
+        transforms.append("LoraSIMessageToLoraAckTransform")
+        transforms.append("LoraStatusToLoraAckTransform")
         return transforms
 
     def SetTransform(self, transformClass):

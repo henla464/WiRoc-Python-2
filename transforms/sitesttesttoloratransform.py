@@ -4,7 +4,7 @@ from battery import Battery
 from datamodel.db_helper import DatabaseHelper
 from settings.settings import SettingsClass
 
-class SITestToLoraTransform(object):
+class SITestTestToLoraTransform(object):
     DeleteAfterSent = False
 
     @staticmethod
@@ -12,26 +12,30 @@ class SITestToLoraTransform(object):
         return "SITEST"
 
     @staticmethod
+    def GetInputMessageSubType():
+        return "Test"
+
+    @staticmethod
     def GetOutputMessageType():
         return "LORA"
 
     @staticmethod
     def GetName():
-        return "SITestToLoraTransform"
+        return "SITestTestToLoraTransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes():
+    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
         return 0
 
     @staticmethod
     def GetDeleteAfterSent():
         # check setting for ack
-        SITestToLoraTransform.DeleteAfterSent = not SettingsClass.GetAcknowledgementRequested()
-        return SITestToLoraTransform.DeleteAfterSent
+        SITestTestToLoraTransform.DeleteAfterSent = not SettingsClass.GetAcknowledgementRequested()
+        return SITestTestToLoraTransform.DeleteAfterSent
 
     @staticmethod
     def GetDeleteAfterSentChanged():
-        return SITestToLoraTransform.DeleteAfterSent != (not SettingsClass.GetAcknowledgementRequested())
+        return SITestTestToLoraTransform.DeleteAfterSent != (not SettingsClass.GetAcknowledgementRequested())
 
     #payloadData is a bytearray
     @staticmethod
