@@ -23,10 +23,12 @@ class LoraSIMessageToLoraAckTransform(object):
 
     @staticmethod
     def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
-        # ack (10), waiting for repeater to reply with ack
-        # and send message (23) to receiver
-        # + little delay
-        return 10+23+2
+        if SettingsClass.GetWiRocMode() == "RECEIVER":
+            # ack (10), waiting for repeater to reply with ack
+            # and send message (23) to receiver
+            # + little delay
+            return 10+23+2
+        return None
 
     @staticmethod
     def GetDeleteAfterSent():

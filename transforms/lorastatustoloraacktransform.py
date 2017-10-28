@@ -23,10 +23,16 @@ class LoraStatusToLoraAckTransform(object):
 
     @staticmethod
     def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
-        # ack (10), waiting for repeater to reply with ack
-        # and send message (23) to receiver
-        # + little delay
-        return 10+23+2
+        if SettingsClass.GetWiRocMode() == "RECEIVER":
+            payloadData = messageBoxData.MessageData
+            loraMsg = LoraRadioMessage()
+            loraMsg.AddPayload(payloadData)
+            if loraMsg.GetRepeaterBit() and loraMsg.GetAcknowledgementRequested():
+                # ack (10), waiting for repeater to reply with ack
+                # and send message (23) to receiver
+                # + little delay
+                return 10+23+2
+        return None
 
     @staticmethod
     def GetDeleteAfterSent():
@@ -45,13 +51,15 @@ class LoraStatusToLoraAckTransform(object):
             payloadData = msgSub.MessageData
             loraMsg = LoraRadioMessage()
             loraMsg.AddPayload(payloadData)
-            incomingMsgType = loraMsg.GetMessageType()
 
             if loraMsg.GetRepeaterBit() and loraMsg.GetAcknowledgementRequested():
                 messageType = LoraRadioMessage.MessageTypeLoraAck
-                loraMessage2 = LoraRadioMessage(5, messageType, False, False)
+                incomingMsgType = loraMsg.GetMessageType()
+                loraMessage2 = None
                 if incomingMsgType == loraMsg.MessageTypeStatus:
                     loraMessage2 = LoraRadioMessage(0, messageType, False, False)
+                else:
+                    loraMessage2 = LoraRadioMessage(5, messageType, False, False)
                 loraMessage2.SetAcknowledgementRequested(True)  # indicate ack sent from receiver
                 loraMessage2.SetRepeaterBit(False)  # indicate this ack doesn't come from repeater
                 loraMessage2.SetMessageIDToAck(loraMsg.GetMessageID())

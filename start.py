@@ -228,7 +228,7 @@ class Main:
                                     now = datetime.now()
 
                                     subAdapters = [subAdapter for subAdapter in self.subscriberAdapters if
-                                                       subAdapter.GetTypeName() == subscription.SubscriberInstanceName]
+                                                       subAdapter.GetTypeName() == subscription.SubscriberTypeName]
                                     if len(subAdapters) > 0:
                                         subAdapter = subAdapters[0]
                                         transform = subAdapter.GetTransform(subscription.TransformName)

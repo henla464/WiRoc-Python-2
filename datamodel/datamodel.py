@@ -192,7 +192,7 @@ class SubscriptionData(object):
 class SubscriptionViewData(object):
     columns = [("DeleteAfterSent", bool), ("Enabled", bool),
                ("SubscriberId", int), ("TransformId", int),
-               ("TransformName", str)]
+               ("TransformName", str), ("SubscriberTypeName", str)]
 
     def __init__(self):
         self.id = None
@@ -201,6 +201,7 @@ class SubscriptionViewData(object):
         self.SubscriberId = None
         self.TransformId = None
         self.TransformName = None
+        self.SubscriberTypeName = None
 
 class MessageSubscriptionData(object):
     columns = [("MessageID", bytes), ("AckReceivedFromReceiver", bool), ("MessageNumber", int),

@@ -257,8 +257,9 @@ class DatabaseHelper:
     @classmethod
     def get_subscription_view_by_input_message_type_id(cls, messageTypeId):
         cls.init()
-        sql = ("SELECT SubscriptionData.*, TransformData.Name as TransformName FROM TransformData JOIN SubscriptionData "
-               "ON TransformData.id = SubscriptionData.TransformId "
+        sql = ("SELECT SubscriptionData.*, TransformData.Name as TransformName, SubscriberData.TypeName as SubscriberTypeName "
+               "FROM TransformData JOIN SubscriptionData ON TransformData.id = SubscriptionData.TransformId "
+               "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
                "WHERE TransformData.Enabled = 1 AND SubscriptionData.Enabled = 1 AND "
                "InputMessageTypeID = " + str(messageTypeId))
         rows = cls.db.get_table_objects_by_SQL(SubscriptionViewData, sql)
