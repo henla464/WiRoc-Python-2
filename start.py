@@ -238,17 +238,6 @@ class Main:
                                     else:
                                         logging.error("Start::Run() SubAdapter not found")
 
-                                    #todo: remove WaitUntilAckSent, WaitThisNumberOfBytes columns from database
-                                    #todo: add the new types to the subadapters
-                                    #if subscription.WaitUntilAckSent and mbd.MessageSource == "WiRoc":
-                                    #    msgSubscription.ScheduledTime = now + timedelta(seconds=SettingsClass.GetLoraAckMessageSendingTimeS())
-                                    #elif subscription.WaitThisNumberOfBytes > 0:
-                                        #todo: no of bytes needs to be done at runtime, it is different for different
-                                        # submessages (RepeaterToLoraTransform) Or subscriptions changed to be messagetype+submessagetype.
-                                    #    msgSubscription.ScheduledTime = now + timedelta(
-                                    #        seconds=SettingsClass.GetLoraMessageTimeSendingTimeS(subscription.WaitThisNumberOfBytes))
-                                    #else:
-                                    #    msgSubscription.ScheduledTime = now
                                     msgSubscription.MessageBoxId = mbdid
                                     msgSubscription.SubscriptionId = subscription.id
                                     msgSubscription.MessageID = messageID # used for messages from repeater table

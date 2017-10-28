@@ -10,7 +10,7 @@ class LoraSIMessageToSITransform(object):
         return "LORA"
 
     @staticmethod
-    def GetInputMessageSubType(): #todo: new transform for status message
+    def GetInputMessageSubType():
         return "SIMessage"
 
     @staticmethod
