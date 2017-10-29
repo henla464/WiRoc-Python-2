@@ -233,6 +233,8 @@ class Main:
                                         subAdapter = subAdapters[0]
                                         transform = subAdapter.GetTransform(subscription.TransformName)
                                         noOfBytesToWait = transform.GetWaitThisNumberOfBytes(mbd, msgSubscription, subAdapter)
+                                        if noOfBytesToWait == None:
+                                            continue #skip this subscription
                                         msgSubscription.ScheduledTime = now + timedelta(
                                             seconds=SettingsClass.GetLoraMessageTimeSendingTimeS(noOfBytesToWait))
                                     else:
@@ -240,6 +242,9 @@ class Main:
 
                                     msgSubscription.MessageBoxId = mbdid
                                     msgSubscription.SubscriptionId = subscription.id
+                                    if messageID != None:
+                                        dataInHex = ''.join(format(x, '02x') for x in messageID)
+                                        logging.debug("MessageID: " + dataInHex)
                                     msgSubscription.MessageID = messageID # used for messages from repeater table
                                     msgSubscription.MessageNumber = MessageSubscriptionData.GetNextMessageNumber()
                                     DatabaseHelper.save_message_subscription(msgSubscription)

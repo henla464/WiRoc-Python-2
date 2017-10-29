@@ -24,7 +24,7 @@ class RepeaterSIMessageToLoraTransform(object):
 
     @staticmethod
     def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
-        return 22 #possible ack from destination 10 + ack sent from repeater 10 + 2 extra
+        return 21 #possible ack from destination 10 + ack sent from repeater 10 + 2 extra
 
     @staticmethod
     def GetDeleteAfterSent():
