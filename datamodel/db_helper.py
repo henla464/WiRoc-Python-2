@@ -417,9 +417,9 @@ class DatabaseHelper:
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData JOIN SubscriptionData "
                 "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
                 "JOIN TransformData ON SubscriptionData.TransformId = TransformData.id "
-                "WHERE TransformData.Name = 'LoraToLoraTransform' AND "
-                "hex(MessageSubscriptionData.MessageID) like '__' + hex(?)")
-        rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID, ))
+                "WHERE TransformData.Name = 'LoraSIMessageToLoraAckTransform' AND "
+                "hex(MessageSubscriptionData.MessageID) like '__' || hex(?)")
+        rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID[1:], ))
 
         if len(rows) > 0:
             now = datetime.now()

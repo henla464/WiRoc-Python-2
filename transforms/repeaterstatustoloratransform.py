@@ -24,7 +24,12 @@ class RepeaterStatusToLoraTransform(object):
 
     @staticmethod
     def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
-        return 22 #possible ack from destination 10 + ack sent from repeater 10 + 2 extra
+        loraRadioMessage = LoraRadioMessage()
+        loraRadioMessage.AddPayload(messageBoxData.MessageData)
+        if loraRadioMessage.GetRepeaterBit():
+            return 22 #possible ack from receiver 10 + ack sent from repeater 10 + 2 extra
+        else:
+            return 11 #no ack expected from receiver, ack 10 + 1 extra
 
     @staticmethod
     def GetDeleteAfterSent():

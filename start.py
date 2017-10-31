@@ -198,13 +198,15 @@ class Main:
                                 rmbd.NoOfTimesAckSeen = 0
                                 rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
                             else:
-
+                                loraMessage = inputData.get("LoraRadioMessage", None)
+                                if loraMessage != None:
+                                    logging.debug("MessageType: " + messageTypeName + ", WiRocMode: " + SettingsClass.GetWiRocMode() + " RepeaterBit: " + str(loraMessage.GetRepeaterBit()))
                                 if messageTypeName == "LORA" and \
                                     SettingsClass.GetWiRocMode() == "RECEIVER":
-                                    loraMessage = loraMessage = inputData.get("LoraRadioMessage", None)
-                                    if loraMessage.GetRepeaterBit():
-                                        # Message received from repeater. Archive any already scheduled ack message
+                                    if not loraMessage.GetRepeaterBit():
+                                        # Message received that might come from repeater. Archive any already scheduled ack message
                                         # from previously received message (directly from sender)
+                                        # Message number ignored, remove acks for same SI-card-number and SI-Station-number
                                         DatabaseHelper.archive_lora_ack_message_subscription(messageID)
 
                                 messageSubTypeName = inputData["MessageSubTypeName"]
@@ -232,7 +234,7 @@ class Main:
                                     if len(subAdapters) > 0:
                                         subAdapter = subAdapters[0]
                                         transform = subAdapter.GetTransform(subscription.TransformName)
-                                        noOfBytesToWait = transform.GetWaitThisNumberOfBytes(mbd, msgSubscription, subAdapter)
+                                        noOfBytesToWait = transform.GetWaitThisNumberOfBytes(mbd, subscription, subAdapter)
                                         if noOfBytesToWait == None:
                                             continue #skip this subscription
                                         msgSubscription.ScheduledTime = now + timedelta(
