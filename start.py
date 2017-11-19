@@ -346,10 +346,10 @@ class Main:
             messageStat = DatabaseHelper.get_message_stat_to_upload()
             btAddress = SettingsClass.GetBTAddress()
             URL = SettingsClass.GetWebServerUrl() + "/api/v1/MessageStats/" + btAddress
-            messageStat = {"adapterInstance": messageStat.AdapterInstanceName,
+            messageStatToSend = {"adapterInstance": messageStat.AdapterInstanceName,
                            "messageType": messageStat.MessageSubTypeName, "status": messageStat.Status,
                             "noOfMessages": messageStat.NoOfMessages }
-            resp = requests.post(url=URL)
+            resp = requests.post(url=URL,timeout=0.1, json=messageStatToSend)
             if resp.status_code == 200:
                 DatabaseHelper.set_message_stat_uploaded(messageStat.id)
             else:

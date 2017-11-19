@@ -29,7 +29,8 @@ class SettingsClass(object):
     sendToBlenoEnabled = None
     wiRocDeviceName = None
     forceReconfigure = False
-
+    webServerUrl = None
+    btAddress = None
 
     connectedComputerIsWiRocDevice = False
     timeConnectedComputerIsWiRocDeviceChanged = None
@@ -71,6 +72,10 @@ class SettingsClass(object):
             SettingsClass.wiRocDeviceName = None
         if settingsName == 'WiRocDeviceName':
             SettingsClass.wiRocDeviceName = None
+        if settingsName == 'WebServerUrl':
+            SettingsClass.webServerUrl = None
+        if settingsName == 'BTAddress':
+            SettingsClass.btAddress = None
 
         if markDirtyInDatabase:
             SettingsClass.SetSetting("ConfigDirty", "1")
@@ -101,6 +106,8 @@ class SettingsClass(object):
             SettingsClass.sendStatusMessages = None
             SettingsClass.sendToBlenoEnabled = None
             SettingsClass.wiRocDeviceName = None
+            SettingsClass.webServerUrl = None
+            SettingsClass.btAddress = None
             if mainConfigDirty:
                 SettingsClass.SetSetting("ConfigDirty", "0")
             else:
@@ -139,6 +146,10 @@ class SettingsClass(object):
                 return SettingsClass.sendToBlenoEnabled is None
             if settingsName == 'WiRocDeviceName':
                 return SettingsClass.wiRocDeviceName is None
+            if settingsName == 'WebServerUrl':
+                return SettingsClass.webServerUrl is None
+            if settingsName == 'BTAddress':
+                return SettingsClass.btAddress is None
 
         return True
 
@@ -237,8 +248,8 @@ class SettingsClass(object):
 
     @staticmethod
     def GetWebServerUrl(mainConfigDirty = True):
-        if SettingsClass.IsDirty("GetWebServerUrl", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('GetWebServerUrl')
+        if SettingsClass.IsDirty("WebServerUrl", True, mainConfigDirty):
+            sett = DatabaseHelper.get_setting_by_key('WebServerUrl')
             if sett is None:
                 SettingsClass.webServerUrl = None
             else:

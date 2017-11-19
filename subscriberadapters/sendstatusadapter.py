@@ -96,11 +96,12 @@ class SendStatusAdapter(object):
     def TestConnection():
         try:
             URL = SettingsClass.GetWebServerUrl() + "/api/v1/ping"
-            r = requests.get(url=URL)
+            r = requests.get(url=URL,timeout=0.01)
             data = r.json()
+            logging.info(data)
             return data['code'] == 0
-        except:
-            logging.error("SendStatusAdapter::TestConnection() Exception")
+        except Exception as ex:
+            logging.error("SendStatusAdapter::TestConnection() Exception: " + str(ex))
             return False
 
 
@@ -110,19 +111,19 @@ class SendStatusAdapter(object):
             if SendStatusAdapter.DeviceId == None:
                 btAddress = SettingsClass.GetBTAddress()
                 URL = SettingsClass.GetWebServerUrl() + "/api/v1/Devices/LookupDeviceByBTAddress/" +  btAddress
-                resp = requests.get(url=URL)
-                device = resp.json()
-                if device['id'] == None:
+                resp = requests.get(url=URL,timeout=0.1)
+                if resp.status_code == 404:
                     wiRocDeviceName = SettingsClass.GetWiRocDeviceName()
                     device = {"BTAddress": btAddress, "name": wiRocDeviceName}  # "description": None
                     URL = SettingsClass.GetWebServerUrl() + "/api/v1/Devices"
-                    resp = requests.post(url=URL, json=device)
+                    resp = requests.post(url=URL, json=device, timeout=0.1)
                     if resp.status_code == 200:
                         device = resp.json()
                         SendStatusAdapter.DeviceId = device['id']
                     else:
                         return False
                 else:
+                    device = resp.json()
                     SendStatusAdapter.DeviceId = device['id']
 
                 # subdevices
@@ -139,17 +140,17 @@ class SendStatusAdapter(object):
                     pathNo = byte2 & 0x07
                     subDevice = {"headBTAddress": btAddress, "distanceToHead": pathNo}
                     URL = SettingsClass.GetWebServerUrl() + "/api/v1/SubDevices"
-                    resp = requests.put(url=URL, json=subDevice)
+                    resp = requests.put(url=URL, json=subDevice,timeout=0.1)
                     if resp.status_code == 200:
                         subDevice2 = resp.json()
                         #subDevice stats
                         subDeviceStatus = {"subDeviceId": subDevice2.id,"batteryLevel":batteryPercent, "batteryLevelprecision":16}
                         URL = SettingsClass.GetWebServerUrl() + "/api/v1/SubDeviceStatuses"
-                        resp = requests.post(url=URL, json=subDeviceStatus)
+                        resp = requests.post(url=URL, json=subDeviceStatus,timeout=0.1)
                         if resp.status_code != 200:
                             return False
                     else:
                         return False
-        except:
-            logging.error("SendStatusAdapter::SendData() Exception")
+        except Exception as ex:
+            logging.error("SendStatusAdapter::SendData() Exception: " + str(ex))
             return False

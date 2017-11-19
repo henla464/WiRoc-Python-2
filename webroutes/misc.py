@@ -54,7 +54,7 @@ def getSettings():
     json_data = json.dumps(data)
     return json_data
 
-@app.route('/misc/setting/<keyandvalue>/', methods=['GET'])
+@app.route('/misc/setting/<path:keyandvalue>/', methods=['GET'])
 def setSetting(keyandvalue):
     settingData = None
     keyandvaluelist = keyandvalue.split(';')
