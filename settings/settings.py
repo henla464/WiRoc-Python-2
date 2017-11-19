@@ -5,6 +5,7 @@ from datamodel.datamodel import SettingData
 import time
 import math
 import random
+import os
 
 class SettingsClass(object):
     RadioIntervalLengthMicroSeconds = [4000000, 4000000, 4000000, 4000000, 4000000, 4000000]
@@ -221,8 +222,6 @@ class SettingsClass(object):
                 SettingsClass.sendToMeosIP = sett.Value
         return SettingsClass.sendToMeosIP
 
-
-
     @staticmethod
     def GetSendToMeosIPPort(mainConfigDirty = True):
         if SettingsClass.IsDirty("SendToMeosIPPort", True, mainConfigDirty):
@@ -237,6 +236,16 @@ class SettingsClass(object):
         return SettingsClass.sendToMeosIPPort
 
     @staticmethod
+    def GetWebServerUrl(mainConfigDirty = True):
+        if SettingsClass.IsDirty("GetWebServerUrl", True, mainConfigDirty):
+            sett = DatabaseHelper.get_setting_by_key('GetWebServerUrl')
+            if sett is None:
+                SettingsClass.webServerUrl = None
+            else:
+                SettingsClass.webServerUrl = sett.Value
+        return SettingsClass.webServerUrl
+
+    @staticmethod
     def GetSendToBlenoEnabled(mainConfigDirty = True):
         if SettingsClass.IsDirty("SendToBlenoEnabled", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('SendToBlenoEnabled')
@@ -245,6 +254,18 @@ class SettingsClass(object):
             else:
                 SettingsClass.sendToBlenoEnabled = (sett.Value == "1")
         return SettingsClass.sendToBlenoEnabled
+
+    @staticmethod
+    def GetBTAddress():
+        if SettingsClass.btAddress == None:
+            hcitoolResp = os.popen("hcitool dev").read()
+            hcitoolResp = hcitoolResp.replace("Devices:","")
+            hcitoolResp = hcitoolResp.strip()
+            hcitoolRespWords = hcitoolResp.split()
+            if len(hcitoolRespWords) > 1 and len(hcitoolRespWords[1]) == 17:
+                SettingsClass.btAddress = hcitoolRespWords[1]
+        return SettingsClass.btAddress
+
 
     @staticmethod
     def GetPowerCycle(mainConfigDirty = True):

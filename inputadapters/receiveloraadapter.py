@@ -3,6 +3,7 @@ import traceback
 from loraradio.loraradio import LoraRadio
 from datamodel.datamodel import LoraRadioMessage
 from settings.settings import SettingsClass
+from datamodel.db_helper import DatabaseHelper
 import serial
 import time
 import logging
@@ -122,6 +123,7 @@ class ReceiveLoraAdapter(object):
                             self.loraRadio.SendData(loraMessage2.GetByteArray())
                     relayPathNo = loraMessage.GetLastRelayPathNoFromStatusMessage()
                     SettingsClass.UpdateRelayPathNumber(relayPathNo)
+                    DatabaseHelper.add_message_stat(self.GetInstanceName(), "Status", "Received", 1)
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "Status", "Data": receivedData, "MessageID": loraMessage.GetMessageID(), "LoraRadioMessage": loraMessage, "ChecksumOK": True}
                 else:
                     messageID = loraMessage.GetMessageID()
@@ -135,6 +137,7 @@ class ReceiveLoraAdapter(object):
                             loraMessage2.SetMessageIDToAck(messageID)
                             loraMessage2.UpdateChecksum()
                             self.loraRadio.SendData(loraMessage2.GetByteArray())
+                    DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Received", 1)
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "SIMessage", "Data": receivedData, "MessageID": messageID, "LoraRadioMessage": loraMessage, "ChecksumOK": True}
             else:
                 return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName":"Unknown", "Data": receivedData, "MessageID":None, "ChecksumOK": False}

@@ -364,6 +364,18 @@ class TestPunchView(object):
         self.NoOfSendTries = 0
         self.Status = None
 
+class MessageStatsData(object):
+        columns = [("AdapterInstanceName", str), ("MessageSubTypeName", str), ("Status", str),
+                   ("NoOfMessages", int), ("Uploaded", bool),("CreatedDate", datetime)]
+
+        def __init__(self):
+            self.id = None
+            self.AdapterInstanceName = None
+            self.MessageSubTypeName = None
+            self.Status = None
+            self.NoOfMessages = None
+            self.Uploaded = False
+            self.CreatedDate = None
 
 # Non database objects
 class LoraRadioMessage(object):

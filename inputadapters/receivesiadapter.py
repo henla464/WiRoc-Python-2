@@ -6,6 +6,7 @@ from time import sleep
 from utils.utils import Utils
 from battery import Battery
 from datamodel.datamodel import SIMessage
+from datamodel.db_helper import DatabaseHelper
 import serial.tools.list_ports
 
 class ReceiveSIAdapter(object):
@@ -228,6 +229,7 @@ class ReceiveSIAdapter(object):
                 self.hasTimeBeenSet = True
                 Utils.SetTime(SIMsg.GetHour(), SIMsg.GetMinute(), SIMsg.GetSeconds())
 
+            DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Received", 1)
             source = "WiRoc" if self.isConnectedToWiRocDevice else "SIStation"
             return {"MessageType": "DATA", "MessageSource": source,
                     "MessageSubTypeName": "SIMessage", "Data": receivedData,

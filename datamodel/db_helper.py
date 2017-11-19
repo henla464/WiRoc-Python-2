@@ -51,6 +51,8 @@ class DatabaseHelper:
         db.ensure_table_created(table)
         table = RepeaterMessageBoxArchiveData()
         db.ensure_table_created(table)
+        table = MessageStatsData()
+        db.ensure_table_created(table)
 
     @classmethod
     def drop_all_tables(cls):
@@ -856,6 +858,30 @@ class DatabaseHelper:
             if punch.Status == 'Not sent' or punch.Status == 'Acked' or punch.Status == 'Not acked':
                 cls.db.execute_SQL("UPDATE TestPunchData SET Fetched = 1 WHERE id = %s" % punch.id)
         return notFetchedPunches
+
+# MessageStatsData
+    @classmethod
+    def add_message_stat(cls, adapterInstanceName, messageSubTypeName, status, noOfMessages):
+        cls.init()
+        stat = MessageStatsData()
+        stat.AdapterInstanceName = adapterInstanceName
+        stat.MessageSubTypeName = messageSubTypeName
+        stat.Status = status
+        stat.NoOfMessages = noOfMessages
+        stat.CreatedDate = datetime.now()
+        cls.db.save_table_object(stat, False)
+
+    @classmethod
+    def get_message_stat_to_upload(cls):
+        cls.init()
+        sql = "SELECT * FROM MessageStatsData WHERE Uploaded = 0 LIMIT 1"
+        return cls.db.get_table_objects_by_SQL(MessageStatsData, sql)
+
+    @classmethod
+    def set_message_stat_uploaded(cls, messageStatId):
+        cls.init()
+        sql = "UPDATE MessageStatsData SET MessageStatsData.Uploaded = 1 WHERE Id = " + messageStatId
+        cls.db.execute_SQL(sql)
 
 #Channels
     @classmethod

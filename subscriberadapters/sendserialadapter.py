@@ -138,10 +138,12 @@ class SendSerialAdapter(object):
     # messageData is a bytearray
     def SendData(self, messageData):
         if self.serialComputer.SendData(messageData):
+            DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "Sent", 1)
             dataInHex = ''.join(format(x, '02x') for x in messageData)
             logging.debug("SendSerialAdapter::SendData() Sent to computer, data: " + dataInHex)
             return True
         else:
+            DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "NotSent", 0)
             logging.warning("SendSerialAdapter::SendData() Could not send to computer")
             #SendSerialAdapter.EnableDisableSubscription()
             return False

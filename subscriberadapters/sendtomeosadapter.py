@@ -121,6 +121,7 @@ class SendToMeosAdapter(object):
             self.sock.close()
             self.sock = None
             logging.debug("SendToMeosAdapter::SendData() Sent to MEOS")
+            DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "Sent", 1)
             return True
         except socket.error as msg:
             logging.error(msg)
