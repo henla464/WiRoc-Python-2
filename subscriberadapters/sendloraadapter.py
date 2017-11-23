@@ -238,7 +238,7 @@ class SendLoraAdapter(object):
         return reqRepeater
 
     # messageData is a bytearray
-    def SendData(self, messageData):
+    def SendData(self, messageData, successCB, failureCB, callbackQueue):
         msg = LoraRadioMessage()
         msg.AddPayload(messageData)
         SettingsClass.SetTimeOfLastMessageSentToLora()

@@ -878,6 +878,7 @@ class DatabaseHelper:
         messageStats = cls.db.get_table_objects_by_SQL(MessageStatsData, sql)
         if len(messageStats) > 0:
             return messageStats[0]
+        return None
 
     @classmethod
     def set_message_stat_uploaded(cls, messageStatId):

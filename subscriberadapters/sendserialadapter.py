@@ -136,7 +136,7 @@ class SendSerialAdapter(object):
         return self.serialComputer.GetIsInitialized()
 
     # messageData is a bytearray
-    def SendData(self, messageData):
+    def SendData(self, messageData, successCB, failureCB, callbackQueue):
         if self.serialComputer.SendData(messageData):
             DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "Sent", 1)
             dataInHex = ''.join(format(x, '02x') for x in messageData)

@@ -251,7 +251,7 @@ class SettingsClass(object):
         if SettingsClass.IsDirty("WebServerUrl", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('WebServerUrl')
             if sett is None:
-                SettingsClass.webServerUrl = None
+                SettingsClass.webServerUrl = "http://localhost"
             else:
                 SettingsClass.webServerUrl = sett.Value
         return SettingsClass.webServerUrl

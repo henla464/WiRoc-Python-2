@@ -85,7 +85,7 @@ class SendToBlenoAdapter(object):
         return True
 
     # messageData is a bytearray
-    def SendData(self, messageData):
+    def SendData(self, messageData, successCB, failureCB, callbackQueue):
         SIMsg = SIMessage()
         SIMsg.AddPayload(messageData)
         #punchData = PunchData(messageData)

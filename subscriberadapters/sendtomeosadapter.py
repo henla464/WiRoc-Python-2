@@ -92,7 +92,7 @@ class SendToMeosAdapter(object):
         return True
 
     # messageData is a bytearray
-    def SendData(self, messageData):
+    def SendData(self, messageData, successCB, failureCB, callbackQueue):
         if self.sock is None:
             try:
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

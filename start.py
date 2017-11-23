@@ -17,7 +17,7 @@ import socket
 from itertools import repeat
 from battery import Battery
 from utils.utils import Utils
-import requests
+import requests, queue, threading
 
 class Main:
     def __init__(self):
@@ -31,7 +31,7 @@ class Main:
         self.wifiPowerSaving = None
         self.activeInputAdapters = None
         self.webServerUp = False
-
+        self.callbackQueue = queue.Queue()
         Battery.Setup()
         Setup.SetupPins()
 
@@ -64,7 +64,7 @@ class Main:
 
         self.runningOnChip = socket.gethostname() == 'chip'
 
-    def displayChannel(self):
+    def displayChannel(self, channel, ackRequested):
         if self.runningOnChip:
             channel = SettingsClass.GetChannel()
             ackRequested = SettingsClass.GetAcknowledgementRequested()
@@ -122,9 +122,8 @@ class Main:
             logging.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
             DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
 
-    def updateWifiPowerSaving(self):
+    def updateWifiPowerSaving(self, sendToMeos):
         if self.runningOnChip:
-            sendToMeos = SettingsClass.GetSendToMeosEnabled()
             if sendToMeos and (self.wifiPowerSaving or self.wifiPowerSaving is None):
                 # disable power saving
                 logging.info("Start::updateWifiPowerSaving() Disable WiFi power saving")
@@ -136,20 +135,34 @@ class Main:
                 os.system("sudo iw wlan0 set power_save on")
                 self.wifiPowerSaving = True
 
+    def reconfigureBackground(self,channel,ackRequested,sendToMeos, webServerUrl):
+        self.displayChannel(channel,ackRequested)
+        self.webServerUp = SendStatusAdapter.TestConnection(webServerUrl)
+        self.updateWifiPowerSaving(sendToMeos)
+        Battery.Tick()
+        SettingsClass.Tick()
 
     def reconfigure(self):
         SettingsClass.IsDirty("StatusMessageBaseInterval", True, True)  # force check dirty in db
-        # SettingsClass.SetMessagesToSendExists(True)
         self.archiveFailedMessages()
         DatabaseHelper.archive_old_repeater_message()
-        self.displayChannel()
-        self.webServerUp = SendStatusAdapter.TestConnection()
-        self.updateWifiPowerSaving()
-        Battery.Tick()
-        SettingsClass.Tick()
         if Setup.SetupAdapters():
             self.subscriberAdapters = Setup.SubscriberAdapters
             self.inputAdapters = Setup.InputAdapters
+
+        channel = None
+        ackRequested = None
+        sendToMeos = None
+        webServerUrl = SettingsClass.GetWebServerUrl()
+        if self.runningOnChip:
+            channel = SettingsClass.GetChannel()
+            ackRequested = SettingsClass.GetAcknowledgementRequested()
+            sendToMeos = SettingsClass.GetSendToMeosEnabled()
+
+        t = threading.Thread(target=self.reconfigureBackground, args=(channel,ackRequested,sendToMeos, webServerUrl))
+        t.start()
+
+
 
     def handleInput(self):
         for inputAdapter in self.activeInputAdapters:
@@ -313,23 +326,44 @@ class Main:
                                 if transformedData["MessageID"] is not None:
                                     DatabaseHelper.update_messageid(msgSub.id, transformedData["MessageID"])
 
-                                success = subAdapter.SendData(transformedData["Data"])
-                                if success:
-                                    logging.info(
-                                        "Start::Run() Message sent to " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
-                                    if msgSub.DeleteAfterSent:  # move msgsub to archive
-                                        DatabaseHelper.archive_message_subscription_view_after_sent(msgSub)
-                                    else:  # set SentDate and increment NoOfSendTries
+                                def createSuccessCB():
+                                    def successCB():
+                                        logging.info(
+                                            "Start::Run() Message sent to " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
+                                        if msgSub.DeleteAfterSent:  # move msgsub to archive
+                                            DatabaseHelper.archive_message_subscription_view_after_sent(msgSub)
+                                        else:  # set SentDate and increment NoOfSendTries
+                                            retryDelay = SettingsClass.GetRetryDelay(msgSub.NoOfSendTries + 1)
+                                            DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub, retryDelay)
+                                            DatabaseHelper.increase_scheduled_time_for_other_subscriptions(msgSub,subAdapter.GetDelayAfterMessageSent())
+                                    return successCB
+
+                                def createFailureCB():
+                                    def failureCB():
+                                        # failed to send
+                                        logging.warning(
+                                            "Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
                                         retryDelay = SettingsClass.GetRetryDelay(msgSub.NoOfSendTries + 1)
-                                        DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub, retryDelay)
-                                        DatabaseHelper.increase_scheduled_time_for_other_subscriptions(msgSub,
-                                                                                                       subAdapter.GetDelayAfterMessageSent())
-                                else:
-                                    # failed to send
-                                    logging.warning(
-                                        "Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
-                                    retryDelay = SettingsClass.GetRetryDelay(msgSub.NoOfSendTries + 1)
-                                    DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub, retryDelay)
+                                        DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub, retryDelay)
+                                    return failureCB
+
+                                subAdapter.SendData(transformedData["Data"], createSuccessCB(), createFailureCB(), self.callbackQueue)
+                                #if success:
+                                #    logging.info(
+                                #        "Start::Run() Message sent to " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
+                                #    if msgSub.DeleteAfterSent:  # move msgsub to archive
+                                #        DatabaseHelper.archive_message_subscription_view_after_sent(msgSub)
+                                #    else:  # set SentDate and increment NoOfSendTries
+                                #        retryDelay = SettingsClass.GetRetryDelay(msgSub.NoOfSendTries + 1)
+                                #        DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub, retryDelay)
+                                #        DatabaseHelper.increase_scheduled_time_for_other_subscriptions(msgSub,
+                                #                                                                       subAdapter.GetDelayAfterMessageSent())
+                                #else:
+                                #    # failed to send
+                                #    logging.warning(
+                                #        "Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
+                                #    retryDelay = SettingsClass.GetRetryDelay(msgSub.NoOfSendTries + 1)
+                                #    DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub, retryDelay)
                             else:
                                 # shouldn't be sent, so just archive the message subscription
                                 # (Probably a Lora message that doesn't request ack
@@ -341,19 +375,38 @@ class Main:
                     retryDelay = SettingsClass.GetRetryDelay(msgSub.FindAdapterTries + 1)
                     DatabaseHelper.increment_find_adapter_tries_and_set_find_adapter_try_date(msgSub, retryDelay)
 
-    def sendMessageStats(self):
-        if self.webServerUp:
-            messageStat = DatabaseHelper.get_message_stat_to_upload()
+    def sendMessageStatsBackground(self, messageStat):
+        if messageStat != None:
             btAddress = SettingsClass.GetBTAddress()
             URL = SettingsClass.GetWebServerUrl() + "/api/v1/MessageStats/" + btAddress
             messageStatToSend = {"adapterInstance": messageStat.AdapterInstanceName,
-                           "messageType": messageStat.MessageSubTypeName, "status": messageStat.Status,
-                            "noOfMessages": messageStat.NoOfMessages }
-            resp = requests.post(url=URL,timeout=0.1, json=messageStatToSend)
-            if resp.status_code == 200:
-                DatabaseHelper.set_message_stat_uploaded(messageStat.id)
+                                 "messageType": messageStat.MessageSubTypeName, "status": messageStat.Status,
+                                 "noOfMessages": messageStat.NoOfMessages}
+            resp = requests.post(url=URL, timeout=0.2, json=messageStatToSend, allow_redirects=False)
+            if resp.status_code == 200 or resp.status_code == 303:
+                self.callbackQueue.put((DatabaseHelper.set_message_stat_uploaded, messageStat.id))
+                # DatabaseHelper.set_message_stat_uploaded(messageStat.id)
             else:
                 self.webServerUp = False
+
+    def sendMessageStats(self):
+        if self.webServerUp:
+            try:
+                messageStat = DatabaseHelper.get_message_stat_to_upload()
+                t = threading.Thread(target=self.sendMessageStatsBackground, args=(messageStat,))
+                t.start()
+            except:
+                logging.error("start::sendMessageStats() Exception")
+
+    def handleCallbacks(self):
+        try:
+            cbt = self.callbackQueue.get(False)
+            cb = cbt[0]
+            cbargs = cbt[1:]
+            logging.debug("arg: " + str(cbt[1]))
+            cb(*cbargs)
+        except queue.Empty:
+            pass
 
     def Run(self):
         while True:
@@ -369,6 +422,9 @@ class Main:
                 self.handleInput()
                 self.handleOutput()
                 self.sendMessageStats()
+                self.handleCallbacks()
+
+
 
 
 

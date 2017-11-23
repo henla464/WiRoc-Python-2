@@ -29,7 +29,8 @@ class SendStatusAdapter(object):
     def EnableDisableSubscription():
         if len(SendStatusAdapter.Instances) > 0:
             isInitialized = SendStatusAdapter.Instances[0].GetIsInitialized()
-            connectionOK = SendStatusAdapter.TestConnection()
+            webServerUrl = SettingsClass.GetWebServerUrl()
+            connectionOK = SendStatusAdapter.TestConnection(webServerUrl)
             subscriptionShouldBeEnabled = isInitialized and connectionOK
             if SendStatusAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
                 logging.info("SendStatusAdapter::EnableDisableSubscription() subscription set enabled: " + str(subscriptionShouldBeEnabled))
@@ -93,9 +94,9 @@ class SendStatusAdapter(object):
         return True
 
     @staticmethod
-    def TestConnection():
+    def TestConnection(webServerUrl):
         try:
-            URL = SettingsClass.GetWebServerUrl() + "/api/v1/ping"
+            URL = webServerUrl + "/api/v1/ping"
             r = requests.get(url=URL,timeout=0.01)
             data = r.json()
             logging.info(data)
@@ -106,10 +107,10 @@ class SendStatusAdapter(object):
 
 
     # messageData is a bytearray
-    def SendData(self, messageData):
+    def SendData(self, messageData, successCB, failureCB, callbackQueue):
         try:
+            btAddress = SettingsClass.GetBTAddress()
             if SendStatusAdapter.DeviceId == None:
-                btAddress = SettingsClass.GetBTAddress()
                 URL = SettingsClass.GetWebServerUrl() + "/api/v1/Devices/LookupDeviceByBTAddress/" +  btAddress
                 resp = requests.get(url=URL,timeout=0.1)
                 if resp.status_code == 404:
@@ -118,39 +119,44 @@ class SendStatusAdapter(object):
                     URL = SettingsClass.GetWebServerUrl() + "/api/v1/Devices"
                     resp = requests.post(url=URL, json=device, timeout=0.1)
                     if resp.status_code == 200:
-                        device = resp.json()
-                        SendStatusAdapter.DeviceId = device['id']
+                        retDevice = resp.json()
+                        SendStatusAdapter.DeviceId = retDevice['id']
                     else:
+                        callbackQueue.put(failureCB, ())
                         return False
                 else:
-                    device = resp.json()
-                    SendStatusAdapter.DeviceId = device['id']
+                    retDevice = resp.json()
+                    SendStatusAdapter.DeviceId = retDevice['id']
 
-                # subdevices
-                subDeviceData = messageData[LoraRadioMessage.GetHeaderSize():]
+            # subdevices
+            subDeviceData = messageData[LoraRadioMessage.GetHeaderSize():]
 
-                def grouped(iterable, n):
-                    "s -> (s0,s1,s2,...sn-1), (sn,sn+1,sn+2,...s2n-1), (s2n,s2n+1,s2n+2,...s3n-1), ..."
-                    return zip(*[iter(iterable)] * n)
-                #/api/v1/SubDevices
-                for byte1,byte2 in grouped(subDeviceData, 2):
-                    batteryPercent = byte1 & 0xF0
-                    siStationNumber = (byte1 & 0x0F) << 5
-                    siStationNumber = siStationNumber | (byte2 & 0xF8) >> 3
-                    pathNo = byte2 & 0x07
-                    subDevice = {"headBTAddress": btAddress, "distanceToHead": pathNo}
-                    URL = SettingsClass.GetWebServerUrl() + "/api/v1/SubDevices"
-                    resp = requests.put(url=URL, json=subDevice,timeout=0.1)
-                    if resp.status_code == 200:
-                        subDevice2 = resp.json()
-                        #subDevice stats
-                        subDeviceStatus = {"subDeviceId": subDevice2.id,"batteryLevel":batteryPercent, "batteryLevelprecision":16}
-                        URL = SettingsClass.GetWebServerUrl() + "/api/v1/SubDeviceStatuses"
-                        resp = requests.post(url=URL, json=subDeviceStatus,timeout=0.1)
-                        if resp.status_code != 200:
-                            return False
+            def grouped(iterable, n):
+                "s -> (s0,s1,s2,...sn-1), (sn,sn+1,sn+2,...s2n-1), (s2n,s2n+1,s2n+2,...s3n-1), ..."
+                return zip(*[iter(iterable)] * n)
+            #/api/v1/SubDevices
+            for byte1,byte2 in grouped(subDeviceData, 2):
+                batteryPercent = byte1 & 0xF0
+                siStationNumber = (byte1 & 0x0F) << 5
+                siStationNumber = siStationNumber | (byte2 & 0xF8) >> 3
+                pathNo = byte2 & 0x07
+                subDevice = {"headBTAddress": btAddress, "distanceToHead": pathNo}
+                URL = SettingsClass.GetWebServerUrl() + "/api/v1/SubDevices"
+                resp = requests.put(url=URL, json=subDevice,timeout=0.1)
+                if resp.status_code == 200 or resp.status_code == 303:
+                    subDevice2 = resp.json()
+                    #subDevice stats
+                    subDeviceStatus = {"subDeviceId": subDevice2['id'],"batteryLevel":batteryPercent, "batteryLevelprecision":16}
+                    URL = SettingsClass.GetWebServerUrl() + "/api/v1/SubDeviceStatuses"
+                    resp = requests.post(url=URL, json=subDeviceStatus,timeout=0.1, allow_redirects=False)
+                    if resp.status_code == 200 or resp.status_code == 303:
+                        callbackQueue.put(successCB, ())
+                        return True
                     else:
+                        callbackQueue.put(failureCB, ())
                         return False
+            return False
         except Exception as ex:
             logging.error("SendStatusAdapter::SendData() Exception: " + str(ex))
+            callbackQueue.put(failureCB, ())
             return False
