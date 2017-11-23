@@ -105,6 +105,8 @@ class SendStatusAdapter(object):
             logging.error("SendStatusAdapter::TestConnection() Exception: " + str(ex))
             return False
 
+    def GetDelayAfterMessageSent(self):
+        return 0
 
     # messageData is a bytearray
     def SendData(self, messageData, successCB, failureCB, callbackQueue):
@@ -150,13 +152,13 @@ class SendStatusAdapter(object):
                     URL = SettingsClass.GetWebServerUrl() + "/api/v1/SubDeviceStatuses"
                     resp = requests.post(url=URL, json=subDeviceStatus,timeout=0.1, allow_redirects=False)
                     if resp.status_code == 200 or resp.status_code == 303:
-                        callbackQueue.put(successCB, ())
+                        callbackQueue.put((successCB, ))
                         return True
                     else:
-                        callbackQueue.put(failureCB, ())
+                        callbackQueue.put((failureCB, ))
                         return False
             return False
         except Exception as ex:
             logging.error("SendStatusAdapter::SendData() Exception: " + str(ex))
-            callbackQueue.put(failureCB, ())
+            callbackQueue.put((failureCB, ))
             return False

@@ -135,6 +135,9 @@ class SendSerialAdapter(object):
     def IsReadyToSend(self):
         return self.serialComputer.GetIsInitialized()
 
+    def GetDelayAfterMessageSent(self):
+        return 0
+
     # messageData is a bytearray
     def SendData(self, messageData, successCB, failureCB, callbackQueue):
         if self.serialComputer.SendData(messageData):

@@ -246,4 +246,7 @@ class SendLoraAdapter(object):
             self.AddSentWithRepeaterBit()
         else:
             self.AddSentWithoutRepeaterBit()
-        return self.loraRadio.SendData(messageData)
+        if self.loraRadio.SendData(messageData):
+            callbackQueue.put((successCB,))
+        else:
+            callbackQueue.put((failureCB,))

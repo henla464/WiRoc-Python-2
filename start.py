@@ -66,8 +66,6 @@ class Main:
 
     def displayChannel(self, channel, ackRequested):
         if self.runningOnChip:
-            channel = SettingsClass.GetChannel()
-            ackRequested = SettingsClass.GetAcknowledgementRequested()
             if channel != self.previousChannel or ackRequested != self.previousAckRequested:
                 self.previousChannel = channel
                 self.previousAckRequested = ackRequested
@@ -375,10 +373,10 @@ class Main:
                     retryDelay = SettingsClass.GetRetryDelay(msgSub.FindAdapterTries + 1)
                     DatabaseHelper.increment_find_adapter_tries_and_set_find_adapter_try_date(msgSub, retryDelay)
 
-    def sendMessageStatsBackground(self, messageStat):
+    def sendMessageStatsBackground(self, messageStat, webServerUrl):
         if messageStat != None:
             btAddress = SettingsClass.GetBTAddress()
-            URL = SettingsClass.GetWebServerUrl() + "/api/v1/MessageStats/" + btAddress
+            URL = webServerUrl + "/api/v1/MessageStats/" + btAddress
             messageStatToSend = {"adapterInstance": messageStat.AdapterInstanceName,
                                  "messageType": messageStat.MessageSubTypeName, "status": messageStat.Status,
                                  "noOfMessages": messageStat.NoOfMessages}
@@ -393,7 +391,8 @@ class Main:
         if self.webServerUp:
             try:
                 messageStat = DatabaseHelper.get_message_stat_to_upload()
-                t = threading.Thread(target=self.sendMessageStatsBackground, args=(messageStat,))
+                webServerUrl = SettingsClass.GetWebServerUrl()
+                t = threading.Thread(target=self.sendMessageStatsBackground, args=(messageStat, webServerUrl))
                 t.start()
             except:
                 logging.error("start::sendMessageStats() Exception")
@@ -403,7 +402,7 @@ class Main:
             cbt = self.callbackQueue.get(False)
             cb = cbt[0]
             cbargs = cbt[1:]
-            logging.debug("arg: " + str(cbt[1]))
+            logging.debug("arg: " + str(cbt[0]))
             cb(*cbargs)
         except queue.Empty:
             pass
