@@ -88,7 +88,7 @@ class SendToBlenoAdapter(object):
         return 0
 
     # messageData is a bytearray
-    def SendData(self, messageData, successCB, failureCB, callbackQueue):
+    def SendData(self, messageData, successCB, failureCB, callbackQueue, settingsDictionary):
         SIMsg = SIMessage()
         SIMsg.AddPayload(messageData)
         #punchData = PunchData(messageData)
@@ -98,5 +98,6 @@ class SendToBlenoAdapter(object):
         blenoPunchData.TwentyFourHour = SIMsg.GetTwentyFourHour()
         blenoPunchData.TwelveHourTimer = (SIMsg.GetTwelveHourTimer()[0] << 8) + SIMsg.GetTwelveHourTimer()[1]
         blenoPunchData.SubSecond = SIMsg.GetSubSecondAsTenthOfSeconds()
-        DatabaseHelper.save_bleno_punch_data(blenoPunchData)
+        callbackQueue.put((DatabaseHelper.save_bleno_punch_data, blenoPunchData))
+        callbackQueue.put((successCB,))
         return True

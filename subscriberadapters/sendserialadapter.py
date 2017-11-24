@@ -139,14 +139,18 @@ class SendSerialAdapter(object):
         return 0
 
     # messageData is a bytearray
-    def SendData(self, messageData, successCB, failureCB, callbackQueue):
+    def SendData(self, messageData, successCB, failureCB, callbackQueue, settingsDictionary):
         if self.serialComputer.SendData(messageData):
-            DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "Sent", 1)
+            callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "Sent", 1))
+            callbackQueue.put((successCB,))
+            #DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "Sent", 1)
             dataInHex = ''.join(format(x, '02x') for x in messageData)
             logging.debug("SendSerialAdapter::SendData() Sent to computer, data: " + dataInHex)
             return True
         else:
-            DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "NotSent", 0)
+            callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "NotSent", 0))
+            callbackQueue.put((failureCB,))
+            #DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "NotSent", 0)
             logging.warning("SendSerialAdapter::SendData() Could not send to computer")
             #SendSerialAdapter.EnableDisableSubscription()
             return False

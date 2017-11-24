@@ -32,6 +32,7 @@ class Main:
         self.activeInputAdapters = None
         self.webServerUp = False
         self.callbackQueue = queue.Queue()
+        self.threadQueue = queue.Queue()
         Battery.Setup()
         Setup.SetupPins()
 
@@ -305,7 +306,7 @@ class Main:
                             timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(35)  # message 23 + ack 10 + 2 extra
                             DatabaseHelper.increase_scheduled_time_if_less_than(timeS)
 
-    def handleOutput(self):
+    def handleOutput(self, settDict):
         if self.messagesToSendExists:
             msgSubscriptions = self.getMessageSubscriptionsToSend()
             for msgSub in msgSubscriptions:
@@ -345,7 +346,11 @@ class Main:
                                         DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub, retryDelay)
                                     return failureCB
 
-                                subAdapter.SendData(transformedData["Data"], createSuccessCB(), createFailureCB(), self.callbackQueue)
+                                t = threading.Thread(target=subAdapter.SendData,
+                                                     args=(transformedData["Data"], createSuccessCB(), createFailureCB(), self.callbackQueue, settDict))
+                                t.start()
+                                self.threadQueue.put(t)
+                                #subAdapter.SendData(transformedData["Data"], createSuccessCB(), createFailureCB(), self.callbackQueue)
                                 #if success:
                                 #    logging.info(
                                 #        "Start::Run() Message sent to " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
@@ -408,9 +413,14 @@ class Main:
             pass
 
     def Run(self):
+        settDict = {}
         while True:
 
             if self.timeToReconfigure():
+                settDict["WebServerUrl"] = SettingsClass.GetWebServerUrl()
+                settDict["WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName()
+                settDict["SendToMeosIP"] = SettingsClass.GetSendToMeosIP()
+                settDict["SendToMeosIPPort"] = SettingsClass.GetSendToMeosIPPort()
                 self.reconfigure()
 
             self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
@@ -419,7 +429,13 @@ class Main:
             for i in repeat(None, 20):
                 time.sleep(0.05)
                 self.handleInput()
-                self.handleOutput()
+                while not self.threadQueue.empty():
+                    try:
+                        bgThread = self.threadQueue.get(False)
+                        bgThread.join()
+                    except queue.Empty:
+                        pass
+                self.handleOutput(settDict)
                 self.sendMessageStats()
                 self.handleCallbacks()
 
