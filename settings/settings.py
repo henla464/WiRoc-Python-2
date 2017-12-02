@@ -431,6 +431,8 @@ class SettingsClass(object):
 
     @staticmethod
     def GetLoraMessageTimeSendingTimeS(noOfBytes):
+        if noOfBytes == 0:
+            return 0
         dataRate = SettingsClass.GetDataRate()
         channel = SettingsClass.GetChannel()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)

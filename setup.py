@@ -36,7 +36,6 @@ class Setup:
         subscriberObjects.extend(SendSerialAdapter.Instances)
         subscriberObjects.extend(SendToBlenoAdapter.Instances)
         subscriberObjects.extend(SendToMeosAdapter.Instances)
-        subscriberObjects.extend(SendToMeosAdapter.Instances)
         subscriberObjects.extend(SendStatusAdapter.Instances)
 
         inputObjects = []

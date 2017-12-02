@@ -597,7 +597,7 @@ class DatabaseHelper:
                    "MessageSubscriptionData.SentDate asc LIMIT 1") % (now, maxRetries, maxRetries)
             msgBoxDataId = cls.db.get_scalar_by_SQL(sql)
             if msgBoxDataId == None:
-                return 0, []
+                return cnt, []
 
             sql = ("SELECT MessageSubscriptionData.id, "
                    "MessageSubscriptionData.MessageID, "

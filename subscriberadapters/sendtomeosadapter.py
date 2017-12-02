@@ -99,21 +99,22 @@ class SendToMeosAdapter(object):
         if self.sock is None:
             try:
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                logging.debug("SendToMeosAdapter::SendData() Address: " + settingsDictionary["GetSendToMeosIP"] + " Port: " + str(
-                    SettingsClass.GetSendToMeosIPPort()))
-                server_address = (settingsDictionary["GetSendToMeosIP"], settingsDictionary["GetSendToMeosIPPort"])
+                logging.debug("SendToMeosAdapter::SendData() Address: " + settingsDictionary["SendToMeosIP"] + " Port: " + str(settingsDictionary["SendToMeosIPPort"]))
+                server_address = (settingsDictionary["SendToMeosIP"], settingsDictionary["SendToMeosIPPort"])
                 self.sock.settimeout(0.5)
                 self.sock.connect(server_address)
                 logging.debug("SendToMeosAdapter::SendData() After connect")
             except socket.gaierror as msg:
                 logging.error("SendToMeosAdapter::SendData() Address-related error connecting to server: " + str(msg))
-                self.sock.close()
+                if self.sock != None:
+                    self.sock.close()
                 self.sock = None
                 callbackQueue.put((failureCB,))
                 return False
             except socket.error as msg:
                 logging.error("SendToMeosAdapter::SendData() Connection error: " + str(msg))
-                self.sock.close()
+                if self.sock != None:
+                    self.sock.close()
                 self.sock = None
                 callbackQueue.put((failureCB,))
                 return False
@@ -130,13 +131,15 @@ class SendToMeosAdapter(object):
             return True
         except socket.error as msg:
             logging.error(msg)
-            self.sock.close()
+            if self.sock != None:
+                self.sock.close()
             self.sock = None
             callbackQueue.put((failureCB,))
             return False
         except:
             logging.error("SendToMeosAdapter::SendData() Exception")
-            self.sock.close()
+            if self.sock != None:
+                self.sock.close()
             self.sock = None
             callbackQueue.put((failureCB,))
             return False

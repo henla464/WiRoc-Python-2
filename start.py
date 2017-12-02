@@ -309,6 +309,7 @@ class Main:
     def handleOutput(self, settDict):
         if self.messagesToSendExists:
             msgSubscriptions = self.getMessageSubscriptionsToSend()
+            logging.info("msgSub count: " + str(len(msgSubscriptions)))
             for msgSub in msgSubscriptions:
                 # find the right adapter
                 adapterFound = False
@@ -348,8 +349,9 @@ class Main:
 
                                 t = threading.Thread(target=subAdapter.SendData,
                                                      args=(transformedData["Data"], createSuccessCB(), createFailureCB(), self.callbackQueue, settDict))
-                                t.start()
                                 self.threadQueue.put(t)
+                                t.start()
+
                                 #subAdapter.SendData(transformedData["Data"], createSuccessCB(), createFailureCB(), self.callbackQueue)
                                 #if success:
                                 #    logging.info(
@@ -414,6 +416,11 @@ class Main:
 
     def Run(self):
         settDict = {}
+        settDict["WebServerUrl"] = SettingsClass.GetWebServerUrl()
+        settDict["WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName()
+        settDict["SendToMeosIP"] = SettingsClass.GetSendToMeosIP()
+        settDict["SendToMeosIPPort"] = SettingsClass.GetSendToMeosIPPort()
+
         while True:
 
             if self.timeToReconfigure():
