@@ -87,7 +87,11 @@ class DB:
         #    self.connection.row_factory = lite.Row
         db_cursor = self.connection.cursor()
         db_cursor.execute(select_SQL_statement)
-        return db_cursor.fetchone()[0]
+        first = db_cursor.fetchone()
+        if first == None:
+            return None
+        else:
+            return first[0]
 
     def get_table_objects_by_SQL(self, table_class, select_SQL_statement, parameters=None):
         db_cursor = self.connection.cursor()

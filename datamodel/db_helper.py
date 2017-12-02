@@ -584,6 +584,19 @@ class DatabaseHelper:
         cnt = cls.db.get_scalar_by_SQL(sql)
         if cnt > 0:
             now = datetime.now()
+            sql = ("SELECT MessageBoxData.id "
+                   "FROM TransformData JOIN SubscriptionData ON TransformData.id = SubscriptionData.TransformId "
+                   "JOIN MessageSubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
+                   "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
+                   "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
+                   "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
+                   "(MessageSubscriptionData.ScheduledTime IS NULL OR MessageSubscriptionData.ScheduledTime < '%s') AND "
+                   "MessageSubscriptionData.NoOfSendTries < %s AND "
+                   "MessageSubscriptionData.FindAdapterTries < %s "
+                   "ORDER BY MessageSubscriptionData.ScheduledTime asc, "
+                   "MessageSubscriptionData.SentDate asc LIMIT 1") % (now, maxRetries, maxRetries)
+            msgBoxDataId = cls.db.get_scalar_by_SQL(sql)
+
             sql = ("SELECT MessageSubscriptionData.id, "
                    "MessageSubscriptionData.MessageID, "
                    "MessageSubscriptionData.AckReceivedFromReceiver, "
@@ -613,9 +626,10 @@ class DatabaseHelper:
                    "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
                    "(MessageSubscriptionData.ScheduledTime IS NULL OR MessageSubscriptionData.ScheduledTime < '%s') AND "
                    "MessageSubscriptionData.NoOfSendTries < %s AND "
-                   "MessageSubscriptionData.FindAdapterTries < %s "
+                   "MessageSubscriptionData.FindAdapterTries < %s AND "
+                   "MessageBoxData.id = %s "
                    "ORDER BY MessageSubscriptionData.ScheduledTime asc, "
-                   "MessageSubscriptionData.SentDate asc LIMIT %s") % (now, maxRetries, maxRetries, limit)
+                   "MessageSubscriptionData.SentDate asc LIMIT %s") % (now, maxRetries, maxRetries, msgBoxDataId, limit)
             return cnt, cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
         return cnt, []
 
@@ -878,7 +892,6 @@ class DatabaseHelper:
         messageStats = cls.db.get_table_objects_by_SQL(MessageStatsData, sql)
         if len(messageStats) > 0:
             return messageStats[0]
-        return None
 
     @classmethod
     def set_message_stat_uploaded(cls, messageStatId):
