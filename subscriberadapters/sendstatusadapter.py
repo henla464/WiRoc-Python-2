@@ -97,7 +97,7 @@ class SendStatusAdapter(object):
     def TestConnection(webServerUrl):
         try:
             URL = webServerUrl + "/api/v1/ping"
-            r = requests.get(url=URL,timeout=0.01)
+            r = requests.get(url=URL,timeout=0.1)
             data = r.json()
             logging.info(data)
             return data['code'] == 0
