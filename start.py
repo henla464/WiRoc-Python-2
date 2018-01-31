@@ -387,10 +387,10 @@ class Main:
             messageStatToSend = {"adapterInstance": messageStat.AdapterInstanceName,
                                  "messageType": messageStat.MessageSubTypeName, "status": messageStat.Status,
                                  "noOfMessages": messageStat.NoOfMessages}
-            resp = requests.post(url=URL, timeout=0.2, json=messageStatToSend, allow_redirects=False)
+            headers = {'Authorization': 'Token token=' + SettingsClass.GetAPIKey(False)}
+            resp = requests.post(url=URL, timeout=0.2, json=messageStatToSend, allow_redirects=False, headers=headers)
             if resp.status_code == 200 or resp.status_code == 303:
                 self.callbackQueue.put((DatabaseHelper.set_message_stat_uploaded, messageStat.id))
-                # DatabaseHelper.set_message_stat_uploaded(messageStat.id)
             else:
                 self.webServerUp = False
 

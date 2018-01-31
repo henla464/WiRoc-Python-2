@@ -31,6 +31,7 @@ class SettingsClass(object):
     forceReconfigure = False
     webServerUrl = None
     btAddress = None
+    APIKey = None
 
     connectedComputerIsWiRocDevice = False
     timeConnectedComputerIsWiRocDeviceChanged = None
@@ -76,6 +77,8 @@ class SettingsClass(object):
             SettingsClass.webServerUrl = None
         if settingsName == 'BTAddress':
             SettingsClass.btAddress = None
+        if settingsName == 'APIKey':
+            SettingsClass.APIKey = None
 
         if markDirtyInDatabase:
             SettingsClass.SetSetting("ConfigDirty", "1")
@@ -108,6 +111,7 @@ class SettingsClass(object):
             SettingsClass.wiRocDeviceName = None
             SettingsClass.webServerUrl = None
             SettingsClass.btAddress = None
+            SettingsClass.APIKey = None
             if mainConfigDirty:
                 SettingsClass.SetSetting("ConfigDirty", "0")
             else:
@@ -150,6 +154,8 @@ class SettingsClass(object):
                 return SettingsClass.webServerUrl is None
             if settingsName == 'BTAddress':
                 return SettingsClass.btAddress is None
+            if settingsName == 'APIKey':
+                return SettingsClass.APIKey is None
 
         return True
 
@@ -277,6 +283,15 @@ class SettingsClass(object):
                 SettingsClass.btAddress = hcitoolRespWords[1]
         return SettingsClass.btAddress
 
+    @staticmethod
+    def GetAPIKey(mainConfigDirty = True):
+        if SettingsClass.IsDirty("APIKey", True, mainConfigDirty):
+            sett = DatabaseHelper.get_setting_by_key('APIKey')
+            if sett is None:
+                SettingsClass.APIKey = '67f11087-32c5-4dc5-9987-bbdecb028d36'
+            else:
+                SettingsClass.APIKey = sett.Value
+        return SettingsClass.APIKey
 
     @staticmethod
     def GetPowerCycle(mainConfigDirty = True):
