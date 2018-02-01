@@ -35,6 +35,7 @@ class Main:
         self.threadQueue = queue.Queue()
         Battery.Setup()
         Setup.SetupPins()
+        Setup.SetupHttpRequestsToUseIPv4()
 
         #DatabaseHelper.drop_all_tables()
         DatabaseHelper.ensure_tables_created()
@@ -383,12 +384,18 @@ class Main:
     def sendMessageStatsBackground(self, messageStat, webServerUrl):
         if messageStat != None:
             btAddress = SettingsClass.GetBTAddress()
-            URL = webServerUrl + "/api/v1/MessageStats/" + btAddress
+
+            host = webServerUrl.replace('http://', '').replace('https://', '')
+            addrs = socket.getaddrinfo(host, 80)
+            ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
+            URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/MessageStats/" + btAddress
+
             messageStatToSend = {"adapterInstance": messageStat.AdapterInstanceName,
                                  "messageType": messageStat.MessageSubTypeName, "status": messageStat.Status,
                                  "noOfMessages": messageStat.NoOfMessages}
-            headers = {'Authorization': 'Token token=' + SettingsClass.GetAPIKey(False)}
-            resp = requests.post(url=URL, timeout=0.2, json=messageStatToSend, allow_redirects=False, headers=headers)
+            headers = {'Authorization': 'Token token=' + SettingsClass.GetAPIKey(False),
+                       'host': host}
+            resp = requests.post(url=URL, timeout=1, json=messageStatToSend, allow_redirects=False, headers=headers)
             if resp.status_code == 200 or resp.status_code == 303:
                 self.callbackQueue.put((DatabaseHelper.set_message_stat_uploaded, messageStat.id))
             else:

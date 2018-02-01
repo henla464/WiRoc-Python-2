@@ -3,6 +3,7 @@ from datamodel.db_helper import DatabaseHelper
 from datamodel.datamodel import LoraRadioMessage
 import logging
 import requests
+import socket
 
 class SendStatusAdapter(object):
     Instances = []
@@ -96,13 +97,16 @@ class SendStatusAdapter(object):
     @staticmethod
     def TestConnection(webServerUrl):
         try:
-            URL = webServerUrl + "/api/v1/ping"
-            r = requests.get(url=URL,timeout=0.1)
+            host = webServerUrl.replace('http://','').replace('https://','')
+            addrs = socket.getaddrinfo(host, 80)
+            ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
+            URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/ping"
+            r = requests.get(url=URL,timeout=1, headers={'host': host})
             data = r.json()
             logging.info(data)
             return data['code'] == 0
         except Exception as ex:
-            logging.error("SendStatusAdapter::TestConnection() Exception: " + str(ex))
+            logging.error("SendStatusAdapter::TestConnection() " + webServerUrl + " Exception: " + str(ex))
             return False
 
     def GetDelayAfterMessageSent(self):
@@ -112,14 +116,18 @@ class SendStatusAdapter(object):
     def SendData(self, messageData, successCB, failureCB, callbackQueue, settingsDictionary):
         try:
             btAddress = SettingsClass.GetBTAddress()
+            host = settingsDictionary["WebServerUrl"].replace('http://', '').replace('https://', '')
+            addrs = socket.getaddrinfo(host, 80)
+            ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
+
             if SendStatusAdapter.DeviceId == None:
-                URL = settingsDictionary["WebServerUrl"] + "/api/v1/Devices/LookupDeviceByBTAddress/" + btAddress
-                resp = requests.get(url=URL,timeout=0.1)
+                URL = settingsDictionary["WebServerUrl"].replace(host, ipv4_addrs[0]) + "/api/v1/Devices/LookupDeviceByBTAddress/" + btAddress
+                resp = requests.get(url=URL,timeout=1, headers={'host': host})
                 if resp.status_code == 404:
                     wiRocDeviceName = settingsDictionary["WiRocDeviceName"]
                     device = {"BTAddress": btAddress, "name": wiRocDeviceName}  # "description": None
-                    URL = settingsDictionary["WebServerUrl"] + "/api/v1/Devices"
-                    resp = requests.post(url=URL, json=device, timeout=0.1)
+                    URL = settingsDictionary["WebServerUrl"].replace(host, ipv4_addrs[0]) + "/api/v1/Devices"
+                    resp = requests.post(url=URL, json=device, timeout=1, headers={'host': host})
                     if resp.status_code == 200:
                         retDevice = resp.json()
                         SendStatusAdapter.DeviceId = retDevice['id']
@@ -143,14 +151,14 @@ class SendStatusAdapter(object):
                 siStationNumber = siStationNumber | (byte2 & 0xF8) >> 3
                 pathNo = byte2 & 0x07
                 subDevice = {"headBTAddress": btAddress, "distanceToHead": pathNo}
-                URL = settingsDictionary["WebServerUrl"] + "/api/v1/SubDevices"
-                resp = requests.put(url=URL, json=subDevice,timeout=0.1)
+                URL = settingsDictionary["WebServerUrl"].replace(host, ipv4_addrs[0]) + "/api/v1/SubDevices"
+                resp = requests.put(url=URL, json=subDevice,timeout=1, headers={'host': host})
                 if resp.status_code == 200 or resp.status_code == 303:
                     subDevice2 = resp.json()
                     #subDevice stats
                     subDeviceStatus = {"subDeviceId": subDevice2['id'],"batteryLevel":batteryPercent, "batteryLevelprecision":16}
-                    URL = settingsDictionary["WebServerUrl"] + "/api/v1/SubDeviceStatuses"
-                    resp = requests.post(url=URL, json=subDeviceStatus,timeout=0.1, allow_redirects=False)
+                    URL = settingsDictionary["WebServerUrl"].replace(host, ipv4_addrs[0]) + "/api/v1/SubDeviceStatuses"
+                    resp = requests.post(url=URL, json=subDeviceStatus,timeout=1, allow_redirects=False, headers={'host': host})
                     if resp.status_code == 200 or resp.status_code == 303:
                         callbackQueue.put((successCB, ))
                         return True

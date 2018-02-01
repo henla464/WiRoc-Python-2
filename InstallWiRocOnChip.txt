@@ -217,3 +217,14 @@ Display
 
 sudo apt-get install libfreetype6-dev
 sudo apt-get install python-imaging
+
+
+---
+Make it prefere ipv4 over ipv6
+
+https://stackoverflow.com/questions/31519567/disable-ipv6-for-python-script
+
+Another would be to use an underlying way to get your C library to prefer IPv4 or disable IPv6. This will vary by platform, but on Linux using glibc you could edit /etc/gai.conf to always prefer IPv4 over IPv6:
+
+precedence ::ffff:0:0/96  100
+------

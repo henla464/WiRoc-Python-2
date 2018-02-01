@@ -16,6 +16,8 @@ from inputadapters.receiveserialcomputeradapter import ReceiveSerialComputerAdap
 from inputadapters.receivesiadapter import ReceiveSIAdapter
 from inputadapters.receivetestpunchesadapter import ReceiveTestPunchesAdapter
 from inputadapters.receiverepeatermessagesadapter import ReceiveRepeaterMessagesAdapter
+#import requests.packages.urllib3.util.connection as urllib3_cn
+import urllib3.util.connection as urllib3_cn
 import logging
 from chipGPIO.chipGPIO import *
 import socket
@@ -174,3 +176,16 @@ class Setup:
             pinModeNonXIO(138, INPUT)
             pinModeNonXIO(139, OUTPUT)
             digitalWriteNonXIO(139, 1)
+
+    @staticmethod
+    def SetupHttpRequestsToUseIPv4():
+        def allowed_gai_family():
+            """
+             https://github.com/shazow/urllib3/blob/master/urllib3/util/connection.py
+            """
+            family = socket.AF_INET
+            #if urllib3_cn.HAS_IPV6:
+            #    family = socket.AF_INET6  # force ipv6 only if it is available
+            return family
+
+        urllib3_cn.allowed_gai_family = allowed_gai_family
