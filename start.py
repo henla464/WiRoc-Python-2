@@ -310,7 +310,7 @@ class Main:
     def handleOutput(self, settDict):
         if self.messagesToSendExists:
             msgSubscriptions = self.getMessageSubscriptionsToSend()
-            logging.info("msgSub count: " + str(len(msgSubscriptions)))
+            #logging.info("msgSub count: " + str(len(msgSubscriptions)))
             for msgSub in msgSubscriptions:
                 # find the right adapter
                 adapterFound = False
@@ -381,7 +381,7 @@ class Main:
                     retryDelay = SettingsClass.GetRetryDelay(msgSub.FindAdapterTries + 1)
                     DatabaseHelper.increment_find_adapter_tries_and_set_find_adapter_try_date(msgSub, retryDelay)
 
-    def sendMessageStatsBackground(self, messageStat, webServerUrl):
+    def sendMessageStatsBackground(self, messageStat, webServerUrl, apiKey):
         if messageStat != None:
             btAddress = SettingsClass.GetBTAddress()
 
@@ -393,23 +393,27 @@ class Main:
             messageStatToSend = {"adapterInstance": messageStat.AdapterInstanceName,
                                  "messageType": messageStat.MessageSubTypeName, "status": messageStat.Status,
                                  "noOfMessages": messageStat.NoOfMessages}
-            headers = {'Authorization': 'Token token=' + SettingsClass.GetAPIKey(False),
-                       'host': host}
-            resp = requests.post(url=URL, timeout=1, json=messageStatToSend, allow_redirects=False, headers=headers)
-            if resp.status_code == 200 or resp.status_code == 303:
-                self.callbackQueue.put((DatabaseHelper.set_message_stat_uploaded, messageStat.id))
-            else:
-                self.webServerUp = False
+            headers = {'Authorization': 'Token token=' + apiKey, 'host': host}
+            try:
+                resp = requests.post(url=URL, timeout=1, json=messageStatToSend, allow_redirects=False, headers=headers)
+                if resp.status_code == 200 or resp.status_code == 303:
+                    self.callbackQueue.put((DatabaseHelper.set_message_stat_uploaded, messageStat.id))
+                else:
+                    self.webServerUp = False
+            except Exception as ex:
+                logging.error("Start::sendMessageStatsBackground() Exception: " + str(ex))
+
 
     def sendMessageStats(self):
         if self.webServerUp:
             try:
                 messageStat = DatabaseHelper.get_message_stat_to_upload()
                 webServerUrl = SettingsClass.GetWebServerUrl()
-                t = threading.Thread(target=self.sendMessageStatsBackground, args=(messageStat, webServerUrl))
+                apiKey = SettingsClass.GetAPIKey(False)
+                t = threading.Thread(target=self.sendMessageStatsBackground, args=(messageStat, webServerUrl, apiKey))
                 t.start()
             except:
-                logging.error("start::sendMessageStats() Exception")
+                logging.error("Start::sendMessageStats() Exception")
 
     def handleCallbacks(self):
         try:
@@ -435,6 +439,7 @@ class Main:
                 settDict["WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName()
                 settDict["SendToMeosIP"] = SettingsClass.GetSendToMeosIP()
                 settDict["SendToMeosIPPort"] = SettingsClass.GetSendToMeosIPPort()
+                settDict["ApiKey"] = SettingsClass.GetAPIKey()
                 self.reconfigure()
 
             self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
