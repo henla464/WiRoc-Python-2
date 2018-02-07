@@ -428,15 +428,16 @@ class Main:
     def Run(self):
         settDict = {}
         settDict["WebServerUrl"] = SettingsClass.GetWebServerUrl()
-        settDict["WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName()
+        settDict["WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
         settDict["SendToMeosIP"] = SettingsClass.GetSendToMeosIP()
         settDict["SendToMeosIPPort"] = SettingsClass.GetSendToMeosIPPort()
+        settDict["ApiKey"] = SettingsClass.GetAPIKey()
 
         while True:
 
             if self.timeToReconfigure():
                 settDict["WebServerUrl"] = SettingsClass.GetWebServerUrl()
-                settDict["WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName()
+                settDict["WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
                 settDict["SendToMeosIP"] = SettingsClass.GetSendToMeosIP()
                 settDict["SendToMeosIPPort"] = SettingsClass.GetSendToMeosIPPort()
                 settDict["ApiKey"] = SettingsClass.GetAPIKey()
