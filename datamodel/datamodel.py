@@ -366,7 +366,8 @@ class TestPunchView(object):
 
 class MessageStatsData(object):
         columns = [("AdapterInstanceName", str), ("MessageSubTypeName", str), ("Status", str),
-                   ("NoOfMessages", int), ("Uploaded", bool),("CreatedDate", datetime)]
+                   ("NoOfMessages", int), ("Uploaded", bool),("FetchedForUpload", datetime),
+                   ("CreatedDate", datetime)]
 
         def __init__(self):
             self.id = None
@@ -375,6 +376,7 @@ class MessageStatsData(object):
             self.Status = None
             self.NoOfMessages = None
             self.Uploaded = False
+            self.FetchedForUpload = None
             self.CreatedDate = None
 
 # Non database objects

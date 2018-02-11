@@ -890,9 +890,13 @@ class DatabaseHelper:
     @classmethod
     def get_message_stat_to_upload(cls):
         cls.init()
-        sql = "SELECT * FROM MessageStatsData WHERE Uploaded = 0 LIMIT 1"
-        messageStats = cls.db.get_table_objects_by_SQL(MessageStatsData, sql)
+        fiveSecondsAgo = datetime.now() - timedelta(seconds=5)
+        sql = ("SELECT * FROM MessageStatsData WHERE Uploaded = 0 AND "
+               "(FetchedForUpload is null OR FetchedForUpload < ?) LIMIT 1")
+        messageStats = cls.db.get_table_objects_by_SQL(MessageStatsData, sql, (fiveSecondsAgo,))
         if len(messageStats) > 0:
+            sql = "UPDATE MessageStatsData SET FetchedForUpload = ? WHERE Id = ?"
+            cls.db.execute_SQL(sql, (datetime.now(), messageStats[0].id))
             return messageStats[0]
 
     @classmethod

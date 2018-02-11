@@ -147,7 +147,7 @@ class SendStatusAdapter(object):
                 return zip(*[iter(iterable)] * n)
             #/api/v1/SubDevices
             for byte1,byte2 in grouped(subDeviceData, 2):
-                batteryPercent = byte1 & 0xF0
+                batteryPercent = (byte1 & 0xF0) >> 4
                 siStationNumber = (byte1 & 0x0F) << 5
                 siStationNumber = siStationNumber | (byte2 & 0xF8) >> 3
                 pathNo = byte2 & 0x07
@@ -157,7 +157,7 @@ class SendStatusAdapter(object):
                 if resp.status_code == 200 or resp.status_code == 303:
                     subDevice2 = resp.json()
                     #subDevice stats
-                    subDeviceStatus = {"subDeviceId": subDevice2['id'],"batteryLevel":batteryPercent, "batteryLevelprecision":16}
+                    subDeviceStatus = {"subDeviceId": subDevice2['id'],"batteryLevel":batteryPercent, "batteryLevelPrecision":16}
                     URL = settingsDictionary["WebServerUrl"].replace(host, ipv4_addrs[0]) + "/api/v1/SubDeviceStatuses"
                     resp = requests.post(url=URL, json=subDeviceStatus,timeout=1, allow_redirects=False, headers=headers)
                     if resp.status_code == 200 or resp.status_code == 303:

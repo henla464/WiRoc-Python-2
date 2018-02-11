@@ -78,6 +78,9 @@ class Main:
             if SendStatusAdapter.DeviceId == None:
                 URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/Devices/LookupDeviceByBTAddress/" + btAddress
                 resp = requests.get(url=URL, timeout=1, headers=headers)
+                if resp.status_code == 200:
+                    retDevice = resp.json()
+                    SendStatusAdapter.DeviceId = retDevice['id']
                 if resp.status_code == 404:
                     device = {"BTAddress": btAddress, "name": wiRocDeviceName}  # "description": None
                     URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/Devices"
@@ -396,9 +399,9 @@ class Main:
             ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
             headers = {'Authorization': apiKey, 'host': host}
 
-            if SendStatusAdapter.DeviceId != None:
-                URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/Devices/ByBTAddress/" + btAddress + "/MessageStats"
-                messageStatToSend = {"adapterInstance": messageStat.AdapterInstanceName,
+            if self.webServerUp:
+                URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/MessageStats"
+                messageStatToSend = {"adapterInstance": messageStat.AdapterInstanceName, "BTAddress": btAddress,
                                      "messageType": messageStat.MessageSubTypeName, "status": messageStat.Status,
                                      "noOfMessages": messageStat.NoOfMessages}
 
@@ -420,8 +423,8 @@ class Main:
                 apiKey = SettingsClass.GetAPIKey(False)
                 t = threading.Thread(target=self.sendMessageStatsBackground, args=(messageStat, webServerUrl, apiKey))
                 t.start()
-            except:
-                logging.error("Start::sendMessageStats() Exception")
+            except Exception as ex:
+                logging.error("Start::sendMessageStats() Exception: " + str(ex))
 
     def handleCallbacks(self):
         try:
