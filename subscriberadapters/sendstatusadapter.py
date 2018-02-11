@@ -1,6 +1,7 @@
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
 from datamodel.datamodel import LoraRadioMessage
+from battery import Battery
 import logging
 import requests
 import socket
@@ -157,7 +158,13 @@ class SendStatusAdapter(object):
                 if resp.status_code == 200 or resp.status_code == 303:
                     subDevice2 = resp.json()
                     #subDevice stats
-                    subDeviceStatus = {"subDeviceId": subDevice2['id'],"batteryLevel":batteryPercent, "batteryLevelPrecision":16}
+                    subDeviceStatus = None
+                    if pathNo == 0:
+                        # this WiRoc so we can get a higher precision battery percentage
+                        subDeviceStatus = {"subDeviceId": subDevice2['id'],"batteryLevel":Battery.GetBatteryPercent(), "batteryLevelPrecision":101}
+                    else:
+                        subDeviceStatus = {"subDeviceId": subDevice2['id'], "batteryLevel": batteryPercent,
+                                           "batteryLevelPrecision": 16}
                     URL = settingsDictionary["WebServerUrl"].replace(host, ipv4_addrs[0]) + "/api/v1/SubDeviceStatuses"
                     resp = requests.post(url=URL, json=subDeviceStatus,timeout=1, allow_redirects=False, headers=headers)
                     if resp.status_code == 200 or resp.status_code == 303:
