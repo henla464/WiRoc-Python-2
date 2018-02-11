@@ -64,6 +64,31 @@ class Main:
             # archive the messages that does not have subscriptions
             DatabaseHelper.archive_message_box_without_subscriptions()
 
+        #Add device to web server
+        btAddress = SettingsClass.GetBTAddress()
+        webServerUrl = SettingsClass.GetWebServerUrl()
+        apiKey = SettingsClass.GetAPIKey()
+        wiRocDeviceName = SettingsClass.GetWiRocDeviceName()
+        host = webServerUrl.replace('http://', '').replace('https://', '')
+        addrs = socket.getaddrinfo(host, 80)
+        ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
+        headers = {'Authorization': apiKey, 'host': host}
+
+        try:
+            if SendStatusAdapter.DeviceId == None:
+                URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/Devices/LookupDeviceByBTAddress/" + btAddress
+                resp = requests.get(url=URL, timeout=1, headers=headers)
+                if resp.status_code == 404:
+                    device = {"BTAddress": btAddress, "name": wiRocDeviceName}  # "description": None
+                    URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/Devices"
+                    resp = requests.post(url=URL, json=device, timeout=1, headers=headers)
+                    if resp.status_code == 200:
+                        retDevice = resp.json()
+                        SendStatusAdapter.DeviceId = retDevice['id']
+        except Exception as ex:
+            logging.warning("Start::Init error creating device on webserver")
+            logging.warning(ex)
+
         self.runningOnChip = socket.gethostname() == 'chip'
 
     def displayChannel(self, channel, ackRequested):
@@ -343,7 +368,7 @@ class Main:
                                     def failureCB():
                                         # failed to send
                                         logging.warning(
-                                            "Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
+                                            "Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName + " id:"+ str(msgSub.id))
                                         retryDelay = SettingsClass.GetRetryDelay(msgSub.NoOfSendTries + 1)
                                         DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub, retryDelay)
                                     return failureCB
@@ -352,24 +377,6 @@ class Main:
                                                      args=(transformedData["Data"], createSuccessCB(), createFailureCB(), self.callbackQueue, settDict))
                                 self.threadQueue.put(t)
                                 t.start()
-
-                                #subAdapter.SendData(transformedData["Data"], createSuccessCB(), createFailureCB(), self.callbackQueue)
-                                #if success:
-                                #    logging.info(
-                                #        "Start::Run() Message sent to " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
-                                #    if msgSub.DeleteAfterSent:  # move msgsub to archive
-                                #        DatabaseHelper.archive_message_subscription_view_after_sent(msgSub)
-                                #    else:  # set SentDate and increment NoOfSendTries
-                                #        retryDelay = SettingsClass.GetRetryDelay(msgSub.NoOfSendTries + 1)
-                                #        DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub, retryDelay)
-                                #        DatabaseHelper.increase_scheduled_time_for_other_subscriptions(msgSub,
-                                #                                                                       subAdapter.GetDelayAfterMessageSent())
-                                #else:
-                                #    # failed to send
-                                #    logging.warning(
-                                #        "Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
-                                #    retryDelay = SettingsClass.GetRetryDelay(msgSub.NoOfSendTries + 1)
-                                #    DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub, retryDelay)
                             else:
                                 # shouldn't be sent, so just archive the message subscription
                                 # (Probably a Lora message that doesn't request ack
@@ -384,24 +391,25 @@ class Main:
     def sendMessageStatsBackground(self, messageStat, webServerUrl, apiKey):
         if messageStat != None:
             btAddress = SettingsClass.GetBTAddress()
-
             host = webServerUrl.replace('http://', '').replace('https://', '')
             addrs = socket.getaddrinfo(host, 80)
             ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
-            URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/MessageStats/" + btAddress
+            headers = {'Authorization': apiKey, 'host': host}
 
-            messageStatToSend = {"adapterInstance": messageStat.AdapterInstanceName,
-                                 "messageType": messageStat.MessageSubTypeName, "status": messageStat.Status,
-                                 "noOfMessages": messageStat.NoOfMessages}
-            headers = {'Authorization': 'Token token=' + apiKey, 'host': host}
-            try:
-                resp = requests.post(url=URL, timeout=1, json=messageStatToSend, allow_redirects=False, headers=headers)
-                if resp.status_code == 200 or resp.status_code == 303:
-                    self.callbackQueue.put((DatabaseHelper.set_message_stat_uploaded, messageStat.id))
-                else:
-                    self.webServerUp = False
-            except Exception as ex:
-                logging.error("Start::sendMessageStatsBackground() Exception: " + str(ex))
+            if SendStatusAdapter.DeviceId != None:
+                URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/Devices/ByBTAddress/" + btAddress + "/MessageStats"
+                messageStatToSend = {"adapterInstance": messageStat.AdapterInstanceName,
+                                     "messageType": messageStat.MessageSubTypeName, "status": messageStat.Status,
+                                     "noOfMessages": messageStat.NoOfMessages}
+
+                try:
+                    resp = requests.post(url=URL, timeout=1, json=messageStatToSend, allow_redirects=False, headers=headers)
+                    if resp.status_code == 200 or resp.status_code == 303:
+                        self.callbackQueue.put((DatabaseHelper.set_message_stat_uploaded, messageStat.id))
+                    else:
+                        self.webServerUp = False
+                except Exception as ex:
+                    logging.error("Start::sendMessageStatsBackground() Exception: " + str(ex))
 
 
     def sendMessageStats(self):

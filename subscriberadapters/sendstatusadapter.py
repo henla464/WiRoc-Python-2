@@ -119,7 +119,7 @@ class SendStatusAdapter(object):
             host = settingsDictionary["WebServerUrl"].replace('http://', '').replace('https://', '')
             addrs = socket.getaddrinfo(host, 80)
             ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
-            headers = {'Authorization': 'Token token=' + settingsDictionary["ApiKey"], 'host': host}
+            headers = {'Authorization': settingsDictionary["ApiKey"], 'host': host}
 
             if SendStatusAdapter.DeviceId == None:
                 URL = settingsDictionary["WebServerUrl"].replace(host, ipv4_addrs[0]) + "/api/v1/Devices/LookupDeviceByBTAddress/" + btAddress
