@@ -143,14 +143,12 @@ class SendSerialAdapter(object):
         if self.serialComputer.SendData(messageData):
             callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "Sent", 1))
             callbackQueue.put((successCB,))
-            #DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "Sent", 1)
             dataInHex = ''.join(format(x, '02x') for x in messageData)
             logging.debug("SendSerialAdapter::SendData() Sent to computer, data: " + dataInHex)
             return True
         else:
             callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "NotSent", 0))
             callbackQueue.put((failureCB,))
-            #DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "NotSent", 0)
             logging.warning("SendSerialAdapter::SendData() Could not send to computer")
             #SendSerialAdapter.EnableDisableSubscription()
             return False

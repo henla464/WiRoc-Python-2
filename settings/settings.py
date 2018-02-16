@@ -257,8 +257,9 @@ class SettingsClass(object):
         if SettingsClass.IsDirty("WebServerUrl", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('WebServerUrl')
             if sett is None:
-                SettingsClass.webServerUrl = "http://wirelessradioonlinecontrol.tk"
-                SettingsClass.SetSetting("WebServerUrl", SettingsClass.webServerUrl)
+                url = "http://wirelessradioonlinecontrol.tk"
+                SettingsClass.SetSetting("WebServerUrl", url)
+                SettingsClass.webServerUrl = url
             else:
                 SettingsClass.webServerUrl = sett.Value
         return SettingsClass.webServerUrl
@@ -282,6 +283,8 @@ class SettingsClass(object):
             hcitoolRespWords = hcitoolResp.split()
             if len(hcitoolRespWords) > 1 and len(hcitoolRespWords[1]) == 17:
                 SettingsClass.btAddress = hcitoolRespWords[1]
+            else:
+                SettingsClass.btAddress = "NoBTAddress"
         return SettingsClass.btAddress
 
     @staticmethod

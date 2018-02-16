@@ -209,12 +209,12 @@ class MessageSubscriptionData(object):
                ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
                ("NoOfSendTries", int), ("AckReceivedDate", datetime),
                ("ScheduledTime", datetime), ("MessageBoxId", int),
-               ("SubscriptionId", int)]
+               ("SubscriptionId", int), ("FetchedForSending", datetime)]
     CurrentMessageNumber = 0
 
     def __init__(self, MessageID=None, AckReceivedFromReceiver=False, MessageNumber=None, SentDate=None, SendFailedDate=None,
                  FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
-                 NoOfSendTries=0, ScheduledTime=None, MessageBoxId=None, SubscriptionId=None):
+                 NoOfSendTries=0, ScheduledTime=None, MessageBoxId=None, SubscriptionId=None, FetchedForSending=None):
         self.id = None
         self.MessageID = MessageID
         self.AckReceivedFromReceiver = AckReceivedFromReceiver
@@ -228,6 +228,7 @@ class MessageSubscriptionData(object):
         self.ScheduledTime = ScheduledTime
         self.MessageBoxId = MessageBoxId
         self.SubscriptionId = SubscriptionId
+        self.FetchedForSending = FetchedForSending
 
     @staticmethod
     def GetNextMessageNumber():

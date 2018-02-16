@@ -356,6 +356,10 @@ class DatabaseHelper:
         msa.NoOfSendTries = msa.NoOfSendTries + 1
         msa.FindAdapterTryDate = None
         msa.FindAdapterTries = 0
+        # this method is called for messages that wait for an ack before being archived
+        # we set a ScheduledTime below to block it from being sent again so no need to keep
+        # the FetchedForSending block anymore.
+        msa.FetchedForSending = None
         msa.ScheduledTime = max(msa.ScheduledTime if msa.ScheduledTime is not None else datetime.min,
                                 datetime.now() + timedelta(microseconds=retryDelay))
         cls.db.save_table_object(msa, False)
@@ -381,6 +385,7 @@ class DatabaseHelper:
         msa.NoOfSendTries = msa.NoOfSendTries + 1
         msa.FindAdapterTryDate = None
         msa.FindAdapterTries = 0
+        msa.FetchedForSending = None
         msa.ScheduledTime = max(msa.ScheduledTime if msa.ScheduledTime is not None else datetime.min,
                                 datetime.now() + timedelta(microseconds=retryDelay))
         cls.db.save_table_object(msa, False)
@@ -578,26 +583,13 @@ class DatabaseHelper:
 
 #MessageSubscriptionView
     @classmethod
-    def get_message_subscriptions_view_to_send(cls, maxRetries, limit = 100):
+    def get_message_subscriptions_view_to_send(cls, maxRetries):
         sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData")
         cls.init()
         cnt = cls.db.get_scalar_by_SQL(sql)
         if cnt > 0:
             now = datetime.now()
-            sql = ("SELECT MessageBoxData.id "
-                   "FROM TransformData JOIN SubscriptionData ON TransformData.id = SubscriptionData.TransformId "
-                   "JOIN MessageSubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
-                   "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
-                   "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
-                   "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
-                   "(MessageSubscriptionData.ScheduledTime IS NULL OR MessageSubscriptionData.ScheduledTime < '%s') AND "
-                   "MessageSubscriptionData.NoOfSendTries < %s AND "
-                   "MessageSubscriptionData.FindAdapterTries < %s "
-                   "ORDER BY MessageSubscriptionData.ScheduledTime asc, "
-                   "MessageSubscriptionData.SentDate asc LIMIT 1") % (now, maxRetries, maxRetries)
-            msgBoxDataId = cls.db.get_scalar_by_SQL(sql)
-            if msgBoxDataId == None:
-                return cnt, []
+            fiveSecondsAgo = now - timedelta(seconds=5)
 
             sql = ("SELECT MessageSubscriptionData.id, "
                    "MessageSubscriptionData.MessageID, "
@@ -629,11 +621,15 @@ class DatabaseHelper:
                    "(MessageSubscriptionData.ScheduledTime IS NULL OR MessageSubscriptionData.ScheduledTime < '%s') AND "
                    "MessageSubscriptionData.NoOfSendTries < %s AND "
                    "MessageSubscriptionData.FindAdapterTries < %s AND "
-                   "MessageBoxData.id = %s "
+                   "(MessageSubscriptionData.FetchedForSending is null OR MessageSubscriptionData.FetchedForSending < '%s') "
                    "ORDER BY MessageSubscriptionData.ScheduledTime asc, "
-                   "MessageSubscriptionData.SentDate asc LIMIT %s") % (now, maxRetries, maxRetries, msgBoxDataId, limit)
-            return cnt, cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
-        return cnt, []
+                   "MessageSubscriptionData.SentDate asc LIMIT 1") % (now, maxRetries, maxRetries, fiveSecondsAgo)
+            messageSubscriptions = cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
+            if len(messageSubscriptions) > 0:
+                sql = "UPDATE MessageSubscriptionData SET FetchedForSending = ? WHERE Id = ?"
+                cls.db.execute_SQL(sql, (datetime.now(), messageSubscriptions[0].id))
+                return cnt, messageSubscriptions[0]
+        return cnt, None
 
     @classmethod
     def get_message_subscriptions_view_to_archive(cls, maxRetries, limit=100):

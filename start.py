@@ -136,12 +136,6 @@ class Main:
         else:
             return False
 
-    def getMessageSubscriptionsToSend(self):
-        cnt, msgSubsToSend = DatabaseHelper.get_message_subscriptions_view_to_send(SettingsClass.GetMaxRetries(), 1)
-        if cnt == 0:
-           self.messagesToSendExists = False
-        return msgSubsToSend
-
     def archiveFailedMessages(self):
         #if self.messagesToSendExists:
         msgSubscriptions = DatabaseHelper.get_message_subscriptions_view_to_archive(SettingsClass.GetMaxRetries(), 100)
@@ -337,9 +331,11 @@ class Main:
 
     def handleOutput(self, settDict):
         if self.messagesToSendExists:
-            msgSubscriptions = self.getMessageSubscriptionsToSend()
-            #logging.info("msgSub count: " + str(len(msgSubscriptions)))
-            for msgSub in msgSubscriptions:
+            noOfMsgSubWaiting, msgSub = DatabaseHelper.get_message_subscriptions_view_to_send(SettingsClass.GetMaxRetries())
+            if noOfMsgSubWaiting == 0:
+                self.messagesToSendExists = False
+            if msgSub != None:
+                #logging.info("msgSub count: " + str(len(msgSubscriptions)))
                 # find the right adapter
                 adapterFound = False
                 for subAdapter in self.subscriberAdapters:
