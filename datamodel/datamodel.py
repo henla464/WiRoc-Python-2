@@ -640,6 +640,11 @@ class SIMessage(object):
         self.UpdateLength()
         self.UpdateChecksum()
 
+    def GetMessageID(self, messageNumber):
+        #messageNumber, CN0 SN3 SN2 SN1 SN0
+        return bytearray(bytes([messageNumber, self.MessageData[4], self.MessageData[5],
+                                self.MessageData[6], self.MessageData[7], self.MessageData[8]]))
+
     def GetStationNumber(self):
         return (self.MessageData[3] << 8) + self.MessageData[4]
 

@@ -271,8 +271,6 @@ class Main:
                                 if noOfBytesToWait == None:
                                     continue  # skip this subscription
                                 minimumScheduledTime = SettingsClass.GetTimeOfLastMessageSentToLoraDateTime()+ timedelta(seconds=subAdapter.GetDelayAfterMessageSent())
-                                logging.debug("now:" + datetime.now())
-                                logging.debug("minimumScheduledTime:" + minimumScheduledTime)
                                 scheduledWaitTime = now + timedelta(seconds=SettingsClass.GetLoraMessageTimeSendingTimeS(noOfBytesToWait))
                                 msgSubscription.ScheduledTime = max(scheduledWaitTime, minimumScheduledTime)
                             else:
@@ -283,7 +281,7 @@ class Main:
                             if messageID != None:
                                 dataInHex = ''.join(format(x, '02x') for x in messageID)
                                 logging.debug("MessageID: " + dataInHex)
-                            msgSubscription.MessageID = messageID  # used for messages from repeater table
+                            msgSubscription.MessageID = messageID  # used for messages from repeater table or test table (added always but only used when in repeater mode)
                             msgSubscription.MessageNumber = MessageSubscriptionData.GetNextMessageNumber()
                             DatabaseHelper.save_message_subscription(msgSubscription)
                             anySubscription = True

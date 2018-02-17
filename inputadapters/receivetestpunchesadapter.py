@@ -63,10 +63,11 @@ class ReceiveTestPunchesAdapter(object):
                                          ))
                 siMessage.AddPayload(payload)
                 siMessage.AddFooter()
+
                 logging.debug("ReceiveTestPunchesAdapter::GetData() Data to fetch")
                 dataInHex = ''.join(format(x, '02x') for x in siMessage.GetByteArray())
                 logging.debug(dataInHex)
-                return {"MessageType": "DATA", "MessageSource":"Test", "MessageSubTypeName": "Test", "Data": siMessage.GetByteArray(), "ChecksumOK": True}
+                return {"MessageType": "DATA", "MessageSource":"Test", "MessageSubTypeName": "Test", "Data": siMessage.GetByteArray(), "ChecksumOK": True, "MessageID": siMessage.GetMessageID(0)}
         return None
 
     def AddedToMessageBox(self, mbid):
