@@ -172,16 +172,9 @@ class SendLoraAdapter(object):
         return self.loraRadio.IsReadyToSend()
 
     def GetDelayAfterMessageSent(self):
-        wMode = SettingsClass.GetWiRocMode()
-        noOfBytesToDelay = 25
+        timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(25) # message + 2 extra
         if SettingsClass.GetAcknowledgementRequested():
-            noOfBytesToDelay += 10  # one message 23 + one ack 10 + 2 bytes extra
-        #if wMode == "SENDER":
-        #    if self.GetShouldRequestRepeater() and \
-        #        SettingsClass.GetHasReceivedMessageFromRepeater():
-        #        noOfBytesToDelay += 10 # wait also for repeaters ack
-                # (if repeater ack is received then the time will extended again)
-        timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(noOfBytesToDelay)
+            timeS+= SettingsClass.GetLoraMessageTimeSendingTimeS(12) # reply ack + 2 extra
         return timeS
 
     def AddSuccessWithoutRepeaterBit(self):
@@ -242,6 +235,7 @@ class SendLoraAdapter(object):
         msg = LoraRadioMessage()
         msg.AddPayload(messageData)
         SettingsClass.SetTimeOfLastMessageSentToLora()
+        SettingsClass.SetTimeOfLastMessageSentToLoraDateTime()
         if SendLoraAdapter.WiRocMode == "SENDER" and msg.GetRepeaterBit():
             self.AddSentWithRepeaterBit()
         else:

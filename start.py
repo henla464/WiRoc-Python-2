@@ -35,7 +35,6 @@ class Main:
         self.threadQueue = queue.Queue()
         Battery.Setup()
         Setup.SetupPins()
-        Setup.SetupHttpRequestsToUseIPv4()
 
         #DatabaseHelper.drop_all_tables()
         DatabaseHelper.ensure_tables_created()
@@ -65,16 +64,16 @@ class Main:
             DatabaseHelper.archive_message_box_without_subscriptions()
 
         #Add device to web server
-        btAddress = SettingsClass.GetBTAddress()
-        webServerUrl = SettingsClass.GetWebServerUrl()
-        apiKey = SettingsClass.GetAPIKey()
-        wiRocDeviceName = SettingsClass.GetWiRocDeviceName()
-        host = webServerUrl.replace('http://', '').replace('https://', '')
-        addrs = socket.getaddrinfo(host, 80)
-        ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
-        headers = {'Authorization': apiKey, 'host': host}
-
         try:
+            btAddress = SettingsClass.GetBTAddress()
+            webServerUrl = SettingsClass.GetWebServerUrl()
+            apiKey = SettingsClass.GetAPIKey()
+            wiRocDeviceName = SettingsClass.GetWiRocDeviceName()
+            host = webServerUrl.replace('http://', '').replace('https://', '')
+            addrs = socket.getaddrinfo(host, 80)
+            ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
+            headers = {'Authorization': apiKey, 'host': host}
+
             if SendStatusAdapter.DeviceId == None:
                 URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/Devices/LookupDeviceByBTAddress/" + btAddress
                 resp = requests.get(url=URL, timeout=1, headers=headers)
@@ -271,8 +270,11 @@ class Main:
                                 noOfBytesToWait = transform.GetWaitThisNumberOfBytes(mbd, subscription, subAdapter)
                                 if noOfBytesToWait == None:
                                     continue  # skip this subscription
-                                msgSubscription.ScheduledTime = now + timedelta(
-                                    seconds=SettingsClass.GetLoraMessageTimeSendingTimeS(noOfBytesToWait))
+                                minimumScheduledTime = SettingsClass.GetTimeOfLastMessageSentToLoraDateTime()+ timedelta(seconds=subAdapter.GetDelayAfterMessageSent())
+                                logging.debug("now:" + datetime.now())
+                                logging.debug("minimumScheduledTime:" + minimumScheduledTime)
+                                scheduledWaitTime = now + timedelta(seconds=SettingsClass.GetLoraMessageTimeSendingTimeS(noOfBytesToWait))
+                                msgSubscription.ScheduledTime = max(scheduledWaitTime, minimumScheduledTime)
                             else:
                                 logging.error("Start::Run() SubAdapter not found")
 

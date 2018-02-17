@@ -3,6 +3,7 @@ __author__ = 'henla464'
 from datamodel.db_helper import DatabaseHelper
 from datamodel.datamodel import SettingData
 import time
+from datetime import datetime
 import math
 import random
 import os
@@ -11,6 +12,7 @@ class SettingsClass(object):
     RadioIntervalLengthMicroSeconds = [4000000, 4000000, 4000000, 4000000, 4000000, 4000000]
     timeOfLastMessageAdded = time.monotonic()
     timeOfLastMessageSentToLora = time.monotonic()
+    timeOfLastMessageSentToLoraDateTime = datetime.now()
     statusMessageBaseInterval = None
     loraAckMessageWaitTimeout = None
     MessagesToSendExists = True
@@ -399,6 +401,14 @@ class SettingsClass(object):
             else:
                 SettingsClass.sendStatusMessages = (sett.Value == "1")
         return SettingsClass.sendStatusMessages
+
+    @staticmethod
+    def SetTimeOfLastMessageSentToLoraDateTime():
+        SettingsClass.timeOfLastMessageSentToLoraDateTime = datetime.now()
+
+    @staticmethod
+    def GetTimeOfLastMessageSentToLoraDateTime():
+        return SettingsClass.timeOfLastMessageSentToLoraDateTime
 
     @staticmethod
     def SetTimeOfLastMessageSentToLora():

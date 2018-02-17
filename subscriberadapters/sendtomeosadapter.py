@@ -101,7 +101,7 @@ class SendToMeosAdapter(object):
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 logging.debug("SendToMeosAdapter::SendData() Address: " + settingsDictionary["SendToMeosIP"] + " Port: " + str(settingsDictionary["SendToMeosIPPort"]))
                 server_address = (settingsDictionary["SendToMeosIP"], settingsDictionary["SendToMeosIPPort"])
-                self.sock.settimeout(0.5)
+                self.sock.settimeout(2)
                 self.sock.connect(server_address)
                 logging.debug("SendToMeosAdapter::SendData() After connect")
             except socket.gaierror as msg:
