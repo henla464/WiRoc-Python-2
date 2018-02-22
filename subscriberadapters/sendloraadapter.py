@@ -14,6 +14,7 @@ class SendLoraAdapter(object):
     WiRocMode = None
     SubscriptionsEnabled = None
     AdapterInitialized = None
+    TestRepeater = None
 
     @staticmethod
     def CreateInstances():
@@ -220,6 +221,8 @@ class SendLoraAdapter(object):
         return int((successCount / sentCount) * 100)
 
     def GetShouldRequestRepeater(self):
+        if SendLoraAdapter.TestRepeater:
+            return True
         reqRepeater = False
         successDestination = self.GetSuccessRateToDestination()
         successRepeater = self.GetSuccessRateToRepeater()

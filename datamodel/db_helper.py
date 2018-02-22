@@ -316,6 +316,7 @@ class DatabaseHelper:
         msa.FindAdapterTries = messageSubscriptionView.FindAdapterTries
         msa.SendFailedDate = messageSubscriptionView.SendFailedDate
         msa.AckReceivedDate = messageSubscriptionView.AckReceivedDate
+        msa.ScheduledTime = messageSubscriptionView.ScheduledTime
         msa.MessageBoxId = messageSubscriptionView.MessageBoxId
         msa.SubscriptionId = messageSubscriptionView.SubscriptionId
         msa.SubscriberTypeName = messageSubscriptionView.SubscriberTypeName
@@ -338,6 +339,7 @@ class DatabaseHelper:
         msa.FindAdapterTries = messageSubscriptionView.FindAdapterTries
         msa.NoOfSendTries = messageSubscriptionView.NoOfSendTries
         msa.AckReceivedDate = messageSubscriptionView.AckReceivedDate
+        msa.ScheduledTime = messageSubscriptionView.ScheduledTime
         msa.MessageBoxId = messageSubscriptionView.MessageBoxId
         msa.SubscriptionId = messageSubscriptionView.SubscriptionId
         msa.SubscriberTypeName = messageSubscriptionView.SubscriberTypeName
@@ -365,16 +367,35 @@ class DatabaseHelper:
         cls.db.save_table_object(msa, False)
 
     @classmethod
+    def get_highest_scheduled_time_of_new_subscriptions(cls, subscriberTypeName):
+        cls.init()
+        sql = ("SELECT * FROM MessageSubscriptionData WHERE "
+               "SubscriptionId in (select SubscriptionData.Id from SubscriptionData JOIN SubscriberData ON "
+               "SubscriptionData.SubscriberId = SubscriberData.id where TypeName = ?) "
+               "AND NoOfSendTries = 0 ORDER BY ScheduledTime desc LIMIT 1")
+        parameters = (subscriberTypeName,)
+        msgSub = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, parameters)
+        if len(msgSub) > 0:
+            return msgSub[0].ScheduledTime
+        else:
+            return None
+
+    @classmethod
     def increase_scheduled_time_for_other_subscriptions(cls, messageSubscriptionView, delaySeconds):
         cls.init()
         sql = ("SELECT * FROM MessageSubscriptionData WHERE "
-               "SubscriptionId in (select Id from SubscriberData where TypeName = ?) AND Id <> ?")
+               "SubscriptionId in (select SubscriptionData.Id from SubscriptionData JOIN SubscriberData ON "
+               "SubscriptionData.SubscriberId = SubscriberData.id where TypeName = ?) "
+               "AND Id <> ? ORDER BY ScheduledTime")
         parameters = (messageSubscriptionView.SubscriberTypeName, messageSubscriptionView.id)
         subs = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, parameters)
+        delaySecondsAccumulated = delaySeconds
         for sub in subs:
             sub.ScheduledTime = max(sub.ScheduledTime if sub.ScheduledTime is not None else datetime.min,
-                                    datetime.now() + timedelta(seconds=delaySeconds))
+                                    datetime.now() + timedelta(seconds=delaySecondsAccumulated))
             cls.db.save_table_object(sub, False)
+            logging.debug('increase_scheduled_time to: ' + str(sub.ScheduledTime) + " delaySeconds: " + str(delaySeconds) + " delaySecondsAccumulated: " + str(delaySecondsAccumulated))
+            delaySecondsAccumulated += delaySeconds
 
 
     @classmethod
@@ -511,6 +532,7 @@ class DatabaseHelper:
             msa.FindAdapterTries = msd.FindAdapterTries
             msa.NoOfSendTries = msd.NoOfSendTries
             msa.AckReceivedDate = now
+            msa.ScheduledTime = msd.ScheduledTime
             msa.MessageBoxId = msd.MessageBoxId
             msa.SubscriptionId = msd.SubscriptionId
             subscriberView = DatabaseHelper.get_subscriber_by_subscription_id(msd.SubscriptionId)
@@ -574,13 +596,21 @@ class DatabaseHelper:
     def increase_scheduled_time_if_less_than(cls, timeS):
         cls.init()
         sql = ("SELECT * FROM MessageSubscriptionData WHERE "
-               "SubscriptionId in (select Id from SubscriberData where TypeName = 'LORA')")
+               "SubscriptionId in (select SubscriptionData.Id from SubscriptionData JOIN SubscriberData ON "
+               "SubscriptionData.SubscriberId = SubscriberData.id where TypeName = 'LORA') "
+               "ORDER BY ScheduledTime")
         subs = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql)
-        for sub in subs:
-            sub.ScheduledTime = max(sub.ScheduledTime if sub.ScheduledTime is not None else datetime.min,
-                                    datetime.now()+ timedelta(seconds=timeS))
-            logging.debug("DatabaseHelper::increase_scheduled_time_if_less_than(): Set to: " + str(sub.ScheduledTime))
-            cls.db.save_table_object(sub, False)
+
+        if len(subs) > 0:
+            now = datetime.now()
+            scheduledTime = subs[0].ScheduledTime if subs[0].ScheduledTime is not None else now
+            delayAllThisManySeconds = timeS - (scheduledTime - now)
+
+            for sub in subs:
+                scheduledTime = sub.ScheduledTime if sub.ScheduledTime is not None else now
+                sub.ScheduledTime = scheduledTime + timedelta(seconds=delayAllThisManySeconds)
+                logging.debug("DatabaseHelper::increase_scheduled_time_if_less_than(): Set to: " + str(sub.ScheduledTime))
+                cls.db.save_table_object(sub, False)
 
 #MessageSubscriptionView
     @classmethod
@@ -602,6 +632,7 @@ class DatabaseHelper:
                    "MessageSubscriptionData.FindAdapterTries, "
                    "MessageSubscriptionData.NoOfSendTries, "
                    "MessageSubscriptionData.AckReceivedDate, "
+                   "MessageSubscriptionData.ScheduledTime, "
                    "MessageSubscriptionData.MessageBoxId, "
                    "MessageSubscriptionData.SubscriptionId, "
                    "SubscriptionData.DeleteAfterSent, "
@@ -809,7 +840,7 @@ class DatabaseHelper:
     @classmethod
     def get_test_punch_to_add(cls):
         cls.init()
-        testPunches = cls.db.get_table_objects_by_SQL(TestPunchData, "SELECT * FROM TestPunchData WHERE AddedToMessageBox = 0 ORDER BY TwentyFourHour, TwelveHourTimer LIMIT 1")
+        testPunches = cls.db.get_table_objects_by_SQL(TestPunchData, "SELECT * FROM TestPunchData WHERE AddedToMessageBox = 0 ORDER BY TwentyFourHour, TwelveHourTimer, id LIMIT 1")
         if len(testPunches) > 0:
             return testPunches[0]
         return None

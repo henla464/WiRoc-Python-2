@@ -6,6 +6,8 @@ from datamodel.datamodel import MessageSubscriptionData
 from datamodel.datamodel import LoraRadioMessage
 from datamodel.datamodel import SIMessage
 from subscriberadapters.sendstatusadapter import SendStatusAdapter
+from subscriberadapters.sendloraadapter import SendLoraAdapter
+from inputadapters.receiveloraadapter import ReceiveLoraAdapter
 from setup import Setup
 import time
 import logging, logging.handlers
@@ -18,9 +20,14 @@ from itertools import repeat
 from battery import Battery
 from utils.utils import Utils
 import requests, queue, threading
+import sys
 
 class Main:
     def __init__(self):
+        if len(sys.argv) > 1 and sys.argv[1] == "testrepeater":
+            logging.debug("Test repeater")
+            ReceiveLoraAdapter.TestRepeater = True
+            SendLoraAdapter.TestRepeater = True
         self.shouldReconfigure = False
         self.forceReconfigure = False
         #self.lastTimeReconfigured = datetime.now()
@@ -270,9 +277,18 @@ class Main:
                                 noOfBytesToWait = transform.GetWaitThisNumberOfBytes(mbd, subscription, subAdapter)
                                 if noOfBytesToWait == None:
                                     continue  # skip this subscription
-                                minimumScheduledTime = SettingsClass.GetTimeOfLastMessageSentToLoraDateTime()+ timedelta(seconds=subAdapter.GetDelayAfterMessageSent())
-                                scheduledWaitTime = now + timedelta(seconds=SettingsClass.GetLoraMessageTimeSendingTimeS(noOfBytesToWait))
+                                scheduledWaitTime = now + timedelta(
+                                    seconds=SettingsClass.GetLoraMessageTimeSendingTimeS(noOfBytesToWait))
+                                scheduledTimeOfOthersToSameAdapter = DatabaseHelper.get_highest_scheduled_time_of_new_subscriptions(subAdapter.GetTypeName())
+                                minimumScheduledTime = now
+                                if scheduledTimeOfOthersToSameAdapter == None:
+                                    logging.debug('scheduledTimeOfOthersToSameAdapter=None')
+                                    minimumScheduledTime = SettingsClass.GetTimeOfLastMessageSentToLoraDateTime()+ timedelta(seconds=subAdapter.GetDelayAfterMessageSent())
+                                else:
+                                    minimumScheduledTime = scheduledTimeOfOthersToSameAdapter + timedelta(seconds=subAdapter.GetDelayAfterMessageSent())
+                                    logging.debug('scheduledTimeOfOthersToSameAdapter!=None: ' + str(minimumScheduledTime))
                                 msgSubscription.ScheduledTime = max(scheduledWaitTime, minimumScheduledTime)
+                                logging.debug('ScheduledTime set to: ' + str(msgSubscription.ScheduledTime))
                             else:
                                 logging.error("Start::Run() SubAdapter not found")
 
@@ -351,7 +367,9 @@ class Main:
                                 if transformedData["MessageID"] is not None:
                                     DatabaseHelper.update_messageid(msgSub.id, transformedData["MessageID"])
 
-                                def createSuccessCB():
+                                logging.debug("In loop: subadapter: " + str(type(subAdapter)) + " delayaftermessagesent: " + str(
+                                    subAdapter.GetDelayAfterMessageSent()))
+                                def createSuccessCB(innerSubAdapter):
                                     def successCB():
                                         logging.info(
                                             "Start::Run() Message sent to " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
@@ -360,7 +378,8 @@ class Main:
                                         else:  # set SentDate and increment NoOfSendTries
                                             retryDelay = SettingsClass.GetRetryDelay(msgSub.NoOfSendTries + 1)
                                             DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub, retryDelay)
-                                            DatabaseHelper.increase_scheduled_time_for_other_subscriptions(msgSub,subAdapter.GetDelayAfterMessageSent())
+                                            logging.debug("subadapter: " +str(type(innerSubAdapter)) + " delayaftermessagesent: " + str(innerSubAdapter.GetDelayAfterMessageSent()))
+                                            DatabaseHelper.increase_scheduled_time_for_other_subscriptions(msgSub,innerSubAdapter.GetDelayAfterMessageSent())
                                     return successCB
 
                                 def createFailureCB():
@@ -373,7 +392,7 @@ class Main:
                                     return failureCB
 
                                 t = threading.Thread(target=subAdapter.SendData,
-                                                     args=(transformedData["Data"], createSuccessCB(), createFailureCB(), self.callbackQueue, settDict))
+                                                     args=(transformedData["Data"], createSuccessCB(subAdapter), createFailureCB(), self.callbackQueue, settDict))
                                 self.threadQueue.put(t)
                                 t.start()
                             else:

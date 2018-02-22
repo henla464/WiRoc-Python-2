@@ -62,7 +62,6 @@ class DB:
 
         valuesTuple = tuple(self.data_mapping.get_database_value(getattr(table_object, column_name))
                                 for column_name, column_type in table_object.__class__.columns)
-        logging.debug(SQL_statement)
         db_cursor = self.connection.cursor()
         db_cursor.execute(SQL_statement, valuesTuple)
         self.connection.commit()
