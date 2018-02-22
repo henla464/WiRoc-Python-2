@@ -22,8 +22,15 @@ class RepeaterStatusToLoraAckTransform(object):
         return "RepeaterStatusToLoraAckTransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
-        return 10 #ack 10, waiting for the destination wiroc to reply with ack
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
+        payloadData = msgSub.MessageData
+        loraMsg = LoraRadioMessage()
+        loraMsg.AddPayload(payloadData)
+
+        # when repeater is requested, ack is sent directly from receiveloraadapter
+        if loraMsg.GetAcknowledgementRequested() and not loraMsg.GetRepeaterBit():
+            return SettingsClass.GetLoraMessageTimeSendingTimeS(10)  # ack 10, waiting for the destination wiroc to reply with ack
+        return None
 
     @staticmethod
     def GetDeleteAfterSent():

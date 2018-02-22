@@ -274,11 +274,10 @@ class Main:
                             if len(subAdapters) > 0:
                                 subAdapter = subAdapters[0]
                                 transform = subAdapter.GetTransform(subscription.TransformName)
-                                noOfBytesToWait = transform.GetWaitThisNumberOfBytes(mbd, subscription, subAdapter)
-                                if noOfBytesToWait == None:
+                                noOfSecondsToWait = transform.GetWaitThisNumberOfSeconds(mbd, subscription, subAdapter)
+                                if noOfSecondsToWait == None:
                                     continue  # skip this subscription
-                                scheduledWaitTime = now + timedelta(
-                                    seconds=SettingsClass.GetLoraMessageTimeSendingTimeS(noOfBytesToWait))
+                                scheduledWaitTime = now + timedelta(seconds=noOfSecondsToWait)
                                 scheduledTimeOfOthersToSameAdapter = DatabaseHelper.get_highest_scheduled_time_of_new_subscriptions(subAdapter.GetTypeName())
                                 minimumScheduledTime = now
                                 if scheduledTimeOfOthersToSameAdapter == None:

@@ -21,7 +21,7 @@ class SITestTestToLoraTransform(object):
         return "SITestTestToMeosTransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         return 0
 
     @staticmethod

@@ -22,7 +22,7 @@ class LoraSIMessageToLoraAckTransform(object):
         return "LoraSIMessageToLoraAckTransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         loraMsg = LoraRadioMessage()
         loraMsg.AddPayload(messageBoxData.MessageData)
 
@@ -31,8 +31,8 @@ class LoraSIMessageToLoraAckTransform(object):
                 and SettingsClass.GetWiRocMode() == "RECEIVER":
             # ack (10), waiting for repeater to reply with ack
             # and send message (23) to receiver
-            # + little delay (20) (two transmissions so need to include M for second)
-            return 10+23+20
+            # + little delay (2)
+            return SettingsClass.GetLoraMessageTimeSendingTimeS(10) + SettingsClass.GetLoraMessageTimeSendingTimeS(23+2)
         return None
 
     @staticmethod

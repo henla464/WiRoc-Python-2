@@ -22,8 +22,11 @@ class LoraStatusToSITransform(object):
         return "LoraStatusToSITransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
-        return 0
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
+        if SettingsClass.GetConnectedComputerIsWiRocDevice():
+            return 0
+        else:
+            return None
 
     @staticmethod
     def GetDeleteAfterSent():

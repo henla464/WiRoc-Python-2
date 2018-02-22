@@ -23,10 +23,19 @@ class SILoraRadioMessageToLoraTransform(object):
         return "SILoraRadioMessageToLoraTransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
-        if messageBoxData.MessageSource == "WiRoc":
-            return 10+1 # ack 10 bytes + 1 extra
-        return 0
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
+        payloadData = msgSub.MessageData
+        siMsg = SIMessage()
+        siMsg.AddPayload(payloadData)
+        # WiRoc to WiRoc message
+        unwrappedMessage = payloadData[3:-3]
+        # Assume it is a LoraRadioMessage that is wrapped
+        loraMessage = LoraRadioMessage()
+        loraMessage.AddPayload(unwrappedMessage)
+        if loraMessage.GetMessageType() == LoraRadioMessage.MessageTypeStatus:
+            if messageBoxData.MessageSource == "WiRoc":
+                return SettingsClass.GetLoraMessageTimeSendingTimeS(10+2) # ack 10 bytes + 2 extra
+        return None
 
     @staticmethod
     def GetDeleteAfterSent():

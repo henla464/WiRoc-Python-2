@@ -21,7 +21,7 @@ class LoraSIMessageToMeosTransform(object):
         return "LoraSIMessageToMeosTransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         return 0
 
     @staticmethod

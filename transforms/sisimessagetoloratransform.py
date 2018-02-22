@@ -23,9 +23,9 @@ class SISIMessageToLoraTransform(object):
         return "SISIMessageToLoraTransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         if messageBoxData.MessageSource == "WiRoc":
-            return 10+1 # ack 10 bytes + 1 extra
+            return SettingsClass.GetLoraMessageTimeSendingTimeS(10+2) # ack 10 bytes + 2 extra
         return 0
 
     @staticmethod

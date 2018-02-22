@@ -23,7 +23,7 @@ class StatusStatusToLoraTransform(object):
         return "StatusStatusToLoraTransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         return 0
 
     @staticmethod

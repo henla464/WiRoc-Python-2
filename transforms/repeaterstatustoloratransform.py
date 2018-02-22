@@ -23,13 +23,17 @@ class RepeaterStatusToLoraTransform(object):
         return "RepeaterStatusToLoraTransform"
 
     @staticmethod
-    def GetWaitThisNumberOfBytes(messageBoxData, msgSub, subAdapter):
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         loraRadioMessage = LoraRadioMessage()
         loraRadioMessage.AddPayload(messageBoxData.MessageData)
         if loraRadioMessage.GetRepeaterBit():
-            return 22 #possible ack from receiver 10 + ack sent from repeater 10 + 2 extra
+            # no ack expected from receiver, should be sent after repeater sent ack
+            return 0
         else:
-            return 11 #no ack expected from receiver, ack 10 + 1 extra
+            # possible ack from receiver 10 + ack sent from repeater 10
+            # since we are repeater we don't need to wait until repeater finished
+            # sending, only until receiver finished sending ack, add 5 extra
+            return SettingsClass.GetLoraMessageTimeSendingTimeS(10+5)
 
     @staticmethod
     def GetDeleteAfterSent():
