@@ -211,7 +211,13 @@ class Main:
                     if messageTypeName == "LORA" and SettingsClass.GetWiRocMode() == "REPEATER":
                         # WiRoc is in repeater mode and received a LORA message
                         logging.info("Start::Run() In repeater mode")
+                        messageSubTypeName = inputData["MessageSubTypeName"]
                         loraMessage = inputData.get("LoraRadioMessage", None)
+                        if loraMessage == None:
+                            logging.error(
+                                "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
+                            return
+
                         rmbd = RepeaterMessageBoxData()
                         rmbd.MessageData = inputData["Data"]
                         rmbd.MessageTypeName = messageTypeName
@@ -236,20 +242,23 @@ class Main:
                         rmbd.NoOfTimesAckSeen = 0
                         rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
                     else:
-                        loraMessage = inputData.get("LoraRadioMessage", None)
-                        if loraMessage != None:
-                            logging.debug(
-                                "MessageType: " + messageTypeName + ", WiRocMode: " + SettingsClass.GetWiRocMode() + " RepeaterBit: " + str(
-                                    loraMessage.GetRepeaterBit()))
-                        if messageTypeName == "LORA" and \
-                                        SettingsClass.GetWiRocMode() == "RECEIVER":
-                            if not loraMessage.GetRepeaterBit():
-                                # Message received that might come from repeater. Archive any already scheduled ack message
-                                # from previously received message (directly from sender)
-                                # Message number ignored, remove acks for same SI-card-number and SI-Station-number
-                                DatabaseHelper.archive_lora_ack_message_subscription(messageID)
-
                         messageSubTypeName = inputData["MessageSubTypeName"]
+                        if messageTypeName == "LORA":
+                            loraMessage = inputData.get("LoraRadioMessage", None)
+                            if loraMessage != None:
+                                logging.debug(
+                                    "Start::handleInput() MessageType: " + messageTypeName + ", WiRocMode: " + SettingsClass.GetWiRocMode() + " RepeaterBit: " + str(
+                                        loraMessage.GetRepeaterBit()))
+                                if SettingsClass.GetWiRocMode() == "RECEIVER":
+                                    if not loraMessage.GetRepeaterBit():
+                                        # Message received that might come from repeater. Archive any already scheduled ack message
+                                        # from previously received message (directly from sender)
+                                        # Message number ignored, remove acks for same SI-card-number and SI-Station-number
+                                        DatabaseHelper.archive_lora_ack_message_subscription(messageID)
+                            else:
+                                logging.error("Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
+                                return
+
                         mbd = MessageBoxData()
                         mbd.MessageData = inputData["Data"]
                         mbd.MessageTypeName = messageTypeName
@@ -341,7 +350,7 @@ class Main:
                         if not destinationHasAcked:
                             # delay an extra message + ack, same as a normal delay after a message is sent
                             # because the repeater should also send and receive ack
-                            timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(35)  # message 23 + ack 10 + 2 extra
+                            timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(23)+SettingsClass.GetLoraMessageTimeSendingTimeS(12)  # message 23 + ack 10 + 2 extra
                             DatabaseHelper.increase_scheduled_time_if_less_than(timeS)
 
     def handleOutput(self, settDict):

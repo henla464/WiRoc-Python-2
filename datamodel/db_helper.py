@@ -611,7 +611,7 @@ class DatabaseHelper:
         if len(subs) > 0:
             now = datetime.now()
             scheduledTime = subs[0].ScheduledTime if subs[0].ScheduledTime is not None else now
-            delayAllThisManySeconds = timeS - (scheduledTime - now)
+            delayAllThisManySeconds = timeS - (scheduledTime - now).total_seconds()
 
             for sub in subs:
                 scheduledTime = sub.ScheduledTime if sub.ScheduledTime is not None else now
