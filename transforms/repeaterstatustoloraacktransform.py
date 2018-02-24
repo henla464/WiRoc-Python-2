@@ -23,7 +23,7 @@ class RepeaterStatusToLoraAckTransform(object):
 
     @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
-        payloadData = msgSub.MessageData
+        payloadData = messageBoxData.MessageData
         loraMsg = LoraRadioMessage()
         loraMsg.AddPayload(payloadData)
 

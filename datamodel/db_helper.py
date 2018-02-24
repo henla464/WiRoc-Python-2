@@ -367,6 +367,13 @@ class DatabaseHelper:
         cls.db.save_table_object(msa, False)
 
     @classmethod
+    def clear_fetched_for_sending(cls, messageSubscriptionView):
+        cls.init()
+        msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
+        msa.FetchedForSending = None
+        cls.db.save_table_object(msa, False)
+
+    @classmethod
     def get_highest_scheduled_time_of_new_subscriptions(cls, subscriberTypeName):
         cls.init()
         sql = ("SELECT * FROM MessageSubscriptionData WHERE "

@@ -399,6 +399,9 @@ class Main:
                                 # (Probably a Lora message that doesn't request ack
                                 logging.debug("Start::Run() " + msgSub.TransformName + " return None so not sent")
                                 DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
+                        else:
+                            DatabaseHelper.clear_fetched_for_sending(msgSub)
+
                 if not adapterFound:
                     logging.warning(
                         "Start::Run() Send adapter not found for " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName)

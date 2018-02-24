@@ -24,7 +24,7 @@ class SILoraRadioMessageToLoraTransform(object):
 
     @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
-        payloadData = msgSub.MessageData
+        payloadData = messageBoxData.MessageData
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
         # WiRoc to WiRoc message
