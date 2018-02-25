@@ -318,6 +318,7 @@ class Main:
                     messageID = inputData["MessageID"]
                     loraMessage = inputData["LoraRadioMessage"]
                     destinationHasAcked = loraMessage.GetAcknowledgementRequested()
+                    receivedFromRepeater = loraMessage.GetRepeaterBit()
                     wirocMode = SettingsClass.GetWiRocMode()
                     if wirocMode == "REPEATER" and len(messageID) == 6:
                         logging.debug("Start::Run() Received ack, for repeater message number: " + str(
@@ -330,13 +331,15 @@ class Main:
                     else:
                         if len(messageID) == 6:
                             logging.debug("Start::Run() Received ack, for message number: " + str(
-                                messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6])))
+                                messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6]))
+                                          + " receivedFromRepeater: " + str(receivedFromRepeater)
+                                          + " destinationHasAcked: " + str(destinationHasAcked))
                         else:
                             logging.debug(
                                 "Start::Run() Received ack, for status message number: " + str(messageID[0]))
                         DatabaseHelper.archive_message_subscription_after_ack(messageID)
 
-                    receivedFromRepeater = loraMessage.GetRepeaterBit()
+
                     loraSubAdapters = [subAdapter for subAdapter in self.subscriberAdapters if
                                        subAdapter.GetTypeName() == "LORA"]
                     if len(loraSubAdapters) > 0:
@@ -350,10 +353,12 @@ class Main:
                         if not destinationHasAcked:
                             # delay an extra message + ack, same as a normal delay after a message is sent
                             # because the repeater should also send and receive ack
-                            timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(23)+SettingsClass.GetLoraMessageTimeSendingTimeS(12)  # message 23 + ack 10 + 2 extra
+                            timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(23)+SettingsClass.GetLoraMessageTimeSendingTimeS(10)+0.25  # message 23 + ack 10 + 5 loop
+                            SettingsClass.SetTimeOfLastMessageSentToLoraDateTime() # set last message sent so that new messages waits.
                             DatabaseHelper.increase_scheduled_time_if_less_than(timeS)
 
     def handleOutput(self, settDict):
+        logging.debug("IsReadyToSend: " + str(SendLoraAdapter.Instances[0].IsReadyToSend()) + " DateTime: " + str(datetime.now()))
         if self.messagesToSendExists:
             noOfMsgSubWaiting, msgSub = DatabaseHelper.get_message_subscriptions_view_to_send(SettingsClass.GetMaxRetries())
             if noOfMsgSubWaiting == 0:

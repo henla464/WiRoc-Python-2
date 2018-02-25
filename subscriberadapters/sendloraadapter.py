@@ -173,9 +173,9 @@ class SendLoraAdapter(object):
         return self.loraRadio.IsReadyToSend()
 
     def GetDelayAfterMessageSent(self):
-        timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(25) # message + 2 extra
+        timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(23)+0.05 # message + one loop
         if SettingsClass.GetAcknowledgementRequested():
-            timeS+= SettingsClass.GetLoraMessageTimeSendingTimeS(12) # reply ack + 2 extra
+            timeS+= SettingsClass.GetLoraMessageTimeSendingTimeS(10)+0.1 # reply ack + 2 loop
         return timeS
 
     def AddSuccessWithoutRepeaterBit(self):
