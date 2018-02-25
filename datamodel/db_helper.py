@@ -354,6 +354,8 @@ class DatabaseHelper:
     def increment_send_tries_and_set_sent_date(cls, messageSubscriptionView, retryDelay):
         cls.init()
         msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
+        if None:
+            return None
         msa.SentDate = datetime.now()
         msa.NoOfSendTries = msa.NoOfSendTries + 1
         msa.FindAdapterTryDate = None

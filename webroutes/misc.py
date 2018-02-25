@@ -106,8 +106,10 @@ def getPunches():
 
 @app.route('/misc/wirocdevicename/', methods=['GET'])
 def getWiRocDeviceName():
-    DatabaseHelper.db = DB("WiRoc.db", DataMapping())
-    deviceName = SettingsClass.GetWiRocDeviceName(False)
+    setting = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
+    deviceName = "WiRoc Device"
+    if setting != None:
+        deviceName = setting.Value
     return jsonpickle.encode(MicroMock(WiRocDeviceName=deviceName))
 
 @app.route('/misc/database/<operation>/', methods=['GET'])

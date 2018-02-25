@@ -78,6 +78,8 @@ class DB:
         select_SQL_statement = "SELECT * FROM %s WHERE id = %s" % (table_class.__name__, rowid)
         db_cursor.execute(select_SQL_statement)
         row = db_cursor.fetchone()
+        if row == None:
+            return None
         table_object = self._get_table_object(table_class, row)
         return table_object
 
