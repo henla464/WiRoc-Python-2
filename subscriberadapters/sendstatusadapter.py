@@ -142,12 +142,13 @@ class SendStatusAdapter(object):
 
             # subdevices
             subDeviceData = messageData[LoraRadioMessage.GetHeaderSize():]
-
+            success = True
             def grouped(iterable, n):
                 "s -> (s0,s1,s2,...sn-1), (sn,sn+1,sn+2,...s2n-1), (s2n,s2n+1,s2n+2,...s3n-1), ..."
                 return zip(*[iter(iterable)] * n)
             #/api/v1/SubDevices
-            for byte1,byte2 in grouped(subDeviceData, 2):
+            groupedStatii = list(grouped(subDeviceData, 2))
+            for byte1,byte2 in groupedStatii:
                 batteryPercent = (byte1 & 0xF0) >> 4
                 siStationNumber = (byte1 & 0x0F) << 5
                 siStationNumber = siStationNumber | (byte2 & 0xF8) >> 3
@@ -159,21 +160,22 @@ class SendStatusAdapter(object):
                     subDevice2 = resp.json()
                     #subDevice stats
                     subDeviceStatus = None
-                    if pathNo == 0:
+                    if pathNo >= len(groupedStatii)-1: #last status (pathNo could be higher than index so >=)
                         # this WiRoc so we can get a higher precision battery percentage
-                        subDeviceStatus = {"subDeviceId": subDevice2['id'],"batteryLevel":Battery.GetBatteryPercent(), "batteryLevelPrecision":101}
+                        subDeviceStatus = {"subDeviceId": subDevice2['id'],"batteryLevel":Battery.GetBatteryPercent(),
+                                           "batteryLevelPrecision":101, "siStationNumber": siStationNumber}
                     else:
                         subDeviceStatus = {"subDeviceId": subDevice2['id'], "batteryLevel": batteryPercent,
-                                           "batteryLevelPrecision": 16}
+                                           "batteryLevelPrecision": 16, "siStationNumber": siStationNumber}
                     URL = settingsDictionary["WebServerUrl"].replace(host, ipv4_addrs[0]) + "/api/v1/SubDeviceStatuses"
                     resp = requests.post(url=URL, json=subDeviceStatus,timeout=1, allow_redirects=False, headers=headers)
-                    if resp.status_code == 200 or resp.status_code == 303:
-                        callbackQueue.put((successCB, ))
-                        return True
-                    else:
-                        callbackQueue.put((failureCB, ))
-                        return False
-            return False
+                    success = (resp.status_code == 200 or resp.status_code == 303)
+            if success:
+                callbackQueue.put((successCB,))
+                return True
+            else:
+                callbackQueue.put((failureCB,))
+                return False
         except Exception as ex:
             logging.error("SendStatusAdapter::SendData() Exception: " + str(ex))
             callbackQueue.put((failureCB, ))

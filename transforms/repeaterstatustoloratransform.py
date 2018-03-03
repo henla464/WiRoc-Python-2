@@ -31,9 +31,7 @@ class RepeaterStatusToLoraTransform(object):
             return 0
         else:
             # possible ack from receiver 10 + ack sent from repeater 10
-            # since we are repeater we don't need to wait until repeater finished
-            # sending, only until receiver finished sending ack, add 5 extra
-            return SettingsClass.GetLoraMessageTimeSendingTimeS(10+5)
+            return SettingsClass.GetLoraMessageTimeSendingTimeS(20)+0.1
 
     @staticmethod
     def GetDeleteAfterSent():

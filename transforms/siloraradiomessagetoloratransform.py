@@ -34,7 +34,7 @@ class SILoraRadioMessageToLoraTransform(object):
         loraMessage.AddPayload(unwrappedMessage)
         if loraMessage.GetMessageType() == LoraRadioMessage.MessageTypeStatus:
             if messageBoxData.MessageSource == "WiRoc":
-                return SettingsClass.GetLoraMessageTimeSendingTimeS(10+2) # ack 10 bytes + 2 extra
+                return SettingsClass.GetLoraMessageTimeSendingTimeS(10)+0.1 # ack 10 bytes + 2 loop extra
         return None
 
     @staticmethod
