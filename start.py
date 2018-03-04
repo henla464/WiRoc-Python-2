@@ -358,7 +358,7 @@ class Main:
                             DatabaseHelper.increase_scheduled_time_if_less_than(timeS)
 
     def handleOutput(self, settDict):
-        logging.debug("IsReadyToSend: " + str(SendLoraAdapter.Instances[0].IsReadyToSend()) + " DateTime: " + str(datetime.now()))
+        #logging.debug("IsReadyToSend: " + str(SendLoraAdapter.Instances[0].IsReadyToSend()) + " DateTime: " + str(datetime.now()))
         if self.messagesToSendExists:
             noOfMsgSubWaiting, msgSub = DatabaseHelper.get_message_subscriptions_view_to_send(SettingsClass.GetMaxRetries())
             if noOfMsgSubWaiting == 0:
