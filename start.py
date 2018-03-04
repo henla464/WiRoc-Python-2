@@ -75,7 +75,7 @@ class Main:
             btAddress = SettingsClass.GetBTAddress()
             webServerUrl = SettingsClass.GetWebServerUrl()
             apiKey = SettingsClass.GetAPIKey()
-            wiRocDeviceName = SettingsClass.GetWiRocDeviceName()
+            wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
             host = webServerUrl.replace('http://', '').replace('https://', '')
             addrs = socket.getaddrinfo(host, 80)
             ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]

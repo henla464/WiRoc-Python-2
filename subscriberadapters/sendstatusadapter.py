@@ -147,13 +147,18 @@ class SendStatusAdapter(object):
                 "s -> (s0,s1,s2,...sn-1), (sn,sn+1,sn+2,...s2n-1), (s2n,s2n+1,s2n+2,...s3n-1), ..."
                 return zip(*[iter(iterable)] * n)
             #/api/v1/SubDevices
+            previousPathNo = None
             groupedStatii = list(grouped(subDeviceData, 2))
+            distanceToHead = groupedStatii[-1][1] & 0x07
             for byte1,byte2 in groupedStatii:
                 batteryPercent = (byte1 & 0xF0) >> 4
                 siStationNumber = (byte1 & 0x0F) << 5
                 siStationNumber = siStationNumber | (byte2 & 0xF8) >> 3
                 pathNo = byte2 & 0x07
-                subDevice = {"headBTAddress": btAddress, "distanceToHead": pathNo}
+                if previousPathNo != None:
+                    distanceToHead -= (pathNo - previousPathNo)
+                previousPathNo = pathNo
+                subDevice = {"headBTAddress": btAddress, "distanceToHead": distanceToHead}
                 URL = settingsDictionary["WebServerUrl"].replace(host, ipv4_addrs[0]) + "/api/v1/SubDevices"
                 resp = requests.put(url=URL, json=subDevice,timeout=1, headers=headers)
                 if resp.status_code == 200 or resp.status_code == 303:

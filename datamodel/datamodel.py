@@ -548,9 +548,9 @@ class LoraRadioMessage(object):
         if wiRocRelayPathNo > 0:
             highBytePrevWiRocIndex = self.GetHeaderSize() + (wiRocRelayPathNo - 1) * 2
             realWiRocRelayPathNo = (self.MessageData[highBytePrevWiRocIndex + 1] & 0x07) + 1
-            if siStationNumber == 0:
-                siStationNumber = ((self.MessageData[highBytePrevWiRocIndex] & 0x0F) << 5) | \
-                                  ((self.MessageData[highBytePrevWiRocIndex + 1] & 0xF8) >> 3)
+            #if siStationNumber == 0:
+            #    siStationNumber = ((self.MessageData[highBytePrevWiRocIndex] & 0x0F) << 5) | \
+            #                      ((self.MessageData[highBytePrevWiRocIndex + 1] & 0xF8) >> 3)
 
         highByte = batteryPercent4Bits << 4 | ((siStationNumber & 0x1E0) >> 5)
         lowByte = ((siStationNumber & 0x1F) << 3) | realWiRocRelayPathNo

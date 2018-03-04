@@ -521,15 +521,14 @@ class SettingsClass(object):
                            time.monotonic() > SettingsClass.timeConnectedComputerIsWiRocDeviceChanged + 6 * SettingsClass.GetReconfigureInterval():
             SettingsClass.timeConnectedComputerIsWiRocDeviceChanged = None
             SettingsClass.connectedComputerIsWiRocDevice = False
-        if SettingsClass.timeSIStationNumberChanged is not None and \
-                        time.monotonic() > SettingsClass.timeSIStationNumberChanged + 6 * SettingsClass.GetReconfigureInterval():
-            SettingsClass.timeSIStationNumberChanged = None
-            SettingsClass.siStationNumber = 0
 
     @staticmethod
     def SetSIStationNumber(stationNumber):
-        # Is refreshed from receiveSIadapter
-        if stationNumber >= SettingsClass.siStationNumber:
+        # Is refreshed from receiveSIadapter, if several stations connected then set the
+        # highest station number. Set a the lower station number if a higher hasn't been
+        # set for a long time.
+        if stationNumber >= SettingsClass.siStationNumber or \
+                (time.monotonic() > SettingsClass.timeSIStationNumberChanged + 60 * SettingsClass.GetReconfigureInterval()):
             SettingsClass.timeSIStationNumberChanged = time.monotonic()
             SettingsClass.siStationNumber = stationNumber
 
