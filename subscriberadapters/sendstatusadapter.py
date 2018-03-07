@@ -9,7 +9,6 @@ import socket
 class SendStatusAdapter(object):
     Instances = []
     SubscriptionsEnabled = False
-    DeviceId = None
 
     @staticmethod
     def CreateInstances():
@@ -122,7 +121,7 @@ class SendStatusAdapter(object):
             ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
             headers = {'Authorization': settingsDictionary["ApiKey"], 'host': host}
 
-            if SendStatusAdapter.DeviceId == None:
+            if SettingsClass.GetDeviceId() == None:
                 URL = settingsDictionary["WebServerUrl"].replace(host, ipv4_addrs[0]) + "/api/v1/Devices/LookupDeviceByBTAddress/" + btAddress
                 resp = requests.get(url=URL,timeout=1, headers=headers)
                 if resp.status_code == 404:
@@ -132,13 +131,13 @@ class SendStatusAdapter(object):
                     resp = requests.post(url=URL, json=device, timeout=1, headers=headers)
                     if resp.status_code == 200:
                         retDevice = resp.json()
-                        SendStatusAdapter.DeviceId = retDevice['id']
+                        SettingsClass.SetDeviceId(retDevice['id'])
                     else:
                         callbackQueue.put((failureCB, ))
                         return False
                 else:
                     retDevice = resp.json()
-                    SendStatusAdapter.DeviceId = retDevice['id']
+                    SettingsClass.SetDeviceId(retDevice['id'])
 
             # subdevices
             subDeviceData = messageData[LoraRadioMessage.GetHeaderSize():]

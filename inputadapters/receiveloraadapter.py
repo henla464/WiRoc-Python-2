@@ -118,6 +118,9 @@ class ReceiveLoraAdapter(object):
                             repeaterRequested:
                         return None
 
+                    if loraMessage.GetBatteryLowBit():
+                        SettingsClass.SetBatteryIsLowReceived(True)
+
                     if ackRequested and \
                             ((SettingsClass.GetWiRocMode() == "RECEIVER" and not repeaterRequested)
                             or (SettingsClass.GetWiRocMode() == "REPEATER" and repeaterRequested)):
@@ -140,6 +143,9 @@ class ReceiveLoraAdapter(object):
                             SettingsClass.GetWiRocMode() == "RECEIVER" and \
                             repeaterRequested:
                         return None
+
+                    if loraMessage.GetBatteryLowBit():
+                        SettingsClass.SetBatteryIsLowReceived(True)
 
                     messageID = loraMessage.GetMessageID()
                     if ackRequested and \

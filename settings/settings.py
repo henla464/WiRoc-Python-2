@@ -35,11 +35,14 @@ class SettingsClass(object):
     btAddress = None
     APIKey = None
 
+
     connectedComputerIsWiRocDevice = False
     timeConnectedComputerIsWiRocDeviceChanged = None
     siStationNumber = 0
     timeSIStationNumberChanged = None
     hasReceivedMessageFromRepeater = False
+    batteryIsLowReceived = False
+    deviceId = None
 
     @staticmethod
     def SetConfigurationDirty(settingsName=None, markDirtyInDatabase = False):
@@ -536,6 +539,18 @@ class SettingsClass(object):
     def GetSIStationNumber():
         return SettingsClass.siStationNumber
 
-    #@staticmethod
-    #def GetShouldRequestRepeater():
-    #    return False
+    @staticmethod
+    def SetBatteryIsLowReceived(batteryIsLowReceived):
+        SettingsClass.batteryIsLowReceived = batteryIsLowReceived
+
+    @staticmethod
+    def GetBatteryIsLowReceived():
+        return SettingsClass.batteryIsLowReceived
+
+    @staticmethod
+    def SetDeviceId(deviceId):
+        SettingsClass.deviceId = deviceId
+
+    @staticmethod
+    def GetDeviceId():
+        return SettingsClass.deviceId

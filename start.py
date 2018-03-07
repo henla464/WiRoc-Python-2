@@ -38,6 +38,7 @@ class Main:
         self.wifiPowerSaving = None
         self.activeInputAdapters = None
         self.webServerUp = False
+        self.lastBatteryIsLowReceived = False
         self.callbackQueue = queue.Queue()
         self.threadQueue = queue.Queue()
         Battery.Setup()
@@ -81,19 +82,19 @@ class Main:
             ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
             headers = {'Authorization': apiKey, 'host': host}
 
-            if SendStatusAdapter.DeviceId == None:
+            if SettingsClass.GetDeviceId() == None:
                 URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/Devices/LookupDeviceByBTAddress/" + btAddress
                 resp = requests.get(url=URL, timeout=1, headers=headers)
                 if resp.status_code == 200:
                     retDevice = resp.json()
-                    SendStatusAdapter.DeviceId = retDevice['id']
+                    SettingsClass.SetDeviceId(retDevice['id'])
                 if resp.status_code == 404:
                     device = {"BTAddress": btAddress, "name": wiRocDeviceName}  # "description": None
                     URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/Devices"
                     resp = requests.post(url=URL, json=device, timeout=1, headers=headers)
                     if resp.status_code == 200:
                         retDevice = resp.json()
-                        SendStatusAdapter.DeviceId = retDevice['id']
+                        SettingsClass.SetDeviceId(retDevice['id'])
         except Exception as ex:
             logging.warning("Start::Init error creating device on webserver")
             logging.warning(ex)
@@ -422,6 +423,33 @@ class Main:
                     retryDelay = SettingsClass.GetRetryDelay(msgSub.FindAdapterTries + 1)
                     DatabaseHelper.increment_find_adapter_tries_and_set_find_adapter_try_date(msgSub, retryDelay)
 
+    def updateBatteryIsLow(self):
+        if self.webServerUp:
+            try:
+                webServerUrl = SettingsClass.GetWebServerUrl()
+                apiKey = SettingsClass.GetAPIKey(False)
+                batteryIsLowReceived = SettingsClass.GetBatteryIsLowReceived()
+                deviceId = SettingsClass.GetDeviceId()
+                t = threading.Thread(target=self.updateBatteryIsLowBackground, args=(batteryIsLowReceived, webServerUrl, apiKey, deviceId))
+                t.start()
+            except Exception as ex:
+                logging.error("Start::updateBatteryIsLow() Exception: " + str(ex))
+
+    def updateBatteryIsLowBackground(self, batteryIsLowReceived, webServerUrl, apiKey, deviceId):
+        if deviceId != None:
+            host = webServerUrl.replace('http://', '').replace('https://', '')
+            addrs = socket.getaddrinfo(host, 80)
+            ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
+            headers = {'Authorization': apiKey, 'host': host}
+
+            if batteryIsLowReceived and not self.lastBatteryIsLowReceived:
+                URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/Devices/" + str(deviceId) + "/SetBatteryIsLow"
+                resp = requests.get(url=URL, timeout=1, headers=headers)
+                if resp.status_code == 200:
+                    retDevice = resp.json()
+                    self.lastBatteryIsLowReceived = retDevice['batteryIsLow']
+
+
     def sendMessageStatsBackground(self, messageStat, webServerUrl, apiKey):
         if messageStat != None:
             btAddress = SettingsClass.GetBTAddress()
@@ -500,6 +528,7 @@ class Main:
                 self.handleOutput(settDict)
                 self.sendMessageStats()
                 self.handleCallbacks()
+                self.updateBatteryIsLow()
 
 
 
