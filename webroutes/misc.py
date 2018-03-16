@@ -11,6 +11,7 @@ from flask import request
 import jsonpickle
 import json
 import time
+import socket
 
 @app.route('/misc/status/', methods=['GET'])
 def getStatus():
@@ -174,3 +175,17 @@ def addTestPunch(testBatchGuid, SINo):
 def getIsCharging():
    isCharging = Battery.IsCharging()
    return jsonpickle.encode(MicroMock(IsCharging=isCharging))
+
+@app.route('/misc/apikey/', methods=['GET'])
+def getApiKey():
+   apiKey = SettingsClass.GetAPIKey(False)
+   return jsonpickle.encode(MicroMock(ApiKey=apiKey))
+
+@app.route('/misc/webserverurl/', methods=['GET'])
+def getWebServerUrl():
+   webServerUrl = SettingsClass.GetWebServerUrl(False)
+   host = webServerUrl.replace('http://', '').replace('https://', '')
+   addrs = socket.getaddrinfo(host, 80)
+   ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
+   webServerUrl = webServerUrl.replace(host, ipv4_addrs[0])
+   return jsonpickle.encode(MicroMock(WebServerUrl=webServerUrl))
