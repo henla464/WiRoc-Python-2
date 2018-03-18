@@ -189,3 +189,9 @@ def getWebServerUrl():
    ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
    webServerUrl = webServerUrl.replace(host, ipv4_addrs[0])
    return jsonpickle.encode(MicroMock(WebServerUrl=webServerUrl))
+
+@app.route('/misc/webserverhost/', methods=['GET'])
+def getWebServerHost():
+   webServerUrl = SettingsClass.GetWebServerUrl(False)
+   webServerHost = webServerUrl.replace('http://', '').replace('https://', '')
+   return jsonpickle.encode(MicroMock(WebServerHost=webServerHost))

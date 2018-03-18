@@ -58,4 +58,19 @@ def setAcknowledgement(ack):
     SettingsClass.SetConfigurationDirty('AcknowledgementRequested', True)
     return jsonpickle.encode(MicroMock(AcknowledgementRequested=sd.Value == '1'))
 
+@app.route('/radioconfiguration/power/', methods=['GET'])
+def getPower():
+    power = SettingsClass.GetLoraPower(False)
+    return jsonpickle.encode(MicroMock(Power=power))
+
+@app.route('/radioconfiguration/power/<int:power>/', methods=['GET'])
+def setPower(power):
+    sd = DatabaseHelper.get_setting_by_key('LoraPower')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'LoraPower'
+    sd.Value = power
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetConfigurationDirty('LoraPower', True)
+    return jsonpickle.encode(MicroMock(Power=int(sd.Value)))
 

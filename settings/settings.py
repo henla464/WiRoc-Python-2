@@ -18,6 +18,7 @@ class SettingsClass(object):
     MessagesToSendExists = True
     channel = None
     dataRate = None
+    loraPower = None
     acknowledgementRequested = None
     sendToMeosEnabled = None
     sendToMeosIP = None
@@ -50,6 +51,8 @@ class SettingsClass(object):
             SettingsClass.channel = None
         if settingsName == 'DataRate':
             SettingsClass.dataRate = None
+        if settingsName == 'LoraPower':
+            SettingsClass.loraPower = None
         if settingsName == 'AcknowledgementRequested':
             SettingsClass.acknowledgementRequested = None
         if settingsName == 'SendToMeosEnabled':
@@ -100,6 +103,7 @@ class SettingsClass(object):
         if isDirty is not None and isDirty == "1":
             SettingsClass.channel = None
             SettingsClass.dataRate = None
+            SettingsClass.loraPower = None
             SettingsClass.acknowledgementRequested = None
             SettingsClass.sendToMeosEnabled = None
             SettingsClass.sendToMeosIP = None
@@ -127,6 +131,8 @@ class SettingsClass(object):
                 return SettingsClass.channel is None
             if settingsName == 'DataRate':
                 return SettingsClass.dataRate is None
+            if settingsName == 'LoraPower':
+                return SettingsClass.loraPower is None
             if settingsName == 'AcknowledgementRequested':
                 return SettingsClass.acknowledgementRequested is None
             if settingsName == 'SendToMeosEnabled':
@@ -201,6 +207,17 @@ class SettingsClass(object):
             else:
                 SettingsClass.dataRate = int(sett.Value)
         return SettingsClass.dataRate
+
+    @staticmethod
+    def GetLoraPower(mainConfigDirty = True):
+        if SettingsClass.IsDirty("LoraPower", True, mainConfigDirty):
+            sett = DatabaseHelper.get_setting_by_key('LoraPower')
+            if sett is None:
+                SettingsClass.loraPower = 0x07
+            else:
+                SettingsClass.loraPower = int(sett.Value)
+        return SettingsClass.loraPower
+
 
     @staticmethod
     def GetAcknowledgementRequested(mainConfigDirty = True):
@@ -299,6 +316,7 @@ class SettingsClass(object):
             if sett is None:
                 with open('apikey.txt', 'r') as apikeyfile:
                     apiKey = apikeyfile.read()
+                    apiKey = apiKey.strip()
                     SettingsClass.APIKey = apiKey
             else:
                 SettingsClass.APIKey = sett.Value

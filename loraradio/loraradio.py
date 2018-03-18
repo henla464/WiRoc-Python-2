@@ -30,6 +30,7 @@ class LoraRadio:
         self.isInitialized = False
         self.channel = None
         self.loraDataRate = None
+        self.loraPower = None
         self.lastMessageSentDate = None
         self.totalNumberOfMessagesSent = 0
         self.totalNumberOfAcksReceived = 0
@@ -37,9 +38,10 @@ class LoraRadio:
         self.runningAveragePercentageAcked = 0.5
         self.chip = False
 
-    def GetIsInitialized(self, channel, dataRate):
+    def GetIsInitialized(self, channel, dataRate, loraPower):
         return self.isInitialized and \
                channel == self.channel and \
+               loraPower == self.loraPower and \
                dataRate == self.loraDataRate
 
     def GetPortName(self):
@@ -53,7 +55,7 @@ class LoraRadio:
         return sum % 256
 
     @staticmethod
-    def getSettingsArray(channel, loraDataRate):
+    def getSettingsArray(channel, loraDataRate, loraPower):
         channelData = DatabaseHelper.get_channel(channel, loraDataRate)
         frequency = int(channelData.Frequency / 61.035)
         frequencyOne = ((frequency & 0xFF0000)>>16)
@@ -63,6 +65,7 @@ class LoraRadio:
 
         logging.debug("LoraRadio::getSettingsArray() channel: " + str(channel))
         logging.debug("LoraRadio::getSettingsArray() loradatarate: " + str(loraDataRate))
+        logging.debug("LoraRadio::getSettingsArray() loraPower: " + str(loraPower))
         logging.debug("LoraRadio::getSettingsArray() rffactor: " + str(channelData.RfFactor))
         logging.debug("LoraRadio::getSettingsArray() rfBw: " + str(channelData.RfBw))
 
@@ -80,7 +83,7 @@ class LoraRadio:
                                    channelData.RfBw,       # rf_bw (6=62.5k, 7=125k, 8=250k, 9=500k)
                                    0x00, 0x00,   # ID
                                    channel,        # NetID
-                                   0x07,        # RF power
+                                   loraPower,        # RF power (0x07)
                                    0x00,        # CS (calculate and set)
                                    0x0D, 0x0A   # end code
                                    ])
@@ -117,14 +120,15 @@ class LoraRadio:
     def GetDataRate(self):
         return self.loraDataRate
 
-    def Init(self, channel, loraDataRate):
-        logging.info("LoraRadio::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraDataRate: " + str(loraDataRate))
+    def Init(self, channel, loraDataRate, loraPower):
+        logging.info("LoraRadio::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraDataRate: " + str(loraDataRate) + " LoraPower: " + str(loraPower))
         if socket.gethostname() == 'chip':
             digitalWriteNonXIO(139, 0) #enable radio module
             self.chip = True
             time.sleep(0.1)
         self.channel = channel
         self.loraDataRate = loraDataRate
+        self.loraPower = loraPower
 
         readSettingArray = bytes([0xAF, 0xAF, # sync word
                                   0x00, 0x00, # id code
@@ -148,7 +152,7 @@ class LoraRadio:
         time.sleep(0.5)
         data = self.getRadioSettingsReply()
 
-        settingsArray = LoraRadio.getSettingsArray(channel, loraDataRate)
+        settingsArray = LoraRadio.getSettingsArray(channel, loraDataRate, loraPower)
 
         if data[8:16] == settingsArray[8:16]:
             self.isInitialized = True

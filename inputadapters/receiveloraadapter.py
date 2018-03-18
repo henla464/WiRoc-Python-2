@@ -83,9 +83,10 @@ class ReceiveLoraAdapter(object):
     def Init(self):
         channel = SettingsClass.GetChannel()
         loraDataRate = SettingsClass.GetDataRate()
-        if self.loraRadio.GetIsInitialized(channel, loraDataRate):
+        loraPower = SettingsClass.GetLoraPower()
+        if self.loraRadio.GetIsInitialized(channel, loraDataRate, loraPower):
             return True
-        self.loraRadio.Init(channel, loraDataRate)
+        self.loraRadio.Init(channel, loraDataRate, loraPower)
 
     def UpdateInfreqently(self):
         return True
