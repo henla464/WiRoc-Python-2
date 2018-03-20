@@ -73,12 +73,14 @@ class ReceiveLoraAdapter(object):
     def GetIsInitialized(self):
         channel = SettingsClass.GetChannel()
         loraDataRate = SettingsClass.GetDataRate()
-        return self.loraRadio.GetIsInitialized(channel, loraDataRate)
+        loraPower = SettingsClass.GetLoraPower()
+        return self.loraRadio.GetIsInitialized(channel, loraDataRate, loraPower)
 
     def ShouldBeInitialized(self):
         channel = SettingsClass.GetChannel()
         loraDataRate = SettingsClass.GetDataRate()
-        return not self.loraRadio.GetIsInitialized(channel, loraDataRate)
+        loraPower = SettingsClass.GetLoraPower()
+        return not self.loraRadio.GetIsInitialized(channel, loraDataRate, loraPower)
 
     def Init(self):
         channel = SettingsClass.GetChannel()
