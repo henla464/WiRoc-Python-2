@@ -168,7 +168,7 @@ class SendLoraAdapter(object):
         if self.loraRadio.GetIsInitialized(channel, loraDataRate, loraPower):
             SendLoraAdapter.Instances[0].AdapterInitialized = True
             return True
-        loraInitialized = self.loraRadio.Init(channel, loraDataRate)
+        loraInitialized = self.loraRadio.Init(channel, loraDataRate, loraPower)
         SendLoraAdapter.Instances[0].AdapterInitialized = loraInitialized
         return loraInitialized
 
