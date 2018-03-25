@@ -61,18 +61,22 @@ apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev
 echo "WiRoc-Python-2"
 #read line
 #install Python-2
-wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v0.93.tar.gz
+WiRocPython2Version="0.94"
+wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v$WiRocPython2Version.tar.gz
 rm -rf WiRoc-Python-2
-tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-0.93
-mv WiRoc-Python-2-0.93 WiRoc-Python-2
+tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-$WiRocPython2Version
+mv WiRoc-Python-2-$WiRocPython2Version WiRoc-Python-2
+mv WiRoc-Python-2/installWiRocPython.sh .
 
 echo "WiRoc-BLE"
 #read line
 #install WiRoc-BLE
-wget -O WiRoc-BLE-Device.tar.gz https://github.com/henla464/WiRoc-BLE-Device/archive/v0.17.tar.gz
+WiRocBLEVersion="0.18"
+wget -O WiRoc-BLE-Device.tar.gz https://github.com/henla464/WiRoc-BLE-Device/archive/v$WiRocBLEVersion.tar.gz
 rm -rf WiRoc-BLE-Device
-tar xvfz WiRoc-BLE-Device.tar.gz WiRoc-BLE-Device-0.17
-mv WiRoc-BLE-Device-0.17 WiRoc-BLE-Device
+tar xvfz WiRoc-BLE-Device.tar.gz WiRoc-BLE-Device-$WiRocBLEVersion
+mv WiRoc-BLE-Device-$WiRocBLEVersion WiRoc-BLE-Device
+mv WiRoc-BLE-Device/installWiRocBLE.sh .
 
 #npm install -g node-gyp
 echo "install bluetooth-hci-socket"
@@ -137,5 +141,11 @@ systemctl enable /etc/systemd/system/blink.service
 echo "add user to dialout"
 #read line
 sudo usermod -a -G dialout $USER
+
+echo "Type the apikey, followed by [ENTER]:"
+read apikey
+cat << EOF > apikey.txt
+${apikey}
+EOF
 
 

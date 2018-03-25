@@ -314,7 +314,7 @@ class SettingsClass(object):
         if SettingsClass.IsDirty("APIKey", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('APIKey')
             if sett is None:
-                with open('apikey.txt', 'r') as apikeyfile:
+                with open('../apikey.txt', 'r') as apikeyfile:
                     apiKey = apikeyfile.read()
                     apiKey = apiKey.strip()
                     SettingsClass.APIKey = apiKey
