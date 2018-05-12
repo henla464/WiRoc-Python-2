@@ -112,7 +112,7 @@ class LoraRadio:
     def Disable(self):
         self.isInitialized = False
         self.radioSerial.close()
-        digitalWriteNonXIO(139, 1)  # disable radio module
+        digitalWriteNonXIO(139, 1)  # disable radio module; #with new oled design: 135
 
     def GetChannel(self):
         return self.channel
@@ -123,7 +123,7 @@ class LoraRadio:
     def Init(self, channel, loraDataRate, loraPower):
         logging.info("LoraRadio::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraDataRate: " + str(loraDataRate) + " LoraPower: " + str(loraPower))
         if socket.gethostname() == 'chip':
-            digitalWriteNonXIO(139, 0) #enable radio module
+            digitalWriteNonXIO(139, 0) #enable radio module; #with new oled design: 135
             self.chip = True
             time.sleep(0.1)
         self.channel = channel
@@ -164,9 +164,9 @@ class LoraRadio:
             setResponse = self.getRadioSettingsReply()
             if setResponse[8:15] == settingsArray[8:15]:
                 self.isInitialized = True
-                digitalWriteNonXIO(139, 1) # disable/enable to make the setting stick
+                digitalWriteNonXIO(139, 1) # disable/enable to make the setting stick #with new oled design: 135
                 time.sleep(0.2)
-                digitalWriteNonXIO(139, 0)
+                digitalWriteNonXIO(139, 0) #with new oled design: 135
                 logging.info("LoraRadio::Init() Now configured correctly")
                 return True
             else:
@@ -186,7 +186,7 @@ class LoraRadio:
     # delay sending next message if we are waiting for an ack message
     def IsReadyToSend(self):
         if self.chip:
-            if digitalReadNonXIO(138) == 0:
+            if digitalReadNonXIO(138) == 0:  #with new oled design: 134
                 return False
         return True
 

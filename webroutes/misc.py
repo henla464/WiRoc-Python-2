@@ -15,6 +15,7 @@ import socket
 
 @app.route('/misc/status/', methods=['GET'])
 def getStatus():
+    DatabaseHelper.reInit()
     subscribersView = DatabaseHelper.get_subscribers()
     subAdpts = []
     for sub in subscribersView:
@@ -42,6 +43,7 @@ def getStatus():
 
 @app.route('/misc/settings/', methods=['GET'])
 def getSettings():
+    DatabaseHelper.reInit()
     settings = DatabaseHelper.get_settings()
     setts = []
     for setting in settings:
@@ -57,6 +59,7 @@ def getSettings():
 
 @app.route('/misc/setting/<path:keyandvalue>/', methods=['GET'])
 def setSetting(keyandvalue):
+    DatabaseHelper.reInit()
     settingData = None
     keyandvaluelist = keyandvalue.split(';')
     if len(keyandvaluelist) > 1:
@@ -79,6 +82,7 @@ def setSetting(keyandvalue):
 
 @app.route('/misc/punches/', methods=['GET'])
 def getPunches():
+    DatabaseHelper.reInit()
     blenoPunches = DatabaseHelper.get_bleno_punches()
     punches = []
     for blenoPunch in blenoPunches:
@@ -107,6 +111,7 @@ def getPunches():
 
 @app.route('/misc/wirocdevicename/', methods=['GET'])
 def getWiRocDeviceName():
+    DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
     deviceName = "WiRoc Device"
     if setting != None:
@@ -115,6 +120,7 @@ def getWiRocDeviceName():
 
 @app.route('/misc/database/<operation>/', methods=['GET'])
 def deletePunches(operation):
+    DatabaseHelper.reInit()
     if operation.lower() == "deletepunches":
         DatabaseHelper.delete_punches()
         return jsonpickle.encode(MicroMock(Status="OK"))
@@ -126,6 +132,7 @@ def deletePunches(operation):
 
 @app.route('/misc/testpunches/gettestpunches/<testBatchGuid>/<includeAll>/', methods=['GET'])
 def getTestPunches(testBatchGuid, includeAll):
+    DatabaseHelper.reInit()
     testPunches = None
     if includeAll == "true":
         testPunches = DatabaseHelper.get_test_punches(testBatchGuid)
@@ -157,6 +164,7 @@ def getTestPunches(testBatchGuid, includeAll):
 
 @app.route('/misc/testpunches/addtestpunch/<testBatchGuid>/<SINo>/', methods=['GET'])
 def addTestPunch(testBatchGuid, SINo):
+    DatabaseHelper.reInit()
     localtime = time.localtime(time.time())
     twelveHourTimer = 0
     twentyFourHour = 0
@@ -173,25 +181,28 @@ def addTestPunch(testBatchGuid, SINo):
 
 @app.route('/misc/ischarging/', methods=['GET'])
 def getIsCharging():
-   isCharging = Battery.IsCharging()
-   return jsonpickle.encode(MicroMock(IsCharging=isCharging))
+    isCharging = Battery.IsCharging()
+    return jsonpickle.encode(MicroMock(IsCharging=isCharging))
 
 @app.route('/misc/apikey/', methods=['GET'])
 def getApiKey():
-   apiKey = SettingsClass.GetAPIKey(False)
-   return jsonpickle.encode(MicroMock(ApiKey=apiKey))
+    DatabaseHelper.reInit()
+    apiKey = SettingsClass.GetAPIKey(False)
+    return jsonpickle.encode(MicroMock(ApiKey=apiKey))
 
 @app.route('/misc/webserverurl/', methods=['GET'])
 def getWebServerUrl():
-   webServerUrl = SettingsClass.GetWebServerUrl(False)
-   host = webServerUrl.replace('http://', '').replace('https://', '')
-   addrs = socket.getaddrinfo(host, 80)
-   ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
-   webServerUrl = webServerUrl.replace(host, ipv4_addrs[0])
-   return jsonpickle.encode(MicroMock(WebServerUrl=webServerUrl))
+    DatabaseHelper.reInit()
+    webServerUrl = SettingsClass.GetWebServerUrl(False)
+    host = webServerUrl.replace('http://', '').replace('https://', '')
+    addrs = socket.getaddrinfo(host, 80)
+    ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
+    webServerUrl = webServerUrl.replace(host, ipv4_addrs[0])
+    return jsonpickle.encode(MicroMock(WebServerUrl=webServerUrl))
 
 @app.route('/misc/webserverhost/', methods=['GET'])
 def getWebServerHost():
-   webServerUrl = SettingsClass.GetWebServerUrl(False)
-   webServerHost = webServerUrl.replace('http://', '').replace('https://', '')
-   return jsonpickle.encode(MicroMock(WebServerHost=webServerHost))
+    DatabaseHelper.reInit()
+    webServerUrl = SettingsClass.GetWebServerUrl(False)
+    webServerHost = webServerUrl.replace('http://', '').replace('https://', '')
+    return jsonpickle.encode(MicroMock(WebServerHost=webServerHost))

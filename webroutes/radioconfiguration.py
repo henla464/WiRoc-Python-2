@@ -10,11 +10,13 @@ import jsonpickle
 
 @app.route('/radioconfiguration/channel/', methods=['GET'])
 def getChannel():
+    DatabaseHelper.reInit()
     channel = SettingsClass.GetChannel(False)
     return jsonpickle.encode(MicroMock(Channel=channel))
 
 @app.route('/radioconfiguration/channel/<int:channel>/', methods=['GET'])
 def setChannel(channel):
+    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('Channel')
     if sd is None:
         sd = SettingData()
@@ -26,11 +28,13 @@ def setChannel(channel):
 
 @app.route('/radioconfiguration/datarate/', methods=['GET'])
 def getDataRate():
-   dataRate = SettingsClass.GetDataRate(False)
-   return jsonpickle.encode(MicroMock(DataRate=dataRate))
+    DatabaseHelper.reInit()
+    dataRate = SettingsClass.GetDataRate(False)
+    return jsonpickle.encode(MicroMock(DataRate=dataRate))
 
 @app.route('/radioconfiguration/datarate/<int:dataRate>/', methods=['GET'])
 def setDataRate(dataRate):
+    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('DataRate')
     if sd is None:
         sd = SettingData()
@@ -43,12 +47,14 @@ def setDataRate(dataRate):
 
 @app.route('/radioconfiguration/acknowledgementrequested/', methods=['GET'])
 def getAcknowledgementRequested():
-   acksRequested = SettingsClass.GetAcknowledgementRequested(False)
-   return jsonpickle.encode(MicroMock(AcknowledgementRequested=acksRequested))
+    DatabaseHelper.reInit()
+    acksRequested = SettingsClass.GetAcknowledgementRequested(False)
+    return jsonpickle.encode(MicroMock(AcknowledgementRequested=acksRequested))
 
 
 @app.route('/radioconfiguration/acknowledgementrequested/<ack>/', methods=['GET'])
 def setAcknowledgement(ack):
+    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
     if sd is None:
         sd = SettingData()
@@ -60,11 +66,13 @@ def setAcknowledgement(ack):
 
 @app.route('/radioconfiguration/power/', methods=['GET'])
 def getPower():
+    DatabaseHelper.reInit()
     power = SettingsClass.GetLoraPower(False)
     return jsonpickle.encode(MicroMock(Power=power))
 
 @app.route('/radioconfiguration/power/<int:power>/', methods=['GET'])
 def setPower(power):
+    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('LoraPower')
     if sd is None:
         sd = SettingData()

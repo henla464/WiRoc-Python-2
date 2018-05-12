@@ -15,6 +15,7 @@ def GetSendToMeosEnabled():
 
 @app.route('/meosconfiguration/sendtomeosenabled/<enabled>/', methods=['GET'])
 def SetSendToMeosEnabled(enabled):
+    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SendToMeosEnabled')
     if sd is None:
         sd = SettingData()
@@ -31,6 +32,7 @@ def GetSendToMeosIP():
 
 @app.route('/meosconfiguration/sendtomeosip/<ip>/', methods=['GET'])
 def SetSendToMeosIP(ip):
+    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SendToMeosIP')
     if sd is None:
         sd = SettingData()
@@ -49,6 +51,7 @@ def getSendToMeosIPPort():
 
 @app.route('/meosconfiguration/sendtomeosipport/<port>/', methods=['GET'])
 def setSendToMeosIPPort(port):
+    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SendToMeosIPPort')
     if sd is None:
         sd = SettingData()

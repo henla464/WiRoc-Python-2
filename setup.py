@@ -173,6 +173,6 @@ class Setup:
             pinMode(5, OUTPUT)
             pinMode(6, OUTPUT)
             pinMode(7, OUTPUT)
-            pinModeNonXIO(138, INPUT)
-            pinModeNonXIO(139, OUTPUT)
-            digitalWriteNonXIO(139, 1)
+            pinModeNonXIO(138, INPUT) #with new oled design: 134
+            pinModeNonXIO(139, OUTPUT) #with new oled design: 135
+            digitalWriteNonXIO(139, 1) #with new oled design: 135

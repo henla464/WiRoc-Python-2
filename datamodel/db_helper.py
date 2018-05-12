@@ -17,6 +17,10 @@ class DatabaseHelper:
             cls.db = DB("WiRoc.db", DataMapping())
 
     @classmethod
+    def reInit(cls):
+        cls.db = DB("WiRoc.db", DataMapping())
+
+    @classmethod
     def ensure_tables_created(cls):
         logging.debug("DatabaseHelper::ensure_tables_created()")
         cls.init()
@@ -969,7 +973,7 @@ class DatabaseHelper:
         channels.append(ChannelData(5, 293, 439850000, 52590, 16, 12, 7))
         channels.append(ChannelData(6, 293, 439875000, 52590, 16, 12, 7))
         channels.append(ChannelData(7, 293, 439900000, 52590, 16, 12, 7))
-        channels.append(ChannelData(8, 293, 439250000, 52590, 16, 12, 7))
+        channels.append(ChannelData(8, 293, 439925000, 52590, 16, 12, 7))
 
         channels.append(ChannelData(1, 537, 439750000, 24130, 16, 11, 7))
         channels.append(ChannelData(2, 537, 439775000, 24130, 16, 11, 7))
@@ -978,7 +982,7 @@ class DatabaseHelper:
         channels.append(ChannelData(5, 537, 439850000, 24130, 16, 11, 7))
         channels.append(ChannelData(6, 537, 439875000, 24130, 16, 11, 7))
         channels.append(ChannelData(7, 537, 439900000, 24130, 16, 11, 7))
-        channels.append(ChannelData(8, 537, 439250000, 24130, 16, 11, 7))
+        channels.append(ChannelData(8, 537, 439925000, 24130, 16, 11, 7))
 
         channels.append(ChannelData(1, 977, 439750000, 15680, 16, 10, 7))
         channels.append(ChannelData(2, 977, 439775000, 15680, 16, 10, 7))
@@ -987,7 +991,7 @@ class DatabaseHelper:
         channels.append(ChannelData(5, 977, 439850000, 15680, 16, 10, 7))
         channels.append(ChannelData(6, 977, 439875000, 15680, 16, 10, 7))
         channels.append(ChannelData(7, 977, 439900000, 15680, 16, 10, 7))
-        channels.append(ChannelData(8, 977, 439250000, 15680, 16, 10, 7))
+        channels.append(ChannelData(8, 977, 439925000, 15680, 16, 10, 7))
 
         channels.append(ChannelData(1, 1758, 439750000, 8714, 15, 9, 7))
         channels.append(ChannelData(2, 1758, 439775000, 8714, 15, 9, 7))
@@ -996,7 +1000,7 @@ class DatabaseHelper:
         channels.append(ChannelData(5, 1758, 439850000, 8714, 15, 9, 7))
         channels.append(ChannelData(6, 1758, 439875000, 8714, 15, 9, 7))
         channels.append(ChannelData(7, 1758, 439900000, 8714, 15, 9, 7))
-        channels.append(ChannelData(8, 1758, 439250000, 8714, 15, 9, 7))
+        channels.append(ChannelData(8, 1758, 439925000, 8714, 15, 9, 7))
 
         # channels.append(ChannelData(1, 146, 439700000, 72333, 22, 12, 6))
         # channels.append(ChannelData(2, 146, 439725000, 72333, 22, 12, 6))
