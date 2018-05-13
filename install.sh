@@ -7,6 +7,9 @@ echo "update"
 # update app list
 apt-get update
 
+echo "zip"
+apt-get install zip
+
 echo "sqlite3"
 #read line
 #Install sqlite3
@@ -61,7 +64,7 @@ apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev
 echo "WiRoc-Python-2"
 #read line
 #install Python-2
-WiRocPython2Version="0.95"
+WiRocPython2Version="0.96"
 wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v$WiRocPython2Version.tar.gz
 rm -rf WiRoc-Python-2
 tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-$WiRocPython2Version
