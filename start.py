@@ -19,6 +19,7 @@ import socket
 from itertools import repeat
 from battery import Battery
 from utils.utils import Utils
+from display.display import Display
 import requests, queue, threading
 import sys
 
@@ -41,6 +42,7 @@ class Main:
         self.lastBatteryIsLowReceived = False
         self.callbackQueue = queue.Queue()
         self.threadQueue = queue.Queue()
+        self.display = Display()
         Battery.Setup()
         Setup.SetupPins()
 
@@ -101,38 +103,38 @@ class Main:
 
         self.runningOnChip = socket.gethostname() == 'chip'
 
-    def displayChannel(self, channel, ackRequested):
-        if self.runningOnChip:
-            if channel != self.previousChannel or ackRequested != self.previousAckRequested:
-                self.previousChannel = channel
-                self.previousAckRequested = ackRequested
-                lightSegA = channel in [2,3,5,6,7,8,9]
-                lightSegB = channel in [1, 2, 3, 4, 7, 8, 9]
-                lightSegC = channel in [1, 3, 4, 5, 6, 7, 8, 9]
-                lightSegD = channel in [2, 3, 5, 6, 8]
-                lightSegE = channel in [2, 6, 8]
-                lightSegF = channel in [4, 5, 6, 8, 9]
-                lightSegG = channel in [2, 3, 4, 5, 6, 8, 9]
-
-                if True:
-                    lightSegA = not lightSegA
-                    lightSegB = not lightSegB
-                    lightSegC = not lightSegC
-                    lightSegD = not lightSegD
-                    lightSegE = not lightSegE
-                    lightSegF = not lightSegF
-                    lightSegG = not lightSegG
-                    ackRequested = not ackRequested
-
-                digitalWrite(0, int(lightSegA))
-                digitalWrite(1, int(lightSegB))
-                digitalWrite(2, int(lightSegC))
-                digitalWrite(3, int(lightSegD))
-                digitalWrite(4, int(lightSegE))
-                digitalWrite(5, int(lightSegF))
-                digitalWrite(6, int(lightSegG))
-
-                digitalWrite(7, int(ackRequested))
+    # def displayChannel(self, channel, ackRequested):
+    #     if self.runningOnChip:
+    #         if channel != self.previousChannel or ackRequested != self.previousAckRequested:
+    #             self.previousChannel = channel
+    #             self.previousAckRequested = ackRequested
+    #             lightSegA = channel in [2,3,5,6,7,8,9]
+    #             lightSegB = channel in [1, 2, 3, 4, 7, 8, 9]
+    #             lightSegC = channel in [1, 3, 4, 5, 6, 7, 8, 9]
+    #             lightSegD = channel in [2, 3, 5, 6, 8]
+    #             lightSegE = channel in [2, 6, 8]
+    #             lightSegF = channel in [4, 5, 6, 8, 9]
+    #             lightSegG = channel in [2, 3, 4, 5, 6, 8, 9]
+    #
+    #             if True:
+    #                 lightSegA = not lightSegA
+    #                 lightSegB = not lightSegB
+    #                 lightSegC = not lightSegC
+    #                 lightSegD = not lightSegD
+    #                 lightSegE = not lightSegE
+    #                 lightSegF = not lightSegF
+    #                 lightSegG = not lightSegG
+    #                 ackRequested = not ackRequested
+    #
+    #             digitalWrite(0, int(lightSegA))
+    #             digitalWrite(1, int(lightSegB))
+    #             digitalWrite(2, int(lightSegC))
+    #             digitalWrite(3, int(lightSegD))
+    #             digitalWrite(4, int(lightSegE))
+    #             digitalWrite(5, int(lightSegF))
+    #             digitalWrite(6, int(lightSegG))
+    #
+    #             digitalWrite(7, int(ackRequested))
 
     def timeToReconfigure(self):
         currentTime = time.monotonic()
@@ -151,23 +153,24 @@ class Main:
             logging.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
             DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
 
-    def updateWifiPowerSaving(self, sendToMeos):
-        if self.runningOnChip:
-            if sendToMeos and (self.wifiPowerSaving or self.wifiPowerSaving is None):
-                # disable power saving
-                logging.info("Start::updateWifiPowerSaving() Disable WiFi power saving")
-                os.system("sudo iw wlan0 set power_save off")
-                self.wifiPowerSaving = False
-            elif not sendToMeos and (not self.wifiPowerSaving or self.wifiPowerSaving is None):
-                # enable power saving
-                logging.info("Start::updateWifiPowerSaving() Enable WiFi power saving")
-                os.system("sudo iw wlan0 set power_save on")
-                self.wifiPowerSaving = True
+    # def updateWifiPowerSaving(self, sendToMeos):
+    #     if self.runningOnChip:
+    #         if sendToMeos and (self.wifiPowerSaving or self.wifiPowerSaving is None):
+    #             # disable power saving
+    #             logging.info("Start::updateWifiPowerSaving() Disable WiFi power saving")
+    #             os.system("sudo iw wlan0 set power_save off")
+    #             self.wifiPowerSaving = False
+    #         elif not sendToMeos and (not self.wifiPowerSaving or self.wifiPowerSaving is None):
+    #             # enable power saving
+    #             logging.info("Start::updateWifiPowerSaving() Enable WiFi power saving")
+    #             os.system("sudo iw wlan0 set power_save on")
+    #             self.wifiPowerSaving = True
 
-    def reconfigureBackground(self,channel,ackRequested,sendToMeos, webServerUrl):
-        self.displayChannel(channel,ackRequested)
+    def reconfigureBackground(self,channel,ackRequested,sendToMeos, webServerUrl, wirocMode):
+        #self.displayChannel(channel,ackRequested)
+        self.display.Draw(channel, ackRequested, wirocMode)
         self.webServerUp = SendStatusAdapter.TestConnection(webServerUrl)
-        self.updateWifiPowerSaving(sendToMeos)
+        Battery.UpdateWifiPowerSaving(sendToMeos)
         Battery.Tick()
         SettingsClass.Tick()
 
@@ -182,13 +185,15 @@ class Main:
         channel = None
         ackRequested = None
         sendToMeos = None
+        wirocMode = None
         webServerUrl = SettingsClass.GetWebServerUrl()
         if self.runningOnChip:
             channel = SettingsClass.GetChannel()
             ackRequested = SettingsClass.GetAcknowledgementRequested()
             sendToMeos = SettingsClass.GetSendToMeosEnabled()
+            wirocMode = SettingsClass.GetWiRocMode()
 
-        t = threading.Thread(target=self.reconfigureBackground, args=(channel,ackRequested,sendToMeos, webServerUrl))
+        t = threading.Thread(target=self.reconfigureBackground, args=(channel,ackRequested,sendToMeos, webServerUrl, wirocMode))
         t.start()
 
 

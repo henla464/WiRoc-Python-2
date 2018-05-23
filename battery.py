@@ -11,6 +11,7 @@ class Battery(object):
     currentMode = None
     limitCurrentMode = None
     isRunningOnChip = False
+    wifiPowerSaving = None
 
     @classmethod
     def Setup(cls):
@@ -128,3 +129,17 @@ class Battery(object):
             batteryPercent4Bit = int(intPercentValue * 15 / 100)
             return batteryPercent4Bit
         return 15
+
+    @classmethod
+    def UpdateWifiPowerSaving(cls, sendToMeos):
+        if cls.isRunningOnChip:
+            if sendToMeos and (cls.wifiPowerSaving or cls.wifiPowerSaving is None):
+                # disable power saving
+                logging.info("Start::updateWifiPowerSaving() Disable WiFi power saving")
+                os.system("sudo iw wlan0 set power_save off")
+                cls.wifiPowerSaving = False
+            elif not sendToMeos and (not cls.wifiPowerSaving or cls.wifiPowerSaving is None):
+                # enable power saving
+                logging.info("Start::updateWifiPowerSaving() Enable WiFi power saving")
+                os.system("sudo iw wlan0 set power_save on")
+                cls.wifiPowerSaving = True
