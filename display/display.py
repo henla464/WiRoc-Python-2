@@ -9,11 +9,13 @@ sys.path.append('..')
 from chipGPIO.chipGPIO import *
 from battery import Battery
 import subprocess
+import logging
 
 
 
 class Display(object):
     def __init__(self):
+        logging.info("Display::Init start")
         self.TypeOfDisplay = None
 
         self.OledDisp = None
@@ -27,6 +29,9 @@ class Display(object):
         self.channel = None
         self.wirocMode = None
         self.ackRequested = None
+        self.dataRate = None
+        self.isCharging = None
+        self.imageChanged = False
         self.runningOnChip = socket.gethostname() == 'chip'
         try:
             byteRead = self.bus.read_byte(self.OledAddress)
@@ -39,19 +44,20 @@ class Display(object):
                 self.OledDisp.begin()
 
                 # Clear display.
-                self.OledDisp.clear()
-                self.OledDisp.display()
+                #self.OledDisp.clear()
+                #self.OledDisp.display()
                 self.OledWidth = self.OledDisp.width
                 self.OledHeight = self.OledDisp.height
                 self.OledImage = Image.new('1', (self.OledWidth , self.OledHeight))
                 self.OledDraw = ImageDraw.Draw(self.OledImage)
                 #self.OledDraw.rectangle((0, 0, self.OledWidth, self.OledHeight), outline=0, fill=0)
-                self.OledThinFont = ImageFont.truetype('GeosansLight.ttf', 10)
-                self.OledThinFont2 = ImageFont.truetype('GeosansLight.ttf', 14)
-                self.OledBoldFont = ImageFont.truetype('theboldfont.ttf', 44)
+                self.OledThinFont = ImageFont.truetype('display/GeosansLight.ttf', 10)
+                self.OledThinFont2 = ImageFont.truetype('display/GeosansLight.ttf', 14)
+                self.OledBoldFont = ImageFont.truetype('display/theboldfont.ttf', 44)
                 self.OledDraw.text((0, 0), 'CH', font=self.OledThinFont, fill=255)
                 self.OledDisp.image(self.OledImage)
                 self.OledDisp.display()
+                logging.info("Display::Init initialized the OLED")
             else:
                 if self.runningOnChip:
                     self.TypeOfDisplay = '7SEG'
@@ -69,6 +75,7 @@ class Display(object):
         if percent == self.batteryPercent:
             return None
         self.batteryPercent = percent
+        self.imageChanged = True
 
         top = 1
         x = 96
@@ -81,28 +88,38 @@ class Display(object):
         width = int((percent - 5) / 5)
         self.OledDraw.rectangle((x + 1, top + 1, x + width, top + 9), outline=255, fill=255)
 
-        if Battery.IsCharging():
+    def DrawIsCharging(self):
+        newBattery = Battery.IsCharging()
+        if newBattery != self.isCharging:
+            self.isCharging = newBattery
+            self.imageChanged = True
+            x = 121
             top = 3
-            offset = 25
             #lightning
-            self.OledDraw.rectangle((x+offset+1, top, x + offset + 6, top + 8), outline=0, fill=0)
-            self.OledDraw.line((x + offset + 3, top, x + offset + 3, top), fill=255)
-            self.OledDraw.line((x + offset + 3, top + 1, x + offset + 3, top + 1), fill=255)
-            self.OledDraw.line((x + offset + 3, top + 2, x + offset + 3, top + 2), fill=255)
-            self.OledDraw.line((x + offset + 2, top + 3, x + offset + 3, top + 3), fill=255)
-            self.OledDraw.line((x + offset + 1, top + 4, x + offset + 6, top + 4), fill=255)
-            self.OledDraw.line((x + offset + 4, top + 5, x + offset + 5, top + 5), fill=255)
-            self.OledDraw.line((x + offset + 4, top + 6, x + offset + 4, top + 6), fill=255)
-            self.OledDraw.line((x + offset + 4, top + 7, x + offset + 4, top + 7), fill=255)
-            self.OledDraw.line((x + offset + 4, top + 8, x + offset + 4, top + 8), fill=255)
+            self.OledDraw.rectangle((x + 1, top, x + 6, top + 8), outline=0, fill=0)
+            self.OledDraw.line((x + 3, top, x + 3, top), fill=255)
+            self.OledDraw.line((x + 3, top + 1, x + 3, top + 1), fill=255)
+            self.OledDraw.line((x + 3, top + 2, x + 3, top + 2), fill=255)
+            self.OledDraw.line((x + 2, top + 3, x + 3, top + 3), fill=255)
+            self.OledDraw.line((x + 1, top + 4, x + 6, top + 4), fill=255)
+            self.OledDraw.line((x + 4, top + 5, x + 5, top + 5), fill=255)
+            self.OledDraw.line((x + 4, top + 6, x + 4, top + 6), fill=255)
+            self.OledDraw.line((x + 4, top + 7, x + 4, top + 7), fill=255)
+            self.OledDraw.line((x + 4, top + 8, x + 4, top + 8), fill=255)
 
-            #plug
-            #self.OledDraw.line((x + 25 + 4, top, x + 25 + 4 + 4, top), fill=255)
-            #self.OledDraw.line((x + 25 , top+1, x + 25 + 9, top+1), fill=255)
-            #self.OledDraw.line((x + 25 + 4, top+2, x + 25 + 4 + 9, top+2), fill=255)
-            #self.OledDraw.line((x + 25 + 4, top+3, x + 25 + 4 + 9, top+3), fill=255)
-            #self.OledDraw.line((x + 25, top+4, x + 25 + 9, top+4), fill=255)
-            #self.OledDraw.line((x + 25 + 4, top+5, x + 25 + 4 + 4, top+5), fill=255)
+    def DrawOledDataRate(self, dataRate):
+        if self.dataRate != dataRate:
+            self.dataRate = dataRate
+            self.imageChanged = True
+            self.OledDraw.rectangle((41, 0, 60, 12), outline=0, fill=0)
+            if dataRate == 293:
+                self.OledDraw.text((41, 1), 'L', font=self.OledThinFont2, fill=255)
+            if dataRate == 537:
+                self.OledDraw.text((41, 1), 'ML', font=self.OledThinFont2, fill=255)
+            if dataRate == 977:
+                self.OledDraw.text((41, 1), 'MS', font=self.OledThinFont2, fill=255)
+            if dataRate == 1758:
+                self.OledDraw.text((41, 1), 'S', font=self.OledThinFont2, fill=255)
 
     def GetWifiSignalStrength(self):
         wifiInUseSSIDSignal = str(subprocess.check_output(["nmcli", "-t", "-f", "in-use,ssid,signal", "device", "wifi"]))
@@ -121,6 +138,7 @@ class Display(object):
         if percent == self.wifiStrength:
             return None
         self.wifiStrength = percent
+        self.imageChanged = True
 
         x = 72
         top = 2
@@ -139,20 +157,33 @@ class Display(object):
             if (percent > 20):
                 self.OledDraw.line((x + 20, top + 9, x + 20, top + -1), fill=255)
 
-    def DrawOled(self, channel, ackRequested, wiRocMode):
+    def DrawOled(self, channel, ackRequested, wiRocMode, dataRate):
         # Draw a black filled box to clear the image.
         if self.channel != channel:
+            self.channel = channel
+            self.imageChanged = True
             self.OledDraw.rectangle((14, 0, 39, 31), outline=0, fill=0)
             self.OledDraw.text((14, 0), str(channel), font=self.OledBoldFont, fill=255)
         if self.wirocMode != wiRocMode:
-            self.OledDraw.rectangle((40, 16, 84, 26), outline=0, fill=0)
-            self.OledDraw.text((40, 16), wiRocMode, font=self.OledThinFont2, fill=255)
+            self.wirocMode = wiRocMode
+            self.imageChanged = True
+            self.OledDraw.rectangle((41, 16, 100, 28), outline=0, fill=0)
+            self.OledDraw.text((41, 16), wiRocMode, font=self.OledThinFont2, fill=255)
+        if self.ackRequested != ackRequested:
+            self.ackRequested = ackRequested
+            self.imageChanged = True
+            self.OledDraw.rectangle((101, 16, 128, 28), outline=0, fill=0)
+            if not ackRequested:
+                self.OledDraw.text((101, 16), 'X', font=self.OledThinFont2, fill=255)
 
-        self.DrawOledBattery()
+        self.DrawOledDataRate(dataRate)
         self.DrawOledWifi()
+        self.DrawOledBattery()
+        self.DrawIsCharging()
 
-        self.OledDisp.image(self.OledImage)
-        self.OledDisp.display()
+        if self.imageChanged:
+            self.OledDisp.image(self.OledImage)
+            self.OledDisp.display()
 
     def Draw7Seg(self, channel, ackRequested):
         #def displayChannel(self, channel, ackRequested):
@@ -188,13 +219,13 @@ class Display(object):
             digitalWrite(7, int(ackRequested))
         return None
 
-    def Draw(self, channel, ackRequested, wiRocMode):
+    def Draw(self, channel, ackRequested, wiRocMode, dataRate):
         if self.TypeOfDisplay == 'OLED':
-            self.DrawOled(channel, ackRequested, wiRocMode)
+            self.DrawOled(channel, ackRequested, wiRocMode, dataRate)
         elif self.TypeOfDisplay == '7SEG':
             self.Draw7Seg(channel, ackRequested)
 
 
 
-myDisplay = Display()
-myDisplay.Draw('4', True, 'SENDER')
+#myDisplay = Display()
+#myDisplay.Draw('4', True, 'SENDER', 293)

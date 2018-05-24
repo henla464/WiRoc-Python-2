@@ -166,9 +166,9 @@ class Main:
     #             os.system("sudo iw wlan0 set power_save on")
     #             self.wifiPowerSaving = True
 
-    def reconfigureBackground(self,channel,ackRequested,sendToMeos, webServerUrl, wirocMode):
+    def reconfigureBackground(self,channel,ackRequested,sendToMeos, webServerUrl, wirocMode, dataRate):
         #self.displayChannel(channel,ackRequested)
-        self.display.Draw(channel, ackRequested, wirocMode)
+        self.display.Draw(channel, ackRequested, wirocMode, dataRate)
         self.webServerUp = SendStatusAdapter.TestConnection(webServerUrl)
         Battery.UpdateWifiPowerSaving(sendToMeos)
         Battery.Tick()
@@ -186,14 +186,16 @@ class Main:
         ackRequested = None
         sendToMeos = None
         wirocMode = None
+        dataRate = None
         webServerUrl = SettingsClass.GetWebServerUrl()
         if self.runningOnChip:
             channel = SettingsClass.GetChannel()
             ackRequested = SettingsClass.GetAcknowledgementRequested()
             sendToMeos = SettingsClass.GetSendToMeosEnabled()
             wirocMode = SettingsClass.GetWiRocMode()
+            dataRate = SettingsClass.GetDataRate()
 
-        t = threading.Thread(target=self.reconfigureBackground, args=(channel,ackRequested,sendToMeos, webServerUrl, wirocMode))
+        t = threading.Thread(target=self.reconfigureBackground, args=(channel,ackRequested,sendToMeos, webServerUrl, wirocMode, dataRate))
         t.start()
 
 
