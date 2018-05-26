@@ -74,7 +74,7 @@ class Display(object):
     def DrawOledBattery(self):
         percent = Battery.GetBatteryPercent()
         logging.debug("Display::DrawOledBattery percent: " + str(percent) + " prev battery: " + str(self.batteryPercent))
-        if self.batteryPercent is not None and (self.batteryPercent - percent) < 2:
+        if self.batteryPercent is not None and abs(self.batteryPercent - percent) < 2:
             return None
         self.batteryPercent = percent
         self.imageChanged = True
@@ -176,13 +176,13 @@ class Display(object):
             self.wirocMode = wiRocMode
             self.imageChanged = True
             logging.debug("Display::DrawOled wirocMode imagechanged")
-            self.OledDraw.rectangle((41, 16, 100, 28), outline=0, fill=0)
+            self.OledDraw.rectangle((41, 16, 102, 31), outline=0, fill=0)
             self.OledDraw.text((41, 16), wiRocMode, font=self.OledThinFont2, fill=255)
         if self.ackRequested != ackRequested:
             self.ackRequested = ackRequested
             self.imageChanged = True
             logging.debug("Display::DrawOled ackRequested imagechanged")
-            self.OledDraw.rectangle((101, 16, 128, 28), outline=0, fill=0)
+            self.OledDraw.rectangle((101, 16, 127, 31), outline=0, fill=0)
             if not ackRequested:
                 self.OledDraw.text((101, 16), 'X', font=self.OledThinFont2, fill=255)
 

@@ -136,6 +136,7 @@ class Main:
             self.subscriberAdapters = Setup.SubscriberAdapters
             self.inputAdapters = Setup.InputAdapters
 
+
         channel = None
         ackRequested = None
         sendToMeos = None
@@ -399,18 +400,20 @@ class Main:
 
     def updateBatteryIsLowBackground(self, batteryIsLowReceived, webServerUrl, apiKey, deviceId):
         if deviceId != None:
-            host = webServerUrl.replace('http://', '').replace('https://', '')
-            addrs = socket.getaddrinfo(host, 80)
-            ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
-            headers = {'Authorization': apiKey, 'host': host}
+            try:
+                host = webServerUrl.replace('http://', '').replace('https://', '')
+                addrs = socket.getaddrinfo(host, 80)
+                ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
+                headers = {'Authorization': apiKey, 'host': host}
 
-            if batteryIsLowReceived and not self.lastBatteryIsLowReceived:
-                URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/Devices/" + str(deviceId) + "/SetBatteryIsLow"
-                resp = requests.get(url=URL, timeout=1, headers=headers)
-                if resp.status_code == 200:
-                    retDevice = resp.json()
-                    self.lastBatteryIsLowReceived = retDevice['batteryIsLow']
-
+                if batteryIsLowReceived and not self.lastBatteryIsLowReceived:
+                    URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/Devices/" + str(deviceId) + "/SetBatteryIsLow"
+                    resp = requests.get(url=URL, timeout=1, headers=headers)
+                    if resp.status_code == 200:
+                        retDevice = resp.json()
+                        self.lastBatteryIsLowReceived = retDevice['batteryIsLow']
+            except Exception as ex:
+                logging.error("Start::updateBatteryIsLowBackground() Exception: " + str(ex))
 
     def sendMessageStatsBackground(self, messageStat, webServerUrl, apiKey):
         if messageStat != None:
@@ -468,6 +471,7 @@ class Main:
         while True:
 
             if self.timeToReconfigure():
+                self.updateBatteryIsLow()
                 settDict["WebServerUrl"] = SettingsClass.GetWebServerUrl()
                 settDict["WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
                 settDict["SendToMeosIP"] = SettingsClass.GetSendToMeosIP()
@@ -490,7 +494,7 @@ class Main:
                 self.handleOutput(settDict)
                 self.sendMessageStats()
                 self.handleCallbacks()
-                self.updateBatteryIsLow()
+
 
 main = None
 def main():
