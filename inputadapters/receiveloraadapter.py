@@ -60,7 +60,7 @@ class ReceiveLoraAdapter(object):
     def __init__(self, instanceNumber, portName, hardwareAbstraction):
         self.instanceNumber = instanceNumber
         self.portName = portName
-        self.loraRadio = LoraRadio.GetInstance(portName)
+        self.loraRadio = LoraRadio.GetInstance(portName, hardwareAbstraction)
         self.hardwareAbstraction = hardwareAbstraction
 
     def GetInstanceNumber(self):

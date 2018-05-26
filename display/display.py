@@ -24,7 +24,7 @@ class Display(object):
         self.OledWidth = 0
         self.OledHeight = 0
         self.OledImage = None
-        self.batteryPercent = None
+        self.batteryPercent = 0
         self.wifiStrength = None
         self.channel = None
         self.wirocMode = None
@@ -73,10 +73,12 @@ class Display(object):
 
     def DrawOledBattery(self):
         percent = Battery.GetBatteryPercent()
-        if percent == self.batteryPercent:
+        logging.debug("Display::DrawOledBattery percent: " + str(percent) + " prev battery: " + str(self.batteryPercent))
+        if self.batteryPercent is not None and (self.batteryPercent - percent) < 2:
             return None
         self.batteryPercent = percent
         self.imageChanged = True
+        logging.debug("Display::DrawOledBattery imagechanged")
 
         top = 1
         x = 96
@@ -94,24 +96,27 @@ class Display(object):
         if newIsCharging != self.isCharging:
             self.isCharging = newIsCharging
             self.imageChanged = True
+            logging.debug("Display::DrawIsCharging imagechanged")
             x = 121
             top = 3
             #lightning
             self.OledDraw.rectangle((x + 1, top, x + 6, top + 8), outline=0, fill=0)
-            self.OledDraw.line((x + 3, top, x + 3, top), fill=255)
-            self.OledDraw.line((x + 3, top + 1, x + 3, top + 1), fill=255)
-            self.OledDraw.line((x + 3, top + 2, x + 3, top + 2), fill=255)
-            self.OledDraw.line((x + 2, top + 3, x + 3, top + 3), fill=255)
-            self.OledDraw.line((x + 1, top + 4, x + 6, top + 4), fill=255)
-            self.OledDraw.line((x + 4, top + 5, x + 5, top + 5), fill=255)
-            self.OledDraw.line((x + 4, top + 6, x + 4, top + 6), fill=255)
-            self.OledDraw.line((x + 4, top + 7, x + 4, top + 7), fill=255)
-            self.OledDraw.line((x + 4, top + 8, x + 4, top + 8), fill=255)
+            if self.isCharging:
+                self.OledDraw.line((x + 3, top, x + 3, top), fill=255)
+                self.OledDraw.line((x + 3, top + 1, x + 3, top + 1), fill=255)
+                self.OledDraw.line((x + 3, top + 2, x + 3, top + 2), fill=255)
+                self.OledDraw.line((x + 2, top + 3, x + 3, top + 3), fill=255)
+                self.OledDraw.line((x + 1, top + 4, x + 6, top + 4), fill=255)
+                self.OledDraw.line((x + 4, top + 5, x + 5, top + 5), fill=255)
+                self.OledDraw.line((x + 4, top + 6, x + 4, top + 6), fill=255)
+                self.OledDraw.line((x + 4, top + 7, x + 4, top + 7), fill=255)
+                self.OledDraw.line((x + 4, top + 8, x + 4, top + 8), fill=255)
 
     def DrawOledDataRate(self, dataRate):
         if self.dataRate != dataRate:
             self.dataRate = dataRate
             self.imageChanged = True
+            logging.debug("Display::DrawOledDataRate imagechanged")
             self.OledDraw.rectangle((41, 0, 60, 12), outline=0, fill=0)
             if dataRate == 293:
                 self.OledDraw.text((41, 1), 'L', font=self.OledThinFont2, fill=255)
@@ -140,6 +145,7 @@ class Display(object):
             return None
         self.wifiStrength = percent
         self.imageChanged = True
+        logging.debug("Display::DrawOledWifi imagechanged")
 
         x = 72
         top = 2
@@ -163,16 +169,19 @@ class Display(object):
         if self.channel != channel:
             self.channel = channel
             self.imageChanged = True
+            logging.debug("Display::DrawOled channel imagechanged")
             self.OledDraw.rectangle((14, 0, 39, 31), outline=0, fill=0)
             self.OledDraw.text((14, 0), str(channel), font=self.OledBoldFont, fill=255)
         if self.wirocMode != wiRocMode:
             self.wirocMode = wiRocMode
             self.imageChanged = True
+            logging.debug("Display::DrawOled wirocMode imagechanged")
             self.OledDraw.rectangle((41, 16, 100, 28), outline=0, fill=0)
             self.OledDraw.text((41, 16), wiRocMode, font=self.OledThinFont2, fill=255)
         if self.ackRequested != ackRequested:
             self.ackRequested = ackRequested
             self.imageChanged = True
+            logging.debug("Display::DrawOled ackRequested imagechanged")
             self.OledDraw.rectangle((101, 16, 128, 28), outline=0, fill=0)
             if not ackRequested:
                 self.OledDraw.text((101, 16), 'X', font=self.OledThinFont2, fill=255)
@@ -183,6 +192,7 @@ class Display(object):
         self.DrawIsCharging()
 
         if self.imageChanged:
+            self.imageChanged = False
             self.OledDisp.image(self.OledImage)
             self.OledDisp.display()
 

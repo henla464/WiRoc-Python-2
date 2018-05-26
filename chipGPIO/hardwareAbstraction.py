@@ -5,7 +5,7 @@ import socket
 class HardwareAbstraction(object):
     def __init__(self, typeOfDisplay):
         logging.info("HardwareAbstraction::Init start")
-        self.TypeOfDisplay = typeOfDisplay
+        self.typeOfDisplay = typeOfDisplay
         self.runningOnChip = socket.gethostname() == 'chip'
 
     def SetupPins(self):
@@ -29,7 +29,7 @@ class HardwareAbstraction(object):
 
     def EnableLora(self):
         # disable radio module 139; #with new oled design: 135
-        if self.TypeOfDisplay == '7SEG':
+        if self.typeOfDisplay == '7SEG':
             digitalWriteNonXIO(139, 0)
         else:
             digitalWriteNonXIO(135, 0)
@@ -37,14 +37,14 @@ class HardwareAbstraction(object):
 
     def DisableLora(self):
         # disable radio module 139; #with new oled design: 135
-        if self.TypeOfDisplay == '7SEG':
+        if self.typeOfDisplay == '7SEG':
             digitalWriteNonXIO(139, 1)
         else:
             digitalWriteNonXIO(135, 1)
 
     def GetIsTransmittingReceiving(self):
         # aux 138, with new oled design: 134
-        if self.TypeOfDisplay == '7SEG':
-            return digitalReadNonXIO(138) == 1
+        if self.typeOfDisplay == '7SEG':
+            return digitalReadNonXIO(138) == 0
         else:
-            return digitalReadNonXIO(134) == 1
+            return digitalReadNonXIO(134) == 0

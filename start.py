@@ -132,7 +132,7 @@ class Main:
         SettingsClass.IsDirty("StatusMessageBaseInterval", True, True)  # force check dirty in db
         self.archiveFailedMessages()
         DatabaseHelper.archive_old_repeater_message()
-        if Setup.SetupAdapters():
+        if Setup.SetupAdapters(self.hardwareAbstraction):
             self.subscriberAdapters = Setup.SubscriberAdapters
             self.inputAdapters = Setup.InputAdapters
 
@@ -237,6 +237,7 @@ class Main:
                         messageTypeId = DatabaseHelper.get_message_type(messageTypeName, messageSubTypeName).id
                         subscriptions = DatabaseHelper.get_subscription_view_by_input_message_type_id(messageTypeId)
                         for subscription in subscriptions:
+                            logging.debug("subscription: " + subscription.SubscriberTypeName + " " + subscription.TransformName)
                             msgSubscription = MessageSubscriptionData()
                             now = datetime.now()
 
