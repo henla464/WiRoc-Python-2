@@ -44,8 +44,6 @@ class Display(object):
                 self.OledDisp.begin()
 
                 # Clear display.
-                #self.OledDisp.clear()
-                #self.OledDisp.display()
                 self.OledWidth = self.OledDisp.width
                 self.OledHeight = self.OledDisp.height
                 self.OledImage = Image.new('1', (self.OledWidth , self.OledHeight))
