@@ -70,6 +70,9 @@ class Display(object):
             else:
                 self.TypeOfDisplay = 'NO_DISPLAY'
 
+    def GetTypeOfDisplay(self):
+        return self.TypeOfDisplay
+
     def DrawOledBattery(self):
         percent = Battery.GetBatteryPercent()
         if percent == self.batteryPercent:
@@ -89,9 +92,9 @@ class Display(object):
         self.OledDraw.rectangle((x + 1, top + 1, x + width, top + 9), outline=255, fill=255)
 
     def DrawIsCharging(self):
-        newBattery = Battery.IsCharging()
-        if newBattery != self.isCharging:
-            self.isCharging = newBattery
+        newIsCharging = Battery.IsCharging()
+        if newIsCharging != self.isCharging:
+            self.isCharging = newIsCharging
             self.imageChanged = True
             x = 121
             top = 3

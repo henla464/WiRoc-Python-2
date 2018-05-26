@@ -19,17 +19,15 @@ from inputadapters.receiverepeatermessagesadapter import ReceiveRepeaterMessages
 #import requests.packages.urllib3.util.connection as urllib3_cn
 import urllib3.util.connection as urllib3_cn
 import logging
-from chipGPIO.chipGPIO import *
-import socket
 from settings.settings import SettingsClass
 
 class Setup:
     SubscriberAdapters = None
     InputAdapters = None
     @staticmethod
-    def SetupAdapters(): #createMessageTypeIfNotExist = False):
+    def SetupAdapters(hardwareAbstraction): #createMessageTypeIfNotExist = False):
         subscriberObjects = []
-        change1 = SendLoraAdapter.CreateInstances()
+        change1 = SendLoraAdapter.CreateInstances(hardwareAbstraction)
         change2 = SendSerialAdapter.CreateInstances()
         change3 = SendToBlenoAdapter.CreateInstances()
         change4 = SendToMeosAdapter.CreateInstances()
@@ -42,7 +40,7 @@ class Setup:
 
         inputObjects = []
         inChange1 = CreateStatusAdapter.CreateInstances()
-        inChange2 = ReceiveLoraAdapter.CreateInstances()
+        inChange2 = ReceiveLoraAdapter.CreateInstances(hardwareAbstraction)
         inChange3 = ReceiveSerialComputerAdapter.CreateInstances()
         inChange4 = ReceiveSIAdapter.CreateInstances()
         inChange5 = ReceiveTestPunchesAdapter.CreateInstances()
@@ -162,17 +160,4 @@ class Setup:
         messageTypeData = MessageTypeData(messageTypeName, messageSubTypeName)
         DatabaseHelper.save_message_type(messageTypeData)
 
-    @staticmethod
-    def SetupPins():
-        if socket.gethostname() == 'chip':
-            pinMode(0, OUTPUT)
-            pinMode(1, OUTPUT)
-            pinMode(2, OUTPUT)
-            pinMode(3, OUTPUT)
-            pinMode(4, OUTPUT)
-            pinMode(5, OUTPUT)
-            pinMode(6, OUTPUT)
-            pinMode(7, OUTPUT)
-            pinModeNonXIO(138, INPUT) #with new oled design: 134
-            pinModeNonXIO(139, OUTPUT) #with new oled design: 135
-            digitalWriteNonXIO(139, 1) #with new oled design: 135
+

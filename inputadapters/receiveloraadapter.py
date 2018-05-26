@@ -13,8 +13,9 @@ class ReceiveLoraAdapter(object):
     Instances = []
     TestRepeater = False
 
+
     @staticmethod
-    def CreateInstances():
+    def CreateInstances(hardwareAbstraction):
         # check the number of lora radios and return an instance for each
         serialPorts = []
         if socket.gethostname() == 'chip':
@@ -40,7 +41,7 @@ class ReceiveLoraAdapter(object):
                 newInstancesFoundOrRemoved = True
                 highestInstanceNumber = highestInstanceNumber + 1
                 newInstances.append(
-                    ReceiveLoraAdapter(highestInstanceNumber, serialDev))
+                    ReceiveLoraAdapter(highestInstanceNumber, serialDev, hardwareAbstraction))
 
         if len(newInstances) != len(ReceiveLoraAdapter.Instances):
             newInstancesFoundOrRemoved = True
@@ -56,10 +57,11 @@ class ReceiveLoraAdapter(object):
     def GetTypeName():
         return "LORA"
 
-    def __init__(self, instanceNumber, portName):
+    def __init__(self, instanceNumber, portName, hardwareAbstraction):
         self.instanceNumber = instanceNumber
         self.portName = portName
         self.loraRadio = LoraRadio.GetInstance(portName)
+        self.hardwareAbstraction = hardwareAbstraction
 
     def GetInstanceNumber(self):
         return self.instanceNumber

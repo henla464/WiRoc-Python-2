@@ -14,7 +14,7 @@ import logging, logging.handlers
 from datetime import datetime, timedelta
 from webroutes.meosconfiguration import *
 import cProfile
-from chipGPIO.chipGPIO import *
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 import socket
 from itertools import repeat
 from battery import Battery
@@ -31,7 +31,6 @@ class Main:
             SendLoraAdapter.TestRepeater = True
         self.shouldReconfigure = False
         self.forceReconfigure = False
-        #self.lastTimeReconfigured = datetime.now()
         self.nextTimeToReconfigure = time.monotonic() + 10
         self.messagesToSendExists = True
         self.previousChannel = None
@@ -44,7 +43,8 @@ class Main:
         self.threadQueue = queue.Queue()
         self.display = Display()
         Battery.Setup()
-        Setup.SetupPins()
+        self.hardwareAbstraction = HardwareAbstraction(self.display.GetTypeOfDisplay())
+        self.hardwareAbstraction.SetupPins()
 
         #DatabaseHelper.drop_all_tables()
         DatabaseHelper.ensure_tables_created()
@@ -53,7 +53,7 @@ class Main:
         SettingsClass.IncrementPowerCycle()
         Setup.AddMessageTypes()
 
-        if Setup.SetupAdapters():
+        if Setup.SetupAdapters(self.hardwareAbstraction):
             self.subscriberAdapters = Setup.SubscriberAdapters
             self.inputAdapters = Setup.InputAdapters
 
@@ -103,39 +103,6 @@ class Main:
 
         self.runningOnChip = socket.gethostname() == 'chip'
 
-    # def displayChannel(self, channel, ackRequested):
-    #     if self.runningOnChip:
-    #         if channel != self.previousChannel or ackRequested != self.previousAckRequested:
-    #             self.previousChannel = channel
-    #             self.previousAckRequested = ackRequested
-    #             lightSegA = channel in [2,3,5,6,7,8,9]
-    #             lightSegB = channel in [1, 2, 3, 4, 7, 8, 9]
-    #             lightSegC = channel in [1, 3, 4, 5, 6, 7, 8, 9]
-    #             lightSegD = channel in [2, 3, 5, 6, 8]
-    #             lightSegE = channel in [2, 6, 8]
-    #             lightSegF = channel in [4, 5, 6, 8, 9]
-    #             lightSegG = channel in [2, 3, 4, 5, 6, 8, 9]
-    #
-    #             if True:
-    #                 lightSegA = not lightSegA
-    #                 lightSegB = not lightSegB
-    #                 lightSegC = not lightSegC
-    #                 lightSegD = not lightSegD
-    #                 lightSegE = not lightSegE
-    #                 lightSegF = not lightSegF
-    #                 lightSegG = not lightSegG
-    #                 ackRequested = not ackRequested
-    #
-    #             digitalWrite(0, int(lightSegA))
-    #             digitalWrite(1, int(lightSegB))
-    #             digitalWrite(2, int(lightSegC))
-    #             digitalWrite(3, int(lightSegD))
-    #             digitalWrite(4, int(lightSegE))
-    #             digitalWrite(5, int(lightSegF))
-    #             digitalWrite(6, int(lightSegG))
-    #
-    #             digitalWrite(7, int(ackRequested))
-
     def timeToReconfigure(self):
         currentTime = time.monotonic()
         if currentTime > self.nextTimeToReconfigure or self.shouldReconfigure:
@@ -152,19 +119,6 @@ class Main:
             #if self.shouldArchiveMessage(msgSub):
             logging.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
             DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
-
-    # def updateWifiPowerSaving(self, sendToMeos):
-    #     if self.runningOnChip:
-    #         if sendToMeos and (self.wifiPowerSaving or self.wifiPowerSaving is None):
-    #             # disable power saving
-    #             logging.info("Start::updateWifiPowerSaving() Disable WiFi power saving")
-    #             os.system("sudo iw wlan0 set power_save off")
-    #             self.wifiPowerSaving = False
-    #         elif not sendToMeos and (not self.wifiPowerSaving or self.wifiPowerSaving is None):
-    #             # enable power saving
-    #             logging.info("Start::updateWifiPowerSaving() Enable WiFi power saving")
-    #             os.system("sudo iw wlan0 set power_save on")
-    #             self.wifiPowerSaving = True
 
     def reconfigureBackground(self,channel,ackRequested,sendToMeos, webServerUrl, wirocMode, dataRate):
         #self.displayChannel(channel,ackRequested)
@@ -536,10 +490,6 @@ class Main:
                 self.sendMessageStats()
                 self.handleCallbacks()
                 self.updateBatteryIsLow()
-
-
-
-
 
 main = None
 def main():

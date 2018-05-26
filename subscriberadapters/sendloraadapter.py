@@ -17,7 +17,7 @@ class SendLoraAdapter(object):
     TestRepeater = None
 
     @staticmethod
-    def CreateInstances():
+    def CreateInstances(hardwareAbstraction):
         # check the number of lora radios and return an instance for each
         serialPorts = []
 
@@ -36,7 +36,7 @@ class SendLoraAdapter(object):
                 elif SendLoraAdapter.WiRocMode is None or SendLoraAdapter.WiRocMode != SettingsClass.GetWiRocMode():
                     return True
             else:
-                SendLoraAdapter.Instances.append(SendLoraAdapter(1, serialPorts[0]))
+                SendLoraAdapter.Instances.append(SendLoraAdapter(1, serialPorts[0], hardwareAbstraction))
                 return True
         else:
             if len(SendLoraAdapter.Instances) > 0:
@@ -79,10 +79,10 @@ class SendLoraAdapter(object):
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterStatusToLoraAckTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterStatusToLoraTransform")
 
-    def __init__(self, instanceNumber, portName):
+    def __init__(self, instanceNumber, portName, hardwareAbstraction):
         self.instanceNumber = instanceNumber
         self.portName = portName
-        self.loraRadio = LoraRadio.GetInstance(portName)
+        self.loraRadio = LoraRadio.GetInstance(portName, hardwareAbstraction)
         self.transforms = {}
         self.isDBInitialized = False
         self.lastMessageRepeaterBit = False
