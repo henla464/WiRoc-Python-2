@@ -44,12 +44,12 @@ pip3 install pyudev
 pip3 install daemonize
 pip3 install smbus2
 pip3 install Adafruit_SSD1306
-#apt-get install libtiff5-dev libjpeg62-turbo-dev zlib1g-dev
+apt-get install libtiff5-dev libjpeg62-turbo-dev zlib1g-dev
 #apt-get install libfreetype6-dev liblcms2-dev libwebp-dev libharfbuzz-dev 
 #apt-get install libfribidi-dev 
 #apt-get install tcl8.6-dev tk8.6-dev
 #  python-tk
-#apt-get install python3-dev python3-setuptools
+apt-get install python3-dev python3-setuptools
 pip3 install pillow
 
 echo "newer nodejs"
