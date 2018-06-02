@@ -18,7 +18,7 @@ class HardwareAbstraction(object):
             pinMode(5, OUTPUT)
             pinMode(6, OUTPUT)
             pinMode(7, OUTPUT)
-            if self.typeOfDisplay == '7SIG':
+            if self.typeOfDisplay == '7SEG':
                 pinModeNonXIO(138, INPUT)
                 pinModeNonXIO(139, OUTPUT)
                 digitalWriteNonXIO(139, 1)
