@@ -30,8 +30,10 @@ class SendStatusAdapter(object):
     def EnableDisableSubscription():
         if len(SendStatusAdapter.Instances) > 0:
             isInitialized = SendStatusAdapter.Instances[0].GetIsInitialized()
-            webServerUrl = SettingsClass.GetWebServerUrl()
-            connectionOK = SendStatusAdapter.TestConnection(webServerUrl)
+
+            webServerIPUrl = SettingsClass.GetWebServerIPUrl()
+            webServerHost = SettingsClass.GetWebServerHost()
+            connectionOK = SendStatusAdapter.TestConnection(webServerIPUrl,webServerHost)
             subscriptionShouldBeEnabled = isInitialized and connectionOK
             if SendStatusAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
                 logging.info("SendStatusAdapter::EnableDisableSubscription() subscription set enabled: " + str(subscriptionShouldBeEnabled))
@@ -95,18 +97,18 @@ class SendStatusAdapter(object):
         return True
 
     @staticmethod
-    def TestConnection(webServerUrl):
+    def TestConnection(webServerIPUrl, webServerHost):
         try:
-            host = webServerUrl.replace('http://','').replace('https://','')
-            addrs = socket.getaddrinfo(host, 80)
-            ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
-            URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/ping"
-            r = requests.get(url=URL,timeout=1, headers={'host': host})
+            if webServerIPUrl == None:
+                logging.error("SendStatusAdapter::TestConnection() No webserverurl available (yet)")
+                return False
+            URL = webServerIPUrl + "/api/v1/ping"
+            r = requests.get(url=URL,timeout=1, headers={'host': webServerHost})
             data = r.json()
             logging.info(data)
             return data['code'] == 0
         except Exception as ex:
-            logging.error("SendStatusAdapter::TestConnection() " + webServerUrl + " Exception: " + str(ex))
+            logging.error("SendStatusAdapter::TestConnection() " + webServerIPUrl + " Host: " + webServerHost + " Exception: " + str(ex))
             return False
 
     def GetDelayAfterMessageSent(self):
@@ -115,19 +117,22 @@ class SendStatusAdapter(object):
     # messageData is a bytearray
     def SendData(self, messageData, successCB, failureCB, callbackQueue, settingsDictionary):
         try:
+            if settingsDictionary["WebServerIPUrl"]== None:
+                logging.error("SendStatusAdapter::SendData No webserveripurl")
+                callbackQueue.put((failureCB,))
+                return False
+
             btAddress = SettingsClass.GetBTAddress()
-            host = settingsDictionary["WebServerUrl"].replace('http://', '').replace('https://', '')
-            addrs = socket.getaddrinfo(host, 80)
-            ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
+            host = SettingsClass.GetWebServerHost()
             headers = {'Authorization': settingsDictionary["ApiKey"], 'host': host}
 
             if SettingsClass.GetDeviceId() == None:
-                URL = settingsDictionary["WebServerUrl"].replace(host, ipv4_addrs[0]) + "/api/v1/Devices/LookupDeviceByBTAddress/" + btAddress
+                URL = settingsDictionary["WebServerIPUrl"] + "/api/v1/Devices/LookupDeviceByBTAddress/" + btAddress
                 resp = requests.get(url=URL,timeout=1, headers=headers)
                 if resp.status_code == 404:
                     wiRocDeviceName = settingsDictionary["WiRocDeviceName"]
                     device = {"BTAddress": btAddress, "name": wiRocDeviceName}  # "description": None
-                    URL = settingsDictionary["WebServerUrl"].replace(host, ipv4_addrs[0]) + "/api/v1/Devices"
+                    URL = settingsDictionary["WebServerIPUrl"] + "/api/v1/Devices"
                     resp = requests.post(url=URL, json=device, timeout=1, headers=headers)
                     if resp.status_code == 200:
                         retDevice = resp.json()
@@ -158,7 +163,7 @@ class SendStatusAdapter(object):
                     distanceToHead -= (pathNo - previousPathNo)
                 previousPathNo = pathNo
                 subDevice = {"headBTAddress": btAddress, "distanceToHead": distanceToHead}
-                URL = settingsDictionary["WebServerUrl"].replace(host, ipv4_addrs[0]) + "/api/v1/SubDevices"
+                URL = settingsDictionary["WebServerIPUrl"] + "/api/v1/SubDevices"
                 resp = requests.put(url=URL, json=subDevice,timeout=1, headers=headers)
                 if resp.status_code == 200 or resp.status_code == 303:
                     subDevice2 = resp.json()
@@ -171,7 +176,7 @@ class SendStatusAdapter(object):
                     else:
                         subDeviceStatus = {"subDeviceId": subDevice2['id'], "batteryLevel": batteryPercent,
                                            "batteryLevelPrecision": 16, "siStationNumber": siStationNumber}
-                    URL = settingsDictionary["WebServerUrl"].replace(host, ipv4_addrs[0]) + "/api/v1/SubDeviceStatuses"
+                    URL = settingsDictionary["WebServerIPUrl"] + "/api/v1/SubDeviceStatuses"
                     resp = requests.post(url=URL, json=subDeviceStatus,timeout=1, allow_redirects=False, headers=headers)
                     success = (resp.status_code == 200 or resp.status_code == 303)
             if success:

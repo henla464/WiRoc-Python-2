@@ -35,6 +35,7 @@ class SettingsClass(object):
     webServerUrl = None
     btAddress = None
     APIKey = None
+    webServerIP = None
 
 
     connectedComputerIsWiRocDevice = False
@@ -574,3 +575,39 @@ class SettingsClass(object):
     @staticmethod
     def GetDeviceId():
         return SettingsClass.deviceId
+
+    @staticmethod
+    def GetWebServerIP():
+        return SettingsClass.webServerIP
+
+    @staticmethod
+    def SetWebServerIP(ip):
+        SettingsClass.webServerIP = ip
+
+    @staticmethod
+    def GetWebServerHost():
+        wsUrl = SettingsClass.GetWebServerUrl()
+        return wsUrl.replace('http://', '').replace('https://', '')
+
+    @staticmethod
+    def GetWebServerHostBackground(wsUrl):
+        return wsUrl.replace('http://', '').replace('https://', '')
+
+    @staticmethod
+    def GetWebServerIPUrl():
+        ip = SettingsClass.GetWebServerIP()
+        if ip == None:
+            return None
+        webServerUrl = SettingsClass.GetWebServerUrl()
+        host = webServerUrl.replace('http://', '').replace('https://', '')
+        IPUrl = webServerUrl.replace(host, ip)
+        return IPUrl
+
+    @staticmethod
+    def GetWebServerIPUrlBackground(webServerUrl):
+        ip = SettingsClass.GetWebServerIP()
+        if ip == None:
+            return None
+        host = webServerUrl.replace('http://', '').replace('https://', '')
+        IPUrl = webServerUrl.replace(host, ip)
+        return IPUrl

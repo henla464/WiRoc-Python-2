@@ -679,3 +679,7 @@ class SIMessage(object):
         tenthOfSecs = self.GetTimeAsTenthOfSeconds()
         numberOfSecondsInTenthOfSecs = (tenthOfSecs - self.GetHour() * 36000 - self.GetMinute()*600)
         return numberOfSecondsInTenthOfSecs // 10
+
+    def GetBackupMemoryAddressAsInt(self):
+        addr = self.MessageData[13] << 16 | self.MessageData[14] << 8 | self.MessageData[15]
+        return addr

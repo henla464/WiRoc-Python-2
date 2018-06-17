@@ -74,25 +74,36 @@ class Main:
             DatabaseHelper.archive_message_box_without_subscriptions()
 
         #Add device to web server
+        webServerHost = SettingsClass.GetWebServerHost()
+        webServerUrl = SettingsClass.GetWebServerUrl()
+        btAddress = SettingsClass.GetBTAddress()
+        apiKey = SettingsClass.GetAPIKey()
+        wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
+        t = threading.Thread(target=self.addDeviceBackground, args=(webServerHost, webServerUrl, btAddress, apiKey, wiRocDeviceName))
+        t.daemon = True
+        t.start()
+
+        self.runningOnChip = socket.gethostname() == 'chip'
+
+    def updateWebserverIPBackground(self, webServerHost):
+        addrs = socket.getaddrinfo(webServerHost, 80)
+        ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
+        SettingsClass.SetWebServerIP(ipv4_addrs[0])
+
+    def addDeviceBackground(self, webServerHost, webServerUrl, btAddress, apiKey, wiRocDeviceName):
         try:
-            btAddress = SettingsClass.GetBTAddress()
-            webServerUrl = SettingsClass.GetWebServerUrl()
-            apiKey = SettingsClass.GetAPIKey()
-            wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
-            host = webServerUrl.replace('http://', '').replace('https://', '')
-            addrs = socket.getaddrinfo(host, 80)
-            ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
-            headers = {'Authorization': apiKey, 'host': host}
+            self.updateWebserverIPBackground(webServerHost)
+            headers = {'Authorization': apiKey, 'host': webServerHost}
 
             if SettingsClass.GetDeviceId() == None:
-                URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/Devices/LookupDeviceByBTAddress/" + btAddress
+                URL = SettingsClass.GetWebServerIPUrlBackground(webServerUrl) + "/api/v1/Devices/LookupDeviceByBTAddress/" + btAddress
                 resp = requests.get(url=URL, timeout=1, headers=headers)
                 if resp.status_code == 200:
                     retDevice = resp.json()
                     SettingsClass.SetDeviceId(retDevice['id'])
                 if resp.status_code == 404:
                     device = {"BTAddress": btAddress, "name": wiRocDeviceName}  # "description": None
-                    URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/Devices"
+                    URL = SettingsClass.GetWebServerIPUrlBackground(webServerUrl) + "/api/v1/Devices"
                     resp = requests.post(url=URL, json=device, timeout=1, headers=headers)
                     if resp.status_code == 200:
                         retDevice = resp.json()
@@ -100,8 +111,6 @@ class Main:
         except Exception as ex:
             logging.warning("Start::Init error creating device on webserver")
             logging.warning(ex)
-
-        self.runningOnChip = socket.gethostname() == 'chip'
 
     def timeToReconfigure(self):
         currentTime = time.monotonic()
@@ -120,10 +129,11 @@ class Main:
             logging.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
             DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
 
-    def reconfigureBackground(self,channel,ackRequested,sendToMeos, webServerUrl, wirocMode, dataRate):
+    def reconfigureBackground(self,channel,ackRequested,sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost):
         #self.displayChannel(channel,ackRequested)
         self.display.Draw(channel, ackRequested, wirocMode, dataRate)
-        self.webServerUp = SendStatusAdapter.TestConnection(webServerUrl)
+        self.updateWebserverIPBackground(webServerHost)
+        self.webServerUp = SendStatusAdapter.TestConnection(webServerIPUrl, webServerHost)
         Battery.UpdateWifiPowerSaving(sendToMeos)
         Battery.Tick()
         SettingsClass.Tick()
@@ -142,7 +152,8 @@ class Main:
         sendToMeos = None
         wirocMode = None
         dataRate = None
-        webServerUrl = SettingsClass.GetWebServerUrl()
+        webServerIPUrl = SettingsClass.GetWebServerIPUrl()
+        webServerHost = SettingsClass.GetWebServerHost()
         if self.runningOnChip:
             channel = SettingsClass.GetChannel()
             ackRequested = SettingsClass.GetAcknowledgementRequested()
@@ -150,7 +161,8 @@ class Main:
             wirocMode = SettingsClass.GetWiRocMode()
             dataRate = SettingsClass.GetDataRate()
 
-        t = threading.Thread(target=self.reconfigureBackground, args=(channel,ackRequested,sendToMeos, webServerUrl, wirocMode, dataRate))
+        t = threading.Thread(target=self.reconfigureBackground, args=(channel,ackRequested,sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost))
+        t.daemon = True
         t.start()
 
 
@@ -394,6 +406,7 @@ class Main:
                 batteryIsLowReceived = SettingsClass.GetBatteryIsLowReceived()
                 deviceId = SettingsClass.GetDeviceId()
                 t = threading.Thread(target=self.updateBatteryIsLowBackground, args=(batteryIsLowReceived, webServerUrl, apiKey, deviceId))
+                t.daemon = True
                 t.start()
             except Exception as ex:
                 logging.error("Start::updateBatteryIsLow() Exception: " + str(ex))
@@ -401,13 +414,12 @@ class Main:
     def updateBatteryIsLowBackground(self, batteryIsLowReceived, webServerUrl, apiKey, deviceId):
         if deviceId != None:
             try:
-                host = webServerUrl.replace('http://', '').replace('https://', '')
-                addrs = socket.getaddrinfo(host, 80)
-                ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
+                host = SettingsClass.GetWebServerHost()
+                ip = SettingsClass.GetWebServerIP()
                 headers = {'Authorization': apiKey, 'host': host}
 
                 if batteryIsLowReceived and not self.lastBatteryIsLowReceived:
-                    URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/Devices/" + str(deviceId) + "/SetBatteryIsLow"
+                    URL = webServerUrl.replace(host, ip) + "/api/v1/Devices/" + str(deviceId) + "/SetBatteryIsLow"
                     resp = requests.get(url=URL, timeout=1, headers=headers)
                     if resp.status_code == 200:
                         retDevice = resp.json()
@@ -415,16 +427,13 @@ class Main:
             except Exception as ex:
                 logging.error("Start::updateBatteryIsLowBackground() Exception: " + str(ex))
 
-    def sendMessageStatsBackground(self, messageStat, webServerUrl, apiKey):
+    def sendMessageStatsBackground(self, messageStat, webServerIPUrl, webServerHost, apiKey):
         if messageStat != None:
             btAddress = SettingsClass.GetBTAddress()
-            host = webServerUrl.replace('http://', '').replace('https://', '')
-            addrs = socket.getaddrinfo(host, 80)
-            ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
-            headers = {'Authorization': apiKey, 'host': host}
+            headers = {'Authorization': apiKey, 'host': webServerHost}
 
             if self.webServerUp:
-                URL = webServerUrl.replace(host, ipv4_addrs[0]) + "/api/v1/MessageStats"
+                URL = webServerIPUrl + "/api/v1/MessageStats"
                 messageStatToSend = {"adapterInstance": messageStat.AdapterInstanceName, "BTAddress": btAddress,
                                      "messageType": messageStat.MessageSubTypeName, "status": messageStat.Status,
                                      "noOfMessages": messageStat.NoOfMessages}
@@ -443,9 +452,11 @@ class Main:
         if self.webServerUp:
             try:
                 messageStat = DatabaseHelper.get_message_stat_to_upload()
-                webServerUrl = SettingsClass.GetWebServerUrl()
+                webServerIPUrl = SettingsClass.GetWebServerIPUrl()
+                webServerHost = SettingsClass.GetWebServerHost()
                 apiKey = SettingsClass.GetAPIKey(False)
-                t = threading.Thread(target=self.sendMessageStatsBackground, args=(messageStat, webServerUrl, apiKey))
+                t = threading.Thread(target=self.sendMessageStatsBackground, args=(messageStat, webServerIPUrl, webServerHost, apiKey))
+                t.daemon = True
                 t.start()
             except Exception as ex:
                 logging.error("Start::sendMessageStats() Exception: " + str(ex))
@@ -459,10 +470,12 @@ class Main:
             cb(*cbargs)
         except queue.Empty:
             pass
+        except Exception as ex:
+            logging.error("Start::handleCallbacks() Exception: " + str(ex))
 
     def Run(self):
         settDict = {}
-        settDict["WebServerUrl"] = SettingsClass.GetWebServerUrl()
+        settDict["WebServerIPUrl"] = SettingsClass.GetWebServerIPUrl()
         settDict["WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
         settDict["SendToMeosIP"] = SettingsClass.GetSendToMeosIP()
         settDict["SendToMeosIPPort"] = SettingsClass.GetSendToMeosIPPort()
@@ -472,7 +485,7 @@ class Main:
 
             if self.timeToReconfigure():
                 self.updateBatteryIsLow()
-                settDict["WebServerUrl"] = SettingsClass.GetWebServerUrl()
+                settDict["WebServerIPUrl"] = SettingsClass.GetWebServerIPUrl()
                 settDict["WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
                 settDict["SendToMeosIP"] = SettingsClass.GetSendToMeosIP()
                 settDict["SendToMeosIPPort"] = SettingsClass.GetSendToMeosIPPort()

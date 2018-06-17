@@ -84,7 +84,7 @@ chmod ugo+x installWiRocPython.sh
 echo "WiRoc-BLE"
 #read line
 #install WiRoc-BLE
-WiRocBLEVersion="0.26"
+WiRocBLEVersion="0.27"
 wget -O WiRoc-BLE-Device.tar.gz https://github.com/henla464/WiRoc-BLE-Device/archive/v$WiRocBLEVersion.tar.gz
 rm -rf WiRoc-BLE-Device
 tar xvfz WiRoc-BLE-Device.tar.gz WiRoc-BLE-Device-$WiRocBLEVersion
