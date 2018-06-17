@@ -401,25 +401,24 @@ class Main:
     def updateBatteryIsLow(self):
         if self.webServerUp:
             try:
-                webServerUrl = SettingsClass.GetWebServerUrl()
+                webServerIPUrl = SettingsClass.GetWebServerIPUrl()
+                webServerHost = SettingsClass.GetWebServerHost()
                 apiKey = SettingsClass.GetAPIKey(False)
                 batteryIsLowReceived = SettingsClass.GetBatteryIsLowReceived()
                 deviceId = SettingsClass.GetDeviceId()
-                t = threading.Thread(target=self.updateBatteryIsLowBackground, args=(batteryIsLowReceived, webServerUrl, apiKey, deviceId))
+                t = threading.Thread(target=self.updateBatteryIsLowBackground, args=(batteryIsLowReceived, webServerIPUrl, webServerHost, apiKey, deviceId))
                 t.daemon = True
                 t.start()
             except Exception as ex:
                 logging.error("Start::updateBatteryIsLow() Exception: " + str(ex))
 
-    def updateBatteryIsLowBackground(self, batteryIsLowReceived, webServerUrl, apiKey, deviceId):
+    def updateBatteryIsLowBackground(self, batteryIsLowReceived, webServerIPUrl, webServerHost, apiKey, deviceId):
         if deviceId != None:
             try:
-                host = SettingsClass.GetWebServerHost()
-                ip = SettingsClass.GetWebServerIP()
-                headers = {'Authorization': apiKey, 'host': host}
+                headers = {'Authorization': apiKey, 'host': webServerHost}
 
                 if batteryIsLowReceived and not self.lastBatteryIsLowReceived:
-                    URL = webServerUrl.replace(host, ip) + "/api/v1/Devices/" + str(deviceId) + "/SetBatteryIsLow"
+                    URL = webServerIPUrl + "/api/v1/Devices/" + str(deviceId) + "/SetBatteryIsLow"
                     resp = requests.get(url=URL, timeout=1, headers=headers)
                     if resp.status_code == 200:
                         retDevice = resp.json()
