@@ -212,7 +212,7 @@ class ReceiveSIAdapter(object):
         siStationCode = (timeResp[3] << 8) + timeResp[4]
         return (year, month, day, hour, minute, second, siStationCode)
 
-    def getSystemValue(self):
+    def getStationSettingSystemValue(self):
         getSystemValueCmd = bytes([0xFF, 0x02, 0x02, 0x83, 0x02, 0x74, 0x01, 0x04, 0x14, 0x03])
         sysValResp = self.sendCommand(getSystemValueCmd)
         extendedProtocol = sysValResp[6] & 0x01
@@ -235,7 +235,7 @@ class ReceiveSIAdapter(object):
 
     def getBackupPunchAsSIMessageArray(self, address):
         if self.siStationNumber == None:
-            self.siStationNumber = self.getSystemValue()[3]
+            self.siStationNumber = self.getStationSettingSystemValue()[3]
         addressArr = [((address >> 16) & 0xFF), ((address >> 8) & 0xFF), (address & 0xFF)]
         getBackupPunchCmdArr = [0xFF, 0x02, 0x02, 0x81, 0x04, addressArr[0], addressArr[1], addressArr[2], 0x08, 0x00, 0x00, 0x03]
         crc = Utils.CalculateCRC(bytearray(bytes(getBackupPunchCmdArr[3:-3])))
