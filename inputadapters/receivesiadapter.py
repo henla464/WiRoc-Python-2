@@ -249,20 +249,20 @@ class ReceiveSIAdapter(object):
                 "ReceiveSIAdapter::getBackupPunchAsSIMessageArray getBackupPunchCmd returned invalid checksum")
             return None
 
-        twentyFourHour = backupPunchRecord[13] & 0x01
+        twentyFourHour = backupPunchRecord[12] & 0x01
 
         siMsg = SIMessage()
-        siMsg.AddHeader(0xD3)
+        siMsg.AddHeader(SIMessage.SIPunch)
         siMsg.AddByte((self.siStationNumber >> 8) & 0xFF)
         siMsg.AddByte(self.siStationNumber & 0xFF)
         siMsg.AddByte(0)
+        siMsg.AddByte(backupPunchRecord[8])
         siMsg.AddByte(backupPunchRecord[9])
         siMsg.AddByte(backupPunchRecord[10])
-        siMsg.AddByte(backupPunchRecord[11])
         siMsg.AddByte(twentyFourHour)
+        siMsg.AddByte(backupPunchRecord[13])
         siMsg.AddByte(backupPunchRecord[14])
         siMsg.AddByte(backupPunchRecord[15])
-        siMsg.AddByte(backupPunchRecord[16])
         siMsg.AddFooter()
         siMsgByteArr = siMsg.GetByteArray()
         dataInHex = ''.join(format(x, '02x') for x in siMsgByteArr)

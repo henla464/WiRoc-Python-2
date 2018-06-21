@@ -86,9 +86,13 @@ class Main:
         self.runningOnChip = socket.gethostname() == 'chip'
 
     def updateWebserverIPBackground(self, webServerHost):
-        addrs = socket.getaddrinfo(webServerHost, 80)
-        ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
-        SettingsClass.SetWebServerIP(ipv4_addrs[0])
+        try:
+            logging.debug("Start::updateWebserverIPBackground " + str(datetime.now()))
+            addrs = socket.getaddrinfo(webServerHost, 80)
+            ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
+            SettingsClass.SetWebServerIP(ipv4_addrs[0])
+        except Exception as ex:
+            logging.debug("Start::updateWebserverIPBackground Exception " + str(ex) + " " + str(datetime.now()))
 
     def addDeviceBackground(self, webServerHost, webServerUrl, btAddress, apiKey, wiRocDeviceName):
         try:
@@ -110,7 +114,7 @@ class Main:
                         SettingsClass.SetDeviceId(retDevice['id'])
         except Exception as ex:
             logging.warning("Start::Init error creating device on webserver")
-            logging.warning(ex)
+            logging.warning("Start::Init " + str(ex))
 
     def timeToReconfigure(self):
         currentTime = time.monotonic()
@@ -475,6 +479,7 @@ class Main:
     def Run(self):
         settDict = {}
         settDict["WebServerIPUrl"] = SettingsClass.GetWebServerIPUrl()
+        settDict["WebServerHost"] = SettingsClass.GetWebServerHost()
         settDict["WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
         settDict["SendToMeosIP"] = SettingsClass.GetSendToMeosIP()
         settDict["SendToMeosIPPort"] = SettingsClass.GetSendToMeosIPPort()
@@ -485,6 +490,7 @@ class Main:
             if self.timeToReconfigure():
                 self.updateBatteryIsLow()
                 settDict["WebServerIPUrl"] = SettingsClass.GetWebServerIPUrl()
+                settDict["WebServerHost"] = SettingsClass.GetWebServerHost()
                 settDict["WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
                 settDict["SendToMeosIP"] = SettingsClass.GetSendToMeosIP()
                 settDict["SendToMeosIPPort"] = SettingsClass.GetSendToMeosIPPort()

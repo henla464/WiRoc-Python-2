@@ -123,7 +123,7 @@ class SendStatusAdapter(object):
                 return False
 
             btAddress = SettingsClass.GetBTAddress()
-            host = SettingsClass.GetWebServerHost()
+            host = settingsDictionary["WebServerHost"]
             headers = {'Authorization': settingsDictionary["ApiKey"], 'host': host}
 
             if SettingsClass.GetDeviceId() == None:
