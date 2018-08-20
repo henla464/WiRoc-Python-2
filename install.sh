@@ -1,4 +1,10 @@
 #!/bin/bash
+#systemctl disable apt-daily.service # disable run when system boot
+#systemctl disable apt-daily.timer   # disable timer run
+#sudo pip3 install wheel
+#apt-get install python3-setuptools
+#apt-get install python3-dev
+#pip3 install requests
 
 echo "update"
 #read line
@@ -20,6 +26,8 @@ echo "python/pip"
 #Install python/pip
 apt-get -y install python3
 apt-get -y install python3-pip
+apt-get -y install python3-setuptools
+pip3 install -U setuptools
 
 echo "flask"
 #read line
@@ -40,22 +48,26 @@ echo "pyudev"
 #read line
 #Install pyudev
 pip3 install pyudev
-
+#pip3 install requests
 pip3 install daemonize
 pip3 install smbus2
+apt-get install python3-dev
+
+pip3 install Adafruit_BBIO #not actually used but it is loaded by gpio because it thinks chip is bb
 pip3 install Adafruit_SSD1306
-apt-get install libtiff5-dev libjpeg62-turbo-dev zlib1g-dev
-#apt-get install libfreetype6-dev liblcms2-dev libwebp-dev libharfbuzz-dev 
+apt-get -y install libtiff5-dev libjpeg62-turbo-dev zlib1g-dev
+apt-get -y install libfreetype6-dev
+# liblcms2-dev libwebp-dev libharfbuzz-dev 
 #apt-get install libfribidi-dev 
 #apt-get install tcl8.6-dev tk8.6-dev
-#  python-tk
-apt-get install python3-dev python3-setuptools
 pip3 install pillow
+# nanopi: apt-get install python3-pillow
 
 echo "newer nodejs"
 #read line
 #Install newer nodejs
 wget https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-armv7l.tar.xz
+#wget https://nodejs.org/dist/v8.11.3/node-v8.11.3-linux-armv7l.tar.xz
 tar -C /usr/local --strip-components 1 -xJf node-v6.9.1-linux-armv7l.tar.xz
 ln -s /usr/local/bin/node /usr/bin/nodejs
 ln -s /usr/local/bin/npm /usr/bin/npm
@@ -73,7 +85,7 @@ apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev
 echo "WiRoc-Python-2"
 #read line
 #install Python-2
-WiRocPython2Version="0.97"
+WiRocPython2Version="0.103"
 wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v$WiRocPython2Version.tar.gz
 rm -rf WiRoc-Python-2
 tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-$WiRocPython2Version
@@ -95,7 +107,7 @@ chmod ugo+x installWiRocBLE.sh
 #npm install -g node-gyp
 echo "install bluetooth-hci-socket"
 cd /home/chip/
-npm install bluetooth-hci-socket
+npm --unsafe-perm install bluetooth-hci-socket
 
 echo "install bleno"
 #read line

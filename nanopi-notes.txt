@@ -1,0 +1,107 @@
+
+
+==========
+
+nanopi
+
+
+Overlays!
+----------
+
+#Posted March 30, 2017
+#   On 2/2/2017 at 4:48 PM, martinayotte said:
+#If you use newest build images, we now provide some overlays in the /boot/dtb/overlay folder, and your can activate them in /boot/#armbianEnv.txt with :
+
+#overlays=uart1-enable uart2-enable i2c0 spi0-spidev
+#just FYI if anyone will be looking in the newest kernel/nightly it should be:
+
+#overlays=sun8i-h3-uart1 sun8i-h3-uart2 sun8i-h3-uart3 sun8i-h3-usbhost0 sun8i-h3-usbhost2 sun8i-h3-usbhost3
+
+#https://docs.armbian.com/Hardware_Allwinner_overlays/
+
+#i2c0 (i2c1 / i2c2)
+#uart1 (uart2 / uart3) uart1 = /dev/ttyS1
+#usbhost2 (usbhost0 / usbhost1 / usbhost3) (USB0 = OTG, USB2 and USB3 on pinheader, named the signals wrong on schematic)
+#pwm, PA5, but disabled ttyS0/UART0. But PA6 is PWM1, no overlay for it?
+
+#usbhost1 and usbhost2 already in /boot/armbianEnv.txt but add u2c0 and uart1
+
+=> Add u2c0 and uart1 to /boot/armbianEnv.txt
+
+--
+Add this to /boot/boot.cmd and recompile it
+setenv video-mode sunxi:1920x1080,monitor=none,hpd=0,edid=1
+saveenv
+
+---
+Enable battery monitoring, percentage calculation
+sudo i2cset -y -f 0 0x34 0x82 0xC3﻿﻿
+(Battery current ADC Enable)
+
+---
+Change display.py to use i2c-0, SMBus(0)
+Change sendloraadapter / receiveloraadapter to use ttyS1 when hostname nanopiair
+change hardwareAbstraction to enable lora (pin 2)
+----
+bluetooth...
+https://forum.armbian.com/topic/3672-hcitool-dev-finds-no-bluetooth-divice-since-newest-version/
+https://github.com/Fourdee/DietPi/issues/738
+
+sudo bluetoothctl
+sudo nano /etc/default/ap6212 #change to ttyS3
+# workaround for AP6212a under mainline kernel
+	#if [ -n "$(lsmod | grep brcmfmac)" ] && [ -z "$(dmesg | grep brcmf | grep Firm)" ]; then
+	#	cp /lib/firmware/brcm/brcmfmac43430-sdio.bin /lib/firmware/brcm/brcmfmac43430-sdio.bin.bak
+	#	cp /lib/firmware/ap6212/fw_bcm43438a1.bin /lib/firmware/brcm/brcmfmac43430-sdio.bin
+	#	rmmod brcmfmac
+	#	modprobe brcmfmac
+	#fi
+
+modprobe hci_uart
+hciconfig -a
+hciconfig hci0 up
+systemctl status ap6212-bluetooth
+journalctl -xe
+cat /etc/init.d/ap6212-bluetooth
+update-rc.d ap6212-bluetooth defaults
+hciattach /dev/ttyS3 bcm43xx 115200 flow bdaddr 43:29:B1:55:01:01
+https://forum.armbian.com/topic/4770-no-bluetooth-with-ap6212a-under-411-mainline/
+
+enable uart3 in armbianEnv.txt
+and also add param_uart3_rtscts=1
+then
+        rfkill unblock all
+        echo "0" > /sys/class/rfkill/rfkill0/state
+        echo "1" > /sys/class/rfkill/rfkill0/state
+        echo " " > /dev/$PORT
+        devmem2 0x1f00060 b 1
+        echo 205 > /sys/class/gpio/export
+        echo out > /sys/class/gpio/gpio205/direction
+        echo 0 > /sys/class/gpio/gpio205/value
+        echo 1 > /sys/class/gpio/gpio205/value
+        sleep 0.1
+        hciattach /dev/$PORT bcm43xx 115200 flow bdaddr $MAC_OPTIONS
+        hciconfig hci0 up
+
+
+
+
+// pin numbers
+
+And for PG11 :
+
+(alphabet - 'A') * 32 + pin no.  = A3 = (6)*32 + 11 = 203
+
+
+// bdaddr tool change bluetood address
+https://stackoverflow.com/questions/28669725/change-bluetooth-mac-address-in-raspbian
+
+Device address: 10:D0:7A:1D:D2:9B
+                10:D0:7A:1D:D2:09
+
+// GPIO pins
+LORA EN: 
+echo 2 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio2/direction
+echo 0 > /sys/class/gpio/gpio2/value
+echo 1 > /sys/class/gpio/gpio2/value

@@ -68,6 +68,7 @@ class LoraRadio:
         logging.debug("LoraRadio::getSettingsArray() loraPower: " + str(loraPower))
         logging.debug("LoraRadio::getSettingsArray() rffactor: " + str(channelData.RfFactor))
         logging.debug("LoraRadio::getSettingsArray() rfBw: " + str(channelData.RfBw))
+        logging.debug("LoraRadio::getSettingsArray() frequency: " + str(channelData.Frequency))
 
         settingsArray = bytearray([0xAF, 0xAF,    # sync word
                                    0x00, 0x00,  # id code
