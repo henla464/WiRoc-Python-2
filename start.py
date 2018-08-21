@@ -29,7 +29,6 @@ class Main:
             logging.debug("Test repeater")
             ReceiveLoraAdapter.TestRepeater = True
             SendLoraAdapter.TestRepeater = True
-        SettingsClass.SetReceiveSIAdapterActive(False)
         self.shouldReconfigure = False
         self.forceReconfigure = False
         self.nextTimeToReconfigure = time.monotonic() + 10
@@ -52,6 +51,7 @@ class Main:
         DatabaseHelper.truncate_setup_tables()
         DatabaseHelper.add_default_channels()
         SettingsClass.IncrementPowerCycle()
+        SettingsClass.SetReceiveSIAdapterActive(False)
         Setup.AddMessageTypes()
 
         if Setup.SetupAdapters(self.hardwareAbstraction):
