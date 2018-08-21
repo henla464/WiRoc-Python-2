@@ -29,6 +29,7 @@ class Main:
             logging.debug("Test repeater")
             ReceiveLoraAdapter.TestRepeater = True
             SendLoraAdapter.TestRepeater = True
+        SettingsClass.SetReceiveSIAdapterActive(False)
         self.shouldReconfigure = False
         self.forceReconfigure = False
         self.nextTimeToReconfigure = time.monotonic() + 10
