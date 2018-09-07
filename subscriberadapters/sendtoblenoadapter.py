@@ -87,6 +87,9 @@ class SendToBlenoAdapter(object):
     def GetDelayAfterMessageSent(self):
         return 0
 
+    def GetRetryDelay(self, tryNo):
+        return 1
+
     # messageData is a bytearray
     def SendData(self, messageData, successCB, failureCB, callbackQueue, settingsDictionary):
         SIMsg = SIMessage()

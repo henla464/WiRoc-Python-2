@@ -370,18 +370,18 @@ class Main:
                                         if msgSub.DeleteAfterSent:  # move msgsub to archive
                                             DatabaseHelper.archive_message_subscription_view_after_sent(msgSub)
                                         else:  # set SentDate and increment NoOfSendTries
-                                            retryDelay = SettingsClass.GetRetryDelay(msgSub.NoOfSendTries + 1)
+                                            retryDelay = innerSubAdapter.GetRetryDelay(msgSub.NoOfSendTries + 1)
                                             DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub, retryDelay)
                                             logging.debug("subadapter: " +str(type(innerSubAdapter)) + " delayaftermessagesent: " + str(innerSubAdapter.GetDelayAfterMessageSent()))
                                             DatabaseHelper.increase_scheduled_time_for_other_subscriptions(msgSub,innerSubAdapter.GetDelayAfterMessageSent())
                                     return successCB
 
-                                def createFailureCB():
+                                def createFailureCB(innerSubAdapter):
                                     def failureCB():
                                         # failed to send
                                         logging.warning(
                                             "Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName + " id:"+ str(msgSub.id))
-                                        retryDelay = SettingsClass.GetRetryDelay(msgSub.NoOfSendTries + 1)
+                                        retryDelay = innerSubAdapter.GetRetryDelay(msgSub.NoOfSendTries + 1)
                                         DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub, retryDelay)
                                     return failureCB
 

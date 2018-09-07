@@ -183,6 +183,9 @@ class SendLoraAdapter(object):
             timeS+= SettingsClass.GetLoraMessageTimeSendingTimeS(10)+0.15 # reply ack + 3 loop
         return timeS
 
+    def GetRetryDelay(self, tryNo):
+        return SettingsClass.GetRetryDelay(tryNo)
+
     def AddSuccessWithoutRepeaterBit(self):
         self.successWithoutRepeaterBitQueue.appendleft(datetime.now())
         if len(self.successWithoutRepeaterBitQueue) > 20:
