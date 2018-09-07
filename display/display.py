@@ -19,7 +19,6 @@ class Display(object):
         self.TypeOfDisplay = None
 
         self.OledDisp = None
-        self.bus = SMBus(2)
         self.OledAddress = 0x3c
         self.OledWidth = 0
         self.OledHeight = 0
@@ -33,13 +32,19 @@ class Display(object):
         self.isCharging = None
         self.imageChanged = False
         self.runningOnChip = socket.gethostname() == 'chip'
+        self.runningOnNanoPi = socket.gethostname() == 'nanopiair'
         try:
+            if self.runningOnChip:
+                self.bus = SMBus(2)
+            elif self.runningOnNanoPi:
+                self.bus = SMBus(0)
             byteRead = self.bus.read_byte(self.OledAddress)
             if byteRead > 0:
                 self.TypeOfDisplay = 'OLED'
-                # Alternatively you can specify an explicit I2C bus number, for example
-                # with the 128x32 display you would use:
-                self.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=2)
+                if self.runningOnChip:
+                    self.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=2)
+                elif self.runningOnNanoPi:
+                    self.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=0)
                 # Initialize library.
                 self.OledDisp.begin()
 

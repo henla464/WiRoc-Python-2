@@ -220,7 +220,7 @@ sudo apt-get install python-imaging
 
 
 ---
-Make it prefere ipv4 over ipv6
+Make it prefer ipv4 over ipv6
 
 https://stackoverflow.com/questions/31519567/disable-ipv6-for-python-script
 
@@ -229,4 +229,7 @@ Another would be to use an underlying way to get your C library to prefer IPv4 o
 precedence ::ffff:0:0/96  100
 ------
 
+Lora module versions:
 
+Older one:  "9600  N 8 1 YL_800T V2.9"
+Received 2018-08-23:"9600  N 8 1 YL_800T V3.8" can change firmware with command

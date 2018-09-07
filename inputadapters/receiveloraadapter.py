@@ -20,6 +20,8 @@ class ReceiveLoraAdapter(object):
         serialPorts = []
         if socket.gethostname() == 'chip':
             serialPorts.append('/dev/ttyS2')
+        elif socket.gethostname() == 'nanopiair':
+            serialPorts.append('/dev/ttyS1')
         else:
             portInfoList = serial.tools.list_ports.grep('10c4:ea60')
             for portInfo in portInfoList:
