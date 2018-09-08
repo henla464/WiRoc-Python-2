@@ -112,12 +112,15 @@ npm --unsafe-perm install bluetooth-hci-socket
 echo "install bleno"
 #read line
 #install bleno
-npm install bleno
-wget -O /home/chip/node_modules/bleno/lib/bleno.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/bleno.js
-wget -O /home/chip/node_modules/bleno/lib/hci-socket/acl-stream.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/hci-socket/acl-stream.js
-wget -O /home/chip/node_modules/bleno/lib/hci-socket/bindings.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/hci-socket/bindings.js
-wget -O /home/chip/node_modules/bleno/lib/hci-socket/hci.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/hci-socket/hci.js
-
+if [[ $(hostname -s) = nanopiair ]]; then
+    npm install @ubnt/bleno
+else
+    npm install bleno
+    wget -O /home/chip/node_modules/bleno/lib/bleno.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/bleno.js
+    wget -O /home/chip/node_modules/bleno/lib/hci-socket/acl-stream.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/hci-socket/acl-stream.js
+    wget -O /home/chip/node_modules/bleno/lib/hci-socket/bindings.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/hci-socket/bindings.js
+    wget -O /home/chip/node_modules/bleno/lib/hci-socket/hci.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/hci-socket/hci.js
+fi
 
 echo "install startup scripts"
 #read line
@@ -125,8 +128,10 @@ echo "install startup scripts"
 mkdir WiRoc-StartupScripts
 wget -O /home/chip/WiRoc-StartupScripts/Startup.sh https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/Startup.sh
 chmod +x /home/chip/WiRoc-StartupScripts/Startup.sh
-wget -O /home/chip/WiRoc-StartupScripts/setGPIOuart2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/setGPIOuart2
-chmod +x /home/chip/WiRoc-StartupScripts/setGPIOuart2
+if ! [[ $(hostname -s) = nanopiair ]]; then
+    wget -O /home/chip/WiRoc-StartupScripts/setGPIOuart2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/setGPIOuart2
+    chmod +x /home/chip/WiRoc-StartupScripts/setGPIOuart2
+fi
 wget -O /etc/systemd/system/WiRocPython.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPython.service
 wget -O /etc/systemd/system/WiRocPythonWS.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPythonWS.service
 wget -O /etc/systemd/system/WiRocBLE.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocBLE.service
@@ -137,21 +142,6 @@ systemctl enable /etc/systemd/system/WiRocStartup.service
 systemctl enable /etc/systemd/system/WiRocBLE.service
 systemctl enable /etc/systemd/system/WiRocPython.service
 systemctl enable /etc/systemd/system/WiRocPythonWS.service
-
-wget -O /etc/udev/rules.d/99-ttyexcludemm.rules https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/99-ttyexcludemm.rules
-udevadm control --reload-rules
-
-
-mkdir /lib/modules/4.4.13-ntc-mlc/kernel/drivers/usb/class
-wget -O /lib/modules/4.4.13-ntc-mlc/kernel/drivers/usb/class/cdc-acm.ko https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/cdc-acm.ko
-depmod
-modprobe cdc-acm
-
-echo "install new dtb"
-#read line
-#Install the new dtb on chip
-rm /boot/sun5i-r8-chip.dtb
-wget -O /boot/sun5i-r8-chip.dtb https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/sun5i-r8-chip.dtb
 
 
 echo "install wiroc-monitor"
@@ -175,3 +165,56 @@ ${apikey}
 EOF
 
 
+if [[ $(hostname -s) = nanopiair ]]; then
+    echo "nanopiair"
+    if ! grep -Fxq "setenv video-mode sunxi:1920x1080,monitor=none,hpd=0,edid=1" /boot/boot.cmd
+    then
+        sed -i '$a setenv video-mode sunxi:1920x1080,monitor=none,hpd=0,edid=1' /boot/boot.cmd
+        sed -i '$a saveenv' /boot/boot.cmd
+        mkimage -C none -A arm -T script -d /boot/boot.cmd /boot/boot.scr
+        echo "Changed boot.cmd and recompiled it"
+    fi
+
+    if ! grep -Fxq "overlays=uart1 uart3 usbhost1 usbhost2 i2c0" /boot/armbianEnv.txt
+    then
+        echo "Change overlays"
+        sed -i -E "s/(overlays=).*/overlays=uart1 uart3 usbhost1 usbhost2 i2c0/" /boot/armbianEnv.txt
+    fi
+
+    if ! grep -Fxq "param_uart3_rtscts=1" /boot/armbianEnv.txt
+    then
+        echo "Change overlays, add uart3 rtscts"
+        sed -i '$a param_uart3_rtscts=1' /boot/armbianEnv.txt
+    fi
+
+    if ! grep -Fxq "PORT=ttyS3" /etc/default/ap6212
+    then
+        echo "Change to use ttyS3 for bluetooth"
+        sed -i 's/PORT=ttyS1/PORT=ttyS3/' /etc/default/ap6212
+    fi
+
+    if ! grep -Fxq "" /etc/init.d/ap6212-bluetooth
+    then
+        echo "Replace ap6212-bluetooth"
+        cp /etc/init.d/ap6212-bluetooth ~/ap6212-bluetooth.backup
+        wget -O /etc/init.d/ap6212-bluetooth https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/ap6212-bluetooth
+        chmod ugo+x /etc/init.d/ap6212-bluetooth
+    fi
+
+else
+    mkdir /lib/modules/4.4.13-ntc-mlc/kernel/drivers/usb/class
+    wget -O /lib/modules/4.4.13-ntc-mlc/kernel/drivers/usb/class/cdc-acm.ko https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/cdc-acm.ko
+    depmod
+    modprobe cdc-acm
+
+    wget -O /etc/udev/rules.d/99-ttyexcludemm.rules https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/99-ttyexcludemm.rules
+    udevadm control --reload-rules
+
+    echo "install new dtb"
+    #read line
+    #Install the new dtb on chip
+    rm /boot/sun5i-r8-chip.dtb
+    wget -O /boot/sun5i-r8-chip.dtb https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/sun5i-r8-chip.dtb
+
+
+fi

@@ -105,3 +105,7 @@ echo 2 > /sys/class/gpio/export
 echo out > /sys/class/gpio/gpio2/direction
 echo 0 > /sys/class/gpio/gpio2/value
 echo 1 > /sys/class/gpio/gpio2/value
+
+// change bleno version
+sed -i "s/var bleno = require('@ubnt\/bleno');/var bleno = require('bleno');/" *
+sed -i "s/var bleno = require('bleno');/var bleno = require('@ubnt\/bleno');/" *
