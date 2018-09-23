@@ -13,6 +13,7 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", GROUP="plug
 sudo udevadm control --reload-rules
 
 http://flash.getchip.com/
+http://fc.fdf.net
 
 
 ------------------------

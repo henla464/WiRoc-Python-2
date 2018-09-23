@@ -11,7 +11,14 @@ echo "after rf"
 tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-$WiRocPython2Version
 echo "after tar"
 mv WiRoc-Python-2-$WiRocPython2Version WiRoc-Python-2
-echo "after mv"
+
+echo "Update WiRocPython version"
+cat << EOF > WiRocPythonVersion.txt
+${WiRocPython2Version}
+EOF
+
+echo "after update version"
+
 systemctl start WiRocPython
 systemctl start WiRocPythonWS
 echo "after start WirocPython and WiRocPythonWS"

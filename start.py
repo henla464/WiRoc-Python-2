@@ -386,7 +386,7 @@ class Main:
                                     return failureCB
 
                                 t = threading.Thread(target=subAdapter.SendData,
-                                                     args=(transformedData["Data"], createSuccessCB(subAdapter), createFailureCB(), self.callbackQueue, settDict))
+                                                     args=(transformedData["Data"], createSuccessCB(subAdapter), createFailureCB(subAdapter), self.callbackQueue, settDict))
                                 self.threadQueue.put(t)
                                 t.start()
                             else:

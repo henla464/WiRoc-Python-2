@@ -6,6 +6,10 @@
 #apt-get install python3-dev
 #pip3 install requests
 
+WiRocPython2Version="0.103"
+WiRocBLEVersion="0.27"
+
+
 echo "update"
 #read line
 # update app list
@@ -85,7 +89,6 @@ apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev
 echo "WiRoc-Python-2"
 #read line
 #install Python-2
-WiRocPython2Version="0.103"
 wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v$WiRocPython2Version.tar.gz
 rm -rf WiRoc-Python-2
 tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-$WiRocPython2Version
@@ -93,16 +96,28 @@ mv WiRoc-Python-2-$WiRocPython2Version WiRoc-Python-2
 mv WiRoc-Python-2/installWiRocPython.sh .
 chmod ugo+x installWiRocPython.sh
 
+
+echo "Update WiRocPython version"
+cat << EOF > WiRocPythonVersion.txt
+${WiRocPython2Version}
+EOF
+
+
 echo "WiRoc-BLE"
 #read line
 #install WiRoc-BLE
-WiRocBLEVersion="0.27"
 wget -O WiRoc-BLE-Device.tar.gz https://github.com/henla464/WiRoc-BLE-Device/archive/v$WiRocBLEVersion.tar.gz
 rm -rf WiRoc-BLE-Device
 tar xvfz WiRoc-BLE-Device.tar.gz WiRoc-BLE-Device-$WiRocBLEVersion
 mv WiRoc-BLE-Device-$WiRocBLEVersion WiRoc-BLE-Device
 mv WiRoc-BLE-Device/installWiRocBLE.sh .
 chmod ugo+x installWiRocBLE.sh
+
+
+echo "Update WiRocBLE version"
+cat << EOF > WiRocBLEVersion.txt
+${WiRocBLEVersion}
+EOF
 
 #npm install -g node-gyp
 echo "install bluetooth-hci-socket"
@@ -113,7 +128,7 @@ echo "install bleno"
 #read line
 #install bleno
 if [[ $(hostname -s) = nanopiair ]]; then
-    npm install @ubnt/bleno
+    npm install ubiquiti/bleno
 else
     npm install bleno
     wget -O /home/chip/node_modules/bleno/lib/bleno.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/bleno.js
@@ -163,6 +178,9 @@ read apikey
 cat << EOF > apikey.txt
 ${apikey}
 EOF
+
+
+
 
 
 if [[ $(hostname -s) = nanopiair ]]; then
