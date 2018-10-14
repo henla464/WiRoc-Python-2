@@ -58,7 +58,12 @@ class HardwareAbstraction(object):
 
     def GetIsTransmittingReceiving(self):
         # aux 138, with new oled design: 134
-        if self.typeOfDisplay == '7SEG':
-            return digitalReadNonXIO(138) == 0
-        else:
-            return digitalReadNonXIO(134) == 0
+        # pin 0 for nanopiair
+        if self.runningOnChip:
+            if self.typeOfDisplay == '7SEG':
+                return digitalReadNonXIO(138) == 0
+            else:
+                return digitalReadNonXIO(134) == 0
+        elif self.runningOnNanoPi:
+            return digitalReadNonXIO(0) == 0
+        return False
