@@ -128,7 +128,7 @@ echo "install bleno"
 #read line
 #install bleno
 if [[ $(hostname -s) = nanopiair ]]; then
-    npm install ubiquiti/bleno
+    npm install henla464/bleno
 else
     npm install bleno
     wget -O /home/chip/node_modules/bleno/lib/bleno.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/bleno.js

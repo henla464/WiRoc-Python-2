@@ -244,6 +244,7 @@ class LoraRadio:
     def RestartModule(self):
         logging.debug("LoraRadio::RestartModule() enter")
         self.radioSerial.write(LoraRadio.RestartModuleCmd)
+        time.sleep(0.15)
         allReceivedData = bytearray()
         while self.radioSerial.in_waiting > 0 and len(allReceivedData) < 12:
             # print("looking for stx: ", end="")
@@ -270,12 +271,13 @@ class LoraRadio:
     def GetDetectAirSignal(self):
         logging.debug("LoraRadio::GetDetectAirSignal() enter")
         self.radioSerial.write(LoraRadio.DetectAirSignalCmd)
+        time.sleep(0.15)
         allReceivedData = bytearray()
-        while self.radioSerial.in_waiting > 0 and len(allReceivedData) < 12:
+        while self.radioSerial.in_waiting > 0 and len(allReceivedData) < 13:
             # print("looking for stx: ", end="")
             bytesRead = self.radioSerial.read(1)
             allReceivedData.append(bytesRead[0])
-            if len(allReceivedData) < 12 and self.radioSerial.in_waiting == 0:
+            if len(allReceivedData) < 13 and self.radioSerial.in_waiting == 0:
                     logging.info("LoraRadio::GetDetectAirSignal() Sleep, wait for more bytes")
                     time.sleep(0.05)
                     if self.radioSerial.in_waiting == 0:
@@ -304,9 +306,12 @@ class LoraRadio:
                 self.receivedMessage2.AddByte(theByte)
             if not self.receivedMessage2.IsFilled() or not self.receivedMessage2.GetIsChecksumOK():
                 self.receivedMessage2 = None
-                logging.error("LoraRadio::GetDetectAirSignal() Signal not detected, extra bytes found but doesn't seem to be correct message")
-                dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
-                logging.error("All data received: " + dataInHex)
+                if len(allReceivedDataMinusSignalNotDetectedReply) > 0:
+                    logging.error("LoraRadio::GetDetectAirSignal() Signal not detected, extra bytes found but doesn't seem to be correct message")
+                    dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
+                    logging.error("All data received: " + dataInHex)
+                else:
+                    logging.error("LoraRadio::GetDetectAirSignal() Signal not detected 2")
             else:
                 logging.debug("LoraRadio::GetDetectAirSignal() Signal not detected, message found also")
             return False
