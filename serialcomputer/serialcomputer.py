@@ -61,6 +61,7 @@ class SerialComputer:
                     imAWiRoc = bytearray([0x02, 0x01, 0x01, 0x55, 0x53, 0x06, 0x03])
                     logging.debug("SerialComputer::TestConnection() before write byte: " + self.portName)
                     self.compSerial.write(imAWiRoc)
+                    self.compSerial.flush()
                     logging.debug("SerialComputer::TestConnection() after write byte: " + self.portName) # + str(noOfBytes)
                     #if wasOpened:
                     #    self.compSerial.close()
@@ -111,6 +112,7 @@ class SerialComputer:
                 dataInHex = ''.join(format(x, '02x') for x in messageData)
                 logging.debug("SerialComputer::SendData() data: " + dataInHex)
                 self.compSerial.write(messageData)
+                self.compSerial.flush()
                 return True
             else:
                 logging.error("SerialComputer::SendData() Serial port not open")

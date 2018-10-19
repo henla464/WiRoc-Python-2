@@ -5,6 +5,7 @@ from datamodel.datamodel import SubscriptionData
 from datamodel.datamodel import TransformData
 from datamodel.datamodel import MessageSubscriptionData
 from datamodel.db_helper import DatabaseHelper
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from subscriberadapters.sendloraadapter import SendLoraAdapter
 from subscriberadapters.sendserialadapter import SendSerialAdapter
 from subscriberadapters.sendtoblenoadapter import SendToBlenoAdapter
@@ -25,9 +26,9 @@ class Setup:
     SubscriberAdapters = None
     InputAdapters = None
     @staticmethod
-    def SetupAdapters(hardwareAbstraction): #createMessageTypeIfNotExist = False):
+    def SetupAdapters(): #createMessageTypeIfNotExist = False):
         subscriberObjects = []
-        change1 = SendLoraAdapter.CreateInstances(hardwareAbstraction)
+        change1 = SendLoraAdapter.CreateInstances(HardwareAbstraction.Instance)
         change2 = SendSerialAdapter.CreateInstances()
         change3 = SendToBlenoAdapter.CreateInstances()
         change4 = SendToMeosAdapter.CreateInstances()
@@ -40,7 +41,7 @@ class Setup:
 
         inputObjects = []
         inChange1 = CreateStatusAdapter.CreateInstances()
-        inChange2 = ReceiveLoraAdapter.CreateInstances(hardwareAbstraction)
+        inChange2 = ReceiveLoraAdapter.CreateInstances(HardwareAbstraction.Instance)
         inChange3 = ReceiveSerialComputerAdapter.CreateInstances()
         inChange4 = ReceiveSIAdapter.CreateInstances()
         inChange5 = ReceiveTestPunchesAdapter.CreateInstances()

@@ -1,18 +1,93 @@
 from smbus2 import SMBus
 import Adafruit_SSD1306
-from PIL import Image
-from PIL import ImageDraw
-from PIL import ImageFont
+#from PIL import Image
+#from PIL import ImageDraw
+#from PIL import ImageFont
 import socket
 import sys
 sys.path.append('..')
-from chipGPIO.chipGPIO import *
-from battery import Battery
-import subprocess
+#from chipGPIO.chipGPIO import *
+#from battery import Battery
+#import subprocess
 import logging
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
+import display.displaystate
+import display.oledstartup
+import display.olednormal
+import display.sevensegnormal
+
+DisplayState = display.displaystate.DisplayState
+OledDisplayState = display.displaystate.OledDisplayState
+
+class DisplayStateMachine(object):
+    SevenSegNormal = None
+    OledStartup = None
+    OledNormal = None
+
+    hardwareAbstraction = None
+    def __init__(self):
+        logging.info("DisplayStateMachine::Init start")
+        self.TypeOfDisplay = None
+        self.currentState = None
+        self.runningOnChip = socket.gethostname() == 'chip'
+        self.runningOnNanoPi = socket.gethostname() == 'nanopiair'
+        try:
+            if self.runningOnChip:
+                self.bus = SMBus(2)
+            elif self.runningOnNanoPi:
+                self.bus = SMBus(0)
+            byteRead = self.bus.read_byte(OledDisplayState.OledAddress)
+            if byteRead > 0:
+                self.TypeOfDisplay = 'OLED'
+                if self.runningOnChip:
+                    self.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=2)
+                elif self.runningOnNanoPi:
+                    self.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=0)
+                # Initialize library.
+                OledDisplayState.OledDisp.begin()
+
+                # Clear display.
+                OledDisplayState.OledWidth = self.OledDisp.width
+                OledDisplayState.OledHeight = self.OledDisp.height
+
+                # Available states
+                DisplayStateMachine.SevenSegNormal = display.sevensegnormal.SevenSegNormal()
+                DisplayStateMachine.OledStartup = display.oledstartup.OledStartup()
+                DisplayStateMachine.OledNormal = display.olednormal.OledNormal()
+
+                logging.info("Display::Init initialized the OLED")
+            else:
+                if self.runningOnChip:
+                    self.TypeOfDisplay = '7SEG'
+                else:
+                    self.TypeOfDisplay = 'NO_DISPLAY'
+        except Exception as ex:
+            print(ex)
+            if self.runningOnChip:
+                self.TypeOfDisplay = '7SEG'
+            else:
+                self.TypeOfDisplay = 'NO_DISPLAY'
+
+        if HardwareAbstraction.Instance == None:
+            HardwareAbstraction.Instance = HardwareAbstraction(self.TypeOfDisplay)
+
+        if self.TypeOfDisplay == 'OLED':
+            self.currentState = DisplayStateMachine.OledStartup
+        elif self.TypeOfDisplay == '7SEG':
+            self.currentState = DisplayStateMachine.SevenSegNormal
 
 
+    def GetTypeOfDisplay(self):
+        return self.TypeOfDisplay
 
+    def Draw(self, channel, ackRequested, wiRocMode, dataRate, deviceName):
+        if self.currentState != None:
+            if HardwareAbstraction.Instance.GetIsShortKeyPress():
+                HardwareAbstraction.Instance.ClearShortKeyPress()
+                self.currentState = self.currentState.Next()
+            self.currentState.Draw(channel, ackRequested, wiRocMode, dataRate, deviceName)
+
+"""
 class Display(object):
     def __init__(self):
         logging.info("Display::Init start")
@@ -23,6 +98,7 @@ class Display(object):
         self.OledWidth = 0
         self.OledHeight = 0
         self.OledImage = None
+        self.OledDisplayState = 'startup' #startup, normal
         self.batteryPercent = 0
         self.wifiStrength = None
         self.channel = None
@@ -242,6 +318,6 @@ class Display(object):
             self.Draw7Seg(channel, ackRequested)
 
 
-
+"""
 #myDisplay = Display()
 #myDisplay.Draw('4', True, 'SENDER', 293)

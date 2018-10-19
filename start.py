@@ -19,7 +19,7 @@ import socket
 from itertools import repeat
 from battery import Battery
 from utils.utils import Utils
-from display.display import Display
+from display.displaystatemachine import DisplayStateMachine
 import requests, queue, threading
 import sys
 
@@ -41,10 +41,9 @@ class Main:
         self.lastBatteryIsLowReceived = False
         self.callbackQueue = queue.Queue()
         self.threadQueue = queue.Queue()
-        self.display = Display()
+        self.displayStateMachine = DisplayStateMachine()
         Battery.Setup()
-        self.hardwareAbstraction = HardwareAbstraction(self.display.GetTypeOfDisplay())
-        self.hardwareAbstraction.SetupPins()
+        HardwareAbstraction.Instance.SetupPins()
 
         #DatabaseHelper.drop_all_tables()
         DatabaseHelper.ensure_tables_created()
@@ -54,7 +53,7 @@ class Main:
         SettingsClass.SetReceiveSIAdapterActive(False)
         Setup.AddMessageTypes()
 
-        if Setup.SetupAdapters(self.hardwareAbstraction):
+        if Setup.SetupAdapters():
             self.subscriberAdapters = Setup.SubscriberAdapters
             self.inputAdapters = Setup.InputAdapters
 
@@ -134,9 +133,9 @@ class Main:
             logging.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
             DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
 
-    def reconfigureBackground(self,channel,ackRequested,sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost):
+    def reconfigureBackground(self,channel,ackRequested, sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost, wirocDeviceName):
         #self.displayChannel(channel,ackRequested)
-        self.display.Draw(channel, ackRequested, wirocMode, dataRate)
+        self.displayStateMachine.Draw(channel, ackRequested, wirocMode, dataRate, wirocDeviceName)
         self.updateWebserverIPBackground(webServerHost)
         self.webServerUp = SendStatusAdapter.TestConnection(webServerIPUrl, webServerHost)
         Battery.UpdateWifiPowerSaving(sendToMeos)
@@ -147,7 +146,7 @@ class Main:
         SettingsClass.IsDirty("StatusMessageBaseInterval", True, True)  # force check dirty in db
         self.archiveFailedMessages()
         DatabaseHelper.archive_old_repeater_message()
-        if Setup.SetupAdapters(self.hardwareAbstraction):
+        if Setup.SetupAdapters():
             self.subscriberAdapters = Setup.SubscriberAdapters
             self.inputAdapters = Setup.InputAdapters
 
@@ -157,6 +156,7 @@ class Main:
         sendToMeos = None
         wirocMode = None
         dataRate = None
+        wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
         webServerIPUrl = SettingsClass.GetWebServerIPUrl()
         webServerHost = SettingsClass.GetWebServerHost()
         if self.runningOnChip:
@@ -166,7 +166,7 @@ class Main:
             wirocMode = SettingsClass.GetWiRocMode()
             dataRate = SettingsClass.GetDataRate()
 
-        t = threading.Thread(target=self.reconfigureBackground, args=(channel,ackRequested,sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost))
+        t = threading.Thread(target=self.reconfigureBackground, args=(channel,ackRequested,sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost, wiRocDeviceName))
         t.daemon = True
         t.start()
 

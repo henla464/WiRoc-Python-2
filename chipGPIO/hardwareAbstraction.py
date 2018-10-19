@@ -1,8 +1,11 @@
 from chipGPIO.chipGPIO import *
 import logging
 import socket
+import subprocess
 
 class HardwareAbstraction(object):
+    Instance = None
+
     def __init__(self, typeOfDisplay):
         logging.info("HardwareAbstraction::Init start")
         self.typeOfDisplay = typeOfDisplay
@@ -67,3 +70,23 @@ class HardwareAbstraction(object):
         elif self.runningOnNanoPi:
             return digitalReadNonXIO(0) == 0
         return False
+
+    def GetWifiSignalStrength(self):
+        wifiInUseSSIDSignal = str(subprocess.check_output(["nmcli", "-t", "-f", "in-use,ssid,signal", "device", "wifi"]))
+        for row in wifiInUseSSIDSignal.split('\\n'):
+            if row.startswith('*'):
+                return int(row.split(':')[2])
+
+        return 0
+
+    def GetIsShortKeyPress(self):
+        if self.runningOnChip or self.runningOnNanoPi:
+            logging.debug("HardwareAbstraction::GetIsShortKeyPress")
+            statusReg = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x4a").read()
+            shortKeyPress = int(statusReg, 16) & 0x02
+            return shortKeyPress > 0
+
+    def ClearShortKeyPress(self):
+        if self.runningOnChip or self.runningOnNanoPi:
+            logging.debug("HardwareAbstraction::ClearShortKeyPress")
+            os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x4a 0x02'")

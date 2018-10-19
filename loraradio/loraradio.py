@@ -9,6 +9,7 @@ from datamodel.db_helper import DatabaseHelper
 from settings.settings import SettingsClass
 import socket
 import binascii
+from datetime import datetime
 
 class LoraRadio:
     Instances = []
@@ -203,6 +204,7 @@ class LoraRadio:
             self.radioSerial.open()
         if self.radioSerial.is_open:
             self.radioSerial.write(readSettingArray)
+            self.radioSerial.flush()
 
         time.sleep(0.5)
         data = self.getRadioSettingsReply()
@@ -215,6 +217,7 @@ class LoraRadio:
             return True
         else:
             self.radioSerial.write(settingsArray)
+            self.radioSerial.flush()
             time.sleep(0.5)
             setResponse = self.getRadioSettingsReply()
             if setResponse[8:15] == settingsArray[8:15]:
@@ -244,6 +247,7 @@ class LoraRadio:
     def RestartModule(self):
         logging.debug("LoraRadio::RestartModule() enter")
         self.radioSerial.write(LoraRadio.RestartModuleCmd)
+        self.radioSerial.flush()
         time.sleep(0.15)
         allReceivedData = bytearray()
         while self.radioSerial.in_waiting > 0 and len(allReceivedData) < 12:
@@ -269,10 +273,16 @@ class LoraRadio:
 
 
     def GetDetectAirSignal(self):
-        logging.debug("LoraRadio::GetDetectAirSignal() enter")
+        logging.debug("LoraRadio::GetDetectAirSignal() enter " + str(datetime.now()))
         self.radioSerial.write(LoraRadio.DetectAirSignalCmd)
-        time.sleep(0.15)
+        self.radioSerial.flush()
         allReceivedData = bytearray()
+        # wait up to 0.2 seconds for serial response to arrive
+        for i in range(20):
+            if self.radioSerial.in_waiting > 0:
+                break
+            time.sleep(0.01)
+        logging.debug("LoraRadio::GetDetectAirSignal() after " + str(datetime.now()))
         while self.radioSerial.in_waiting > 0 and len(allReceivedData) < 13:
             # print("looking for stx: ", end="")
             bytesRead = self.radioSerial.read(1)
@@ -344,13 +354,14 @@ class LoraRadio:
     def IsReadyToSend(self):
         if self.hardwareAbstraction.GetIsTransmittingReceiving():
             return False
+        return True
+
+    def IsAirSignalDetected(self):
         # read all data before sending new messages, especially important to avoid receiving mixed data when detecting air signal
         if self.radioSerial.in_waiting > 0:
             return False
         if self.hardwareAbstraction.runningOnNanoPi:
-            return not self.GetDetectAirSignal()
-        return True
-
+            return self.GetDetectAirSignal()
 
     def SendData(self, messageData):
         dataInHex = ''.join(format(x, '02x') for x in messageData)
@@ -358,6 +369,7 @@ class LoraRadio:
         #self.UpdateSentStats() of use?
         self.lastMessageSentDate =  time.monotonic()
         self.radioSerial.write(messageData)
+        self.radioSerial.flush()
         return True
 
     def GetRadioData(self):

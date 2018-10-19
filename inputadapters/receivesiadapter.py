@@ -89,6 +89,7 @@ class ReceiveSIAdapter(object):
         dataInHex = ''.join(format(x, '02x') for x in command)
         logging.debug("ReceiveSIAdapter::sendCommand() command: " + dataInHex)
         self.siSerial.write(command)
+        self.siSerial.flush()
         expectedLength = 3
         response = bytearray()
         allBytesReceived = bytearray()
@@ -411,6 +412,7 @@ class ReceiveSIAdapter(object):
                 imAWiRocReply[4] = calculatedCRC[0]
                 imAWiRocReply[5] = calculatedCRC[1]
                 self.siSerial.write(imAWiRocReply)
+                self.siSerial.flush()
             else:
                 logging.error("ReceiveSIAdapter::GetData() I am a WiRoc message, WRONG CHECKSUM!")
             return None
