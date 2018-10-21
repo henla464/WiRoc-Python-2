@@ -85,6 +85,7 @@ class HardwareAbstraction(object):
             statusReg = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x4a").read()
             shortKeyPress = int(statusReg, 16) & 0x02
             return shortKeyPress > 0
+        return False
 
     def ClearShortKeyPress(self):
         if self.runningOnChip or self.runningOnNanoPi:
