@@ -13,6 +13,18 @@ from datetime import datetime
 
 class LoraRadio:
     Instances = []
+
+    ReadSettingCmd = bytes([0xAF, 0xAF,  # sync word
+                              0x00, 0x00,  # id code
+                              0xAF,  # header
+                              0x80,  # command (sending)
+                              0x02,  # command type (read)
+                              0x0C,  # length (data section, from here to CS)
+                              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                              0x9B,  # CS (calculate and set)
+                              0x0D, 0x0A  # end code
+                              ])
+
     DetectAirSignalCmd = bytes([0xAF, 0xAF,  # sync word
                                 0x00, 0x00,  # id code
                                 0xAF,  # start code
@@ -45,6 +57,28 @@ class LoraRadio:
                             0x00,  # data
                             0x33,  # CRC
                             0x0D, 0x0A])  # end code
+
+    WriteSerialBaudRateCmd = bytes([0xAF, 0xAF,  # sync word
+                                0x00, 0x00,  # id code
+                                0xAF,  # start code
+                                0x80,  # command (sending)
+                                0x09,  # command detect air signal
+                                0x02,  # len
+                                0x07,  # data rate 57600
+                                0x00,  # data no parity
+                                0x9F,  # CRC
+                                0x0D, 0x0A])  # end code
+
+    ReadSerialBaudRateCmd = bytes([0xAF, 0xAF,  # sync word
+                                    0x00, 0x00,  # id code
+                                    0xAF,  # start code
+                                    0x80,  # command (sending)
+                                    0x0A,  # command detect air signal
+                                    0x02,  # len
+                                    0x00,  # data rate
+                                    0x00,  # data parity
+                                    0x99,  # CRC
+                                    0x0D, 0x0A])  # end code
 
     RestartModuleCmd = bytes([0xAF, 0xAF,  # sync word
                                0x00, 0x00,  # id code
@@ -132,7 +166,7 @@ class LoraRadio:
                                    0x80,        # command (sending)
                                    0x01,        # command type (write)
                                    0x0C,        # length (data section, from here to CS)
-                                   0x04,        # baud rate (1=1200, 2=2400, 3=4800, 4=9600, 5=19200,6=38400, 7=57600)
+                                   0x07,        # baud rate (1=1200, 2=2400, 3=4800, 4=9600, 5=19200,6=38400, 7=57600)
                                    0x00,        # parity (0=no parity check, 1=odd parity, 2=even parity)
                                    frequencyOne, frequencyTwo, frequencyThree,  # frequency (The value=Frequency/61.035)
                                    channelData.RfFactor,   # rf factor (7=128, 8=256, 9=512, 10=1024, 11=2048, 12=4096)
@@ -149,7 +183,6 @@ class LoraRadio:
 
     def getRadioSettingsReply(self):
         data = bytearray([])
-        logging.debug("LoraRadio::getSettingsReply() LoraRadio settings reply response: ")
         while self.radioSerial.inWaiting() > 0:
             bytesRead = self.radioSerial.read(1)
             if len(bytesRead) > 0 and bytesRead[0] == 0xAF:
@@ -163,7 +196,8 @@ class LoraRadio:
 
                     time.sleep(2 / 1000)
                 break
-        logging.debug("LoraRadio::getSettingsReply() " + str(data))
+        dataInHex = ''.join(format(x, '02x') for x in data)
+        logging.debug("LoraRadio::getSettingsReply() response: " + dataInHex)
         return data
 
     def Disable(self):
@@ -177,6 +211,13 @@ class LoraRadio:
     def GetDataRate(self):
         return self.loraDataRate
 
+    def WaitForSerialUpToTimeMS(self, ms):
+        for i in range(int(ms/10)):
+            if self.radioSerial.in_waiting > 0:
+                time.sleep(0.01)
+                break
+            time.sleep(0.01)
+
     def Init(self, channel, loraDataRate, loraPower):
         logging.info("LoraRadio::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraDataRate: " + str(loraDataRate) + " LoraPower: " + str(loraPower))
         self.hardwareAbstraction.EnableLora()
@@ -186,34 +227,43 @@ class LoraRadio:
         self.loraDataRate = loraDataRate
         self.loraPower = loraPower
 
-        readSettingArray = bytes([0xAF, 0xAF, # sync word
-                                  0x00, 0x00, # id code
-                                  0xAF,       # header
-                                  0x80,       # command (sending)
-                                  0x02,       # command type (read)
-                                  0x0C,       # length (data section, from here to CS)
-                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                  0x9B,       # CS (calculate and set)
-                                  0x0D, 0x0A  # end code
-                                  ])
-
-        baudRate = 9600
-        self.radioSerial.baudrate = baudRate
+        self.radioSerial.baudrate = 9600
         self.radioSerial.port = self.portName
         if not self.radioSerial.is_open:
             self.radioSerial.open()
         if self.radioSerial.is_open:
-            self.radioSerial.write(readSettingArray)
+            self.radioSerial.write(LoraRadio.ReadSettingCmd)
             self.radioSerial.flush()
 
-        time.sleep(0.5)
+        self.WaitForSerialUpToTimeMS(500)
         data = self.getRadioSettingsReply()
+
+        if len(data) == 0:
+            # switch to 57600
+            logging.debug("LoraRadio::Init() 9600 didn't work, change to 57600")
+            self.radioSerial.close()
+            self.radioSerial.baudrate = 57600
+            #self.hardwareAbstraction.DisableLora()
+            #time.sleep(0.2)
+            #self.hardwareAbstraction.EnableLora()
+            #time.sleep(0.2)
+            self.radioSerial.open()
+            time.sleep(2)
+
+        if len(data) == 0:
+            if self.radioSerial.is_open:
+                self.radioSerial.write(LoraRadio.ReadSettingCmd)
+                self.radioSerial.flush()
+                self.WaitForSerialUpToTimeMS(500)
+                data = self.getRadioSettingsReply()
 
         settingsArray = LoraRadio.getSettingsArray(channel, loraDataRate, loraPower)
 
         if data[8:16] == settingsArray[8:16]:
             self.isInitialized = True
             logging.info("LoraRadio::Init() Lora radio already configured correctly")
+            # restart the module, regardless if we changed baud rate or not because we want the firmware version number
+            self.firmwareVersion = self.RestartModule(57600)
             return True
         else:
             self.radioSerial.write(settingsArray)
@@ -222,10 +272,11 @@ class LoraRadio:
             setResponse = self.getRadioSettingsReply()
             if setResponse[8:15] == settingsArray[8:15]:
                 self.isInitialized = True
-                self.hardwareAbstraction.DisableLora()
-                time.sleep(0.2)
-                self.hardwareAbstraction.EnableLora()
+                #self.hardwareAbstraction.DisableLora()
+                #time.sleep(0.2)
+                #self.hardwareAbstraction.EnableLora()
                 logging.info("LoraRadio::Init() Now configured correctly")
+                self.firmwareVersion = self.RestartModule(57600)
                 return True
             else:
                 self.isInitialized = False
@@ -243,46 +294,102 @@ class LoraRadio:
                 return fullList[0:i]+fullList[i+len_s:]
         return fullList
 
-
-    def RestartModule(self):
-        logging.debug("LoraRadio::RestartModule() enter")
-        self.radioSerial.write(LoraRadio.RestartModuleCmd)
+    def ChangeToHigherBaudRate(self):
+        dataInHex = ''.join(format(x, '02x') for x in LoraRadio.WriteSerialBaudRateCmd)
+        logging.debug("LoraRadio::ChangeToHigherBaudRate() enter: " + dataInHex)
+        self.radioSerial.write(LoraRadio.WriteSerialBaudRateCmd)
         self.radioSerial.flush()
-        time.sleep(0.15)
+        self.WaitForSerialUpToTimeMS(250)
         allReceivedData = bytearray()
-        while self.radioSerial.in_waiting > 0 and len(allReceivedData) < 12:
+        while self.radioSerial.in_waiting > 0 and len(allReceivedData) < 13:
             # print("looking for stx: ", end="")
             bytesRead = self.radioSerial.read(1)
             allReceivedData.append(bytesRead[0])
-            if len(allReceivedData) < 12 and self.radioSerial.in_waiting == 0:
+            if len(allReceivedData) < 13 and self.radioSerial.in_waiting == 0:
+                    logging.info("LoraRadio::ChangeToHigherBaudRate() Sleep, wait for more bytes")
+                    time.sleep(0.05)
+                    if self.radioSerial.in_waiting == 0:
+                        break
+
+        dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
+        if len(allReceivedData) != 13:
+            logging.error("LoraRadio::ChangeToHigherBaudRate() incorrect response: " + dataInHex)
+        else:
+
+            logging.info("LoraRadio::ChangeToHigherBaudRate() Changed to 57600 baudrate: " + dataInHex)
+            #self.radioSerial.baudrate = 57600
+            #self.radioSerial.write(LoraRadio.ReadSerialBaudRateCmd)
+            #self.radioSerial.flush()
+            #time.sleep(0.25)
+            #allReceivedData = bytearray()
+            #while self.radioSerial.in_waiting > 0 and len(allReceivedData) < 13:
+                # print("looking for stx: ", end="")
+            #    bytesRead = self.radioSerial.read(1)
+            #    allReceivedData.append(bytesRead[0])
+            #    if len(allReceivedData) < 13 and self.radioSerial.in_waiting == 0:
+            #        logging.info("LoraRadio::ChangeToHigherBaudRate() Sleep, wait for more bytes")
+            #        time.sleep(0.05)
+            #        if self.radioSerial.in_waiting == 0:
+            #            break
+            #dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
+            #logging.info("LoraRadio::ChangeToHigherBaudRate() read baud rate: " + dataInHex)
+
+
+    def RestartModule(self, baudRateAfter):
+        dataInHex = ''.join(format(x, '02x') for x in LoraRadio.RestartModuleCmd)
+        logging.debug("LoraRadio::RestartModule() enter: " + dataInHex)
+        self.radioSerial.write(LoraRadio.RestartModuleCmd)
+        self.radioSerial.flush()
+        self.WaitForSerialUpToTimeMS(200)
+        allReceivedData = bytearray()
+        while self.radioSerial.in_waiting > 0 and len(allReceivedData) < 13:
+            # print("looking for stx: ", end="")
+            bytesRead = self.radioSerial.read(1)
+            allReceivedData.append(bytesRead[0])
+            if len(allReceivedData) < 13 and self.radioSerial.in_waiting == 0:
                     logging.info("LoraRadio::RestartModule() Sleep, wait for more bytes")
                     time.sleep(0.05)
                     if self.radioSerial.in_waiting == 0:
                         break
 
+        dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
         if len(allReceivedData) != 13:
-            logging.error("LoraRadio::RestartModule() incorrect response")
+            logging.error("LoraRadio::RestartModule() incorrect response: " + dataInHex)
 
-        time.sleep(0.5)
+        self.radioSerial.baudrate = 9600
+        self.WaitForSerialUpToTimeMS(2000)
         allReceivedData = bytearray()
         while self.radioSerial.in_waiting > 0:
-            # print("looking for stx: ", end="")
             bytesRead = self.radioSerial.read(1)
             allReceivedData.append(bytesRead[0])
-        logging.debug("Startup output: " + allReceivedData.decode("utf-8"))
+        dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
+        logging.debug("Startup output: " + dataInHex)
+        version = None
+        try:
+            startUpString = allReceivedData.decode("utf-8")
+            logging.info("LoraRadio Firmware: " + startUpString)
+            startUpStringArr = startUpString.split(" ")
+            if len(startUpStringArr) > 5:
+                version = startUpStringArr[5]
+        except:
+            logging.debug("Could not interpret startup string")
+        self.radioSerial.baudrate = baudRateAfter
+        return version
 
 
     def GetDetectAirSignal(self):
-        logging.debug("LoraRadio::GetDetectAirSignal() enter " + str(datetime.now()))
+        logging.debug("LoraRadio::GetDetectAirSignal() enter")
         self.radioSerial.write(LoraRadio.DetectAirSignalCmd)
         self.radioSerial.flush()
+        logging.debug("LoraRadio::GetDetectAirSignal() after flush")
+
         allReceivedData = bytearray()
         # wait up to 0.2 seconds for serial response to arrive
         for i in range(20):
             if self.radioSerial.in_waiting > 0:
                 break
             time.sleep(0.01)
-        logging.debug("LoraRadio::GetDetectAirSignal() after " + str(datetime.now()))
+        logging.debug("LoraRadio::GetDetectAirSignal() after resp")
         while self.radioSerial.in_waiting > 0 and len(allReceivedData) < 13:
             # print("looking for stx: ", end="")
             bytesRead = self.radioSerial.read(1)
@@ -360,7 +467,7 @@ class LoraRadio:
         # read all data before sending new messages, especially important to avoid receiving mixed data when detecting air signal
         if self.radioSerial.in_waiting > 0:
             return False
-        if self.hardwareAbstraction.runningOnNanoPi:
+        if self.hardwareAbstraction.typeOfDisplay == "OLED":
             return self.GetDetectAirSignal()
 
     def SendData(self, messageData):

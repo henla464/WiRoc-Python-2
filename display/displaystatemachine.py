@@ -40,15 +40,15 @@ class DisplayStateMachine(object):
             if byteRead > 0:
                 self.TypeOfDisplay = 'OLED'
                 if self.runningOnChip:
-                    self.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=2)
+                    OledDisplayState.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=2)
                 elif self.runningOnNanoPi:
-                    self.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=0)
+                    OledDisplayState.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=0)
                 # Initialize library.
                 OledDisplayState.OledDisp.begin()
 
                 # Clear display.
-                OledDisplayState.OledWidth = self.OledDisp.width
-                OledDisplayState.OledHeight = self.OledDisp.height
+                OledDisplayState.OledWidth = OledDisplayState.OledDisp.width
+                OledDisplayState.OledHeight = OledDisplayState.OledDisp.height
 
                 # Available states
                 DisplayStateMachine.SevenSegNormal = display.sevensegnormal.SevenSegNormal()
@@ -82,7 +82,7 @@ class DisplayStateMachine(object):
 
     def Draw(self, channel, ackRequested, wiRocMode, dataRate, deviceName):
         if self.currentState != None:
-            if HardwareAbstraction.Instance.GetIsShortKeyPress():
+            if HardwareAbstraction.Instance.GetIsShortKeyPress() or self.currentState == self.OledStartup:
                 HardwareAbstraction.Instance.ClearShortKeyPress()
                 self.currentState = self.currentState.Next()
             self.currentState.Draw(channel, ackRequested, wiRocMode, dataRate, deviceName)
