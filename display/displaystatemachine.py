@@ -14,6 +14,7 @@ from chipGPIO.hardwareAbstraction import HardwareAbstraction
 import display.displaystate
 import display.oledstartup
 import display.olednormal
+import display.oledoutput
 import display.sevensegnormal
 
 DisplayState = display.displaystate.DisplayState
@@ -23,6 +24,7 @@ class DisplayStateMachine(object):
     SevenSegNormal = None
     OledStartup = None
     OledNormal = None
+    OledOutput = None
 
     hardwareAbstraction = None
     def __init__(self):
@@ -54,6 +56,7 @@ class DisplayStateMachine(object):
                 DisplayStateMachine.SevenSegNormal = display.sevensegnormal.SevenSegNormal()
                 DisplayStateMachine.OledStartup = display.oledstartup.OledStartup()
                 DisplayStateMachine.OledNormal = display.olednormal.OledNormal()
+                DisplayStateMachine.OledOutput = display.oledoutput.OledOutput()
 
                 logging.info("Display::Init initialized the OLED")
             else:
@@ -80,12 +83,12 @@ class DisplayStateMachine(object):
     def GetTypeOfDisplay(self):
         return self.TypeOfDisplay
 
-    def Draw(self, channel, ackRequested, wiRocMode, dataRate, deviceName):
+    def Draw(self, channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort):
         if self.currentState != None:
             if HardwareAbstraction.Instance.GetIsShortKeyPress() or self.currentState == self.OledStartup:
                 HardwareAbstraction.Instance.ClearShortKeyPress()
                 self.currentState = self.currentState.Next()
-            self.currentState.Draw(channel, ackRequested, wiRocMode, dataRate, deviceName)
+            self.currentState.Draw(channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort)
 
 """
 class Display(object):

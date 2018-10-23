@@ -467,7 +467,7 @@ class LoraRadio:
         # read all data before sending new messages, especially important to avoid receiving mixed data when detecting air signal
         if self.radioSerial.in_waiting > 0:
             return False
-        if self.hardwareAbstraction.typeOfDisplay == "OLED":
+        if self.firmwareVersion == "v3.6":
             return self.GetDetectAirSignal()
 
     def SendData(self, messageData):

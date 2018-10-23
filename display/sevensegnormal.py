@@ -3,7 +3,7 @@ import display.displaystate
 from chipGPIO.chipGPIO import *
 
 class SevenSegNormal(display.displaystate.DisplayState):
-    def Draw(self,channel, ackRequested, wiRocMode, dataRate, deviceName):
+    def Draw(self,channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort):
         # def displayChannel(self, channel, ackRequested):
         if channel != display.displaystate.DisplayState.channel or ackRequested != display.displaystate.DisplayState.ackRequested:
             self.channel = channel

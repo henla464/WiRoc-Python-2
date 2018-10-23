@@ -109,7 +109,7 @@ class OledNormal(OledDisplayState):
             if (percent > 20):
                 self.OledDraw.line((x + 20, top + 9, x + 20, top + -1), fill=255)
 
-    def Draw(self, channel, ackRequested, wiRocMode, dataRate, deviceName):
+    def Draw(self, channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort):
         if self.channel != channel:
             self.channel = channel
             self.imageChanged = True
@@ -145,4 +145,4 @@ class OledNormal(OledDisplayState):
         # set imageChanged to true because next time this state is entered we
         # should draw the image
         self.imageChanged = True
-        return display.displaystatemachine.DisplayStateMachine.OledStartup
+        return display.displaystatemachine.DisplayStateMachine.OledOutput
