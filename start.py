@@ -133,9 +133,9 @@ class Main:
             logging.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
             DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
 
-    def reconfigureBackground(self,channel,ackRequested, sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost, wirocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort):
+    def reconfigureBackground(self,channel,ackRequested, sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost, wirocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
         #self.displayChannel(channel,ackRequested)
-        self.displayStateMachine.Draw(channel, ackRequested, wirocMode, dataRate, wirocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort)
+        self.displayStateMachine.Draw(channel, ackRequested, wirocMode, dataRate, wirocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
         self.updateWebserverIPBackground(webServerHost)
         self.webServerUp = SendStatusAdapter.TestConnection(webServerIPUrl, webServerHost)
         Battery.UpdateWifiPowerSaving(sendToMeos)
@@ -163,6 +163,7 @@ class Main:
         sendSerialActive = False
         sirapIPAddress = ""
         sirapIPPort = 0
+        wiRocIPAddress = ""
         if self.runningOnChip:
             channel = SettingsClass.GetChannel()
             ackRequested = SettingsClass.GetAcknowledgementRequested()
@@ -174,7 +175,7 @@ class Main:
             sirapIPAddress = SettingsClass.GetSendToMeosIP()
             sirapIPPort = SettingsClass.GetSendToMeosIPPort()
 
-        t = threading.Thread(target=self.reconfigureBackground, args=(channel,ackRequested,sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost, wiRocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort))
+        t = threading.Thread(target=self.reconfigureBackground, args=(channel,ackRequested,sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost, wiRocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress))
         t.daemon = True
         t.start()
 

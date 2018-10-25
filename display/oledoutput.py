@@ -12,7 +12,6 @@ class OledOutput(display.displaystate.OledDisplayState):
     def __init__(self):
         self.imageChanged = True
         self.showPort = False
-        self.deviceName = None
         self.sirapTCPEnabled = False
         self.sendSerialActive = False
         self.sirapIPAddress = ""
@@ -23,7 +22,7 @@ class OledOutput(display.displaystate.OledDisplayState):
         self.OledDraw.text((3, 16), "To:" , font=self.OledThinFont2, fill=255)
 
 
-    def Draw(self,channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort):
+    def Draw(self,channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
         if self.sirapTCPEnabled != sirapTCPEnabled:
             self.imageChanged = True
             logging.debug("OledStartup::Draw sirapTCPEnabled changed")
@@ -70,4 +69,4 @@ class OledOutput(display.displaystate.OledDisplayState):
         # set imageChanged to true because next time this state is entered we
         # should draw the image
         self.imageChanged = True
-        return display.displaystatemachine.DisplayStateMachine.OledStartup
+        return display.displaystatemachine.DisplayStateMachine.OledWiRocIP
