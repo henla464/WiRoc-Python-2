@@ -5,6 +5,8 @@ from PIL import ImageDraw
 import logging
 from pathlib import Path
 
+OledDisplayState = display.displaystate.OledDisplayState
+
 class OledStartup(display.displaystate.OledDisplayState):
     def __init__(self):
         self.imageChanged = True
@@ -36,8 +38,8 @@ class OledStartup(display.displaystate.OledDisplayState):
             self.OledDraw.text((1, 16), deviceName, font=self.OledThinFont2, fill=255)
 
         if self.imageChanged:
-            display.displaystate.OledDisplayState.OledDisp.image(self.OledImage)
-            self.OledDisp.display()
+            OledDisplayState.OledDisp.image(self.OledImage)
+            OledDisplayState.OledDisp.display()
 
     def Next(self):
         # set imageChanged to true because next time this state is entered we

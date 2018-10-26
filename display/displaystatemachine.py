@@ -78,7 +78,7 @@ class DisplayStateMachine(object):
             HardwareAbstraction.Instance = HardwareAbstraction(self.TypeOfDisplay)
 
         if self.TypeOfDisplay == 'OLED':
-            self.currentState = DisplayStateMachine.OledStartup
+            self.currentState = None
         elif self.TypeOfDisplay == '7SEG':
             self.currentState = DisplayStateMachine.SevenSegNormal
 
@@ -91,5 +91,7 @@ class DisplayStateMachine(object):
             if HardwareAbstraction.Instance.GetIsShortKeyPress() or self.currentState == self.OledStartup:
                 HardwareAbstraction.Instance.ClearShortKeyPress()
                 self.currentState = self.currentState.Next()
-            self.currentState.Draw(channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
+        else:
+            self.currentState = DisplayStateMachine.OledStartup
+        self.currentState.Draw(channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
 

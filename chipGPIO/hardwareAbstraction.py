@@ -80,7 +80,7 @@ class HardwareAbstraction(object):
         return 0
 
     def GetWiRocIPAddresses(self):
-        ipAddresses = str(subprocess.check_output(["hostname", "-I"]))
+        ipAddresses = subprocess.check_output(["hostname", "-I"]).decode('ascii')
         ipAddressesArray = ipAddresses.split(" ")
         return ipAddressesArray
 
