@@ -79,6 +79,11 @@ class HardwareAbstraction(object):
 
         return 0
 
+    def GetWiRocIPAddresses(self):
+        ipAddresses = str(subprocess.check_output(["hostname", "-I"]))
+        ipAddressesArray = ipAddresses.split(" ")
+        return ipAddressesArray
+
     def GetIsShortKeyPress(self):
         if self.runningOnChip or self.runningOnNanoPi:
             logging.debug("HardwareAbstraction::GetIsShortKeyPress")

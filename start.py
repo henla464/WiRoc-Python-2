@@ -83,8 +83,6 @@ class Main:
         t.daemon = True
         t.start()
 
-        self.runningOnChip = socket.gethostname() == 'chip'
-
     def updateWebserverIPBackground(self, webServerHost):
         try:
             logging.debug("Start::updateWebserverIPBackground " + str(datetime.now()))
@@ -163,8 +161,8 @@ class Main:
         sendSerialActive = False
         sirapIPAddress = ""
         sirapIPPort = 0
-        wiRocIPAddress = ""
-        if self.runningOnChip:
+        wiRocIPAddress = [""]
+        if HardwareAbstraction.Instance.runningOnChip or HardwareAbstraction.Instance.runningOnNanoPi:
             channel = SettingsClass.GetChannel()
             ackRequested = SettingsClass.GetAcknowledgementRequested()
             sendToMeos = SettingsClass.GetSendToMeosEnabled()
@@ -174,6 +172,7 @@ class Main:
             sendSerialActive = SettingsClass.GetSendSerialAdapterActive()
             sirapIPAddress = SettingsClass.GetSendToMeosIP()
             sirapIPPort = SettingsClass.GetSendToMeosIPPort()
+            wiRocIPAddress = HardwareAbstraction.Instance.GetWiRocIPAddresses()
 
         t = threading.Thread(target=self.reconfigureBackground, args=(channel,ackRequested,sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost, wiRocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress))
         t.daemon = True

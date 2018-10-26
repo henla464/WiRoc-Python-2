@@ -17,11 +17,13 @@ class OledWiRocIP(display.displaystate.OledDisplayState):
         self.OledDraw.text((3, 1), "WiRoc IP address", font=self.OledThinFont2, fill=255)
 
     def Draw(self,channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
-        if self.wiRocIPAddress != wiRocIPAddress:
+        if len(set(self.wiRocIPAddress).intersection(wiRocIPAddress)) != len(wiRocIPAddress):
+            self.wiRocIPAddress = wiRocIPAddress
             self.imageChanged = True
             logging.debug("OledStartup::Draw wiRocIPAddress changed")
             self.OledDraw.rectangle((3, 16, 128, 31), outline=0, fill=0)
-            self.OledDraw.text((3, 1), self.wiRocIPAddress, font=self.OledThinFont2, fill=255)
+            if len(self.wiRocIPAddress) > 0:
+                self.OledDraw.text((3, 1), self.wiRocIPAddress[0], font=self.OledThinFont2, fill=255)
 
         if self.imageChanged:
             display.displaystate.OledDisplayState.OledDisp.image(self.OledImage)
