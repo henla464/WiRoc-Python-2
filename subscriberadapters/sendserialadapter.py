@@ -13,7 +13,7 @@ class SendSerialAdapter(object):
     def CreateInstances():
         serialPorts = []
 
-        if socket.gethostname() == 'chip':
+        if socket.gethostname() == 'chip' or socket.gethostname() == 'nanopiair':
             if os.path.exists('/dev/ttyGS0'):
                 serialPorts.append('/dev/ttyGS0')
 

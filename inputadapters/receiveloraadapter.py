@@ -18,9 +18,9 @@ class ReceiveLoraAdapter(object):
     def CreateInstances(hardwareAbstraction):
         # check the number of lora radios and return an instance for each
         serialPorts = []
-        if socket.gethostname() == 'chip':
+        if hardwareAbstraction.runningOnChip:
             serialPorts.append('/dev/ttyS2')
-        elif socket.gethostname() == 'nanopiair':
+        elif hardwareAbstraction.runningOnNanoPi:
             serialPorts.append('/dev/ttyS1')
         else:
             portInfoList = serial.tools.list_ports.grep('10c4:ea60')

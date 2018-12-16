@@ -45,17 +45,15 @@ class SerialComputer:
                 self.noOfTimesUSBCableInserted = noOfTimesUSBCableInserted
 
         if shouldTest:
-            #wasOpened = False
-            if not self.compSerial.is_open:
-                self.compSerial.baudrate = 38400
-                self.compSerial.port = self.portName
-                self.compSerial.writeTimeout = 0.01
-                self.compSerial.open()
-                self.compSerial.reset_input_buffer()
-                self.compSerial.reset_output_buffer()
-                #wasOpened = True
-
             try:
+                if not self.compSerial.is_open:
+                    self.compSerial.baudrate = 38400
+                    self.compSerial.port = self.portName
+                    self.compSerial.writeTimeout = 0.01
+                    self.compSerial.open()
+                    self.compSerial.reset_input_buffer()
+                    self.compSerial.reset_output_buffer()
+
                 if self.compSerial.is_open:
                     # I'm a WiRoc device, code 0x01, len 0x01, "random data byte": 0x55, crc0 crc1
                     imAWiRoc = bytearray([0x02, 0x01, 0x01, 0x55, 0x53, 0x06, 0x03])

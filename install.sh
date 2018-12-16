@@ -1,13 +1,9 @@
 #!/bin/bash
 #systemctl disable apt-daily.service # disable run when system boot
 #systemctl disable apt-daily.timer   # disable timer run
-#sudo pip3 install wheel
-#apt-get install python3-setuptools
-#apt-get install python3-dev
-#pip3 install requests
 
-WiRocPython2Version="0.103"
-WiRocBLEVersion="0.27"
+WiRocPython2Version="0.113"
+WiRocBLEVersion="0.30"
 
 
 echo "update"
@@ -31,7 +27,11 @@ echo "python/pip"
 apt-get -y install python3
 apt-get -y install python3-pip
 apt-get -y install python3-setuptools
+apt-get -y install python3-dev
 pip3 install -U setuptools
+pip3 install wheel
+pip3 install requests
+
 
 echo "flask"
 #read line
@@ -52,10 +52,8 @@ echo "pyudev"
 #read line
 #Install pyudev
 pip3 install pyudev
-#pip3 install requests
 pip3 install daemonize
 pip3 install smbus2
-apt-get install python3-dev
 
 pip3 install Adafruit_BBIO #not actually used but it is loaded by gpio because it thinks chip is bb
 pip3 install Adafruit_SSD1306
@@ -146,6 +144,8 @@ chmod +x /home/chip/WiRoc-StartupScripts/Startup.sh
 if ! [[ $(hostname -s) = nanopiair ]]; then
     wget -O /home/chip/WiRoc-StartupScripts/setGPIOuart2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/setGPIOuart2
     chmod +x /home/chip/WiRoc-StartupScripts/setGPIOuart2
+else
+    wget -O /usr/bin/devmem2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/devmem2
 fi
 wget -O /etc/systemd/system/WiRocPython.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPython.service
 wget -O /etc/systemd/system/WiRocPythonWS.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPythonWS.service
@@ -211,13 +211,16 @@ if [[ $(hostname -s) = nanopiair ]]; then
         sed -i 's/PORT=ttyS1/PORT=ttyS3/' /etc/default/ap6212
     fi
 
-    if ! grep -Fxq "" /etc/init.d/ap6212-bluetooth
+    if ! grep -Fxq "echo 205" /etc/init.d/ap6212-bluetooth
     then
         echo "Replace ap6212-bluetooth"
         cp /etc/init.d/ap6212-bluetooth ~/ap6212-bluetooth.backup
         wget -O /etc/init.d/ap6212-bluetooth https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/ap6212-bluetooth
         chmod ugo+x /etc/init.d/ap6212-bluetooth
     fi
+
+    wget -O /home/chip/bluez_5.43-2%2Bdeb9u1_armhf-fix.deb https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/bluez_5.43-2%2Bdeb9u1_armhf-fix.deb
+    dpkg -i /home/chip/bluez_5.43-2%2Bdeb9u1_armhf-fix.deb
 
 else
     mkdir /lib/modules/4.4.13-ntc-mlc/kernel/drivers/usb/class

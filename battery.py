@@ -11,15 +11,17 @@ class Battery(object):
     currentMode = None
     limitCurrentMode = None
     isRunningOnChip = False
+    isRunningOnNanoPi = False
     wifiPowerSaving = None
 
     @classmethod
     def Setup(cls):
         cls.isRunningOnChip = (socket.gethostname() == 'chip')
+        cls.isRunningOnNanoPi = (socket.gethostname() == 'nanopiair')
 
     @classmethod
     def LimitCurrentDrawTo100IfBatteryOK(cls):
-        if cls.isRunningOnChip:
+        if cls.isRunningOnChip or cls.isRunningOnNanoPi:
             if cls.limitCurrentMode != "100":
                 if cls.GetBatteryPercent() > 20:
                     logging.info("Battery::LimitCurrentDrawTo100 Set to draw max 100mA from USB")
@@ -35,7 +37,7 @@ class Battery(object):
 
     @classmethod
     def LimitCurrentDrawTo900(cls):
-        if cls.isRunningOnChip and cls.limitCurrentMode != "900":
+        if (cls.isRunningOnChip or cls.isRunningOnNanoPi) and cls.limitCurrentMode != "900":
             logging.info("Battery::LimitCurrentDrawTo100 Set to draw max 900mA from USB")
             os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x30 0x60'")
             cls.limitCurrentMode = "900"
@@ -43,7 +45,7 @@ class Battery(object):
 
     @classmethod
     def DisableChargingIfBatteryOK(cls):
-        if cls.isRunningOnChip:
+        if cls.isRunningOnChip or cls.isRunningOnNanoPi:
             if cls.currentMode != "DISABLED":
                 if cls.GetBatteryPercent() > 15:
                     logging.info("Battery::DisableCharging Disable charging")
@@ -59,7 +61,7 @@ class Battery(object):
 
     @classmethod
     def SetSlowCharging(cls):
-        if cls.isRunningOnChip and cls.currentMode != "SLOW":
+        if (cls.isRunningOnChip  or cls.isRunningOnNanoPi) and cls.currentMode != "SLOW":
             logging.info("Battery::SetSlowCharging Charging set to slow")
             os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x33 0xC1'")
             cls.currentMode = "SLOW"
@@ -67,7 +69,7 @@ class Battery(object):
 
     @classmethod
     def SetNormalCharging(cls):
-        if cls.isRunningOnChip and cls.currentMode != "NORMAL":
+        if (cls.isRunningOnChip  or cls.isRunningOnNanoPi) and cls.currentMode != "NORMAL":
             logging.info("Battery::SetNormalCharging Charging set to normal")
             os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x33 0xC9'")
             cls.currentMode = "NORMAL"
@@ -82,7 +84,7 @@ class Battery(object):
 
     @classmethod
     def IsCharging(cls):
-        if cls.isRunningOnChip:
+        if cls.isRunningOnChip or cls.isRunningOnNanoPi:
             logging.debug("Battery::IsCharging")
             strValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x01").read()
             intValue = int(strValue, 16)
@@ -92,7 +94,7 @@ class Battery(object):
 
     @classmethod
     def IsPowerSupplied(cls):
-        if cls.isRunningOnChip:
+        if cls.isRunningOnChip or cls.isRunningOnNanoPi:
             logging.debug("Battery::IsPowerSupplied")
             strValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x00").read()
             intValue = int(strValue, 16)
@@ -102,7 +104,7 @@ class Battery(object):
 
     @classmethod
     def GetIsBatteryLow(cls):
-        if cls.isRunningOnChip:
+        if cls.isRunningOnChip or cls.isRunningOnNanoPi:
             logging.debug("Battery::GetIsBatteryLow")
             strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
             intPercentValue = int(strPercentValue, 16)
@@ -112,7 +114,7 @@ class Battery(object):
 
     @classmethod
     def GetBatteryPercent(cls):
-        if cls.isRunningOnChip:
+        if cls.isRunningOnChip or cls.isRunningOnNanoPi:
             logging.debug("Battery::GetBatteryPercent")
             strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
             intPercentValue = int(strPercentValue, 16)
@@ -122,7 +124,7 @@ class Battery(object):
 
     @classmethod
     def GetBatteryPercent4Bits(cls):
-        if cls.isRunningOnChip:
+        if cls.isRunningOnChip or cls.isRunningOnNanoPi:
             logging.debug("Battery::GetBatteryPercent4Bits")
             strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
             intPercentValue = min(int(strPercentValue, 16), 100)
@@ -132,7 +134,7 @@ class Battery(object):
 
     @classmethod
     def UpdateWifiPowerSaving(cls, sendToMeos):
-        if cls.isRunningOnChip:
+        if cls.isRunningOnChip or cls.isRunningOnNanoPi:
             if sendToMeos and (cls.wifiPowerSaving or cls.wifiPowerSaving is None):
                 # disable power saving
                 logging.info("Start::updateWifiPowerSaving() Disable WiFi power saving")

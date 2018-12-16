@@ -25,6 +25,44 @@ from settings.settings import SettingsClass
 class Setup:
     SubscriberAdapters = None
     InputAdapters = None
+
+    @staticmethod
+    def SetupInputAdapters():  # createMessageTypeIfNotExist = False):
+        inputObjects = []
+        inChange1 = CreateStatusAdapter.CreateInstances()  #uses db
+        inChange2 = ReceiveLoraAdapter.CreateInstances(HardwareAbstraction.Instance) #doesn't use db, init uses
+        inChange3 = ReceiveSerialComputerAdapter.CreateInstances(HardwareAbstraction.Instance) #doesn't use db,
+        inChange4 = ReceiveSIAdapter.CreateInstances() #uses db, writes to it
+        inChange5 = ReceiveTestPunchesAdapter.CreateInstances() #no doesnt use db
+        inChange6 = ReceiveRepeaterMessagesAdapter.CreateInstances() #no doesnt use db
+        inputObjects.extend(CreateStatusAdapter.Instances)
+        inputObjects.extend(ReceiveLoraAdapter.Instances)
+        inputObjects.extend(ReceiveSerialComputerAdapter.Instances)
+        inputObjects.extend(ReceiveSIAdapter.Instances)
+        inputObjects.extend(ReceiveTestPunchesAdapter.Instances)
+        inputObjects.extend(ReceiveRepeaterMessagesAdapter.Instances)
+
+        anyShouldBeInitialized = False
+        for inst in inputObjects:
+            if inst.ShouldBeInitialized():
+                anyShouldBeInitialized = True
+
+        if (not anyShouldBeInitialized and not SettingsClass.GetForceReconfigure()
+            and not inChange1 and not inChange2 and not inChange3 and not inChange4
+            and not inChange5 and not inChange6):
+            return False
+
+        SettingsClass.SetForceReconfigure(False)
+
+        for adapterObj in inputObjects:
+            logging.debug(
+                "Setup::SetupInputAdapters() Before Init() input adapter: " + str(adapterObj.GetInstanceName()))
+            adapterObj.Init()
+        DatabaseHelper.update_input_adapter_instances(inputObjects)
+
+        Setup.InputAdapters = inputObjects
+        return True
+
     @staticmethod
     def SetupAdapters(): #createMessageTypeIfNotExist = False):
         subscriberObjects = []

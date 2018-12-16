@@ -1,5 +1,5 @@
 from serialcomputer.serialcomputer import SerialComputer
-import socket, os
+import os
 import logging
 from constants import *
 from utils.utils import Utils
@@ -13,10 +13,10 @@ class ReceiveSerialComputerAdapter(object):
     Instances = []
     randomSerialNumber = None
     @staticmethod
-    def CreateInstances():
+    def CreateInstances(hardwareAbstraction):
         serialPort = None
 
-        if socket.gethostname() == 'chip':
+        if hardwareAbstraction.runningOnChip or hardwareAbstraction.runningOnChip:
             if os.path.exists('/dev/ttyGS0'):
                 serialPort = '/dev/ttyGS0'
 

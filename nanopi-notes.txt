@@ -1,9 +1,65 @@
 
 
 ==========
-
 nanopi
+==========
+Install armbian
+---------------
+# Download Armbian Stretch: mainline kernel 4.14.y
+# See https://docs.armbian.com/User-Guide_Getting-Started/
+# Decompress
+> cd  ~/Downloads/
+> p7zip -d Armbian_5.65_Nanopiair_Debian_stretch_next_4.14.78.7z
+# Check download authenticity
+> gpg --keyserver pgp.mit.edu --recv-key DF00FAF1C577104B50BF1D0093D6889F9F0E78D5
+> gpg --verify Armbian_5.65_Nanopiair_Debian_stretch_next_4.14.78.img.asc
+# Check download integrity
+> shasum -a 256 -c sha256sum.sha Armbian_5.65*.img
 
+Use Etcher to write to SD-card
+
+Boot
+-------
+Put the SD card in
+Connect usb to computer
+> screen /dev/ttyACM0
+log in with user root, password 1234
+set new root password to chipchip when asked
+enter chip as username
+enter chip as password
+press enter to enter empty strings for names etc
+log out and log in as chip
+
+
+Connect
+--------
+> sudo nmcli device wifi connect 'WiRoc' password 'WiRocWiRoc' ifname wlan0
+
+Install script
+-------------
+> sudo nano install.sh
+Paste in the script
+> chmod ugo+x install.sh
+> sudo ./install.sh
+
+
+
+
+
+
+--------------
+#recompile bluez with fix
+#https://raphaelhertzog.com/2010/12/15/howto-to-rebuild-debian-packages/
+#https://github.com/OpenELEC/OpenELEC.tv/blob/6b9e7aaba7b3f1e7b69c8deb1558ef652dd5b82d/packages/network/bluez/patches/bluez-07-broadcom-dont-set-speed-before-loading.patch
+change /etc/apt/sources.list to include the src lines
+>apt-get update
+>apt-get source bluez
+>apt-get build-dep bluez
+>apt-get install devscripts
+>apt-get install fakeroot
+make changes
+>dpkg-source --commit
+>debuild -us -uc
 
 Overlays!
 ----------
@@ -92,6 +148,8 @@ And for PG11 :
 
 (alphabet - 'A') * 32 + pin no.  = A3 = (6)*32 + 11 = 203
 
+and PA6 (status led)
+A6 => 6
 
 // bdaddr tool change bluetood address
 https://stackoverflow.com/questions/28669725/change-bluetooth-mac-address-in-raspbian

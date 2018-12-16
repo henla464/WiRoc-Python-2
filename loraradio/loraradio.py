@@ -370,7 +370,7 @@ class LoraRadio:
             logging.info("LoraRadio Firmware: " + startUpString)
             startUpStringArr = startUpString.split(" ")
             if len(startUpStringArr) > 5:
-                version = startUpStringArr[5]
+                version = startUpStringArr[5].rstrip()
         except:
             logging.debug("Could not interpret startup string")
         self.radioSerial.baudrate = baudRateAfter
@@ -467,7 +467,7 @@ class LoraRadio:
         # read all data before sending new messages, especially important to avoid receiving mixed data when detecting air signal
         if self.radioSerial.in_waiting > 0:
             return False
-        if self.firmwareVersion == "v3.6":
+        if self.firmwareVersion == "V3.6":
             return self.GetDetectAirSignal()
 
     def SendData(self, messageData):
