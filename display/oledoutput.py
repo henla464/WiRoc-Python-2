@@ -12,8 +12,8 @@ class OledOutput(display.displaystate.OledDisplayState):
     def __init__(self):
         self.imageChanged = True
         self.showPort = False
-        self.sirapTCPEnabled = False
-        self.sendSerialActive = False
+        self.sirapTCPEnabled = None
+        self.sendSerialActive = None
         self.sirapIPAddress = ""
         self.sirapIPPort = ""
         self.OledImage = Image.new('1', (display.displaystate.OledDisplayState.OledWidth, display.displaystate.OledDisplayState.OledHeight))
