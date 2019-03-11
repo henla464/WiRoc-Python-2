@@ -12,7 +12,7 @@ class OledNormal(OledDisplayState):
     def __init__(self):
         self.batteryPercent = 0
         self.NormalOledImage = None
-        self.wifiStrength = None
+        self.wifiNoOfBars = 0
         self.channel = None
         self.wirocMode = None
         self.ackRequested = None
@@ -83,31 +83,41 @@ class OledNormal(OledDisplayState):
     def DrawOledWifi(self):
         percent = HardwareAbstraction.Instance.GetWifiSignalStrength()
 
-        if percent == 0:
+        # None is returned for devices that doesn't support getting signal strength
+        if percent == None or percent == 0:
             return None
+        noOfBars = 0
+        if(percent > 75):
+            noOfBars = 4
+        elif (percent > 55):
+            noOfBars = 3
+        elif (percent > 35):
+            noOfBars = 2
+        elif (percent > 15):
+            noOfBars = 1
 
-        if percent == self.wifiStrength:
+        if noOfBars == self.wifiNoOfBars:
             return None
-        self.wifiStrength = percent
+        logging.debug("OledNormal::DrawOledWifi imagechanged: old: " + str(self.wifiNoOfBars) +  " new: " + str(noOfBars))
+        self.wifiNoOfBars = noOfBars
         self.imageChanged = True
-        logging.debug("OledNormal::DrawOledWifi imagechanged")
+
 
         x = 72
         top = 2
-        self.OledDraw.rectangle((x, top, x+21, top+9), outline=0, fill=0)
+        self.OledDraw.rectangle((x, top-1, x+21, top+9), outline=0, fill=0)
         self.OledDraw.arc([(x, top), (x + 16, top + 16)], 210, 330, fill=255)
         self.OledDraw.arc([(x + 3, top + 3), (x + 13, top + 13)], 210, 335, fill=255)
         self.OledDraw.ellipse((x + 7, top + 7, x + 9, top + 9), outline=255, fill=255)
 
-        if False: #nmcli on chip doesn't give correct numbers when connected to wifi, maybe nanopi does?
-            if (percent > 80):
-                self.OledDraw.line((x + 14, top + 9, x + 14, top + 8), fill=255)
-            if (percent > 60):
-                self.OledDraw.line((x + 16, top + 9, x + 16, top + 5), fill=255)
-            if (percent > 40):
-                self.OledDraw.line((x + 18, top + 9, x + 18, top + 2), fill=255)
-            if (percent > 20):
-                self.OledDraw.line((x + 20, top + 9, x + 20, top + -1), fill=255)
+        if (noOfBars >= 1):
+            self.OledDraw.line((x + 14, top + 9, x + 14, top + 8), fill=255)
+        if (noOfBars >= 2):
+            self.OledDraw.line((x + 16, top + 9, x + 16, top + 5), fill=255)
+        if (noOfBars >= 3):
+            self.OledDraw.line((x + 18, top + 9, x + 18, top + 2), fill=255)
+        if (noOfBars >= 4):
+            self.OledDraw.line((x + 20, top + 9, x + 20, top + -1), fill=255)
 
     def Draw(self, channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
         if self.channel != channel:

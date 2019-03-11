@@ -72,12 +72,12 @@ class HardwareAbstraction(object):
         return False
 
     def GetWifiSignalStrength(self):
-        wifiInUseSSIDSignal = str(subprocess.check_output(["nmcli", "-t", "-f", "in-use,ssid,signal", "device", "wifi"]))
-        for row in wifiInUseSSIDSignal.split('\\n'):
-            if row.startswith('*'):
-                return int(row.split(':')[2])
-
-        return 0
+        if self.runningOnNanoPi:
+            wifiInUseSSIDSignal = str(subprocess.check_output(["nmcli", "-t", "-f", "in-use,ssid,signal", "device", "wifi"]))
+            for row in wifiInUseSSIDSignal.split('\\n'):
+                if row.startswith('*'):
+                    return int(row.split(':')[2])
+        return None
 
     def GetWiRocIPAddresses(self):
         ipAddresses = subprocess.check_output(["hostname", "-I"]).decode('ascii')

@@ -80,7 +80,7 @@ class Setup:
         inputObjects = []
         inChange1 = CreateStatusAdapter.CreateInstances()
         inChange2 = ReceiveLoraAdapter.CreateInstances(HardwareAbstraction.Instance)
-        inChange3 = ReceiveSerialComputerAdapter.CreateInstances()
+        inChange3 = ReceiveSerialComputerAdapter.CreateInstances(HardwareAbstraction.Instance)
         inChange4 = ReceiveSIAdapter.CreateInstances()
         inChange5 = ReceiveTestPunchesAdapter.CreateInstances()
         inChange6 = ReceiveRepeaterMessagesAdapter.CreateInstances()
