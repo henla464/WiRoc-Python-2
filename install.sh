@@ -2,14 +2,16 @@
 #systemctl disable apt-daily.service # disable run when system boot
 #systemctl disable apt-daily.timer   # disable timer run
 
-WiRocPython2Version="0.113"
-WiRocBLEVersion="0.30"
+WiRocPython2Version="0.116"
+WiRocBLEVersion="0.32"
 
 
 echo "update"
 #read line
 # update app list
 apt-get update
+
+apt-get -y install git
 
 echo "zip"
 apt-get install zip
@@ -125,15 +127,15 @@ npm --unsafe-perm install bluetooth-hci-socket
 echo "install bleno"
 #read line
 #install bleno
-if [[ $(hostname -s) = nanopiair ]]; then
+#if [[ $(hostname -s) = nanopiair ]]; then
     npm install henla464/bleno
-else
-    npm install bleno
-    wget -O /home/chip/node_modules/bleno/lib/bleno.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/bleno.js
-    wget -O /home/chip/node_modules/bleno/lib/hci-socket/acl-stream.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/hci-socket/acl-stream.js
-    wget -O /home/chip/node_modules/bleno/lib/hci-socket/bindings.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/hci-socket/bindings.js
-    wget -O /home/chip/node_modules/bleno/lib/hci-socket/hci.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/hci-socket/hci.js
-fi
+#else
+#    npm install bleno
+#    wget -O /home/chip/node_modules/bleno/lib/bleno.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/bleno.js
+#    wget -O /home/chip/node_modules/bleno/lib/hci-socket/acl-stream.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/hci-socket/acl-stream.js
+#    wget -O /home/chip/node_modules/bleno/lib/hci-socket/bindings.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/hci-socket/bindings.js
+#    wget -O /home/chip/node_modules/bleno/lib/hci-socket/hci.js https://raw.githubusercontent.com/sandeepmistry/bleno/2548cc375646717ae76259d8a780159f9834b361/lib/hci-socket/hci.js
+#fi
 
 echo "install startup scripts"
 #read line

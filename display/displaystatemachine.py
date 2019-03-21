@@ -11,15 +11,9 @@ sys.path.append('..')
 #import subprocess
 import logging
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
-import display.displaystate
-import display.oledstartup
-import display.olednormal
-import display.oledoutput
-import display.oledwirocip
-import display.sevensegnormal
 
-DisplayState = display.displaystate.DisplayState
-OledDisplayState = display.displaystate.OledDisplayState
+#DisplayState = display.displaystate.DisplayState
+#OledDisplayState = None
 
 class DisplayStateMachine(object):
     SevenSegNormal = None
@@ -40,9 +34,16 @@ class DisplayStateMachine(object):
                 self.bus = SMBus(2)
             elif self.runningOnNanoPi:
                 self.bus = SMBus(0)
-            byteRead = self.bus.read_byte(OledDisplayState.OledAddress)
+            oledAddress = 0x3c
+            byteRead = self.bus.read_byte(oledAddress)
             if byteRead > 0:
                 self.TypeOfDisplay = 'OLED'
+                from display.displaystate import OledDisplayState
+                import display.oledstartup
+                import display.olednormal
+                import display.oledoutput
+                import display.oledwirocip
+                #OledDisplayState = display.displaystate.OledDisplayState
                 if self.runningOnChip:
                     OledDisplayState.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=2)
                 elif self.runningOnNanoPi:
@@ -64,14 +65,18 @@ class DisplayStateMachine(object):
                 logging.info("Display::Init initialized the OLED")
             else:
                 if self.runningOnChip:
+                    logging.debug("DisplayStateMachine::Init 7SEG 1")
                     self.TypeOfDisplay = '7SEG'
                 else:
+                    logging.debug("DisplayStateMachine::Init No display 1")
                     self.TypeOfDisplay = 'NO_DISPLAY'
         except Exception as ex:
             print(ex)
             if self.runningOnChip:
+                logging.debug("DisplayStateMachine::Init 7SEG 2")
                 self.TypeOfDisplay = '7SEG'
             else:
+                logging.debug("DisplayStateMachine::Init no display")
                 self.TypeOfDisplay = 'NO_DISPLAY'
 
         if HardwareAbstraction.Instance == None:
@@ -80,6 +85,9 @@ class DisplayStateMachine(object):
         if self.TypeOfDisplay == 'OLED':
             self.currentState = None
         elif self.TypeOfDisplay == '7SEG':
+            import display.sevensegnormal
+            # Available states
+            DisplayStateMachine.SevenSegNormal = display.sevensegnormal.SevenSegNormal()
             self.currentState = DisplayStateMachine.SevenSegNormal
 
 

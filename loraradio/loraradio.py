@@ -359,13 +359,14 @@ class LoraRadio:
         self.radioSerial.baudrate = 9600
         self.WaitForSerialUpToTimeMS(2000)
         allReceivedData = bytearray()
-        while self.radioSerial.in_waiting > 0:
-            bytesRead = self.radioSerial.read(1)
-            allReceivedData.append(bytesRead[0])
-        dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
-        logging.debug("Startup output: " + dataInHex)
-        version = None
         try:
+            while self.radioSerial.in_waiting > 0:
+                bytesRead = self.radioSerial.read(1)
+                allReceivedData.append(bytesRead[0])
+            dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
+            logging.debug("Startup output: " + dataInHex)
+            version = None
+
             startUpString = allReceivedData.decode("utf-8")
             logging.info("LoraRadio Firmware: " + startUpString)
             startUpStringArr = startUpString.split(" ")

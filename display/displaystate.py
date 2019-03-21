@@ -11,7 +11,7 @@ class DisplayState(object):
 
 class OledDisplayState(DisplayState):
     OledDisp = None
-    OledAddress = 0x3c
+    #OledAddress = 0x3c
     OledWidth = 0
     OledHeight = 0
     OledThinFont = ImageFont.truetype('display/GeosansLight.ttf', 10)
