@@ -2,7 +2,7 @@
 #systemctl disable apt-daily.service # disable run when system boot
 #systemctl disable apt-daily.timer   # disable timer run
 
-WiRocPython2Version="0.117"
+WiRocPython2Version="0.118"
 WiRocBLEVersion="0.32"
 
 
