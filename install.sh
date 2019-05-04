@@ -9,9 +9,15 @@ WiRocBLEVersion="0.32"
 echo "update"
 #read line
 # update app list
-apt-get update
+if [[ $(hostname -s) = nanopiair ]]; then
+   apt-get update
+else
+   apt-key update
+   apt-get -o Acquire::Check-Valid-Until=false update
+fi
 
 apt-get -y install git
+
 
 echo "zip"
 apt-get install zip
