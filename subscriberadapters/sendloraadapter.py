@@ -88,6 +88,7 @@ class SendLoraAdapter(object):
         self.transforms = {}
         self.isDBInitialized = False
         self.lastMessageRepeaterBit = False
+        self.blockSendingUntil = None
         self.sentQueueWithoutRepeaterBit = collections.deque()
         self.sentQueueWithRepeaterBit = collections.deque()
         self.successWithoutRepeaterBitQueue = collections.deque()
@@ -174,8 +175,21 @@ class SendLoraAdapter(object):
         SendLoraAdapter.Instances[0].AdapterInitialized = loraInitialized
         return loraInitialized
 
+    def BlockSendingToLetRepeaterSendAndReceiveAck(self):
+        timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(23) + SettingsClass.GetLoraMessageTimeSendingTimeS(10) + 0.25  # message 23 + ack 10 + 5 loop
+        blockUntilDateTime = datetime.now + timedelta(seconds=timeS)
+        self.blockSendingUntil = blockUntilDateTime
+
+    def BlockSendingUntilMessageSentAndAckReceived(self):
+        timeS = self.GetDelayAfterMessageSent()
+        blockUntilDateTime = datetime.now + timedelta(seconds=timeS)
+        self.blockSendingUntil = blockUntilDateTime
+
     def IsReadyToSend(self):
-        return self.loraRadio.IsReadyToSend()
+        now = datetime.now()
+        if (self.blockSendingUntil is None or self.blockSendingUntil < now):
+            return self.loraRadio.IsReadyToSend()
+        return False
 
     def GetDelayAfterMessageSent(self):
         timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(23)+0.05 # message + one loop
@@ -250,11 +264,11 @@ class SendLoraAdapter(object):
         msg.AddPayload(messageData)
         if msg.GetMessageType() != msg.MessageTypeLoraAck:
             SettingsClass.SetTimeOfLastMessageSentToLora()
-            SettingsClass.SetTimeOfLastMessageSentToLoraDateTime()
         if SendLoraAdapter.WiRocMode == "SENDER" and msg.GetRepeaterBit():
             self.AddSentWithRepeaterBit()
         else:
             self.AddSentWithoutRepeaterBit()
+        self.BlockSendingUntilMessageSentAndAckReceived()
         if self.loraRadio.SendData(messageData):
             callbackQueue.put((successCB,))
         else:

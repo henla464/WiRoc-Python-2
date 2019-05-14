@@ -278,9 +278,11 @@ class ReceiveSIAdapter(object):
             str(theCurrentTimeInSiStation[3]) + ":" + str(theCurrentTimeInSiStation[4]) + ":" + str(theCurrentTimeInSiStation[5]))
         Utils.SetDateTime(2000+theCurrentTimeInSiStation[0], theCurrentTimeInSiStation[1], theCurrentTimeInSiStation[2], theCurrentTimeInSiStation[3], theCurrentTimeInSiStation[4], theCurrentTimeInSiStation[5])
         SettingsClass.SetTimeOfLastMessageSentToLora()
-        SettingsClass.SetTimeOfLastMessageSentToLoraDateTime()
         self.siStationNumber = theCurrentTimeInSiStation[6]
         SettingsClass.SetSIStationNumber(self.siStationNumber)
+        DatabaseHelper.change_future_created_dates()
+        DatabaseHelper.change_future_sent_dates()
+
 
     def UpdateInfreqently(self):
         #SettingsClass.SetSIStationNumber(self.siStationNumber)
@@ -387,14 +389,6 @@ class ReceiveSIAdapter(object):
                 logging.error("ReceiveSIAdapter::GetData() Received more data than expected, all data: " + allDataInHex)
 
             self.detectMissedPunches(SIMsg)
-            # save the station number; it will be updated to SettingsClass as long as this object exists
-            #self.siStationNumber = SIMsg.GetStationNumber()
-            #if not self.hasTimeBeenSet:
-                #logging.debug("time not set: " + str(SIMsg.GetHour()) + ":"+ str(SIMsg.GetMinute()) + ":"+ str(SIMsg.GetSeconds()))
-                #self.hasTimeBeenSet = True
-                #Utils.SetTime(SIMsg.GetHour(), SIMsg.GetMinute(), SIMsg.GetSeconds())
-                #SettingsClass.SetTimeOfLastMessageSentToLora()
-                #SettingsClass.SetTimeOfLastMessageSentToLoraDateTime()
 
             DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Received", 1)
             source = "WiRoc" if self.isConnectedToWiRocDevice else "SIStation"

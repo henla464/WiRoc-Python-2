@@ -12,7 +12,6 @@ class SettingsClass(object):
     RadioIntervalLengthMicroSeconds = [4000000, 4000000, 4000000, 4000000, 4000000, 4000000]
     timeOfLastMessageAdded = time.monotonic()
     timeOfLastMessageSentToLora = time.monotonic()
-    timeOfLastMessageSentToLoraDateTime = datetime.now()
     statusMessageBaseInterval = None
     loraAckMessageWaitTimeout = None
     MessagesToSendExists = True
@@ -425,14 +424,6 @@ class SettingsClass(object):
             else:
                 SettingsClass.sendStatusMessages = (sett.Value == "1")
         return SettingsClass.sendStatusMessages
-
-    @staticmethod
-    def SetTimeOfLastMessageSentToLoraDateTime():
-        SettingsClass.timeOfLastMessageSentToLoraDateTime = datetime.now()
-
-    @staticmethod
-    def GetTimeOfLastMessageSentToLoraDateTime():
-        return SettingsClass.timeOfLastMessageSentToLoraDateTime
 
     @staticmethod
     def SetTimeOfLastMessageSentToLora():

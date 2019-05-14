@@ -208,13 +208,20 @@ class MessageSubscriptionData(object):
                ("SentDate", datetime), ("SendFailedDate", datetime),
                ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
                ("NoOfSendTries", int), ("AckReceivedDate", datetime),
-               ("ScheduledTime", datetime), ("MessageBoxId", int),
+               ("Delay", int),
+               ("RetryDelay", int),
+               ("FindAdapterRetryDelay", int),
+               ("MessageBoxId", int),
                ("SubscriptionId", int), ("FetchedForSending", datetime)]
     CurrentMessageNumber = 0
 
     def __init__(self, MessageID=None, AckReceivedFromReceiver=False, MessageNumber=None, SentDate=None, SendFailedDate=None,
                  FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
-                 NoOfSendTries=0, ScheduledTime=None, MessageBoxId=None, SubscriptionId=None, FetchedForSending=None):
+                 NoOfSendTries=0,
+                 Delay=0,
+                 RetryDelay=0,
+                 FindAdapterRetryDelay=0,
+                 MessageBoxId=None, SubscriptionId=None, FetchedForSending=None):
         self.id = None
         self.MessageID = MessageID
         self.AckReceivedFromReceiver = AckReceivedFromReceiver
@@ -225,7 +232,9 @@ class MessageSubscriptionData(object):
         self.FindAdapterTryDate = FindAdapterTryDate
         self.FindAdapterTries = FindAdapterTries
         self.AckReceivedDate = AckReceivedDate
-        self.ScheduledTime = ScheduledTime
+        self.Delay = Delay
+        self.RetryDelay = RetryDelay
+        self.FindAdapterRetryDelay = FindAdapterRetryDelay
         self.MessageBoxId = MessageBoxId
         self.SubscriptionId = SubscriptionId
         self.FetchedForSending = FetchedForSending
@@ -241,13 +250,20 @@ class MessageSubscriptionArchiveData(object):
                 ("SentDate", datetime), ("SendFailedDate", datetime),
                 ("FindAdapterTryDate", datetime),("FindAdapterTries", int),
                 ("NoOfSendTries", int), ("AckReceivedDate", datetime),
-                ("ScheduledTime", datetime), ("MessageBoxId", int),
+                ("Delay", int),
+                ("RetryDelay", int),
+                ("FindAdapterRetryDelay", int),
+                ("MessageBoxId", int),
                 ("SubscriptionId", int),
                 ("SubscriberTypeName", str), ("TransformName", str),]
 
     def __init__(self, MessageID=None, MessageNumber=None, SentDate=None, SendFailedDate=None,
                  FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
-                 NoOfSendTries=0, ScheduledTime=None, MessageBoxId=None,
+                 NoOfSendTries=0,
+                 Delay=0,
+                 RetryDelay=0,
+                 FindAdapterRetryDelay=0,
+                 MessageBoxId=None,
                  SubscriptionId=None,
                  SubscriberTypeName = None, TransformName = None):
         self.id = None
@@ -260,7 +276,9 @@ class MessageSubscriptionArchiveData(object):
         self.NoOfSendTries = NoOfSendTries
         self.AckReceivedDate = AckReceivedDate
         self.MessageBoxId = MessageBoxId
-        self.ScheduledTime = ScheduledTime
+        self.Delay = Delay
+        self.RetryDelay = RetryDelay
+        self.FindAdapterRetryDelay = FindAdapterRetryDelay
         self.SubscriptionId = SubscriptionId
         self.SubscriberTypeName = SubscriberTypeName
         self.TransformName = TransformName
@@ -269,12 +287,15 @@ class MessageSubscriptionArchiveData(object):
 class MessageSubscriptionView(object):
     columns = [("MessageID", bytes),  ("AckReceivedFromReceiver", bool), ("MessageNumber", int), ("SentDate", datetime), ("SendFailedDate", datetime),
                ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
-               ("NoOfSendTries", int), ("AckReceivedDate", datetime), ("ScheduledTime", datetime),
+               ("NoOfSendTries", int), ("AckReceivedDate", datetime),
+               ("Delay", int),
+               ("RetryDelay", int),
+               ("FindAdapterRetryDelay", int)
                ("MessageBoxId", int), ("SubscriptionId", int),
                ("DeleteAfterSent", bool), ("Enabled", bool), ("SubscriberId", int),
                ("SubscriberTypeName", str), ("SubscriberInstanceName", str),
                ("TransformName", str), ("MessageData", bytearray),
-               #("CreatedDate", datetime)
+               ("CreatedDate", datetime)
                ]
 
     def __init__(self):
@@ -288,7 +309,10 @@ class MessageSubscriptionView(object):
         self.FindAdapterTries = None
         self.NoOfSendTries = None
         self.AckReceivedDate = None
-        self.ScheduledTime = None
+        #self.ScheduledTime = None
+        self.Delay = 0
+        self.RetryDelay = 0
+        self.FindAdapterRetryDelay = 0
         self.MessageBoxId = None
         self.SubscriptionId = None
         self.DeleteAfterSent = None

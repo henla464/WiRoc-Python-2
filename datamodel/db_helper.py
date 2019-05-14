@@ -320,7 +320,9 @@ class DatabaseHelper:
         msa.FindAdapterTries = messageSubscriptionView.FindAdapterTries
         msa.SendFailedDate = messageSubscriptionView.SendFailedDate
         msa.AckReceivedDate = messageSubscriptionView.AckReceivedDate
-        msa.ScheduledTime = messageSubscriptionView.ScheduledTime
+        msa.Delay = messageSubscriptionView.Delay
+        msa.RetryDelay = messageSubscriptionView.RetryDelay
+        msa.FindAdapterRetryDelay = messageSubscriptionView.FindAdapterRetryDelay
         msa.MessageBoxId = messageSubscriptionView.MessageBoxId
         msa.SubscriptionId = messageSubscriptionView.SubscriptionId
         msa.SubscriberTypeName = messageSubscriptionView.SubscriberTypeName
@@ -343,7 +345,9 @@ class DatabaseHelper:
         msa.FindAdapterTries = messageSubscriptionView.FindAdapterTries
         msa.NoOfSendTries = messageSubscriptionView.NoOfSendTries
         msa.AckReceivedDate = messageSubscriptionView.AckReceivedDate
-        msa.ScheduledTime = messageSubscriptionView.ScheduledTime
+        msa.Delay = messageSubscriptionView.Delay
+        msa.RetryDelay = messageSubscriptionView.RetryDelay
+        msa.FindAdapterRetryDelay = messageSubscriptionView.FindAdapterRetryDelay
         msa.MessageBoxId = messageSubscriptionView.MessageBoxId
         msa.SubscriptionId = messageSubscriptionView.SubscriptionId
         msa.SubscriberTypeName = messageSubscriptionView.SubscriberTypeName
@@ -365,11 +369,11 @@ class DatabaseHelper:
         msa.FindAdapterTryDate = None
         msa.FindAdapterTries = 0
         # this method is called for messages that wait for an ack before being archived
-        # we set a ScheduledTime below to block it from being sent again so no need to keep
+        # we set a RetryDelay below to block it from being sent again until it timed out so no need to keep
         # the FetchedForSending block anymore.
         msa.FetchedForSending = None
-        msa.ScheduledTime = max(msa.ScheduledTime if msa.ScheduledTime is not None else datetime.min,
-                                datetime.now() + timedelta(microseconds=retryDelay))
+        msa.RetryDelay = retryDelay
+        msa.FindAdapterRetryDelay = 0
         cls.db.save_table_object(msa, False)
 
     @classmethod
@@ -380,38 +384,6 @@ class DatabaseHelper:
         cls.db.save_table_object(msa, False)
 
     @classmethod
-    def get_highest_scheduled_time_of_new_subscriptions(cls, subscriberTypeName):
-        cls.init()
-        sql = ("SELECT * FROM MessageSubscriptionData WHERE "
-               "SubscriptionId in (select SubscriptionData.Id from SubscriptionData JOIN SubscriberData ON "
-               "SubscriptionData.SubscriberId = SubscriberData.id where TypeName = ?) "
-               "AND NoOfSendTries = 0 ORDER BY ScheduledTime desc LIMIT 1")
-        parameters = (subscriberTypeName,)
-        msgSub = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, parameters)
-        if len(msgSub) > 0:
-            return msgSub[0].ScheduledTime
-        else:
-            return None
-
-    @classmethod
-    def increase_scheduled_time_for_other_subscriptions(cls, messageSubscriptionView, delaySeconds):
-        cls.init()
-        sql = ("SELECT * FROM MessageSubscriptionData WHERE "
-               "SubscriptionId in (select SubscriptionData.Id from SubscriptionData JOIN SubscriberData ON "
-               "SubscriptionData.SubscriberId = SubscriberData.id where TypeName = ?) "
-               "AND Id <> ? ORDER BY ScheduledTime")
-        parameters = (messageSubscriptionView.SubscriberTypeName, messageSubscriptionView.id)
-        subs = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, parameters)
-        delaySecondsAccumulated = delaySeconds
-        for sub in subs:
-            sub.ScheduledTime = max(sub.ScheduledTime if sub.ScheduledTime is not None else datetime.min,
-                                    datetime.now() + timedelta(seconds=delaySecondsAccumulated))
-            cls.db.save_table_object(sub, False)
-            logging.debug('increase_scheduled_time to: ' + str(sub.ScheduledTime) + " delaySeconds: " + str(delaySeconds) + " delaySecondsAccumulated: " + str(delaySecondsAccumulated))
-            delaySecondsAccumulated += delaySeconds
-
-
-    @classmethod
     def increment_send_tries_and_set_send_failed_date(cls, messageSubscriptionView, retryDelay):
         cls.init()
         msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
@@ -420,8 +392,8 @@ class DatabaseHelper:
         msa.FindAdapterTryDate = None
         msa.FindAdapterTries = 0
         msa.FetchedForSending = None
-        msa.ScheduledTime = max(msa.ScheduledTime if msa.ScheduledTime is not None else datetime.min,
-                                datetime.now() + timedelta(microseconds=retryDelay))
+        msa.RetryDelay = retryDelay
+        msa.FindAdapterRetryDelay = 0
         cls.db.save_table_object(msa, False)
 
     @classmethod
@@ -430,8 +402,7 @@ class DatabaseHelper:
         msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
         msa.FindAdapterTryDate = datetime.now()
         msa.FindAdapterTries = msa.FindAdapterTries + 1
-        msa.ScheduledTime = max(msa.ScheduledTime if msa.ScheduledTime is not None else datetime.min,
-                                datetime.now() + timedelta(microseconds=retryDelay))
+        msa.FindAdpterRetryDelay = retryDelay
         cls.db.save_table_object(msa, False)
 
 
@@ -473,6 +444,9 @@ class DatabaseHelper:
             msa.FindAdapterTryDate = msd.FindAdapterTryDate
             msa.FindAdapterTries = msd.FindAdapterTries
             msa.NoOfSendTries = msd.NoOfSendTries
+            msa.Delay = msd.Delay
+            msa.RetryDelay = msd.RetryDelay
+            msa.FindAdapterRetryDelay = msd.FindAdapterRetryDelay
             msa.AckReceivedDate = now
             msa.MessageBoxId = msd.MessageBoxId
             msa.SubscriptionId = msd.SubscriptionId
@@ -510,6 +484,9 @@ class DatabaseHelper:
             msa.FindAdapterTryDate = msd.FindAdapterTryDate
             msa.FindAdapterTries = msd.FindAdapterTries
             msa.NoOfSendTries = msd.NoOfSendTries
+            msa.Delay = msd.Delay
+            msa.RetryDelay = msd.RetryDelay
+            msa.FindAdapterRetryDelay = msd.FindAdapterRetryDelay
             msa.AckReceivedDate = now
             msa.MessageBoxId = msd.MessageBoxId
             msa.SubscriptionId = msd.SubscriptionId
@@ -545,7 +522,9 @@ class DatabaseHelper:
             msa.FindAdapterTries = msd.FindAdapterTries
             msa.NoOfSendTries = msd.NoOfSendTries
             msa.AckReceivedDate = now
-            msa.ScheduledTime = msd.ScheduledTime
+            msa.Delay = msd.Delay
+            msa.RetryDelay = msd.RetryDelay
+            msa.FindAdapterRetryDelay = msd.FindAdapterRetryDelay
             msa.MessageBoxId = msd.MessageBoxId
             msa.SubscriptionId = msd.SubscriptionId
             subscriberView = DatabaseHelper.get_subscriber_by_subscription_id(msd.SubscriptionId)
@@ -605,26 +584,6 @@ class DatabaseHelper:
         cls.db.save_table_object(msa, False)
         cls.db.delete_table_object(RepeaterMessageBoxData, repeaterMessageBox.id)
 
-    @classmethod
-    def increase_scheduled_time_if_less_than(cls, timeS):
-        cls.init()
-        sql = ("SELECT * FROM MessageSubscriptionData WHERE "
-               "SubscriptionId in (select SubscriptionData.Id from SubscriptionData JOIN SubscriberData ON "
-               "SubscriptionData.SubscriberId = SubscriberData.id where TypeName = 'LORA') "
-               "ORDER BY ScheduledTime")
-        subs = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql)
-
-        if len(subs) > 0:
-            now = datetime.now()
-            scheduledTime = subs[0].ScheduledTime if subs[0].ScheduledTime is not None else now
-            delayAllThisManySeconds = timeS - (scheduledTime - now).total_seconds()
-
-            for sub in subs:
-                scheduledTime = sub.ScheduledTime if sub.ScheduledTime is not None else now
-                sub.ScheduledTime = scheduledTime + timedelta(seconds=delayAllThisManySeconds)
-                logging.debug("DatabaseHelper::increase_scheduled_time_if_less_than(): Set to: " + str(sub.ScheduledTime))
-                cls.db.save_table_object(sub, False)
-
 #MessageSubscriptionView
     @classmethod
     def get_message_subscriptions_view_to_send(cls, maxRetries):
@@ -632,8 +591,6 @@ class DatabaseHelper:
         cls.init()
         cnt = cls.db.get_scalar_by_SQL(sql)
         if cnt > 0:
-            now = datetime.now()
-            fiveSecondsAgo = now - timedelta(seconds=5)
 
             sql = ("SELECT MessageSubscriptionData.id, "
                    "MessageSubscriptionData.MessageID, "
@@ -645,7 +602,8 @@ class DatabaseHelper:
                    "MessageSubscriptionData.FindAdapterTries, "
                    "MessageSubscriptionData.NoOfSendTries, "
                    "MessageSubscriptionData.AckReceivedDate, "
-                   "MessageSubscriptionData.ScheduledTime, "
+                   "MessageSubscriptionData.Delay, "
+                   "MessageSubscriptionData.RetryDelay, "
                    "MessageSubscriptionData.MessageBoxId, "
                    "MessageSubscriptionData.SubscriptionId, "
                    "SubscriptionData.DeleteAfterSent, "
@@ -655,34 +613,72 @@ class DatabaseHelper:
                    "SubscriberData.InstanceName as SubscriberInstanceName, "
                    "TransformData.Name as TransformName, "
                    "MessageBoxData.MessageData,"
-                   "MessageBoxData.id as MessageBoxId "
+                   "MessageBoxData.id as MessageBoxId, "
+                   "MessageBoxData.CreatedDate as CreatedDate "
                    "FROM TransformData JOIN SubscriptionData "
                    "ON TransformData.id = SubscriptionData.TransformId "
                    "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
                    "JOIN MessageSubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
                    "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
                    "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
-                   "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
-                   "(MessageSubscriptionData.ScheduledTime IS NULL OR MessageSubscriptionData.ScheduledTime < '%s') AND "
-                   "MessageSubscriptionData.NoOfSendTries < %s AND "
-                   "MessageSubscriptionData.FindAdapterTries < %s AND "
-                   "(MessageSubscriptionData.FetchedForSending is null OR MessageSubscriptionData.FetchedForSending < '%s') "
-                   "ORDER BY MessageSubscriptionData.ScheduledTime asc, "
-                   "MessageSubscriptionData.SentDate asc LIMIT 1") % (now, maxRetries, maxRetries, fiveSecondsAgo)
+                   "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 "
+                   "ORDER BY MessageBoxData.CreatedDate asc "
+                   "MessageSubscriptionData.SentDate asc LIMIT 1")
             messageSubscriptions = cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
-            if len(messageSubscriptions) > 0:
+
+            messageSubscriptionToSend = None
+            adapterTypesAlreadyHandlingMessages = set()
+            for messageSubscription in messageSubscriptions:
+                if messageSubscription.SubscriberTypeName in adapterTypesAlreadyHandlingMessages:
+                    # a message has already been sent to this adapter or is waiting to be sent (been delayed)
+                    # skip any following messages to the same adapter
+                    continue
+
+                if messageSubscription.FetchedForSending is not None:
+                    # recently fetched and is being sent by another thread
+                    adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
+                    continue
+
+                now = datetime.now()
+                if messageSubscription.CreatedDate + timedelta(microseconds=messageSubscription.Delay) > now:
+                    # Should have an initial delay that has not passed yet
+                    adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
+                    continue
+
+                if messageSubscription.SentDate + timedelta(microseconds=messageSubscription.RetryDelay) > now:
+                    # has been sent, not yet passed the retry delay (may still be waiting for ack)
+                    adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
+                    continue
+
+                if messageSubscription.FindAdapterTryDate + timedelta(microseconds=messageSubscription.FindAdapterRetryDelay) > now:
+                    # should wait longer before trying to find adapter again
+                    adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
+                    continue
+
+                if messageSubscription.NoOfSendTries >= maxRetries:
+                    # Message may have been sent, noOfSendTries icremented, passed the retry time
+                    # BUT has not yet been archived. Just skip/should be ignored
+                    continue
+
+                if messageSubscription.FindAdapterTries >= maxRetries:
+                    # Ignore messages exceeding find adapter tries. Has not yet been archived.
+                    continue
+
+                messageSubscriptionToSend = messageSubscription
+
+            if messageSubscriptionToSend != None:
                 sql = "UPDATE MessageSubscriptionData SET FetchedForSending = ? WHERE Id = ?"
-                cls.db.execute_SQL(sql, (datetime.now(), messageSubscriptions[0].id))
-                return cnt, messageSubscriptions[0]
+                cls.db.execute_SQL(sql, (datetime.now(), messageSubscriptionToSend.id))
+                return cnt, messageSubscriptionToSend
         return cnt, None
 
     @classmethod
     def get_message_subscriptions_view_to_archive(cls, maxRetries, limit=100):
-        now = datetime.now()
         sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData ")
         cls.init()
         cnt = cls.db.get_scalar_by_SQL(sql)
         if cnt > 0:
+
             sql = ("SELECT MessageSubscriptionData.id, "
                    "MessageSubscriptionData.MessageID, "
                    "MessageSubscriptionData.MessageNumber, "
@@ -691,6 +687,8 @@ class DatabaseHelper:
                    "MessageSubscriptionData.FindAdapterTryDate, "
                    "MessageSubscriptionData.FindAdapterTries, "
                    "MessageSubscriptionData.NoOfSendTries, "
+                   "MessageSubscriptionData.Delay, "
+                   "MessageSubscriptionData.RetryDelay, "
                    "MessageSubscriptionData.AckReceivedDate, "
                    "MessageSubscriptionData.MessageBoxId, "
                    "MessageSubscriptionData.SubscriptionId, "
@@ -710,10 +708,38 @@ class DatabaseHelper:
                    "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
                    "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
                    "(MessageSubscriptionData.NoOfSendTries >= %s or MessageSubscriptionData.FindAdapterTries >= %s) "
-                   "ORDER BY MessageSubscriptionData.ScheduledTime desc LIMIT %s") % (maxRetries, maxRetries, limit)
+                   "ORDER BY MessageBoxData.CreatedDate desc "
+                   "LIMIT %s") % (maxRetries, maxRetries, limit)
             return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
         return []
 
+    @classmethod
+    def change_future_sent_dates(cls):
+        cls.init()
+        sql = ("SELECT * FROM MessageSubscriptionData ORDER BY SentDate desc")
+        subs = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql)
+        now = datetime.now()
+        for sub in subs:
+            if sub.SentDate > now:
+                sub.SentDate = now
+                cls.db.save_table_object(sub, False)
+                logging.debug('Set future SentDate: ' + str(sub.SentDate) + " to: " + str(now))
+            else:
+                return
+
+    @classmethod
+    def change_future_created_dates(cls):
+        cls.init()
+        sql = ("SELECT * FROM MessageBoxData ORDER BY CreatedDate desc")
+        messageBoxDatas = cls.db.get_table_objects_by_SQL(MessageBoxData, sql)
+        now = datetime.now()
+        for msg in messageBoxDatas:
+            if msg.CreatedDate > now:
+                msg.CreatedDate = now
+                cls.db.save_table_object(msg, False)
+                logging.debug('Set future CreatedDate: ' + str(msg.CreatedDate) + " to: " + str(now))
+            else:
+                return
 #MessageBox
     @classmethod
     def save_message_box(cls, messageBoxData):
@@ -857,14 +883,6 @@ class DatabaseHelper:
         if len(testPunches) > 0:
             return testPunches[0]
         return None
-
-    #@classmethod
-    #def get_test_punch_ack_req(cls, msgId):
-    #    testPunches = cls.db.get_table_objects_by_SQL(TestPunchData,
-    #                                                  "SELECT * FROM TestPunchData WHERE MessageBoxId = %s" % msgId)
-    #    if len(testPunches) > 0:
-    #        return testPunches[0].AckReq
-    #    return False
 
     @classmethod
     def set_test_punch_added_to_message_box(cls, messageBoxId, testPunchId):
