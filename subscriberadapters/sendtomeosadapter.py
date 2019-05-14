@@ -91,7 +91,8 @@ class SendToMeosAdapter(object):
     def IsReadyToSend(self):
         return True
 
-    def GetDelayAfterMessageSent(self):
+    @staticmethod
+    def GetDelayAfterMessageSent():
         return 0
 
     def GetRetryDelay(self, tryNo):

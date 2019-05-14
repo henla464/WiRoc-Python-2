@@ -135,7 +135,8 @@ class SendSerialAdapter(object):
     def IsReadyToSend(self):
         return self.serialComputer.GetIsInitialized()
 
-    def GetDelayAfterMessageSent(self):
+    @staticmethod
+    def GetDelayAfterMessageSent():
         return 0
 
     def GetRetryDelay(self, tryNo):

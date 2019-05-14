@@ -371,8 +371,8 @@ class Main:
                                 if transformedData["MessageID"] is not None:
                                     DatabaseHelper.update_messageid(msgSub.id, transformedData["MessageID"])
 
-                                logging.debug("In loop: subadapter: " + str(type(subAdapter)) + " delayaftermessagesent: " + str(
-                                    subAdapter.GetDelayAfterMessageSent()))
+                                logging.debug("In loop: subadapter: " + str(type(subAdapter)) + " DelayAfterMessageSent: " + str(subAdapter.GetDelayAfterMessageSent()))
+                                settDict["DelayAfterMessageSent"] = subAdapter.GetDelayAfterMessageSent()
                                 def createSuccessCB(innerSubAdapter):
                                     def successCB():
                                         logging.info(

@@ -604,8 +604,10 @@ class DatabaseHelper:
                    "MessageSubscriptionData.AckReceivedDate, "
                    "MessageSubscriptionData.Delay, "
                    "MessageSubscriptionData.RetryDelay, "
+                   "MessageSubscriptionData.FindAdapterRetryDelay, "
                    "MessageSubscriptionData.MessageBoxId, "
                    "MessageSubscriptionData.SubscriptionId, "
+                   "MessageSubscriptionData.FetchedForSending, "
                    "SubscriptionData.DeleteAfterSent, "
                    "SubscriptionData.Enabled, "
                    "SubscriptionData.SubscriberId, "
@@ -613,7 +615,6 @@ class DatabaseHelper:
                    "SubscriberData.InstanceName as SubscriberInstanceName, "
                    "TransformData.Name as TransformName, "
                    "MessageBoxData.MessageData,"
-                   "MessageBoxData.id as MessageBoxId, "
                    "MessageBoxData.CreatedDate as CreatedDate "
                    "FROM TransformData JOIN SubscriptionData "
                    "ON TransformData.id = SubscriptionData.TransformId "
@@ -622,7 +623,7 @@ class DatabaseHelper:
                    "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
                    "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
                    "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 "
-                   "ORDER BY MessageBoxData.CreatedDate asc "
+                   "ORDER BY MessageBoxData.CreatedDate asc, "
                    "MessageSubscriptionData.SentDate asc LIMIT 1")
             messageSubscriptions = cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
 
@@ -645,12 +646,12 @@ class DatabaseHelper:
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
 
-                if messageSubscription.SentDate + timedelta(microseconds=messageSubscription.RetryDelay) > now:
+                if messageSubscription.SentDate != None and messageSubscription.SentDate + timedelta(microseconds=messageSubscription.RetryDelay) > now:
                     # has been sent, not yet passed the retry delay (may still be waiting for ack)
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
 
-                if messageSubscription.FindAdapterTryDate + timedelta(microseconds=messageSubscription.FindAdapterRetryDelay) > now:
+                if messageSubscription.FindAdapterTryDate != None and messageSubscription.FindAdapterTryDate + timedelta(microseconds=messageSubscription.FindAdapterRetryDelay) > now:
                     # should wait longer before trying to find adapter again
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue

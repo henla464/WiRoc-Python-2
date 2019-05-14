@@ -111,7 +111,8 @@ class SendStatusAdapter(object):
             logging.error("SendStatusAdapter::TestConnection() " + webServerIPUrl + " Host: " + webServerHost + " Exception: " + str(ex))
             return False
 
-    def GetDelayAfterMessageSent(self):
+    @staticmethod
+    def GetDelayAfterMessageSent():
         return 0
 
     def GetRetryDelay(self, tryNo):

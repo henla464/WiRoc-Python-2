@@ -285,13 +285,14 @@ class MessageSubscriptionArchiveData(object):
 
 
 class MessageSubscriptionView(object):
-    columns = [("MessageID", bytes),  ("AckReceivedFromReceiver", bool), ("MessageNumber", int), ("SentDate", datetime), ("SendFailedDate", datetime),
+    columns = [("MessageID", bytes),  ("AckReceivedFromReceiver", bool),
+               ("MessageNumber", int), ("SentDate", datetime), ("SendFailedDate", datetime),
                ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
                ("NoOfSendTries", int), ("AckReceivedDate", datetime),
                ("Delay", int),
                ("RetryDelay", int),
-               ("FindAdapterRetryDelay", int)
-               ("MessageBoxId", int), ("SubscriptionId", int),
+               ("FindAdapterRetryDelay", int),
+               ("MessageBoxId", int), ("SubscriptionId", int),("FetchedForSending", datetime),
                ("DeleteAfterSent", bool), ("Enabled", bool), ("SubscriberId", int),
                ("SubscriberTypeName", str), ("SubscriberInstanceName", str),
                ("TransformName", str), ("MessageData", bytearray),
@@ -309,12 +310,12 @@ class MessageSubscriptionView(object):
         self.FindAdapterTries = None
         self.NoOfSendTries = None
         self.AckReceivedDate = None
-        #self.ScheduledTime = None
         self.Delay = 0
         self.RetryDelay = 0
         self.FindAdapterRetryDelay = 0
         self.MessageBoxId = None
         self.SubscriptionId = None
+        self.FetchedForSending = None
         self.DeleteAfterSent = None
         self.Enabled = None
         self.SubscriberId = None
