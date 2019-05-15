@@ -177,18 +177,19 @@ class SendLoraAdapter(object):
 
     def BlockSendingToLetRepeaterSendAndReceiveAck(self):
         timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(23) + SettingsClass.GetLoraMessageTimeSendingTimeS(10) + 0.25  # message 23 + ack 10 + 5 loop
-        blockUntilDateTime = datetime.now + timedelta(seconds=timeS)
+        blockUntilDateTime = datetime.now() + timedelta(seconds=timeS)
         self.blockSendingUntil = blockUntilDateTime
 
     def BlockSendingUntilMessageSentAndAckReceived(self, delayInS):
         timeS = delayInS
-        blockUntilDateTime = datetime.now + timedelta(seconds=timeS)
+        blockUntilDateTime = datetime.now() + timedelta(seconds=timeS)
         self.blockSendingUntil = blockUntilDateTime
 
     def IsReadyToSend(self):
         now = datetime.now()
         if (self.blockSendingUntil is None or self.blockSendingUntil < now):
             return self.loraRadio.IsReadyToSend()
+        logging.debug("SendLoraAdapter::IsReadyToSend() blocked from sending until: " + str(self.blockSendingUntil))
         return False
 
     @staticmethod
@@ -270,7 +271,6 @@ class SendLoraAdapter(object):
         else:
             self.AddSentWithoutRepeaterBit()
         delayS = settingsDictionary["DelayAfterMessageSent"]
-        #self.GetDelayAfterMessageSent()
         self.BlockSendingUntilMessageSentAndAckReceived(delayS)
         if self.loraRadio.SendData(messageData):
             callbackQueue.put((successCB,))

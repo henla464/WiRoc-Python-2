@@ -129,7 +129,6 @@ class Main:
         #if self.messagesToSendExists:
         msgSubscriptions = DatabaseHelper.get_message_subscriptions_view_to_archive(SettingsClass.GetMaxRetries(), 100)
         for msgSub in msgSubscriptions:
-            #if self.shouldArchiveMessage(msgSub):
             logging.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
             DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
 
@@ -279,17 +278,7 @@ class Main:
                                     continue  # skip this subscription
                                 msgSubscription.Delay = noOfSecondsToWait * 1000000
                                 logging.debug('Delay: ' + str(noOfSecondsToWait * 1000000))
-                                #scheduledWaitTime = now + timedelta(seconds=noOfSecondsToWait)
-                                #scheduledTimeOfOthersToSameAdapter = DatabaseHelper.get_highest_scheduled_time_of_new_subscriptions(subAdapter.GetTypeName())
-                                #minimumScheduledTime = now
-                                #if scheduledTimeOfOthersToSameAdapter == None:
-                                #    logging.debug('scheduledTimeOfOthersToSameAdapter=None')
-                                #    minimumScheduledTime = SettingsClass.GetTimeOfLastMessageSentToLoraDateTime()+ timedelta(seconds=subAdapter.GetDelayAfterMessageSent())
-                                #else:
-                                #    minimumScheduledTime = scheduledTimeOfOthersToSameAdapter + timedelta(seconds=subAdapter.GetDelayAfterMessageSent())
-                                #    logging.debug('scheduledTimeOfOthersToSameAdapter!=None: ' + str(minimumScheduledTime))
-                                #msgSubscription.ScheduledTime = max(scheduledWaitTime, minimumScheduledTime)
-                                #logging.debug('ScheduledTime set to: ' + str(msgSubscription.ScheduledTime))
+                                # used for wiroc to wiroc to wait for receiver to send ack first...
                             else:
                                 logging.error("Start::Run() SubAdapter not found")
 
@@ -376,13 +365,15 @@ class Main:
                                 def createSuccessCB(innerSubAdapter):
                                     def successCB():
                                         logging.info(
-                                            "Start::Run() Message sent to " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
+                                            "Start::Run() successCB() Message sent to " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
                                         if msgSub.DeleteAfterSent:  # move msgsub to archive
                                             DatabaseHelper.archive_message_subscription_view_after_sent(msgSub)
                                         else:  # set SentDate and increment NoOfSendTries
                                             retryDelay = innerSubAdapter.GetRetryDelay(msgSub.NoOfSendTries + 1)
                                             DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub, retryDelay)
-                                            logging.debug("subadapter: " +str(type(innerSubAdapter)))
+                                            logging.debug("Start::Run() successCB() Subadapter: " +str(type(innerSubAdapter)) +
+                                                          " Increment send tries, NoOfSendTries: " + str(msgSub.NoOfSendTries) +
+                                                          " retryDelay: " + str(retryDelay))
                                     return successCB
 
                                 def createFailureCB(innerSubAdapter):
@@ -392,6 +383,10 @@ class Main:
                                             "Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName + " id:"+ str(msgSub.id))
                                         retryDelay = innerSubAdapter.GetRetryDelay(msgSub.NoOfSendTries + 1)
                                         DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub, retryDelay)
+                                        logging.debug(
+                                            "Start::Run() failureCB() Subadapter: " + str(type(innerSubAdapter)) +
+                                            " Increment send tries, NoOfSendTries: " + str(msgSub.NoOfSendTries) +
+                                            " retryDelay: " + str(retryDelay))
                                     return failureCB
 
                                 t = threading.Thread(target=subAdapter.SendData,
