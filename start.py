@@ -22,6 +22,7 @@ from utils.utils import Utils
 from display.displaystatemachine import DisplayStateMachine
 import requests, queue, threading
 import sys
+from logging.handlers import HTTPHandler
 
 class Main:
     def __init__(self):
@@ -132,8 +133,18 @@ class Main:
             logging.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
             DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
 
-    def reconfigureBackground(self,channel,ackRequested, sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost, wirocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
-        #self.displayChannel(channel,ackRequested)
+    def reconfigureBackground(self,channel,ackRequested, sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost, wirocDeviceName, sirapTCPEnabled,
+                              sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress, loggingServerHost, loggingServerPort, logToServer):
+        server = loggingServerHost + ':' + loggingServerPort
+        httpHandler = logging.handlers.HTTPHandler(server, '/', method='POST')
+        if any(isinstance(h, logging.handlers.HTTPHandler) for h in logging.getLogger('').handlers):
+            if not logToServer:
+                logging.getLogger('').handlers = [h for h in logging.getLogger('').handlers if
+                                                  not isinstance(h, logging.handlers.HTTPHandler)]
+        else:
+            if logToServer:
+                logging.getLogger('').addHandler(httpHandler)
+
         self.displayStateMachine.Draw(channel, ackRequested, wirocMode, dataRate, wirocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
         self.updateWebserverIPBackground(webServerHost)
         self.webServerUp = SendStatusAdapter.TestConnection(webServerIPUrl, webServerHost)
@@ -158,6 +169,9 @@ class Main:
         wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
         webServerIPUrl = SettingsClass.GetWebServerIPUrl()
         webServerHost = SettingsClass.GetWebServerHost()
+        loggingServerHost = SettingsClass.GetLoggingServerHost()
+        loggingServerPort = SettingsClass.GetLoggingServerPort()
+        logToServer = SettingsClass.GetLogToServer()
         sirapTCPEnabled = False
         sendSerialActive = False
         sirapIPAddress = ""
@@ -175,7 +189,9 @@ class Main:
             sirapIPPort = SettingsClass.GetSendToMeosIPPort()
             wiRocIPAddress = HardwareAbstraction.Instance.GetWiRocIPAddresses()
 
-        t = threading.Thread(target=self.reconfigureBackground, args=(channel,ackRequested,sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost, wiRocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress))
+        t = threading.Thread(target=self.reconfigureBackground, args=(channel,ackRequested,sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost,
+                                                                      wiRocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress,
+                                                                      loggingServerHost, loggingServerPort, logToServer))
         t.daemon = True
         t.start()
 
@@ -550,6 +566,7 @@ if __name__ == '__main__':
     console = logging.StreamHandler()
     console.setLevel(logging.DEBUG)
     console.setFormatter(formatter)
+
     # add the handler to the root logger
     logging.getLogger('').addHandler(rotFileHandler)
     logging.getLogger('').addHandler(console)

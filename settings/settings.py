@@ -35,6 +35,9 @@ class SettingsClass(object):
     btAddress = None
     APIKey = None
     webServerIP = None
+    loggingServerHost = None
+    loggingServerPort = None
+    logToServer = None
 
 
     connectedComputerIsWiRocDevice = False
@@ -87,6 +90,12 @@ class SettingsClass(object):
             SettingsClass.btAddress = None
         if settingsName == 'APIKey':
             SettingsClass.APIKey = None
+        if settingsName == 'LoggingServerHost':
+            SettingsClass.loggingServerHost = None
+        if settingsName == 'LoggingServerPort':
+            SettingsClass.loggingServerPort = None
+        if settingsName == 'LogToServer':
+            SettingsClass.logToServer = None
 
         if markDirtyInDatabase:
             SettingsClass.SetSetting("ConfigDirty", "1")
@@ -121,6 +130,10 @@ class SettingsClass(object):
             SettingsClass.webServerUrl = None
             SettingsClass.btAddress = None
             SettingsClass.APIKey = None
+            SettingsClass.loggingServerHost = None
+            SettingsClass.loggingServerPort = None
+            SettingsClass.logToServer = None
+
             if mainConfigDirty:
                 SettingsClass.SetSetting("ConfigDirty", "0")
             else:
@@ -167,6 +180,12 @@ class SettingsClass(object):
                 return SettingsClass.btAddress is None
             if settingsName == 'APIKey':
                 return SettingsClass.APIKey is None
+            if settingsName == 'LoggingServerHost':
+                return SettingsClass.loggingServerHost is None
+            if settingsName == 'LoggingServerHost':
+                return SettingsClass.loggingServerPort is None
+            if settingsName == 'LogToServer':
+                return SettingsClass.logToServer is None
 
         return True
 
@@ -287,6 +306,39 @@ class SettingsClass(object):
         return SettingsClass.webServerUrl
 
     @staticmethod
+    def GetLoggingServerHost(mainConfigDirty = True):
+        if SettingsClass.IsDirty("LoggingServerHost", True, mainConfigDirty):
+            sett = DatabaseHelper.get_setting_by_key('LoggingServerHost')
+            if sett is None:
+                SettingsClass.SetSetting("LoggingServerHost", "")
+                SettingsClass.loggingServerHost = ""
+            else:
+                SettingsClass.loggingServerHost = sett.Value
+        return SettingsClass.loggingServerHost
+
+    @staticmethod
+    def GetLoggingServerPort(mainConfigDirty = True):
+        if SettingsClass.IsDirty("LoggingServerPort", True, mainConfigDirty):
+            sett = DatabaseHelper.get_setting_by_key('LoggingServerPort')
+            if sett is None:
+                SettingsClass.SetSetting("LoggingServerPort", "3000")
+                SettingsClass.loggingServerPort = "3000"
+            else:
+                SettingsClass.loggingServerPort = sett.Value
+        return SettingsClass.loggingServerPort
+
+    @staticmethod
+    def GetLogToServer(mainConfigDirty = True):
+        if SettingsClass.IsDirty("LogToServer", True, mainConfigDirty):
+            sett = DatabaseHelper.get_setting_by_key('LogToServer')
+            if sett is None:
+                SettingsClass.SetSetting("LogToServer", "0")
+                SettingsClass.logToServer = False
+            else:
+                SettingsClass.logToServer = (sett.Value == "1")
+        return SettingsClass.logToServer
+
+    @staticmethod
     def GetSendToBlenoEnabled(mainConfigDirty = True):
         if SettingsClass.IsDirty("SendToBlenoEnabled", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('SendToBlenoEnabled')
@@ -400,14 +452,14 @@ class SettingsClass(object):
     microSecondsToSendAnAckMessage = None
     @staticmethod
     def GetRetryDelay(retryNumber, mainConfigDirty = True):
-        if SettingsClass.IsDirty("Channel", True, mainConfigDirty) \
-                or SettingsClass.channelData is None \
-                or SettingsClass.microSecondsToSendAMessage is None:
-            dataRate = SettingsClass.GetDataRate()
-            channel = SettingsClass.GetChannel()
-            SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
-            messageLengthInBytes = 24 # typical length
-            SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
+        #if SettingsClass.IsDirty("Channel", True, mainConfigDirty) \
+        #        or SettingsClass.channelData is None \
+        #        or SettingsClass.microSecondsToSendAMessage is None:
+        dataRate = SettingsClass.GetDataRate()
+        channel = SettingsClass.GetChannel()
+        SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
+        messageLengthInBytes = 24 # typical length
+        SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
         microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 1)*SettingsClass.microSecondsToSendAMessage
         return microSecondsDelay
 
