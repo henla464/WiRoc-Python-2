@@ -135,14 +135,14 @@ class Main:
 
     def reconfigureBackground(self,channel,ackRequested, sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost, wirocDeviceName, sirapTCPEnabled,
                               sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress, loggingServerHost, loggingServerPort, logToServer):
-        server = loggingServerHost + ':' + loggingServerPort
-        httpHandler = logging.handlers.HTTPHandler(server, '/', method='POST')
         if any(isinstance(h, logging.handlers.HTTPHandler) for h in logging.getLogger('').handlers):
             if not logToServer:
                 logging.getLogger('').handlers = [h for h in logging.getLogger('').handlers if
                                                   not isinstance(h, logging.handlers.HTTPHandler)]
         else:
             if logToServer:
+                server = loggingServerHost + ':' + loggingServerPort
+                httpHandler = logging.handlers.HTTPHandler(server, '/', method='POST')
                 logging.getLogger('').addHandler(httpHandler)
 
         self.displayStateMachine.Draw(channel, ackRequested, wirocMode, dataRate, wirocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
@@ -556,6 +556,7 @@ if __name__ == '__main__':
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         filename='WiRoc.log',
                         filemode='a')
+    logging.raiseExceptions = False
     # set a format which is simpler for console use
     formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
     rotFileHandler = logging.handlers.RotatingFileHandler('WiRoc.log', maxBytes=20000000, backupCount=3)
