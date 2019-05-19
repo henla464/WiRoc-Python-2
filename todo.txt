@@ -1,0 +1,9 @@
+Add these columns to messagebox table, and extract them from the messagedata:
+SIStationSerialNumber
+MemoryAddress
+PunchTime
+SIStationNumber
+LowBattery
+
+
+Add one-way option for connecting to samlingsboxar, srr dongles

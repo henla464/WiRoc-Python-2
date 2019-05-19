@@ -76,6 +76,9 @@ class Main:
             # archive the messages that does not have subscriptions
             DatabaseHelper.archive_message_box_without_subscriptions()
 
+        # Disable logToServer, must activate manually
+        SettingsClass.SetSetting("LogToServer", "0")
+
         #Add device to web server
         webServerHost = SettingsClass.GetWebServerHost()
         webServerUrl = SettingsClass.GetWebServerUrl()
@@ -416,6 +419,7 @@ class Main:
                                 DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
                         else:
                             DatabaseHelper.clear_fetched_for_sending(msgSub)
+                            return
 
                 if not adapterFound:
                     logging.warning(
@@ -522,7 +526,7 @@ class Main:
                                    if inputAdapter.UpdateInfreqently() and inputAdapter.GetIsInitialized()]
 
             for i in repeat(None, 20):
-                time.sleep(0.05)
+                time.sleep(0.04)
                 self.handleInput()
                 while not self.threadQueue.empty():
                     try:

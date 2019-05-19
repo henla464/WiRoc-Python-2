@@ -88,7 +88,8 @@ class SendLoraAdapter(object):
         self.transforms = {}
         self.isDBInitialized = False
         self.lastMessageRepeaterBit = False
-        self.blockSendingUntil = None
+        self.blockSendingFromThisDate = None
+        self.blockSendingForSeconds = None
         self.sentQueueWithoutRepeaterBit = collections.deque()
         self.sentQueueWithRepeaterBit = collections.deque()
         self.successWithoutRepeaterBitQueue = collections.deque()
@@ -177,19 +178,22 @@ class SendLoraAdapter(object):
 
     def BlockSendingToLetRepeaterSendAndReceiveAck(self):
         timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(23) + SettingsClass.GetLoraMessageTimeSendingTimeS(10) + 0.25  # message 23 + ack 10 + 5 loop
-        blockUntilDateTime = datetime.now() + timedelta(seconds=timeS)
-        self.blockSendingUntil = blockUntilDateTime
+        self.blockSendingForSeconds = timeS
+        self.blockSendingFromThisDate = datetime.now()
 
     def BlockSendingUntilMessageSentAndAckReceived(self, delayInS):
-        timeS = delayInS
-        blockUntilDateTime = datetime.now() + timedelta(seconds=timeS)
-        self.blockSendingUntil = blockUntilDateTime
+        self.blockSendingForSeconds = delayInS
+        self.blockSendingFromThisDate = datetime.now()
 
     def IsReadyToSend(self):
         now = datetime.now()
-        if (self.blockSendingUntil is None or self.blockSendingUntil < now):
+        if self.blockSendingFromThisDate is None or self.blockSendingForSeconds is None or \
+            (self.blockSendingFromThisDate + timedelta(seconds=self.blockSendingForSeconds)) < now:
             return self.loraRadio.IsReadyToSend()
-        logging.debug("SendLoraAdapter::IsReadyToSend() blocked from sending until: " + str(self.blockSendingUntil))
+        if self.blockSendingFromThisDate > now:
+             # computer time must have changed, so reset blockSendingFromThisDate
+             self.blockSendingFromThisDate = None
+        logging.debug("SendLoraAdapter::IsReadyToSend() blocked from sending until: " + str(self.blockSendingFromThisDate + timedelta(seconds=self.blockSendingForSeconds)))
         return False
 
     @staticmethod

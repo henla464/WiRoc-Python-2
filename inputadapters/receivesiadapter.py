@@ -305,6 +305,8 @@ class ReceiveSIAdapter(object):
             noOfMissedPunches = ((curAddr - lastAddr) / 8) -1
             if noOfMissedPunches > 0 and noOfMissedPunches <= 30:
                 #We missed punches...
+                logging.info(
+                    "ReceiveSIAdapter::detectMissedPunchesDuringInit Punches missed, lastAddr: " + str(lastAddr) + " curAddr: " + str(curAddr))
                 self.fetchFromBackupAddress = lastAddr
                 self.fetchToBackupAddress = curAddr
                 self.fetchFromBackup = True
@@ -323,6 +325,9 @@ class ReceiveSIAdapter(object):
             noOfMissedPunches = ((curAddr - lastAddr) / 8) -1
             if noOfMissedPunches > 0 and noOfMissedPunches <= 30:
                 #We missed punches...
+                logging.info(
+                    "ReceiveSIAdapter::detectMissedPunches Punches missed, lastAddr: " + str(
+                        lastAddr) + " curAddr: " + str(curAddr))
                 self.fetchFromBackupAddress = lastAddr
                 self.fetchToBackupAddress = curAddr
                 self.fetchFromBackup = True
