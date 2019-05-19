@@ -355,6 +355,10 @@ class Main:
                                 # delay an extra message + ack, same as a normal delay after a message is sent
                                 # because the repeater should also send and receive ack
                                 loraSubAdapter.BlockSendingToLetRepeaterSendAndReceiveAck()
+                            else:
+                                loraSubAdapter.RemoveBlock()
+                        else:
+                            loraSubAdapter.RemoveBlock()
 
     def handleOutput(self, settDict):
         #logging.debug("IsReadyToSend: " + str(SendLoraAdapter.Instances[0].IsReadyToSend()) + " DateTime: " + str(datetime.now()))

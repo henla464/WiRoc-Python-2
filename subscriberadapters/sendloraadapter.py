@@ -176,6 +176,9 @@ class SendLoraAdapter(object):
         SendLoraAdapter.Instances[0].AdapterInitialized = loraInitialized
         return loraInitialized
 
+    def RemoveBlock(self):
+        self.blockSendingForSeconds = 0
+
     def BlockSendingToLetRepeaterSendAndReceiveAck(self):
         timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(23) + SettingsClass.GetLoraMessageTimeSendingTimeS(10) + 0.25  # message 23 + ack 10 + 5 loop
         self.blockSendingForSeconds = timeS
