@@ -6,9 +6,9 @@ from battery import Battery
 import logging
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 
-OledDisplayState = display.displaystate.OledDisplayState
+OledDisplayState = display.oleddisplaystate.OledDisplayState
 
-class OledOutput(display.displaystate.OledDisplayState):
+class OledOutput(display.oleddisplaystate.OledDisplayState):
     def __init__(self):
         self.imageChanged = True
         self.showPort = False
@@ -16,7 +16,7 @@ class OledOutput(display.displaystate.OledDisplayState):
         self.sendSerialActive = None
         self.sirapIPAddress = ""
         self.sirapIPPort = ""
-        self.OledImage = Image.new('1', (display.displaystate.OledDisplayState.OledWidth, display.displaystate.OledDisplayState.OledHeight))
+        self.OledImage = Image.new('1', (display.oleddisplaystate.OledDisplayState.OledWidth, display.oleddisplaystate.OledDisplayState.OledHeight))
         self.OledDraw = ImageDraw.Draw(self.OledImage)
         self.OledDraw.text((3, 1), "Out:", font=self.OledThinFont2, fill=255)
         self.OledDraw.text((3, 16), "To:" , font=self.OledThinFont2, fill=255)
@@ -62,7 +62,7 @@ class OledOutput(display.displaystate.OledDisplayState):
         self.sirapTCPEnabled = sirapTCPEnabled
 
         if self.imageChanged:
-            display.displaystate.OledDisplayState.OledDisp.image(self.OledImage)
+            display.oleddisplaystate.OledDisplayState.OledDisp.image(self.OledImage)
             self.OledDisp.display()
 
     def Next(self):

@@ -38,14 +38,17 @@ class DisplayStateMachine(object):
             byteRead = self.bus.read_byte(oledAddress)
             if byteRead > 0:
                 self.TypeOfDisplay = 'OLED'
-                from display.displaystate import OledDisplayState
+                from display.oleddisplaystate import OledDisplayState
                 import display.oledstartup
                 import display.olednormal
                 import display.oledoutput
                 import display.oledwirocip
-                #OledDisplayState = display.displaystate.OledDisplayState
+                import display.sevensegnormal
+                OledDisplayState = display.oleddisplaystate.OledDisplayState
                 if self.runningOnChip:
+                    logging.debug("on chip")
                     OledDisplayState.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=2)
+                    logging.debug("after oleddisp")
                 elif self.runningOnNanoPi:
                     OledDisplayState.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=0)
                 # Initialize library.

@@ -5,9 +5,9 @@ from PIL import ImageDraw
 import logging
 from pathlib import Path
 
-OledDisplayState = display.displaystate.OledDisplayState
+OledDisplayState = display.oleddisplaystate.OledDisplayState
 
-class OledStartup(display.displaystate.OledDisplayState):
+class OledStartup(display.oleddisplaystate.OledDisplayState):
     def __init__(self):
         self.imageChanged = True
         self.deviceName = None
@@ -23,7 +23,7 @@ class OledStartup(display.displaystate.OledDisplayState):
                 self.bleVersion = versionFile.read()
         except:
             pass
-        self.OledImage = Image.new('1', (display.displaystate.OledDisplayState.OledWidth, display.displaystate.OledDisplayState.OledHeight))
+        self.OledImage = Image.new('1', (display.oleddisplaystate.OledDisplayState.OledWidth, display.oleddisplaystate.OledDisplayState.OledHeight))
         self.OledDraw = ImageDraw.Draw(self.OledImage)
         self.OledDraw.text((3, 1), self.pythonVersion, font=self.OledThinFont2, fill=255)
         self.OledDraw.text((60, 1), 'BLE: ' + self.bleVersion, font=self.OledThinFont2, fill=255)

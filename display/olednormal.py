@@ -6,7 +6,7 @@ from battery import Battery
 import logging
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 
-OledDisplayState = display.displaystate.OledDisplayState
+OledDisplayState = display.oleddisplaystate.OledDisplayState
 
 class OledNormal(OledDisplayState):
     def __init__(self):

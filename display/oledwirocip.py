@@ -6,13 +6,13 @@ from battery import Battery
 import logging
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 
-OledDisplayState = display.displaystate.OledDisplayState
+OledDisplayState = display.oleddisplaystate.OledDisplayState
 
-class OledWiRocIP(display.displaystate.OledDisplayState):
+class OledWiRocIP(display.oleddisplaystate.OledDisplayState):
     def __init__(self):
         self.imageChanged = True
         self.wiRocIPAddress = ""
-        self.OledImage = Image.new('1', (display.displaystate.OledDisplayState.OledWidth, display.displaystate.OledDisplayState.OledHeight))
+        self.OledImage = Image.new('1', (display.oleddisplaystate.OledDisplayState.OledWidth, display.oleddisplaystate.OledDisplayState.OledHeight))
         self.OledDraw = ImageDraw.Draw(self.OledImage)
         self.OledDraw.text((3, 1), "WiRoc IP address", font=self.OledThinFont2, fill=255)
 
@@ -26,7 +26,7 @@ class OledWiRocIP(display.displaystate.OledDisplayState):
                 self.OledDraw.text((2, 16), self.wiRocIPAddress[0], font=self.OledThinFont2, fill=255)
 
         if self.imageChanged:
-            display.displaystate.OledDisplayState.OledDisp.image(self.OledImage)
+            display.oleddisplaystate.OledDisplayState.OledDisp.image(self.OledImage)
             self.OledDisp.display()
 
     def Next(self):
