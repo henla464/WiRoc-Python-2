@@ -298,7 +298,7 @@ class SettingsClass(object):
         if SettingsClass.IsDirty("WebServerUrl", True, mainConfigDirty):
             sett = DatabaseHelper.get_setting_by_key('WebServerUrl')
             if sett is None:
-                url = "http://wirelessradioonlinecontrol.tk"
+                url = "http://monitor.wiroc.se"
                 SettingsClass.SetSetting("WebServerUrl", url)
                 SettingsClass.webServerUrl = url
             else:

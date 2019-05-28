@@ -104,6 +104,7 @@ class Battery(object):
 
     @classmethod
     def GetIsBatteryLow(cls):
+        # todo: change to subprocess and cache result
         if cls.isRunningOnChip or cls.isRunningOnNanoPi:
             logging.debug("Battery::GetIsBatteryLow")
             strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()

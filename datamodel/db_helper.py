@@ -747,6 +747,7 @@ class DatabaseHelper:
 #MessageBox
     @classmethod
     def save_message_box(cls, messageBoxData):
+        # todo: test performance with using fixed sql to insert instead
         cls.init()
         return cls.db.save_table_object(messageBoxData, False)
 
@@ -1023,6 +1024,24 @@ class DatabaseHelper:
         channels.append(ChannelData(6, 1758, 439875000, 8714, 15, 9, 7))
         channels.append(ChannelData(7, 1758, 439900000, 8714, 15, 9, 7))
         channels.append(ChannelData(8, 1758, 439925000, 8714, 15, 9, 7))
+
+        channels.append(ChannelData(1, 3125, 439750000, 4793, 15, 8, 7))
+        channels.append(ChannelData(2, 3125, 439775000, 4793, 15, 8, 7))
+        channels.append(ChannelData(3, 3125, 439800000, 4793, 15, 8, 7))
+        channels.append(ChannelData(4, 3125, 439825000, 4793, 15, 8, 7))
+        channels.append(ChannelData(5, 3125, 439850000, 4793, 15, 8, 7))
+        channels.append(ChannelData(6, 3125, 439875000, 4793, 15, 8, 7))
+        channels.append(ChannelData(7, 3125, 439900000, 4793, 15, 8, 7))
+        channels.append(ChannelData(8, 3125, 439925000, 4793, 15, 8, 7))
+
+        channels.append(ChannelData(1, 5470, 439750000, 2736, 15, 7, 7))
+        channels.append(ChannelData(2, 5470, 439775000, 2736, 15, 7, 7))
+        channels.append(ChannelData(3, 5470, 439800000, 2736, 15, 7, 7))
+        channels.append(ChannelData(4, 5470, 439825000, 2736, 15, 7, 7))
+        channels.append(ChannelData(5, 5470, 439850000, 2736, 15, 7, 7))
+        channels.append(ChannelData(6, 5470, 439875000, 2736, 15, 7, 7))
+        channels.append(ChannelData(7, 5470, 439900000, 2736, 15, 7, 7))
+        channels.append(ChannelData(8, 5470, 439925000, 2736, 15, 7, 7))
 
         # channels.append(ChannelData(1, 146, 439700000, 72333, 22, 12, 6))
         # channels.append(ChannelData(2, 146, 439725000, 72333, 22, 12, 6))

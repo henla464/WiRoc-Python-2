@@ -50,6 +50,9 @@ def digitalWriteNonXIO(pin, state):
 def digitalReadNonXIO(pin):
     pinMapped = str(pin)
     value = os.popen("cat /sys/class/gpio/gpio" + pinMapped + "/value").read()
+    # todo: change to subprocess
+    #p = subprocess.Popen(("cat /sys/class/gpio/gpio" + pinMapped + "/value").split(), stdout=subprocess.PIPE)
+    #value, _ = p.communicate()
     return int(value)
 
 def digitalRead(pin):

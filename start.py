@@ -212,13 +212,13 @@ class Main:
 
             if inputData is not None:
                 if inputData["MessageType"] == "DATA":
-                    logging.info("Start::Run() Received data from " + inputAdapter.GetInstanceName())
+                    logging.info("Start::handleInput() Received data from " + inputAdapter.GetInstanceName())
                     messageID = inputData.get("MessageID", None)
                     messageTypeName = inputAdapter.GetTypeName()
                     instanceName = inputAdapter.GetInstanceName()
                     if messageTypeName == "LORA" and SettingsClass.GetWiRocMode() == "REPEATER":
                         # WiRoc is in repeater mode and received a LORA message
-                        logging.info("Start::Run() In repeater mode")
+                        logging.info("Start::handleInput() In repeater mode")
                         messageSubTypeName = inputData["MessageSubTypeName"]
                         loraMessage = inputData.get("LoraRadioMessage", None)
                         if loraMessage == None:
@@ -280,10 +280,11 @@ class Main:
                         inputAdapter.AddedToMessageBox(mbdid)
                         anySubscription = False
 
+                        # todo: change to get directly with messageTypeName and messageSubTypeName in single call
                         messageTypeId = DatabaseHelper.get_message_type(messageTypeName, messageSubTypeName).id
                         subscriptions = DatabaseHelper.get_subscription_view_by_input_message_type_id(messageTypeId)
                         for subscription in subscriptions:
-                            logging.debug("subscription: " + subscription.SubscriberTypeName + " " + subscription.TransformName)
+                            logging.debug("Start::handleInput() Subscription: " + subscription.SubscriberTypeName + " " + subscription.TransformName)
                             msgSubscription = MessageSubscriptionData()
                             now = datetime.now()
 
@@ -296,10 +297,10 @@ class Main:
                                 if noOfSecondsToWait == None:
                                     continue  # skip this subscription
                                 msgSubscription.Delay = noOfSecondsToWait * 1000000
-                                logging.debug('Delay: ' + str(noOfSecondsToWait * 1000000))
+                                logging.debug('Start::handleInput() Delay: ' + str(noOfSecondsToWait * 1000000))
                                 # used for wiroc to wiroc to wait for receiver to send ack first...
                             else:
-                                logging.error("Start::Run() SubAdapter not found")
+                                logging.error("Start::handleInput()  SubAdapter not found")
 
                             msgSubscription.MessageBoxId = mbdid
                             msgSubscription.SubscriptionId = subscription.id
@@ -313,7 +314,7 @@ class Main:
                             self.messagesToSendExists = True
                         if not anySubscription:
                             logging.info(
-                                "Start::Run() Message has no subscribers, being archived, msgid: " + str(mbdid))
+                                "Start::handleInput() Message has no subscribers, being archived, msgid: " + str(mbdid))
                             DatabaseHelper.archive_message_box(mbdid)
                 elif inputData["MessageType"] == "ACK":
                     messageID = inputData["MessageID"]
@@ -322,7 +323,7 @@ class Main:
                     receivedFromRepeater = loraMessage.GetRepeaterBit()
                     wirocMode = SettingsClass.GetWiRocMode()
                     if wirocMode == "REPEATER" and len(messageID) == 6:
-                        logging.debug("Start::Run() Received ack, for repeater message number: " + str(
+                        logging.debug("Start::handleInput() Received ack, for repeater message number: " + str(
                             messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6])))
                         DatabaseHelper.repeater_message_acked(messageID)
                         DatabaseHelper.archive_repeater_lora_message_subscription_after_ack(messageID)
@@ -331,13 +332,13 @@ class Main:
                                 messageID)
                     else:
                         if len(messageID) == 6:
-                            logging.debug("Start::Run() Received ack, for message number: " + str(
+                            logging.debug("Start::handleInput() Received ack, for message number: " + str(
                                 messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6]))
                                           + " receivedFromRepeater: " + str(receivedFromRepeater)
                                           + " destinationHasAcked: " + str(destinationHasAcked))
                         else:
                             logging.debug(
-                                "Start::Run() Received ack, for status message number: " + str(messageID[0]))
+                                "Start::handleInput() Received ack, for status message number: " + str(messageID[0]))
                         DatabaseHelper.archive_message_subscription_after_ack(messageID)
 
 
@@ -424,6 +425,8 @@ class Main:
                         else:
                             DatabaseHelper.clear_fetched_for_sending(msgSub)
                             return
+
+                        return
 
                 if not adapterFound:
                     logging.warning(
