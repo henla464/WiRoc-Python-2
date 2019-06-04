@@ -26,6 +26,7 @@ class OledWiRocIP(display.oleddisplaystate.OledDisplayState):
                 self.OledDraw.text((2, 16), self.wiRocIPAddress[0], font=self.OledThinFont2, fill=255)
 
         if self.imageChanged:
+            self.imageChanged = False
             display.oleddisplaystate.OledDisplayState.OledDisp.image(self.OledImage)
             self.OledDisp.display()
 

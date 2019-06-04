@@ -38,6 +38,7 @@ class OledStartup(display.oleddisplaystate.OledDisplayState):
             self.OledDraw.text((1, 16), deviceName, font=self.OledThinFont2, fill=255)
 
         if self.imageChanged:
+            self.imageChanged = False
             OledDisplayState.OledDisp.image(self.OledImage)
             OledDisplayState.OledDisp.display()
 

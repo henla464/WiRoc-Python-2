@@ -55,6 +55,7 @@ class OledOutput(display.oleddisplaystate.OledDisplayState):
                 self.OledDraw.text((64, 1), "USB", font=self.OledThinFont2, fill=255)
         if ((self.sirapTCPEnabled != sirapTCPEnabled or self.sendSerialActive != sendSerialActive)
             and not sirapTCPEnabled and not sendSerialActive):
+            self.imageChanged = True
             logging.debug("OledStartup::Draw not serial and not sirap")
             self.OledDraw.rectangle((28, 1, 128, 15), outline=0, fill=0)
             self.OledDraw.text((28, 1), "RADIO", font=self.OledThinFont2, fill=255)
@@ -62,6 +63,7 @@ class OledOutput(display.oleddisplaystate.OledDisplayState):
         self.sirapTCPEnabled = sirapTCPEnabled
 
         if self.imageChanged:
+            self.imageChanged = False
             display.oleddisplaystate.OledDisplayState.OledDisp.image(self.OledImage)
             self.OledDisp.display()
 
