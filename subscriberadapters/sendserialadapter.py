@@ -143,7 +143,7 @@ class SendSerialAdapter(object):
         return 1
 
     # messageData is a bytearray
-    def SendData(self, messageData, successCB, failureCB, callbackQueue, settingsDictionary):
+    def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
         if self.serialComputer.SendData(messageData):
             callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "Sent", 1))
             callbackQueue.put((successCB,))

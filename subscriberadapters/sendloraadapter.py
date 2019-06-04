@@ -265,9 +265,10 @@ class SendLoraAdapter(object):
         return reqRepeater
 
     # messageData is a bytearray
-    def SendData(self, messageData, successCB, failureCB, callbackQueue, settingsDictionary):
+    def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
         if self.loraRadio.IsAirSignalDetected():
             logging.debug("SendLoraAdapter::SendData() Air signal detected, skip sending now")
+            callbackQueue.put((notSentCB,))
             return
         msg = LoraRadioMessage()
         msg.AddPayload(messageData)

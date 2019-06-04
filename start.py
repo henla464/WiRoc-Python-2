@@ -413,8 +413,16 @@ class Main:
                                             " retryDelay: " + str(retryDelay))
                                     return failureCB
 
+                                def createNotSentCB():
+                                    def notSentCB():
+                                        # msg not sent
+                                        logging.warning(
+                                            "Start::Run() Message was not sent: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName + " id:"+ str(msgSub.id))
+                                        DatabaseHelper.clear_fetched_for_sending(msgSub)
+                                    return notSentCB
+
                                 t = threading.Thread(target=subAdapter.SendData,
-                                                     args=(transformedData["Data"], createSuccessCB(subAdapter), createFailureCB(subAdapter), self.callbackQueue, settDict))
+                                                     args=(transformedData["Data"], createSuccessCB(subAdapter), createFailureCB(subAdapter), createNotSentCB(), self.callbackQueue, settDict))
                                 self.threadQueue.put(t)
                                 t.start()
                             else:
