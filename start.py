@@ -224,7 +224,7 @@ class Main:
                         if loraMessage == None:
                             logging.error(
                                 "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
-                            return
+                            continue
 
                         rmbd = RepeaterMessageBoxData()
                         rmbd.MessageData = inputData["Data"]
@@ -265,7 +265,7 @@ class Main:
                                         DatabaseHelper.archive_lora_ack_message_subscription(messageID)
                             else:
                                 logging.error("Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
-                                return
+                                continue
 
                         mbd = MessageBoxData()
                         mbd.MessageData = inputData["Data"]
@@ -543,14 +543,14 @@ class Main:
             for i in repeat(None, 20):
                 time.sleep(0.04)
                 self.handleInput()
-                while not self.threadQueue.empty():
+                self.handleOutput(settDict)
+                self.sendMessageStats()
+                while not self.threadQueue.empty():  #ensure that messages are sent before handleCallbacks. Maybe separate send threads from others in future
                     try:
                         bgThread = self.threadQueue.get(False)
                         bgThread.join()
                     except queue.Empty:
                         pass
-                self.handleOutput(settDict)
-                self.sendMessageStats()
                 self.handleCallbacks()
 
 
