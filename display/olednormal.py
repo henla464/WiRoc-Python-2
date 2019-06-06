@@ -11,6 +11,7 @@ OledDisplayState = display.oleddisplaystate.OledDisplayState
 class OledNormal(OledDisplayState):
     def __init__(self):
         self.batteryPercent = 0
+        self.batteryWidth = 0
         self.NormalOledImage = None
         self.wifiNoOfBars = 0
         self.channel = None
@@ -26,8 +27,9 @@ class OledNormal(OledDisplayState):
 
     def DrawOledBattery(self):
         percent = Battery.GetBatteryPercent()
-        logging.debug("OledNormal::DrawOledBattery percent: " + str(percent) + " prev battery: " + str(self.batteryPercent))
-        if self.batteryPercent is not None and abs(self.batteryPercent - percent) < 2:
+        width = int((percent - 5) / 5)
+        logging.debug("OledNormal::DrawOledBattery percent: " + str(percent) + " prev battery: " + str(self.batteryPercent) + " batteryWidth: " + str(width) + " prev batteryWidth: " + str(self.batteryWidth))
+        if self.batteryPercent is not None and self.batteryWidth != width:
             return None
         self.batteryPercent = percent
         self.imageChanged = True
@@ -41,7 +43,7 @@ class OledNormal(OledDisplayState):
         self.OledDraw.rectangle((x, top, x + 20, top + 10), outline=255, fill=0)
         self.OledDraw.rectangle((x + 20, top + 3, x + 23, top + 7), outline=255, fill=0)
         # Fill charge percentage
-        width = int((percent - 5) / 5)
+
         self.OledDraw.rectangle((x + 1, top + 1, x + width, top + 9), outline=255, fill=255)
 
     def DrawIsCharging(self):
