@@ -29,9 +29,10 @@ class OledNormal(OledDisplayState):
         percent = Battery.GetBatteryPercent()
         width = int((percent - 5) / 5)
         logging.debug("OledNormal::DrawOledBattery percent: " + str(percent) + " prev battery: " + str(self.batteryPercent) + " batteryWidth: " + str(width) + " prev batteryWidth: " + str(self.batteryWidth))
-        if self.batteryPercent is not None and self.batteryWidth != width:
+        if self.batteryWidth is not None and self.batteryWidth == width:
             return None
         self.batteryPercent = percent
+        self.batteryWidth = width
         self.imageChanged = True
         logging.debug("OledNormal::DrawOledBattery imagechanged")
 
