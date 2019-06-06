@@ -635,23 +635,24 @@ class DatabaseHelper:
                     # skip any following messages to the same adapter
                     continue
 
-                if messageSubscription.FetchedForSending is not None:
+                now = datetime.now()
+                if messageSubscription.FetchedForSending is not None and messageSubscription.FetchedForSending < now < messageSubscription.FetchedForSending + timedelta(
+                        seconds=10):
                     # recently fetched and is being sent by another thread
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
 
-                now = datetime.now()
-                if messageSubscription.CreatedDate + timedelta(microseconds=messageSubscription.Delay) > now:
+                if  messageSubscription.CreatedDate < now < messageSubscription.CreatedDate + timedelta(microseconds=messageSubscription.Delay):
                     # Should have an initial delay that has not passed yet
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
 
-                if messageSubscription.SentDate != None and messageSubscription.SentDate + timedelta(microseconds=messageSubscription.RetryDelay) > now:
+                if messageSubscription.SentDate != None and messageSubscription.SentDate < now < messageSubscription.SentDate + timedelta(microseconds=messageSubscription.RetryDelay):
                     # has been sent, not yet passed the retry delay (may still be waiting for ack)
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
 
-                if messageSubscription.FindAdapterTryDate != None and messageSubscription.FindAdapterTryDate + timedelta(microseconds=messageSubscription.FindAdapterRetryDelay) > now:
+                if messageSubscription.FindAdapterTryDate != None and messageSubscription.FindAdapterTryDate < now < messageSubscription.FindAdapterTryDate + timedelta(microseconds=messageSubscription.FindAdapterRetryDelay):
                     # should wait longer before trying to find adapter again
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
