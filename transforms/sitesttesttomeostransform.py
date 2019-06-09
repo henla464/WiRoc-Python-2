@@ -2,7 +2,7 @@ from utils.utils import Utils
 from datamodel.datamodel import SIMessage
 
 
-class SITestTestToLoraTransform(object):
+class SITestTestToMeosTransform(object):
 
     @staticmethod
     def GetInputMessageType():

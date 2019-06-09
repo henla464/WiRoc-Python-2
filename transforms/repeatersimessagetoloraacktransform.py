@@ -29,7 +29,7 @@ class RepeaterSIMessageToLoraAckTransform(object):
 
         # when repeater is requested, ack is sent directly from receiveloraadapter
         if loraMsg.GetAcknowledgementRequested() and not loraMsg.GetRepeaterBit():
-            return SettingsClass.GetLoraMessageTimeSendingTimeS(12) #ack 10, waiting for the destination wiroc to reply with ack + delay 2
+            return SettingsClass.GetLoraMessageTimeSendingTimeS(10) + 0.15 #ack 10, waiting for the destination wiroc to reply with ack + 0.15 delay
         return None
 
     @staticmethod

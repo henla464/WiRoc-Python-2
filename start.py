@@ -307,7 +307,8 @@ class Main:
                             if messageID != None:
                                 dataInHex = ''.join(format(x, '02x') for x in messageID)
                                 logging.debug("MessageID: " + dataInHex)
-                            msgSubscription.MessageID = messageID  # used for messages from repeater table or test table (added always but only used when in repeater mode)
+                            # messageid is used for messages from repeater table or test table. Is updated after transform when sent
+                            msgSubscription.MessageID = messageID
                             msgSubscription.MessageNumber = MessageSubscriptionData.GetNextMessageNumber()
                             DatabaseHelper.save_message_subscription(msgSubscription)
                             anySubscription = True
@@ -384,8 +385,14 @@ class Main:
                                 if transformedData["MessageID"] is not None:
                                     DatabaseHelper.update_messageid(msgSub.id, transformedData["MessageID"])
 
-                                logging.debug("In loop: subadapter: " + str(type(subAdapter)) + " DelayAfterMessageSent: " + str(subAdapter.GetDelayAfterMessageSent()))
-                                settDict["DelayAfterMessageSent"] = subAdapter.GetDelayAfterMessageSent()
+                                if msgSub.DeleteAfterSent:
+                                    # shouldn't wait for ack. (ie. repeater message ack)
+                                    logging.debug("In loop: subadapter: " + str(type(subAdapter)) + " DeleteAfterSent")
+                                    settDict["DelayAfterMessageSent"] = 0
+                                else:
+                                    logging.debug("In loop: subadapter: " + str(type(subAdapter)) + " DelayAfterMessageSent: " + str(subAdapter.GetDelayAfterMessageSent()))
+                                    settDict["DelayAfterMessageSent"] = subAdapter.GetDelayAfterMessageSent()
+
                                 def createSuccessCB(innerSubAdapter):
                                     def successCB():
                                         logging.info(

@@ -31,8 +31,8 @@ class LoraSIMessageToLoraAckTransform(object):
                 and SettingsClass.GetWiRocMode() == "RECEIVER":
             # ack (10), waiting for repeater to reply with ack
             # and send message (23) to receiver
-            # + little delay 0.1 sec
-            return SettingsClass.GetLoraMessageTimeSendingTimeS(10) + SettingsClass.GetLoraMessageTimeSendingTimeS(23)+0.1
+            # + little delay 0.15 sec
+            return SettingsClass.GetLoraMessageTimeSendingTimeS(10) + SettingsClass.GetLoraMessageTimeSendingTimeS(23)+0.15
         return None
 
     @staticmethod
