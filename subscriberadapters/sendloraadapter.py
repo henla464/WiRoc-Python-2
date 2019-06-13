@@ -180,7 +180,7 @@ class SendLoraAdapter(object):
         self.blockSendingForSeconds = 0
 
     def BlockSendingToLetRepeaterSendAndReceiveAck(self):
-        timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(23) + SettingsClass.GetLoraMessageTimeSendingTimeS(10) + 0.25  # message 23 + ack 10 + 5 loop
+        timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(23) + SettingsClass.GetLoraMessageTimeSendingTimeS(10) + 0.35  # message 23 + ack 10
         self.blockSendingForSeconds = timeS
         self.blockSendingFromThisDate = datetime.now()
 
@@ -235,7 +235,8 @@ class SendLoraAdapter(object):
             self.sentQueueWithRepeaterBit.pop()
 
     def GetSuccessRateToDestination(self):
-        dateTimeToUse = max(min(self.successWithoutRepeaterBitQueue[-1], self.sentQueueWithoutRepeaterBit[-1]), datetime.now() - timedelta(minutes=30))
+        #dateTimeToUse = max(min(self.successWithoutRepeaterBitQueue[-1], self.sentQueueWithoutRepeaterBit[-1]), datetime.now() - timedelta(minutes=30))
+        dateTimeToUse = max(self.sentQueueWithoutRepeaterBit[-1],datetime.now() - timedelta(minutes=30))
         successCount = sum(1 for successDate in self.successWithoutRepeaterBitQueue if successDate >= dateTimeToUse)
         sentCount = sum(1 for sentDate in self.sentQueueWithoutRepeaterBit if sentDate >= dateTimeToUse)
         if sentCount == 0:
@@ -243,8 +244,10 @@ class SendLoraAdapter(object):
         return int((successCount / sentCount)*100)
 
     def GetSuccessRateToRepeater(self):
-        dateTimeToUse = max(min(self.successWithRepeaterBitQueue[-1], self.sentQueueWithRepeaterBit[-1]),
-                            datetime.now() - timedelta(minutes=30))
+        #dateTimeToUse = max(min(self.successWithRepeaterBitQueue[-1], self.sentQueueWithRepeaterBit[-1]),
+        #                    datetime.now() - timedelta(minutes=30))
+        dateTimeToUse = max(self.sentQueueWithRepeaterBit[-1], datetime.now() - timedelta(minutes=30))
+
         successCount = sum(1 for successDate in self.successWithRepeaterBitQueue if successDate >= dateTimeToUse)
         sentCount = sum(1 for sentDate in self.sentQueueWithRepeaterBit if sentDate >= dateTimeToUse)
         if sentCount == 0:

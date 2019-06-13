@@ -67,12 +67,12 @@ class Setup:
     def SetupAdapters(): #createMessageTypeIfNotExist = False):
         subscriberObjects = []
         change1 = SendLoraAdapter.CreateInstances(HardwareAbstraction.Instance)
-        change2 = SendSerialAdapter.CreateInstances()
+        #change2 = SendSerialAdapter.CreateInstances()
         change3 = SendToBlenoAdapter.CreateInstances()
         change4 = SendToMeosAdapter.CreateInstances()
         change5 = SendStatusAdapter.CreateInstances()
         subscriberObjects.extend(SendLoraAdapter.Instances)
-        subscriberObjects.extend(SendSerialAdapter.Instances)
+        #subscriberObjects.extend(SendSerialAdapter.Instances)
         subscriberObjects.extend(SendToBlenoAdapter.Instances)
         subscriberObjects.extend(SendToMeosAdapter.Instances)
         subscriberObjects.extend(SendStatusAdapter.Instances)
@@ -80,13 +80,13 @@ class Setup:
         inputObjects = []
         inChange1 = CreateStatusAdapter.CreateInstances()
         inChange2 = ReceiveLoraAdapter.CreateInstances(HardwareAbstraction.Instance)
-        inChange3 = ReceiveSerialComputerAdapter.CreateInstances(HardwareAbstraction.Instance)
+        #inChange3 = ReceiveSerialComputerAdapter.CreateInstances(HardwareAbstraction.Instance)
         inChange4 = ReceiveSIAdapter.CreateInstances()
         inChange5 = ReceiveTestPunchesAdapter.CreateInstances()
         inChange6 = ReceiveRepeaterMessagesAdapter.CreateInstances()
         inputObjects.extend(CreateStatusAdapter.Instances)
         inputObjects.extend(ReceiveLoraAdapter.Instances)
-        inputObjects.extend(ReceiveSerialComputerAdapter.Instances)
+        #inputObjects.extend(ReceiveSerialComputerAdapter.Instances)
         inputObjects.extend(ReceiveSIAdapter.Instances)
         inputObjects.extend(ReceiveTestPunchesAdapter.Instances)
         inputObjects.extend(ReceiveRepeaterMessagesAdapter.Instances)
@@ -102,8 +102,8 @@ class Setup:
                 anyShouldBeInitialized = True
 
         if (not anyShouldBeInitialized and not SettingsClass.GetForceReconfigure()
-            and not change1 and not change2 and not change3 and not change4 and not change5
-            and not inChange1 and not inChange2 and not inChange3 and not inChange4
+            and not change1 and not change3 and not change4 and not change5 #and not change2
+            and not inChange1 and not inChange2 and not inChange4 #and not inChange3
             and not inChange5 and not inChange6):
             return False
 

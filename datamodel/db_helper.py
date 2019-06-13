@@ -624,7 +624,7 @@ class DatabaseHelper:
                    "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
                    "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 "
                    "ORDER BY MessageBoxData.CreatedDate asc, "
-                   "MessageSubscriptionData.SentDate asc LIMIT 1")
+                   "MessageSubscriptionData.SentDate asc")
             messageSubscriptions = cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
 
             messageSubscriptionToSend = None
@@ -667,6 +667,7 @@ class DatabaseHelper:
                     continue
 
                 messageSubscriptionToSend = messageSubscription
+                break
 
             if messageSubscriptionToSend != None:
                 sql = "UPDATE MessageSubscriptionData SET FetchedForSending = ? WHERE Id = ?"
