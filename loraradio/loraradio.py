@@ -10,6 +10,7 @@ from settings.settings import SettingsClass
 import socket
 import binascii
 from datetime import datetime
+import errno
 
 class LoraRadio:
     Instances = []
@@ -476,9 +477,17 @@ class LoraRadio:
         logging.debug("LoraRadio::SendData() send data: " + dataInHex)
         #self.UpdateSentStats() of use?
         self.lastMessageSentDate =  time.monotonic()
-        self.radioSerial.write(messageData)
-        self.radioSerial.flush()
-        return True
+        while True:
+            try:
+                self.radioSerial.write(messageData)
+                logging.debug("after write")
+                self.radioSerial.flush()
+            except IOError as ioe:
+                logging.error("LoraRadio::SendData() " + str(ioe))
+                if ioe.errno != errno.EINTR:
+                    raise
+                continue
+            return True
 
     def GetRadioData(self):
         if self.receivedMessage2 != None:
@@ -506,6 +515,8 @@ class LoraRadio:
                     time.sleep(0.05)
                     if self.radioSerial.in_waiting == 0:
                         break
+            else:
+                logging.debug("LoraRadio::GetRadioData() start not found")
 
         # reset so that a messages can be sent. The received message could be an ack that we were waiting for
         self.lastMessageSentDate = None

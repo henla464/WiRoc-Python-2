@@ -167,8 +167,14 @@ class ReceiveLoraAdapter(object):
                                 loraMessage2.SetRepeaterBit(True)  # indicate this is repeater acking
                             loraMessage2.SetMessageIDToAck(messageID)
                             loraMessage2.UpdateChecksum()
-                            self.loraRadio.SendData(loraMessage2.GetByteArray())
-                    DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Received", 1)
+                            try:
+                                self.loraRadio.SendData(loraMessage2.GetByteArray())
+                            except Exception as ex2:
+                                logging.error("ReceiveLoraAdapter::GetData() Error sending ack: " + str(ex2))
+                    try:
+                        DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Received", 1)
+                    except Exception as ex:
+                        logging.error("ReceiveLoraAdapter::GetData() Error saving statistics: " + str(ex))
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "SIMessage", "Data": receivedData, "MessageID": messageID, "LoraRadioMessage": loraMessage, "ChecksumOK": True}
             else:
                 return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName":"Unknown", "Data": receivedData, "MessageID":None, "ChecksumOK": False}
