@@ -12,3 +12,12 @@ add calculated airtime to channel table, use this in GetDelayAfterMessageSent by
 
 Add some type of time based caching to settingsclass, don't check is dirty every time, https://www.thepythoncorner.com/2018/04/how-to-make-your-code-faster-by-using-a-cache-in-python/
  - Get rid of IsDirty, just rely on 5s cache? Invalidate cacheitem at set settings
+
+
+
+
+Later
+-------------------
+add RSSI test
+change to use cardno, stationno and time as message id? Repeater can avoid resending same message.
+Ack could include request to resend missed messages. Good idea? Or just a resend adapter fetching from failed messages?

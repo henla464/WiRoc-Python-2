@@ -213,6 +213,7 @@ class SendLoraAdapter(object):
         self.successWithoutRepeaterBitQueue.appendleft(datetime.now())
         if len(self.successWithoutRepeaterBitQueue) > 20:
             self.successWithoutRepeaterBitQueue.pop()
+        logging.debug("SendLoraAdapter::AddSuccessWithoutRepeaterBit() Add success without repeater bit, queue length: " + str(len(self.successWithoutRepeaterBitQueue)))
 
     def AddSuccessWithRepeaterBit(self):
         # we received and ack from the repeater, only
@@ -221,24 +222,28 @@ class SendLoraAdapter(object):
             self.successWithRepeaterBitQueue.appendleft(datetime.now())
             if len(self.successWithRepeaterBitQueue) > 20:
                 self.successWithRepeaterBitQueue.pop()
+            logging.debug("SendLoraAdapter::AddSuccessWithRepeaterBit() Add success with repeater bit, queue length: " + str(len(self.successWithRepeaterBitQueue)))
 
     def AddSentWithoutRepeaterBit(self):
         self.lastMessageRepeaterBit = False
         self.sentQueueWithoutRepeaterBit.appendleft(datetime.now())
         if len(self.sentQueueWithoutRepeaterBit) > 20:
             self.sentQueueWithoutRepeaterBit.pop()
+        logging.debug("SendLoraAdapter::AddSentWithoutRepeaterBit() Add sent without repeater bit, queue length: " + str(len(self.sentQueueWithoutRepeaterBit)))
 
     def AddSentWithRepeaterBit(self):
         self.lastMessageRepeaterBit = True
         self.sentQueueWithRepeaterBit.appendleft(datetime.now())
         if len(self.sentQueueWithRepeaterBit) > 20:
             self.sentQueueWithRepeaterBit.pop()
+        logging.debug("SendLoraAdapter::AddSentWithRepeaterBit() Add sent with repeater bit, queue length: " + str(len(self.sentQueueWithRepeaterBit)))
 
     def GetSuccessRateToDestination(self):
         #dateTimeToUse = max(min(self.successWithoutRepeaterBitQueue[-1], self.sentQueueWithoutRepeaterBit[-1]), datetime.now() - timedelta(minutes=30))
         dateTimeToUse = max(self.sentQueueWithoutRepeaterBit[-1],datetime.now() - timedelta(minutes=30))
         successCount = sum(1 for successDate in self.successWithoutRepeaterBitQueue if successDate >= dateTimeToUse)
         sentCount = sum(1 for sentDate in self.sentQueueWithoutRepeaterBit if sentDate >= dateTimeToUse)
+        logging.debug("SendLoraAdapter::GetSuccessRateToDestination() successCount: " + str(successCount) + " sentCount: " + str(sentCount))
         if sentCount == 0:
             return 100
         return int((successCount / sentCount)*100)
@@ -250,6 +255,7 @@ class SendLoraAdapter(object):
 
         successCount = sum(1 for successDate in self.successWithRepeaterBitQueue if successDate >= dateTimeToUse)
         sentCount = sum(1 for sentDate in self.sentQueueWithRepeaterBit if sentDate >= dateTimeToUse)
+        logging.debug("SendLoraAdapter::GetSuccessRateToRepeater() successCount: " + str(successCount) + " sentCount: " + str(sentCount))
         if sentCount == 0:
             return 100
         return int((successCount / sentCount) * 100)

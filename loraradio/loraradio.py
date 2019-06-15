@@ -466,6 +466,8 @@ class LoraRadio:
         return True
 
     def IsAirSignalDetected(self):
+        return False
+
         # read all data before sending new messages, especially important to avoid receiving mixed data when detecting air signal
         if self.radioSerial.in_waiting > 0:
             return False
