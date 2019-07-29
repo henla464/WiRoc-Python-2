@@ -104,5 +104,6 @@ class DisplayStateMachine(object):
                 self.currentState = self.currentState.Next()
         else:
             self.currentState = DisplayStateMachine.OledStartup
-        self.currentState.Draw(channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
+        if self.currentState != None:
+            self.currentState.Draw(channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
 
