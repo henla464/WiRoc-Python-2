@@ -36,21 +36,30 @@ class ChannelData(object):
 class MessageBoxData(object):
     columns = [("MessageData", bytearray), ("PowerCycleCreated", int),
                ("MessageTypeName", str), ("InstanceName", str),
-               ("MessageSubTypeName", str),
+               ("MessageSubTypeName", str),("MemoryAddress", int),
+               ("SICardNumber", str),
+               ("SIStationSerialNumber", str), ("SportIdentHour", str),
+               ("SportIdentMinute", str), ("SportIdentSecond", str),
+               ("SIStationNumber", str),("LowBattery", str),
                ("ChecksumOK", bool), ("CreatedDate", datetime)]
 
-    def __init__(self, MessageData=None, PowerCycleCreated=None,
-                 MessageTypeName=None, InstanceName = None,
-                 MessageSubTypeName=None,
-                 ChecksumOK=None, CreatedDate=None):
+    def __init__(self):
         self.id = None
-        self.MessageData = MessageData
-        self.PowerCycleCreated = PowerCycleCreated
-        self.MessageTypeName = MessageTypeName
-        self.InstanceName = InstanceName
-        self.MessageSubTypeName = MessageSubTypeName
-        self.ChecksumOK = ChecksumOK
-        self.CreatedDate = CreatedDate
+        self.MessageData = None
+        self.PowerCycleCreated = None
+        self.MessageTypeName = None
+        self.InstanceName = None
+        self.MessageSubTypeName = None
+        self.MemoryAddress = None
+        self.SICardNumber = None
+        self.SIStationSerialNumber = None
+        self.SportIdentHour = None
+        self.SportIdentMinute = None
+        self.SportIdentSecond = None
+        self.SIStationNumber = None
+        self.LowBattery = None
+        self.ChecksumOK = None
+        self.CreatedDate = None
 
 
 class MessageBoxArchiveData(object):
@@ -79,7 +88,7 @@ class RepeaterMessageBoxData(object):
                ("InstanceName", str), ("MessageSubTypeName", str), ("ChecksumOK", bool),
                ("MessageSource", str), ("SICardNumber", int), ("SportIdentHour", int),
                ("SportIdentMinute", int), ("SportIdentSecond", int), ("MessageID", bytes),
-               ("AckRequested", bool),
+               ("AckRequested", bool),("MemoryAddress", int), ("SIStationNumber", int),
                ("RepeaterRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", int),
                ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int),
                ("LastSeenTime", datetime), ("CreatedDate", datetime)]
@@ -99,6 +108,8 @@ class RepeaterMessageBoxData(object):
         self.SportIdentSecond = None
         self.MessageID = None
         self.AckRequested = None
+        self.MemoryAddress = None
+        self.SIStationNumber = None
         self.RepeaterRequested = None
         self.NoOfTimesSeen = None
         self.NoOfTimesAckSeen = None

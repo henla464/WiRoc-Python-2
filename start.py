@@ -215,42 +215,28 @@ class Main:
                     logging.info("Start::handleInput() Received data from " + inputAdapter.GetInstanceName())
                     messageID = inputData.get("MessageID", None)
                     messageTypeName = inputAdapter.GetTypeName()
+                    messageSource = inputData["MessageSource"]
+                    checksumOK = inputData["ChecksumOK"]
                     instanceName = inputAdapter.GetInstanceName()
+                    powerCycle = SettingsClass.GetPowerCycle()
+                    messageData = inputData["Data"]
+                    messageSubTypeName = inputData["MessageSubTypeName"]
+                    SIStationSerialNumber = inputData.get("SIStationSerialNumber", None)
                     if messageTypeName == "LORA" and SettingsClass.GetWiRocMode() == "REPEATER":
                         # WiRoc is in repeater mode and received a LORA message
                         logging.info("Start::handleInput() In repeater mode")
-                        messageSubTypeName = inputData["MessageSubTypeName"]
+
                         loraMessage = inputData.get("LoraRadioMessage", None)
                         if loraMessage == None:
                             logging.error(
                                 "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
                             continue
 
-                        rmbd = RepeaterMessageBoxData()
-                        rmbd.MessageData = inputData["Data"]
-                        rmbd.MessageTypeName = messageTypeName
-                        rmbd.PowerCycleCreated = SettingsClass.GetPowerCycle()
-                        rmbd.InstanceName = instanceName
-                        rmbd.MessageSubTypeName = inputData["MessageSubTypeName"]
-                        rmbd.ChecksumOK = inputData["ChecksumOK"]
-                        rmbd.MessageSource = inputData["MessageSource"]
-                        if loraMessage.GetMessageType() == LoraRadioMessage.MessageTypeSIPunch:
-                            loraHeaderSize = LoraRadioMessage.GetHeaderSize()
-                            siPayloadData = loraMessage.GetByteArray()[loraHeaderSize:]
-                            siMsg = SIMessage()
-                            siMsg.AddPayload(siPayloadData)
-                            rmbd.SICardNumber = siMsg.GetSICardNumber()
-                            rmbd.SportIdentHour = siMsg.GetHour()
-                            rmbd.SportIdentMinute = siMsg.GetMinute()
-                            rmbd.SportIdentSecond = siMsg.GetSeconds()
-                        rmbd.MessageID = messageID
-                        rmbd.AckRequested = loraMessage.GetAcknowledgementRequested()
-                        rmbd.RepeaterRequested = loraMessage.GetRepeaterBit()
-                        rmbd.NoOfTimesSeen = 1
-                        rmbd.NoOfTimesAckSeen = 0
+                        rmbd = DatabaseHelper.create_repeater_message_box_data(messageSource, messageTypeName, messageSubTypeName,
+                                                                     instanceName, checksumOK, powerCycle,
+                                                                     SIStationSerialNumber, messageID, messageData)
                         rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
                     else:
-                        messageSubTypeName = inputData["MessageSubTypeName"]
                         if messageTypeName == "LORA":
                             loraMessage = inputData.get("LoraRadioMessage", None)
                             if loraMessage != None:
@@ -267,14 +253,7 @@ class Main:
                                 logging.error("Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
                                 continue
 
-                        mbd = MessageBoxData()
-                        mbd.MessageData = inputData["Data"]
-                        mbd.MessageTypeName = messageTypeName
-                        mbd.PowerCycleCreated = SettingsClass.GetPowerCycle()
-                        mbd.ChecksumOK = inputData["ChecksumOK"]
-                        mbd.InstanceName = instanceName
-                        mbd.MessageSubTypeName = messageSubTypeName
-                        mbd.MessageSource = inputData["MessageSource"]
+                        mbd = DatabaseHelper.create_message_box_data(messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK, powerCycle, SIStationSerialNumber, messageData)
                         mbdid = DatabaseHelper.save_message_box(mbd)
                         SettingsClass.SetTimeOfLastMessageAdded()
                         inputAdapter.AddedToMessageBox(mbdid)

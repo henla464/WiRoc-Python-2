@@ -748,6 +748,44 @@ class DatabaseHelper:
                 return
 #MessageBox
     @classmethod
+    def create_message_box_data(cls, messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK, powerCycle, serialNumber, data):
+        mbd = MessageBoxData()
+        mbd.MessageData = data
+        mbd.MessageTypeName = messageTypeName
+        mbd.PowerCycleCreated = powerCycle
+        mbd.ChecksumOK = checksumOK
+        mbd.InstanceName = instanceName
+        mbd.MessageSubTypeName = messageSubTypeName
+        mbd.MessageSource = messageSource
+        mbd.SIStationSerialNumber = serialNumber
+
+        mbd.SIStationNumber = None
+        mbd.SIStationSerialNumber = None
+        mbd.LowBattery = None
+
+        siPayloadData = None
+        if messageTypeName == "LORA" and messageSubTypeName == "SIMessage":
+            loraHeaderSize = LoraRadioMessage.GetHeaderSize()
+            siPayloadData = data[loraHeaderSize:]
+            loraMessage = LoraRadioMessage()
+            loraMessage.AddPayload(data)
+            mbd.LowBattery = loraMessage.GetBatteryLowBit()
+        elif messageSubTypeName == "SIMessage":
+            #source WiRoc, SIStation
+            siPayloadData = data
+
+        if siPayloadData != None:
+            siMsg = SIMessage()
+            siMsg.AddPayload(siPayloadData)
+            mbd.SICardNumber = siMsg.GetSICardNumber()
+            mbd.SportIdentHour = siMsg.GetHour()
+            mbd.SportIdentMinute = siMsg.GetMinute()
+            mbd.SportIdentSecond = siMsg.GetSeconds()
+            mbd.MemoryAddress = siMsg.GetBackupMemoryAddressAsInt()
+            mbd.SIStationNumber = siMsg.GetStationNumber()
+
+
+    @classmethod
     def save_message_box(cls, messageBoxData):
         # todo: test performance with using fixed sql to insert instead
         cls.init()
@@ -783,6 +821,46 @@ class DatabaseHelper:
         cls.db.execute_SQL(sql)
 
 #RepeaterMessageBox
+    @classmethod
+    def create_repeater_message_box_data(cls, messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK,
+                                powerCycle, serialNumber, messageID, data):
+        rmbd = RepeaterMessageBoxData()
+        rmbd.MessageData = data
+        rmbd.MessageTypeName = messageTypeName
+        rmbd.PowerCycleCreated = powerCycle
+        rmbd.ChecksumOK = checksumOK
+        rmbd.InstanceName = instanceName
+        rmbd.MessageSubTypeName = messageSubTypeName
+        rmbd.MessageSource = messageSource
+        rmbd.SIStationSerialNumber = serialNumber
+        rmbd.NoOfTimesSeen = 1
+        rmbd.NoOfTimesAckSeen = 0
+
+        rmbd.SIStationNumber = None
+        rmbd.SIStationSerialNumber = None
+        rmbd.LowBattery = None
+
+        siPayloadData = None
+        if messageTypeName == "LORA" and messageSubTypeName == "SIMessage":
+            loraHeaderSize = LoraRadioMessage.GetHeaderSize()
+            siPayloadData = data[loraHeaderSize:]
+            loraMessage = LoraRadioMessage()
+            loraMessage.AddPayload(data)
+            rmbd.LowBattery = loraMessage.GetBatteryLowBit()
+            rmbd.MessageID = messageID
+            rmbd.AckRequested = loraMessage.GetAcknowledgementRequested()
+            rmbd.RepeaterRequested = loraMessage.GetRepeaterBit()
+
+        if siPayloadData != None:
+            siMsg = SIMessage()
+            siMsg.AddPayload(siPayloadData)
+            rmbd.SICardNumber = siMsg.GetSICardNumber()
+            rmbd.SportIdentHour = siMsg.GetHour()
+            rmbd.SportIdentMinute = siMsg.GetMinute()
+            rmbd.SportIdentSecond = siMsg.GetSeconds()
+            rmbd.MemoryAddress = siMsg.GetBackupMemoryAddressAsInt()
+            rmbd.SIStationNumber = siMsg.GetStationNumber()
+
     @classmethod
     def save_repeater_message_box(cls, repeaterMessageBoxData):
         cls.init()

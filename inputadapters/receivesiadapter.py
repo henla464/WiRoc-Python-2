@@ -399,6 +399,7 @@ class ReceiveSIAdapter(object):
             source = "WiRoc" if self.isConnectedToWiRocDevice else "SIStation"
             return {"MessageType": "DATA", "MessageSource": source,
                     "MessageSubTypeName": "SIMessage", "Data": receivedData,
+                    "SerialNumber": self.serialNumber,
                     "ChecksumOK": self.IsChecksumOK(receivedData)}
         elif SIMsg.GetMessageType() == SIMessage.IAmAWiRocDevice:
             checksumOK = self.IsChecksumOK(receivedData)
@@ -418,7 +419,7 @@ class ReceiveSIAdapter(object):
         elif SIMsg.GetMessageType() == SIMessage.WiRocToWiRoc: # Generic WiRoc to WiRoc data message
             logging.debug("ReceiveSIAdapter::GetData() WiRoc to WiRoc data message!")
             return {"MessageType": "DATA", "MessageSource": "WiRoc",
-                    "MessageSubTypeName": "LoraRadioMessage",
+                    "MessageSubTypeName": "LoraRadioMessage", "SIStationSerialNumber": self.serialNumber,
                     "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}
         else:
             dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
