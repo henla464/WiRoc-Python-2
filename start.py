@@ -505,12 +505,15 @@ class Main:
 
         while True:
             for i in range(1,1004):
+                didTasks = False
                 if i % 149 == 0: #use prime numbers to avoid the tasks happening on the same interation
                     print("frequent maintenance time: " + str(datetime.now()))
+                    didTasks = True
                     self.doFrequentMaintenanceTasks()
 
                 if i % 251 == 0:
                     print("reconfigure time: " + str(datetime.now()))
+                    didTasks = True
                     self.shouldReconfigure = False
                     settDict["WebServerIPUrl"] = SettingsClass.GetWebServerIPUrl()
                     settDict["WebServerHost"] = SettingsClass.GetWebServerHost()
@@ -523,13 +526,15 @@ class Main:
 
                 if i % 499 == 0:
                     print("infrequent maintenance time: " + str(datetime.now()))
+                    didTasks = True
                     self.doInfrequentMaintenanceTasks()
 
                 self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
                                             if inputAdapter.UpdateInfreqently() and inputAdapter.GetIsInitialized()]
 
+                if not didTasks:
+                    time.sleep(0.04)
                 print("time: " + str(datetime.now()))
-                time.sleep(0.04)
                 self.handleInput()
                 self.handleOutput(settDict)
                 self.sendMessageStats()
