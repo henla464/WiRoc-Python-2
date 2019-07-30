@@ -120,15 +120,6 @@ class Main:
             logging.warning("Start::Init error creating device on webserver")
             logging.warning("Start::Init " + str(ex))
 
-    def timeToReconfigure(self):
-        currentTime = time.monotonic()
-        if currentTime > self.nextTimeToReconfigure or self.shouldReconfigure:
-            self.nextTimeToReconfigure = currentTime + SettingsClass.GetReconfigureInterval()
-            self.shouldReconfigure = False
-            return True
-        else:
-            return False
-
     def archiveFailedMessages(self):
         #if self.messagesToSendExists:
         msgSubscriptions = DatabaseHelper.get_message_subscriptions_view_to_archive(SettingsClass.GetMaxRetries(), 100)
@@ -136,8 +127,7 @@ class Main:
             logging.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
             DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
 
-    def reconfigureBackground(self,channel,ackRequested, sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost, wirocDeviceName, sirapTCPEnabled,
-                              sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress, loggingServerHost, loggingServerPort, logToServer):
+    def reconfigureBackground(self,sendToMeos, webServerIPUrl, webServerHost, loggingServerHost, loggingServerPort, logToServer):
         if any(isinstance(h, logging.handlers.HTTPHandler) for h in logging.getLogger('').handlers):
             if not logToServer:
                 logging.getLogger('').handlers = [h for h in logging.getLogger('').handlers if
@@ -148,42 +138,23 @@ class Main:
                 httpHandler = logging.handlers.HTTPHandler(server, '/', method='POST')
                 logging.getLogger('').addHandler(httpHandler)
 
-        self.displayStateMachine.Draw(channel, ackRequested, wirocMode, dataRate, wirocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
+        #self.displayStateMachine.Draw(channel, ackRequested, wirocMode, dataRate, wirocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
         self.updateWebserverIPBackground(webServerHost)
         self.webServerUp = SendStatusAdapter.TestConnection(webServerIPUrl, webServerHost)
         Battery.UpdateWifiPowerSaving(sendToMeos)
         Battery.Tick()
+
+    def updateDisplayBackground(self,channel,ackRequested, wirocMode, dataRate, wirocDeviceName, sirapTCPEnabled,
+                              sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
+        self.displayStateMachine.Draw(channel, ackRequested, wirocMode, dataRate, wirocDeviceName, sirapTCPEnabled,
+                                      sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
+
+    def doFrequentMaintenanceTasks(self):
         SettingsClass.Tick()
-
-    def reconfigure(self):
-        SettingsClass.IsDirty("StatusMessageBaseInterval", True, True)  # force check dirty in db
-        self.archiveFailedMessages()
-        DatabaseHelper.archive_old_repeater_message()
-        if Setup.SetupAdapters():
-            self.subscriberAdapters = Setup.SubscriberAdapters
-            self.inputAdapters = Setup.InputAdapters
-
-
-        channel = None
-        ackRequested = None
-        sendToMeos = None
-        wirocMode = None
-        dataRate = None
-        wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
-        webServerIPUrl = SettingsClass.GetWebServerIPUrl()
-        webServerHost = SettingsClass.GetWebServerHost()
-        loggingServerHost = SettingsClass.GetLoggingServerHost()
-        loggingServerPort = SettingsClass.GetLoggingServerPort()
-        logToServer = SettingsClass.GetLogToServer()
-        sirapTCPEnabled = False
-        sendSerialActive = False
-        sirapIPAddress = ""
-        sirapIPPort = 0
-        wiRocIPAddress = [""]
         if HardwareAbstraction.Instance.runningOnChip or HardwareAbstraction.Instance.runningOnNanoPi:
+            wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
             channel = SettingsClass.GetChannel()
             ackRequested = SettingsClass.GetAcknowledgementRequested()
-            sendToMeos = SettingsClass.GetSendToMeosEnabled()
             wirocMode = SettingsClass.GetWiRocMode()
             dataRate = SettingsClass.GetDataRate()
             sirapTCPEnabled = SettingsClass.GetSendToMeosEnabled()
@@ -192,9 +163,30 @@ class Main:
             sirapIPPort = SettingsClass.GetSendToMeosIPPort()
             wiRocIPAddress = HardwareAbstraction.Instance.GetWiRocIPAddresses()
 
-        t = threading.Thread(target=self.reconfigureBackground, args=(channel,ackRequested,sendToMeos, webServerIPUrl, wirocMode, dataRate, webServerHost,
-                                                                      wiRocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress,
-                                                                      loggingServerHost, loggingServerPort, logToServer))
+            t = threading.Thread(target=self.updateDisplayBackground, args=(
+            channel, ackRequested, wirocMode, dataRate, wiRocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress))
+            t.daemon = True
+            t.start()
+
+
+    def doInfrequentMaintenanceTasks(self):
+        self.archiveFailedMessages()
+        DatabaseHelper.archive_old_repeater_message()
+        self.updateBatteryIsLow()
+
+    def reconfigure(self):
+        if Setup.SetupAdapters():
+            self.subscriberAdapters = Setup.SubscriberAdapters
+            self.inputAdapters = Setup.InputAdapters
+
+        webServerIPUrl = SettingsClass.GetWebServerIPUrl()
+        webServerHost = SettingsClass.GetWebServerHost()
+        loggingServerHost = SettingsClass.GetLoggingServerHost()
+        loggingServerPort = SettingsClass.GetLoggingServerPort()
+        logToServer = SettingsClass.GetLogToServer()
+        sendToMeos = SettingsClass.GetSendToMeosEnabled()
+
+        t = threading.Thread(target=self.reconfigureBackground, args=(sendToMeos, webServerIPUrl, webServerHost, loggingServerHost, loggingServerPort, logToServer))
         t.daemon = True
         t.start()
 
@@ -512,21 +504,31 @@ class Main:
         settDict["ApiKey"] = SettingsClass.GetAPIKey()
 
         while True:
+            for i in range(1,1004):
+                if i % 149 == 0: #use prime numbers to avoid the tasks happening on the same interation
+                    print("frequent maintenance time: " + str(datetime.now()))
+                    self.doFrequentMaintenanceTasks()
 
-            if self.timeToReconfigure():
-                self.updateBatteryIsLow()
-                settDict["WebServerIPUrl"] = SettingsClass.GetWebServerIPUrl()
-                settDict["WebServerHost"] = SettingsClass.GetWebServerHost()
-                settDict["WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
-                settDict["SendToMeosIP"] = SettingsClass.GetSendToMeosIP()
-                settDict["SendToMeosIPPort"] = SettingsClass.GetSendToMeosIPPort()
-                settDict["ApiKey"] = SettingsClass.GetAPIKey()
-                self.reconfigure()
+                if i % 251 == 0:
+                    print("reconfigure time: " + str(datetime.now()))
+                    self.shouldReconfigure = False
+                    settDict["WebServerIPUrl"] = SettingsClass.GetWebServerIPUrl()
+                    settDict["WebServerHost"] = SettingsClass.GetWebServerHost()
+                    settDict[
+                        "WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
+                    settDict["SendToMeosIP"] = SettingsClass.GetSendToMeosIP()
+                    settDict["SendToMeosIPPort"] = SettingsClass.GetSendToMeosIPPort()
+                    settDict["ApiKey"] = SettingsClass.GetAPIKey()
+                    self.reconfigure()
 
-            self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
-                                   if inputAdapter.UpdateInfreqently() and inputAdapter.GetIsInitialized()]
+                if i % 499 == 0:
+                    print("infrequent maintenance time: " + str(datetime.now()))
+                    self.doInfrequentMaintenanceTasks()
 
-            for i in repeat(None, 20):
+                self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
+                                            if inputAdapter.UpdateInfreqently() and inputAdapter.GetIsInitialized()]
+
+                print("time: " + str(datetime.now()))
                 time.sleep(0.04)
                 self.handleInput()
                 self.handleOutput(settDict)

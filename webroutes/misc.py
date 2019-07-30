@@ -71,13 +71,7 @@ def setSetting(keyandvalue):
     if settingData is None:
         return ''
 
-    settingData2 = SettingData()
-    settingData2.Key = 'ConfigDirty'
-    settingData2.Value = '1'
-    settingData2 = DatabaseHelper.save_setting(settingData2)
-    if settingData2 is None:
-        return ''
-
+    SettingsClass.SetSettingUpdatedByWebService()
     return settingData.Key + ';' + settingData.Value
 
 @app.route('/misc/punches/', methods=['GET'])

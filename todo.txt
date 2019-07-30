@@ -1,18 +1,10 @@
-Add these columns to messagebox table, and extract them from the messagedata:
-SIStationSerialNumber
-MemoryAddress
-PunchTime
-SIStationNumber
-LowBattery
-
-
 Add one-way option for connecting to samlingsboxar, srr dongles
 test if checking the effectictive logging level should be done to only create hex strings when it is actually logged
 add calculated airtime to channel table, use this in GetDelayAfterMessageSent by calling loraradio
 
 Add some type of time based caching to settingsclass, don't check is dirty every time, https://www.thepythoncorner.com/2018/04/how-to-make-your-code-faster-by-using-a-cache-in-python/
  - Get rid of IsDirty, just rely on 5s cache? Invalidate cacheitem at set settings
-
+- skip sleep after reconfigure
 
 
 
@@ -20,4 +12,5 @@ Later
 -------------------
 add RSSI test
 change to use cardno, stationno and time as message id? Repeater can avoid resending same message.
+Or use stationserialnumber and memoryaddress (5 bytes in total)
 Ack could include request to resend missed messages. Good idea? Or just a resend adapter fetching from failed messages?

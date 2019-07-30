@@ -78,7 +78,7 @@ class Battery(object):
     @classmethod
     def Tick(cls):
         if cls.timeChargingOrMaxCurrentDrawChangedFromNormal is not None and \
-                        time.monotonic() > cls.timeChargingOrMaxCurrentDrawChangedFromNormal + 6 * SettingsClass.GetReconfigureInterval():
+                        time.monotonic() > cls.timeChargingOrMaxCurrentDrawChangedFromNormal + 60:
             cls.SetNormalCharging()
             cls.LimitCurrentDrawTo900()
 

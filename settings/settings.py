@@ -3,43 +3,27 @@ __author__ = 'henla464'
 from datamodel.db_helper import DatabaseHelper
 from datamodel.datamodel import SettingData
 import time
-from datetime import datetime
 import math
 import random
 import os
+from cachetools import cached, TTLCache
+from cachetools.keys import hashkey
+from functools import partial
+from threading import RLock
+
+
+cache = TTLCache(maxsize=100, ttl=300)  # 300 seconds
+cacheForEver = TTLCache(maxsize=100, ttl=30000)  # 30000 seconds (500 min)
+cacheUntilChangedByProcess = TTLCache(maxsize=100, ttl=30000)  # 30000 seconds (500 min)
+rlock = RLock()
 
 class SettingsClass(object):
-    RadioIntervalLengthMicroSeconds = [4000000, 4000000, 4000000, 4000000, 4000000, 4000000]
     timeOfLastMessageAdded = time.monotonic()
     timeOfLastMessageSentToLora = time.monotonic()
-    statusMessageBaseInterval = None
-    loraAckMessageWaitTimeout = None
-    MessagesToSendExists = True
-    channel = None
-    dataRate = None
-    loraPower = None
-    acknowledgementRequested = None
-    sendToMeosEnabled = None
-    sendToMeosIP = None
-    sendToMeosIPPort = None
-    powerCycle = None
     receiveSIAdapterActive = None
     sendSerialAdapterActive = None
-    firstRetryDelay = None
-    secondRetryDelay = None
-    sendStatusMessages = None
-    sendToBlenoEnabled = None
-    wiRocDeviceName = None
     forceReconfigure = False
-    webServerUrl = None
-    btAddress = None
-    APIKey = None
     webServerIP = None
-    loggingServerHost = None
-    loggingServerPort = None
-    logToServer = None
-
-
     connectedComputerIsWiRocDevice = False
     timeConnectedComputerIsWiRocDeviceChanged = None
     siStationNumber = 0
@@ -48,206 +32,9 @@ class SettingsClass(object):
     batteryIsLowReceived = False
     deviceId = None
 
-    @staticmethod
-    def SetConfigurationDirty(settingsName=None, markDirtyInDatabase = False):
-        if settingsName == 'Channel':
-            SettingsClass.channel = None
-        if settingsName == 'DataRate':
-            SettingsClass.dataRate = None
-        if settingsName == 'LoraPower':
-            SettingsClass.loraPower = None
-        if settingsName == 'AcknowledgementRequested':
-            SettingsClass.acknowledgementRequested = None
-        if settingsName == 'SendToMeosEnabled':
-            SettingsClass.sendToMeosEnabled = None
-        if settingsName == 'SendToMeosIP':
-            SettingsClass.sendToMeosIP = None
-        if settingsName == 'SendToMeosIPPort':
-            SettingsClass.sendToMeosIPPort = None
-        if settingsName == 'PowerCycle':
-            SettingsClass.powerCycle = None
-        if settingsName == 'ReceiveSIAdapterActive':
-            SettingsClass.receiveSIAdapterActive = None
-        if settingsName == 'SendSerialAdapterActive':
-            SettingsClass.sendSerialAdapterActive = None
-        if settingsName == 'FirstRetryDelay':
-            SettingsClass.firstRetryDelay = None
-        if settingsName == 'SecondRetryDelay':
-            SettingsClass.secondRetryDelay = None
-        if settingsName == 'StatusMessageBaseInterval':
-            SettingsClass.statusMessageBaseInterval = None
-        if settingsName == 'LoraAckMessageWaitTimeout':
-            SettingsClass.loraAckMessageWaitTimeout = None
-        if settingsName == 'SendToBlenoEnabled':
-            SettingsClass.sendToBlenoEnabled = None
-        if settingsName == 'WiRocDeviceName':
-            SettingsClass.wiRocDeviceName = None
-        if settingsName == 'WiRocDeviceName':
-            SettingsClass.wiRocDeviceName = None
-        if settingsName == 'WebServerUrl':
-            SettingsClass.webServerUrl = None
-        if settingsName == 'BTAddress':
-            SettingsClass.btAddress = None
-        if settingsName == 'APIKey':
-            SettingsClass.APIKey = None
-        if settingsName == 'LoggingServerHost':
-            SettingsClass.loggingServerHost = None
-        if settingsName == 'LoggingServerPort':
-            SettingsClass.loggingServerPort = None
-        if settingsName == 'LogToServer':
-            SettingsClass.logToServer = None
-
-        if markDirtyInDatabase:
-            SettingsClass.SetSetting("ConfigDirty", "1")
-            SettingsClass.SetSetting("WebConfigDirty", "1")
-
-    @staticmethod
-    def IsDirty(settingsName, checkSettingForDirty = True, mainConfigDirty = True):
-        isDirty = "0"
-        if checkSettingForDirty:
-            if mainConfigDirty:
-                isDirty = SettingsClass.GetSetting("ConfigDirty")
-            else:
-                isDirty = SettingsClass.GetSetting("WebConfigDirty")
-        if isDirty is not None and isDirty == "1":
-            SettingsClass.channel = None
-            SettingsClass.dataRate = None
-            SettingsClass.loraPower = None
-            SettingsClass.acknowledgementRequested = None
-            SettingsClass.sendToMeosEnabled = None
-            SettingsClass.sendToMeosIP = None
-            SettingsClass.sendToMeosIPPort = None
-            SettingsClass.powerCycle = None
-            SettingsClass.receiveSIAdapterActive = None
-            SettingsClass.sendSerialAdapterActive = None
-            SettingsClass.firstRetryDelay = None
-            SettingsClass.secondRetryDelay = None
-            SettingsClass.statusMessageBaseInterval = None
-            SettingsClass.loraAckMessageWaitTimeout = None
-            SettingsClass.sendStatusMessages = None
-            SettingsClass.sendToBlenoEnabled = None
-            SettingsClass.wiRocDeviceName = None
-            SettingsClass.webServerUrl = None
-            SettingsClass.btAddress = None
-            SettingsClass.APIKey = None
-            SettingsClass.loggingServerHost = None
-            SettingsClass.loggingServerPort = None
-            SettingsClass.logToServer = None
-
-            if mainConfigDirty:
-                SettingsClass.SetSetting("ConfigDirty", "0")
-            else:
-                SettingsClass.SetSetting("WebConfigDirty", "0")
-            return True
-        else:
-            if settingsName == 'Channel':
-                return SettingsClass.channel is None
-            if settingsName == 'DataRate':
-                return SettingsClass.dataRate is None
-            if settingsName == 'LoraPower':
-                return SettingsClass.loraPower is None
-            if settingsName == 'AcknowledgementRequested':
-                return SettingsClass.acknowledgementRequested is None
-            if settingsName == 'SendToMeosEnabled':
-                return SettingsClass.sendToMeosEnabled is None
-            if settingsName == 'SendToMeosIP':
-                return SettingsClass.sendToMeosIP is None
-            if settingsName == 'SendToMeosIPPort':
-                return SettingsClass.sendToMeosIPPort is None
-            if settingsName == 'PowerCycle':
-                return SettingsClass.powerCycle is None
-            if settingsName == 'ReceiveSIAdapterActive':
-                return SettingsClass.receiveSIAdapterActive is None
-            if settingsName == 'SendSerialAdapterActive':
-                return SettingsClass.sendSerialAdapterActive is None
-            if settingsName == 'FirstRetryDelay':
-                return SettingsClass.firstRetryDelay is None
-            if settingsName == 'SecondRetryDelay':
-                return SettingsClass.secondRetryDelay is None
-            if settingsName == 'StatusMessageBaseInterval':
-                return SettingsClass.statusMessageBaseInterval is None
-            if settingsName == 'LoraAckMessageWaitTimeout':
-                return SettingsClass.loraAckMessageWaitTimeout is None
-            if settingsName == 'SendStatusMessages':
-                return SettingsClass.sendStatusMessages is None
-            if settingsName == 'SendToBlenoEnabled':
-                return SettingsClass.sendToBlenoEnabled is None
-            if settingsName == 'WiRocDeviceName':
-                return SettingsClass.wiRocDeviceName is None
-            if settingsName == 'WebServerUrl':
-                return SettingsClass.webServerUrl is None
-            if settingsName == 'BTAddress':
-                return SettingsClass.btAddress is None
-            if settingsName == 'APIKey':
-                return SettingsClass.APIKey is None
-            if settingsName == 'LoggingServerHost':
-                return SettingsClass.loggingServerHost is None
-            if settingsName == 'LoggingServerHost':
-                return SettingsClass.loggingServerPort is None
-            if settingsName == 'LogToServer':
-                return SettingsClass.logToServer is None
-
-        return True
-
-    @staticmethod
-    def SetSetting(key, value):
-        sd = DatabaseHelper.get_setting_by_key(key)
-        if sd is None:
-            sd = SettingData()
-            sd.Key = key
-        sd.Value = value
-        sd = DatabaseHelper.save_setting(sd)
-        SettingsClass.SetConfigurationDirty(key)
-        return sd
-
-    @staticmethod
-    def GetSetting(key):
-        sd = DatabaseHelper.get_setting_by_key(key)
-        if sd is None:
-            return None
-        return sd.Value
-
-    @staticmethod
-    def GetChannel(mainConfigDirty = True):
-        if SettingsClass.IsDirty("Channel", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('Channel')
-            if sett is None:
-                SettingsClass.channel = 1
-            else:
-                SettingsClass.channel = int(sett.Value)
-        return SettingsClass.channel
-
-    @staticmethod
-    def GetDataRate(mainConfigDirty = True):
-        if SettingsClass.IsDirty("DataRate", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('DataRate')
-            if sett is None:
-                SettingsClass.dataRate = 293
-            else:
-                SettingsClass.dataRate = int(sett.Value)
-        return SettingsClass.dataRate
-
-    @staticmethod
-    def GetLoraPower(mainConfigDirty = True):
-        if SettingsClass.IsDirty("LoraPower", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('LoraPower')
-            if sett is None:
-                SettingsClass.loraPower = 0x07
-            else:
-                SettingsClass.loraPower = int(sett.Value)
-        return SettingsClass.loraPower
-
-
-    @staticmethod
-    def GetAcknowledgementRequested(mainConfigDirty = True):
-        if SettingsClass.IsDirty("AcknowledgementRequested", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
-            if sett is None:
-                SettingsClass.acknowledgementRequested = True
-            else:
-                SettingsClass.acknowledgementRequested = (sett.Value == "1")
-        return SettingsClass.acknowledgementRequested
-
+    #####
+    # Static/class settings
+    #####
     @staticmethod
     def SetHasReceivedMessageFromRepeater():
         SettingsClass.hasReceivedMessageFromRepeater = True
@@ -257,225 +44,12 @@ class SettingsClass(object):
         return SettingsClass.hasReceivedMessageFromRepeater
 
     @staticmethod
-    def GetStatusAcknowledgementRequested(mainConfigDirty = True):
+    def GetStatusAcknowledgementRequested():
         return True
-
-    @staticmethod
-    def GetSendToMeosEnabled(mainConfigDirty = True):
-        if SettingsClass.IsDirty("SendToMeosEnabled", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('SendToMeosEnabled')
-            if sett is None:
-                SettingsClass.sendToMeosEnabled = False
-            else:
-                SettingsClass.sendToMeosEnabled = (sett.Value == "1")
-        return SettingsClass.sendToMeosEnabled
-
-    @staticmethod
-    def GetSendToMeosIP(mainConfigDirty = True):
-        if SettingsClass.IsDirty("SendToMeosIP", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('SendToMeosIP')
-            if sett is None:
-                SettingsClass.sendToMeosIP = None
-            else:
-                SettingsClass.sendToMeosIP = sett.Value
-        return SettingsClass.sendToMeosIP
-
-    @staticmethod
-    def GetSendToMeosIPPort(mainConfigDirty = True):
-        if SettingsClass.IsDirty("SendToMeosIPPort", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('SendToMeosIPPort')
-            if sett is None:
-                SettingsClass.sendToMeosIPPort = 10000
-            else:
-                 try:
-                     SettingsClass.sendToMeosIPPort = int(sett.Value)
-                 except ValueError:
-                     SettingsClass.sendToMeosIPPort = 10000
-        return SettingsClass.sendToMeosIPPort
-
-    @staticmethod
-    def GetWebServerUrl(mainConfigDirty = True):
-        if SettingsClass.IsDirty("WebServerUrl", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('WebServerUrl')
-            if sett is None:
-                url = "http://monitor.wiroc.se"
-                SettingsClass.SetSetting("WebServerUrl", url)
-                SettingsClass.webServerUrl = url
-            else:
-                SettingsClass.webServerUrl = sett.Value
-        return SettingsClass.webServerUrl
-
-    @staticmethod
-    def GetLoggingServerHost(mainConfigDirty = True):
-        if SettingsClass.IsDirty("LoggingServerHost", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('LoggingServerHost')
-            if sett is None:
-                SettingsClass.SetSetting("LoggingServerHost", "")
-                SettingsClass.loggingServerHost = ""
-            else:
-                SettingsClass.loggingServerHost = sett.Value
-        return SettingsClass.loggingServerHost
-
-    @staticmethod
-    def GetLoggingServerPort(mainConfigDirty = True):
-        if SettingsClass.IsDirty("LoggingServerPort", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('LoggingServerPort')
-            if sett is None:
-                SettingsClass.SetSetting("LoggingServerPort", "3000")
-                SettingsClass.loggingServerPort = "3000"
-            else:
-                SettingsClass.loggingServerPort = sett.Value
-        return SettingsClass.loggingServerPort
-
-    @staticmethod
-    def GetLogToServer(mainConfigDirty = True):
-        if SettingsClass.IsDirty("LogToServer", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('LogToServer')
-            if sett is None:
-                SettingsClass.SetSetting("LogToServer", "0")
-                SettingsClass.logToServer = False
-            else:
-                SettingsClass.logToServer = (sett.Value == "1")
-        return SettingsClass.logToServer
-
-    @staticmethod
-    def GetSendToBlenoEnabled(mainConfigDirty = True):
-        if SettingsClass.IsDirty("SendToBlenoEnabled", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('SendToBlenoEnabled')
-            if sett is None:
-                SettingsClass.sendToBlenoEnabled = False
-            else:
-                SettingsClass.sendToBlenoEnabled = (sett.Value == "1")
-        return SettingsClass.sendToBlenoEnabled
-
-    @staticmethod
-    def GetBTAddress():
-        if SettingsClass.btAddress == None:
-            hcitoolResp = os.popen("hcitool dev").read()
-            hcitoolResp = hcitoolResp.replace("Devices:","")
-            hcitoolResp = hcitoolResp.strip()
-            hcitoolRespWords = hcitoolResp.split()
-            if len(hcitoolRespWords) > 1 and len(hcitoolRespWords[1]) == 17:
-                SettingsClass.btAddress = hcitoolRespWords[1]
-            else:
-                SettingsClass.btAddress = "NoBTAddress"
-        return SettingsClass.btAddress
-
-    @staticmethod
-    def GetAPIKey(mainConfigDirty = True):
-        if SettingsClass.IsDirty("APIKey", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('APIKey')
-            if sett is None:
-                with open('../apikey.txt', 'r') as apikeyfile:
-                    apiKey = apikeyfile.read()
-                    apiKey = apiKey.strip()
-                    SettingsClass.APIKey = apiKey
-            else:
-                SettingsClass.APIKey = sett.Value
-        return SettingsClass.APIKey
-
-    @staticmethod
-    def GetPowerCycle(mainConfigDirty = True):
-        if SettingsClass.IsDirty("PowerCycle", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('PowerCycle')
-            if sett is None:
-                SettingsClass.IncrementPowerCycle()
-                SettingsClass.powerCycle = 1
-            else:
-                SettingsClass.powerCycle = int(sett.Value)
-        return SettingsClass.powerCycle
-
-    @staticmethod
-    def IncrementPowerCycle():
-        sett = DatabaseHelper.get_setting_by_key('PowerCycle')
-        if sett is None:
-            sett = SettingData()
-            sett.Key = 'PowerCycle'
-            sett.Value = '0'
-        pc = int(sett.Value) + 1
-        sett.Value = str(pc)
-        DatabaseHelper.save_setting(sett)
-
-    @staticmethod
-    def GetReceiveSIAdapterActive(mainConfigDirty = True):
-        if SettingsClass.IsDirty("ReceiveSIAdapterActive", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('ReceiveSIAdapterActive')
-            if sett is None:
-                SettingsClass.receiveSIAdapterActive = False
-            else:
-                SettingsClass.receiveSIAdapterActive = (sett.Value == "1")
-        return SettingsClass.receiveSIAdapterActive
-
-    @staticmethod
-    def SetReceiveSIAdapterActive(val):
-        if val == SettingsClass.receiveSIAdapterActive:
-            return None
-
-        sett = SettingsClass.SetSetting('ReceiveSIAdapterActive', val)
-        SettingsClass.receiveSIAdapterActive = (sett.Value == "1")
-
-
-    @staticmethod
-    def GetSendSerialAdapterActive(mainConfigDirty = True):
-        if SettingsClass.IsDirty("SendSerialAdapterActive", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('SendSerialAdapterActive')
-            if sett is None:
-                SettingsClass.SetSendSerialAdapterActive("0")
-                SettingsClass.sendSerialAdapterActive = False
-            else:
-                SettingsClass.sendSerialAdapterActive = (sett.Value == "1")
-        return SettingsClass.sendSerialAdapterActive
-
-    @staticmethod
-    def SetSendSerialAdapterActive(val):
-        if val == SettingsClass.sendSerialAdapterActive:
-            return None
-
-        sett = SettingsClass.SetSetting('SendSerialAdapterActive', val)
-        SettingsClass.sendSerialAdapterActive = (sett.Value == "1")
-
-    @staticmethod
-    def GetWiRocMode():
-        if SettingsClass.GetSendSerialAdapterActive(): #and output = SERIAL
-            # connected to computer or other WiRoc
-            return "RECEIVER"
-        elif SettingsClass.GetSendToMeosEnabled(): #and output = MEOS
-            # configured to send to Meos over network/wifi
-            return "RECEIVER"
-        elif SettingsClass.GetReceiveSIAdapterActive():
-            return "SENDER"
-        else:
-            return "REPEATER"
-
-    channelData = None
-    microSecondsToSendAMessage = None
-    microSecondsToSendAnAckMessage = None
-    @staticmethod
-    def GetRetryDelay(retryNumber, mainConfigDirty = True):
-        #if SettingsClass.IsDirty("Channel", True, mainConfigDirty) \
-        #        or SettingsClass.channelData is None \
-        #        or SettingsClass.microSecondsToSendAMessage is None:
-        dataRate = SettingsClass.GetDataRate()
-        channel = SettingsClass.GetChannel()
-        SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
-        messageLengthInBytes = 24 # typical length
-        SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
-        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 1)*SettingsClass.microSecondsToSendAMessage
-        return microSecondsDelay
 
     @staticmethod
     def GetMaxRetries():
         return 5
-
-    @staticmethod
-    def GetSendStatusMessages(mainConfigDirty = True):
-        if SettingsClass.IsDirty("SendStatusMessages", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('SendStatusMessages')
-            if sett is None:
-                SettingsClass.sendStatusMessages = True
-            else:
-                SettingsClass.sendStatusMessages = (sett.Value == "1")
-        return SettingsClass.sendStatusMessages
 
     @staticmethod
     def SetTimeOfLastMessageSentToLora():
@@ -504,72 +78,6 @@ class SettingsClass(object):
     currentTime = time.monotonic()
 
     @staticmethod
-    def GetLoraAckMessageWaitTimeoutS():
-        if SettingsClass.microSecondsToSendAMessage is None:
-            dataRate = SettingsClass.GetDataRate()
-            channel = SettingsClass.GetChannel()
-            SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
-            messageLengthInBytes = 24  # typical length
-            SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
-
-        return 1+(SettingsClass.microSecondsToSendAMessage * 2.1)/1000000
-
-    @staticmethod
-    def GetLoraAckMessageSendingTimeS():
-        if SettingsClass.microSecondsToSendAnAckMessage is None:
-            dataRate = SettingsClass.GetDataRate()
-            channel = SettingsClass.GetChannel()
-            SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
-            messageLengthInBytes = 10  # typical length
-            SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
-
-        return 0.2+(SettingsClass.microSecondsToSendAnAckMessage)/1000000
-
-    @staticmethod
-    def GetLoraMessageTimeSendingTimeS(noOfBytes):
-        if noOfBytes == 0:
-            return 0
-        dataRate = SettingsClass.GetDataRate()
-        channel = SettingsClass.GetChannel()
-        SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
-        microSecs = SettingsClass.channelData.SlopeCoefficient * (noOfBytes + SettingsClass.channelData.M)
-        return microSecs/1000000
-
-    relayPathNo = 0
-    @staticmethod
-    def UpdateRelayPathNumber(sequenceNo):
-        if sequenceNo > SettingsClass.relayPathNo:
-            SettingsClass.relayPathNo = sequenceNo
-
-    @staticmethod
-    def GetRelayPathNumber():
-        return SettingsClass.relayPathNo
-
-    @staticmethod
-    def GetStatusMessageInterval():
-        if SettingsClass.statusMessageBaseInterval is None: #skip isDirty call, check directly
-            sett = DatabaseHelper.get_setting_by_key('StatusMessageBaseInterval')
-            if sett is None:
-                SettingsClass.SetSetting('StatusMessageBaseInterval', 300)
-                SettingsClass.statusMessageBaseInterval = 300
-            else:
-                try:
-                    SettingsClass.statusMessageBaseInterval = int(sett.Value)
-                except ValueError:
-                    SettingsClass.statusMessageBaseInterval = 300
-        return SettingsClass.statusMessageBaseInterval + (7*SettingsClass.GetRelayPathNumber()) + random.randint(0, 9)
-
-    @staticmethod
-    def GetWiRocDeviceName(mainConfigDirty = True):
-        if SettingsClass.IsDirty("WiRocDeviceName", True, mainConfigDirty):
-            sett = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
-            if sett is None:
-                SettingsClass.wiRocDeviceName = None
-            else:
-                SettingsClass.wiRocDeviceName = sett.Value
-        return SettingsClass.wiRocDeviceName
-
-    @staticmethod
     def GetReconfigureInterval():
         return 10
 
@@ -585,9 +93,17 @@ class SettingsClass(object):
     @staticmethod
     def Tick():
         if SettingsClass.timeConnectedComputerIsWiRocDeviceChanged is not None and \
-                           time.monotonic() > SettingsClass.timeConnectedComputerIsWiRocDeviceChanged + 6 * SettingsClass.GetReconfigureInterval():
+                        time.monotonic() > SettingsClass.timeConnectedComputerIsWiRocDeviceChanged + 60:
             SettingsClass.timeConnectedComputerIsWiRocDeviceChanged = None
             SettingsClass.connectedComputerIsWiRocDevice = False
+
+        # Clear cache if settings has been updated from webservices
+        sett = DatabaseHelper.get_setting_by_key('SettingUpdatedByWebService')
+        if sett is None:
+            return
+        if sett.Value == "1":
+            SettingsClass.ClearSettingUpdatedByWebService()
+            cache.clear()
 
     @staticmethod
     def SetSIStationNumber(stationNumber):
@@ -595,7 +111,8 @@ class SettingsClass(object):
         # highest station number. Set a the lower station number if a higher hasn't been
         # set for a long time.
         if stationNumber >= SettingsClass.siStationNumber or \
-                (time.monotonic() > SettingsClass.timeSIStationNumberChanged + 60 * SettingsClass.GetReconfigureInterval()):
+                (
+                    time.monotonic() > SettingsClass.timeSIStationNumberChanged + 600):
             SettingsClass.timeSIStationNumberChanged = time.monotonic()
             SettingsClass.siStationNumber = stationNumber
 
@@ -627,16 +144,295 @@ class SettingsClass(object):
     def SetWebServerIP(ip):
         SettingsClass.webServerIP = ip
 
+    relayPathNo = 0
     @staticmethod
-    def GetWebServerHost():
-        wsUrl = SettingsClass.GetWebServerUrl()
-        return wsUrl.replace('http://', '').replace('https://', '')
+    def UpdateRelayPathNumber(sequenceNo):
+        if sequenceNo > SettingsClass.relayPathNo:
+            SettingsClass.relayPathNo = sequenceNo
+
+    @staticmethod
+    def GetRelayPathNumber():
+        return SettingsClass.relayPathNo
+
+    @staticmethod
+    def GetWebServerIPUrlBackground(webServerUrl):
+        ip = SettingsClass.GetWebServerIP()
+        if ip == None:
+            return None
+        host = webServerUrl.replace('http://', '').replace('https://', '')
+        IPUrl = webServerUrl.replace(host, ip)
+        return IPUrl
 
     @staticmethod
     def GetWebServerHostBackground(wsUrl):
         return wsUrl.replace('http://', '').replace('https://', '')
 
+    #####
+    # Set DB values
+    #####
     @staticmethod
+    def SetSettingUpdatedByWebService():
+        SettingsClass.SetSetting("SettingUpdatedByWebService", "1")
+
+    @staticmethod
+    def ClearSettingUpdatedByWebService():
+        SettingsClass.SetSetting("SettingUpdatedByWebService", "0")
+
+    @staticmethod
+    def IncrementPowerCycle():
+        sett = DatabaseHelper.get_setting_by_key('PowerCycle')
+        if sett is None:
+            sett = SettingData()
+            sett.Key = 'PowerCycle'
+            sett.Value = '0'
+        pc = int(sett.Value) + 1
+        sett.Value = str(pc)
+        DatabaseHelper.save_setting(sett)
+
+    @staticmethod
+    def SetReceiveSIAdapterActive(val):
+        if val == SettingsClass.receiveSIAdapterActive:
+            return None
+
+        if val == True:
+            sett = SettingsClass.SetSetting('ReceiveSIAdapterActive', "1")
+        else:
+            sett = SettingsClass.SetSetting('ReceiveSIAdapterActive', "0")
+        SettingsClass.receiveSIAdapterActive = (sett.Value == "1")
+        cacheUntilChangedByProcess.clear()
+        cache.clear()  #GetWiRocMode uses this value so needs to be invalidated
+
+    @staticmethod
+    def SetSetting(key, value):
+        sd = DatabaseHelper.get_setting_by_key(key)
+        if sd is None:
+            sd = SettingData()
+            sd.Key = key
+        sd.Value = value
+        sd = DatabaseHelper.save_setting(sd)
+        return sd
+
+    @staticmethod
+    def SetSendSerialAdapterActive(val):
+        if val == SettingsClass.sendSerialAdapterActive:
+            return None
+
+        sett = SettingsClass.SetSetting('SendSerialAdapterActive', val)
+        SettingsClass.sendSerialAdapterActive = (sett.Value == "1")
+        cacheUntilChangedByProcess.clear()
+        cache.clear() #GetWiRocMode uses this value so needs to be invalidated
+
+     #####
+     # Changed both locally and via web services
+     #####
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWiRocMode'), lock=rlock)
+    def GetWiRocMode():
+        if SettingsClass.GetSendSerialAdapterActive():  # and output = SERIAL
+            # connected to computer or other WiRoc
+            return "RECEIVER"
+        elif SettingsClass.GetSendToMeosEnabled():  # and output = MEOS
+            # configured to send to Meos over network/wifi
+            return "RECEIVER"
+        elif SettingsClass.GetReceiveSIAdapterActive():
+            return "SENDER"
+        else:
+            return "REPEATER"
+
+    #####
+    # DB settings changed via web services only
+    #####
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetChannel'), lock=rlock)
+    def GetChannel():
+        sett = DatabaseHelper.get_setting_by_key('Channel')
+        return int(sett.Value)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetDataRate'), lock=rlock)
+    def GetDataRate():
+        sett = DatabaseHelper.get_setting_by_key('DataRate')
+        if sett is None:
+            SettingsClass.SetSetting("DataRate", "293")
+            return 293
+        return int(sett.Value)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetLoraPower'), lock=rlock)
+    def GetLoraPower():
+        sett = DatabaseHelper.get_setting_by_key('LoraPower')
+        if sett is None:
+            SettingsClass.SetSetting("LoraPower", str(0x07))
+            return 0x07
+        return int(sett.Value)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetAcknowledgementRequested'), lock=rlock)
+    def GetAcknowledgementRequested():
+        sett = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
+        if sett is None:
+            SettingsClass.SetSetting("AcknowledgementRequested", "1")
+            return True
+        return  (sett.Value == "1")
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSendToMeosEnabled'), lock=rlock)
+    def GetSendToMeosEnabled():
+        sett = DatabaseHelper.get_setting_by_key('SendToMeosEnabled')
+        if sett is None:
+            SettingsClass.SetSetting("SendToMeosEnabled", "0")
+            return False
+        return (sett.Value == "1")
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSendToMeosIP'), lock=rlock)
+    def GetSendToMeosIP():
+        sett = DatabaseHelper.get_setting_by_key('SendToMeosIP')
+        if sett is None:
+            return None
+        return sett.Value
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSendToMeosIPPort'), lock=rlock)
+    def GetSendToMeosIPPort():
+        sett = DatabaseHelper.get_setting_by_key('SendToMeosIPPort')
+        if sett is None:
+            SettingsClass.SetSetting("SendToMeosIPPort", "10000")
+            return 10000
+        return int(sett.Value)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWebServerUrl'), lock=rlock)
+    def GetWebServerUrl():
+        sett = DatabaseHelper.get_setting_by_key('WebServerUrl')
+        if sett is None:
+            url = "http://monitor.wiroc.se"
+            SettingsClass.SetSetting("WebServerUrl", url)
+            return url
+        return sett.Value
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetLoggingServerHost'), lock=rlock)
+    def GetLoggingServerHost():
+        sett = DatabaseHelper.get_setting_by_key('LoggingServerHost')
+        if sett is None:
+            SettingsClass.SetSetting("LoggingServerHost", "")
+            return ""
+        return sett.Value
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetLoggingServerPort'), lock=rlock)
+    def GetLoggingServerPort():
+        sett = DatabaseHelper.get_setting_by_key('LoggingServerPort')
+        if sett is None:
+            SettingsClass.SetSetting("LoggingServerPort", "3000")
+            return "3000"
+        return sett.Value
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetLogToServer'), lock=rlock)
+    def GetLogToServer():
+        sett = DatabaseHelper.get_setting_by_key('LogToServer')
+        if sett is None:
+            SettingsClass.SetSetting("LogToServer", "0")
+            return False
+        return (sett.Value == "1")
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSendToBlenoEnabled'), lock=rlock)
+    def GetSendToBlenoEnabled():
+        sett = DatabaseHelper.get_setting_by_key('SendToBlenoEnabled')
+        if sett is None:
+            SettingsClass.SetSetting("SendToBlenoEnabled", "0")
+            return False
+        return (sett.Value == "1")
+
+    channelData = None
+    microSecondsToSendAMessage = None
+    microSecondsToSendAnAckMessage = None
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetRetryDelay'), lock=rlock)
+    def GetRetryDelay(retryNumber, mainConfigDirty = True):
+        #if SettingsClass.IsDirty("Channel", True, mainConfigDirty) \
+        #        or SettingsClass.channelData is None \
+        #        or SettingsClass.microSecondsToSendAMessage is None:
+        dataRate = SettingsClass.GetDataRate()
+        channel = SettingsClass.GetChannel()
+        SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
+        messageLengthInBytes = 24 # typical length
+        SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
+        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 1)*SettingsClass.microSecondsToSendAMessage
+        return microSecondsDelay
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetLoraAckMessageWaitTimeoutS'), lock=rlock)
+    def GetLoraAckMessageWaitTimeoutS():
+        if SettingsClass.microSecondsToSendAMessage is None:
+            dataRate = SettingsClass.GetDataRate()
+            channel = SettingsClass.GetChannel()
+            SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
+            messageLengthInBytes = 24  # typical length
+            SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
+
+        return 1+(SettingsClass.microSecondsToSendAMessage * 2.1)/1000000
+
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetLoraAckMessageSendingTimeS'), lock=rlock)
+    def GetLoraAckMessageSendingTimeS():
+        if SettingsClass.microSecondsToSendAnAckMessage is None:
+            dataRate = SettingsClass.GetDataRate()
+            channel = SettingsClass.GetChannel()
+            SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
+            messageLengthInBytes = 10  # typical length
+            SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
+
+        return 0.2+(SettingsClass.microSecondsToSendAnAckMessage)/1000000
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetLoraMessageTimeSendingTimeS'), lock=rlock)
+    def GetLoraMessageTimeSendingTimeS(noOfBytes):
+        if noOfBytes == 0:
+            return 0
+        dataRate = SettingsClass.GetDataRate()
+        channel = SettingsClass.GetChannel()
+        SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
+        microSecs = SettingsClass.channelData.SlopeCoefficient * (noOfBytes + SettingsClass.channelData.M)
+        return microSecs/1000000
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetStatusMessageInterval'), lock=rlock)
+    def GetStatusMessageInterval():
+        sett = DatabaseHelper.get_setting_by_key('StatusMessageBaseInterval')
+        if sett is None:
+            SettingsClass.SetSetting('StatusMessageBaseInterval', 300)
+            statusMessageBaseInterval = 300
+        else:
+            try:
+                statusMessageBaseInterval = int(sett.Value)
+            except ValueError:
+                statusMessageBaseInterval = 300
+
+        return statusMessageBaseInterval + (7 * SettingsClass.GetRelayPathNumber()) + random.randint(0, 9)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWiRocDeviceName'), lock=rlock)
+    def GetWiRocDeviceName():
+        sett = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
+        if sett is None:
+            SettingsClass.SetSetting("WiRocDeviceName", None)
+            return None
+        return sett.Value
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWebServerHost'), lock=rlock)
+    def GetWebServerHost():
+        wsUrl = SettingsClass.GetWebServerUrl()
+        return wsUrl.replace('http://', '').replace('https://', '')
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWebServerIPUrl'), lock=rlock)
     def GetWebServerIPUrl():
         ip = SettingsClass.GetWebServerIP()
         if ip == None:
@@ -647,10 +443,67 @@ class SettingsClass(object):
         return IPUrl
 
     @staticmethod
-    def GetWebServerIPUrlBackground(webServerUrl):
-        ip = SettingsClass.GetWebServerIP()
-        if ip == None:
-            return None
-        host = webServerUrl.replace('http://', '').replace('https://', '')
-        IPUrl = webServerUrl.replace(host, ip)
-        return IPUrl
+    @cached(cache, key=partial(hashkey, 'GetSendStatusMessage'), lock=rlock)
+    def GetSendStatusMessages():
+        sett = DatabaseHelper.get_setting_by_key('SendStatusMessages')
+        if sett is None:
+            SettingsClass.SetSetting("SendStatusMessages", "1")
+            return True
+        return (sett.Value == "1")
+
+    #####
+    # Not changed from web services
+    #####
+
+    @staticmethod
+    @cached(cacheForEver, key=partial(hashkey, 'GetBTAddress'), lock=rlock)
+    def GetBTAddress():
+        hcitoolResp = os.popen("hcitool dev").read()
+        hcitoolResp = hcitoolResp.replace("Devices:", "")
+        hcitoolResp = hcitoolResp.strip()
+        hcitoolRespWords = hcitoolResp.split()
+        btAddress = "NoBTAddress"
+        if len(hcitoolRespWords) > 1 and len(hcitoolRespWords[1]) == 17:
+            btAddress = hcitoolRespWords[1]
+        return btAddress
+
+    @staticmethod
+    @cached(cacheForEver, key=partial(hashkey, 'GetAPIKey'), lock=rlock)
+    def GetAPIKey():
+        sett = DatabaseHelper.get_setting_by_key('APIKey')
+        if sett is None:
+            with open('../apikey.txt', 'r') as apikeyfile:
+                apiKey = apikeyfile.read()
+                apiKey = apiKey.strip()
+                return apiKey
+        return sett.Value
+
+    @staticmethod
+    @cached(cacheForEver, key=partial(hashkey, 'GetPowerCycle'), lock=rlock)
+    def GetPowerCycle():
+        sett = DatabaseHelper.get_setting_by_key('PowerCycle')
+        if sett is None:
+            SettingsClass.SetSetting("PowerCycle", "1")
+            return 1
+        return int(sett.Value)
+
+
+    @staticmethod
+    @cached(cacheUntilChangedByProcess, key=partial(hashkey, 'GetReceiveSIAdapterActive'), lock=rlock)
+    def GetReceiveSIAdapterActive():
+        sett = DatabaseHelper.get_setting_by_key('ReceiveSIAdapterActive')
+        if sett is None:
+            SettingsClass.SetSetting("ReceiveSIAdapterActive", "0")
+            return False
+        return (sett.Value == "1")
+
+    @staticmethod
+    @cached(cacheUntilChangedByProcess, key=partial(hashkey, 'GetSendSerialAdapterActive'), lock=rlock)
+    def GetSendSerialAdapterActive():
+        sett = DatabaseHelper.get_setting_by_key('SendSerialAdapterActive')
+        if sett is None:
+            SettingsClass.SetSetting("SendSerialAdapterActive", "0")
+            return False
+        return (sett.Value == "1")
+
+

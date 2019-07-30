@@ -23,7 +23,7 @@ def setChannel(channel):
         sd.Key = 'Channel'
     sd.Value = channel
     sd = DatabaseHelper.save_setting(sd)
-    SettingsClass.SetConfigurationDirty('Channel', True)
+    SettingsClass.SetSettingUpdatedByWebService()
     return jsonpickle.encode(MicroMock(Channel=int(sd.Value)))
 
 @app.route('/radioconfiguration/datarate/', methods=['GET'])
@@ -41,7 +41,7 @@ def setDataRate(dataRate):
         sd.Key = 'DataRate'
     sd.Value = dataRate
     sd = DatabaseHelper.save_setting(sd)
-    SettingsClass.SetConfigurationDirty('DataRate', True)
+    SettingsClass.SetSettingUpdatedByWebService()
     return jsonpickle.encode(MicroMock(DataRate=int(sd.Value)))
 
 
@@ -61,7 +61,7 @@ def setAcknowledgement(ack):
         sd.Key = 'AcknowledgementRequested'
     sd.Value = '1' if ack.lower() == 'true' else '0'
     sd = DatabaseHelper.save_setting(sd)
-    SettingsClass.SetConfigurationDirty('AcknowledgementRequested', True)
+    SettingsClass.SetSettingUpdatedByWebService()
     return jsonpickle.encode(MicroMock(AcknowledgementRequested=sd.Value == '1'))
 
 @app.route('/radioconfiguration/power/', methods=['GET'])
@@ -79,6 +79,6 @@ def setPower(power):
         sd.Key = 'LoraPower'
     sd.Value = power
     sd = DatabaseHelper.save_setting(sd)
-    SettingsClass.SetConfigurationDirty('LoraPower', True)
+    SettingsClass.SetSettingUpdatedByWebService()
     return jsonpickle.encode(MicroMock(Power=int(sd.Value)))
 
