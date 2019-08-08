@@ -122,62 +122,80 @@ class ReceiveSIAdapter(object):
         logging.debug("ReceiveSIAdapter::sendCommand() response: " + dataInHex)
         return response
 
+    def InitOneWay(self):
+        if SettingsClass.GetForce4800BaudRateFromSIStation():
+            # can only be forced to 4800 when in one-way receive
+            self.siSerial.baudrate = 4800
+        else:
+            self.siSerial.baudrate = 38400
+
+        self.siSerial.open()
+        self.siSerial.reset_input_buffer()
+        self.siSerial.reset_output_buffer()
+        return True
+
+    def InitTwoWay(self):
+        self.siSerial.baudrate = 38400
+        try:
+            self.siSerial.open()
+            self.siSerial.reset_input_buffer()
+            self.siSerial.reset_output_buffer()
+            logging.debug("ReceiveSIAdapter::Init() opened serial")
+        except Exception as ex:
+            logging.error("ReceiveSIAdapter::Init() opening serial exception:")
+            logging.error(ex)
+            return False
+
+        if self.siSerial.is_open:
+            # set master - mode to direct
+            logging.debug("ReceiveSIAdapter::Init() serial port open")
+            msdMode = bytes([0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
+            response = self.sendCommand(msdMode)
+
+            if not self.isCorrectMSModeDirectResponse(response):
+                logging.info("ReceiveSIAdapter::Init() not correct msmodedirectresponse: " + str(response))
+
+                # something wrong, try other baudrate
+                self.siSerial.close()
+                self.siSerial.port = self.portName
+                self.siSerial.baudrate = 4800
+                self.siSerial.open()
+                self.siSerial.reset_input_buffer()
+                self.siSerial.reset_output_buffer()
+
+                response = self.sendCommand(msdMode)
+
+                if not self.isCorrectMSModeDirectResponse(response):
+                    logging.info("ReceiveSIAdapter::Init() not correct msmodedirectresponse: " + str(response))
+                    logging.error("ReceiveSIAdapter::Init() could not communicate with master station")
+                    return False
+
+                logging.info("ReceiveSIAdapter::Init() SI Station 4800 kbit/s works")
+            else:
+                logging.info("ReceiveSIAdapter::Init() SI Station 38400 kbit/s works")
+
+            # If this is the first instance then update the computer time
+            if ReceiveSIAdapter.Instances[0].GetSerialDevicePath() == self.GetSerialDevicePath():
+                self.updateComputerTimeAndSiStationNumber()
+            self.serialNumber = self.getSerialNumberSystemValue()
+            self.detectMissedPunchesDuringInit()
+
+            self.isInitialized = True
+            return True
+        return False
+
     def Init(self):
         try:
             if self.GetIsInitialized() and self.siSerial.is_open:
                 return True
             logging.debug("ReceiveSIAdapter::Init() SI Station port name: " + self.portName)
             self.siSerial.close()
-            self.siSerial.baudrate = 38400
             self.siSerial.port = self.portName
-            try:
-                self.siSerial.open()
-                self.siSerial.reset_input_buffer()
-                self.siSerial.reset_output_buffer()
-                logging.debug("ReceiveSIAdapter::Init() opened serial")
-            except Exception as ex:
-                logging.error("ReceiveSIAdapter::Init() opening serial exception:")
-                logging.error(ex)
-                return False
+            if SettingsClass.GetOneWayReceiveFromSIStation():
+                return self.InitOneWay()
+            else:
+                return self.InitTwoWay()
 
-            if self.siSerial.is_open:
-                #set master - mode to direct
-                logging.debug("ReceiveSIAdapter::Init() serial port open")
-                msdMode = bytes([0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
-                response = self.sendCommand(msdMode)
-
-                if not self.isCorrectMSModeDirectResponse(response):
-                    logging.info("ReceiveSIAdapter::Init() not correct msmodedirectresponse: " + str(response))
-
-                    # something wrong, try other baudrate
-                    self.siSerial.close()
-                    self.siSerial.port = self.portName
-                    self.siSerial.baudrate = 4800
-                    self.siSerial.open()
-                    self.siSerial.reset_input_buffer()
-                    self.siSerial.reset_output_buffer()
-
-                    response = self.sendCommand(msdMode)
-
-                    if not self.isCorrectMSModeDirectResponse(response):
-                        logging.info("ReceiveSIAdapter::Init() not correct msmodedirectresponse: " + str(response))
-                        logging.error("ReceiveSIAdapter::Init() could not communicate with master station")
-                        return False
-
-                    logging.info("ReceiveSIAdapter::Init() SI Station 4800 kbit/s works")
-                else:
-                    logging.info("ReceiveSIAdapter::Init() SI Station 38400 kbit/s works")
-
-                # If this is the first instance then update the computer time
-                if ReceiveSIAdapter.Instances[0].GetSerialDevicePath() == self.GetSerialDevicePath():
-                    self.updateComputerTimeAndSiStationNumber()
-
-                self.serialNumber = self.getSerialNumberSystemValue()
-                self.detectMissedPunchesDuringInit()
-                self.isInitialized = True
-                return True
-
-            return False
         except (Exception) as msg:
             logging.error("ReceiveSIAdapter::Init() Exception: " + str(msg))
             return False
@@ -354,7 +372,10 @@ class ReceiveSIAdapter(object):
     # messageData is a bytearray
     def GetData(self):
         if self.siSerial.in_waiting == 0:
-            return self.getBackupPunch()
+            if SettingsClass.GetOneWayReceiveFromSIStation():
+                return None
+            else:
+                return self.getBackupPunch()
         logging.debug("ReceiveSIAdapter::GetData() Data to fetch")
         expectedLength = 3
         receivedData = bytearray()
@@ -393,7 +414,8 @@ class ReceiveSIAdapter(object):
                 allDataInHex = ''.join(format(x, '02x') for x in allReceivedData)
                 logging.error("ReceiveSIAdapter::GetData() Received more data than expected, all data: " + allDataInHex)
 
-            self.detectMissedPunches(SIMsg)
+            if not SettingsClass.GetOneWayReceiveFromSIStation():
+                self.detectMissedPunches(SIMsg)
 
             DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Received", 1)
             source = "WiRoc" if self.isConnectedToWiRocDevice else "SIStation"

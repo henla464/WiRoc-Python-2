@@ -354,9 +354,6 @@ class SettingsClass(object):
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetRetryDelay'), lock=rlock)
     def GetRetryDelay(retryNumber, mainConfigDirty = True):
-        #if SettingsClass.IsDirty("Channel", True, mainConfigDirty) \
-        #        or SettingsClass.channelData is None \
-        #        or SettingsClass.microSecondsToSendAMessage is None:
         dataRate = SettingsClass.GetDataRate()
         channel = SettingsClass.GetChannel()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
@@ -449,6 +446,24 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("SendStatusMessages", "1")
             return True
+        return (sett.Value == "1")
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetOneWayReceiveFromSIStation'), lock=rlock)
+    def GetOneWayReceiveFromSIStation():
+        sett = DatabaseHelper.get_setting_by_key('OneWayReceive')
+        if sett is None:
+            SettingsClass.SetSetting("OneWayReceive", "0")
+            return False
+        return (sett.Value == "1")
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSendStatusMessage'), lock=rlock)
+    def GetForce4800BaudRateFromSIStation():
+        sett = DatabaseHelper.get_setting_by_key('Force4800BaudRate')
+        if sett is None:
+            SettingsClass.SetSetting("Force4800BaudRate", "0")
+            return False
         return (sett.Value == "1")
 
     #####

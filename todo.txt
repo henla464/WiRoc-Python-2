@@ -1,14 +1,21 @@
-Add one-way option for connecting to samlingsboxar, srr dongles
 test if checking the effectictive logging level should be done to only create hex strings when it is actually logged
 add calculated airtime to channel table, use this in GetDelayAfterMessageSent by calling loraradio
 
-- skip sleep after reconfigure
 
+
+App
+===
+Add one-way option for connecting to samlingsboxar, srr dongles
 
 
 Later
 -------------------
 add RSSI test
-change to use cardno, stationno and time as message id? Repeater can avoid resending same message.
-Or use stationserialnumber and memoryaddress (5 bytes in total)
+
+IDs
+----
+Options for IDs
+Logical MessageID: cardno, time (and stationo) [4 bytes + 4 bytes] (all included in serialmessage)
+Real MessageID: MemoryAddress 2 bytes, WiRoc-serialno 2 bytes
+
 Ack could include request to resend missed messages. Good idea? Or just a resend adapter fetching from failed messages?
