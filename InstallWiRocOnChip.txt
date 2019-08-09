@@ -50,6 +50,9 @@ Install jsonpickle
 Install pyudev
 	a) sudo pip3 install pyudev
 
+Install cachetools
+        a) sudo pip3 install cachetools
+
 Install newer nodejs
 	a) wget https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-armv7l.tar.xz
 	b) sudo tar -C /usr/local --strip-components 1 -xJf node-v6.9.1-linux-armv7l.tar.xz
