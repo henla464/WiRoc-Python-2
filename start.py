@@ -276,8 +276,7 @@ class Main:
                             msgSubscription.MessageBoxId = mbdid
                             msgSubscription.SubscriptionId = subscription.id
                             if messageID != None:
-                                dataInHex = ''.join(format(x, '02x') for x in messageID)
-                                logging.debug("MessageID: " + dataInHex)
+                                logging.debug("MessageID: " +  + Utils.GetDataInHex(messageID, logging.DEBUG))
                             # messageid is used for messages from repeater table or test table. Is updated after transform when sent
                             msgSubscription.MessageID = messageID
                             msgSubscription.MessageNumber = MessageSubscriptionData.GetNextMessageNumber()

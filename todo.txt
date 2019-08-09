@@ -1,6 +1,3 @@
-test if checking the effectictive logging level should be done to only create hex strings when it is actually logged
-add calculated airtime to channel table, use this in GetDelayAfterMessageSent by calling loraradio
-
 
 
 App

@@ -27,7 +27,7 @@ def SetSendToMeosEnabled(enabled):
 
 @app.route('/meosconfiguration/sendtomeosip/', methods=['GET'])
 def GetSendToMeosIP():
-   ip = SettingsClass.GetSendToMeosIP(False)
+   ip = SettingsClass.GetSendToMeosIP()
    return jsonpickle.encode(MicroMock(SendToMeosIP=ip))
 
 @app.route('/meosconfiguration/sendtomeosip/<ip>/', methods=['GET'])

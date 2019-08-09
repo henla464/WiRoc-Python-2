@@ -220,3 +220,10 @@ class Utils:
         logging.debug("Util::SetDateTime before time set: " + str(datetime.now()))
         librt.clock_settime(CLOCK_REALTIME, ctypes.byref(ts))
         logging.debug("Util::SetDateTime after time set: " + str(datetime.now()))
+
+    @staticmethod
+    def GetDataInHex(data, loggingLevel):
+        if logging.getLogger().isEnabledFor(loggingLevel):
+            dataInHex = ''.join(format(x, '02x') for x in data)
+            return dataInHex
+        return "(Not printed in this logging level)"

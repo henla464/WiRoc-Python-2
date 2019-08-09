@@ -1,6 +1,7 @@
 from settings.settings import SettingsClass
 from serialcomputer.serialcomputer import SerialComputer
 from datamodel.db_helper import DatabaseHelper
+from utils.utils import Utils
 import socket
 import logging
 import os
@@ -147,8 +148,7 @@ class SendSerialAdapter(object):
         if self.serialComputer.SendData(messageData):
             callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "Sent", 1))
             callbackQueue.put((successCB,))
-            dataInHex = ''.join(format(x, '02x') for x in messageData)
-            logging.debug("SendSerialAdapter::SendData() Sent to computer, data: " + dataInHex)
+            logging.debug("SendSerialAdapter::SendData() Sent to computer, data: " + Utils.GetDataInHex(messageData, logging.DEBUG))
             return True
         else:
             callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "NotSent", 0))

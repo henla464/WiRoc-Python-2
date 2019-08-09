@@ -107,8 +107,7 @@ class SerialComputer:
     def SendData(self, messageData):
         try:
             if self.compSerial.is_open:
-                dataInHex = ''.join(format(x, '02x') for x in messageData)
-                logging.debug("SerialComputer::SendData() data: " + dataInHex)
+                logging.debug("SerialComputer::SendData() data: " + Utils.GetDataInHex(messageData, logging.DEBUG))
                 self.compSerial.write(messageData)
                 self.compSerial.flush()
                 return True
@@ -167,8 +166,7 @@ class SerialComputer:
 
             if len(receivedData) != expectedLength:
                 # throw away the data, isn't correct
-                dataInHex = ''.join(format(x, '02x') for x in allBytesReceived)
-                logging.error("SerialComputer::GetData() Data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + dataInHex)
+                logging.error("SerialComputer::GetData() Data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + Utils.GetDataInHex(allBytesReceived, logging.ERROR))
                 return None
 
             logging.info("SerialComputer::GetData() Message received!")

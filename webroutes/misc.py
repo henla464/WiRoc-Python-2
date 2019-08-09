@@ -112,6 +112,18 @@ def getWiRocDeviceName():
         deviceName = setting.Value
     return jsonpickle.encode(MicroMock(WiRocDeviceName=deviceName))
 
+@app.route('/misc/wirocdevicename/<devicename>', methods=['GET'])
+def setWiRocDeviceName(deviceName):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'WiRocDeviceName'
+    sd.Value = deviceName
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    return jsonpickle.encode(MicroMock(WiRocDeviceName=sd.Value))
+
 @app.route('/misc/database/<operation>/', methods=['GET'])
 def deletePunches(operation):
     DatabaseHelper.reInit()
@@ -200,3 +212,111 @@ def getWebServerHost():
     webServerUrl = SettingsClass.GetWebServerUrl(False)
     webServerHost = webServerUrl.replace('http://', '').replace('https://', '')
     return jsonpickle.encode(MicroMock(WebServerHost=webServerHost))
+
+
+@app.route('/misc/force4800baudrate/', methods=['GET'])
+def getForce4800BaudRate():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('Force4800BaudRate')
+    force4800BaudRate = False
+    if sett is not None:
+        force4800BaudRate = (sett.Value == "1")
+    return jsonpickle.encode(MicroMock(Force4800BaudRate=force4800BaudRate))
+
+@app.route('/misc/force4800baudrate/<enabled>/', methods=['GET'])
+def SetForce4800BaudRateEnabled(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('Force4800BaudRate')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'Force4800BaudRate'
+    sd.Value = '1' if enabled.lower() == 'true' else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    return jsonpickle.encode(MicroMock(Force4800BaudRate=sd.Value.lower()=='true'))
+
+
+@app.route('/misc/onewayreceive/', methods=['GET'])
+def getOneWayReceive():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('OneWayReceive')
+    oneWayReceive = False
+    if sett is not None:
+        oneWayReceive = (sett.Value == "1")
+    return jsonpickle.encode(MicroMock(OneWayReceive=oneWayReceive))
+
+@app.route('/misc/onewayreceive/<enabled>/', methods=['GET'])
+def SetOneWayReceiveEnabled(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('OneWayReceive')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'OneWayReceive'
+    sd.Value = '1' if enabled.lower() == 'true' else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    return jsonpickle.encode(MicroMock(OneWayReceive=sd.Value.lower()=='true'))
+
+@app.route('/misc/logtoserver/', methods=['GET'])
+def getLogToServer():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('LogToServer')
+    logToServer = False
+    if sett is not None:
+        logToServer = (sett.Value == "1")
+    return jsonpickle.encode(MicroMock(LogToServer=logToServer))
+
+@app.route('/misc/logtoserver/<enabled>/', methods=['GET'])
+def SetLogToServerEnabled(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('LogToServer')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'LogToServer'
+    sd.Value = '1' if enabled.lower() == 'true' else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    return jsonpickle.encode(MicroMock(LogToServer=sd.Value.lower()=='true'))
+
+
+@app.route('/misc/loggingserverhost/', methods=['GET'])
+def getLoggingServerHost():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('LoggingServerHost')
+    loggingServerHost = ""
+    if sett is not None:
+        loggingServerHost = sett.Value
+    return jsonpickle.encode(MicroMock(LoggingServerHost=loggingServerHost))
+
+@app.route('/misc/loggingserverhost/<host>/', methods=['GET'])
+def SetLoggingServerHost(host):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('LoggingServerHost')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'LoggingServerHost'
+    sd.Value = host
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    return jsonpickle.encode(MicroMock(LoggingServerHost=sd.Value))
+
+@app.route('/misc/loggingserverport/', methods=['GET'])
+def getLoggingServerPort():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('LoggingServerPort')
+    loggingServerPort = ""
+    if sett is not None:
+        loggingServerPort = sett.Value
+    return jsonpickle.encode(MicroMock(LoggingServerPort=loggingServerPort))
+
+@app.route('/misc/loggingserverport/<port>/', methods=['GET'])
+def SetLoggingServerPort(port):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('LoggingServerPort')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'LoggingServerPort'
+    sd.Value = port
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    return jsonpickle.encode(MicroMock(LoggingServerPort=sd.Value))

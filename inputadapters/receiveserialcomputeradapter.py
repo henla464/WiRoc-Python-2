@@ -284,9 +284,7 @@ class ReceiveSerialComputerAdapter(object):
                 logging.debug("ReceiveSerialComputerAdapter::GetData() Unknown command received")
                 return None
 
-            dataInHex = ''.join(format(x, '02x') for x in data["Data"])
-            replyInHex = ''.join(format(x, '02x') for x in replyMessage)
-            logging.debug("ReceiveSerialComputerAdapter::GetData() Received: " + dataInHex + " Sending reply message: " + replyInHex)
+            logging.debug("ReceiveSerialComputerAdapter::GetData() Received: " + Utils.GetDataInHex(data["Data"], logging.DEBUG) + " Sending reply message: " + Utils.GetDataInHex(replyMessage, logging.DEBUG))
             try:
                 self.serialComputer.SendData(replyMessage)
             except:

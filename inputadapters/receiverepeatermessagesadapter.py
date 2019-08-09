@@ -45,9 +45,7 @@ class ReceiveRepeaterMessagesAdapter(object):
         if messageToAdd is not None:
             self.lastRepeaterMessageBoxIdAdded = messageToAdd.id
 
-            logging.debug("ReceiveRepeaterMessagesAdapter::GetData() Data to fetch")
-            dataInHex = ''.join(format(x, '02x') for x in messageToAdd.MessageData)
-            logging.debug(dataInHex)
+            logging.debug("ReceiveRepeaterMessagesAdapter::GetData() Data to fetch: " + Utils.GetDataInHex(messageToAdd.MessageData, logging.DEBUG))
             return {"MessageType": "DATA", "MessageSource":"Repeater", "MessageSubTypeName": "SIMessage", "Data": messageToAdd.MessageData, "MessageID": messageToAdd.MessageID, "ChecksumOK": True}
         return None
 

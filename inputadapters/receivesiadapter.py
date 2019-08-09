@@ -86,8 +86,7 @@ class ReceiveSIAdapter(object):
         return len(data) == 9 and data[0] == STX and data[5] == 0x4D
 
     def sendCommand(self, command):
-        dataInHex = ''.join(format(x, '02x') for x in command)
-        logging.debug("ReceiveSIAdapter::sendCommand() command: " + dataInHex)
+        logging.debug("ReceiveSIAdapter::sendCommand() command: " + Utils.GetDataInHex(command, logging.DEBUG))
         self.siSerial.write(command)
         self.siSerial.flush()
         expectedLength = 3
@@ -118,8 +117,7 @@ class ReceiveSIAdapter(object):
                 if len(response) < expectedLength and self.siSerial.in_waiting == 0:
                     logging.debug("ReceiveSIAdapter::sendCommand() sleep and wait for more bytes")
                     sleep(0.05)
-        dataInHex = ''.join(format(x, '02x') for x in response)
-        logging.debug("ReceiveSIAdapter::sendCommand() response: " + dataInHex)
+        logging.debug("ReceiveSIAdapter::sendCommand() response: " + Utils.GetDataInHex(response, logging.DEBUG))
         return response
 
     def InitOneWay(self):
@@ -246,8 +244,7 @@ class ReceiveSIAdapter(object):
         noOfBytesToRead = 0x04
         getSerialNumberSystemValueCmd = bytes([0xFF, 0x02, 0x02, 0x83, cmdLength, addr, noOfBytesToRead, 0xbc, 0x0f, 0x03])
         serialNumberArray = self.sendCommand(getSerialNumberSystemValueCmd)
-        dataInHex = ''.join(format(x, '02x') for x in serialNumberArray)
-        logging.debug("ReceiveSIAdapter::getSerialNumberSystemValue() data: " + dataInHex)
+        logging.debug("ReceiveSIAdapter::getSerialNumberSystemValue() data: " + Utils.GetDataInHex(serialNumberArray, logging.DEBUG))
         serialNumber = serialNumberArray[6] << 24 | serialNumberArray[7] << 16 | serialNumberArray[8] << 8 | serialNumberArray[9]
         logging.debug("ReceiveSIAdapter::getSerialNumberSystemValue() serialNumber: " + str(serialNumber))
         return serialNumber
@@ -284,8 +281,7 @@ class ReceiveSIAdapter(object):
         siMsg.AddByte(backupPunchRecord[15])
         siMsg.AddFooter()
         siMsgByteArr = siMsg.GetByteArray()
-        dataInHex = ''.join(format(x, '02x') for x in siMsgByteArr)
-        logging.debug("ReceiveSIAdapter::getBackupPunchAsSIMessageArray SIMsg created from backup punch " + dataInHex)
+        logging.debug("ReceiveSIAdapter::getBackupPunchAsSIMessageArray SIMsg created from backup punch: " + Utils.GetDataInHex(siMsgByteArr, logging.DEBUG))
         return siMsgByteArr
 
     def updateComputerTimeAndSiStationNumber(self):
@@ -401,18 +397,15 @@ class ReceiveSIAdapter(object):
 
         if len(receivedData) != expectedLength:
             # throw away the data, isn't correct
-            dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
-            logging.error("ReceiveSIAdapter::GetData() data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + dataInHex)
+            logging.error("ReceiveSIAdapter::GetData() data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
             return None
 
         SIMsg = SIMessage()
         SIMsg.AddPayload(receivedData)
         if SIMsg.GetMessageType() == SIMessage.SIPunch:
-            dataInHex = ''.join(format(x, '02x') for x in receivedData)
-            logging.debug("ReceiveSIAdapter::GetData() SI message received! data: " + dataInHex)
+            logging.debug("ReceiveSIAdapter::GetData() SI message received! data: " + Utils.GetDataInHex(receivedData, logging.DEBUG))
             if len(allReceivedData) != len(receivedData):
-                allDataInHex = ''.join(format(x, '02x') for x in allReceivedData)
-                logging.error("ReceiveSIAdapter::GetData() Received more data than expected, all data: " + allDataInHex)
+                logging.error("ReceiveSIAdapter::GetData() Received more data than expected, all data: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
 
             if not SettingsClass.GetOneWayReceiveFromSIStation():
                 self.detectMissedPunches(SIMsg)
@@ -444,8 +437,7 @@ class ReceiveSIAdapter(object):
                     "MessageSubTypeName": "LoraRadioMessage", "SIStationSerialNumber": self.serialNumber,
                     "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}
         else:
-            dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
-            logging.error("ReceiveSIAdapter::GetData() Unknown SI message received! Data: " + dataInHex)
+            logging.error("ReceiveSIAdapter::GetData() Unknown SI message received! Data: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
             return None
 
     def AddedToMessageBox(self, mbid):

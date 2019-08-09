@@ -2,6 +2,7 @@ from datamodel.datamodel import SIMessage
 from datamodel.datamodel import LoraRadioMessage
 from settings.settings import SettingsClass
 from battery import Battery
+from utils.utils import Utils
 import logging
 
 class LoraStatusToSITransform(object):
@@ -49,8 +50,7 @@ class LoraStatusToSITransform(object):
             siMsg.AddHeader(SIMessage.WiRocToWiRoc)
             siMsg.AddPayload(loraMessage.GetByteArray())
             siMsg.AddFooter()
-            dataInHex = ''.join(format(x, '02x') for x in siMsg.GetByteArray())
-            logging.debug("LoraToSITransform::Transform() data: " + dataInHex)
+            logging.debug("LoraToSITransform::Transform() data: " +  + Utils.GetDataInHex(siMsg.GetByteArray(), logging.DEBUG))
             return {"Data": siMsg.GetByteArray(), "MessageID": None}
         else:
             logging.debug("LoraToSITransform::Transform() return None, not connected to wiroc device")

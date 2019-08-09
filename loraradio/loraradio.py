@@ -6,6 +6,7 @@ import logging
 from constants import *
 from datamodel.datamodel import LoraRadioMessage
 from datamodel.db_helper import DatabaseHelper
+from utils.utils import Utils
 from settings.settings import SettingsClass
 import socket
 import binascii
@@ -197,8 +198,7 @@ class LoraRadio:
 
                     time.sleep(2 / 1000)
                 break
-        dataInHex = ''.join(format(x, '02x') for x in data)
-        logging.debug("LoraRadio::getSettingsReply() response: " + dataInHex)
+        logging.debug("LoraRadio::getSettingsReply() response: " +  + Utils.GetDataInHex(data, logging.DEBUG))
         return data
 
     def Disable(self):
@@ -296,8 +296,7 @@ class LoraRadio:
         return fullList
 
     def ChangeToHigherBaudRate(self):
-        dataInHex = ''.join(format(x, '02x') for x in LoraRadio.WriteSerialBaudRateCmd)
-        logging.debug("LoraRadio::ChangeToHigherBaudRate() enter: " + dataInHex)
+        logging.debug("LoraRadio::ChangeToHigherBaudRate() enter: " +  Utils.GetDataInHex(LoraRadio.WriteSerialBaudRateCmd, logging.DEBUG))
         self.radioSerial.write(LoraRadio.WriteSerialBaudRateCmd)
         self.radioSerial.flush()
         self.WaitForSerialUpToTimeMS(250)
@@ -312,33 +311,14 @@ class LoraRadio:
                     if self.radioSerial.in_waiting == 0:
                         break
 
-        dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
         if len(allReceivedData) != 13:
-            logging.error("LoraRadio::ChangeToHigherBaudRate() incorrect response: " + dataInHex)
+            logging.error("LoraRadio::ChangeToHigherBaudRate() incorrect response: " + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
         else:
 
-            logging.info("LoraRadio::ChangeToHigherBaudRate() Changed to 57600 baudrate: " + dataInHex)
-            #self.radioSerial.baudrate = 57600
-            #self.radioSerial.write(LoraRadio.ReadSerialBaudRateCmd)
-            #self.radioSerial.flush()
-            #time.sleep(0.25)
-            #allReceivedData = bytearray()
-            #while self.radioSerial.in_waiting > 0 and len(allReceivedData) < 13:
-                # print("looking for stx: ", end="")
-            #    bytesRead = self.radioSerial.read(1)
-            #    allReceivedData.append(bytesRead[0])
-            #    if len(allReceivedData) < 13 and self.radioSerial.in_waiting == 0:
-            #        logging.info("LoraRadio::ChangeToHigherBaudRate() Sleep, wait for more bytes")
-            #        time.sleep(0.05)
-            #        if self.radioSerial.in_waiting == 0:
-            #            break
-            #dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
-            #logging.info("LoraRadio::ChangeToHigherBaudRate() read baud rate: " + dataInHex)
-
+            logging.info("LoraRadio::ChangeToHigherBaudRate() Changed to 57600 baudrate: " +  + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
 
     def RestartModule(self, baudRateAfter):
-        dataInHex = ''.join(format(x, '02x') for x in LoraRadio.RestartModuleCmd)
-        logging.debug("LoraRadio::RestartModule() enter: " + dataInHex)
+        logging.debug("LoraRadio::RestartModule() enter: " +  Utils.GetDataInHex(LoraRadio.RestartModuleCmd, logging.DEBUG))
         self.radioSerial.write(LoraRadio.RestartModuleCmd)
         self.radioSerial.flush()
         self.WaitForSerialUpToTimeMS(200)
@@ -353,20 +333,18 @@ class LoraRadio:
                     if self.radioSerial.in_waiting == 0:
                         break
 
-        dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
         if len(allReceivedData) != 13:
-            logging.error("LoraRadio::RestartModule() incorrect response: " + dataInHex)
+            logging.error("LoraRadio::RestartModule() incorrect response: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
 
         self.radioSerial.baudrate = 9600
         self.WaitForSerialUpToTimeMS(2000)
+        version = None
         allReceivedData = bytearray()
         try:
             while self.radioSerial.in_waiting > 0:
                 bytesRead = self.radioSerial.read(1)
                 allReceivedData.append(bytesRead[0])
-            dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
-            logging.debug("Startup output: " + dataInHex)
-            version = None
+            logging.debug("Startup output: " +  Utils.GetDataInHex(allReceivedData, logging.DEBUG))
 
             startUpString = allReceivedData.decode("utf-8")
             logging.info("LoraRadio Firmware: " + startUpString)
@@ -427,8 +405,7 @@ class LoraRadio:
                 self.receivedMessage2 = None
                 if len(allReceivedDataMinusSignalNotDetectedReply) > 0:
                     logging.error("LoraRadio::GetDetectAirSignal() Signal not detected, extra bytes found but doesn't seem to be correct message")
-                    dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
-                    logging.error("All data received: " + dataInHex)
+                    logging.error("All data received: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
                 else:
                     logging.error("LoraRadio::GetDetectAirSignal() Signal not detected 2")
             else:
@@ -443,8 +420,7 @@ class LoraRadio:
             if not self.receivedMessage2.IsFilled() or not self.receivedMessage2.GetIsChecksumOK():
                 self.receivedMessage2 = None
                 logging.error("LoraRadio::GetDetectAirSignal() Signal detected, extra bytes found but doesn't seem to be correct message")
-                dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
-                logging.error("All data received: " + dataInHex)
+                logging.error("All data received: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
             else:
                 logging.debug("LoraRadio::GetDetectAirSignal() Signal detected, message found also")
             return True
@@ -475,8 +451,7 @@ class LoraRadio:
             return self.GetDetectAirSignal()
 
     def SendData(self, messageData):
-        dataInHex = ''.join(format(x, '02x') for x in messageData)
-        logging.debug("LoraRadio::SendData() send data: " + dataInHex)
+        logging.debug("LoraRadio::SendData() send data: " + Utils.GetDataInHex(messageData, logging.DEBUG))
         #self.UpdateSentStats() of use?
         self.lastMessageSentDate =  time.monotonic()
         while True:
@@ -522,8 +497,7 @@ class LoraRadio:
 
         # reset so that a messages can be sent. The received message could be an ack that we were waiting for
         self.lastMessageSentDate = None
-        dataInHex = ''.join(format(x, '02x') for x in allReceivedData)
-        logging.debug("LoraRadio::GetRadioData() received data, got: " + dataInHex)
+        logging.debug("LoraRadio::GetRadioData() received data, got: " + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
         if not self.receivedMessage.IsFilled():
             # throw away the data, isn't correct
             logging.error("LoraRadio::GetRadioData() received incorrect data")
