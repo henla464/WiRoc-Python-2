@@ -73,7 +73,7 @@ class OledNormal(OledDisplayState):
             self.dataRate = dataRate
             self.imageChanged = True
             logging.debug("OledNormal::DrawOledDataRate imagechanged")
-            self.OledDraw.rectangle((41, 0, 60, 12), outline=0, fill=0)
+            self.OledDraw.rectangle((41, 0, 60, 13), outline=0, fill=0)
             if dataRate == 293:
                 self.OledDraw.text((41, 1), 'L', font=self.OledThinFont2, fill=255)
             if dataRate == 537:
