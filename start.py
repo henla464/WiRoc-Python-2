@@ -424,7 +424,7 @@ class Main:
             try:
                 webServerIPUrl = SettingsClass.GetWebServerIPUrl()
                 webServerHost = SettingsClass.GetWebServerHost()
-                apiKey = SettingsClass.GetAPIKey(False)
+                apiKey = SettingsClass.GetAPIKey()
                 batteryIsLowReceived = SettingsClass.GetBatteryIsLowReceived()
                 deviceId = SettingsClass.GetDeviceId()
                 t = threading.Thread(target=self.updateBatteryIsLowBackground, args=(batteryIsLowReceived, webServerIPUrl, webServerHost, apiKey, deviceId))
@@ -474,7 +474,7 @@ class Main:
                 messageStat = DatabaseHelper.get_message_stat_to_upload()
                 webServerIPUrl = SettingsClass.GetWebServerIPUrl()
                 webServerHost = SettingsClass.GetWebServerHost()
-                apiKey = SettingsClass.GetAPIKey(False)
+                apiKey = SettingsClass.GetAPIKey()
                 t = threading.Thread(target=self.sendMessageStatsBackground, args=(messageStat, webServerIPUrl, webServerHost, apiKey))
                 t.daemon = True
                 t.start()

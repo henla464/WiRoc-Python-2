@@ -783,6 +783,7 @@ class DatabaseHelper:
             mbd.SportIdentSecond = siMsg.GetSeconds()
             mbd.MemoryAddress = siMsg.GetBackupMemoryAddressAsInt()
             mbd.SIStationNumber = siMsg.GetStationNumber()
+        return mbd
 
 
     @classmethod

@@ -247,6 +247,9 @@ class SettingsClass(object):
     @cached(cache, key=partial(hashkey, 'GetChannel'), lock=rlock)
     def GetChannel():
         sett = DatabaseHelper.get_setting_by_key('Channel')
+        if sett is None:
+            SettingsClass.SetSetting("Channel", 1)
+            return 1
         return int(sett.Value)
 
     @staticmethod

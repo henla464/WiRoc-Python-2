@@ -198,7 +198,7 @@ class LoraRadio:
 
                     time.sleep(2 / 1000)
                 break
-        logging.debug("LoraRadio::getSettingsReply() response: " +  + Utils.GetDataInHex(data, logging.DEBUG))
+        logging.debug("LoraRadio::getSettingsReply() response: " +  Utils.GetDataInHex(data, logging.DEBUG))
         return data
 
     def Disable(self):

@@ -11,7 +11,10 @@ import jsonpickle
 @app.route('/radioconfiguration/channel/', methods=['GET'])
 def getChannel():
     DatabaseHelper.reInit()
-    channel = SettingsClass.GetChannel(False)
+    setting = DatabaseHelper.get_setting_by_key('Channel')
+    channel = 1
+    if setting != None:
+        channel = int(setting.Value)
     return jsonpickle.encode(MicroMock(Channel=channel))
 
 @app.route('/radioconfiguration/channel/<int:channel>/', methods=['GET'])
@@ -29,7 +32,10 @@ def setChannel(channel):
 @app.route('/radioconfiguration/datarate/', methods=['GET'])
 def getDataRate():
     DatabaseHelper.reInit()
-    dataRate = SettingsClass.GetDataRate(False)
+    setting = DatabaseHelper.get_setting_by_key('DataRate')
+    dataRate = 293
+    if setting != None:
+        dataRate = int(setting.Value)
     return jsonpickle.encode(MicroMock(DataRate=dataRate))
 
 @app.route('/radioconfiguration/datarate/<int:dataRate>/', methods=['GET'])
@@ -48,9 +54,11 @@ def setDataRate(dataRate):
 @app.route('/radioconfiguration/acknowledgementrequested/', methods=['GET'])
 def getAcknowledgementRequested():
     DatabaseHelper.reInit()
-    acksRequested = SettingsClass.GetAcknowledgementRequested(False)
+    setting = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
+    acksRequested = True
+    if setting != None:
+        acksRequested = (setting.Value == "1")
     return jsonpickle.encode(MicroMock(AcknowledgementRequested=acksRequested))
-
 
 @app.route('/radioconfiguration/acknowledgementrequested/<ack>/', methods=['GET'])
 def setAcknowledgement(ack):
@@ -67,7 +75,10 @@ def setAcknowledgement(ack):
 @app.route('/radioconfiguration/power/', methods=['GET'])
 def getPower():
     DatabaseHelper.reInit()
-    power = SettingsClass.GetLoraPower(False)
+    setting = DatabaseHelper.get_setting_by_key('LoraPower')
+    power = 0x07
+    if setting != None:
+        power = int(setting.Value)
     return jsonpickle.encode(MicroMock(Power=power))
 
 @app.route('/radioconfiguration/power/<int:power>/', methods=['GET'])
