@@ -1,6 +1,7 @@
 import pyudev
 import traceback
 from loraradio.loraradio import LoraRadio
+from loraradio.loraradiodrf1268ds import LoraRadioDRF1268DS
 from datamodel.datamodel import LoraRadioMessage
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
@@ -62,7 +63,10 @@ class ReceiveLoraAdapter(object):
     def __init__(self, instanceNumber, portName, hardwareAbstraction):
         self.instanceNumber = instanceNumber
         self.portName = portName
-        self.loraRadio = LoraRadio.GetInstance(portName, hardwareAbstraction)
+        if hardwareAbstraction.runningOnNanoPi:
+            self.loraRadio = LoraRadioDRF1268DS.GetInstance(portName, hardwareAbstraction)
+        else:
+            self.loraRadio = LoraRadio.GetInstance(portName, hardwareAbstraction)
         self.hardwareAbstraction = hardwareAbstraction
 
     def GetInstanceNumber(self):

@@ -1,5 +1,4 @@
 
-
 App
 ===
 Add one-way option for connecting to samlingsboxar, srr dongles

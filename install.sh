@@ -2,8 +2,8 @@
 #systemctl disable apt-daily.service # disable run when system boot
 #systemctl disable apt-daily.timer   # disable timer run
 
-WiRocPython2Version="0.119"
-WiRocBLEVersion="0.33"
+WiRocPython2Version="0.136"
+WiRocBLEVersion="0.37"
 
 
 echo "update"
@@ -17,7 +17,7 @@ else
 fi
 
 apt-get -y install git
-
+apt-get -y install i2c-tools
 
 echo "zip"
 apt-get install zip
@@ -39,6 +39,7 @@ apt-get -y install python3-dev
 pip3 install -U setuptools
 pip3 install wheel
 pip3 install requests
+pip3 install cachetools
 
 
 echo "flask"

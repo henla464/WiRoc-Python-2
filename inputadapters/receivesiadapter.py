@@ -15,8 +15,14 @@ class ReceiveSIAdapter(object):
 
     @staticmethod
     def CreateInstances():
-        portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa')
+        portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa|1a86:7523|067b:2303|0403:6001|0557:2008')
         serialPorts = [portInfo.device for portInfo in portInfoList]
+        # SPORTident USB device                                                                 -- Works
+        # Linux-USB CDC Composite Gadge (Ethernet and ACM)      {ie:Chip computer}              -- Works
+        # 1a86:7523 QinHeng Electronics HL-340 USB-Serial adapter                               -- Doesn't work (possibly works one-way)
+        # 067b:2303 Prolific Technology, Inc. PL2303 Serial Port                                -- Works
+        # 0403:6001 Future Technology Devices International, Ltd FT232 USB-Serial (UART) IC     -- Works
+        # 0557:2008 ATEN International Co., Ltd UC-232A Serial Port [pl2303]                    -- Works
 
         # already existing
         previouslyCreated = [instance for instance in ReceiveSIAdapter.Instances if instance.GetSerialDevicePath() in serialPorts]

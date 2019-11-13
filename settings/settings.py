@@ -31,6 +31,7 @@ class SettingsClass(object):
     hasReceivedMessageFromRepeater = False
     batteryIsLowReceived = False
     deviceId = None
+    loraModule = "DRF1268DS"
 
     #####
     # Static/class settings
@@ -131,6 +132,15 @@ class SettingsClass(object):
     @staticmethod
     def SetDeviceId(deviceId):
         SettingsClass.deviceId = deviceId
+
+    @staticmethod
+    def GetLoraModule():
+        return SettingsClass.loraModule
+
+    @staticmethod
+    def SetLoraModule(loraModule):
+        SettingsClass.loraModule = loraModule
+        cache.clear()
 
     @staticmethod
     def GetDeviceId():
@@ -356,10 +366,11 @@ class SettingsClass(object):
     microSecondsToSendAnAckMessage = None
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetRetryDelay'), lock=rlock)
-    def GetRetryDelay(retryNumber, mainConfigDirty = True):
+    def GetRetryDelay(retryNumber):
         dataRate = SettingsClass.GetDataRate()
         channel = SettingsClass.GetChannel()
-        SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
+        loraModule = SettingsClass.GetLoraModule()
+        SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate, loraModule)
         messageLengthInBytes = 24 # typical length
         SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
         microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 1)*SettingsClass.microSecondsToSendAMessage
@@ -371,7 +382,8 @@ class SettingsClass(object):
         if SettingsClass.microSecondsToSendAMessage is None:
             dataRate = SettingsClass.GetDataRate()
             channel = SettingsClass.GetChannel()
-            SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
+            loraModule = SettingsClass.GetLoraModule()
+            SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate, loraModule)
             messageLengthInBytes = 24  # typical length
             SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
 
@@ -384,7 +396,8 @@ class SettingsClass(object):
         if SettingsClass.microSecondsToSendAnAckMessage is None:
             dataRate = SettingsClass.GetDataRate()
             channel = SettingsClass.GetChannel()
-            SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
+            loraModule = SettingsClass.GetLoraModule()
+            SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate, loraModule)
             messageLengthInBytes = 10  # typical length
             SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
 
@@ -397,7 +410,8 @@ class SettingsClass(object):
             return 0
         dataRate = SettingsClass.GetDataRate()
         channel = SettingsClass.GetChannel()
-        SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate)
+        loraModule = SettingsClass.GetLoraModule()
+        SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate, loraModule)
         microSecs = SettingsClass.channelData.SlopeCoefficient * (noOfBytes + SettingsClass.channelData.M)
         return microSecs/1000000
 

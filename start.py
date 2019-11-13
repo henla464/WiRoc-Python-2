@@ -382,8 +382,8 @@ class Main:
                                         # failed to send
                                         logging.warning(
                                             "Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName + " id:"+ str(msgSub.id))
-                                        retryDelay = innerSubAdapter.GetRetryDelay(msgSub.NoOfSendTries + 1)
-                                        DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub, retryDelay)
+                                        #retryDelay = innerSubAdapter.GetRetryDelay(msgSub.NoOfSendTries + 1)
+                                        #DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub, retryDelay)
                                         logging.debug(
                                             "Start::Run() failureCB() Subadapter: " + str(type(innerSubAdapter)) +
                                             " Increment send tries, NoOfSendTries: " + str(msgSub.NoOfSendTries) +

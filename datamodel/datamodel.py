@@ -18,11 +18,11 @@ class SettingData(object):
 class ChannelData(object):
     columns = [("Channel", int), ("DataRate", int),
                ("Frequency", int), ("SlopeCoefficient", int),
-               ("M", int), ("RfFactor", int), ("RfBw", int)]
+               ("M", int), ("RfFactor", int), ("RfBw", int), ("LoraModem", str)]
 
     def __init__(self, Channel=None, DataRate=None,
                  Frequency=None, SlopeCoefficient=None,
-                 M=None, RfFactor=None, RfBw=None):
+                 M=None, RfFactor=None, RfBw=None, LoraModem=None):
         self.id = None
         self.Channel = Channel
         self.DataRate = DataRate
@@ -31,6 +31,7 @@ class ChannelData(object):
         self.M = M
         self.RfFactor = RfFactor
         self.RfBw = RfBw
+        self.LoraModem = LoraModem
 
 
 class MessageBoxData(object):

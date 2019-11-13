@@ -1,4 +1,5 @@
 from loraradio.loraradio import LoraRadio
+from loraradio.loraradiodrf1268ds import LoraRadioDRF1268DS
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
 #import pyudev
@@ -84,7 +85,10 @@ class SendLoraAdapter(object):
     def __init__(self, instanceNumber, portName, hardwareAbstraction):
         self.instanceNumber = instanceNumber
         self.portName = portName
-        self.loraRadio = LoraRadio.GetInstance(portName, hardwareAbstraction)
+        if hardwareAbstraction.isRunningOnNanoPi:
+            self.loraRadio = LoraRadioDRF1268DS.GetInstance(portName, hardwareAbstraction)
+        else:
+            self.loraRadio = LoraRadio.GetInstance(portName, hardwareAbstraction)
         self.transforms = {}
         self.isDBInitialized = False
         self.lastMessageRepeaterBit = False
@@ -283,13 +287,15 @@ class SendLoraAdapter(object):
         msg.AddPayload(messageData)
         if msg.GetMessageType() != msg.MessageTypeLoraAck:
             SettingsClass.SetTimeOfLastMessageSentToLora()
-        if SendLoraAdapter.WiRocMode == "SENDER" and msg.GetRepeaterBit():
-            self.AddSentWithRepeaterBit()
-        else:
-            self.AddSentWithoutRepeaterBit()
         delayS = settingsDictionary["DelayAfterMessageSent"]
         self.BlockSendingUntilMessageSentAndAckReceived(delayS)
         if self.loraRadio.SendData(messageData):
+            if SendLoraAdapter.WiRocMode == "SENDER" and msg.GetRepeaterBit():
+                self.AddSentWithRepeaterBit()
+            else:
+                self.AddSentWithoutRepeaterBit()
             callbackQueue.put((successCB,))
         else:
+            # failed to send now, probably because 'busy' was returned, ie. something else was sending on same frequence. Delay a short bit.
+            self.BlockSendingUntilMessageSentAndAckReceived(0.1)
             callbackQueue.put((failureCB,))

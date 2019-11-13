@@ -148,7 +148,7 @@ class LoraRadio:
 
     @staticmethod
     def getSettingsArray(channel, loraDataRate, loraPower):
-        channelData = DatabaseHelper.get_channel(channel, loraDataRate)
+        channelData = DatabaseHelper.get_channel(channel, loraDataRate, 'RF1276T')
         frequency = int(channelData.Frequency / 61.035)
         frequencyOne = ((frequency & 0xFF0000)>>16)
         frequencyTwo = ((frequency & 0xFF00)>>8)
@@ -263,6 +263,7 @@ class LoraRadio:
         if data[8:16] == settingsArray[8:16]:
             self.isInitialized = True
             logging.info("LoraRadio::Init() Lora radio already configured correctly")
+            SettingsClass.SetLoraModule("RF1276T")
             # restart the module, regardless if we changed baud rate or not because we want the firmware version number
             self.firmwareVersion = self.RestartModule(57600)
             return True
@@ -277,6 +278,7 @@ class LoraRadio:
                 #time.sleep(0.2)
                 #self.hardwareAbstraction.EnableLora()
                 logging.info("LoraRadio::Init() Now configured correctly")
+                SettingsClass.SetLoraModule("RF1276T")
                 self.firmwareVersion = self.RestartModule(57600)
                 return True
             else:
