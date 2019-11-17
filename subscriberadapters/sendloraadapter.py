@@ -85,7 +85,7 @@ class SendLoraAdapter(object):
     def __init__(self, instanceNumber, portName, hardwareAbstraction):
         self.instanceNumber = instanceNumber
         self.portName = portName
-        if hardwareAbstraction.isRunningOnNanoPi:
+        if hardwareAbstraction.runningOnNanoPi:
             self.loraRadio = LoraRadioDRF1268DS.GetInstance(portName, hardwareAbstraction)
         else:
             self.loraRadio = LoraRadio.GetInstance(portName, hardwareAbstraction)
@@ -298,4 +298,4 @@ class SendLoraAdapter(object):
         else:
             # failed to send now, probably because 'busy' was returned, ie. something else was sending on same frequence. Delay a short bit.
             self.BlockSendingUntilMessageSentAndAckReceived(0.1)
-            callbackQueue.put((failureCB,))
+            callbackQueue.put((notSentCB,))

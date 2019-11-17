@@ -64,7 +64,7 @@ pip3 install pyudev
 pip3 install daemonize
 pip3 install smbus2
 
-pip3 install Adafruit_BBIO #not actually used but it is loaded by gpio because it thinks chip is bb
+pip3 install Adafruit_BBIO==1.0.0 #not actually used but it is loaded by gpio because it thinks chip is bb
 pip3 install Adafruit_SSD1306
 apt-get -y install libtiff5-dev libjpeg62-turbo-dev zlib1g-dev
 apt-get -y install libfreetype6-dev

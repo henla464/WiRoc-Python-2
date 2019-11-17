@@ -267,8 +267,12 @@ class SettingsClass(object):
     def GetDataRate():
         sett = DatabaseHelper.get_setting_by_key('DataRate')
         if sett is None:
-            SettingsClass.SetSetting("DataRate", "293")
-            return 293
+            if  SettingsClass.GetLoraModule() == "DRF1268DS":
+                SettingsClass.SetSetting("DataRate", "244")
+                return 244
+            else:
+                SettingsClass.SetSetting("DataRate", "293")
+                return 293
         return int(sett.Value)
 
     @staticmethod
