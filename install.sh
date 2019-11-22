@@ -155,6 +155,7 @@ if ! [[ $(hostname -s) = nanopiair ]]; then
     chmod +x /home/chip/WiRoc-StartupScripts/setGPIOuart2
 else
     wget -O /usr/bin/devmem2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/devmem2
+    chmod ugo+x /usr/bin/devmem2
 fi
 wget -O /etc/systemd/system/WiRocPython.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPython.service
 wget -O /etc/systemd/system/WiRocPythonWS.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPythonWS.service
