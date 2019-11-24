@@ -264,7 +264,7 @@ class LoraRadioDRF1268DS:
         self.radioSerial.write(LoraRadioDRF1268DS.ReadParameter)
         self.radioSerial.flush()
         time.sleep(0.2)
-        expectedLength = 0x25
+        expectedLength = 0x26
         readParameterResp = self.getRadioSettingsReply(expectedLength)
         readParameterResp[3] = 0x03 # write
         readParameterResp[6] = channel
@@ -273,9 +273,9 @@ class LoraRadioDRF1268DS:
         readParameterResp[14] = loraPower
         readParameterResp[24] = 0x01 # LBT enable
         readParameterResp[25] = 0x01 # RSSI enable
-        struct.pack_into('ii', readParameterResp, 15, channelData.Frequency, channelData.Frequency)
+        struct.pack_into('II', readParameterResp, 15, channelData.Frequency, channelData.Frequency)
         readParameterResp = self.addCRC(readParameterResp)
-        logging.debug("LoraRadioDRF1268DS::setParameters(): Write new parameters: " + + Utils.GetDataInHex(readParameterResp, logging.DEBUG))
+        logging.debug("LoraRadioDRF1268DS::setParameters(): Write new parameters: " + Utils.GetDataInHex(readParameterResp, logging.DEBUG))
         self.radioSerial.write(readParameterResp)
         self.radioSerial.flush()
         time.sleep(0.5)
@@ -373,6 +373,7 @@ class LoraRadioDRF1268DS:
                     logging.info("LoraRadioDRF1268DS::Init() Already correct parameters")
                     return True
                 else:
+                    logging.info("LoraRadioDRF1268DS::Init() frequency" + str(channelData.Frequency))
                     if self.setParameters(channelData, channel, loraPower):
                         logging.info("LoraRadioDRF1268DS::Init() Parameters set")
                         self.isInitialized = True

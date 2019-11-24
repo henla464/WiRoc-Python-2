@@ -2,8 +2,8 @@
 #systemctl disable apt-daily.service # disable run when system boot
 #systemctl disable apt-daily.timer   # disable timer run
 
-WiRocPython2Version="0.136"
-WiRocBLEVersion="0.37"
+WiRocPython2Version="0.137"
+WiRocBLEVersion="0.38"
 
 
 echo "update"

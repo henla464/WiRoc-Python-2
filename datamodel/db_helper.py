@@ -862,6 +862,8 @@ class DatabaseHelper:
             rmbd.MemoryAddress = siMsg.GetBackupMemoryAddressAsInt()
             rmbd.SIStationNumber = siMsg.GetStationNumber()
 
+        return rmbd
+
     @classmethod
     def save_repeater_message_box(cls, repeaterMessageBoxData):
         cls.init()
