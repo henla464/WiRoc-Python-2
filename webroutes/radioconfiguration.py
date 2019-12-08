@@ -32,23 +32,62 @@ def setChannel(channel):
 @app.route('/radioconfiguration/datarate/', methods=['GET'])
 def getDataRate():
     DatabaseHelper.reInit()
-    setting = DatabaseHelper.get_setting_by_key('DataRate')
+    setting = DatabaseHelper.get_setting_by_key('LoraRange')
     dataRate = 293
     if setting != None:
-        dataRate = int(setting.Value)
+        dataRate = SettingsClass.GetDataRate(setting.Value)
     return jsonpickle.encode(MicroMock(DataRate=dataRate))
 
 @app.route('/radioconfiguration/datarate/<int:dataRate>/', methods=['GET'])
 def setDataRate(dataRate):
     DatabaseHelper.reInit()
-    sd = DatabaseHelper.get_setting_by_key('DataRate')
+
+    # for compatibility with newer code set LoraRange
+    sd = DatabaseHelper.get_setting_by_key('LoraRange')
     if sd is None:
         sd = SettingData()
-        sd.Key = 'DataRate'
-    sd.Value = dataRate
+        sd.Key = 'LoraRange'
+
+    loraRange = 'L'
+    if dataRate == 73:
+        loraRange = 'UL'
+    elif dataRate == 134:
+        loraRange = 'XL'
+    elif dataRate == 244 or dataRate == 293:
+        loraRange = 'L'
+    elif dataRate == 439 or dataRate == 537:
+        loraRange = 'ML'
+    elif dataRate == 781 or dataRate == 977:
+        loraRange = 'MS'
+    elif dataRate == 1367 or dataRate == 1758:
+        loraRange = 'S'
+
+    sd.Value = loraRange
+    sd = DatabaseHelper.save_setting(sd)
+
+    SettingsClass.SetSettingUpdatedByWebService()
+    return jsonpickle.encode(MicroMock(DataRate=int(dataRate)))
+
+@app.route('/radioconfiguration/lorarange/', methods=['GET'])
+def getLoraRange():
+    DatabaseHelper.reInit()
+    setting = DatabaseHelper.get_setting_by_key('LoraRange')
+    loraRange = 'L'
+    if setting != None:
+        loraRange = setting.Value
+    return jsonpickle.encode(MicroMock(LoraRange=loraRange))
+
+@app.route('/radioconfiguration/lorarange/<lorarange>/', methods=['GET'])
+def setLoraRange(lorarange):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('LoraRange')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'LoraRange'
+    sd.Value = lorarange
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
-    return jsonpickle.encode(MicroMock(DataRate=int(sd.Value)))
+    return jsonpickle.encode(MicroMock(LoraRange=sd.Value))
 
 
 @app.route('/radioconfiguration/acknowledgementrequested/', methods=['GET'])

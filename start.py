@@ -138,15 +138,14 @@ class Main:
                 httpHandler = logging.handlers.HTTPHandler(server, '/', method='POST')
                 logging.getLogger('').addHandler(httpHandler)
 
-        #self.displayStateMachine.Draw(channel, ackRequested, wirocMode, dataRate, wirocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
         self.updateWebserverIPBackground(webServerHost)
         self.webServerUp = SendStatusAdapter.TestConnection(webServerIPUrl, webServerHost)
         Battery.UpdateWifiPowerSaving(sendToMeos)
         Battery.Tick()
 
-    def updateDisplayBackground(self,channel,ackRequested, wirocMode, dataRate, wirocDeviceName, sirapTCPEnabled,
+    def updateDisplayBackground(self,channel,ackRequested, wirocMode, loraRange, wirocDeviceName, sirapTCPEnabled,
                               sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
-        self.displayStateMachine.Draw(channel, ackRequested, wirocMode, dataRate, wirocDeviceName, sirapTCPEnabled,
+        self.displayStateMachine.Draw(channel, ackRequested, wirocMode, loraRange, wirocDeviceName, sirapTCPEnabled,
                                       sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
 
     def doFrequentMaintenanceTasks(self):
@@ -156,7 +155,7 @@ class Main:
             channel = SettingsClass.GetChannel()
             ackRequested = SettingsClass.GetAcknowledgementRequested()
             wirocMode = SettingsClass.GetWiRocMode()
-            dataRate = SettingsClass.GetDataRate()
+            loraRange = SettingsClass.GetLoraRange()
             sirapTCPEnabled = SettingsClass.GetSendToMeosEnabled()
             sendSerialActive = SettingsClass.GetSendSerialAdapterActive()
             sirapIPAddress = SettingsClass.GetSendToMeosIP()
@@ -164,7 +163,7 @@ class Main:
             wiRocIPAddress = HardwareAbstraction.Instance.GetWiRocIPAddresses()
 
             t = threading.Thread(target=self.updateDisplayBackground, args=(
-            channel, ackRequested, wirocMode, dataRate, wiRocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress))
+            channel, ackRequested, wirocMode, loraRange, wiRocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress))
             t.daemon = True
             t.start()
 
@@ -223,12 +222,13 @@ class Main:
                             logging.error(
                                 "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
                             continue
-
+                        rssiValue = loraMessage.GetRSSIValue()
                         rmbd = DatabaseHelper.create_repeater_message_box_data(messageSource, messageTypeName, messageSubTypeName,
                                                                      instanceName, checksumOK, powerCycle,
-                                                                     SIStationSerialNumber, messageID, messageData)
+                                                                     SIStationSerialNumber, messageID, messageData, rssiValue)
                         rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
                     else:
+                        rssiValue = 0
                         if messageTypeName == "LORA":
                             loraMessage = inputData.get("LoraRadioMessage", None)
                             if loraMessage != None:
@@ -245,7 +245,7 @@ class Main:
                                 logging.error("Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
                                 continue
 
-                        mbd = DatabaseHelper.create_message_box_data(messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK, powerCycle, SIStationSerialNumber, messageData)
+                        mbd = DatabaseHelper.create_message_box_data(messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK, powerCycle, SIStationSerialNumber, messageData, rssiValue)
                         mbdid = DatabaseHelper.save_message_box(mbd)
                         SettingsClass.SetTimeOfLastMessageAdded()
                         inputAdapter.AddedToMessageBox(mbdid)
@@ -276,7 +276,7 @@ class Main:
                             msgSubscription.MessageBoxId = mbdid
                             msgSubscription.SubscriptionId = subscription.id
                             if messageID != None:
-                                logging.debug("MessageID: " +  + Utils.GetDataInHex(messageID, logging.DEBUG))
+                                logging.debug("MessageID: " + Utils.GetDataInHex(messageID, logging.DEBUG))
                             # messageid is used for messages from repeater table or test table. Is updated after transform when sent
                             msgSubscription.MessageID = messageID
                             msgSubscription.MessageNumber = MessageSubscriptionData.GetNextMessageNumber()
@@ -292,12 +292,13 @@ class Main:
                     loraMessage = inputData["LoraRadioMessage"]
                     destinationHasAcked = loraMessage.GetAcknowledgementRequested()
                     receivedFromRepeater = loraMessage.GetRepeaterBit()
+                    rssiValue = loraMessage.GetRSSIValue()
                     wirocMode = SettingsClass.GetWiRocMode()
                     if wirocMode == "REPEATER" and len(messageID) == 6:
                         logging.debug("Start::handleInput() Received ack, for repeater message number: " + str(
                             messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6])))
                         DatabaseHelper.repeater_message_acked(messageID)
-                        DatabaseHelper.archive_repeater_lora_message_subscription_after_ack(messageID)
+                        DatabaseHelper.archive_repeater_lora_message_subscription_after_ack(messageID, rssiValue)
                         if destinationHasAcked:
                             DatabaseHelper.set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(
                                 messageID)
@@ -310,7 +311,7 @@ class Main:
                         else:
                             logging.debug(
                                 "Start::handleInput() Received ack, for status message number: " + str(messageID[0]))
-                        DatabaseHelper.archive_message_subscription_after_ack(messageID)
+                        DatabaseHelper.archive_message_subscription_after_ack(messageID, rssiValue)
 
 
                     loraSubAdapters = [subAdapter for subAdapter in self.subscriberAdapters if

@@ -97,7 +97,7 @@ class DisplayStateMachine(object):
     def GetTypeOfDisplay(self):
         return self.TypeOfDisplay
 
-    def Draw(self, channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
+    def Draw(self, channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
         if self.currentState != None:
             if HardwareAbstraction.Instance.GetIsShortKeyPress() or self.currentState == self.OledStartup:
                 HardwareAbstraction.Instance.ClearShortKeyPress()
@@ -105,5 +105,5 @@ class DisplayStateMachine(object):
         else:
             self.currentState = DisplayStateMachine.OledStartup
         if self.currentState != None:
-            self.currentState.Draw(channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
+            self.currentState.Draw(channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
 

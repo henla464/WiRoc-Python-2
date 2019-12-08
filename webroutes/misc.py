@@ -112,7 +112,7 @@ def getWiRocDeviceName():
         deviceName = setting.Value
     return jsonpickle.encode(MicroMock(WiRocDeviceName=deviceName))
 
-@app.route('/misc/wirocdevicename/<devicename>', methods=['GET'])
+@app.route('/misc/wirocdevicename/<deviceName>', methods=['GET'])
 def setWiRocDeviceName(deviceName):
     DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('WiRocDeviceName')

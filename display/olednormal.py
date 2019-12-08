@@ -17,7 +17,7 @@ class OledNormal(OledDisplayState):
         self.channel = None
         self.wirocMode = None
         self.ackRequested = None
-        self.dataRate = None
+        self.loraRange = None
         self.isCharging = None
         self.imageChanged = False
         self.OledImage = Image.new('1', (OledDisplayState.OledWidth, OledDisplayState.OledHeight))
@@ -68,20 +68,29 @@ class OledNormal(OledDisplayState):
                 self.OledDraw.line((x + 4, top + 7, x + 4, top + 7), fill=255)
                 self.OledDraw.line((x + 4, top + 8, x + 4, top + 8), fill=255)
 
-    def DrawOledDataRate(self, dataRate):
-        if self.dataRate != dataRate:
-            self.dataRate = dataRate
+    #def DrawOledDataRate(self, dataRate):
+    #    if self.dataRate != dataRate:
+    #        self.dataRate = dataRate
+    #        self.imageChanged = True
+    #        logging.debug("OledNormal::DrawOledDataRate imagechanged")
+    #        self.OledDraw.rectangle((41, 0, 60, 13), outline=0, fill=0)
+    #        if dataRate == 293:
+    #            self.OledDraw.text((41, 1), 'L', font=self.OledThinFont2, fill=255)
+    #        if dataRate == 537:
+    #            self.OledDraw.text((41, 1), 'ML', font=self.OledThinFont2, fill=255)
+    #        if dataRate == 977:
+    #            self.OledDraw.text((41, 1), 'MS', font=self.OledThinFont2, fill=255)
+    #        if dataRate == 1758:
+    #            self.OledDraw.text((41, 1), 'S', font=self.OledThinFont2, fill=255)
+
+    def DrawOledLoraRange(self, loraRange):
+        if self.loraRange != loraRange:
+            self.loraRange = loraRange
             self.imageChanged = True
-            logging.debug("OledNormal::DrawOledDataRate imagechanged")
+            logging.debug("OledNormal::DrawOledRange imagechanged")
             self.OledDraw.rectangle((41, 0, 60, 13), outline=0, fill=0)
-            if dataRate == 293:
-                self.OledDraw.text((41, 1), 'L', font=self.OledThinFont2, fill=255)
-            if dataRate == 537:
-                self.OledDraw.text((41, 1), 'ML', font=self.OledThinFont2, fill=255)
-            if dataRate == 977:
-                self.OledDraw.text((41, 1), 'MS', font=self.OledThinFont2, fill=255)
-            if dataRate == 1758:
-                self.OledDraw.text((41, 1), 'S', font=self.OledThinFont2, fill=255)
+            self.OledDraw.text((41, 1), loraRange, font=self.OledThinFont2, fill=255)
+
 
     def DrawOledWifi(self):
         percent = HardwareAbstraction.Instance.GetWifiSignalStrength()
@@ -122,7 +131,7 @@ class OledNormal(OledDisplayState):
         if (noOfBars >= 4):
             self.OledDraw.line((x + 20, top + 9, x + 20, top + -1), fill=255)
 
-    def Draw(self, channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
+    def Draw(self, channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
         if self.channel != channel:
             self.channel = channel
             self.imageChanged = True
@@ -144,7 +153,7 @@ class OledNormal(OledDisplayState):
             if not ackRequested:
                 self.OledDraw.text((101, 16), 'X', font=self.OledThinFont2, fill=255)
 
-        self.DrawOledDataRate(dataRate)
+        self.DrawOledLoraRange(loraRange)
         self.DrawOledWifi()
         self.DrawOledBattery()
         self.DrawIsCharging()

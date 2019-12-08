@@ -263,17 +263,31 @@ class SettingsClass(object):
         return int(sett.Value)
 
     @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetDataRate'), lock=rlock)
-    def GetDataRate():
-        sett = DatabaseHelper.get_setting_by_key('DataRate')
-        if sett is None:
-            if  SettingsClass.GetLoraModule() == "DRF1268DS":
-                SettingsClass.SetSetting("DataRate", "244")
-                return 244
-            else:
-                SettingsClass.SetSetting("DataRate", "293")
-                return 293
-        return int(sett.Value)
+    def GetDataRate(loraRange):
+        loraDataRate = 244
+        if SettingsClass.GetLoraModule() == 'RF1276T':
+            if loraRange == 'L':
+                loraDataRate = 293
+            elif loraRange == 'ML':
+                loraDataRate = 537
+            elif loraRange == 'MS':
+                loraDataRate = 977
+            elif loraRange == 'S':
+                loraDataRate = 1758
+        else:
+            if loraRange == 'UL':
+                loraDataRate = 73
+            elif loraRange == 'XL':
+                loraDataRate = 134
+            elif loraRange == 'L':
+                loraDataRate = 244
+            elif loraRange == 'ML':
+                loraDataRate = 439
+            elif loraRange == 'MS':
+                loraDataRate = 781
+            elif loraRange == 'S':
+                loraDataRate = 1367
+        return loraDataRate
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetLoraPower'), lock=rlock)
@@ -371,7 +385,8 @@ class SettingsClass(object):
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetRetryDelay'), lock=rlock)
     def GetRetryDelay(retryNumber):
-        dataRate = SettingsClass.GetDataRate()
+        loraRange = SettingsClass.GetLoraRange()
+        dataRate = SettingsClass.GetDataRate(loraRange)
         channel = SettingsClass.GetChannel()
         loraModule = SettingsClass.GetLoraModule()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate, loraModule)
@@ -384,7 +399,8 @@ class SettingsClass(object):
     @cached(cache, key=partial(hashkey, 'GetLoraAckMessageWaitTimeoutS'), lock=rlock)
     def GetLoraAckMessageWaitTimeoutS():
         if SettingsClass.microSecondsToSendAMessage is None:
-            dataRate = SettingsClass.GetDataRate()
+            loraRange = SettingsClass.GetLoraRange()
+            dataRate = SettingsClass.GetDataRate(loraRange)
             channel = SettingsClass.GetChannel()
             loraModule = SettingsClass.GetLoraModule()
             SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate, loraModule)
@@ -398,7 +414,8 @@ class SettingsClass(object):
     @cached(cache, key=partial(hashkey, 'GetLoraAckMessageSendingTimeS'), lock=rlock)
     def GetLoraAckMessageSendingTimeS():
         if SettingsClass.microSecondsToSendAnAckMessage is None:
-            dataRate = SettingsClass.GetDataRate()
+            loraRange = SettingsClass.GetLoraRange()
+            dataRate = SettingsClass.GetDataRate(loraRange)
             channel = SettingsClass.GetChannel()
             loraModule = SettingsClass.GetLoraModule()
             SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate, loraModule)
@@ -412,7 +429,8 @@ class SettingsClass(object):
     def GetLoraMessageTimeSendingTimeS(noOfBytes):
         if noOfBytes == 0:
             return 0
-        dataRate = SettingsClass.GetDataRate()
+        loraRange = SettingsClass.GetLoraRange()
+        dataRate = SettingsClass.GetDataRate(loraRange)
         channel = SettingsClass.GetChannel()
         loraModule = SettingsClass.GetLoraModule()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate, loraModule)

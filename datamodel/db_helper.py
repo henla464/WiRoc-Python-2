@@ -463,7 +463,7 @@ class DatabaseHelper:
 
 
     @classmethod
-    def archive_repeater_lora_message_subscription_after_ack(cls, messageID):
+    def archive_repeater_lora_message_subscription_after_ack(cls, messageID, ackRSSIValue):
         cls.init()
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData JOIN SubscriptionData "
                 "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
@@ -490,6 +490,7 @@ class DatabaseHelper:
             msa.AckReceivedDate = now
             msa.MessageBoxId = msd.MessageBoxId
             msa.SubscriptionId = msd.SubscriptionId
+            msa.AckRSSIValue = ackRSSIValue
             subscriberView = DatabaseHelper.get_subscriber_by_subscription_id(msd.SubscriptionId)
             if len(subscriberView) > 0:
                 msa.SubscriberTypeName = subscriberView[0].TypeName
@@ -502,7 +503,7 @@ class DatabaseHelper:
                 cls.archive_message_box(msd.MessageBoxId)
 
     @classmethod
-    def archive_message_subscription_after_ack(cls, messageID):
+    def archive_message_subscription_after_ack(cls, messageID, ackRSSIValue):
         cls.init()
         sixtySecondsAgo = datetime.now() - timedelta(seconds=60)
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData WHERE "
@@ -526,6 +527,7 @@ class DatabaseHelper:
             msa.RetryDelay = msd.RetryDelay
             msa.FindAdapterRetryDelay = msd.FindAdapterRetryDelay
             msa.MessageBoxId = msd.MessageBoxId
+            msa.AckRSSIValue = ackRSSIValue
             msa.SubscriptionId = msd.SubscriptionId
             subscriberView = DatabaseHelper.get_subscriber_by_subscription_id(msd.SubscriptionId)
             if len(subscriberView) > 0:
@@ -539,7 +541,7 @@ class DatabaseHelper:
                 cls.archive_message_box(msd.MessageBoxId)
 
     @classmethod
-    def repeater_message_acked(cls, messageID):
+    def repeater_message_acked(cls, messageID, ackRSSIValue):
         cls.init()
         sql = ("SELECT RepeaterMessageBoxData.* FROM RepeaterMessageBoxData WHERE "
                "MessageID = ?")
@@ -548,6 +550,7 @@ class DatabaseHelper:
             msgToUpdate = rows[0]
             msgToUpdate.Acked = True
             msgToUpdate.NoOfTimesAckSeen = msgToUpdate.NoOfTimesAckSeen + 1
+            msgToUpdate.AckRSSIValue = ackRSSIValue
             if msgToUpdate.AckedTime is None:
                 msgToUpdate.AckedTime = datetime.now()
             logging.debug("DatabaseHelper::repeater_message_acked(): Marking RepeaterMessageBoxData message as acked")
@@ -577,8 +580,10 @@ class DatabaseHelper:
         msa.NoOfTimesAckSeen = repeaterMessageBox.NoOfTimesAckSeen
         msa.Acked = repeaterMessageBox.Acked
         msa.AckedTime = repeaterMessageBox.AckedTime
-        msa.MessageBoxId = repeaterMessageBox.MessageBoxId
+        msa.MessageBoxId = repeaterMessageBox.MessageBoxId  #todo: set messageBoxId ?
         msa.AddedToMessageBoxTime = datetime.now()
+        msa.RSSIValue = repeaterMessageBox.RSSIValue
+        msa.AckRSSIValue = repeaterMessageBox.AckRSSIValue
         msa.LastSeenTime = repeaterMessageBox.LastSeenTime
         msa.OrigCreatedDate = repeaterMessageBox.CreatedDate
         cls.db.save_table_object(msa, False)
@@ -698,6 +703,7 @@ class DatabaseHelper:
                    "MessageSubscriptionData.MessageBoxId, "
                    "MessageSubscriptionData.SubscriptionId, "
                    "MessageSubscriptionData.FetchedForSending, "
+                   "MessageSubscriptionData.AckRSSIValue, "
                    "SubscriptionData.DeleteAfterSent, "
                    "SubscriptionData.Enabled, "
                    "SubscriptionData.SubscriberId, "
@@ -748,7 +754,7 @@ class DatabaseHelper:
                 return
 #MessageBox
     @classmethod
-    def create_message_box_data(cls, messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK, powerCycle, serialNumber, data):
+    def create_message_box_data(cls, messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK, powerCycle, serialNumber, data, rssiValue):
         mbd = MessageBoxData()
         mbd.MessageData = data
         mbd.MessageTypeName = messageTypeName
@@ -758,6 +764,7 @@ class DatabaseHelper:
         mbd.MessageSubTypeName = messageSubTypeName
         mbd.MessageSource = messageSource
         mbd.SIStationSerialNumber = serialNumber
+        mbd.RSSIValue = rssiValue
 
         mbd.SIStationNumber = None
         mbd.SIStationSerialNumber = None
@@ -800,19 +807,28 @@ class DatabaseHelper:
     @classmethod
     def archive_message_box(cls, msgBoxId):
         cls.init()
-        sql = "INSERT INTO MessageBoxArchiveData (OrigId, MessageData, PowerCycleCreated," \
-              "CreatedDate, ChecksumOK, InstanceName, MessageTypeName) SELECT id, MessageData," \
-              "PowerCycleCreated, CreatedDate, ChecksumOK, InstanceName, MessageTypeName FROM " \
+        sql = "INSERT INTO MessageBoxArchiveData (OrigId, MessageData," \
+              "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
+              "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
+              "SportIdentSecond, SIStationNumber, LowBattery, ChecksumOK, CreatedDate) SELECT id, MessageData," \
+              "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
+              "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
+              "SportIdentSecond, SIStationNumber, LowBattery, ChecksumOK, CreatedDate FROM " \
               "MessageBoxData WHERE Id = %s" % msgBoxId
+
         cls.db.execute_SQL(sql)
         cls.db.delete_table_object(MessageBoxData, msgBoxId)
 
     @classmethod
     def archive_message_box_without_subscriptions(cls):
         cls.init()
-        sql = "INSERT INTO MessageBoxArchiveData (OrigId, MessageData, PowerCycleCreated," \
-              "CreatedDate, ChecksumOK, InstanceName, MessageTypeName) SELECT MessageBoxData.id, MessageData," \
-              "PowerCycleCreated, CreatedDate, ChecksumOK, InstanceName, MessageTypeName FROM " \
+        sql = "INSERT INTO MessageBoxArchiveData (OrigId, MessageData," \
+              "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
+              "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
+              "SportIdentSecond, SIStationNumber, LowBattery, ChecksumOK, CreatedDate) SELECT id, MessageData," \
+              "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
+              "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
+              "SportIdentSecond, SIStationNumber, LowBattery, ChecksumOK, CreatedDate FROM " \
               "MessageBoxData LEFT JOIN MessageSubscriptionData ON MessageBoxData.id = " \
               "MessageSubscriptionData.MessageboxId WHERE MessageSubscriptionData.id is null"
         cls.db.execute_SQL(sql)
@@ -824,7 +840,7 @@ class DatabaseHelper:
 #RepeaterMessageBox
     @classmethod
     def create_repeater_message_box_data(cls, messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK,
-                                powerCycle, serialNumber, messageID, data):
+                                powerCycle, serialNumber, messageID, data, rssiValue):
         rmbd = RepeaterMessageBoxData()
         rmbd.MessageData = data
         rmbd.MessageTypeName = messageTypeName
@@ -834,6 +850,7 @@ class DatabaseHelper:
         rmbd.MessageSubTypeName = messageSubTypeName
         rmbd.MessageSource = messageSource
         rmbd.SIStationSerialNumber = serialNumber
+        rmbd.RSSIValue = rssiValue
         rmbd.NoOfTimesSeen = 1
         rmbd.NoOfTimesAckSeen = 0
 
@@ -874,6 +891,7 @@ class DatabaseHelper:
             msgToUpdate = rows[0]
             msgToUpdate.NoOfTimesSeen = msgToUpdate.NoOfTimesSeen + 1
             msgToUpdate.LastSeenTime = datetime.now()
+            msgToUpdate.RSSIValue = repeaterMessageBoxData.RSSIValue
             return cls.db.save_table_object(msgToUpdate, False)
         else:
             repeaterMessageBoxData.LastSeenTime = datetime.now()
@@ -883,14 +901,22 @@ class DatabaseHelper:
     def archive_old_repeater_message(cls):
         cls.init()
         fiveMinutesAgo = datetime.now() - timedelta(seconds=300)
-        sql = ("INSERT INTO RepeaterMessageBoxArchiveData SELECT NULL, "
+        sql = ("INSERT INTO RepeaterMessageBoxArchiveData (id, "
+               "OrigId, MessageData, MessageTypeName, PowerCycleCreated, "
+               "InstanceName, MessageSubTypeName, ChecksumOK, MessageSource, "
+               "SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, "
+               "MessageID, AckRequested, RepeaterRequested, NoOfTimesSeen, "
+               "NoOfTimesAckSeen, Acked, AckedTime, MessageBoxId, RSSIValue, "
+               "AckRSSIValue, AddedToMessageBoxTime, LastSeenTime, OrigCreatedDate, "
+               "CreatedDate) SELECT NULL, "
                "id as OrigId, MessageData, MessageTypeName, PowerCycleCreated, "
-                "InstanceName, MessageSubTypeName, ChecksumOK, MessageSource, "
-                "SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, "
-                "MessageID, AckRequested, RepeaterRequested, NoOfTimesSeen, NoOfTimesAckSeen, "
-                "Acked, AckedTime, MessageBoxId, ? as AddedToMessageBoxTime,LastSeenTime, "
-                "CreatedDate as OrigCreatedDate, ? as CreatedDate "
-                "FROM RepeaterMessageBoxData WHERE LastSeenTime < ?")
+               "InstanceName, MessageSubTypeName, ChecksumOK, MessageSource, "
+               "SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, "
+               "MessageID, AckRequested, RepeaterRequested, NoOfTimesSeen, "
+               "NoOfTimesAckSeen, Acked, AckedTime, MessageBoxId, RSSIValue, "
+               "AckRSSIValue, ? as AddedToMessageBoxTime, LastSeenTime, CreatedDate as OrigCreatedDate, "
+               "? as CreatedDate "
+               "FROM RepeaterMessageBoxData WHERE LastSeenTime < ?")
         cls.db.execute_SQL(sql, (datetime.now(), datetime.now(), fiveMinutesAgo))
         sql = ("DELETE FROM RepeaterMessageBoxData WHERE LastSeenTime < ? ")
         cls.db.execute_SQL(sql, (fiveMinutesAgo,))

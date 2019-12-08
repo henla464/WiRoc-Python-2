@@ -22,7 +22,7 @@ class OledOutput(display.oleddisplaystate.OledDisplayState):
         self.OledDraw.text((3, 16), "To:" , font=self.OledThinFont2, fill=255)
 
 
-    def Draw(self,channel, ackRequested, wiRocMode, dataRate, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
+    def Draw(self,channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
         if self.sirapTCPEnabled != sirapTCPEnabled:
             self.imageChanged = True
             logging.debug("OledStartup::Draw sirapTCPEnabled changed")

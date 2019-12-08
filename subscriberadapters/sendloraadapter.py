@@ -148,15 +148,15 @@ class SendLoraAdapter(object):
 
     def GetIsInitialized(self):
         channel = SettingsClass.GetChannel()
-        loraDataRate = SettingsClass.GetDataRate()
+        loraRange = SettingsClass.GetLoraRange()
         loraPower = SettingsClass.GetLoraPower()
-        return self.loraRadio.GetIsInitialized(channel, loraDataRate, loraPower)
+        return self.loraRadio.GetIsInitialized(channel, loraRange, loraPower)
 
     def ShouldBeInitialized(self):
         channel = SettingsClass.GetChannel()
-        loraDataRate = SettingsClass.GetDataRate()
+        loraRange = SettingsClass.GetLoraRange()
         loraPower = SettingsClass.GetLoraPower()
-        loraRadioInitialized = self.loraRadio.GetIsInitialized(channel, loraDataRate, loraPower)
+        loraRadioInitialized = self.loraRadio.GetIsInitialized(channel, loraRange, loraPower)
         # initialize if loraRadio isn't initialized yet, or if the loraradio initialization status changed
         return not loraRadioInitialized or SendLoraAdapter.Instances[0].AdapterInitialized != loraRadioInitialized
 
@@ -169,14 +169,14 @@ class SendLoraAdapter(object):
 
     def Init(self):
         channel = SettingsClass.GetChannel()
-        loraDataRate = SettingsClass.GetDataRate()
+        loraRange = SettingsClass.GetLoraRange()
         loraPower = SettingsClass.GetLoraPower()
         # set the AdapterInitialized to same value as loraRadios initialized
         # if loraRadio changes initialize value later we can detect this.
-        if self.loraRadio.GetIsInitialized(channel, loraDataRate, loraPower):
+        if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower):
             SendLoraAdapter.Instances[0].AdapterInitialized = True
             return True
-        loraInitialized = self.loraRadio.Init(channel, loraDataRate, loraPower)
+        loraInitialized = self.loraRadio.Init(channel, loraRange, loraPower)
         SendLoraAdapter.Instances[0].AdapterInitialized = loraInitialized
         return loraInitialized
 

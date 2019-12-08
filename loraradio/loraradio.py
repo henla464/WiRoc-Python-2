@@ -120,7 +120,7 @@ class LoraRadio:
         self.portName = portName
         self.isInitialized = False
         self.channel = None
-        self.loraDataRate = None
+        self.loraRange = None
         self.loraPower = None
         self.lastMessageSentDate = None
         self.totalNumberOfMessagesSent = 0
@@ -130,11 +130,11 @@ class LoraRadio:
         self.chip = False
         self.hardwareAbstraction = hardwareAbstraction
 
-    def GetIsInitialized(self, channel, dataRate, loraPower):
+    def GetIsInitialized(self, channel, range, loraPower):
         return self.isInitialized and \
                channel == self.channel and \
                loraPower == self.loraPower and \
-               dataRate == self.loraDataRate
+               range == self.loraRange
 
     def GetPortName(self):
         return self.portName
@@ -209,9 +209,6 @@ class LoraRadio:
     def GetChannel(self):
         return self.channel
 
-    def GetDataRate(self):
-        return self.loraDataRate
-
     def WaitForSerialUpToTimeMS(self, ms):
         for i in range(int(ms/10)):
             if self.radioSerial.in_waiting > 0:
@@ -219,13 +216,23 @@ class LoraRadio:
                 break
             time.sleep(0.01)
 
-    def Init(self, channel, loraDataRate, loraPower):
-        logging.info("LoraRadio::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraDataRate: " + str(loraDataRate) + " LoraPower: " + str(loraPower))
+    def Init(self, channel, loraRange, loraPower):
+        logging.info("LoraRadio::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraRange: " + loraRange + " LoraPower: " + str(loraPower))
         self.hardwareAbstraction.EnableLora()
         time.sleep(0.1)
 
         self.channel = channel
-        self.loraDataRate = loraDataRate
+
+        loraDataRate = 293
+        if loraRange == 'L':
+            loraDataRate = 293
+        elif loraRange == 'ML':
+            loraDataRate = 537
+        elif loraRange == 'MS':
+            loraDataRate = 977
+        elif loraRange == 'S':
+            loraDataRate = 1758
+
         self.loraPower = loraPower
 
         self.radioSerial.baudrate = 9600

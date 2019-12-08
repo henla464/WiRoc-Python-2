@@ -41,7 +41,7 @@ class MessageBoxData(object):
                ("SICardNumber", str),
                ("SIStationSerialNumber", str), ("SportIdentHour", str),
                ("SportIdentMinute", str), ("SportIdentSecond", str),
-               ("SIStationNumber", str),("LowBattery", str),
+               ("SIStationNumber", str),("LowBattery", str),("RSSIValue", int),
                ("ChecksumOK", bool), ("CreatedDate", datetime)]
 
     def __init__(self):
@@ -59,6 +59,7 @@ class MessageBoxData(object):
         self.SportIdentSecond = None
         self.SIStationNumber = None
         self.LowBattery = None
+        self.RSSIValue = None
         self.ChecksumOK = None
         self.CreatedDate = None
 
@@ -66,22 +67,32 @@ class MessageBoxData(object):
 class MessageBoxArchiveData(object):
     columns = [("OrigId", int), ("MessageData", bytes), ("PowerCycleCreated", int),
                ("MessageTypeName", str), ("InstanceName", str),
-               ("MessageSubTypeName", str),
+               ("MessageSubTypeName", str),("MemoryAddress", int),
+               ("SICardNumber", str),
+               ("SIStationSerialNumber", str), ("SportIdentHour", str),
+               ("SportIdentMinute", str), ("SportIdentSecond", str),
+               ("SIStationNumber", str),("LowBattery", str),("RSSIValue", int),
                ("ChecksumOK", bool), ("CreatedDate", datetime)]
 
-    def __init__(self, OrigId=None, MessageData=None, PowerCycleCreated=None,
-                 MessageTypeName=None, InstanceName=None,
-                 MessageSubTypeName=None,
-                 ChecksumOK=None, CreatedDate=None):
+    def __init__(self):
         self.id = None
-        self.OrigId = OrigId
-        self.MessageData = MessageData
-        self.PowerCycleCreated = PowerCycleCreated
-        self.MessageTypeName = MessageTypeName
-        self.InstanceName = InstanceName
-        self.MessageSubTypeName = MessageSubTypeName
-        self.ChecksumOK = ChecksumOK
-        self.CreatedDate = CreatedDate
+        self.OrigId = None
+        self.MessageData = None
+        self.PowerCycleCreated = None
+        self.MessageTypeName = None
+        self.InstanceName = None
+        self.MessageSubTypeName = None
+        self.MemoryAddress = None
+        self.SICardNumber = None
+        self.SIStationSerialNumber = None
+        self.SportIdentHour = None
+        self.SportIdentMinute = None
+        self.SportIdentSecond = None
+        self.SIStationNumber = None
+        self.LowBattery = None
+        self.RSSIValue = None
+        self.ChecksumOK = None
+        self.CreatedDate = None
 
 
 class RepeaterMessageBoxData(object):
@@ -91,7 +102,7 @@ class RepeaterMessageBoxData(object):
                ("SportIdentMinute", int), ("SportIdentSecond", int), ("MessageID", bytes),
                ("AckRequested", bool),("MemoryAddress", int), ("SIStationNumber", int),
                ("RepeaterRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", int),
-               ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int),
+               ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int),("RSSIValue", int),("AckRSSIValue", int),
                ("LastSeenTime", datetime), ("CreatedDate", datetime)]
 
     def __init__(self):
@@ -117,6 +128,8 @@ class RepeaterMessageBoxData(object):
         self.Acked = False
         self.AckedTime = None
         self.MessageBoxId = None
+        self.RSSIValue = None
+        self.AckRSSIValue = None
         self.AddedToMessageBoxTime = None
         self.LastSeenTime = None
         self.CreatedDate = None
@@ -128,7 +141,7 @@ class RepeaterMessageBoxArchiveData(object):
                ("SportIdentMinute", int), ("SportIdentSecond", int), ("MessageID", bytes),
                ("AckRequested", bool),
                ("RepeaterRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", int),
-               ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int),
+               ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int), ("RSSIValue", int), ("AckRSSIValue", int),
                ("AddedToMessageBoxTime", datetime), ("LastSeenTime", datetime), ("OrigCreatedDate", datetime),
                ("CreatedDate", datetime)]
 
@@ -154,6 +167,8 @@ class RepeaterMessageBoxArchiveData(object):
         self.Acked = False
         self.AckedTime = None
         self.MessageBoxId = None
+        self.RSSIValue = None
+        self.AckRSSIValue = None
         self.AddedToMessageBoxTime = None
         self.LastSeenTime = None
         self.OrigCreatedDate = None
@@ -267,33 +282,27 @@ class MessageSubscriptionArchiveData(object):
                 ("FindAdapterRetryDelay", int),
                 ("MessageBoxId", int),
                 ("SubscriptionId", int),
+                ("AckRSSIValue", int),
                 ("SubscriberTypeName", str), ("TransformName", str),]
 
-    def __init__(self, MessageID=None, MessageNumber=None, SentDate=None, SendFailedDate=None,
-                 FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
-                 NoOfSendTries=0,
-                 Delay=0,
-                 RetryDelay=0,
-                 FindAdapterRetryDelay=0,
-                 MessageBoxId=None,
-                 SubscriptionId=None,
-                 SubscriberTypeName = None, TransformName = None):
+    def __init__(self):
         self.id = None
-        self.MessageID = MessageID
-        self.MessageNumber = MessageNumber
-        self.SentDate = SentDate
-        self.SendFailedDate = SendFailedDate
-        self.FindAdapterTryDate = FindAdapterTryDate
-        self.FindAdapterTries = FindAdapterTries
-        self.NoOfSendTries = NoOfSendTries
-        self.AckReceivedDate = AckReceivedDate
-        self.MessageBoxId = MessageBoxId
-        self.Delay = Delay
-        self.RetryDelay = RetryDelay
-        self.FindAdapterRetryDelay = FindAdapterRetryDelay
-        self.SubscriptionId = SubscriptionId
-        self.SubscriberTypeName = SubscriberTypeName
-        self.TransformName = TransformName
+        self.MessageID = None
+        self.MessageNumber = None
+        self.SentDate = None
+        self.SendFailedDate = None
+        self.FindAdapterTryDate = None
+        self.FindAdapterTries = 0
+        self.NoOfSendTries = 0
+        self.AckReceivedDate = None
+        self.MessageBoxId = None
+        self.Delay = 0
+        self.RetryDelay = 0
+        self.FindAdapterRetryDelay = 0
+        self.SubscriptionId = None
+        self.AckRSSIValue = 0
+        self.SubscriberTypeName = None
+        self.TransformName = None
 
 
 class MessageSubscriptionView(object):
@@ -308,6 +317,7 @@ class MessageSubscriptionView(object):
                ("DeleteAfterSent", bool), ("Enabled", bool), ("SubscriberId", int),
                ("SubscriberTypeName", str), ("SubscriberInstanceName", str),
                ("TransformName", str), ("MessageData", bytearray),
+               ("AckRSSIValue", int),
                ("CreatedDate", datetime)
                ]
 
@@ -334,6 +344,7 @@ class MessageSubscriptionView(object):
         self.SubscriberTypeName = None
         self.SubscriberInstanceName = None
         self.TransformName = None
+        self.AckRSSIValue = 0
         self.MessageData = None
         self.CreatedDate = None
 
@@ -431,6 +442,7 @@ class LoraRadioMessage(object):
     CurrentMessageNumber = 0
 
     def __init__(self, payloadDataLength=None, messageType=None, batteryLow = False, ackReq = False):
+        self.rssiValue = 0
         if payloadDataLength is not None:
             batteryLowBit = 0
             ackReqBit = 0
@@ -492,6 +504,12 @@ class LoraRadioMessage(object):
         else:
             self.MessageData[2] = 0xDF & self.MessageData[2]
 
+    def SetRSSIByteExpected(self, rssiByteExpected):
+        self.rssiByteExpected = rssiByteExpected
+
+    def GetRSSIValue(self):
+        return self.rssiValue
+
     def GetMessageIDThatIsAcked(self):
         if self.GetMessageType() == LoraRadioMessage.MessageTypeSIPunch:
             return None
@@ -546,8 +564,12 @@ class LoraRadioMessage(object):
 
     def IsFilled(self):
         if len(self.MessageData) >= 2:
-            if len(self.MessageData) == self.MessageData[1] + 5:
-                return True
+            if self.rssiByteExpected:
+                if len(self.MessageData) == self.MessageData[1] + 6:
+                    return True
+            else:
+                if len(self.MessageData) == self.MessageData[1] + 5:
+                    return True
         return False
 
     def GetByteArray(self):

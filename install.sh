@@ -172,12 +172,18 @@ systemctl enable /etc/systemd/system/WiRocPythonWS.service
 echo "install wiroc-monitor"
 #read line
 #Install WiRoc-Monitor
-wget -O /usr/local/bin/gpio.sh https://raw.githubusercontent.com/henla464/WiRoc-Monitor/master/gpio.sh
-wget -O /usr/local/bin/blink.sh https://raw.githubusercontent.com/henla464/WiRoc-Monitor/master/blink.sh
-chmod +x /usr/local/bin/blink.sh
-wget -O /etc/systemd/system/blink.service https://raw.githubusercontent.com/henla464/WiRoc-Monitor/master/blink.service
-wget -O /usr/local/etc/blink.cfg https://raw.githubusercontent.com/henla464/WiRoc-Monitor/master/blink.cfg
-systemctl enable /etc/systemd/system/blink.service
+wget -O /home/chip/WiRoc-WatchDog/gpio.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/gpio.sh
+wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.sh
+chmod +x /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh
+wget -O /etc/systemd/system/WiRoc-WatchDog.service https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.service
+if [[ $(hostname -s) = nanopiair ]]; then
+    echo "nanopiair"
+    wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.cfg https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.cfg
+else
+    echo "chip"
+    wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.cfg https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.chip.cfg
+fi
+systemctl enable /etc/systemd/system/WiRoc-WatchDog.service
 
 echo "add user to dialout"
 #read line
@@ -203,7 +209,7 @@ if [[ $(hostname -s) = nanopiair ]]; then
         echo "Changed boot.cmd and recompiled it"
     fi
 
-    if ! grep -Fxq "overlays=uart1 uart3 usbhost1 usbhost2 i2c0" /boot/armbianEnv.txt
+    if ! grep -Fxq "overlays=uart1 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
     then
         echo "Change overlays"
         sed -i -E "s/(overlays=).*/overlays=uart1 uart3 usbhost1 usbhost2 i2c0/" /boot/armbianEnv.txt

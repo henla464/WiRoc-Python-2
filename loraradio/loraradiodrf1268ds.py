@@ -151,11 +151,12 @@ class LoraRadioDRF1268DS:
     def __init__(self, portName, hardwareAbstraction):
         self.radioSerial = serial.Serial()
         self.receivedMessage = LoraRadioMessage()
+        self.receivedMessage.SetRSSIByteExpected(True)
         self.receivedMessage2 = None
         self.portName = portName
         self.isInitialized = False
         self.channel = None
-        self.loraDataRate = None
+        self.loraRange = None
         self.loraPower = None
         self.totalNumberOfMessagesSent = 0
         self.totalNumberOfAcksReceived = 0
@@ -164,11 +165,11 @@ class LoraRadioDRF1268DS:
         self.chip = False
         self.hardwareAbstraction = hardwareAbstraction
 
-    def GetIsInitialized(self, channel, dataRate, loraPower):
+    def GetIsInitialized(self, channel, loraRange, loraPower):
         return self.isInitialized and \
                channel == self.channel and \
                loraPower == self.loraPower and \
-               dataRate == self.loraDataRate
+               loraRange == self.loraRange
 
     def GetPortName(self):
         return self.portName
@@ -329,9 +330,6 @@ class LoraRadioDRF1268DS:
     def GetChannel(self):
         return self.channel
 
-    def GetDataRate(self):
-        return self.loraDataRate
-
     def WaitForSerialUpToTimeMS(self, ms):
         for i in range(int(ms/10)):
             if self.radioSerial.in_waiting > 0:
@@ -339,15 +337,16 @@ class LoraRadioDRF1268DS:
                 break
             time.sleep(0.01)
 
-    def Init(self, channel, loraDataRate, loraPower):
-        logging.info("LoraRadioDRF1268DS::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraDataRate: " + str(loraDataRate) + " LoraPower: " + str(loraPower))
+    def Init(self, channel, loraRange, loraPower):
+        logging.info("LoraRadioDRF1268DS::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraRange: " + loraRange + " LoraPower: " + str(loraPower))
         SettingsClass.SetLoraModule("DRF1268DS")
         self.hardwareAbstraction.EnableLora()
         time.sleep(0.1)
 
         self.channel = channel
-        self.loraDataRate = loraDataRate
         self.loraPower = loraPower
+        self.loraRange = loraRange
+        loraDataRate = SettingsClass.GetDataRate(loraRange)
 
         self.radioSerial.baudrate = 9600
         self.radioSerial.port = self.portName
@@ -434,7 +433,7 @@ class LoraRadioDRF1268DS:
                 continue
             break
 
-        self.WaitForSerialUpToTimeMS(200)
+        self.WaitForSerialUpToTimeMS(300)
         sendReply = self.getRadioReply(4)
         if sendReply == bytearray([0x6F, 0x6B, 0x0D, 0x0A]): #ok
             logging.debug(
