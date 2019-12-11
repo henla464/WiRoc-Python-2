@@ -825,7 +825,7 @@ class DatabaseHelper:
         sql = "INSERT INTO MessageBoxArchiveData (OrigId, MessageData," \
               "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
               "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
-              "SportIdentSecond, SIStationNumber, LowBattery, ChecksumOK, CreatedDate) SELECT id, MessageData," \
+              "SportIdentSecond, SIStationNumber, LowBattery, ChecksumOK, CreatedDate) SELECT MessageBoxData.id, MessageData," \
               "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
               "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
               "SportIdentSecond, SIStationNumber, LowBattery, ChecksumOK, CreatedDate FROM " \
