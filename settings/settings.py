@@ -6,6 +6,7 @@ import time
 import math
 import random
 import os
+import socket
 from cachetools import cached, TTLCache
 from cachetools.keys import hashkey
 from functools import partial
@@ -31,7 +32,6 @@ class SettingsClass(object):
     hasReceivedMessageFromRepeater = False
     batteryIsLowReceived = False
     deviceId = None
-    loraModule = "DRF1268DS"
 
     #####
     # Static/class settings
@@ -135,12 +135,10 @@ class SettingsClass(object):
 
     @staticmethod
     def GetLoraModule():
-        return SettingsClass.loraModule
-
-    @staticmethod
-    def SetLoraModule(loraModule):
-        SettingsClass.loraModule = loraModule
-        cache.clear()
+        if socket.gethostname() == 'chip':
+            return 'RF1276T'
+        else:
+            return 'DRF1268DS'
 
     @staticmethod
     def GetDeviceId():
@@ -291,6 +289,15 @@ class SettingsClass(object):
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetLoraPower'), lock=rlock)
+    def GetLoraRange():
+        sett = DatabaseHelper.get_setting_by_key('LoraRange')
+        if sett is None:
+            SettingsClass.SetSetting("LoraRange", 'L')
+            return 'L'
+        return sett.Value
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetLoraPower'), lock=rlock)
     def GetLoraPower():
         sett = DatabaseHelper.get_setting_by_key('LoraPower')
         if sett is None:
@@ -386,10 +393,9 @@ class SettingsClass(object):
     @cached(cache, key=partial(hashkey, 'GetRetryDelay'), lock=rlock)
     def GetRetryDelay(retryNumber):
         loraRange = SettingsClass.GetLoraRange()
-        dataRate = SettingsClass.GetDataRate(loraRange)
         channel = SettingsClass.GetChannel()
         loraModule = SettingsClass.GetLoraModule()
-        SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate, loraModule)
+        SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
         messageLengthInBytes = 24 # typical length
         SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
         microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 1)*SettingsClass.microSecondsToSendAMessage
@@ -400,10 +406,9 @@ class SettingsClass(object):
     def GetLoraAckMessageWaitTimeoutS():
         if SettingsClass.microSecondsToSendAMessage is None:
             loraRange = SettingsClass.GetLoraRange()
-            dataRate = SettingsClass.GetDataRate(loraRange)
             channel = SettingsClass.GetChannel()
             loraModule = SettingsClass.GetLoraModule()
-            SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate, loraModule)
+            SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
             messageLengthInBytes = 24  # typical length
             SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
 
@@ -415,10 +420,9 @@ class SettingsClass(object):
     def GetLoraAckMessageSendingTimeS():
         if SettingsClass.microSecondsToSendAnAckMessage is None:
             loraRange = SettingsClass.GetLoraRange()
-            dataRate = SettingsClass.GetDataRate(loraRange)
             channel = SettingsClass.GetChannel()
             loraModule = SettingsClass.GetLoraModule()
-            SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate, loraModule)
+            SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
             messageLengthInBytes = 10  # typical length
             SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
 
@@ -430,10 +434,9 @@ class SettingsClass(object):
         if noOfBytes == 0:
             return 0
         loraRange = SettingsClass.GetLoraRange()
-        dataRate = SettingsClass.GetDataRate(loraRange)
         channel = SettingsClass.GetChannel()
         loraModule = SettingsClass.GetLoraModule()
-        SettingsClass.channelData = DatabaseHelper.get_channel(channel, dataRate, loraModule)
+        SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
         microSecs = SettingsClass.channelData.SlopeCoefficient * (noOfBytes + SettingsClass.channelData.M)
         return microSecs/1000000
 

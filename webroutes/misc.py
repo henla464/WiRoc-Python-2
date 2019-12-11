@@ -320,3 +320,56 @@ def SetLoggingServerPort(port):
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
     return jsonpickle.encode(MicroMock(LoggingServerPort=sd.Value))
+
+@app.route('/misc/allmainsettings/', methods=['GET'])
+def getAllMainSettings():
+    DatabaseHelper.reInit()
+    isCharging = Battery.IsCharging()
+
+    setting = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
+    deviceName = "WiRoc Device"
+    if setting != None:
+        deviceName = setting.Value
+
+    setting = DatabaseHelper.get_setting_by_key('SendToMeosIPPort')
+    sirapPort = ""
+    if setting != None:
+        sirapPort = setting.Value
+
+    setting = DatabaseHelper.get_setting_by_key('SendToMeosIP')
+    sirapIP = ""
+    if setting != None:
+        sirapIP = setting.Value
+
+    setting = DatabaseHelper.get_setting_by_key('SendToMeosEnabled')
+    sirapEnabled = '0'
+    if setting != None:
+        sirapEnabled = setting.Value
+
+    setting = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
+    acksRequested = '1'
+    if setting != None:
+        acksRequested = setting.Value
+
+    setting = DatabaseHelper.get_setting_by_key('LoraRange')
+    loraRange = 'L'
+    if setting != None:
+        loraRange = setting.Value
+
+    loraModule = SettingsClass.GetLoraModule()
+
+    dataRate = SettingsClass.GetDataRate(loraRange)
+
+    setting = DatabaseHelper.get_setting_by_key('Channel')
+    channel = 1
+    if setting != None:
+        channel = int(setting.Value)
+
+    setting = DatabaseHelper.get_setting_by_key('LoraPower')
+    loraPower = '7'
+    if setting != None:
+        loraPower = setting.Value
+
+    all = isCharging + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + acksRequested + '¤' + dataRate + '¤' + channel + '¤' + '%batteryPercent%' + '¤' + '%ipAddress%'+ '¤' + loraPower + '¤' + loraModule + '¤' + loraRange
+
+    return jsonpickle.encode(MicroMock(All=all))

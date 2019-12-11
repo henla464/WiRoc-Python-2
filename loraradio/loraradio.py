@@ -147,20 +147,16 @@ class LoraRadio:
         return sum % 256
 
     @staticmethod
-    def getSettingsArray(channel, loraDataRate, loraPower):
-        channelData = DatabaseHelper.get_channel(channel, loraDataRate, 'RF1276T')
+    def getSettingsArray(channel, loraRange, loraPower):
+        channelData = DatabaseHelper.get_channel(channel, loraRange, 'RF1276T')
         frequency = int(channelData.Frequency / 61.035)
         frequencyOne = ((frequency & 0xFF0000)>>16)
         frequencyTwo = ((frequency & 0xFF00)>>8)
         frequencyThree = (frequency & 0xFF)
 
-
-        logging.debug("LoraRadio::getSettingsArray() channel: " + str(channel))
-        logging.debug("LoraRadio::getSettingsArray() loradatarate: " + str(loraDataRate))
-        logging.debug("LoraRadio::getSettingsArray() loraPower: " + str(loraPower))
-        logging.debug("LoraRadio::getSettingsArray() rffactor: " + str(channelData.RfFactor))
-        logging.debug("LoraRadio::getSettingsArray() rfBw: " + str(channelData.RfBw))
-        logging.debug("LoraRadio::getSettingsArray() frequency: " + str(channelData.Frequency))
+        logging.debug("LoraRadio::getSettingsArray() channel: " + str(channel) + " loraRange: " + loraRange + " dataRate: " +
+                      str(channelData.DataRate) + " power: " + str(loraPower) + "rfFactor: " + str(channelData.RfFactor) +
+                      " rfBw: " + str(channelData.RfBw) + " frequency: " + str(channelData.Frequency))
 
         settingsArray = bytearray([0xAF, 0xAF,    # sync word
                                    0x00, 0x00,  # id code
@@ -270,7 +266,6 @@ class LoraRadio:
         if data[8:16] == settingsArray[8:16]:
             self.isInitialized = True
             logging.info("LoraRadio::Init() Lora radio already configured correctly")
-            SettingsClass.SetLoraModule("RF1276T")
             # restart the module, regardless if we changed baud rate or not because we want the firmware version number
             self.firmwareVersion = self.RestartModule(57600)
             return True
@@ -285,7 +280,6 @@ class LoraRadio:
                 #time.sleep(0.2)
                 #self.hardwareAbstraction.EnableLora()
                 logging.info("LoraRadio::Init() Now configured correctly")
-                SettingsClass.SetLoraModule("RF1276T")
                 self.firmwareVersion = self.RestartModule(57600)
                 return True
             else:

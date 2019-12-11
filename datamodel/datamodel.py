@@ -16,16 +16,17 @@ class SettingData(object):
 
 
 class ChannelData(object):
-    columns = [("Channel", int), ("DataRate", int),
+    columns = [("Channel", int), ("DataRate", int),  ("LoraRange", str),
                ("Frequency", int), ("SlopeCoefficient", int),
                ("M", int), ("RfFactor", int), ("RfBw", int), ("LoraModem", str)]
 
-    def __init__(self, Channel=None, DataRate=None,
+    def __init__(self, Channel=None, DataRate=None, LoraRange=None,
                  Frequency=None, SlopeCoefficient=None,
                  M=None, RfFactor=None, RfBw=None, LoraModem=None):
         self.id = None
         self.Channel = Channel
         self.DataRate = DataRate
+        self.LoraRange = LoraRange
         self.Frequency = Frequency
         self.SlopeCoefficient = SlopeCoefficient
         self.M = M

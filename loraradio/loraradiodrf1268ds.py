@@ -339,7 +339,6 @@ class LoraRadioDRF1268DS:
 
     def Init(self, channel, loraRange, loraPower):
         logging.info("LoraRadioDRF1268DS::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraRange: " + loraRange + " LoraPower: " + str(loraPower))
-        SettingsClass.SetLoraModule("DRF1268DS")
         self.hardwareAbstraction.EnableLora()
         time.sleep(0.1)
 
@@ -361,7 +360,7 @@ class LoraRadioDRF1268DS:
             #if self.enterATModeAndChangeBaudRateIfRequired():
             if self.enterATMode():
                 LoraRadioDRF1268DS.LoraModuleParameters = self.getParameters()
-                channelData = DatabaseHelper.get_channel(channel, loraDataRate, 'DRF1268DS')
+                channelData = DatabaseHelper.get_channel(channel, loraRange, 'DRF1268DS')
                 if channelData.Frequency ==  LoraRadioDRF1268DS.LoraModuleParameters.TransmitFrequency and \
                     channelData.Frequency == LoraRadioDRF1268DS.LoraModuleParameters.ReceiveFrequency and \
                     channelData.RfFactor == LoraRadioDRF1268DS.LoraModuleParameters.SpreadingFactor and \
