@@ -442,6 +442,7 @@ class LoraRadioMessage(object):
 
     def __init__(self, payloadDataLength=None, messageType=None, batteryLow = False, ackReq = False):
         self.rssiValue = 0
+        self.rssiByteExpected = False
         if payloadDataLength is not None:
             batteryLowBit = 0
             ackReqBit = 0
@@ -527,7 +528,10 @@ class LoraRadioMessage(object):
         if self.IsFilled():
             crcInMessage = self.MessageData[4]
             self.MessageData[4] = 0
-            calculatedCrc = Utils.CalculateCRC(self.MessageData)
+            if self.rssiByteExpected:
+                calculatedCrc = Utils.CalculateCRC(self.MessageData[0:-1])
+            else:
+                calculatedCrc = Utils.CalculateCRC(self.MessageData)
             oneByteCalculatedCrc = calculatedCrc[0] ^ calculatedCrc[1]
             isOK = (crcInMessage == oneByteCalculatedCrc)
             self.MessageData[4] = crcInMessage #restore the message
@@ -536,7 +540,10 @@ class LoraRadioMessage(object):
 
     def UpdateChecksum(self):
         self.MessageData[4] = 0
-        crc = Utils.CalculateCRC(self.MessageData)
+        if self.rssiByteExpected:
+            crc = Utils.CalculateCRC(self.MessageData[0:-1])
+        else:
+            crc = Utils.CalculateCRC(self.MessageData)
         self.MessageData[4] = crc[0] ^ crc[1]
         return True
 

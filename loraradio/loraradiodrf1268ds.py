@@ -480,9 +480,11 @@ class LoraRadioDRF1268DS:
             # throw away the data, isn't correct
             logging.error("LoraRadioDRF1268DS::GetRadioData() received incorrect data")
             self.receivedMessage = LoraRadioMessage()
+            self.receivedMessage.SetRSSIByteExpected(True)
             return None
         else:
             message = self.receivedMessage
             self.receivedMessage = LoraRadioMessage()
+            self.receivedMessage.SetRSSIByteExpected(True)
             logging.info("LoraRadioDRF1268DS::GetRadioData() received message!")
             return message
