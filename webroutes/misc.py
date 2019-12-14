@@ -328,7 +328,7 @@ def getAllMainSettings():
 
     setting = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
     deviceName = "WiRoc Device"
-    if setting != None:
+    if setting != None and setting.Value != None:
         deviceName = setting.Value
 
     setting = DatabaseHelper.get_setting_by_key('SendToMeosIPPort')
@@ -370,6 +370,6 @@ def getAllMainSettings():
     if setting != None:
         loraPower = setting.Value
 
-    all = isCharging + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + acksRequested + '¤' + dataRate + '¤' + channel + '¤' + '%batteryPercent%' + '¤' + '%ipAddress%'+ '¤' + loraPower + '¤' + loraModule + '¤' + loraRange
+    all = ('1' if isCharging else '0') + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + '%batteryPercent%' + '¤' + '%ipAddress%'+ '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange
 
     return jsonpickle.encode(MicroMock(All=all))
