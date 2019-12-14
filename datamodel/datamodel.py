@@ -318,7 +318,6 @@ class MessageSubscriptionView(object):
                ("DeleteAfterSent", bool), ("Enabled", bool), ("SubscriberId", int),
                ("SubscriberTypeName", str), ("SubscriberInstanceName", str),
                ("TransformName", str), ("MessageData", bytearray),
-               ("AckRSSIValue", int),
                ("CreatedDate", datetime)
                ]
 
@@ -345,7 +344,6 @@ class MessageSubscriptionView(object):
         self.SubscriberTypeName = None
         self.SubscriberInstanceName = None
         self.TransformName = None
-        self.AckRSSIValue = 0
         self.MessageData = None
         self.CreatedDate = None
 

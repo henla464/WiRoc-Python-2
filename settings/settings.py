@@ -288,7 +288,7 @@ class SettingsClass(object):
         return loraDataRate
 
     @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetLoraPower'), lock=rlock)
+    @cached(cache, key=partial(hashkey, 'GetLoraRange'), lock=rlock)
     def GetLoraRange():
         sett = DatabaseHelper.get_setting_by_key('LoraRange')
         if sett is None:

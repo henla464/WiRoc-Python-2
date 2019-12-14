@@ -703,7 +703,6 @@ class DatabaseHelper:
                    "MessageSubscriptionData.MessageBoxId, "
                    "MessageSubscriptionData.SubscriptionId, "
                    "MessageSubscriptionData.FetchedForSending, "
-                   "MessageSubscriptionData.AckRSSIValue, "
                    "SubscriptionData.DeleteAfterSent, "
                    "SubscriptionData.Enabled, "
                    "SubscriptionData.SubscriberId, "
@@ -1093,7 +1092,7 @@ class DatabaseHelper:
     def get_channel(cls, channel, loraRange, loraModem):
         cls.init()
         sql = ("SELECT * FROM ChannelData WHERE Channel = " + str(channel) +
-               " and LoraRange = " + loraRange + " and LoraModem = '" + loraModem + "'")
+               " and LoraRange = '" + loraRange + "' and LoraModem = '" + loraModem + "'")
         rows = cls.db.get_table_objects_by_SQL(ChannelData, sql)
         if len(rows) >= 1:
             return rows[0]
