@@ -400,7 +400,7 @@ class TestPunchData(object):
 
 class TestPunchView(object):
     columns = [("BatchGuid", str), ("MessageBoxId", int), ("TwentyFourHour", int), ("TwelveHourTimer", int),
-               ("SICardNumber", int), ("Fetched", bool), ("NoOfSendTries", int), ("Status", str)]
+               ("SICardNumber", int), ("Fetched", bool), ("NoOfSendTries", int), ("Status", str), ("AckRSSIValue", int)]
 
     def __init__(self):
         self.id = None
@@ -412,6 +412,7 @@ class TestPunchView(object):
         self.Fetched = 0
         self.NoOfSendTries = 0
         self.Status = None
+        self.AckRSSIValue = 0
 
 class MessageStatsData(object):
         columns = [("AdapterInstanceName", str), ("MessageSubTypeName", str), ("Status", str),

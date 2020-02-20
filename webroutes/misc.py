@@ -153,6 +153,7 @@ def getTestPunches(testBatchGuid, includeAll):
         punch['SINo'] = testPunch.SICardNumber
         punch['NoOfSendTries'] = testPunch.NoOfSendTries
         punch['SubscrId'] = testPunch.SubscriptionId
+        punch['RSSI'] = testPunch.AckRSSIValue
         timeInSeconds = testPunch.TwelveHourTimer
         if testPunch.TwentyFourHour == 1:
             timeInSeconds += 3600 * 12

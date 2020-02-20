@@ -297,7 +297,7 @@ class Main:
                     if wirocMode == "REPEATER" and len(messageID) == 6:
                         logging.debug("Start::handleInput() Received ack, for repeater message number: " + str(
                             messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6])))
-                        DatabaseHelper.repeater_message_acked(messageID)
+                        DatabaseHelper.repeater_message_acked(messageID, rssiValue)
                         DatabaseHelper.archive_repeater_lora_message_subscription_after_ack(messageID, rssiValue)
                         if destinationHasAcked:
                             DatabaseHelper.set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(

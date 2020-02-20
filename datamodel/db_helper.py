@@ -463,7 +463,7 @@ class DatabaseHelper:
 
 
     @classmethod
-    def archive_repeater_lora_message_subscription_after_ack(cls, messageID, ackRSSIValue):
+    def archive_repeater_lora_message_subscription_after_ack(cls, messageID, rssiValue):
         cls.init()
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData JOIN SubscriptionData "
                 "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
@@ -488,9 +488,9 @@ class DatabaseHelper:
             msa.RetryDelay = msd.RetryDelay
             msa.FindAdapterRetryDelay = msd.FindAdapterRetryDelay
             msa.AckReceivedDate = now
+            msa.AckRSSIValue = rssiValue
             msa.MessageBoxId = msd.MessageBoxId
             msa.SubscriptionId = msd.SubscriptionId
-            msa.AckRSSIValue = ackRSSIValue
             subscriberView = DatabaseHelper.get_subscriber_by_subscription_id(msd.SubscriptionId)
             if len(subscriberView) > 0:
                 msa.SubscriberTypeName = subscriberView[0].TypeName
@@ -1029,7 +1029,10 @@ class DatabaseHelper:
            "WHEN MessageSubscriptionArchiveData.id is not null "
              "and MessageSubscriptionArchiveData.SentDate is not null and MessageSubscriptionArchiveData.AckReceivedDate is not null THEN 'Acked' "
            "ELSE 'No subscr.' "
-         "END Status "
+         "END Status, CASE "
+           "WHEN MessageSubscriptionArchiveData.id is not null THEN MessageSubscriptionArchiveData.AckRSSIValue "
+           "ELSE 0 "
+         "END AckRSSIValue "
          "FROM TestPunchData LEFT JOIN MessageBoxData ON TestPunchData.MessageBoxId = MessageBoxData.id "
          "LEFT JOIN MessageSubscriptionData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
          "LEFT JOIN MessageBoxArchiveData ON TestPunchData.MessageBoxId = MessageBoxArchiveData.OrigId "
