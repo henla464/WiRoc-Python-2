@@ -194,13 +194,13 @@ def getIsCharging():
 @app.route('/misc/apikey/', methods=['GET'])
 def getApiKey():
     DatabaseHelper.reInit()
-    apiKey = SettingsClass.GetAPIKey(False)
+    apiKey = SettingsClass.GetAPIKey()
     return jsonpickle.encode(MicroMock(ApiKey=apiKey))
 
 @app.route('/misc/webserverurl/', methods=['GET'])
 def getWebServerUrl():
     DatabaseHelper.reInit()
-    webServerUrl = SettingsClass.GetWebServerUrl(False)
+    webServerUrl = SettingsClass.GetWebServerUrl()
     host = webServerUrl.replace('http://', '').replace('https://', '')
     addrs = socket.getaddrinfo(host, 80)
     ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
@@ -210,7 +210,7 @@ def getWebServerUrl():
 @app.route('/misc/webserverhost/', methods=['GET'])
 def getWebServerHost():
     DatabaseHelper.reInit()
-    webServerUrl = SettingsClass.GetWebServerUrl(False)
+    webServerUrl = SettingsClass.GetWebServerUrl()
     webServerHost = webServerUrl.replace('http://', '').replace('https://', '')
     return jsonpickle.encode(MicroMock(WebServerHost=webServerHost))
 
