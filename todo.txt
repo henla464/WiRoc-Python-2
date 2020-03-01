@@ -1,12 +1,8 @@
 
 App
 ===
-Add one-way option for connecting to samlingsboxar, srr dongles
-
-
-Later
--------------------
-add RSSI test
+Add one-way option for connecting to samlingsboxar, srr dongles [WiRoc Python Done, app remaining]
+add RSSI to test punches
 
 IDs
 ----

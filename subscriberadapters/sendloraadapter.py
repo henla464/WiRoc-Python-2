@@ -268,14 +268,18 @@ class SendLoraAdapter(object):
         if SendLoraAdapter.TestRepeater:
             return True
         reqRepeater = False
-        successDestination = self.GetSuccessRateToDestination()
-        successRepeater = self.GetSuccessRateToRepeater()
-        if SettingsClass.GetHasReceivedMessageFromRepeater() and \
+        if SendLoraAdapter.WiRocMode == "SENDER":
+            successDestination = self.GetSuccessRateToDestination()
+            successRepeater = self.GetSuccessRateToRepeater()
+            if SettingsClass.GetHasReceivedMessageFromRepeater() and \
                         successDestination < 85 \
                 and successRepeater > successDestination:
-            reqRepeater = True
-        logging.debug("Request repeater: " + str(reqRepeater) + " success destination: " + str(successDestination) + " success repeater: " + str(successRepeater))
-        return reqRepeater
+                reqRepeater = True
+            logging.debug("Request repeater: " + str(reqRepeater) + " success destination: " + str(successDestination) + " success repeater: " + str(successRepeater))
+            return reqRepeater
+        else:
+            logging.debug("Request repeater: " + str(reqRepeater))
+            return reqRepeater
 
     # messageData is a bytearray
     def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
