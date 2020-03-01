@@ -442,7 +442,6 @@ class LoraRadioMessage(object):
     CurrentMessageNumber = 0
 
     def __init__(self, payloadDataLength=None, messageType=None, batteryLow = False, ackReq = False):
-        self.rssiValue = 0
         self.rssiByteExpected = False
         if payloadDataLength is not None:
             batteryLowBit = 0
@@ -509,7 +508,10 @@ class LoraRadioMessage(object):
         self.rssiByteExpected = rssiByteExpected
 
     def GetRSSIValue(self):
-        return self.rssiValue
+        if self.rssiByteExpected and self.IsFilled():
+            return self.MessageData[-1]
+        else:
+            return 0
 
     def GetMessageIDThatIsAcked(self):
         if self.GetMessageType() == LoraRadioMessage.MessageTypeSIPunch:
