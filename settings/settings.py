@@ -301,8 +301,8 @@ class SettingsClass(object):
     def GetLoraPower():
         sett = DatabaseHelper.get_setting_by_key('LoraPower')
         if sett is None:
-            SettingsClass.SetSetting("LoraPower", str(0x07))
-            return 0x07
+            SettingsClass.SetSetting("LoraPower", str(0x16))
+            return 0x16
         return int(sett.Value)
 
     @staticmethod

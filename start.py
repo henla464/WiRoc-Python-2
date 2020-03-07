@@ -534,7 +534,7 @@ class Main:
 
                 if not didTasks:
                     time.sleep(0.04)
-                print("time: " + str(datetime.now()))
+                #print("time: " + str(datetime.now()))
                 self.handleInput()
                 self.handleOutput(settDict)
                 self.sendMessageStats()

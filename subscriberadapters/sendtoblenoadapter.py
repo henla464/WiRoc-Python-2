@@ -1,7 +1,7 @@
 from settings.settings import SettingsClass
 from datamodel.datamodel import BlenoPunchData
 from datamodel.db_helper import DatabaseHelper
-from datamodel.db_helper import SIMessage
+from datamodel.datamodel import SIMessage
 import logging
 
 class SendToBlenoAdapter(object):

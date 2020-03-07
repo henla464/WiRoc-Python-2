@@ -133,10 +133,20 @@ class ReceiveSIAdapter(object):
         else:
             self.siSerial.baudrate = 38400
 
-        self.siSerial.open()
-        self.siSerial.reset_input_buffer()
-        self.siSerial.reset_output_buffer()
-        return True
+        try:
+            self.siSerial.open()
+            self.siSerial.reset_input_buffer()
+            self.siSerial.reset_output_buffer()
+            logging.debug("ReceiveSIAdapter::InitOneWay() opened serial")
+        except Exception as ex:
+            logging.error("ReceiveSIAdapter::InitOneWay() opening serial exception:")
+            logging.error(ex)
+            return False
+
+        if self.siSerial.is_open:
+            self.isInitialized = True
+            return True
+        return False
 
     def InitTwoWay(self):
         self.siSerial.baudrate = 38400
@@ -144,20 +154,20 @@ class ReceiveSIAdapter(object):
             self.siSerial.open()
             self.siSerial.reset_input_buffer()
             self.siSerial.reset_output_buffer()
-            logging.debug("ReceiveSIAdapter::Init() opened serial")
+            logging.debug("ReceiveSIAdapter::InitTwoWay() opened serial")
         except Exception as ex:
-            logging.error("ReceiveSIAdapter::Init() opening serial exception:")
+            logging.error("ReceiveSIAdapter::InitTwoWay() opening serial exception:")
             logging.error(ex)
             return False
 
         if self.siSerial.is_open:
             # set master - mode to direct
-            logging.debug("ReceiveSIAdapter::Init() serial port open")
+            logging.debug("ReceiveSIAdapter::InitTwoWay() serial port open")
             msdMode = bytes([0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
             response = self.sendCommand(msdMode)
 
             if not self.isCorrectMSModeDirectResponse(response):
-                logging.info("ReceiveSIAdapter::Init() not correct msmodedirectresponse: " + str(response))
+                logging.info("ReceiveSIAdapter::InitTwoWay() not correct msmodedirectresponse: " + str(response))
 
                 # something wrong, try other baudrate
                 self.siSerial.close()
@@ -170,13 +180,13 @@ class ReceiveSIAdapter(object):
                 response = self.sendCommand(msdMode)
 
                 if not self.isCorrectMSModeDirectResponse(response):
-                    logging.info("ReceiveSIAdapter::Init() not correct msmodedirectresponse: " + str(response))
-                    logging.error("ReceiveSIAdapter::Init() could not communicate with master station")
+                    logging.info("ReceiveSIAdapter::InitTwoWay() not correct msmodedirectresponse: " + str(response))
+                    logging.error("ReceiveSIAdapter::InitTwoWay() could not communicate with master station")
                     return False
 
-                logging.info("ReceiveSIAdapter::Init() SI Station 4800 kbit/s works")
+                logging.info("ReceiveSIAdapter::InitTwoWay() SI Station 4800 kbit/s works")
             else:
-                logging.info("ReceiveSIAdapter::Init() SI Station 38400 kbit/s works")
+                logging.info("ReceiveSIAdapter::InitTwoWay() SI Station 38400 kbit/s works")
 
             # If this is the first instance then update the computer time
             if ReceiveSIAdapter.Instances[0].GetSerialDevicePath() == self.GetSerialDevicePath():

@@ -213,6 +213,8 @@ class LoraRadio:
             time.sleep(0.01)
 
     def Init(self, channel, loraRange, loraPower):
+        if loraPower > 0x07:
+            loraPower = 0x07
         logging.info("LoraRadio::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraRange: " + loraRange + " LoraPower: " + str(loraPower))
         self.hardwareAbstraction.EnableLora()
         time.sleep(0.1)
