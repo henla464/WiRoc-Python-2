@@ -272,6 +272,7 @@ class LoraRadioDRF1268DS:
         readParameterResp[11] = channelData.RfFactor
         readParameterResp[12] = 0x05 # Bandwidth 31,25kHz
         readParameterResp[14] = loraPower
+        readParameterResp[23] = 0x81 # ID / Rx Gain enable
         readParameterResp[24] = 0x01 # LBT enable
         readParameterResp[25] = 0x01 # RSSI enable
         struct.pack_into('II', readParameterResp, 15, channelData.Frequency, channelData.Frequency)
@@ -366,7 +367,8 @@ class LoraRadioDRF1268DS:
                     channelData.RfFactor == LoraRadioDRF1268DS.LoraModuleParameters.SpreadingFactor and \
                     loraPower == LoraRadioDRF1268DS.LoraModuleParameters.TransmitPower and \
                     channelData.RfBw == LoraRadioDRF1268DS.LoraModuleParameters.Bandwidth and \
-                    channel == LoraRadioDRF1268DS.LoraModuleParameters.NetID:
+                    channel == LoraRadioDRF1268DS.LoraModuleParameters.NetID and \
+                    0x81 == LoraRadioDRF1268DS.LoraModuleParameters.IDRxGainEnable:
                     self.isInitialized = True
                     logging.info("LoraRadioDRF1268DS::Init() Already correct parameters")
                     return True

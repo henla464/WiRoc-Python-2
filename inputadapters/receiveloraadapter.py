@@ -101,6 +101,16 @@ class ReceiveLoraAdapter(object):
     def UpdateInfreqently(self):
         return True
 
+    def TrySendData(self, messageData):
+        startTrySendTime = time.monotonic()
+        dataSentOK = self.loraRadio.SendData(messageData)
+        while not dataSentOK:
+            time.sleep(0.01)
+            dataSentOK = self.loraRadio.SendData(messageData)
+            if time.monotonic() - startTrySendTime > (self.loraRadio.GetRetryDelay(1) / 2000):
+                # Wait half of a first retrydelay (GetRetryDelay returns in microseconds)
+                break
+
     # messageData is a bytearray
     def GetData(self):
         loraMessage = None
@@ -144,7 +154,7 @@ class ReceiveLoraAdapter(object):
                                 loraMessage2.SetRepeaterBit(True)  # indicate this is repeater acking
                             loraMessage2.SetMessageIDToAck(loraMessage.GetMessageID())
                             loraMessage2.UpdateChecksum()
-                            self.loraRadio.SendData(loraMessage2.GetByteArray())
+                            self.TrySendData(loraMessage2.GetByteArray())
                     relayPathNo = loraMessage.GetLastRelayPathNoFromStatusMessage()
                     SettingsClass.UpdateRelayPathNumber(relayPathNo)
                     DatabaseHelper.add_message_stat(self.GetInstanceName(), "Status", "Received", 1)
@@ -172,7 +182,7 @@ class ReceiveLoraAdapter(object):
                             loraMessage2.SetMessageIDToAck(messageID)
                             loraMessage2.UpdateChecksum()
                             try:
-                                self.loraRadio.SendData(loraMessage2.GetByteArray())
+                                self.TrySendData(loraMessage2.GetByteArray())
                             except Exception as ex2:
                                 logging.error("ReceiveLoraAdapter::GetData() Error sending ack: " + str(ex2))
                     try:
