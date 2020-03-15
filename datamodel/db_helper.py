@@ -199,14 +199,14 @@ class DatabaseHelper:
         return rows
 
 #MessageTypes
-    @classmethod
-    def get_message_type(cls, messageTypeName, messageSubTypeName):
-        cls.init()
-        sql = "SELECT * FROM MessageTypeData WHERE Name = ? AND MessageSubTypeName = ?"
-        rows = cls.db.get_table_objects_by_SQL(MessageTypeData, sql, (messageTypeName, messageSubTypeName))
-        if len(rows) >= 1:
-            return rows[0]
-        return None
+    #@classmethod
+    #def get_message_type(cls, messageTypeName, messageSubTypeName):
+    #    cls.init()
+    #    sql = "SELECT * FROM MessageTypeData WHERE Name = ? AND MessageSubTypeName = ?"
+    #    rows = cls.db.get_table_objects_by_SQL(MessageTypeData, sql, (messageTypeName, messageSubTypeName))
+    #    if len(rows) >= 1:
+    #        return rows[0]
+    #    return None
 
     @classmethod
     def save_message_type(cls, messageTypeData):
@@ -261,13 +261,14 @@ class DatabaseHelper:
         return rows
 
     @classmethod
-    def get_subscription_view_by_input_message_type_id(cls, messageTypeId):
+    def get_subscription_view_by_input_message_type(cls, messageTypeName, messageSubTypeName):
         cls.init()
         sql = ("SELECT SubscriptionData.*, TransformData.Name as TransformName, SubscriberData.TypeName as SubscriberTypeName "
                "FROM TransformData JOIN SubscriptionData ON TransformData.id = SubscriptionData.TransformId "
                "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
+                "JOIN MessageTypeData ON MessageTypeData.id = TransformData.InputMessageTypeID "
                "WHERE TransformData.Enabled = 1 AND SubscriptionData.Enabled = 1 AND "
-               "InputMessageTypeID = " + str(messageTypeId))
+               "MessageTypeData.Name = '" + str(messageTypeName) + "' AND MessageSubTypeName = '" + str(messageSubTypeName) +"'")
         rows = cls.db.get_table_objects_by_SQL(SubscriptionViewData, sql)
         return rows
 
@@ -580,7 +581,7 @@ class DatabaseHelper:
         msa.NoOfTimesAckSeen = repeaterMessageBox.NoOfTimesAckSeen
         msa.Acked = repeaterMessageBox.Acked
         msa.AckedTime = repeaterMessageBox.AckedTime
-        msa.MessageBoxId = repeaterMessageBox.MessageBoxId  #todo: set messageBoxId ?
+        msa.MessageBoxId = repeaterMessageBox.MessageBoxId
         msa.AddedToMessageBoxTime = datetime.now()
         msa.RSSIValue = repeaterMessageBox.RSSIValue
         msa.AckRSSIValue = repeaterMessageBox.AckRSSIValue

@@ -14,6 +14,7 @@ class OledNormal(OledDisplayState):
         self.batteryWidth = 0
         self.NormalOledImage = None
         self.wifiNoOfBars = 0
+        self.wifiNoOfBarsPrevious = 0
         self.channel = None
         self.wirocMode = None
         self.ackRequested = None
@@ -68,21 +69,6 @@ class OledNormal(OledDisplayState):
                 self.OledDraw.line((x + 4, top + 7, x + 4, top + 7), fill=255)
                 self.OledDraw.line((x + 4, top + 8, x + 4, top + 8), fill=255)
 
-    #def DrawOledDataRate(self, dataRate):
-    #    if self.dataRate != dataRate:
-    #        self.dataRate = dataRate
-    #        self.imageChanged = True
-    #        logging.debug("OledNormal::DrawOledDataRate imagechanged")
-    #        self.OledDraw.rectangle((41, 0, 60, 13), outline=0, fill=0)
-    #        if dataRate == 293:
-    #            self.OledDraw.text((41, 1), 'L', font=self.OledThinFont2, fill=255)
-    #        if dataRate == 537:
-    #            self.OledDraw.text((41, 1), 'ML', font=self.OledThinFont2, fill=255)
-    #        if dataRate == 977:
-    #            self.OledDraw.text((41, 1), 'MS', font=self.OledThinFont2, fill=255)
-    #        if dataRate == 1758:
-    #            self.OledDraw.text((41, 1), 'S', font=self.OledThinFont2, fill=255)
-
     def DrawOledLoraRange(self, loraRange):
         if self.loraRange != loraRange:
             self.loraRange = loraRange
@@ -108,9 +94,12 @@ class OledNormal(OledDisplayState):
         elif (percent > 15):
             noOfBars = 1
 
-        if noOfBars == self.wifiNoOfBars:
+        if noOfBars == self.wifiNoOfBars or (noOfBars != self.wifiNoOfBars and self.wifiNoOfBarsPrevious == self.wifiNoOfBars):
+            self.wifiNoOfBarsPrevious = self.wifiNoOfBars
+            self.wifiNoOfBars = noOfBars
             return None
         logging.debug("OledNormal::DrawOledWifi imagechanged: old: " + str(self.wifiNoOfBars) +  " new: " + str(noOfBars))
+        self.wifiNoOfBarsPrevious = self.wifiNoOfBars
         self.wifiNoOfBars = noOfBars
         self.imageChanged = True
 

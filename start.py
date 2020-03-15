@@ -26,8 +26,9 @@ from logging.handlers import HTTPHandler
 
 class Main:
     def __init__(self):
+        self.wirocLogger = logging.getLogger("WiRoc")
         if len(sys.argv) > 1 and sys.argv[1] == "testrepeater":
-            logging.debug("Test repeater")
+            self.wirocLogger.debug("Test repeater")
             ReceiveLoraAdapter.TestRepeater = True
             SendLoraAdapter.TestRepeater = True
         self.shouldReconfigure = False
@@ -63,8 +64,7 @@ class Main:
             # recreate message subscriptions after reboot for messages in the messagebox
             messages = DatabaseHelper.get_message_box_messages()
             for msg in messages:
-                messageTypeId = DatabaseHelper.get_message_type(msg.MessageTypeName, msg.MessageSubTypeName).id
-                subscriptions = DatabaseHelper.get_subscriptions_by_input_message_type_id(messageTypeId)
+                subscriptions = DatabaseHelper.get_subscription_view_by_input_message_type(msg.MessageTypeName, msg.MessageSubTypeName)
                 for subscription in subscriptions:
                     msgSubscription = MessageSubscriptionData()
                     msgSubscription.MessageBoxId = msg.id
@@ -91,12 +91,12 @@ class Main:
 
     def updateWebserverIPBackground(self, webServerHost):
         try:
-            logging.debug("Start::updateWebserverIPBackground " + str(datetime.now()))
+            self.wirocLogger.debug("Start::updateWebserverIPBackground " + str(datetime.now()))
             addrs = socket.getaddrinfo(webServerHost, 80)
             ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
             SettingsClass.SetWebServerIP(ipv4_addrs[0])
         except Exception as ex:
-            logging.debug("Start::updateWebserverIPBackground Exception " + str(ex) + " " + str(datetime.now()))
+            self.wirocLogger.debug("Start::updateWebserverIPBackground Exception " + str(ex) + " " + str(datetime.now()))
 
     def addDeviceBackground(self, webServerHost, webServerUrl, btAddress, apiKey, wiRocDeviceName):
         try:
@@ -117,14 +117,14 @@ class Main:
                         retDevice = resp.json()
                         SettingsClass.SetDeviceId(retDevice['id'])
         except Exception as ex:
-            logging.warning("Start::Init error creating device on webserver")
-            logging.warning("Start::Init " + str(ex))
+            self.wirocLogger.warning("Start::Init error creating device on webserver")
+            self.wirocLogger.warning("Start::Init " + str(ex))
 
     def archiveFailedMessages(self):
         #if self.messagesToSendExists:
         msgSubscriptions = DatabaseHelper.get_message_subscriptions_view_to_archive(SettingsClass.GetMaxRetries(), 100)
         for msgSub in msgSubscriptions:
-            logging.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
+            self.wirocLogger.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
             DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
 
     def reconfigureBackground(self,sendToMeos, webServerIPUrl, webServerHost, loggingServerHost, loggingServerPort, logToServer):
@@ -136,7 +136,7 @@ class Main:
             if logToServer:
                 server = loggingServerHost + ':' + loggingServerPort
                 httpHandler = logging.handlers.HTTPHandler(server, '/', method='POST')
-                logging.getLogger('').addHandler(httpHandler)
+                self.wirocLogger.getLogger('').addHandler(httpHandler)
 
         self.updateWebserverIPBackground(webServerHost)
         self.webServerUp = SendStatusAdapter.TestConnection(webServerIPUrl, webServerHost)
@@ -198,12 +198,12 @@ class Main:
                 inputData = inputAdapter.GetData()
             except Exception as ex:
                 self.shouldReconfigure = True
-                logging.error("InputAdapter error in GetData: " + str(inputAdapter.GetInstanceName()))
-                logging.error(ex)
+                self.wirocLogger.error("InputAdapter error in GetData: " + str(inputAdapter.GetInstanceName()))
+                self.wirocLogger.error(ex)
 
             if inputData is not None:
                 if inputData["MessageType"] == "DATA":
-                    logging.info("Start::handleInput() Received data from " + inputAdapter.GetInstanceName())
+                    self.wirocLogger.info("Start::handleInput() Received data from " + inputAdapter.GetInstanceName())
                     messageID = inputData.get("MessageID", None)
                     messageTypeName = inputAdapter.GetTypeName()
                     messageSource = inputData["MessageSource"]
@@ -215,11 +215,11 @@ class Main:
                     SIStationSerialNumber = inputData.get("SIStationSerialNumber", None)
                     if messageTypeName == "LORA" and SettingsClass.GetWiRocMode() == "REPEATER":
                         # WiRoc is in repeater mode and received a LORA message
-                        logging.info("Start::handleInput() In repeater mode")
+                        self.wirocLogger.info("Start::handleInput() In repeater mode")
 
                         loraMessage = inputData.get("LoraRadioMessage", None)
                         if loraMessage == None:
-                            logging.error(
+                            self.wirocLogger.error(
                                 "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
                             continue
                         rssiValue = loraMessage.GetRSSIValue()
@@ -232,7 +232,7 @@ class Main:
                         if messageTypeName == "LORA":
                             loraMessage = inputData.get("LoraRadioMessage", None)
                             if loraMessage != None:
-                                logging.debug(
+                                self.wirocLogger.debug(
                                     "Start::handleInput() MessageType: " + messageTypeName + ", WiRocMode: " + SettingsClass.GetWiRocMode() + " RepeaterBit: " + str(
                                         loraMessage.GetRepeaterBit()))
                                 if SettingsClass.GetWiRocMode() == "RECEIVER":
@@ -242,7 +242,7 @@ class Main:
                                         # Message number ignored, remove acks for same SI-card-number and SI-Station-number
                                         DatabaseHelper.archive_lora_ack_message_subscription(messageID)
                             else:
-                                logging.error("Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
+                                self.wirocLogger.error("Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
                                 continue
 
                         mbd = DatabaseHelper.create_message_box_data(messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK, powerCycle, SIStationSerialNumber, messageData, rssiValue)
@@ -251,13 +251,10 @@ class Main:
                         inputAdapter.AddedToMessageBox(mbdid)
                         anySubscription = False
 
-                        # todo: change to get directly with messageTypeName and messageSubTypeName in single call
-                        messageTypeId = DatabaseHelper.get_message_type(messageTypeName, messageSubTypeName).id
-                        subscriptions = DatabaseHelper.get_subscription_view_by_input_message_type_id(messageTypeId)
+                        subscriptions = DatabaseHelper.get_subscription_view_by_input_message_type(messageTypeName, messageSubTypeName)
                         for subscription in subscriptions:
-                            logging.debug("Start::handleInput() Subscription: " + subscription.SubscriberTypeName + " " + subscription.TransformName)
+                            self.wirocLogger.debug("Start::handleInput() Subscription: " + subscription.SubscriberTypeName + " " + subscription.TransformName)
                             msgSubscription = MessageSubscriptionData()
-                            now = datetime.now()
 
                             subAdapters = [subAdapter for subAdapter in self.subscriberAdapters if
                                            subAdapter.GetTypeName() == subscription.SubscriberTypeName]
@@ -268,15 +265,15 @@ class Main:
                                 if noOfSecondsToWait == None:
                                     continue  # skip this subscription
                                 msgSubscription.Delay = noOfSecondsToWait * 1000000
-                                logging.debug('Start::handleInput() Delay: ' + str(noOfSecondsToWait * 1000000))
+                                self.wirocLogger.debug('Start::handleInput() Delay: ' + str(noOfSecondsToWait * 1000000))
                                 # used for wiroc to wiroc to wait for receiver to send ack first...
                             else:
-                                logging.error("Start::handleInput()  SubAdapter not found")
+                                self.wirocLogger.error("Start::handleInput()  SubAdapter not found")
 
                             msgSubscription.MessageBoxId = mbdid
                             msgSubscription.SubscriptionId = subscription.id
                             if messageID != None:
-                                logging.debug("MessageID: " + Utils.GetDataInHex(messageID, logging.DEBUG))
+                                self.wirocLogger.debug("MessageID: " + Utils.GetDataInHex(messageID, logging.DEBUG))
                             # messageid is used for messages from repeater table or test table. Is updated after transform when sent
                             msgSubscription.MessageID = messageID
                             msgSubscription.MessageNumber = MessageSubscriptionData.GetNextMessageNumber()
@@ -284,7 +281,7 @@ class Main:
                             anySubscription = True
                             self.messagesToSendExists = True
                         if not anySubscription:
-                            logging.info(
+                            self.wirocLogger.info(
                                 "Start::handleInput() Message has no subscribers, being archived, msgid: " + str(mbdid))
                             DatabaseHelper.archive_message_box(mbdid)
                 elif inputData["MessageType"] == "ACK":
@@ -299,7 +296,7 @@ class Main:
                     rssiValue = loraMessage.GetRSSIValue()
                     wirocMode = SettingsClass.GetWiRocMode()
                     if wirocMode == "REPEATER" and len(messageID) == 6:
-                        logging.debug("Start::handleInput() Received ack, for repeater message number: " + str(
+                        self.wirocLogger.debug("Start::handleInput() Received ack, for repeater message number: " + str(
                             messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6])))
                         DatabaseHelper.repeater_message_acked(messageID, rssiValue)
                         DatabaseHelper.archive_repeater_lora_message_subscription_after_ack(messageID, rssiValue)
@@ -308,12 +305,12 @@ class Main:
                                 messageID)
                     else:
                         if len(messageID) == 6:
-                            logging.debug("Start::handleInput() Received ack, for message number: " + str(
+                            self.wirocLogger.debug("Start::handleInput() Received ack, for message number: " + str(
                                 messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6]))
                                           + " receivedFromRepeater: " + str(receivedFromRepeater)
                                           + " destinationHasAcked: " + str(destinationHasAcked))
                         else:
-                            logging.debug(
+                            self.wirocLogger.debug(
                                 "Start::handleInput() Received ack, for status message number: " + str(messageID[0]))
                         DatabaseHelper.archive_message_subscription_after_ack(messageID, rssiValue)
 
@@ -337,13 +334,13 @@ class Main:
                             loraSubAdapter.RemoveBlock()
 
     def handleOutput(self, settDict):
-        #logging.debug("IsReadyToSend: " + str(SendLoraAdapter.Instances[0].IsReadyToSend()) + " DateTime: " + str(datetime.now()))
+        #self.wirocLogger.debug("IsReadyToSend: " + str(SendLoraAdapter.Instances[0].IsReadyToSend()) + " DateTime: " + str(datetime.now()))
         if self.messagesToSendExists:
             noOfMsgSubWaiting, msgSub = DatabaseHelper.get_message_subscriptions_view_to_send(SettingsClass.GetMaxRetries())
             if noOfMsgSubWaiting == 0:
                 self.messagesToSendExists = False
             if msgSub != None:
-                #logging.info("msgSub count: " + str(len(msgSubscriptions)))
+                #self.wirocLogger.info("msgSub count: " + str(len(msgSubscriptions)))
                 # find the right adapter
                 adapterFound = False
                 for subAdapter in self.subscriberAdapters:
@@ -361,22 +358,22 @@ class Main:
 
                                 if msgSub.DeleteAfterSent:
                                     # shouldn't wait for ack. (ie. repeater message ack)
-                                    logging.debug("In loop: subadapter: " + str(type(subAdapter)) + " DeleteAfterSent")
+                                    self.wirocLogger.debug("In loop: subadapter: " + str(type(subAdapter)) + " DeleteAfterSent")
                                     settDict["DelayAfterMessageSent"] = 0
                                 else:
-                                    logging.debug("In loop: subadapter: " + str(type(subAdapter)) + " DelayAfterMessageSent: " + str(subAdapter.GetDelayAfterMessageSent()))
+                                    self.wirocLogger.debug("In loop: subadapter: " + str(type(subAdapter)) + " DelayAfterMessageSent: " + str(subAdapter.GetDelayAfterMessageSent()))
                                     settDict["DelayAfterMessageSent"] = subAdapter.GetDelayAfterMessageSent()
 
                                 def createSuccessCB(innerSubAdapter):
                                     def successCB():
-                                        logging.info(
+                                        self.wirocLogger.info(
                                             "Start::Run() successCB() Message sent to " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
                                         if msgSub.DeleteAfterSent:  # move msgsub to archive
                                             DatabaseHelper.archive_message_subscription_view_after_sent(msgSub)
                                         else:  # set SentDate and increment NoOfSendTries
                                             retryDelay = innerSubAdapter.GetRetryDelay(msgSub.NoOfSendTries + 1)
                                             DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub, retryDelay)
-                                            logging.debug("Start::Run() successCB() Subadapter: " +str(type(innerSubAdapter)) +
+                                            self.wirocLogger.debug("Start::Run() successCB() Subadapter: " +str(type(innerSubAdapter)) +
                                                           " Increment send tries, NoOfSendTries: " + str(msgSub.NoOfSendTries) +
                                                           " retryDelay: " + str(retryDelay))
                                     return successCB
@@ -384,11 +381,11 @@ class Main:
                                 def createFailureCB(innerSubAdapter):
                                     def failureCB():
                                         # failed to send
-                                        logging.warning(
+                                        self.wirocLogger.warning(
                                             "Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName + " id:"+ str(msgSub.id))
                                         retryDelay = innerSubAdapter.GetRetryDelay(msgSub.NoOfSendTries + 1)
                                         DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub, retryDelay)
-                                        logging.debug(
+                                        self.wirocLogger.debug(
                                             "Start::Run() failureCB() Subadapter: " + str(type(innerSubAdapter)) +
                                             " Increment send tries, NoOfSendTries: " + str(msgSub.NoOfSendTries) +
                                             " retryDelay: " + str(retryDelay))
@@ -397,7 +394,7 @@ class Main:
                                 def createNotSentCB():
                                     def notSentCB():
                                         # msg not sent
-                                        logging.warning(
+                                        self.wirocLogger.warning(
                                             "Start::Run() Message was not sent: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName + " id:"+ str(msgSub.id))
                                         DatabaseHelper.clear_fetched_for_sending(msgSub)
                                     return notSentCB
@@ -409,7 +406,7 @@ class Main:
                             else:
                                 # shouldn't be sent, so just archive the message subscription
                                 # (Probably a Lora message that doesn't request ack
-                                logging.debug("Start::Run() " + msgSub.TransformName + " return None so not sent")
+                                self.wirocLogger.debug("Start::Run() " + msgSub.TransformName + " return None so not sent")
                                 DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
                         else:
                             DatabaseHelper.clear_fetched_for_sending(msgSub)
@@ -418,7 +415,7 @@ class Main:
                         return
 
                 if not adapterFound:
-                    logging.warning(
+                    self.wirocLogger.warning(
                         "Start::Run() Send adapter not found for " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName)
                     retryDelay = SettingsClass.GetRetryDelay(msgSub.FindAdapterTries + 1)
                     DatabaseHelper.increment_find_adapter_tries_and_set_find_adapter_try_date(msgSub, retryDelay)
@@ -435,7 +432,7 @@ class Main:
                 t.daemon = True
                 t.start()
             except Exception as ex:
-                logging.error("Start::updateBatteryIsLow() Exception: " + str(ex))
+                self.wirocLogger.error("Start::updateBatteryIsLow() Exception: " + str(ex))
 
     def updateBatteryIsLowBackground(self, batteryIsLowReceived, webServerIPUrl, webServerHost, apiKey, deviceId):
         if deviceId != None:
@@ -449,7 +446,7 @@ class Main:
                         retDevice = resp.json()
                         self.lastBatteryIsLowReceived = retDevice['batteryIsLow']
             except Exception as ex:
-                logging.error("Start::updateBatteryIsLowBackground() Exception: " + str(ex))
+                self.wirocLogger.error("Start::updateBatteryIsLowBackground() Exception: " + str(ex))
 
     def sendMessageStatsBackground(self, messageStat, webServerIPUrl, webServerHost, apiKey):
         if messageStat != None:
@@ -469,7 +466,7 @@ class Main:
                     else:
                         self.webServerUp = False
                 except Exception as ex:
-                    logging.error("Start::sendMessageStatsBackground() Exception: " + str(ex))
+                    self.wirocLogger.error("Start::sendMessageStatsBackground() Exception: " + str(ex))
 
 
     def sendMessageStats(self):
@@ -483,19 +480,19 @@ class Main:
                 t.daemon = True
                 t.start()
             except Exception as ex:
-                logging.error("Start::sendMessageStats() Exception: " + str(ex))
+                self.wirocLogger.error("Start::sendMessageStats() Exception: " + str(ex))
 
     def handleCallbacks(self):
         try:
             cbt = self.callbackQueue.get(False)
             cb = cbt[0]
             cbargs = cbt[1:]
-            logging.debug("arg: " + str(cbt[0]))
+            self.wirocLogger.debug("arg: " + str(cbt[0]))
             cb(*cbargs)
         except queue.Empty:
             pass
         except Exception as ex:
-            logging.error("Start::handleCallbacks() Exception: " + str(ex))
+            self.wirocLogger.error("Start::handleCallbacks() Exception: " + str(ex))
 
     def Run(self):
         settDict = {}
@@ -552,7 +549,7 @@ class Main:
 
 main = None
 def main():
-    logging.info("Start::main() Start main")
+    self.wirocLogger.info("Start::main() Start main")
     global main
     main = Main()
 
@@ -567,7 +564,7 @@ def startMain():
     #cProfile.run('run()')
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG,
+    logging.basicConfig(level=logging.ERROR,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         filename='WiRoc.log',
                         filemode='a')
@@ -583,9 +580,10 @@ if __name__ == '__main__':
     console.setLevel(logging.DEBUG)
     console.setFormatter(formatter)
 
-    # add the handler to the root logger
-    logging.getLogger('').addHandler(rotFileHandler)
-    logging.getLogger('').addHandler(console)
+    # add the handler to the myLogger
+    myLogger = logging.getLogger('WiRoc')
+    myLogger.addHandler(rotFileHandler)
+    myLogger.addHandler(console)
 
-    logging.info("Start")
+    myLogger.info("Start")
     startMain()
