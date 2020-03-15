@@ -290,6 +290,10 @@ class Main:
                 elif inputData["MessageType"] == "ACK":
                     messageID = inputData["MessageID"]
                     loraMessage = inputData["LoraRadioMessage"]
+                    if not inputData["ChecksumOK"]:
+                        subscriptionView = DatabaseHelper.get_last_message_subscription_view_that_was_sent_to_lora()
+                        if Utils.IsEnoughAlike(messageID, subscriptionView.MessageID):
+                            messageID = subscriptionView.MessageID
                     destinationHasAcked = loraMessage.GetAcknowledgementRequested()
                     receivedFromRepeater = loraMessage.GetRepeaterBit()
                     rssiValue = loraMessage.GetRSSIValue()
@@ -312,7 +316,6 @@ class Main:
                             logging.debug(
                                 "Start::handleInput() Received ack, for status message number: " + str(messageID[0]))
                         DatabaseHelper.archive_message_subscription_after_ack(messageID, rssiValue)
-
 
                     loraSubAdapters = [subAdapter for subAdapter in self.subscriberAdapters if
                                        subAdapter.GetTypeName() == "LORA"]

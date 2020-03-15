@@ -107,8 +107,9 @@ class ReceiveLoraAdapter(object):
         while not dataSentOK:
             time.sleep(0.01)
             dataSentOK = self.loraRadio.SendData(messageData)
-            if time.monotonic() - startTrySendTime > (self.loraRadio.GetRetryDelay(1) / 2000):
+            if time.monotonic() - startTrySendTime > (SettingsClass.GetRetryDelay(1) / 2000):
                 # Wait half of a first retrydelay (GetRetryDelay returns in microseconds)
+                logging.error("ReceiveLoraAdapter::TrySendData() Wasn't able to send ack (busy response)")
                 break
 
     # messageData is a bytearray
@@ -191,7 +192,12 @@ class ReceiveLoraAdapter(object):
                         logging.error("ReceiveLoraAdapter::GetData() Error saving statistics: " + str(ex))
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "SIMessage", "Data": receivedData, "MessageID": messageID, "LoraRadioMessage": loraMessage, "ChecksumOK": True}
             else:
-                return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName":"Unknown", "Data": receivedData, "MessageID":None, "ChecksumOK": False}
+                messageType = loraMessage.GetMessageType()
+                if messageType == LoraRadioMessage.MessageTypeLoraAck:
+                    messageID = loraMessage.GetMessageIDThatIsAcked()
+                    return {"MessageType": "ACK", "MessageSource": "Lora", "MessageSubTypeName":"Ack", "Data": receivedData, "MessageID":messageID, "ChecksumOK": False, "LoraRadioMessage": loraMessage}
+                else:
+                    return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName":"Unknown", "Data": receivedData, "MessageID":None, "ChecksumOK": False}
 
         return None
 

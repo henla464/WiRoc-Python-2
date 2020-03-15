@@ -306,7 +306,11 @@ class ReceiveSIAdapter(object):
             "ReceiveSIAdapter::updateComputerTime time to set: " + str(2000+theCurrentTimeInSiStation[0]) + "-" +
             str(theCurrentTimeInSiStation[1]) + "-" + str(theCurrentTimeInSiStation[2]) + "  " +
             str(theCurrentTimeInSiStation[3]) + ":" + str(theCurrentTimeInSiStation[4]) + ":" + str(theCurrentTimeInSiStation[5]))
-        Utils.SetDateTime(2000+theCurrentTimeInSiStation[0], theCurrentTimeInSiStation[1], theCurrentTimeInSiStation[2], theCurrentTimeInSiStation[3], theCurrentTimeInSiStation[4], theCurrentTimeInSiStation[5])
+        try:
+            Utils.SetDateTime(2000+theCurrentTimeInSiStation[0], theCurrentTimeInSiStation[1], theCurrentTimeInSiStation[2], theCurrentTimeInSiStation[3], theCurrentTimeInSiStation[4], theCurrentTimeInSiStation[5])
+        except Exception as ex:
+            # If month = 0 then battery is probably dead. Can't set
+            logging.error("ReceiveSIAdapter::updateComputerTime exception: " + str(ex))
         SettingsClass.SetTimeOfLastMessageSentToLora()
         self.siStationNumber = theCurrentTimeInSiStation[6]
         SettingsClass.SetSIStationNumber(self.siStationNumber)

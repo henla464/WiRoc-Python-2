@@ -434,7 +434,7 @@ class LoraRadioDRF1268DS:
                 continue
             break
 
-        self.WaitForSerialUpToTimeMS(300)
+        self.WaitForSerialUpToTimeMS(1500)
         sendReply = self.getRadioReply(4)
         if sendReply == bytearray([0x6F, 0x6B, 0x0D, 0x0A]): #ok
             logging.debug(

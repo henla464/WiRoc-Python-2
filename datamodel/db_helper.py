@@ -591,6 +591,51 @@ class DatabaseHelper:
 
 #MessageSubscriptionView
     @classmethod
+    def get_last_message_subscription_view_that_was_sent_to_lora(cls):
+        sql = ("SELECT MessageSubscriptionData.id, "
+               "MessageSubscriptionData.MessageID, "
+               "MessageSubscriptionData.AckReceivedFromReceiver, "
+               "MessageSubscriptionData.MessageNumber, "
+               "MessageSubscriptionData.SentDate, "
+               "MessageSubscriptionData.SendFailedDate, "
+               "MessageSubscriptionData.FindAdapterTryDate, "
+               "MessageSubscriptionData.FindAdapterTries, "
+               "MessageSubscriptionData.NoOfSendTries, "
+               "MessageSubscriptionData.AckReceivedDate, "
+               "MessageSubscriptionData.Delay, "
+               "MessageSubscriptionData.RetryDelay, "
+               "MessageSubscriptionData.FindAdapterRetryDelay, "
+               "MessageSubscriptionData.MessageBoxId, "
+               "MessageSubscriptionData.SubscriptionId, "
+               "MessageSubscriptionData.FetchedForSending, "
+               "SubscriptionData.DeleteAfterSent, "
+               "SubscriptionData.Enabled, "
+               "SubscriptionData.SubscriberId, "
+               "SubscriberData.TypeName as SubscriberTypeName, "
+               "SubscriberData.InstanceName as SubscriberInstanceName, "
+               "TransformData.Name as TransformName, "
+               "MessageBoxData.MessageData,"
+               "MessageBoxData.CreatedDate as CreatedDate "
+               "FROM TransformData JOIN SubscriptionData "
+               "ON TransformData.id = SubscriptionData.TransformId "
+               "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
+               "JOIN MessageSubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
+               "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
+               "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
+               "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
+               "SubscriberData.TypeName = 'LORA' AND "
+               "MessageSubscriptionData.SentDate IS NOT NULL "
+               "ORDER BY MessageBoxData.CreatedDate asc, "
+               "MessageSubscriptionData.SentDate asc")
+        messageSubscriptions = cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
+        now = datetime.now()
+        for messageSubscription in messageSubscriptions:
+            if messageSubscription.SentDate != None and messageSubscription.SentDate < now < messageSubscription.SentDate + timedelta(
+                    microseconds=messageSubscription.RetryDelay):
+                    # has been sent, not yet passed the retry delay (may still be waiting for ack)
+                return messageSubscription
+
+    @classmethod
     def get_message_subscriptions_view_to_send(cls, maxRetries):
         sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData")
         cls.init()
@@ -642,7 +687,7 @@ class DatabaseHelper:
 
                 now = datetime.now()
                 if messageSubscription.FetchedForSending is not None and messageSubscription.FetchedForSending < now < messageSubscription.FetchedForSending + timedelta(
-                        seconds=10):
+                        seconds=12):
                     # recently fetched and is being sent by another thread
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue

@@ -227,3 +227,19 @@ class Utils:
             dataInHex = ''.join(format(x, '02x') for x in data)
             return dataInHex
         return "(Not printed in this logging level)"
+
+    @staticmethod
+    def IsEnoughAlike(receivedMessageID, expectedMessageID):
+        if receivedMessageID == expectedMessageID:
+            return True
+        if len(receivedMessageID) != len(expectedMessageID):
+            return False
+        receivedMessageIDBinary = '{0:b}'.format(receivedMessageID)
+        expectedMessageIDBinary = '{0:b}'.format(expectedMessageID)
+        noOfBitsWrong = 0
+        for idx, bitVal in enumerate(receivedMessageIDBinary, start=0):
+            if bitVal != expectedMessageIDBinary[idx]:
+                noOfBitsWrong = noOfBitsWrong + 1
+            if noOfBitsWrong >= 2:
+                return False
+        return True
