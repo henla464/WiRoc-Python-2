@@ -224,7 +224,8 @@ class Utils:
 
     @staticmethod
     def GetDataInHex(data, loggingLevel):
-        if logging.getLogger().isEnabledFor(loggingLevel):
+        if logging.getLogger('WiRoc.Input').isEnabledFor(loggingLevel) or \
+            logging.getLogger('WiRoc.Output').isEnabledFor(loggingLevel):
             dataInHex = ''.join(format(x, '02x') for x in data)
             return dataInHex
         return "(Not printed in this logging level)"

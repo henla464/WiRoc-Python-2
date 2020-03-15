@@ -564,7 +564,7 @@ def startMain():
     #cProfile.run('run()')
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.N,
+    logging.basicConfig(level=logging.ERROR,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         filename='WiRoc.log',
                         filemode='a')
