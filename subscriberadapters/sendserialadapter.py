@@ -7,6 +7,7 @@ import logging
 import os
 
 class SendSerialAdapter(object):
+    WiRocLogger = logging.getLogger('WiRoc.Output')
     Instances = []
     SendSerialAdapterActive = None
 
@@ -47,24 +48,24 @@ class SendSerialAdapter(object):
 
     @staticmethod
     def EnableDisableSubscription():
-        logging.debug("SendSerialAdapter::EnableDisableSubscription()")
+        SendSerialAdapter.WiRocLogger.debug("SendSerialAdapter::EnableDisableSubscription()")
         if len(SendSerialAdapter.Instances) > 0:
             if SendSerialAdapter.Instances[0].TestConnection():
                 if SendSerialAdapter.SendSerialAdapterActive is None or not SendSerialAdapter.SendSerialAdapterActive:
-                    logging.info("SendSerialAdapter::EnableDisableSubscription() update subscription enable")
+                    SendSerialAdapter.WiRocLogger.info("SendSerialAdapter::EnableDisableSubscription() update subscription enable")
                     SendSerialAdapter.SendSerialAdapterActive = True
                     SettingsClass.SetSendSerialAdapterActive(True)
                     DatabaseHelper.update_subscriptions(True, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
                     SettingsClass.SetForceReconfigure(True)
             else:
                 if SendSerialAdapter.SendSerialAdapterActive is None or SendSerialAdapter.SendSerialAdapterActive:
-                    logging.info("SendSerialAdapter::EnableDisableSubscription() update subscription disable")
+                    SendSerialAdapter.WiRocLogger.info("SendSerialAdapter::EnableDisableSubscription() update subscription disable")
                     SendSerialAdapter.SendSerialAdapterActive = False
                     SettingsClass.SetSendSerialAdapterActive(False)
                     DatabaseHelper.update_subscriptions(False, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
                     SettingsClass.SetForceReconfigure(True)
         else:
-            logging.debug("SendSerialAdapter::EnableDisableSubscription() Setting SetSendSerialAdapterActive False 2")
+            SendSerialAdapter.WiRocLogger.debug("SendSerialAdapter::EnableDisableSubscription() Setting SetSendSerialAdapterActive False 2")
             if SettingsClass.GetSendSerialAdapterActive():
                 SendSerialAdapter.SendSerialAdapterActive = False
                 SettingsClass.SetSendSerialAdapterActive(False)
@@ -148,11 +149,11 @@ class SendSerialAdapter(object):
         if self.serialComputer.SendData(messageData):
             callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "Sent", 1))
             callbackQueue.put((successCB,))
-            logging.debug("SendSerialAdapter::SendData() Sent to computer, data: " + Utils.GetDataInHex(messageData, logging.DEBUG))
+            SendSerialAdapter.WiRocLogger.debug("SendSerialAdapter::SendData() Sent to computer, data: " + Utils.GetDataInHex(messageData, logging.DEBUG))
             return True
         else:
             callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "NotSent", 0))
             callbackQueue.put((failureCB,))
-            logging.warning("SendSerialAdapter::SendData() Could not send to computer")
+            SendSerialAdapter.WiRocLogger.warning("SendSerialAdapter::SendData() Could not send to computer")
             #SendSerialAdapter.EnableDisableSubscription()
             return False

@@ -13,7 +13,7 @@ import socket
 class ReceiveLoraAdapter(object):
     Instances = []
     TestRepeater = False
-
+    WiRocLogger = logging.getLogger('WiRoc.Input')
 
     @staticmethod
     def CreateInstances(hardwareAbstraction):
@@ -109,7 +109,7 @@ class ReceiveLoraAdapter(object):
             dataSentOK = self.loraRadio.SendData(messageData)
             if time.monotonic() - startTrySendTime > (SettingsClass.GetRetryDelay(1) / 2000):
                 # Wait half of a first retrydelay (GetRetryDelay returns in microseconds)
-                logging.error("ReceiveLoraAdapter::TrySendData() Wasn't able to send ack (busy response)")
+                ReceiveLoraAdapter.WiRocLogger.error("ReceiveLoraAdapter::TrySendData() Wasn't able to send ack (busy response)")
                 break
 
     # messageData is a bytearray
@@ -118,7 +118,7 @@ class ReceiveLoraAdapter(object):
         try:
             loraMessage = self.loraRadio.GetRadioData()
         except Exception as ex:
-            logging.error("ReceiveLoraAdapter::GetData() Error reading from lora " + traceback.format_exc())
+            ReceiveLoraAdapter.WiRocLogger.error("ReceiveLoraAdapter::GetData() Error reading from lora " + traceback.format_exc())
             time.sleep(0.5)
 
         if loraMessage is not None:
@@ -146,7 +146,7 @@ class ReceiveLoraAdapter(object):
                     if ackRequested and \
                             ((SettingsClass.GetWiRocMode() == "RECEIVER" and not repeaterRequested)
                             or (SettingsClass.GetWiRocMode() == "REPEATER" and repeaterRequested)):
-                            logging.debug("Lora status message received, send ack. WiRocMode: " + SettingsClass.GetWiRocMode() + " Repeater requested: " + str(repeaterRequested))
+                            ReceiveLoraAdapter.WiRocLogger.debug("Lora status message received, send ack. WiRocMode: " + SettingsClass.GetWiRocMode() + " Repeater requested: " + str(repeaterRequested))
                             messageType = LoraRadioMessage.MessageTypeLoraAck
                             loraMessage2 = LoraRadioMessage(0, messageType, False, False)
                             if SettingsClass.GetWiRocMode() == "RECEIVER":
@@ -173,7 +173,7 @@ class ReceiveLoraAdapter(object):
                     if ackRequested and \
                             ((SettingsClass.GetWiRocMode() == "RECEIVER" and not repeaterRequested)
                              or (SettingsClass.GetWiRocMode() == "REPEATER" and repeaterRequested)):
-                            logging.debug("Lora message received, send ack. WiRocMode: " + SettingsClass.GetWiRocMode() + " Repeater requested: " + str(repeaterRequested))
+                            ReceiveLoraAdapter.WiRocLogger.debug("Lora message received, send ack. WiRocMode: " + SettingsClass.GetWiRocMode() + " Repeater requested: " + str(repeaterRequested))
                             messageType = LoraRadioMessage.MessageTypeLoraAck
                             loraMessage2 = LoraRadioMessage(5, messageType, False, False)
                             if SettingsClass.GetWiRocMode() == "RECEIVER":
@@ -185,11 +185,11 @@ class ReceiveLoraAdapter(object):
                             try:
                                 self.TrySendData(loraMessage2.GetByteArray())
                             except Exception as ex2:
-                                logging.error("ReceiveLoraAdapter::GetData() Error sending ack: " + str(ex2))
+                                ReceiveLoraAdapter.WiRocLogger.error("ReceiveLoraAdapter::GetData() Error sending ack: " + str(ex2))
                     try:
                         DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Received", 1)
                     except Exception as ex:
-                        logging.error("ReceiveLoraAdapter::GetData() Error saving statistics: " + str(ex))
+                        ReceiveLoraAdapter.WiRocLogger.error("ReceiveLoraAdapter::GetData() Error saving statistics: " + str(ex))
                     return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "SIMessage", "Data": receivedData, "MessageID": messageID, "LoraRadioMessage": loraMessage, "ChecksumOK": True}
             else:
                 messageType = loraMessage.GetMessageType()

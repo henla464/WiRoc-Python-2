@@ -6,14 +6,9 @@ import Adafruit_SSD1306
 import socket
 import sys
 sys.path.append('..')
-#from chipGPIO.chipGPIO import *
-#from battery import Battery
-#import subprocess
 import logging
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 
-#DisplayState = display.displaystate.DisplayState
-#OledDisplayState = None
 
 class DisplayStateMachine(object):
     SevenSegNormal = None
@@ -24,7 +19,8 @@ class DisplayStateMachine(object):
 
     hardwareAbstraction = None
     def __init__(self):
-        logging.info("DisplayStateMachine::Init start")
+        self.wiRocLogger = logging.getLogger('WiRoc.Display')
+        self.wiRocLogger.info("DisplayStateMachine::Init() start")
         self.TypeOfDisplay = None
         self.currentState = None
         self.runningOnChip = socket.gethostname() == 'chip'
@@ -46,9 +42,9 @@ class DisplayStateMachine(object):
                 import display.sevensegnormal
                 OledDisplayState = display.oleddisplaystate.OledDisplayState
                 if self.runningOnChip:
-                    logging.debug("on chip")
+                    self.wiRocLogger.debug("DisplayStateMachine::Init() on chip")
                     OledDisplayState.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=2)
-                    logging.debug("after oleddisp")
+                    self.wiRocLogger.debug("DisplayStateMachine::Init() after oleddisp")
                 elif self.runningOnNanoPi:
                     OledDisplayState.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=0)
                 # Initialize library.
@@ -65,21 +61,21 @@ class DisplayStateMachine(object):
                 DisplayStateMachine.OledOutput = display.oledoutput.OledOutput()
                 DisplayStateMachine.OledWiRocIP = display.oledwirocip.OledWiRocIP()
 
-                logging.info("Display::Init initialized the OLED")
+                self.wiRocLogger.info("DisplayStateMachine::Init() initialized the OLED")
             else:
                 if self.runningOnChip:
-                    logging.debug("DisplayStateMachine::Init 7SEG 1")
+                    self.wiRocLogger.debug("DisplayStateMachine::Init() 7SEG 1")
                     self.TypeOfDisplay = '7SEG'
                 else:
-                    logging.debug("DisplayStateMachine::Init No display 1")
+                    self.wiRocLogger.debug("DisplayStateMachine::Init() No display 1")
                     self.TypeOfDisplay = 'NO_DISPLAY'
         except Exception as ex:
             print(ex)
             if self.runningOnChip:
-                logging.debug("DisplayStateMachine::Init 7SEG 2")
+                self.wiRocLogger.debug("DisplayStateMachine::Init() 7SEG 2")
                 self.TypeOfDisplay = '7SEG'
             else:
-                logging.debug("DisplayStateMachine::Init no display")
+                self.wiRocLogger.debug("DisplayStateMachine::Init no display")
                 self.TypeOfDisplay = 'NO_DISPLAY'
 
         if HardwareAbstraction.Instance == None:

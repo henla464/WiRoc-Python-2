@@ -21,6 +21,7 @@ import logging, os
 
 
 class Utils:
+    WiRocLogger = logging.getLogger('WiRoc')
     CRC_POLYNOM = 0x8005
     CRC_BIT16 = 0x8000
 
@@ -184,9 +185,9 @@ class Utils:
         ts.tv_nsec = 0
 
         # http://linux.die.net/man/3/clock_settime
-        logging.debug("before time set: "+ str(datetime.now()))
+        Utils.WiRocLogger.debug("before time set: "+ str(datetime.now()))
         librt.clock_settime(CLOCK_REALTIME, ctypes.byref(ts))
-        logging.debug("after time set: " + str(datetime.now()))
+        Utils.WiRocLogger.debug("after time set: " + str(datetime.now()))
 
     @staticmethod
     def SetDateTime(year, month, day, hour, minute, second):
@@ -217,9 +218,9 @@ class Utils:
         ts.tv_nsec = 0
 
         # http://linux.die.net/man/3/clock_settime
-        logging.debug("Util::SetDateTime before time set: " + str(datetime.now()))
+        Utils.WiRocLogger.debug("Util::SetDateTime before time set: " + str(datetime.now()))
         librt.clock_settime(CLOCK_REALTIME, ctypes.byref(ts))
-        logging.debug("Util::SetDateTime after time set: " + str(datetime.now()))
+        Utils.WiRocLogger.debug("Util::SetDateTime after time set: " + str(datetime.now()))
 
     @staticmethod
     def GetDataInHex(data, loggingLevel):

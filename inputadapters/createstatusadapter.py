@@ -23,6 +23,7 @@ class CreateStatusAdapter(object):
         return "STATUS"
 
     def __init__(self, instanceName):
+        self.WiRocLogger = logging.getLogger('WiRoc.Input')
         self.instanceName = instanceName
         self.isInitialized = False
         self.TimeToFetch = False
@@ -55,7 +56,7 @@ class CreateStatusAdapter(object):
             self.TimeToFetch = False
             self.loraRadioMessage.SetBatteryLowBit(Battery.GetIsBatteryLow())
             self.loraRadioMessage.UpdateChecksum()
-            logging.debug("CreateStatusAdapter::GetData() Data to fetch")
+            self.WiRocLogger.debug("CreateStatusAdapter::GetData() Data to fetch")
             return {"MessageType": "DATA", "MessageSubTypeName": "Status", "MessageSource":"Status", "Data": self.loraRadioMessage.GetByteArray(), "ChecksumOK": True}
 
     def AddedToMessageBox(self, mbid):

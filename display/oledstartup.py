@@ -9,6 +9,7 @@ OledDisplayState = display.oleddisplaystate.OledDisplayState
 
 class OledStartup(display.oleddisplaystate.OledDisplayState):
     def __init__(self):
+        self.wiRocLogger = logging.getLogger('WiRoc.Display')
         self.imageChanged = True
         self.deviceName = None
         self.pythonVersion = "err"
@@ -33,7 +34,7 @@ class OledStartup(display.oleddisplaystate.OledDisplayState):
         if self.deviceName != deviceName:
             self.deviceName = deviceName
             self.imageChanged = True
-            logging.debug("OledStartup::Draw imagechanged")
+            self.wiRocLogger.debug("OledStartup::Draw imagechanged")
             self.OledDraw.rectangle((1, 16, 128, 31), outline=0, fill=0)
             self.OledDraw.text((1, 16), deviceName, font=self.OledThinFont2, fill=255)
 

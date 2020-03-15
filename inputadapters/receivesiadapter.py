@@ -10,6 +10,7 @@ from datamodel.db_helper import DatabaseHelper
 import serial.tools.list_ports
 
 class ReceiveSIAdapter(object):
+    WiRocLogger = logging.getLogger('WiRoc.Input')
     Instances = []
     AddressOfLastPunch = {}
 
@@ -92,7 +93,7 @@ class ReceiveSIAdapter(object):
         return len(data) == 9 and data[0] == STX and data[5] == 0x4D
 
     def sendCommand(self, command):
-        logging.debug("ReceiveSIAdapter::sendCommand() command: " + Utils.GetDataInHex(command, logging.DEBUG))
+        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::sendCommand() command: " + Utils.GetDataInHex(command, logging.DEBUG))
         self.siSerial.write(command)
         self.siSerial.flush()
         expectedLength = 3
@@ -123,7 +124,7 @@ class ReceiveSIAdapter(object):
                 if len(response) < expectedLength and self.siSerial.in_waiting == 0:
                     logging.debug("ReceiveSIAdapter::sendCommand() sleep and wait for more bytes")
                     sleep(0.05)
-        logging.debug("ReceiveSIAdapter::sendCommand() response: " + Utils.GetDataInHex(response, logging.DEBUG))
+        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::sendCommand() response: " + Utils.GetDataInHex(response, logging.DEBUG))
         return response
 
     def InitOneWay(self):
@@ -137,10 +138,10 @@ class ReceiveSIAdapter(object):
             self.siSerial.open()
             self.siSerial.reset_input_buffer()
             self.siSerial.reset_output_buffer()
-            logging.debug("ReceiveSIAdapter::InitOneWay() opened serial")
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitOneWay() opened serial")
         except Exception as ex:
-            logging.error("ReceiveSIAdapter::InitOneWay() opening serial exception:")
-            logging.error(ex)
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitOneWay() opening serial exception:")
+            ReceiveSIAdapter.WiRocLogger.error(ex)
             return False
 
         if self.siSerial.is_open:
@@ -154,20 +155,20 @@ class ReceiveSIAdapter(object):
             self.siSerial.open()
             self.siSerial.reset_input_buffer()
             self.siSerial.reset_output_buffer()
-            logging.debug("ReceiveSIAdapter::InitTwoWay() opened serial")
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitTwoWay() opened serial")
         except Exception as ex:
-            logging.error("ReceiveSIAdapter::InitTwoWay() opening serial exception:")
-            logging.error(ex)
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() opening serial exception:")
+            ReceiveSIAdapter.WiRocLogger.error(ex)
             return False
 
         if self.siSerial.is_open:
             # set master - mode to direct
-            logging.debug("ReceiveSIAdapter::InitTwoWay() serial port open")
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitTwoWay() serial port open")
             msdMode = bytes([0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
             response = self.sendCommand(msdMode)
 
             if not self.isCorrectMSModeDirectResponse(response):
-                logging.info("ReceiveSIAdapter::InitTwoWay() not correct msmodedirectresponse: " + str(response))
+                ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() not correct msmodedirectresponse: " + str(response))
 
                 # something wrong, try other baudrate
                 self.siSerial.close()
@@ -180,13 +181,13 @@ class ReceiveSIAdapter(object):
                 response = self.sendCommand(msdMode)
 
                 if not self.isCorrectMSModeDirectResponse(response):
-                    logging.info("ReceiveSIAdapter::InitTwoWay() not correct msmodedirectresponse: " + str(response))
-                    logging.error("ReceiveSIAdapter::InitTwoWay() could not communicate with master station")
+                    ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() not correct msmodedirectresponse: " + str(response))
+                    ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() could not communicate with master station")
                     return False
 
-                logging.info("ReceiveSIAdapter::InitTwoWay() SI Station 4800 kbit/s works")
+                ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() SI Station 4800 kbit/s works")
             else:
-                logging.info("ReceiveSIAdapter::InitTwoWay() SI Station 38400 kbit/s works")
+                ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() SI Station 38400 kbit/s works")
 
             # If this is the first instance then update the computer time
             if ReceiveSIAdapter.Instances[0].GetSerialDevicePath() == self.GetSerialDevicePath():
@@ -202,7 +203,7 @@ class ReceiveSIAdapter(object):
         try:
             if self.GetIsInitialized() and self.siSerial.is_open:
                 return True
-            logging.debug("ReceiveSIAdapter::Init() SI Station port name: " + self.portName)
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::Init() SI Station port name: " + self.portName)
             self.siSerial.close()
             self.siSerial.port = self.portName
             if SettingsClass.GetOneWayReceiveFromSIStation():
@@ -211,7 +212,7 @@ class ReceiveSIAdapter(object):
                 return self.InitTwoWay()
 
         except (Exception) as msg:
-            logging.error("ReceiveSIAdapter::Init() Exception: " + str(msg))
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::Init() Exception: " + str(msg))
             return False
 
 
@@ -227,7 +228,7 @@ class ReceiveSIAdapter(object):
         SIMsg = SIMessage()
         SIMsg.AddPayload(timeResp)
         if not SIMsg.GetIsChecksumOK():
-            logging.error(
+            ReceiveSIAdapter.WiRocLogger.error(
                 "ReceiveSIAdapter::getSIStationTimeAndStationNumber getTimeCmd returned invalid checksum")
             return None
         twelveHourTime = timeResp[9:11]
@@ -260,9 +261,9 @@ class ReceiveSIAdapter(object):
         noOfBytesToRead = 0x04
         getSerialNumberSystemValueCmd = bytes([0xFF, 0x02, 0x02, 0x83, cmdLength, addr, noOfBytesToRead, 0xbc, 0x0f, 0x03])
         serialNumberArray = self.sendCommand(getSerialNumberSystemValueCmd)
-        logging.debug("ReceiveSIAdapter::getSerialNumberSystemValue() data: " + Utils.GetDataInHex(serialNumberArray, logging.DEBUG))
+        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::getSerialNumberSystemValue() data: " + Utils.GetDataInHex(serialNumberArray, logging.DEBUG))
         serialNumber = serialNumberArray[6] << 24 | serialNumberArray[7] << 16 | serialNumberArray[8] << 8 | serialNumberArray[9]
-        logging.debug("ReceiveSIAdapter::getSerialNumberSystemValue() serialNumber: " + str(serialNumber))
+        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::getSerialNumberSystemValue() serialNumber: " + str(serialNumber))
         return serialNumber
 
     def getBackupPunchAsSIMessageArray(self, address):
@@ -277,7 +278,7 @@ class ReceiveSIAdapter(object):
         SIMsg = SIMessage()
         SIMsg.AddPayload(backupPunchRecord)
         if not SIMsg.GetIsChecksumOK():
-            logging.error(
+            ReceiveSIAdapter.WiRocLogger.error(
                 "ReceiveSIAdapter::getBackupPunchAsSIMessageArray getBackupPunchCmd returned invalid checksum")
             return None
 
@@ -297,12 +298,12 @@ class ReceiveSIAdapter(object):
         siMsg.AddByte(backupPunchRecord[15])
         siMsg.AddFooter()
         siMsgByteArr = siMsg.GetByteArray()
-        logging.debug("ReceiveSIAdapter::getBackupPunchAsSIMessageArray SIMsg created from backup punch: " + Utils.GetDataInHex(siMsgByteArr, logging.DEBUG))
+        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::getBackupPunchAsSIMessageArray SIMsg created from backup punch: " + Utils.GetDataInHex(siMsgByteArr, logging.DEBUG))
         return siMsgByteArr
 
     def updateComputerTimeAndSiStationNumber(self):
         theCurrentTimeInSiStation = self.getSIStationTimeAndStationNumber()
-        logging.debug(
+        ReceiveSIAdapter.WiRocLogger.debug(
             "ReceiveSIAdapter::updateComputerTime time to set: " + str(2000+theCurrentTimeInSiStation[0]) + "-" +
             str(theCurrentTimeInSiStation[1]) + "-" + str(theCurrentTimeInSiStation[2]) + "  " +
             str(theCurrentTimeInSiStation[3]) + ":" + str(theCurrentTimeInSiStation[4]) + ":" + str(theCurrentTimeInSiStation[5]))
@@ -310,7 +311,7 @@ class ReceiveSIAdapter(object):
             Utils.SetDateTime(2000+theCurrentTimeInSiStation[0], theCurrentTimeInSiStation[1], theCurrentTimeInSiStation[2], theCurrentTimeInSiStation[3], theCurrentTimeInSiStation[4], theCurrentTimeInSiStation[5])
         except Exception as ex:
             # If month = 0 then battery is probably dead. Can't set
-            logging.error("ReceiveSIAdapter::updateComputerTime exception: " + str(ex))
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::updateComputerTime exception: " + str(ex))
         SettingsClass.SetTimeOfLastMessageSentToLora()
         self.siStationNumber = theCurrentTimeInSiStation[6]
         SettingsClass.SetSIStationNumber(self.siStationNumber)
@@ -331,7 +332,7 @@ class ReceiveSIAdapter(object):
         SIMsg = SIMessage()
         SIMsg.AddPayload(response)
         if not SIMsg.GetIsChecksumOK():
-            logging.error("ReceiveSIAdapter::detectMissedPunchesDuringInit getBackupPointerCmd returned invalid checksum")
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::detectMissedPunchesDuringInit getBackupPointerCmd returned invalid checksum")
             return None
         curAddr = (response[7] << 16) | (response[11] << 8 ) | response[12] #next free memory address
 
@@ -339,7 +340,7 @@ class ReceiveSIAdapter(object):
             noOfMissedPunches = ((curAddr - lastAddr) / 8) -1
             if noOfMissedPunches > 0 and noOfMissedPunches <= 30:
                 #We missed punches...
-                logging.info(
+                ReceiveSIAdapter.WiRocLogger.info(
                     "ReceiveSIAdapter::detectMissedPunchesDuringInit Punches missed, lastAddr: " + str(lastAddr) + " curAddr: " + str(curAddr))
                 self.fetchFromBackupAddress = lastAddr
                 self.fetchToBackupAddress = curAddr
@@ -359,7 +360,7 @@ class ReceiveSIAdapter(object):
             noOfMissedPunches = ((curAddr - lastAddr) / 8) -1
             if noOfMissedPunches > 0 and noOfMissedPunches <= 30:
                 #We missed punches...
-                logging.info(
+                ReceiveSIAdapter.WiRocLogger.info(
                     "ReceiveSIAdapter::detectMissedPunches Punches missed, lastAddr: " + str(
                         lastAddr) + " curAddr: " + str(curAddr))
                 self.fetchFromBackupAddress = lastAddr
@@ -375,7 +376,7 @@ class ReceiveSIAdapter(object):
                     return None
                 self.fetchFromBackupAddress = addrToPunch
                 source = "SIStation"
-                logging.debug("ReceiveSIAdapter::getBackupPunch Fetched backup punch")
+                ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::getBackupPunch Fetched backup punch")
                 return {"MessageType": "DATA", "MessageSource": source,
                     "MessageSubTypeName": "SIMessage", "Data": SIMsgByteArray,
                     "ChecksumOK": self.IsChecksumOK(SIMsgByteArray)}
@@ -392,7 +393,7 @@ class ReceiveSIAdapter(object):
                 return None
             else:
                 return self.getBackupPunch()
-        logging.debug("ReceiveSIAdapter::GetData() Data to fetch")
+        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::GetData() Data to fetch")
         expectedLength = 3
         receivedData = bytearray()
         allReceivedData = bytearray()
@@ -412,18 +413,18 @@ class ReceiveSIAdapter(object):
                 if len(receivedData) == expectedLength:
                     break
                 if len(receivedData) < expectedLength and self.siSerial.in_waiting == 0:
-                    logging.debug("ReceiveSIAdapter::GetData() sleep and wait for more bytes")
+                    ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::GetData() sleep and wait for more bytes")
                     sleep(0.05)
 
         if len(receivedData) != expectedLength:
             # throw away the data, isn't correct
-            logging.error("ReceiveSIAdapter::GetData() data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::GetData() data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
             return None
 
         SIMsg = SIMessage()
         SIMsg.AddPayload(receivedData)
         if SIMsg.GetMessageType() == SIMessage.SIPunch:
-            logging.debug("ReceiveSIAdapter::GetData() SI message received! data: " + Utils.GetDataInHex(receivedData, logging.DEBUG))
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::GetData() SI message received! data: " + Utils.GetDataInHex(receivedData, logging.DEBUG))
             if len(allReceivedData) != len(receivedData):
                 logging.error("ReceiveSIAdapter::GetData() Received more data than expected, all data: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
 
@@ -439,7 +440,7 @@ class ReceiveSIAdapter(object):
         elif SIMsg.GetMessageType() == SIMessage.IAmAWiRocDevice:
             checksumOK = self.IsChecksumOK(receivedData)
             if checksumOK:
-                logging.debug("ReceiveSIAdapter::GetData() I am a WiRoc message received!")
+                ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::GetData() I am a WiRoc message received!")
                 self.isConnectedToWiRocDevice = True
                 powerSupplied = int(Battery.IsPowerSupplied())
                 imAWiRocReply = bytearray([0x02, 0x01, 0x01, powerSupplied, 0x00, 0x00, 0x03])
@@ -449,15 +450,15 @@ class ReceiveSIAdapter(object):
                 self.siSerial.write(imAWiRocReply)
                 self.siSerial.flush()
             else:
-                logging.error("ReceiveSIAdapter::GetData() I am a WiRoc message, WRONG CHECKSUM!")
+                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::GetData() I am a WiRoc message, WRONG CHECKSUM!")
             return None
         elif SIMsg.GetMessageType() == SIMessage.WiRocToWiRoc: # Generic WiRoc to WiRoc data message
-            logging.debug("ReceiveSIAdapter::GetData() WiRoc to WiRoc data message!")
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::GetData() WiRoc to WiRoc data message!")
             return {"MessageType": "DATA", "MessageSource": "WiRoc",
                     "MessageSubTypeName": "LoraRadioMessage", "SIStationSerialNumber": self.serialNumber,
                     "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}
         else:
-            logging.error("ReceiveSIAdapter::GetData() Unknown SI message received! Data: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::GetData() Unknown SI message received! Data: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
             return None
 
     def AddedToMessageBox(self, mbid):

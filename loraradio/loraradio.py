@@ -15,6 +15,7 @@ import errno
 
 class LoraRadio:
     Instances = []
+    WiRocLogger = logging.getLogger('WiRoc')
 
     ReadSettingCmd = bytes([0xAF, 0xAF,  # sync word
                               0x00, 0x00,  # id code
@@ -154,7 +155,7 @@ class LoraRadio:
         frequencyTwo = ((frequency & 0xFF00)>>8)
         frequencyThree = (frequency & 0xFF)
 
-        logging.debug("LoraRadio::getSettingsArray() channel: " + str(channel) + " loraRange: " + loraRange + " dataRate: " +
+        LoraRadio.WiRocLogger.debug("LoraRadio::getSettingsArray() channel: " + str(channel) + " loraRange: " + loraRange + " dataRate: " +
                       str(channelData.DataRate) + " power: " + str(loraPower) + "rfFactor: " + str(channelData.RfFactor) +
                       " rfBw: " + str(channelData.RfBw) + " frequency: " + str(channelData.Frequency))
 
@@ -194,7 +195,7 @@ class LoraRadio:
 
                     time.sleep(2 / 1000)
                 break
-        logging.debug("LoraRadio::getSettingsReply() response: " +  Utils.GetDataInHex(data, logging.DEBUG))
+        LoraRadio.WiRocLogger.debug("LoraRadio::getSettingsReply() response: " +  Utils.GetDataInHex(data, logging.DEBUG))
         return data
 
     def Disable(self):
@@ -215,7 +216,7 @@ class LoraRadio:
     def Init(self, channel, loraRange, loraPower):
         if loraPower > 0x07:
             loraPower = 0x07
-        logging.info("LoraRadio::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraRange: " + loraRange + " LoraPower: " + str(loraPower))
+        LoraRadio.WiRocLogger.info("LoraRadio::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraRange: " + loraRange + " LoraPower: " + str(loraPower))
         self.hardwareAbstraction.EnableLora()
         time.sleep(0.1)
 
@@ -246,7 +247,7 @@ class LoraRadio:
 
         if len(data) == 0:
             # switch to 57600
-            logging.debug("LoraRadio::Init() 9600 didn't work, change to 57600")
+            LoraRadio.WiRocLogger.debug("LoraRadio::Init() 9600 didn't work, change to 57600")
             self.radioSerial.close()
             self.radioSerial.baudrate = 57600
             #self.hardwareAbstraction.DisableLora()
@@ -267,7 +268,7 @@ class LoraRadio:
 
         if data[8:16] == settingsArray[8:16]:
             self.isInitialized = True
-            logging.info("LoraRadio::Init() Lora radio already configured correctly")
+            LoraRadio.WiRocLogger.info("LoraRadio::Init() Lora radio already configured correctly")
             # restart the module, regardless if we changed baud rate or not because we want the firmware version number
             self.firmwareVersion = self.RestartModule(57600)
             return True
@@ -281,12 +282,12 @@ class LoraRadio:
                 #self.hardwareAbstraction.DisableLora()
                 #time.sleep(0.2)
                 #self.hardwareAbstraction.EnableLora()
-                logging.info("LoraRadio::Init() Now configured correctly")
+                LoraRadio.WiRocLogger.info("LoraRadio::Init() Now configured correctly")
                 self.firmwareVersion = self.RestartModule(57600)
                 return True
             else:
                 self.isInitialized = False
-                logging.error("LoraRadio::Init() Error configuring")
+                LoraRadio.WiRocLogger.error("LoraRadio::Init() Error configuring")
                 return False
 
     def isSliceInList(self, listSlice, fullList):
@@ -301,7 +302,7 @@ class LoraRadio:
         return fullList
 
     def ChangeToHigherBaudRate(self):
-        logging.debug("LoraRadio::ChangeToHigherBaudRate() enter: " +  Utils.GetDataInHex(LoraRadio.WriteSerialBaudRateCmd, logging.DEBUG))
+        LoraRadio.WiRocLogger.debug("LoraRadio::ChangeToHigherBaudRate() enter: " +  Utils.GetDataInHex(LoraRadio.WriteSerialBaudRateCmd, logging.DEBUG))
         self.radioSerial.write(LoraRadio.WriteSerialBaudRateCmd)
         self.radioSerial.flush()
         self.WaitForSerialUpToTimeMS(250)
@@ -311,19 +312,18 @@ class LoraRadio:
             bytesRead = self.radioSerial.read(1)
             allReceivedData.append(bytesRead[0])
             if len(allReceivedData) < 13 and self.radioSerial.in_waiting == 0:
-                    logging.info("LoraRadio::ChangeToHigherBaudRate() Sleep, wait for more bytes")
-                    time.sleep(0.05)
-                    if self.radioSerial.in_waiting == 0:
-                        break
+                LoraRadio.WiRocLogger.info("LoraRadio::ChangeToHigherBaudRate() Sleep, wait for more bytes")
+                time.sleep(0.05)
+                if self.radioSerial.in_waiting == 0:
+                    break
 
         if len(allReceivedData) != 13:
-            logging.error("LoraRadio::ChangeToHigherBaudRate() incorrect response: " + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
+            LoraRadio.WiRocLogger.error("LoraRadio::ChangeToHigherBaudRate() incorrect response: " + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
         else:
-
-            logging.info("LoraRadio::ChangeToHigherBaudRate() Changed to 57600 baudrate: " +  + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
+            LoraRadio.WiRocLogger.info("LoraRadio::ChangeToHigherBaudRate() Changed to 57600 baudrate: " +  + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
 
     def RestartModule(self, baudRateAfter):
-        logging.debug("LoraRadio::RestartModule() enter: " +  Utils.GetDataInHex(LoraRadio.RestartModuleCmd, logging.DEBUG))
+        LoraRadio.WiRocLogger.debug("LoraRadio::RestartModule() enter: " +  Utils.GetDataInHex(LoraRadio.RestartModuleCmd, logging.DEBUG))
         self.radioSerial.write(LoraRadio.RestartModuleCmd)
         self.radioSerial.flush()
         self.WaitForSerialUpToTimeMS(200)
@@ -333,13 +333,13 @@ class LoraRadio:
             bytesRead = self.radioSerial.read(1)
             allReceivedData.append(bytesRead[0])
             if len(allReceivedData) < 13 and self.radioSerial.in_waiting == 0:
-                    logging.info("LoraRadio::RestartModule() Sleep, wait for more bytes")
-                    time.sleep(0.05)
-                    if self.radioSerial.in_waiting == 0:
-                        break
+                LoraRadio.WiRocLogger.info("LoraRadio::RestartModule() Sleep, wait for more bytes")
+                time.sleep(0.05)
+                if self.radioSerial.in_waiting == 0:
+                    break
 
         if len(allReceivedData) != 13:
-            logging.error("LoraRadio::RestartModule() incorrect response: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
+            LoraRadio.WiRocLogger.error("LoraRadio::RestartModule() incorrect response: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
 
         self.radioSerial.baudrate = 9600
         self.WaitForSerialUpToTimeMS(2000)
@@ -349,24 +349,24 @@ class LoraRadio:
             while self.radioSerial.in_waiting > 0:
                 bytesRead = self.radioSerial.read(1)
                 allReceivedData.append(bytesRead[0])
-            logging.debug("Startup output: " +  Utils.GetDataInHex(allReceivedData, logging.DEBUG))
+            LoraRadio.WiRocLogger.debug("Startup output: " +  Utils.GetDataInHex(allReceivedData, logging.DEBUG))
 
             startUpString = allReceivedData.decode("utf-8")
-            logging.info("LoraRadio Firmware: " + startUpString)
+            LoraRadio.WiRocLogger.info("LoraRadio Firmware: " + startUpString)
             startUpStringArr = startUpString.split(" ")
             if len(startUpStringArr) > 5:
                 version = startUpStringArr[5].rstrip()
         except:
-            logging.debug("Could not interpret startup string")
+            LoraRadio.WiRocLogger.debug("Could not interpret startup string")
         self.radioSerial.baudrate = baudRateAfter
         return version
 
 
     def GetDetectAirSignal(self):
-        logging.debug("LoraRadio::GetDetectAirSignal() enter")
+        LoraRadio.WiRocLogger.debug("LoraRadio::GetDetectAirSignal() enter")
         self.radioSerial.write(LoraRadio.DetectAirSignalCmd)
         self.radioSerial.flush()
-        logging.debug("LoraRadio::GetDetectAirSignal() after flush")
+        LoraRadio.WiRocLogger.debug("LoraRadio::GetDetectAirSignal() after flush")
 
         allReceivedData = bytearray()
         # wait up to 0.2 seconds for serial response to arrive
@@ -374,23 +374,23 @@ class LoraRadio:
             if self.radioSerial.in_waiting > 0:
                 break
             time.sleep(0.01)
-        logging.debug("LoraRadio::GetDetectAirSignal() after resp")
+            LoraRadio.WiRocLogger.debug("LoraRadio::GetDetectAirSignal() after resp")
         while self.radioSerial.in_waiting > 0 and len(allReceivedData) < 13:
             # print("looking for stx: ", end="")
             bytesRead = self.radioSerial.read(1)
             allReceivedData.append(bytesRead[0])
             if len(allReceivedData) < 13 and self.radioSerial.in_waiting == 0:
-                    logging.info("LoraRadio::GetDetectAirSignal() Sleep, wait for more bytes")
-                    time.sleep(0.05)
-                    if self.radioSerial.in_waiting == 0:
-                        break
+                LoraRadio.WiRocLogger.info("LoraRadio::GetDetectAirSignal() Sleep, wait for more bytes")
+                time.sleep(0.05)
+                if self.radioSerial.in_waiting == 0:
+                    break
 
         # check if command reply is as expected
         if allReceivedData == LoraRadio.SignalDetected:
-            logging.debug("LoraRadio::GetDetectAirSignal() Signal detected")
+            LoraRadio.WiRocLogger.debug("LoraRadio::GetDetectAirSignal() Signal detected")
             return True
         if allReceivedData == LoraRadio.SignalNotDetected:
-            logging.debug("LoraRadio::GetDetectAirSignal() Signal not detected")
+            LoraRadio.WiRocLogger.debug("LoraRadio::GetDetectAirSignal() Signal not detected")
             return False
 
         #If not read until no more bytes to read.
@@ -409,12 +409,12 @@ class LoraRadio:
             if not self.receivedMessage2.IsFilled() or not self.receivedMessage2.GetIsChecksumOK():
                 self.receivedMessage2 = None
                 if len(allReceivedDataMinusSignalNotDetectedReply) > 0:
-                    logging.error("LoraRadio::GetDetectAirSignal() Signal not detected, extra bytes found but doesn't seem to be correct message")
-                    logging.error("All data received: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
+                    LoraRadio.WiRocLogger.error("LoraRadio::GetDetectAirSignal() Signal not detected, extra bytes found but doesn't seem to be correct message")
+                    LoraRadio.WiRocLogger.error("All data received: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
                 else:
-                    logging.error("LoraRadio::GetDetectAirSignal() Signal not detected 2")
+                    LoraRadio.WiRocLogger.error("LoraRadio::GetDetectAirSignal() Signal not detected 2")
             else:
-                logging.debug("LoraRadio::GetDetectAirSignal() Signal not detected, message found also")
+                LoraRadio.WiRocLogger.debug("LoraRadio::GetDetectAirSignal() Signal not detected, message found also")
             return False
 
         allReceivedDataMinusSignalDetectedReply = self.removeSliceFromList(LoraRadio.SignalDetected, allReceivedData)
@@ -424,10 +424,10 @@ class LoraRadio:
                 self.receivedMessage2.AddByte(theByte)
             if not self.receivedMessage2.IsFilled() or not self.receivedMessage2.GetIsChecksumOK():
                 self.receivedMessage2 = None
-                logging.error("LoraRadio::GetDetectAirSignal() Signal detected, extra bytes found but doesn't seem to be correct message")
-                logging.error("All data received: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
+                LoraRadio.WiRocLogger.error("LoraRadio::GetDetectAirSignal() Signal detected, extra bytes found but doesn't seem to be correct message")
+                LoraRadio.WiRocLogger.error("All data received: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
             else:
-                logging.debug("LoraRadio::GetDetectAirSignal() Signal detected, message found also")
+                LoraRadio.WiRocLogger.debug("LoraRadio::GetDetectAirSignal() Signal detected, message found also")
             return True
         return False
 
@@ -456,16 +456,16 @@ class LoraRadio:
             return self.GetDetectAirSignal()
 
     def SendData(self, messageData):
-        logging.debug("LoraRadio::SendData() send data: " + Utils.GetDataInHex(messageData, logging.DEBUG))
+        LoraRadio.WiRocLogger.debug("LoraRadio::SendData() send data: " + Utils.GetDataInHex(messageData, logging.DEBUG))
         #self.UpdateSentStats() of use?
         self.lastMessageSentDate =  time.monotonic()
         while True:
             try:
                 self.radioSerial.write(messageData)
-                logging.debug("after write")
+                LoraRadio.WiRocLogger.debug("after write")
                 self.radioSerial.flush()
             except IOError as ioe:
-                logging.error("LoraRadio::SendData() " + str(ioe))
+                LoraRadio.WiRocLogger.error("LoraRadio::SendData() " + str(ioe))
                 if ioe.errno != errno.EINTR:
                     raise
                 continue
@@ -475,11 +475,11 @@ class LoraRadio:
         if self.receivedMessage2 != None:
             message = self.receivedMessage2
             self.receivedMessage2 = None
-            logging.info("LoraRadio::GetRadioData() received message 2!")
+            LoraRadio.WiRocLogger.info("LoraRadio::GetRadioData() received message 2!")
             return message
         if self.radioSerial.in_waiting == 0:
             return None
-        logging.debug("LoraRadio::GetRadioData() data to fetch")
+        LoraRadio.WiRocLogger.debug("LoraRadio::GetRadioData() data to fetch")
         startFound = False
         allReceivedData = bytearray()
         while self.radioSerial.in_waiting > 0:
@@ -493,19 +493,19 @@ class LoraRadio:
                 if self.receivedMessage.IsFilled():
                     break
                 if not self.receivedMessage.IsFilled() and self.radioSerial.in_waiting == 0:
-                    logging.info("LoraRadio::GetRadioData() Sleep, wait for more bytes")
+                    LoraRadio.WiRocLogger.info("LoraRadio::GetRadioData() Sleep, wait for more bytes")
                     time.sleep(0.05)
                     if self.radioSerial.in_waiting == 0:
                         break
             else:
-                logging.debug("LoraRadio::GetRadioData() start not found")
+                LoraRadio.WiRocLogger.debug("LoraRadio::GetRadioData() start not found")
 
         # reset so that a messages can be sent. The received message could be an ack that we were waiting for
         self.lastMessageSentDate = None
-        logging.debug("LoraRadio::GetRadioData() received data, got: " + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
+        LoraRadio.WiRocLogger.debug("LoraRadio::GetRadioData() received data, got: " + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
         if not self.receivedMessage.IsFilled():
             # throw away the data, isn't correct
-            logging.error("LoraRadio::GetRadioData() received incorrect data")
+            LoraRadio.WiRocLogger.error("LoraRadio::GetRadioData() received incorrect data")
             self.receivedMessage = LoraRadioMessage()
             return None
         else:
@@ -513,5 +513,5 @@ class LoraRadio:
             self.receivedMessage = LoraRadioMessage()
             #if message.GetMessageType() == LoraRadioMessage.MessageTypeLoraAck:
             #    self.UpdateAcksReceivedStats() of use?
-            logging.info("LoraRadio::GetRadioData() received message!")
+            LoraRadio.WiRocLogger.info("LoraRadio::GetRadioData() received message!")
             return message

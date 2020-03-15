@@ -4,10 +4,11 @@ import socket
 import subprocess
 
 class HardwareAbstraction(object):
+    WiRocLogger = logging.getLogger('WiRoc')
     Instance = None
 
     def __init__(self, typeOfDisplay):
-        logging.info("HardwareAbstraction::Init start")
+        HardwareAbstraction.WiRocLogger.info("HardwareAbstraction::Init start")
         self.typeOfDisplay = typeOfDisplay
         self.runningOnChip = socket.gethostname() == 'chip'
         self.runningOnNanoPi = socket.gethostname() == 'nanopiair'
@@ -86,7 +87,7 @@ class HardwareAbstraction(object):
 
     def GetIsShortKeyPress(self):
         if self.runningOnChip or self.runningOnNanoPi:
-            logging.debug("HardwareAbstraction::GetIsShortKeyPress")
+            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetIsShortKeyPress")
             statusReg = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x4a").read()
             shortKeyPress = int(statusReg, 16) & 0x02
             return shortKeyPress > 0
@@ -94,5 +95,5 @@ class HardwareAbstraction(object):
 
     def ClearShortKeyPress(self):
         if self.runningOnChip or self.runningOnNanoPi:
-            logging.debug("HardwareAbstraction::ClearShortKeyPress")
+            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearShortKeyPress")
             os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x4a 0x02'")

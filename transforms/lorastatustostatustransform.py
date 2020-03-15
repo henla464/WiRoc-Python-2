@@ -1,10 +1,11 @@
-from datamodel.datamodel import SIMessage
 from datamodel.datamodel import LoraRadioMessage
 from settings.settings import SettingsClass
 from battery import Battery
 import logging
 
 class LoraStatusToStatusTransform(object):
+    WiRocLogger = logging.getLogger('WiRoc.Output')
+
     @staticmethod
     def GetInputMessageType():
         return "LORA"
@@ -36,7 +37,7 @@ class LoraStatusToStatusTransform(object):
     #msgSub.MessageData is a bytearray
     @staticmethod
     def Transform(msgSub, subscriberAdapter):
-        logging.debug("LoraStatusToStatusTransform::Transform() Message type status")
+        LoraStatusToStatusTransform.WiRocLogger.debug("LoraStatusToStatusTransform::Transform() Message type status")
         loraMessage = LoraRadioMessage()
         loraMessage.AddPayload(msgSub.MessageData)
         loraMessage.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())

@@ -9,7 +9,7 @@ import random
 from datetime import datetime, time, date
 
 class ReceiveSerialComputerAdapter(object):
-
+    WiRocLogger = logging.getLogger('WiRoc.Input')
     Instances = []
     randomSerialNumber = None
     @staticmethod
@@ -108,13 +108,13 @@ class ReceiveSerialComputerAdapter(object):
         replyMessage.append(address)  # index 5
         for addr in range(address, address + numberOfBytesRequested):
             if addr == 0x71:  # index 7
-                logging.debug("Addr: " + str(addr) + " val 0x02")
+                ReceiveSerialComputerAdapter.WiRocLogger.debug("Addr: " + str(addr) + " val 0x02")
                 replyMessage.append(0x02)  # control 0x02 (dec 2)
             elif addr == 0x74:  # index 10
-                logging.debug("Addr: " + str(addr) + " val 0x03")
+                ReceiveSerialComputerAdapter.WiRocLogger.debug("Addr: " + str(addr) + " val 0x03")
                 replyMessage.append(0x03)  # 00000011, autosend and extended protocol
             else:  # index 6, 8, 9, 11
-                logging.debug("Addr: " + str(addr) + " val 0x00")
+                ReceiveSerialComputerAdapter.WiRocLogger.debug("Addr: " + str(addr) + " val 0x00")
                 replyMessage.append(0x00)
         crc = Utils.CalculateCRC(replyMessage[1:])
         replyMessage.append(crc[0])  # crc1
@@ -239,11 +239,11 @@ class ReceiveSerialComputerAdapter(object):
         # and restores it in reconfigure call to Tick
         if data["Data"][3] == 0x01:
             # Host WiRoc has power supplied so lets charge too, but slowly
-            logging.debug("ReceiveSerialComputerAdapter::GetData() Change to slow charging...")
+            ReceiveSerialComputerAdapter.WiRocLogger.debug("ReceiveSerialComputerAdapter::GetData() Change to slow charging...")
             Battery.DisableChargingIfBatteryOK()
             Battery.LimitCurrentDrawTo100IfBatteryOK()
         else:
-            logging.debug("ReceiveSerialComputerAdapter::GetData() Disable charging...")
+            ReceiveSerialComputerAdapter.WiRocLogger.debug("ReceiveSerialComputerAdapter::GetData() Disable charging...")
             Battery.DisableChargingIfBatteryOK()
             Battery.LimitCurrentDrawTo100IfBatteryOK()
         SettingsClass.SetConnectedComputerIsWiRocDevice()
@@ -254,7 +254,7 @@ class ReceiveSerialComputerAdapter(object):
         data = self.serialComputer.GetData()
         if data is not None:
             if not data["ChecksumOK"]:
-                logging.debug("ReceiveSerialComputerAdapter::GetData() Checksum not ok, message thrown away")
+                ReceiveSerialComputerAdapter.WiRocLogger.debug("ReceiveSerialComputerAdapter::GetData() Checksum not ok, message thrown away")
                 return None
 
             replyMessage = bytearray()
@@ -281,14 +281,14 @@ class ReceiveSerialComputerAdapter(object):
                 self.handleWiRocToWiRoc(data)
                 return None
             else:
-                logging.debug("ReceiveSerialComputerAdapter::GetData() Unknown command received")
+                ReceiveSerialComputerAdapter.WiRocLogger.debug("ReceiveSerialComputerAdapter::GetData() Unknown command received")
                 return None
 
-            logging.debug("ReceiveSerialComputerAdapter::GetData() Received: " + Utils.GetDataInHex(data["Data"], logging.DEBUG) + " Sending reply message: " + Utils.GetDataInHex(replyMessage, logging.DEBUG))
+            ReceiveSerialComputerAdapter.WiRocLogger.debug("ReceiveSerialComputerAdapter::GetData() Received: " + Utils.GetDataInHex(data["Data"], logging.DEBUG) + " Sending reply message: " + Utils.GetDataInHex(replyMessage, logging.DEBUG))
             try:
                 self.serialComputer.SendData(replyMessage)
             except:
-                logging.error("ReceiveSerialComputerAdapter::GetData() Error sending reply message")
+                ReceiveSerialComputerAdapter.WiRocLogger.error("ReceiveSerialComputerAdapter::GetData() Error sending reply message")
         return None
 
     def AddedToMessageBox(self, mbid):

@@ -10,6 +10,7 @@ OledDisplayState = display.oleddisplaystate.OledDisplayState
 
 class OledOutput(display.oleddisplaystate.OledDisplayState):
     def __init__(self):
+        self.wiRocLogger = logging.getLogger('WiRoc.Display')
         self.imageChanged = True
         self.showPort = False
         self.sirapTCPEnabled = None
@@ -25,7 +26,7 @@ class OledOutput(display.oleddisplaystate.OledDisplayState):
     def Draw(self,channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
         if self.sirapTCPEnabled != sirapTCPEnabled:
             self.imageChanged = True
-            logging.debug("OledStartup::Draw sirapTCPEnabled changed")
+            self.wiRocLogger.debug("OledStartup::Draw sirapTCPEnabled changed")
             self.OledDraw.rectangle((28, 1, 63, 15), outline=0, fill=0)
             if sirapTCPEnabled:
                 self.OledDraw.text((28, 1), "SIRAP", font=self.OledThinFont2, fill=255)
@@ -35,28 +36,28 @@ class OledOutput(display.oleddisplaystate.OledDisplayState):
             if not self.showPort:
                 self.sirapIPAddress = sirapIPAddress
                 self.imageChanged = True
-                logging.debug("OledStartup::Draw sirapIPAddress changed")
+                self.wiRocLogger.debug("OledStartup::Draw sirapIPAddress changed")
                 self.OledDraw.rectangle((20, 16, 100, 31), outline=0, fill=0)
                 if sirapIPAddress != None:
                     self.OledDraw.text((20, 16), sirapIPAddress, font=self.OledThinFont2, fill=255)
             else:
                 self.sirapIPPort = sirapIPPort
                 self.imageChanged = True
-                logging.debug("OledStartup::Draw sirapIPPort changed")
+                self.wiRocLogger.debug("OledStartup::Draw sirapIPPort changed")
                 self.OledDraw.rectangle((22, 16, 128, 31), outline=0, fill=0)
                 self.OledDraw.text((22, 16), "Port: " + str(sirapIPPort), font=self.OledThinFont2, fill=255)
         self.showPort = not self.showPort
 
         if self.sendSerialActive != sendSerialActive:
             self.imageChanged = True
-            logging.debug("OledStartup::Draw sendSerialActive changed")
+            self.wiRocLogger.debug("OledStartup::Draw sendSerialActive changed")
             self.OledDraw.rectangle((64, 1, 128, 15), outline=0, fill=0)
             if sendSerialActive:
                 self.OledDraw.text((64, 1), "USB", font=self.OledThinFont2, fill=255)
         if ((self.sirapTCPEnabled != sirapTCPEnabled or self.sendSerialActive != sendSerialActive)
             and not sirapTCPEnabled and not sendSerialActive):
             self.imageChanged = True
-            logging.debug("OledStartup::Draw not serial and not sirap")
+            self.wiRocLogger.debug("OledStartup::Draw not serial and not sirap")
             self.OledDraw.rectangle((28, 1, 128, 15), outline=0, fill=0)
             self.OledDraw.text((28, 1), "RADIO", font=self.OledThinFont2, fill=255)
         self.sendSerialActive = sendSerialActive

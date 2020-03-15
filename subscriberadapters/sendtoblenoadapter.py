@@ -5,6 +5,7 @@ from datamodel.datamodel import SIMessage
 import logging
 
 class SendToBlenoAdapter(object):
+    WiRocLogger = logging.getLogger('WiRoc.Output')
     Instances = []
     SubscriptionsEnabled = False
 
@@ -25,7 +26,7 @@ class SendToBlenoAdapter(object):
             enabled = SettingsClass.GetSendToBlenoEnabled()
             isInitialized = SendToBlenoAdapter.Instances[0].GetIsInitialized()
             if SendToBlenoAdapter.SubscriptionsEnabled != (isInitialized and enabled):
-                logging.info("SendToBlenoAdapter subscription set enabled: " + str(isInitialized and enabled))
+                SendToBlenoAdapter.WiRocLogger.info("SendToBlenoAdapter subscription set enabled: " + str(isInitialized and enabled))
                 SendToBlenoAdapter.SubscriptionsEnabled = (isInitialized and enabled)
                 DatabaseHelper.update_subscriptions((isInitialized and enabled), SendToBlenoAdapter.GetDeleteAfterSent(), SendToBlenoAdapter.GetTypeName())
 

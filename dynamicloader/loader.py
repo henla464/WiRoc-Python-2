@@ -2,15 +2,16 @@ import os, importlib, inspect
 import logging
 
 class Loader(object):
+    WiRocLogger = logging.getLogger('WiRoc')
 
     @staticmethod
     def ImportModule(moduleAbsoluteName):
-        logging.debug("Loader::ImportModule() " + moduleAbsoluteName)
+        Loader.WiRocLogger.debug("Loader::ImportModule() " + moduleAbsoluteName)
         try:
             return importlib.import_module(moduleAbsoluteName)
         except Exception as myex:
-            logging.error("Loader::ImportModule() Import exception")
-            logging.error(myex)
+            Loader.WiRocLogger.error("Loader::ImportModule() Import exception")
+            Loader.WiRocLogger.error(myex)
             pass
 
         return None
@@ -44,11 +45,11 @@ class Loader(object):
         for name, moduleObject in inspect.getmembers(module):
             if inspect.isclass(moduleObject):
                 if name.endswith(suffix):
-                    logging.debug("Loader::GetFirstClassFromModule() Class name: "  + name)
+                    Loader.WiRocLogger.debug("Loader::GetFirstClassFromModule() Class name: "  + name)
                     return moduleObject
                 else:
-                    logging.debug("Loader::GetFirstClassFromModule() Class name: " + name + " doesn't end in " + suffix)
+                    Loader.WiRocLogger.debug("Loader::GetFirstClassFromModule() Class name: " + name + " doesn't end in " + suffix)
             else:
-                logging.debug("Loader::GetFirstClassFromModule() Class name: " + name + " isn't a class")
-        logging.debug("Loader::GetFirstClassFromModule() No class member found")
+                Loader.WiRocLogger.debug("Loader::GetFirstClassFromModule() Class name: " + name + " isn't a class")
+        Loader.WiRocLogger.debug("Loader::GetFirstClassFromModule() No class member found")
         return None

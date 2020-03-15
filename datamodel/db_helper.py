@@ -10,6 +10,7 @@ import time
 
 class DatabaseHelper:
     db = None
+    WiRocLogger = logging.getLogger('WiRoc')
 
     @classmethod
     def init(cls):
@@ -22,7 +23,7 @@ class DatabaseHelper:
 
     @classmethod
     def ensure_tables_created(cls):
-        logging.debug("DatabaseHelper::ensure_tables_created()")
+        DatabaseHelper.WiRocLogger.debug("DatabaseHelper::ensure_tables_created()")
         cls.init()
         db = cls.db
         table = SettingData()
@@ -60,7 +61,7 @@ class DatabaseHelper:
 
     @classmethod
     def drop_all_tables(cls):
-        logging.debug("DatabaseHelper::drop_all_tables()")
+        DatabaseHelper.WiRocLogger.debug("DatabaseHelper::drop_all_tables()")
         cls.init()
         db = cls.db
         table = SettingData()
@@ -96,7 +97,7 @@ class DatabaseHelper:
 
     @classmethod
     def truncate_setup_tables(cls):
-        logging.debug("DatabaseHelper::truncate_setup_tables()")
+        DatabaseHelper.WiRocLogger.debug("DatabaseHelper::truncate_setup_tables()")
         cls.init()
         db = cls.db
         db.execute_SQL("DELETE FROM SubscriptionData")
@@ -108,7 +109,7 @@ class DatabaseHelper:
 
     @classmethod
     def delete_punches(cls):
-        logging.debug("DatabaseHelper::delete_punches()")
+        DatabaseHelper.WiRocLogger.debug("DatabaseHelper::delete_punches()")
         cls.init()
         db = cls.db
         db.execute_SQL("DELETE FROM BlenoPunchData")
@@ -236,7 +237,7 @@ class DatabaseHelper:
         dbValue = DataMapping.get_database_value(enabled)
         sql = ("UPDATE TransformData SET Enabled = " + str(dbValue) + " " +
                "WHERE TransformData.Name = '" + transformName + "'")
-        logging.debug(sql)
+        DatabaseHelper.WiRocLogger.debug(sql)
         cls.db.execute_SQL(sql)
 
 #Subscriptions
@@ -421,7 +422,7 @@ class DatabaseHelper:
         if len(rows) > 0:
             msd = rows[0]
             msd.AckReceivedFromReceiver = True
-            logging.debug("DatabaseHelper::set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(): The ack sent from repeater to sender should indicate the message has been received by receiver")
+            DatabaseHelper.WiRocLogger.debug("DatabaseHelper::set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(): The ack sent from repeater to sender should indicate the message has been received by receiver")
             cls.db.save_table_object(msd, False)
 
     @classmethod
@@ -455,7 +456,7 @@ class DatabaseHelper:
             if len(subscriberView) > 0:
                 msa.SubscriberTypeName = subscriberView[0].TypeName
                 msa.TransformName = subscriberView[0].TransformName
-            logging.debug("DatabaseHelper::archive_lora_ack_message_subscription(): Archive ack message because it was already sent when SIMessage was received")
+            DatabaseHelper.WiRocLogger.debug("DatabaseHelper::archive_lora_ack_message_subscription(): Archive ack message because it was already sent when SIMessage was received")
             cls.db.save_table_object(msa, False)
             cls.db.delete_table_object(MessageSubscriptionData, msd.id)
             remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(msd.MessageBoxId)
@@ -496,7 +497,7 @@ class DatabaseHelper:
             if len(subscriberView) > 0:
                 msa.SubscriberTypeName = subscriberView[0].TypeName
                 msa.TransformName = subscriberView[0].TransformName
-            logging.debug("DatabaseHelper::archive_repeater_lora_message_subscription_after_ack(): Archive message because it was already received by receiver")
+            DatabaseHelper.WiRocLogger.debug("DatabaseHelper::archive_repeater_lora_message_subscription_after_ack(): Archive message because it was already received by receiver")
             cls.db.save_table_object(msa, False)
             cls.db.delete_table_object(MessageSubscriptionData, msd.id)
             remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(msd.MessageBoxId)
@@ -534,7 +535,7 @@ class DatabaseHelper:
             if len(subscriberView) > 0:
                 msa.SubscriberTypeName = subscriberView[0].TypeName
                 msa.TransformName = subscriberView[0].TransformName
-            logging.debug("DatabaseHelper::archive_message_subscription_after_ack(): Archive message")
+            DatabaseHelper.WiRocLogger.debug("DatabaseHelper::archive_message_subscription_after_ack(): Archive message")
             cls.db.save_table_object(msa, False)
             cls.db.delete_table_object(MessageSubscriptionData, msd.id)
             remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(msd.MessageBoxId)
@@ -554,7 +555,7 @@ class DatabaseHelper:
             msgToUpdate.AckRSSIValue = ackRSSIValue
             if msgToUpdate.AckedTime is None:
                 msgToUpdate.AckedTime = datetime.now()
-            logging.debug("DatabaseHelper::repeater_message_acked(): Marking RepeaterMessageBoxData message as acked")
+            DatabaseHelper.WiRocLogger.debug("DatabaseHelper::repeater_message_acked(): Marking RepeaterMessageBoxData message as acked")
             return cls.db.save_table_object(msgToUpdate, False)
 
     @classmethod
@@ -780,7 +781,7 @@ class DatabaseHelper:
             if sub.SentDate > now:
                 sub.SentDate = now
                 cls.db.save_table_object(sub, False)
-                logging.debug('Set future SentDate: ' + str(sub.SentDate) + " to: " + str(now))
+                DatabaseHelper.WiRocLogger.debug('Set future SentDate: ' + str(sub.SentDate) + " to: " + str(now))
             else:
                 return
 
@@ -794,7 +795,7 @@ class DatabaseHelper:
             if msg.CreatedDate > now:
                 msg.CreatedDate = now
                 cls.db.save_table_object(msg, False)
-                logging.debug('Set future CreatedDate: ' + str(msg.CreatedDate) + " to: " + str(now))
+                DatabaseHelper.WiRocLogger.debug('Set future CreatedDate: ' + str(msg.CreatedDate) + " to: " + str(now))
             else:
                 return
 #MessageBox

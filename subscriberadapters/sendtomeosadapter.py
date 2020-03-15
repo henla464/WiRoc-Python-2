@@ -4,6 +4,7 @@ import socket
 import logging
 
 class SendToMeosAdapter(object):
+    WiRocLogger = logging.getLogger('WiRoc.Output')
     Instances = []
     SubscriptionsEnabled = False
 
@@ -31,7 +32,7 @@ class SendToMeosAdapter(object):
             enabled = SettingsClass.GetSendToMeosEnabled()
             subscriptionShouldBeEnabled = (isInitialized and enabled)
             if SendToMeosAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
-                logging.info("SendToMeosAdapter::EnableDisableSubscription() subscription set enabled: " + str(subscriptionShouldBeEnabled))
+                SendToMeosAdapter.WiRocLogger.info("SendToMeosAdapter::EnableDisableSubscription() subscription set enabled: " + str(subscriptionShouldBeEnabled))
                 SendToMeosAdapter.SubscriptionsEnabled = subscriptionShouldBeEnabled
                 DatabaseHelper.update_subscriptions(subscriptionShouldBeEnabled, SendToMeosAdapter.GetDeleteAfterSent(), SendToMeosAdapter.GetTypeName())
 
@@ -103,20 +104,20 @@ class SendToMeosAdapter(object):
         if self.sock is None:
             try:
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                logging.debug("SendToMeosAdapter::SendData() Address: " + settingsDictionary["SendToMeosIP"] + " Port: " + str(settingsDictionary["SendToMeosIPPort"]))
+                SendToMeosAdapter.WiRocLogger.debug("SendToMeosAdapter::SendData() Address: " + settingsDictionary["SendToMeosIP"] + " Port: " + str(settingsDictionary["SendToMeosIPPort"]))
                 server_address = (settingsDictionary["SendToMeosIP"], settingsDictionary["SendToMeosIPPort"])
                 self.sock.settimeout(2)
                 self.sock.connect(server_address)
-                logging.debug("SendToMeosAdapter::SendData() After connect")
+                SendToMeosAdapter.WiRocLogger.debug("SendToMeosAdapter::SendData() After connect")
             except socket.gaierror as msg:
-                logging.error("SendToMeosAdapter::SendData() Address-related error connecting to server: " + str(msg))
+                SendToMeosAdapter.WiRocLogger.error("SendToMeosAdapter::SendData() Address-related error connecting to server: " + str(msg))
                 if self.sock != None:
                     self.sock.close()
                 self.sock = None
                 callbackQueue.put((failureCB,))
                 return False
             except socket.error as msg:
-                logging.error("SendToMeosAdapter::SendData() Connection error: " + str(msg))
+                SendToMeosAdapter.WiRocLogger.error("SendToMeosAdapter::SendData() Connection error: " + str(msg))
                 if self.sock != None:
                     self.sock.close()
                 self.sock = None
@@ -128,7 +129,7 @@ class SendToMeosAdapter(object):
             self.sock.sendall(messageData)
             self.sock.close()
             self.sock = None
-            logging.debug("SendToMeosAdapter::SendData() Sent to MEOS")
+            SendToMeosAdapter.WiRocLogger.debug("SendToMeosAdapter::SendData() Sent to MEOS")
             callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), "SIMessage", "Sent", 1))
             callbackQueue.put((successCB,))
             return True
@@ -140,7 +141,7 @@ class SendToMeosAdapter(object):
             callbackQueue.put((failureCB,))
             return False
         except:
-            logging.error("SendToMeosAdapter::SendData() Exception")
+            SendToMeosAdapter.WiRocLogger.error("SendToMeosAdapter::SendData() Exception")
             if self.sock != None:
                 self.sock.close()
             self.sock = None

@@ -25,6 +25,7 @@ from settings.settings import SettingsClass
 class Setup:
     SubscriberAdapters = None
     InputAdapters = None
+    WiRocLogger = logging.getLogger('WiRoc')
 
     @staticmethod
     def SetupInputAdapters():  # createMessageTypeIfNotExist = False):
@@ -55,7 +56,7 @@ class Setup:
         SettingsClass.SetForceReconfigure(False)
 
         for adapterObj in inputObjects:
-            logging.debug(
+            Setup.WiRocLogger.debug(
                 "Setup::SetupInputAdapters() Before Init() input adapter: " + str(adapterObj.GetInstanceName()))
             adapterObj.Init()
         DatabaseHelper.update_input_adapter_instances(inputObjects)
@@ -146,14 +147,14 @@ class Setup:
                 adapter.SetIsDBInitialized()
 
         for adapterObj in subscriberObjects:
-            logging.debug("Setup::SetupSubscribers() Before Init() subscriber adapter: " + str(adapterObj.GetInstanceName()))
+            Setup.WiRocLogger.debug("Setup::SetupSubscribers() Before Init() subscriber adapter: " + str(adapterObj.GetInstanceName()))
             if not adapterObj.Init():
-                logging.error("Setup::SetupSubscribers() Init adapter failed: " + adapterObj.GetInstanceName())
+                Setup.WiRocLogger.error("Setup::SetupSubscribers() Init adapter failed: " + adapterObj.GetInstanceName())
             adapterObj.EnableDisableSubscription()
             adapterObj.EnableDisableTransforms()
 
         for adapterObj in inputObjects:
-            logging.debug("Setup::SetupInputAdapters() Before Init() input adapter: " + str(adapterObj.GetInstanceName()))
+            Setup.WiRocLogger.debug("Setup::SetupInputAdapters() Before Init() input adapter: " + str(adapterObj.GetInstanceName()))
             adapterObj.Init()
         DatabaseHelper.update_input_adapter_instances(inputObjects)
 

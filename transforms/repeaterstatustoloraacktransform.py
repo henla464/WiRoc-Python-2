@@ -1,10 +1,7 @@
 from datamodel.datamodel import LoraRadioMessage
-from datamodel.datamodel import SIMessage
-from battery import Battery
 from settings.settings import SettingsClass
 
 class RepeaterStatusToLoraAckTransform(object):
-
     @staticmethod
     def GetInputMessageType():
         return "REPEATER"

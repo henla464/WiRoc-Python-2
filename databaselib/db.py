@@ -5,6 +5,7 @@ import datetime
 import logging
 
 class DB:
+    WiRocLogger = logging.getLogger('WiRoc')
 
     def __init__(self, database_file_path, data_mapping):
         self.connection = lite.connect(database_file_path, timeout=100)
@@ -41,7 +42,7 @@ class DB:
                                                     + self.data_mapping.get_database_type(python_type)
                                                     for column_name, python_type in table_object.__class__.columns)
             create_table_SQL_statement += ")"
-            logging.debug(create_table_SQL_statement)
+            DB.WiRocLogger.debug(create_table_SQL_statement)
             self.connection.execute(create_table_SQL_statement)
 
 

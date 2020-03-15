@@ -4,9 +4,9 @@ from datamodel.datamodel import LoraRadioMessage
 from battery import Battery
 import logging
 import requests
-import socket
 
 class SendStatusAdapter(object):
+    WiRocLogger = logging.getLogger('WiRoc.Output')
     Instances = []
     SubscriptionsEnabled = False
 
@@ -36,7 +36,7 @@ class SendStatusAdapter(object):
             connectionOK = SendStatusAdapter.TestConnection(webServerIPUrl,webServerHost)
             subscriptionShouldBeEnabled = isInitialized and connectionOK
             if SendStatusAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
-                logging.info("SendStatusAdapter::EnableDisableSubscription() subscription set enabled: " + str(subscriptionShouldBeEnabled))
+                SendStatusAdapter.WiRocLogger.info("SendStatusAdapter::EnableDisableSubscription() subscription set enabled: " + str(subscriptionShouldBeEnabled))
                 SendStatusAdapter.SubscriptionsEnabled = subscriptionShouldBeEnabled
                 DatabaseHelper.update_subscriptions(subscriptionShouldBeEnabled, SendStatusAdapter.GetDeleteAfterSent(), SendStatusAdapter.GetTypeName())
 
@@ -100,7 +100,7 @@ class SendStatusAdapter(object):
     def TestConnection(webServerIPUrl, webServerHost):
         try:
             if webServerIPUrl == None:
-                logging.error("SendStatusAdapter::TestConnection() No webserverurl available (yet)")
+                SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::TestConnection() No webserverurl available (yet)")
                 return False
             URL = webServerIPUrl + "/api/v1/ping"
             r = requests.get(url=URL,timeout=1, headers={'host': webServerHost})
@@ -108,7 +108,7 @@ class SendStatusAdapter(object):
             logging.info(data)
             return data['code'] == 0
         except Exception as ex:
-            logging.error("SendStatusAdapter::TestConnection() " + webServerIPUrl + " Host: " + webServerHost + " Exception: " + str(ex))
+            SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::TestConnection() " + webServerIPUrl + " Host: " + webServerHost + " Exception: " + str(ex))
             return False
 
     @staticmethod
@@ -122,7 +122,7 @@ class SendStatusAdapter(object):
     def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
         try:
             if settingsDictionary["WebServerIPUrl"]== None:
-                logging.error("SendStatusAdapter::SendData No webserveripurl")
+                SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::SendData No webserveripurl")
                 callbackQueue.put((failureCB,))
                 return False
 
@@ -190,6 +190,6 @@ class SendStatusAdapter(object):
                 callbackQueue.put((failureCB,))
                 return False
         except Exception as ex:
-            logging.error("SendStatusAdapter::SendData() Exception: " + str(ex))
+            SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::SendData() Exception: " + str(ex))
             callbackQueue.put((failureCB, ))
             return False

@@ -1,10 +1,9 @@
-from datamodel.datamodel import SIMessage
 from datamodel.datamodel import LoraRadioMessage
-from settings.settings import SettingsClass
-from battery import Battery
 import logging
 
 class LoraSIMessageToSITransform(object):
+    WiRocLogger = logging.getLogger('WiRoc.Output')
+
     @staticmethod
     def GetInputMessageType():
         return "LORA"
@@ -37,7 +36,5 @@ class LoraSIMessageToSITransform(object):
     @staticmethod
     def Transform(msgSub, subscriberAdapter):
         payloadData = msgSub.MessageData
-        #loraMessage = LoraRadioMessage()
-        #loraMessage.AddPayload(payloadData)
-        logging.debug("LoraSIMessageToSITransform::Transform() MessageTypeSIPunch")
+        LoraSIMessageToSITransform.WiRocLogger.debug("LoraSIMessageToSITransform::Transform() MessageTypeSIPunch")
         return {"Data":payloadData[LoraRadioMessage.GetHeaderSize():], "MessageID": None}

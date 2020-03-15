@@ -586,7 +586,7 @@ class LoraRadioMessage(object):
 
     def AddByte(self, newByte):
         if self.IsFilled():
-            logging.error("Error, trying to fill LoraRadioMessage with bytes, but it is already full")
+            logging.getLogger('WiRoc').error("LoraRadioMessage::AddByte Error, trying to fill LoraRadioMessage with bytes, but it is already full")
         else:
             self.MessageData.append(newByte)
 

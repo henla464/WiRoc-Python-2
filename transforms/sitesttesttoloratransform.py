@@ -1,7 +1,6 @@
 from datamodel.datamodel import LoraRadioMessage
 from datamodel.datamodel import SIMessage
 from battery import Battery
-from datamodel.db_helper import DatabaseHelper
 from settings.settings import SettingsClass
 
 class SITestTestToLoraTransform(object):

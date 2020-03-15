@@ -6,6 +6,8 @@ from utils.utils import Utils
 import logging
 
 class LoraStatusToSITransform(object):
+    WiRocLogger = logging.getLogger('WiRoc.Output')
+
     @staticmethod
     def GetInputMessageType():
         return "LORA"
@@ -43,15 +45,15 @@ class LoraStatusToSITransform(object):
         payloadData = msgSub.MessageData
         loraMessage = LoraRadioMessage()
         loraMessage.AddPayload(payloadData)
-        logging.debug("LoraToSITransform::Transform() Message type status")
+        LoraStatusToSITransform.WiRocLogger.debug("LoraToSITransform::Transform() Message type status")
         if SettingsClass.GetConnectedComputerIsWiRocDevice():
             loraMessage.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())
             siMsg = SIMessage()
             siMsg.AddHeader(SIMessage.WiRocToWiRoc)
             siMsg.AddPayload(loraMessage.GetByteArray())
             siMsg.AddFooter()
-            logging.debug("LoraToSITransform::Transform() data: " +  + Utils.GetDataInHex(siMsg.GetByteArray(), logging.DEBUG))
+            LoraStatusToSITransform.WiRocLogger.debug("LoraToSITransform::Transform() data: " +  + Utils.GetDataInHex(siMsg.GetByteArray(), logging.DEBUG))
             return {"Data": siMsg.GetByteArray(), "MessageID": None}
         else:
-            logging.debug("LoraToSITransform::Transform() return None, not connected to wiroc device")
+            LoraStatusToSITransform.WiRocLogger.debug("LoraToSITransform::Transform() return None, not connected to wiroc device")
             return None

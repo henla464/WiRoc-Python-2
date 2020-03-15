@@ -10,6 +10,7 @@ OledDisplayState = display.oleddisplaystate.OledDisplayState
 
 class OledNormal(OledDisplayState):
     def __init__(self):
+        self.wiRocLogger = logging.getLogger('WiRoc.Display')
         self.batteryPercent = 0
         self.batteryWidth = 0
         self.NormalOledImage = None
@@ -29,13 +30,13 @@ class OledNormal(OledDisplayState):
     def DrawOledBattery(self):
         percent = Battery.GetBatteryPercent()
         width = int((percent - 5) / 5)
-        logging.debug("OledNormal::DrawOledBattery percent: " + str(percent) + " prev battery: " + str(self.batteryPercent) + " batteryWidth: " + str(width) + " prev batteryWidth: " + str(self.batteryWidth))
+        self.wiRocLogger.debug("OledNormal::DrawOledBattery percent: " + str(percent) + " prev battery: " + str(self.batteryPercent) + " batteryWidth: " + str(width) + " prev batteryWidth: " + str(self.batteryWidth))
         if self.batteryWidth is not None and self.batteryWidth == width:
             return None
         self.batteryPercent = percent
         self.batteryWidth = width
         self.imageChanged = True
-        logging.debug("OledNormal::DrawOledBattery imagechanged")
+        self.wiRocLogger.debug("OledNormal::DrawOledBattery imagechanged")
 
         top = 1
         x = 96
@@ -53,7 +54,7 @@ class OledNormal(OledDisplayState):
         if newIsCharging != self.isCharging:
             self.isCharging = newIsCharging
             self.imageChanged = True
-            logging.debug("OledNormal::DrawIsCharging imagechanged")
+            self.wiRocLogger.debug("OledNormal::DrawIsCharging imagechanged")
             x = 121
             top = 3
             #lightning
@@ -73,7 +74,7 @@ class OledNormal(OledDisplayState):
         if self.loraRange != loraRange:
             self.loraRange = loraRange
             self.imageChanged = True
-            logging.debug("OledNormal::DrawOledRange imagechanged")
+            self.wiRocLogger.debug("OledNormal::DrawOledRange imagechanged")
             self.OledDraw.rectangle((41, 0, 60, 13), outline=0, fill=0)
             self.OledDraw.text((41, 1), loraRange, font=self.OledThinFont2, fill=255)
 
@@ -98,7 +99,7 @@ class OledNormal(OledDisplayState):
             self.wifiNoOfBarsPrevious = self.wifiNoOfBars
             self.wifiNoOfBars = noOfBars
             return None
-        logging.debug("OledNormal::DrawOledWifi imagechanged: old: " + str(self.wifiNoOfBars) +  " new: " + str(noOfBars))
+            self.wiRocLogger.debug("OledNormal::DrawOledWifi imagechanged: old: " + str(self.wifiNoOfBars) +  " new: " + str(noOfBars))
         self.wifiNoOfBarsPrevious = self.wifiNoOfBars
         self.wifiNoOfBars = noOfBars
         self.imageChanged = True
@@ -124,20 +125,20 @@ class OledNormal(OledDisplayState):
         if self.channel != channel:
             self.channel = channel
             self.imageChanged = True
-            logging.debug("OledNormal::DrawOled channel imagechanged")
+            self.wiRocLogger.debug("OledNormal::DrawOled channel imagechanged")
             # Draw a black filled box to clear part of the image.
             self.OledDraw.rectangle((14, 0, 39, 31), outline=0, fill=0)
             self.OledDraw.text((14, 0), str(channel), font=self.OledBoldFont, fill=255)
         if self.wirocMode != wiRocMode:
             self.wirocMode = wiRocMode
             self.imageChanged = True
-            logging.debug("OledNormal::DrawOled wirocMode imagechanged")
+            self.wiRocLogger.debug("OledNormal::DrawOled wirocMode imagechanged")
             self.OledDraw.rectangle((41, 16, 102, 31), outline=0, fill=0)
             self.OledDraw.text((41, 16), wiRocMode, font=self.OledThinFont2, fill=255)
         if self.ackRequested != ackRequested:
             self.ackRequested = ackRequested
             self.imageChanged = True
-            logging.debug("OledNormal::DrawOled ackRequested imagechanged")
+            self.wiRocLogger.debug("OledNormal::DrawOled ackRequested imagechanged")
             self.OledDraw.rectangle((101, 16, 127, 31), outline=0, fill=0)
             if not ackRequested:
                 self.OledDraw.text((101, 16), 'X', font=self.OledThinFont2, fill=255)

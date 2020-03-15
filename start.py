@@ -549,7 +549,7 @@ class Main:
 
 main = None
 def main():
-    self.wirocLogger.info("Start::main() Start main")
+    logging.info("Start::main() Start main")
     global main
     main = Main()
 
@@ -564,7 +564,7 @@ def startMain():
     #cProfile.run('run()')
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.ERROR,
+    logging.basicConfig(level=logging.N,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         filename='WiRoc.log',
                         filemode='a')
@@ -582,8 +582,26 @@ if __name__ == '__main__':
 
     # add the handler to the myLogger
     myLogger = logging.getLogger('WiRoc')
+    myLogger.setLevel(logging.DEBUG)
+    myLogger.propagate = False
     myLogger.addHandler(rotFileHandler)
     myLogger.addHandler(console)
+
+    WiRocDisplayLogger = logging.getLogger('WiRoc.Display')
+    WiRocDisplayLogger.setLevel(logging.DEBUG)
+    WiRocDisplayLogger.propagate = False
+    WiRocDisplayLogger.addHandler(rotFileHandler)
+    WiRocDisplayLogger.addHandler(console)
+    WiRocInputLogger = logging.getLogger('WiRoc.Input')
+    WiRocInputLogger.setLevel(logging.DEBUG)
+    WiRocInputLogger.propagate = False
+    WiRocInputLogger.addHandler(rotFileHandler)
+    WiRocInputLogger.addHandler(console)
+    WiRocOutputLogger = logging.getLogger('WiRoc.Output')
+    WiRocOutputLogger.setLevel(logging.DEBUG)
+    WiRocOutputLogger.propagate = False
+    WiRocOutputLogger.addHandler(rotFileHandler)
+    WiRocOutputLogger.addHandler(console)
 
     myLogger.info("Start")
     startMain()
