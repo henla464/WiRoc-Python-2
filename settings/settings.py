@@ -7,6 +7,7 @@ import math
 import random
 import os
 import socket
+import yaml
 from cachetools import cached, TTLCache
 from cachetools.keys import hashkey
 from functools import partial
@@ -458,11 +459,15 @@ class SettingsClass(object):
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetWiRocDeviceName'), lock=rlock)
     def GetWiRocDeviceName():
-        sett = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
-        if sett is None:
-            SettingsClass.SetSetting("WiRocDeviceName", None)
-            return None
-        return sett.Value
+        f = open("../../settings.yaml", "r")
+        settings = yaml.load(f, Loader=yaml.BaseLoader)
+        f.close()
+        return settings['WiRocDeviceName']
+        #sett = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
+        #if sett is None:
+        #    SettingsClass.SetSetting("WiRocDeviceName", None)
+        #    return None
+        #return sett.Value
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetWebServerHost'), lock=rlock)

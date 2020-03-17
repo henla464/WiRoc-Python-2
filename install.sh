@@ -4,6 +4,7 @@
 
 WiRocPython2Version="0.137"
 WiRocBLEVersion="0.38"
+WiRocHWVersion="3Rev2"
 
 
 echo "update"
@@ -56,6 +57,8 @@ echo "jsonpickle"
 #read line
 #Install jsonpickle
 pip3 install jsonpickle
+
+pip3 install pyyaml
 
 echo "pyudev"
 #read line
@@ -124,6 +127,12 @@ chmod ugo+x installWiRocBLE.sh
 echo "Update WiRocBLE version"
 cat << EOF > WiRocBLEVersion.txt
 ${WiRocBLEVersion}
+EOF
+
+
+echo "Update HW version"
+cat << EOF > WiRocHWVersion.txt
+${WiRocHWVersion}
 EOF
 
 #npm install -g node-gyp

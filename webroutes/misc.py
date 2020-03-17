@@ -1,8 +1,6 @@
 __author__ = 'henla464'
 
 from datamodel.db_helper import DatabaseHelper
-from databaselib.db import DB
-from databaselib.datamapping import DataMapping
 from settings.settings import SettingsClass
 from datamodel.datamodel import SettingData
 from battery import Battery
@@ -12,6 +10,7 @@ import jsonpickle
 import json
 import time
 import socket
+import yaml
 
 @app.route('/misc/status/', methods=['GET'])
 def getStatus():
@@ -105,24 +104,38 @@ def getPunches():
 
 @app.route('/misc/wirocdevicename/', methods=['GET'])
 def getWiRocDeviceName():
-    DatabaseHelper.reInit()
-    setting = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
-    deviceName = "WiRoc Device"
-    if setting != None:
-        deviceName = setting.Value
-    return jsonpickle.encode(MicroMock(WiRocDeviceName=deviceName))
+    f = open("../../settings.yaml", "r")
+    settings = yaml.load(f, Loader=yaml.BaseLoader)
+    f.close()
+    return jsonpickle.encode(MicroMock(WiRocDeviceName=settings['WiRocDeviceName']))
+
+    #DatabaseHelper.reInit()
+    #setting = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
+    #deviceName = "WiRoc Device"
+    #if setting != None:
+    #    deviceName = setting.Value
+    #return jsonpickle.encode(MicroMock(WiRocDeviceName=deviceName))
 
 @app.route('/misc/wirocdevicename/<deviceName>', methods=['GET'])
 def setWiRocDeviceName(deviceName):
-    DatabaseHelper.reInit()
-    sd = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
-    if sd is None:
-        sd = SettingData()
-        sd.Key = 'WiRocDeviceName'
-    sd.Value = deviceName
-    sd = DatabaseHelper.save_setting(sd)
+    f = open("../../settings.yaml", "r")
+    settings = yaml.load(f, Loader=yaml.BaseLoader)
+    f.close()
+    settings['WiRocDeviceName'] = deviceName
+    f2 = open('document.yaml', 'w')
+    yaml.dump(settings, f2)  # Write a YAML representation of data to 'settings.yaml'.
     SettingsClass.SetSettingUpdatedByWebService()
-    return jsonpickle.encode(MicroMock(WiRocDeviceName=sd.Value))
+    return jsonpickle.encode(MicroMock(WiRocDeviceName=deviceName))
+
+    #DatabaseHelper.reInit()
+    #sd = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
+    #if sd is None:
+    #    sd = SettingData()
+    #    sd.Key = 'WiRocDeviceName'
+    #sd.Value = deviceName
+    #sd = DatabaseHelper.save_setting(sd)
+    #SettingsClass.SetSettingUpdatedByWebService()
+    #return jsonpickle.encode(MicroMock(WiRocDeviceName=sd.Value))
 
 @app.route('/misc/database/<operation>/', methods=['GET'])
 def deletePunches(operation):
@@ -322,6 +335,27 @@ def SetLoggingServerPort(port):
     SettingsClass.SetSettingUpdatedByWebService()
     return jsonpickle.encode(MicroMock(LoggingServerPort=sd.Value))
 
+@app.route('/misc/wirocpythonversion/', methods=['GET'])
+def GetWiRocPythonVersion():
+    f = open("../../WiRocPythonVersion.txt", "r")
+    wirocPythonVersion = f.read()
+    f.close()
+    return jsonpickle.encode(MicroMock(WiRocPythonVersion=wirocPythonVersion))
+
+@app.route('/misc/wirocbleversion/', methods=['GET'])
+def GetWiRocPythonVersion():
+    f = open("../../wirocBLEVersion.txt", "r")
+    wirocBLEVersion = f.read()
+    f.close()
+    return jsonpickle.encode(MicroMock(WirocBLEVersion=wirocBLEVersion))
+
+@app.route('/misc/wirochwversion/', methods=['GET'])
+def GetWiRocPythonVersion():
+    f = open("../../WirocHWVersion.txt", "r")
+    wirocHWVersion = f.read()
+    f.close()
+    return jsonpickle.encode(MicroMock(WirocHWVersion=wirocHWVersion))
+
 @app.route('/misc/allmainsettings/', methods=['GET'])
 def getAllMainSettings():
     DatabaseHelper.reInit()
@@ -371,6 +405,21 @@ def getAllMainSettings():
     if setting != None:
         loraPower = setting.Value
 
-    all = ('1' if isCharging else '0') + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + '%batteryPercent%' + '¤' + '%ipAddress%'+ '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange
+    f = open("../../WiRocPythonVersion.txt", "r")
+    wirocPythonVersion = f.read()
+    f.close()
+
+    f = open("../../WiRocBLEVersion.txt", "r")
+    wirocBLEVersion = f.read()
+    f.close()
+
+    f = open("../../WiRocHWVersion.txt", "r")
+    wirocHWVersion = f.read()
+    f.close()
+
+    all = ('1' if isCharging else '0') + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \
+          acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + '%batteryPercent%' + '¤' + \
+          '%ipAddress%'+ '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wirocPythonVersion + '¤' + \
+          wirocBLEVersion + '¤' + wirocHWVersion
 
     return jsonpickle.encode(MicroMock(All=all))
