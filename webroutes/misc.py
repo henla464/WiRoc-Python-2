@@ -109,13 +109,6 @@ def getWiRocDeviceName():
     f.close()
     return jsonpickle.encode(MicroMock(WiRocDeviceName=settings['WiRocDeviceName']))
 
-    #DatabaseHelper.reInit()
-    #setting = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
-    #deviceName = "WiRoc Device"
-    #if setting != None:
-    #    deviceName = setting.Value
-    #return jsonpickle.encode(MicroMock(WiRocDeviceName=deviceName))
-
 @app.route('/misc/wirocdevicename/<deviceName>', methods=['GET'])
 def setWiRocDeviceName(deviceName):
     f = open("../../settings.yaml", "r")
@@ -126,16 +119,6 @@ def setWiRocDeviceName(deviceName):
     yaml.dump(settings, f2)  # Write a YAML representation of data to 'settings.yaml'.
     SettingsClass.SetSettingUpdatedByWebService()
     return jsonpickle.encode(MicroMock(WiRocDeviceName=deviceName))
-
-    #DatabaseHelper.reInit()
-    #sd = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
-    #if sd is None:
-    #    sd = SettingData()
-    #    sd.Key = 'WiRocDeviceName'
-    #sd.Value = deviceName
-    #sd = DatabaseHelper.save_setting(sd)
-    #SettingsClass.SetSettingUpdatedByWebService()
-    #return jsonpickle.encode(MicroMock(WiRocDeviceName=sd.Value))
 
 @app.route('/misc/database/<operation>/', methods=['GET'])
 def deletePunches(operation):
@@ -343,14 +326,14 @@ def GetWiRocPythonVersion():
     return jsonpickle.encode(MicroMock(WiRocPythonVersion=wirocPythonVersion))
 
 @app.route('/misc/wirocbleversion/', methods=['GET'])
-def GetWiRocPythonVersion():
+def GetWiRocBLEVersion():
     f = open("../../wirocBLEVersion.txt", "r")
     wirocBLEVersion = f.read()
     f.close()
     return jsonpickle.encode(MicroMock(WirocBLEVersion=wirocBLEVersion))
 
 @app.route('/misc/wirochwversion/', methods=['GET'])
-def GetWiRocPythonVersion():
+def GetWiRocHWVersion():
     f = open("../../WirocHWVersion.txt", "r")
     wirocHWVersion = f.read()
     f.close()
@@ -361,10 +344,11 @@ def getAllMainSettings():
     DatabaseHelper.reInit()
     isCharging = Battery.IsCharging()
 
-    setting = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
-    deviceName = "WiRoc Device"
-    if setting != None and setting.Value != None:
-        deviceName = setting.Value
+    f = open("../../settings.yaml", "r")
+    settings = yaml.load(f, Loader=yaml.BaseLoader)
+    f.close()
+    deviceName = settings['WiRocDeviceName']
+
 
     setting = DatabaseHelper.get_setting_by_key('SendToMeosIPPort')
     sirapPort = ""
@@ -405,16 +389,19 @@ def getAllMainSettings():
     if setting != None:
         loraPower = setting.Value
 
-    f = open("../../WiRocPythonVersion.txt", "r")
+    f = open("../WiRocPythonVersion.txt", "r")
     wirocPythonVersion = f.read()
+    wirocPythonVersion = wirocPythonVersion.replace("\n","")
     f.close()
 
-    f = open("../../WiRocBLEVersion.txt", "r")
+    f = open("../WiRocBLEVersion.txt", "r")
     wirocBLEVersion = f.read()
+    wirocBLEVersion = wirocBLEVersion.replace("\n", "")
     f.close()
 
-    f = open("../../WiRocHWVersion.txt", "r")
+    f = open("../WiRocHWVersion.txt", "r")
     wirocHWVersion = f.read()
+    wirocHWVersion = wirocHWVersion.replace("\n", "")
     f.close()
 
     all = ('1' if isCharging else '0') + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \

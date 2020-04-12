@@ -2,9 +2,6 @@ WiRoc
 =====
 Patch the BLE fails, add delay to the redo when fails
 The status light shouldn't blink when BLE fails, fail the service also?
-Add HW version file
-Add Settings file (for pesisting devicename, potentially other settings)
-
 
 App
 ===
@@ -16,6 +13,8 @@ Done
 X Add one-way option for connecting to samlingsboxar, srr dongles [WiRoc Python Done, app remaining]
 X add RSSI to test punches
 X Test RX Gain option (didn't see any difference in first test, but not sure if test was ok, RSSI is same. Dorji says enable can have small advantage)
+x Add HW version file
+x Add Settings file (for pesisting devicename, potentially other settings)
 
 possible HW enhancments
 -----------------------
