@@ -1,7 +1,7 @@
 WiRoc
 =====
-Patch the BLE fails, add delay to the redo when fails
-The status light shouldn't blink when BLE fails, fail the service also?
+
+
 
 App
 ===
@@ -15,6 +15,8 @@ X add RSSI to test punches
 X Test RX Gain option (didn't see any difference in first test, but not sure if test was ok, RSSI is same. Dorji says enable can have small advantage)
 x Add HW version file
 x Add Settings file (for pesisting devicename, potentially other settings)
+x The status light shouldn't blink when BLE fails, fail the service also?
+x Patch the BLE fails, add delay to the redo when fails
 
 possible HW enhancments
 -----------------------
