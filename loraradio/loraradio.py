@@ -222,15 +222,16 @@ class LoraRadio:
 
         self.channel = channel
 
-        loraDataRate = 293
-        if loraRange == 'L':
-            loraDataRate = 293
-        elif loraRange == 'ML':
-            loraDataRate = 537
-        elif loraRange == 'MS':
-            loraDataRate = 977
-        elif loraRange == 'S':
-            loraDataRate = 1758
+
+        #loraDataRate = 293
+        #if loraRange == 'L':
+        #    loraDataRate = 293
+        #elif loraRange == 'ML':
+        #    loraDataRate = 537
+        #elif loraRange == 'MS':
+        #    loraDataRate = 977
+        #elif loraRange == 'S':
+        #    loraDataRate = 1758
 
         self.loraPower = loraPower
 
@@ -264,7 +265,7 @@ class LoraRadio:
                 self.WaitForSerialUpToTimeMS(500)
                 data = self.getRadioSettingsReply()
 
-        settingsArray = LoraRadio.getSettingsArray(channel, loraDataRate, loraPower)
+        settingsArray = LoraRadio.getSettingsArray(channel, loraRange, loraPower)
 
         if data[8:16] == settingsArray[8:16]:
             self.isInitialized = True

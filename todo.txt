@@ -5,7 +5,7 @@ WiRoc
 
 App
 ===
-Make app work with old wiroc version
+Set the correct version of the update Python/BLE dropdowns
 
 
 Done
@@ -17,6 +17,7 @@ x Add HW version file
 x Add Settings file (for pesisting devicename, potentially other settings)
 x The status light shouldn't blink when BLE fails, fail the service also?
 x Patch the BLE fails, add delay to the redo when fails
+x Make app work with old wiroc version
 
 possible HW enhancments
 -----------------------

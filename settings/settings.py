@@ -459,7 +459,7 @@ class SettingsClass(object):
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetWiRocDeviceName'), lock=rlock)
     def GetWiRocDeviceName():
-        f = open("../../settings.yaml", "r")
+        f = open("../settings.yaml", "r")
         settings = yaml.load(f, Loader=yaml.BaseLoader)
         f.close()
         return settings['WiRocDeviceName']

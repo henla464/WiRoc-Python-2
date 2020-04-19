@@ -104,18 +104,18 @@ def getPunches():
 
 @app.route('/misc/wirocdevicename/', methods=['GET'])
 def getWiRocDeviceName():
-    f = open("../../settings.yaml", "r")
+    f = open("../settings.yaml", "r")
     settings = yaml.load(f, Loader=yaml.BaseLoader)
     f.close()
     return jsonpickle.encode(MicroMock(WiRocDeviceName=settings['WiRocDeviceName']))
 
 @app.route('/misc/wirocdevicename/<deviceName>', methods=['GET'])
 def setWiRocDeviceName(deviceName):
-    f = open("../../settings.yaml", "r")
+    f = open("../settings.yaml", "r")
     settings = yaml.load(f, Loader=yaml.BaseLoader)
     f.close()
     settings['WiRocDeviceName'] = deviceName
-    f2 = open('document.yaml', 'w')
+    f2 = open('../settings.yaml', 'w')
     yaml.dump(settings, f2)  # Write a YAML representation of data to 'settings.yaml'.
     SettingsClass.SetSettingUpdatedByWebService()
     return jsonpickle.encode(MicroMock(WiRocDeviceName=deviceName))
@@ -344,7 +344,7 @@ def getAllMainSettings():
     DatabaseHelper.reInit()
     isCharging = Battery.IsCharging()
 
-    f = open("../../settings.yaml", "r")
+    f = open("../settings.yaml", "r")
     settings = yaml.load(f, Loader=yaml.BaseLoader)
     f.close()
     deviceName = settings['WiRocDeviceName']

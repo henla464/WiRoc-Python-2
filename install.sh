@@ -135,6 +135,12 @@ cat << EOF > WiRocHWVersion.txt
 ${WiRocHWVersion}
 EOF
 
+echo "Settings.yaml"
+cat << EOF > settings.yaml
+WiRocDeviceName: WiRoc Device
+
+EOF
+
 #npm install -g node-gyp
 echo "install bluetooth-hci-socket"
 cd /home/chip/
