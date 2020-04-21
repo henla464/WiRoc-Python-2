@@ -388,6 +388,8 @@ def getAllMainSettings():
     loraPower = '7'
     if setting != None:
         loraPower = setting.Value
+    if loraModule == 'RF1276T' and int(loraPower) > 7:
+        loraPower = '7'
 
     f = open("../WiRocPythonVersion.txt", "r")
     wirocPythonVersion = f.read()
@@ -412,6 +414,6 @@ def getAllMainSettings():
     all = ('1' if isCharging else '0') + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \
           acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + '%batteryPercent%' + '¤' + \
           '%ipAddress%'+ '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wirocPythonVersion + '¤' + \
-          wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive
+          wirocBLEVersion + '¤' + wirocHWVersion + '¤' + ('1' if oneWayReceive else '0')
 
     return jsonpickle.encode(MicroMock(All=all))

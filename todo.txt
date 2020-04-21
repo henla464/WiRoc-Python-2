@@ -5,7 +5,8 @@ WiRoc
 
 App
 ===
-Set the correct version of the update Python/BLE dropdowns
+Show repeater/sender/receiver somewhere
+Change to use 'single' BLE service to speed up connection
 
 
 Done
