@@ -404,9 +404,14 @@ def getAllMainSettings():
     wirocHWVersion = wirocHWVersion.replace("\n", "")
     f.close()
 
+    sett = DatabaseHelper.get_setting_by_key('OneWayReceive')
+    oneWayReceive = False
+    if sett is not None:
+        oneWayReceive = (sett.Value == "1")
+
     all = ('1' if isCharging else '0') + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \
           acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + '%batteryPercent%' + '¤' + \
           '%ipAddress%'+ '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wirocPythonVersion + '¤' + \
-          wirocBLEVersion + '¤' + wirocHWVersion
+          wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive
 
     return jsonpickle.encode(MicroMock(All=all))
