@@ -14,7 +14,7 @@ def GetSendToMeosEnabled():
     enabled = False
     if setting != None:
         enabled = (setting.Value == "1")
-    return jsonpickle.encode(MicroMock(SendToMeosEnabled=enabled))
+    return jsonpickle.encode(MicroMock(SendToMeosEnabled=enabled, Value=enabled))
 
 @app.route('/meosconfiguration/sendtomeosenabled/<enabled>/', methods=['GET'])
 def SetSendToMeosEnabled(enabled):
@@ -26,7 +26,7 @@ def SetSendToMeosEnabled(enabled):
     sd.Value = '1' if enabled.lower() == 'true' else '0'
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
-    return jsonpickle.encode(MicroMock(SendToMeosEnabled=sd.Value.lower()=='true'))
+    return jsonpickle.encode(MicroMock(SendToMeosEnabled=sd.Value=='1', Value=sd.Value=='1'))
 
 @app.route('/meosconfiguration/sendtomeosip/', methods=['GET'])
 def GetSendToMeosIP():
@@ -34,7 +34,7 @@ def GetSendToMeosIP():
     ip = ""
     if setting != None:
         ip = setting.Value
-    return jsonpickle.encode(MicroMock(SendToMeosIP=ip))
+    return jsonpickle.encode(MicroMock(SendToMeosIP=ip, Value=ip))
 
 @app.route('/meosconfiguration/sendtomeosip/<ip>/', methods=['GET'])
 def SetSendToMeosIP(ip):
@@ -46,7 +46,7 @@ def SetSendToMeosIP(ip):
     sd.Value = ip
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
-    return jsonpickle.encode(MicroMock(SendToMeosIP=sd.Value))
+    return jsonpickle.encode(MicroMock(SendToMeosIP=sd.Value, Value=sd.Value))
 
 @app.route('/meosconfiguration/sendtomeosipport/', methods=['GET'])
 def getSendToMeosIPPort():
@@ -54,7 +54,7 @@ def getSendToMeosIPPort():
     port = ""
     if setting != None:
         port = setting.Value
-    return jsonpickle.encode(MicroMock(SendToMeosIPPort=port))
+    return jsonpickle.encode(MicroMock(SendToMeosIPPort=port, Value=port))
 
 @app.route('/meosconfiguration/sendtomeosipport/<port>/', methods=['GET'])
 def setSendToMeosIPPort(port):
@@ -66,5 +66,5 @@ def setSendToMeosIPPort(port):
     sd.Value = port
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
-    return jsonpickle.encode(MicroMock(SendToMeosIPPort=sd.Value))
+    return jsonpickle.encode(MicroMock(SendToMeosIPPort=sd.Value, Value=sd.Value))
 
