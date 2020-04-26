@@ -8,6 +8,7 @@ from daemonize import Daemonize
 from webroutes import radioconfiguration
 from webroutes import meosconfiguration
 from webroutes import misc
+from webroutes import api
 
 def startWebServer():
     logging.info("startWebServer() Start web server")

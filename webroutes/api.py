@@ -294,6 +294,7 @@ def getWiRocDeviceName():
 
 @app.route('/api/wirocdevicename/<deviceName>', methods=['GET'])
 def setWiRocDeviceName(deviceName):
+    DatabaseHelper.reInit()
     f = open("../settings.yaml", "r")
     settings = yaml.load(f, Loader=yaml.BaseLoader)
     f.close()
