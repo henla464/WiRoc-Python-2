@@ -1,0 +1,44 @@
+sudo bluetoothctl
+scan on
+connect 00:0C:BF:02:29:61
+pair 00:0C:BF:02:29:61
+trust 00:0C:BF:02:29:61
+
+sudo sdptool add --channel=22 SP
+sudo rfcomm bind 0 fc:f8:ae:0e:53:70 22
+
+
+---
+Change baudrate via serialport of BTadapter.
+Connect RX to TX/TX to RX and use USB-serial
+Command AT should give OK as response. (default baud is 9600 8 bits, 1 stop bit, no parity, no hw)
+AT+BAUD6 should change the baud rate to 38400, response should be 38400\r\n
+
+---
+
+UUID: Serial Port               (00001101-0000-1000-8000-00805f9b34fb)
+
+-----
+
+https://raspberrypi.stackexchange.com/questions/41776/failed-to-connect-to-sdp-server-on-ffffff000000-no-such-file-or-directory
+This might help
+
+sdptool is broken in Bluez 5
+
+You need to run the blue tooth daemon in compatibility mode to provide deprecated command line interfaces. You're running Bluez5 and you need some Bluez4 functions. You can do this by editing this file
+
+/etc/systemd/system/dbus-org.bluez.service
+and changing this line
+
+ExecStart=/usr/lib/bluetooth/bluetoothd
+to this
+
+ExecStart=/usr/lib/bluetooth/bluetoothd --compat
+
+and then restarting bluetooth like this
+
+sudo systemctl daemon-reload
+sudo systemctl restart bluetooth
+and you'll also have to change permissions on /var/run/sdp
+
+sudo chmod 777 /var/run/sdp

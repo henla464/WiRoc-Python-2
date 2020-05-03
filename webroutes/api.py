@@ -98,9 +98,9 @@ def setLoraRange(lorarange):
 def getAcknowledgementRequested():
     DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
-    acksRequested = True
+    acksRequested = '0'
     if setting != None:
-        acksRequested = (setting.Value == "1")
+        acksRequested = setting.Value
     return jsonpickle.encode(MicroMock(AcknowledgementRequested=acksRequested, Value=acksRequested))
 
 @app.route('/api/acknowledgementrequested/<ack>/', methods=['GET'])
@@ -110,10 +110,10 @@ def setAcknowledgement(ack):
     if sd is None:
         sd = SettingData()
         sd.Key = 'AcknowledgementRequested'
-    sd.Value = '1' if ack.lower() == 'true' else '0'
+    sd.Value = '1' if (ack.lower() == 'true' or ack.lower() == '1') else '0'
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
-    return jsonpickle.encode(MicroMock(AcknowledgementRequested=sd.Value == '1', Value=sd.Value == '1'))
+    return jsonpickle.encode(MicroMock(AcknowledgementRequested=sd.Value, Value=sd.Value))
 
 @app.route('/api/power/', methods=['GET'])
 def getPower():
@@ -139,9 +139,9 @@ def setPower(power):
 @app.route('/api/sendtosirapenabled/', methods=['GET'])
 def GetSendToSirapEnabled():
     setting = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
-    enabled = False
+    enabled = '0'
     if setting != None:
-        enabled = (setting.Value == "1")
+        enabled = setting.Value
     return jsonpickle.encode(MicroMock(SendToSirapEnabled=enabled, Value=enabled))
 
 @app.route('/api/sendtosirapenabled/<enabled>/', methods=['GET'])
@@ -151,10 +151,10 @@ def SetSendToSirapEnabled(enabled):
     if sd is None:
         sd = SettingData()
         sd.Key = 'SendToSirapEnabled'
-    sd.Value = '1' if enabled.lower() == 'true' else '0'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
-    return jsonpickle.encode(MicroMock(SendToSirapEnabled=sd.Value=='1', Value=sd.Value=='1'))
+    return jsonpickle.encode(MicroMock(SendToSirapEnabled=sd.Value, Value=sd.Value))
 
 @app.route('/api/sendtosirapip/', methods=['GET'])
 def GetSendToSirapIP():
@@ -222,7 +222,7 @@ def getStatus():
     data['inputAdapters'] = inputAdapters
     data['subscriberAdapters'] = subAdpts
     json_data = json.dumps(data)
-    return json_data
+    return jsonpickle.encode(MicroMock(Value=json_data))
 
 @app.route('/api/settings/', methods=['GET'])
 def getSettings():
@@ -238,7 +238,7 @@ def getSettings():
     data = {}
     data['settings'] = setts
     json_data = json.dumps(data)
-    return json_data
+    return jsonpickle.encode(MicroMock(Value=json_data))
 
 @app.route('/api/setting/<path:keyandvalue>/', methods=['GET'])
 def setSetting(keyandvalue):
@@ -399,9 +399,9 @@ def getWebServerHost():
 def getForce4800BaudRate():
     DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('Force4800BaudRate')
-    force4800BaudRate = False
+    force4800BaudRate = '0'
     if sett is not None:
-        force4800BaudRate = (sett.Value == "1")
+        force4800BaudRate = sett.Value
     return jsonpickle.encode(MicroMock(Force4800BaudRate=force4800BaudRate, Value=force4800BaudRate))
 
 @app.route('/api/force4800baudrate/<enabled>/', methods=['GET'])
@@ -411,19 +411,19 @@ def SetForce4800BaudRateEnabled(enabled):
     if sd is None:
         sd = SettingData()
         sd.Key = 'Force4800BaudRate'
-    sd.Value = '1' if enabled.lower() == 'true' else '0'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
-    return jsonpickle.encode(MicroMock(Force4800BaudRate=sd.Value=='1', Value=sd.Value=='1'))
+    return jsonpickle.encode(MicroMock(Force4800BaudRate=sd.Value, Value=sd.Value))
 
 
 @app.route('/api/onewayreceive/', methods=['GET'])
 def getOneWayReceive():
     DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('OneWayReceive')
-    oneWayReceive = False
+    oneWayReceive = '0'
     if sett is not None:
-        oneWayReceive = (sett.Value == "1")
+        oneWayReceive = sett.Value
     return jsonpickle.encode(MicroMock(OneWayReceive=oneWayReceive, Value=oneWayReceive))
 
 @app.route('/api/onewayreceive/<enabled>/', methods=['GET'])
@@ -433,18 +433,39 @@ def SetOneWayReceiveEnabled(enabled):
     if sd is None:
         sd = SettingData()
         sd.Key = 'OneWayReceive'
-    sd.Value = '1' if enabled.lower() == 'true' else '0'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
-    return jsonpickle.encode(MicroMock(OneWayReceive=sd.Value=='1', Value=sd.Value=='1'))
+    return jsonpickle.encode(MicroMock(OneWayReceive=sd.Value, Value=sd.Value))
+
+@app.route('/api/sendtoblenoenabled/', methods=['GET'])
+def getSendToBlenoEnabled():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('SendToBlenoEnabled')
+    sendToBlenoEnabled = '0'
+    if sett is not None:
+        sendToBlenoEnabled = sett.Value
+    return jsonpickle.encode(MicroMock(Value=sendToBlenoEnabled))
+
+@app.route('/api/sendtoblenoenabled/<enabled>/', methods=['GET'])
+def SetSendToBlenoEnabled(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('SendToBlenoEnabled')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SendToBlenoEnabled'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    return jsonpickle.encode(MicroMock(SendToBlenoEnabled=sd.Value, Value=sd.Value))
 
 @app.route('/api/logtoserver/', methods=['GET'])
 def getLogToServer():
     DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('LogToServer')
-    logToServer = False
+    logToServer = '0'
     if sett is not None:
-        logToServer = (sett.Value == "1")
+        logToServer = sett.Value
     return jsonpickle.encode(MicroMock(LogToServer=logToServer, Value=logToServer))
 
 @app.route('/api/logtoserver/<enabled>/', methods=['GET'])
@@ -454,10 +475,10 @@ def SetLogToServerEnabled(enabled):
     if sd is None:
         sd = SettingData()
         sd.Key = 'LogToServer'
-    sd.Value = '1' if enabled.lower() == 'true' else '0'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
-    return jsonpickle.encode(MicroMock(LogToServer=sd.Value=='1', Value=sd.Value=='1'))
+    return jsonpickle.encode(MicroMock(LogToServer=sd.Value, Value=sd.Value))
 
 
 @app.route('/api/loggingserverhost/', methods=['GET'])
@@ -523,7 +544,7 @@ def GetWiRocHWVersion():
     f.close()
     return jsonpickle.encode(MicroMock(WirocHWVersion=wirocHWVersion, Value=wirocHWVersion))
 
-@app.route('/api/allmainsettings/', methods=['GET'])
+@app.route('/api/all/', methods=['GET'])
 def getAllMainSettings():
     DatabaseHelper.reInit()
     isCharging = Battery.IsCharging()
@@ -591,13 +612,13 @@ def getAllMainSettings():
     f.close()
 
     sett = DatabaseHelper.get_setting_by_key('OneWayReceive')
-    oneWayReceive = False
+    oneWayReceive = '0'
     if sett is not None:
-        oneWayReceive = (sett.Value == "1")
+        oneWayReceive = sett.Value
 
     all = ('1' if isCharging else '0') + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \
           acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + '%batteryPercent%' + '¤' + \
           '%ipAddress%'+ '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wirocPythonVersion + '¤' + \
-          wirocBLEVersion + '¤' + wirocHWVersion + '¤' + ('1' if oneWayReceive else '0')
+          wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive
 
     return jsonpickle.encode(MicroMock(All=all, Value=all))
