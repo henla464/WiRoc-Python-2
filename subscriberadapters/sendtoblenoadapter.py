@@ -14,6 +14,8 @@ class SendToBlenoAdapter(object):
         if len(SendToBlenoAdapter.Instances) == 0:
             SendToBlenoAdapter.Instances.append(SendToBlenoAdapter('bleno1'))
             return True
+        if SendToBlenoAdapter.SubscriptionsEnabled != SettingsClass.GetSendToBlenoEnabled():
+            return True
         return False
 
     @staticmethod

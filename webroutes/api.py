@@ -283,7 +283,7 @@ def getPunches():
     for blenoPunch in blenoPunches:
         DatabaseHelper.delete_bleno_punch_data(blenoPunch.id)
 
-    return json_data
+    return jsonpickle.encode(MicroMock(Value=json_data))
 
 @app.route('/api/wirocdevicename/', methods=['GET'])
 def getWiRocDeviceName():
