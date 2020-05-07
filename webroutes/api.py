@@ -302,17 +302,17 @@ def setWiRocDeviceName(deviceName):
     yaml.dump(settings, f2)  # Write a YAML representation of data to 'settings.yaml'.
     return jsonpickle.encode(MicroMock(Value=deviceName))
 
-@app.route('/api/database/<operation>/', methods=['GET'])
-def deletePunches(operation):
+@app.route('/api/deletepunches/', methods=['GET'])
+def deletePunches():
     DatabaseHelper.reInit()
-    if operation.lower() == "deletepunches":
-        DatabaseHelper.delete_punches()
-        return jsonpickle.encode(MicroMock(Value="OK"))
-    elif operation.lower() == "dropalltables":
-        DatabaseHelper.drop_all_tables()
-        return jsonpickle.encode(MicroMock(Value="OK"))
-    else:
-        return jsonpickle.encode(MicroMock(Value="Operation not found"))
+    DatabaseHelper.delete_punches()
+    return jsonpickle.encode(MicroMock(Value="OK"))
+
+@app.route('/api/dropalltables/', methods=['GET'])
+def dropAllTables():
+    DatabaseHelper.reInit()
+    DatabaseHelper.drop_all_tables()
+    return jsonpickle.encode(MicroMock(Value="OK"))
 
 @app.route('/api/testpunches/gettestpunches/<testBatchGuid>/<includeAll>/', methods=['GET'])
 def getTestPunches(testBatchGuid, includeAll):
