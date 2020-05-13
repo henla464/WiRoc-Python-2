@@ -12,6 +12,13 @@ import yaml
 import time
 import socket
 
+@app.route('/api/openapicontent/', methods=['GET'])
+def getOpenApiContent():
+    f = open("webroutes/api.yaml", "r")
+    swaggercontent = f.read()
+    f.close()
+    return swaggercontent
+
 
 @app.route('/api/channel/', methods=['GET'])
 def getChannel():
@@ -33,45 +40,6 @@ def setChannel(channel):
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
     return jsonpickle.encode(MicroMock(Value=int(sd.Value)))
-
-@app.route('/api/datarate/', methods=['GET'])
-def getDataRate():
-    DatabaseHelper.reInit()
-    setting = DatabaseHelper.get_setting_by_key('LoraRange')
-    dataRate = 293
-    if setting != None:
-        dataRate = SettingsClass.GetDataRate(setting.Value)
-    return jsonpickle.encode(MicroMock(Value=dataRate))
-
-@app.route('/api/datarate/<int:dataRate>/', methods=['GET'])
-def setDataRate(dataRate):
-    DatabaseHelper.reInit()
-
-    # for compatibility with newer code set LoraRange
-    sd = DatabaseHelper.get_setting_by_key('LoraRange')
-    if sd is None:
-        sd = SettingData()
-        sd.Key = 'LoraRange'
-
-    loraRange = 'L'
-    if dataRate == 73:
-        loraRange = 'UL'
-    elif dataRate == 134:
-        loraRange = 'XL'
-    elif dataRate == 244 or dataRate == 293:
-        loraRange = 'L'
-    elif dataRate == 439 or dataRate == 537:
-        loraRange = 'ML'
-    elif dataRate == 781 or dataRate == 977:
-        loraRange = 'MS'
-    elif dataRate == 1367 or dataRate == 1758:
-        loraRange = 'S'
-
-    sd.Value = loraRange
-    sd = DatabaseHelper.save_setting(sd)
-
-    SettingsClass.SetSettingUpdatedByWebService()
-    return jsonpickle.encode(MicroMock(Value=int(dataRate)))
 
 @app.route('/api/lorarange/', methods=['GET'])
 def getLoraRange():
@@ -104,7 +72,7 @@ def getAcknowledgementRequested():
     return jsonpickle.encode(MicroMock(Value=acksRequested))
 
 @app.route('/api/acknowledgementrequested/<ack>/', methods=['GET'])
-def setAcknowledgement(ack):
+def setAcknowledgementRequested(ack):
     DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
     if sd is None:
@@ -137,7 +105,7 @@ def setPower(power):
     return jsonpickle.encode(MicroMock(Value=int(sd.Value)))
 
 @app.route('/api/sendtosirapenabled/', methods=['GET'])
-def GetSendToSirapEnabled():
+def getSendToSirapEnabled():
     setting = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
     enabled = '0'
     if setting != None:
@@ -145,7 +113,7 @@ def GetSendToSirapEnabled():
     return jsonpickle.encode(MicroMock(Value=enabled))
 
 @app.route('/api/sendtosirapenabled/<enabled>/', methods=['GET'])
-def SetSendToSirapEnabled(enabled):
+def setSendToSirapEnabled(enabled):
     DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
     if sd is None:
@@ -157,7 +125,7 @@ def SetSendToSirapEnabled(enabled):
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 @app.route('/api/sendtosirapip/', methods=['GET'])
-def GetSendToSirapIP():
+def getSendToSirapIP():
     setting = DatabaseHelper.get_setting_by_key('SendToSirapIP')
     ip = ""
     if setting != None:
@@ -165,7 +133,7 @@ def GetSendToSirapIP():
     return jsonpickle.encode(MicroMock(Value=ip))
 
 @app.route('/api/sendtosirapip/<ip>/', methods=['GET'])
-def SetSendToSirapIP(ip):
+def setSendToSirapIP(ip):
     DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SendToSirapIP')
     if sd is None:
@@ -257,6 +225,23 @@ def setSetting(keyandvalue):
     SettingsClass.SetSettingUpdatedByWebService()
     return jsonpickle.encode(MicroMock(Value=settingData.Key + ';' + settingData.Value))
 
+@app.route('/api/wirocdevicename/', methods=['GET'])
+def getWiRocDeviceName():
+    f = open("../settings.yaml", "r")
+    settings = yaml.load(f, Loader=yaml.BaseLoader)
+    f.close()
+    return jsonpickle.encode(MicroMock(Value=settings['WiRocDeviceName']))
+
+@app.route('/api/wirocdevicename/<deviceName>/', methods=['GET'])
+def setWiRocDeviceName(deviceName):
+    f = open("../settings.yaml", "r")
+    settings = yaml.load(f, Loader=yaml.BaseLoader)
+    f.close()
+    settings['WiRocDeviceName'] = deviceName
+    f2 = open('../settings.yaml', 'w')
+    yaml.dump(settings, f2)  # Write a YAML representation of data to 'settings.yaml'.
+    return jsonpickle.encode(MicroMock(Value=deviceName))
+
 @app.route('/api/punches/', methods=['GET'])
 def getPunches():
     DatabaseHelper.reInit()
@@ -284,23 +269,6 @@ def getPunches():
         DatabaseHelper.delete_bleno_punch_data(blenoPunch.id)
 
     return jsonpickle.encode(MicroMock(Value=json_data))
-
-@app.route('/api/wirocdevicename/', methods=['GET'])
-def getWiRocDeviceName():
-    f = open("../settings.yaml", "r")
-    settings = yaml.load(f, Loader=yaml.BaseLoader)
-    f.close()
-    return jsonpickle.encode(MicroMock(Value=settings['WiRocDeviceName']))
-
-@app.route('/api/wirocdevicename/<deviceName>/', methods=['GET'])
-def setWiRocDeviceName(deviceName):
-    f = open("../settings.yaml", "r")
-    settings = yaml.load(f, Loader=yaml.BaseLoader)
-    f.close()
-    settings['WiRocDeviceName'] = deviceName
-    f2 = open('../settings.yaml', 'w')
-    yaml.dump(settings, f2)  # Write a YAML representation of data to 'settings.yaml'.
-    return jsonpickle.encode(MicroMock(Value=deviceName))
 
 @app.route('/api/deletepunches/', methods=['GET'])
 def deletePunches():
@@ -393,6 +361,27 @@ def getWebServerHost():
     return jsonpickle.encode(MicroMock(Value=webServerHost))
 
 
+@app.route('/api/onewayreceive/', methods=['GET'])
+def getOneWayReceive():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('OneWayReceive')
+    oneWayReceive = '0'
+    if sett is not None:
+        oneWayReceive = sett.Value
+    return jsonpickle.encode(MicroMock(Value=oneWayReceive))
+
+@app.route('/api/onewayreceive/<enabled>/', methods=['GET'])
+def SetOneWayReceive(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('OneWayReceive')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'OneWayReceive'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
 @app.route('/api/force4800baudrate/', methods=['GET'])
 def getForce4800BaudRate():
     DatabaseHelper.reInit()
@@ -414,28 +403,6 @@ def SetForce4800BaudRateEnabled(enabled):
     SettingsClass.SetSettingUpdatedByWebService()
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
-
-@app.route('/api/onewayreceive/', methods=['GET'])
-def getOneWayReceive():
-    DatabaseHelper.reInit()
-    sett = DatabaseHelper.get_setting_by_key('OneWayReceive')
-    oneWayReceive = '0'
-    if sett is not None:
-        oneWayReceive = sett.Value
-    return jsonpickle.encode(MicroMock(Value=oneWayReceive))
-
-@app.route('/api/onewayreceive/<enabled>/', methods=['GET'])
-def SetOneWayReceiveEnabled(enabled):
-    DatabaseHelper.reInit()
-    sd = DatabaseHelper.get_setting_by_key('OneWayReceive')
-    if sd is None:
-        sd = SettingData()
-        sd.Key = 'OneWayReceive'
-    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
-    sd = DatabaseHelper.save_setting(sd)
-    SettingsClass.SetSettingUpdatedByWebService()
-    return jsonpickle.encode(MicroMock(Value=sd.Value))
-
 @app.route('/api/sendtoblenoenabled/', methods=['GET'])
 def getSendToBlenoEnabled():
     DatabaseHelper.reInit()
@@ -446,7 +413,7 @@ def getSendToBlenoEnabled():
     return jsonpickle.encode(MicroMock(Value=sendToBlenoEnabled))
 
 @app.route('/api/sendtoblenoenabled/<enabled>/', methods=['GET'])
-def SetSendToBlenoEnabled(enabled):
+def setSendToBlenoEnabled(enabled):
     DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SendToBlenoEnabled')
     if sd is None:
@@ -510,7 +477,7 @@ def getLoggingServerPort():
     return jsonpickle.encode(MicroMock(Value=loggingServerPort))
 
 @app.route('/api/loggingserverport/<port>/', methods=['GET'])
-def SetLoggingServerPort(port):
+def setLoggingServerPort(port):
     DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('LoggingServerPort')
     if sd is None:
@@ -522,23 +489,26 @@ def SetLoggingServerPort(port):
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 @app.route('/api/wirocpythonversion/', methods=['GET'])
-def GetWiRocPythonVersion():
-    f = open("../../WiRocPythonVersion.txt", "r")
+def getWiRocPythonVersion():
+    f = open("../WiRocPythonVersion.txt", "r")
     wirocPythonVersion = f.read()
+    wirocPythonVersion = wirocPythonVersion.strip()
     f.close()
     return jsonpickle.encode(MicroMock(Value=wirocPythonVersion))
 
 @app.route('/api/wirocbleversion/', methods=['GET'])
-def GetWiRocBLEVersion():
-    f = open("../../wirocBLEVersion.txt", "r")
+def getWiRocBLEVersion():
+    f = open("../WiRocBLEVersion.txt", "r")
     wirocBLEVersion = f.read()
+    wirocBLEVersion = wirocBLEVersion.strip()
     f.close()
     return jsonpickle.encode(MicroMock(Value=wirocBLEVersion))
 
 @app.route('/api/wirochwversion/', methods=['GET'])
-def GetWiRocHWVersion():
-    f = open("../../WirocHWVersion.txt", "r")
+def getWiRocHWVersion():
+    f = open("../WiRocHWVersion.txt", "r")
     wirocHWVersion = f.read()
+    wirocHWVersion = wirocHWVersion.strip()
     f.close()
     return jsonpickle.encode(MicroMock(Value=wirocHWVersion))
 
@@ -614,9 +584,14 @@ def getAllMainSettings():
     if sett is not None:
         oneWayReceive = sett.Value
 
+    sett = DatabaseHelper.get_setting_by_key('Force4800BaudRate')
+    force4800BaudRate = '0'
+    if sett is not None:
+        force4800BaudRate = sett.Value
+
     all = ('1' if isCharging else '0') + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \
           acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + '%batteryPercent%' + '¤' + \
           '%ipAddress%'+ '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wirocPythonVersion + '¤' + \
-          wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive
+          wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive + '¤' +force4800BaudRate
 
     return jsonpickle.encode(MicroMock(Value=all))

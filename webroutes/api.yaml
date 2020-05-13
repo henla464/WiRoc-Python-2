@@ -1,0 +1,817 @@
+openapi: "3.0.0"
+info:
+  description: "This is the WiRoc API"
+  version: "1.0.0"
+  title: "WiRoc"
+  contact:
+    email: "laselase@gmail.com"
+servers:
+  - url: /api
+tags:
+  - name: "Radio"
+    description: ""
+  - name: "SIRAP"
+    description: ""
+  - name: "Status"
+    description: ""
+  - name: "Database"
+    description: ""
+  - name: "Public web server"
+    description: ""
+  - name: "SportIdent"
+    description: ""
+  - name: "Debug"
+    description: ""
+paths:
+  /channel/:
+    get:
+      tags:
+      - "Radio"
+      summary: "Get the channel used"
+      operationId: "getChannel"
+      responses:
+        "200":
+          description: "The channel used"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChannelObj"
+  /channel/{channel}:
+    get:
+      tags:
+      - "Radio"
+      summary: "Set the channel"
+      operationId: "setChannel"
+      parameters:
+        - name: channel
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Channel'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChannelObj"
+  /lorarange/:
+    get:
+      tags:
+      - "Radio"
+      summary: "Get the Lora Range"
+      operationId: "getLoraRange"
+      responses:
+        "200":
+          description: "The range used"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoraRangeObj"
+  /lorarange/{lorarange}:
+    get:
+      tags:
+      - "Radio"
+      summary: "Set the Lora Range"
+      operationId: "setLoraRange"
+      parameters:
+        - name: lorarange
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/LoraRange'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoraRangeObj"
+  /acknowledgementrequested/:
+    get:
+      tags:
+      - "Radio"
+      summary: "Get if acknowledgemnt should be requested when sending message over the lora radio"
+      operationId: "getAcknowledgementRequested"
+      responses:
+        "200":
+          description: "0/1 depending on if acknowledgement should be requested"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /acknowledgementrequested/{ackreq}:
+    get:
+      tags:
+      - "Radio"
+      summary: "Set if acknowledgemnt should be requested when sending message over the lora radio"
+      operationId: "setAcknowledgementRequested"
+      parameters:
+        - name: ackreq
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /power/:
+    get:
+      tags:
+      - "Radio"
+      summary: "Get lora radio power in dBm"
+      operationId: "getPower"
+      responses:
+        "200":
+          description: "The lora radio power in dBm"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PowerObj"
+  /power/{power}:
+    get:
+      tags:
+      - "Radio"
+      summary: "Set the lora radio power in dBm"
+      operationId: "setPower"
+      parameters:
+        - name: power
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Power'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PowerObj"
+  /sendtosirapenabled/:
+    get:
+      tags:
+      - "SIRAP"
+      summary: "Get if sending to SIRAP is enabled"
+      operationId: "GetSendToSirapEnabled"
+      responses:
+        "200":
+          description: "0/1 depending on if send to SIRAP is enabled or not"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /sendtosirapenabled/{sendtosirapenabled}:
+    get:
+      tags:
+      - "SIRAP"
+      summary: "Enable/Disable sending punches to SIRAP"
+      operationId: "setSendToSirapEnabled"
+      parameters:
+        - name: sendtosirapenabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /sendtosirapip/:
+    get:
+      tags:
+      - "SIRAP"
+      summary: "Get the IP address that SIRAP messages are sent to"
+      operationId: "getSendToSirapIP"
+      responses:
+        "200":
+          description: "The IP address that SIRAP messages are sent to"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /sendtosirapip/{sendtosirapip}:
+    get:
+      tags:
+      - "SIRAP"
+      summary: "Set the IP address to send SIRAP messages to"
+      operationId: "setSendToSirapIP"
+      parameters:
+        - name: sendtosirapip
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Property'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /sendtosirapipport/:
+    get:
+      tags:
+      - "SIRAP"
+      summary: "Get the TCP/IP port that SIRAP messages are sent to"
+      operationId: "getSendToSirapIPPort"
+      responses:
+        "200":
+          description: "SIRAP TCP/IP Port"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyIntObj"
+  /sendtosirapipport/{sendtosirapipport}:
+    get:
+      tags:
+      - "SIRAP"
+      summary: "Set the TCP/IP port to send SIRAP messages to"
+      operationId: "setSendToSirapIPPort"
+      parameters:
+        - name: sendtosirapipport
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Property'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyIntObj"
+  /status/:
+    get:
+      tags:
+      - "Status"
+      summary: "Get the status, with enabled input and output adapters and transformations"
+      operationId: "getStatus"
+      responses:
+        "200":
+          description: "JSON string with data about the inner status"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /settings/:
+    get:
+      tags:
+      - "Status"
+      summary: "Get all settings"
+      operationId: "getSettings"
+      responses:
+        "200":
+          description: "JSON with all settings"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /setting/{keyandvalue}:
+    get:
+      tags:
+      - "Status"
+      summary: "Add or change a setting"
+      operationId: "setSetting"
+      parameters:
+        - name: keyandvalue
+          description: "Enter in the format key;value"
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Property'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /wirocdevicename/:
+    get:
+      tags:
+      - "Status"
+      summary: "Get the device name"
+      operationId: "getWiRocDeviceName"
+      responses:
+        "200":
+          description: "The device name"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /wirocdevicename/{devicename}:
+    get:
+      tags:
+      - "Status"
+      summary: "Set the WiRoc device name"
+      operationId: "setWiRocDeviceName"
+      parameters:
+        - name: devicename
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Property'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /punches/:
+    get:
+      tags:
+      - "Punches"
+      summary: "Get new punches (sendtoblenoenabled must be enabled)"
+      operationId: "getPunches"
+      responses:
+        "200":
+          description: "JSON with the new punches"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /deletepunches/:
+    get:
+      tags:
+      - "Punches"
+      summary: "Delete all punches in the database"
+      operationId: "deletePunches"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /dropalltables/:
+    get:
+      tags:
+      - "Database"
+      summary: "Drop and recreate all tables in the database"
+      operationId: "dropalltables"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /testpunches/gettestpunches/{testbatchguid}/{includeall}/:
+    get:
+      tags:
+      - "Punches"
+      summary: "Get the test punches given the batch guid"
+      operationId: "getTestPunches"
+      parameters:
+        - name: testbatchguid
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Property'
+        - name: includeall
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalseString'
+      responses:
+        "200":
+          description: "JSON with test punches"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /testpunches/addtestpunch/{testbatchguid}/{sinumber}/:
+    get:
+      tags:
+      - "Punches"
+      summary: "Add a test punch to a test batch"
+      operationId: "addTestPunch"
+      parameters:
+        - name: testbatchguid
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Property'
+        - name: sinumber
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /ischarging/:
+    get:
+      tags:
+      - "Status"
+      summary: "Get if the device is charging now"
+      operationId: "getIsCharging"
+      responses:
+        "200":
+          description: "1 if it is charging, 0 otherwise"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /apikey/:
+    get:
+      tags:
+      - "Public web server"
+      summary: "Get the API key required for posting things to the internet server"
+      operationId: "getApiKey"
+      responses:
+        "200":
+          description: "The API key"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /webserverurl/:
+    get:
+      tags:
+      - "Public web server"
+      summary: "Get the web server url to the internet server"
+      operationId: "getWebServerUrl"
+      responses:
+        "200":
+          description: "The web server url"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /webserverhost/:
+    get:
+      tags:
+      - "Public web server"
+      summary: "Get the web server host of the internet server"
+      operationId: "getWebServerHost"
+      responses:
+        "200":
+          description: "The web server host"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /onewayreceive/:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Get if one-way recieve from SportIdent master station is enabled"
+      operationId: "getOneWayReceive"
+      responses:
+        "200":
+          description: "0/1 depending on if one-way recieve is enabled"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /onewayreceive/{onewayenabled}:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Enable/Disable one-way recieve from SportIdent master station"
+      operationId: "setOneWayReceive"
+      parameters:
+        - name: onewayenabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /force4800baudrate/:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Get if one-way recieve from SportIdent master station is enabled"
+      operationId: "getForce4800BaudRate"
+      responses:
+        "200":
+          description: "0/1 depending on if one-way recieve is enabled"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /force4800baudrate/{forceenabled}:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Enable/Disable one-way recieve from SportIdent master station"
+      operationId: "setForce4800BaudRate"
+      parameters:
+        - name: forceenabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /sendtoblenoenabled/:
+    get:
+      tags:
+      - "Punches"
+      summary: "Is sending punches to webservice enabled"
+      operationId: "getSendToBlenoEnabled"
+      responses:
+        "200":
+          description: "0/1 depending on if sending punches to webservice is enabled"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /sendtoblenoenabled/{blenoenabled}:
+    get:
+      tags:
+      - "Punches"
+      summary: "Enable/Disable one-way recieve from SportIdent master station"
+      operationId: "setSendToBlenoEnabled"
+      parameters:
+        - name: blenoenabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /logtoserver/:
+    get:
+      tags:
+      - "Debug"
+      summary: "Is logging to server enabled"
+      operationId: "getLogToServer"
+      responses:
+        "200":
+          description: "0/1 depending on if logging to server is enabled"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /logtoserver/{logtoserver}:
+    get:
+      tags:
+      - "Debug"
+      summary: "Enable/Disable logging to server"
+      operationId: "setLogToServer"
+      parameters:
+        - name: logtoserver
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /loggingserverhost/:
+    get:
+      tags:
+      - "Debug"
+      summary: "Get the logging server host"
+      operationId: "getLoggingServerHost"
+      responses:
+        "200":
+          description: "The host"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /loggingserverhost/{host}:
+    get:
+      tags:
+      - "Debug"
+      summary: "Set the logging server host"
+      operationId: "setLoggingServerHost"
+      parameters:
+        - name: host
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Property'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /loggingserverport/:
+    get:
+      tags:
+      - "Debug"
+      summary: "Get the TCP/IP port to send logging to"
+      operationId: "getLoggingServerPort"
+      responses:
+        "200":
+          description: "SIRAP TCP/IP Port"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyIntObj"
+  /loggingserverport/{port}:
+    get:
+      tags:
+      - "Debug"
+      summary: "Set the TCP/IP port send logging to"
+      operationId: "setLoggingServerPort"
+      parameters:
+        - name: port
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyIntObj"
+  /wirocpythonversion/:
+    get:
+      tags:
+      - "Status"
+      summary: "Get the WiRoc Python version"
+      operationId: "getWiRocPythonVersion"
+      responses:
+        "200":
+          description: "The version"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /wirocbleversion/:
+    get:
+      tags:
+      - "Status"
+      summary: "Get the WiRoc BLE version"
+      operationId: "getWiRocBLEVersion"
+      responses:
+        "200":
+          description: "The version"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /wirochwversion/:
+    get:
+      tags:
+      - "Status"
+      summary: "Get the WiRoc hardware version"
+      operationId: "getWiRocHWVersion"
+      responses:
+        "200":
+          description: "The version"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /all/:
+    get:
+      tags:
+      - "Status"
+      summary: "Gets a semicolon separated list of settings"
+      operationId: "getAllMainSettings"
+      responses:
+        "200":
+          description: "The semicolon separated list of settings"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+components:
+  schemas:
+    Channel:
+      type: "string"
+      description: "The channel as a string"
+      enum:
+      - "1"
+      - "2"
+      - "3"
+      - "4"
+      - "5"
+      - "6"
+    ChannelObj:
+      type: "object"
+      properties:
+        Value:
+          $ref: '#/components/schemas/Channel'
+        py/object:
+          type: "string"
+    LoraRange:
+      type: "string"
+      description: "The lora range as a string"
+      enum:
+      - "UL"
+      - "XL"
+      - "L"
+      - "ML"
+      - "MS"
+      - "S"
+    LoraRangeObj:
+      type: "object"
+      properties:
+        Value:
+          $ref: '#/components/schemas/LoraRange'
+        py/object:
+          type: "string"
+    TrueFalseString:
+      type: "string"
+      description: "true or false as string"
+      enum:
+      - "true"
+      - "false"
+    TrueFalse:
+      type: "string"
+      description: "True or False as 0/1 string"
+      enum:
+      - "0"
+      - "1"
+    TrueFalseObj:
+      type: "object"
+      properties:
+        Value:
+          $ref: '#/components/schemas/TrueFalse'
+        py/object:
+          type: "string"
+    Power:
+      type: "string"
+      description: "The lora power in dBm"
+      enum:
+      - "1"
+      - "2"
+      - "3"
+      - "4"
+      - "5"
+      - "6"
+      - "7"
+      - "8"
+      - "9"
+      - "10"
+      - "11"
+      - "12"
+      - "13"
+      - "14"
+      - "15"
+      - "16"
+      - "17"
+      - "18"
+      - "19"
+      - "20"
+      - "21"
+      - "22"
+    PowerObj:
+      type: "object"
+      properties:
+        Value:
+          $ref: '#/components/schemas/Power'
+        py/object:
+          type: "string"
+    Property:
+      type: "string"
+    PropertyObj:
+      type: "object"
+      properties:
+        Value:
+          $ref: '#/components/schemas/Property'
+        py/object:
+          type: "string"
+    PropertyInt:
+      type: "integer"
+    PropertyIntObj:
+      type: "object"
+      properties:
+        Value:
+          $ref: '#/components/schemas/PropertyInt'
+        py/object:
+          type: "string"
