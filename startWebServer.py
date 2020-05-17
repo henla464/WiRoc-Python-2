@@ -5,9 +5,6 @@ from init import *
 import os
 from battery import Battery
 from daemonize import Daemonize
-from webroutes import radioconfiguration
-from webroutes import meosconfiguration
-from webroutes import misc
 from webroutes import api
 
 def startWebServer():

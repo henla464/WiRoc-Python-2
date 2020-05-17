@@ -12,7 +12,8 @@ from setup import Setup
 import time
 import logging, logging.handlers
 from datetime import datetime, timedelta
-from webroutes.meosconfiguration import *
+from datamodel.db_helper import DatabaseHelper
+from settings.settings import SettingsClass
 import cProfile
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 import socket

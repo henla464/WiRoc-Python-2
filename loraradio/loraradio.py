@@ -132,6 +132,10 @@ class LoraRadio:
         self.hardwareAbstraction = hardwareAbstraction
 
     def GetIsInitialized(self, channel, range, loraPower):
+        LoraRadio.WiRocLogger.debug(
+            "LoraRadio::GetIsInitialized(): " + str(channel) + ":" + str(range) + ":" + str(loraPower))
+        LoraRadio.WiRocLogger.debug(
+            "LoraRadio::GetIsInitialized(): " + Utils.GetDataInHex(data, logging.DEBUG))
         return self.isInitialized and \
                channel == self.channel and \
                loraPower == self.loraPower and \
@@ -216,23 +220,13 @@ class LoraRadio:
     def Init(self, channel, loraRange, loraPower):
         if loraPower > 0x07:
             loraPower = 0x07
+            SettingsClass.SetLoraPower(0x07)
         LoraRadio.WiRocLogger.info("LoraRadio::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraRange: " + loraRange + " LoraPower: " + str(loraPower))
         self.hardwareAbstraction.EnableLora()
         time.sleep(0.1)
 
         self.channel = channel
-
-
-        #loraDataRate = 293
-        #if loraRange == 'L':
-        #    loraDataRate = 293
-        #elif loraRange == 'ML':
-        #    loraDataRate = 537
-        #elif loraRange == 'MS':
-        #    loraDataRate = 977
-        #elif loraRange == 'S':
-        #    loraDataRate = 1758
-
+        self.loraRange = loraRange
         self.loraPower = loraPower
 
         self.radioSerial.baudrate = 9600

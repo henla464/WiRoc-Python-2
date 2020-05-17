@@ -307,6 +307,11 @@ class SettingsClass(object):
         return int(sett.Value)
 
     @staticmethod
+    def SetLoraPower(loraPower):
+        SettingsClass.SetSetting("LoraPower", str(loraPower))
+        cache.clear()
+
+    @staticmethod
     @cached(cache, key=partial(hashkey, 'GetAcknowledgementRequested'), lock=rlock)
     def GetAcknowledgementRequested():
         sett = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
@@ -463,11 +468,6 @@ class SettingsClass(object):
         settings = yaml.load(f, Loader=yaml.BaseLoader)
         f.close()
         return settings['WiRocDeviceName']
-        #sett = DatabaseHelper.get_setting_by_key('WiRocDeviceName')
-        #if sett is None:
-        #    SettingsClass.SetSetting("WiRocDeviceName", None)
-        #    return None
-        #return sett.Value
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetWebServerHost'), lock=rlock)
