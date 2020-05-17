@@ -195,7 +195,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PropertyObj"
+                $ref: "#/components/schemas/IPAddressObj"
   /sendtosirapip/{sendtosirapip}:
     get:
       tags:
@@ -207,14 +207,14 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/Property'
+            $ref: '#/components/schemas/IPAddress'
       responses:
         "200":
           description: "successful operation"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PropertyObj"
+                $ref: "#/components/schemas/IPAddressObj"
   /sendtosirapipport/:
     get:
       tags:
@@ -795,6 +795,16 @@ components:
       properties:
         Value:
           $ref: '#/components/schemas/Power'
+        py/object:
+          type: "string"
+    IPAddress:
+      type: "string"
+      format: ipv4
+    IPAddressObj:
+      type: "object"
+      properties:
+        Value:
+          $ref: '#/components/schemas/IPAddress'
         py/object:
           type: "string"
     Property:

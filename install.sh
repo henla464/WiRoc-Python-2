@@ -2,10 +2,34 @@
 #systemctl disable apt-daily.service # disable run when system boot
 #systemctl disable apt-daily.timer   # disable timer run
 
-WiRocPython2Version="0.137"
-WiRocBLEVersion="0.38"
-WiRocHWVersion="3Rev2"
+WiRocPython2Version="0.157"
+echo "Which WiRocPython2Version? [$WiRocPython2Version]"
+read wPOption
+if ! [[ -z "$wPOption" ]];
+then
+    WiRocPython2Version=$wPOption
+fi
 
+WiRocBLEVersion="0.53"
+echo "Which WiRocBLEVersion? [$WiRocBLEVersion]"
+read wBLEOption
+if ! [[ -z "$wBLEOption" ]];
+then
+    WiRocBLEVersion=$wBLEOption
+fi
+
+echo "Which hardware is this runnig on: 1: CHIP+7SEG, 2: CHIP+OLED, 3: NanoPi"
+read hwOption
+WiRocHWVersion="3Rev2"
+if [[ $hwOption = 1 ]]; then
+    WiRocHWVersion="2Rev1"
+fi
+if [[ $hwOption = 2 ]]; then
+    WiRocHWVersion="2Rev2"
+fi
+if [[ $hwOption = 3 ]]; then
+    WiRocHWVersion="3Rev2"
+fi
 
 echo "update"
 #read line
