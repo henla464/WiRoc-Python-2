@@ -242,6 +242,36 @@ def setWiRocDeviceName(deviceName):
     yaml.dump(settings, f2)  # Write a YAML representation of data to 'settings.yaml'.
     return jsonpickle.encode(MicroMock(Value=deviceName))
 
+
+def getWiRocMode():
+    DatabaseHelper.reInit()
+
+    sett = DatabaseHelper.get_setting_by_key('SendSerialAdapterActive')
+    sendSerialAdapterActive = (sett is not None and sett.Value == "1")
+
+    sett = DatabaseHelper.get_setting_by_key('SendToMeosEnabled')
+    sendToMeosEnabled = (sett is not None and sett.Value == "1")
+
+    sett = DatabaseHelper.get_setting_by_key('ReceiveSIAdapterActive')
+    receiveSIAdapterActive = (sett is not None and sett.Value == "1")
+
+    if sendSerialAdapterActive:  # and output = SERIAL
+        # connected to computer or other WiRoc
+        wirocMode = "RECEIVER"
+    elif sendToMeosEnabled:  # and output = MEOS
+        # configured to send to Meos over network/wifi
+        wirocMode = "RECEIVER"
+    elif receiveSIAdapterActive:
+        wirocMode = "SENDER"
+    else:
+        wirocMode = "REPEATER"
+    return wirocMode
+
+@app.route('/api/wirocmode/', methods=['GET'])
+def getWiRocModeJson():
+    wirocMode = getWiRocMode()
+    return jsonpickle.encode(MicroMock(Value=wirocMode))
+
 @app.route('/api/punches/', methods=['GET'])
 def getPunches():
     DatabaseHelper.reInit()
@@ -589,9 +619,11 @@ def getAllMainSettings():
     if sett is not None:
         force4800BaudRate = sett.Value
 
+    wirocMode = getWiRocMode()
+
     all = ('1' if isCharging else '0') + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \
           acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + '%batteryPercent%' + '¤' + \
           '%ipAddress%'+ '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wirocPythonVersion + '¤' + \
-          wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive + '¤' +force4800BaudRate
+          wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive + '¤' + force4800BaudRate + '¤'+ wirocMode
 
     return jsonpickle.encode(MicroMock(Value=all))

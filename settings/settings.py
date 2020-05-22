@@ -234,6 +234,8 @@ class SettingsClass(object):
      #####
      # Changed both locally and via web services
      #####
+
+    # Also see the code for wirocmode in the api. This is duplicated there.
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetWiRocMode'), lock=rlock)
     def GetWiRocMode():
