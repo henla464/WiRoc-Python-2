@@ -184,7 +184,7 @@ class Main:
         loggingServerHost = SettingsClass.GetLoggingServerHost()
         loggingServerPort = SettingsClass.GetLoggingServerPort()
         logToServer = SettingsClass.GetLogToServer()
-        sendToSirap SettingsClass.GetSendToSirapEnabled()
+        sendToSirap = SettingsClass.GetSendToSirapEnabled()
 
         t = threading.Thread(target=self.reconfigureBackground, args=(sendToSirap, webServerIPUrl, webServerHost, loggingServerHost, loggingServerPort, logToServer))
         t.daemon = True

@@ -1,24 +1,23 @@
 from utils.utils import Utils
-from datamodel.datamodel import LoraRadioMessage
 from datamodel.datamodel import SIMessage
 
-class LoraSIMessageToMeosTransform(object):
+class SITestTestToSirapTransform(object):
 
     @staticmethod
     def GetInputMessageType():
-        return "LORA"
+        return "SITEST"
 
     @staticmethod
     def GetInputMessageSubType():
-        return "SIMessage"
+        return "Test"
 
     @staticmethod
     def GetOutputMessageType():
-        return "MEOS"
+        return "SIRAP"
 
     @staticmethod
     def GetName():
-        return "LoraSIMessageToMeosTransform"
+        return "SITestTestToSirapTransform"
 
     @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
@@ -36,10 +35,6 @@ class LoraSIMessageToMeosTransform(object):
     @staticmethod
     def Transform(msgSub, subscriberAdapter):
         payloadData = msgSub.MessageData
-        msg = LoraRadioMessage()
-        msg.AddPayload(payloadData)
-        loraHeaderSize = LoraRadioMessage.GetHeaderSize()
-        siPayloadData = payloadData[loraHeaderSize:]
         siMsg = SIMessage()
-        siMsg.AddPayload(siPayloadData)
-        return {"Data": Utils.GetMeosDataFromSIData(siMsg), "MessageID": None}
+        siMsg.AddPayload(payloadData)
+        return {"Data": Utils.GetSirapDataFromSIData(siMsg), "MessageID": None}

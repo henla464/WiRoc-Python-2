@@ -11,7 +11,7 @@ class SendToSirapAdapter(object):
     @staticmethod
     def CreateInstances():
         if len(SendToSirapAdapter.Instances) == 0:
-            SendToSirapAdapter.Instances.append(SendToSirapAdapter('meos1'))
+            SendToSirapAdapter.Instances.append(SendToSirapAdapter('sirap1'))
             return True
         # check if enabled changed => let init/enabledisablesubscription run
         isInitialized = SendToSirapAdapter.Instances[0].GetIsInitialized()
@@ -23,7 +23,7 @@ class SendToSirapAdapter(object):
 
     @staticmethod
     def GetTypeName():
-        return "MEOS"
+        return "SIRAP"
 
     @staticmethod
     def EnableDisableSubscription():
@@ -75,7 +75,7 @@ class SendToSirapAdapter(object):
         self.isDBInitialized = val
 
     def GetTransformNames(self):
-        return ["LoraSIMessageToMeosTransform", "SISIMessageToMeosTransform", "SITestTestToMeosTransform" ]
+        return ["LoraSIMessageToSirapTransform", "SISIMessageToSirapTransform", "SITestTestToSirapTransform" ]
 
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass

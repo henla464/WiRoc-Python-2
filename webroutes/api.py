@@ -259,7 +259,7 @@ def getWiRocMode():
         # connected to computer or other WiRoc
         wirocMode = "RECEIVER"
     elif sendToSirapEnabled:  # and output = SIRAP
-        # configured to send to Meos over network/wifi
+        # configured to send to Sirap over network/wifi
         wirocMode = "RECEIVER"
     elif receiveSIAdapterActive:
         wirocMode = "SENDER"

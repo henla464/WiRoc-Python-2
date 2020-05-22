@@ -1,7 +1,7 @@
 from utils.utils import Utils
 from datamodel.datamodel import SIMessage
 
-class SISIMessageToMeosTransform(object):
+class SISIMessageToSirapTransform(object):
 
     @staticmethod
     def GetInputMessageType():
@@ -13,11 +13,11 @@ class SISIMessageToMeosTransform(object):
 
     @staticmethod
     def GetOutputMessageType():
-        return "MEOS"
+        return "SIRAP"
 
     @staticmethod
     def GetName():
-        return "SISIMessageToMeosTransform"
+        return "SISIMessageToSirapTransform"
 
     @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
@@ -37,4 +37,4 @@ class SISIMessageToMeosTransform(object):
         payloadData = msgSub.MessageData
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
-        return {"Data": Utils.GetMeosDataFromSIData(siMsg), "MessageID": None}
+        return {"Data": Utils.GetSirapDataFromSIData(siMsg), "MessageID": None}

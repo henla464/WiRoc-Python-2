@@ -242,8 +242,8 @@ class SettingsClass(object):
         if SettingsClass.GetSendSerialAdapterActive():  # and output = SERIAL
             # connected to computer or other WiRoc
             return "RECEIVER"
-        elif SettingsClass.GetSendToSirapEnabled():  # and output = MEOS
-            # configured to send to Meos over network/wifi
+        elif SettingsClass.GetSendToSirapEnabled():  # and output = SIRAP
+            # configured to send to Sirap over network/wifi
             return "RECEIVER"
         elif SettingsClass.GetReceiveSIAdapterActive():
             return "SENDER"

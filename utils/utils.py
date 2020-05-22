@@ -138,9 +138,9 @@ class Utils:
 
 
     @staticmethod
-    def GetMeosDataFromSIData(siMessage):
+    def GetSirapDataFromSIData(siMessage):
         #if len(siPayloadData) < 12:
-        #    logging.error("Utils::GetMeosDataFromSIData() length siPayloadData less than 12")
+        #    logging.error("Utils::GetSirapDataFromSIData() length siPayloadData less than 12")
         #    return None
         #punchData = PunchData(siPayloadData)
         punch = 0  # type of data
