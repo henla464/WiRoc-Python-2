@@ -3,21 +3,21 @@ from datamodel.db_helper import DatabaseHelper
 import socket
 import logging
 
-class SendToMeosAdapter(object):
+class SendToSirapAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
     Instances = []
     SubscriptionsEnabled = False
 
     @staticmethod
     def CreateInstances():
-        if len(SendToMeosAdapter.Instances) == 0:
-            SendToMeosAdapter.Instances.append(SendToMeosAdapter('meos1'))
+        if len(SendToSirapAdapter.Instances) == 0:
+            SendToSirapAdapter.Instances.append(SendToSirapAdapter('meos1'))
             return True
         # check if enabled changed => let init/enabledisablesubscription run
-        isInitialized = SendToMeosAdapter.Instances[0].GetIsInitialized()
-        enabled = SettingsClass.GetSendToMeosEnabled()
+        isInitialized = SendToSirapAdapter.Instances[0].GetIsInitialized()
+        enabled = SettingsClass.GetSendToSirapEnabled()
         subscriptionShouldBeEnabled = (isInitialized and enabled)
-        if SendToMeosAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
+        if SendToSirapAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
             return True
         return False
 
@@ -27,14 +27,14 @@ class SendToMeosAdapter(object):
 
     @staticmethod
     def EnableDisableSubscription():
-        if len(SendToMeosAdapter.Instances) > 0:
-            isInitialized = SendToMeosAdapter.Instances[0].GetIsInitialized()
-            enabled = SettingsClass.GetSendToMeosEnabled()
+        if len(SendToSirapAdapter.Instances) > 0:
+            isInitialized = SendToSirapAdapter.Instances[0].GetIsInitialized()
+            enabled = SettingsClass.GetSendToSirapEnabled()
             subscriptionShouldBeEnabled = (isInitialized and enabled)
-            if SendToMeosAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
-                SendToMeosAdapter.WiRocLogger.info("SendToMeosAdapter::EnableDisableSubscription() subscription set enabled: " + str(subscriptionShouldBeEnabled))
-                SendToMeosAdapter.SubscriptionsEnabled = subscriptionShouldBeEnabled
-                DatabaseHelper.update_subscriptions(subscriptionShouldBeEnabled, SendToMeosAdapter.GetDeleteAfterSent(), SendToMeosAdapter.GetTypeName())
+            if SendToSirapAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
+                SendToSirapAdapter.WiRocLogger.info("SendToSirapAdapter::EnableDisableSubscription() subscription set enabled: " + str(subscriptionShouldBeEnabled))
+                SendToSirapAdapter.SubscriptionsEnabled = subscriptionShouldBeEnabled
+                DatabaseHelper.update_subscriptions(subscriptionShouldBeEnabled, SendToSirapAdapter.GetDeleteAfterSent(), SendToSirapAdapter.GetTypeName())
 
 
     @staticmethod
@@ -104,20 +104,20 @@ class SendToMeosAdapter(object):
         if self.sock is None:
             try:
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                SendToMeosAdapter.WiRocLogger.debug("SendToMeosAdapter::SendData() Address: " + settingsDictionary["SendToMeosIP"] + " Port: " + str(settingsDictionary["SendToMeosIPPort"]))
-                server_address = (settingsDictionary["SendToMeosIP"], settingsDictionary["SendToMeosIPPort"])
+                SendToSirapAdapter.WiRocLogger.debug("SendToSirapAdapter::SendData() Address: " + settingsDictionary["SendToSirapIP"] + " Port: " + str(settingsDictionary["SendToSirapIPPort"]))
+                server_address = (settingsDictionary["SendToSirapIP"], settingsDictionary["SendToSirapIPPort"])
                 self.sock.settimeout(2)
                 self.sock.connect(server_address)
-                SendToMeosAdapter.WiRocLogger.debug("SendToMeosAdapter::SendData() After connect")
+                SendToSirapAdapter.WiRocLogger.debug("SendToSirapAdapter::SendData() After connect")
             except socket.gaierror as msg:
-                SendToMeosAdapter.WiRocLogger.error("SendToMeosAdapter::SendData() Address-related error connecting to server: " + str(msg))
+                SendToSirapAdapter.WiRocLogger.error("SendToSirapAdapter::SendData() Address-related error connecting to server: " + str(msg))
                 if self.sock != None:
                     self.sock.close()
                 self.sock = None
                 callbackQueue.put((failureCB,))
                 return False
             except socket.error as msg:
-                SendToMeosAdapter.WiRocLogger.error("SendToMeosAdapter::SendData() Connection error: " + str(msg))
+                SendToSirapAdapter.WiRocLogger.error("SendToSirapAdapter::SendData() Connection error: " + str(msg))
                 if self.sock != None:
                     self.sock.close()
                 self.sock = None
@@ -129,7 +129,7 @@ class SendToMeosAdapter(object):
             self.sock.sendall(messageData)
             self.sock.close()
             self.sock = None
-            SendToMeosAdapter.WiRocLogger.debug("SendToMeosAdapter::SendData() Sent to MEOS")
+            SendToSirapAdapter.WiRocLogger.debug("SendToSirapAdapter::SendData() Sent to SIRAP")
             callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), "SIMessage", "Sent", 1))
             callbackQueue.put((successCB,))
             return True
@@ -141,7 +141,7 @@ class SendToMeosAdapter(object):
             callbackQueue.put((failureCB,))
             return False
         except:
-            SendToMeosAdapter.WiRocLogger.error("SendToMeosAdapter::SendData() Exception")
+            SendToSirapAdapter.WiRocLogger.error("SendToSirapAdapter::SendData() Exception")
             if self.sock != None:
                 self.sock.close()
             self.sock = None

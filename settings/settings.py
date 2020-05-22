@@ -242,7 +242,7 @@ class SettingsClass(object):
         if SettingsClass.GetSendSerialAdapterActive():  # and output = SERIAL
             # connected to computer or other WiRoc
             return "RECEIVER"
-        elif SettingsClass.GetSendToMeosEnabled():  # and output = MEOS
+        elif SettingsClass.GetSendToSirapEnabled():  # and output = MEOS
             # configured to send to Meos over network/wifi
             return "RECEIVER"
         elif SettingsClass.GetReceiveSIAdapterActive():
@@ -323,28 +323,28 @@ class SettingsClass(object):
         return  (sett.Value == "1")
 
     @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetSendToMeosEnabled'), lock=rlock)
-    def GetSendToMeosEnabled():
-        sett = DatabaseHelper.get_setting_by_key('SendToMeosEnabled')
+    @cached(cache, key=partial(hashkey, 'GetSendToSirapEnabled'), lock=rlock)
+    def GetSendToSirapEnabled():
+        sett = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
         if sett is None:
-            SettingsClass.SetSetting("SendToMeosEnabled", "0")
+            SettingsClass.SetSetting("SendToSirapEnabled", "0")
             return False
         return (sett.Value == "1")
 
     @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetSendToMeosIP'), lock=rlock)
-    def GetSendToMeosIP():
-        sett = DatabaseHelper.get_setting_by_key('SendToMeosIP')
+    @cached(cache, key=partial(hashkey, 'GetSendToSirapIP'), lock=rlock)
+    def GetSendToSirapIP():
+        sett = DatabaseHelper.get_setting_by_key('SendToSirapIP')
         if sett is None:
             return None
         return sett.Value
 
     @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetSendToMeosIPPort'), lock=rlock)
-    def GetSendToMeosIPPort():
-        sett = DatabaseHelper.get_setting_by_key('SendToMeosIPPort')
+    @cached(cache, key=partial(hashkey, 'GetSendToSirapIPPort'), lock=rlock)
+    def GetSendToSirapIPPort():
+        sett = DatabaseHelper.get_setting_by_key('SendToSirapIPPort')
         if sett is None:
-            SettingsClass.SetSetting("SendToMeosIPPort", "10000")
+            SettingsClass.SetSetting("SendToSirapIPPort", "10000")
             return 10000
         return int(sett.Value)
 

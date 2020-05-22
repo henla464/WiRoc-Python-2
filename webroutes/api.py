@@ -249,8 +249,8 @@ def getWiRocMode():
     sett = DatabaseHelper.get_setting_by_key('SendSerialAdapterActive')
     sendSerialAdapterActive = (sett is not None and sett.Value == "1")
 
-    sett = DatabaseHelper.get_setting_by_key('SendToMeosEnabled')
-    sendToMeosEnabled = (sett is not None and sett.Value == "1")
+    sett = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
+    sendToSirapEnabled = (sett is not None and sett.Value == "1")
 
     sett = DatabaseHelper.get_setting_by_key('ReceiveSIAdapterActive')
     receiveSIAdapterActive = (sett is not None and sett.Value == "1")
@@ -258,7 +258,7 @@ def getWiRocMode():
     if sendSerialAdapterActive:  # and output = SERIAL
         # connected to computer or other WiRoc
         wirocMode = "RECEIVER"
-    elif sendToMeosEnabled:  # and output = MEOS
+    elif sendToSirapEnabled:  # and output = SIRAP
         # configured to send to Meos over network/wifi
         wirocMode = "RECEIVER"
     elif receiveSIAdapterActive:

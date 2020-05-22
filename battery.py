@@ -135,14 +135,14 @@ class Battery(object):
         return 15
 
     @classmethod
-    def UpdateWifiPowerSaving(cls, sendToMeos):
+    def UpdateWifiPowerSaving(cls, sendToSirap):
         if cls.isRunningOnChip or cls.isRunningOnNanoPi:
-            if sendToMeos and (cls.wifiPowerSaving or cls.wifiPowerSaving is None):
+            if sendToSirap and (cls.wifiPowerSaving or cls.wifiPowerSaving is None):
                 # disable power saving
                 Battery.WiRocLogger.info("Start::updateWifiPowerSaving() Disable WiFi power saving")
                 os.system("sudo iw wlan0 set power_save off")
                 cls.wifiPowerSaving = False
-            elif not sendToMeos and (not cls.wifiPowerSaving or cls.wifiPowerSaving is None):
+            elif not sendToSirap and (not cls.wifiPowerSaving or cls.wifiPowerSaving is None):
                 # enable power saving
                 Battery.WiRocLogger.info("Start::updateWifiPowerSaving() Enable WiFi power saving")
                 os.system("sudo iw wlan0 set power_save on")

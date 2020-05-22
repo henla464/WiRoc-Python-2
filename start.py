@@ -128,7 +128,7 @@ class Main:
             self.wirocLogger.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
             DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
 
-    def reconfigureBackground(self,sendToMeos, webServerIPUrl, webServerHost, loggingServerHost, loggingServerPort, logToServer):
+    def reconfigureBackground(self, sendToSirap, webServerIPUrl, webServerHost, loggingServerHost, loggingServerPort, logToServer):
         if any(isinstance(h, logging.handlers.HTTPHandler) for h in logging.getLogger('').handlers):
             if not logToServer:
                 logging.getLogger('').handlers = [h for h in logging.getLogger('').handlers if
@@ -141,7 +141,7 @@ class Main:
 
         self.updateWebserverIPBackground(webServerHost)
         self.webServerUp = SendStatusAdapter.TestConnection(webServerIPUrl, webServerHost)
-        Battery.UpdateWifiPowerSaving(sendToMeos)
+        Battery.UpdateWifiPowerSaving(sendToSirap)
         Battery.Tick()
 
     def updateDisplayBackground(self,channel,ackRequested, wirocMode, loraRange, wirocDeviceName, sirapTCPEnabled,
@@ -157,10 +157,10 @@ class Main:
             ackRequested = SettingsClass.GetAcknowledgementRequested()
             wirocMode = SettingsClass.GetWiRocMode()
             loraRange = SettingsClass.GetLoraRange()
-            sirapTCPEnabled = SettingsClass.GetSendToMeosEnabled()
+            sirapTCPEnabled = SettingsClass.GetSendToSirapEnabled()
             sendSerialActive = SettingsClass.GetSendSerialAdapterActive()
-            sirapIPAddress = SettingsClass.GetSendToMeosIP()
-            sirapIPPort = SettingsClass.GetSendToMeosIPPort()
+            sirapIPAddress = SettingsClass.GetSendToSirapIP()
+            sirapIPPort = SettingsClass.GetSendToSirapIPPort()
             wiRocIPAddress = HardwareAbstraction.Instance.GetWiRocIPAddresses()
 
             t = threading.Thread(target=self.updateDisplayBackground, args=(
@@ -184,9 +184,9 @@ class Main:
         loggingServerHost = SettingsClass.GetLoggingServerHost()
         loggingServerPort = SettingsClass.GetLoggingServerPort()
         logToServer = SettingsClass.GetLogToServer()
-        sendToMeos = SettingsClass.GetSendToMeosEnabled()
+        sendToSirap SettingsClass.GetSendToSirapEnabled()
 
-        t = threading.Thread(target=self.reconfigureBackground, args=(sendToMeos, webServerIPUrl, webServerHost, loggingServerHost, loggingServerPort, logToServer))
+        t = threading.Thread(target=self.reconfigureBackground, args=(sendToSirap, webServerIPUrl, webServerHost, loggingServerHost, loggingServerPort, logToServer))
         t.daemon = True
         t.start()
 
@@ -500,8 +500,8 @@ class Main:
         settDict["WebServerIPUrl"] = SettingsClass.GetWebServerIPUrl()
         settDict["WebServerHost"] = SettingsClass.GetWebServerHost()
         settDict["WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
-        settDict["SendToMeosIP"] = SettingsClass.GetSendToMeosIP()
-        settDict["SendToMeosIPPort"] = SettingsClass.GetSendToMeosIPPort()
+        settDict["SendToSirapIP"] = SettingsClass.GetSendToSirapIP()
+        settDict["SendToSirapIPPort"] = SettingsClass.GetSendToSirapIPPort()
         settDict["ApiKey"] = SettingsClass.GetAPIKey()
 
         while True:
@@ -520,8 +520,8 @@ class Main:
                     settDict["WebServerHost"] = SettingsClass.GetWebServerHost()
                     settDict[
                         "WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
-                    settDict["SendToMeosIP"] = SettingsClass.GetSendToMeosIP()
-                    settDict["SendToMeosIPPort"] = SettingsClass.GetSendToMeosIPPort()
+                    settDict["SendToSirapIP"] = SettingsClass.GetSendToSirapIP()
+                    settDict["SendToSirapIPPort"] = SettingsClass.GetSendToSirapIPPort()
                     settDict["ApiKey"] = SettingsClass.GetAPIKey()
                     self.reconfigure()
 

@@ -9,7 +9,7 @@ from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from subscriberadapters.sendloraadapter import SendLoraAdapter
 from subscriberadapters.sendserialadapter import SendSerialAdapter
 from subscriberadapters.sendtoblenoadapter import SendToBlenoAdapter
-from subscriberadapters.sendtomeosadapter import SendToMeosAdapter
+from subscriberadapters.sendtosirapadapter import SendToSirapAdapter
 from subscriberadapters.sendstatusadapter import SendStatusAdapter
 from inputadapters.createstatusadapter import CreateStatusAdapter
 from inputadapters.receiveloraadapter import ReceiveLoraAdapter
@@ -70,12 +70,12 @@ class Setup:
         change1 = SendLoraAdapter.CreateInstances(HardwareAbstraction.Instance)
         #change2 = SendSerialAdapter.CreateInstances()
         change3 = SendToBlenoAdapter.CreateInstances()
-        change4 = SendToMeosAdapter.CreateInstances()
+        change4 = SendToSirapAdapter.CreateInstances()
         change5 = SendStatusAdapter.CreateInstances()
         subscriberObjects.extend(SendLoraAdapter.Instances)
         #subscriberObjects.extend(SendSerialAdapter.Instances)
         subscriberObjects.extend(SendToBlenoAdapter.Instances)
-        subscriberObjects.extend(SendToMeosAdapter.Instances)
+        subscriberObjects.extend(SendToSirapAdapter.Instances)
         subscriberObjects.extend(SendStatusAdapter.Instances)
 
         inputObjects = []
