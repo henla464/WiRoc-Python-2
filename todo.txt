@@ -1,16 +1,16 @@
 WiRoc
 =====
 
-
-
 App
 ===
-Show repeater/sender/receiver somewhere
 
 
 
 Done
 ----
+
+X Test max sending frequency without ack:  >~1.5 per second
+X Test max sending frequency with ack > ~1.2 per second
 X Add one-way option for connecting to samlingsboxar, srr dongles [WiRoc Python Done, app remaining]
 X add RSSI to test punches
 X Test RX Gain option (didn't see any difference in first test, but not sure if test was ok, RSSI is same. Dorji says enable can have small advantage)
@@ -20,6 +20,7 @@ x The status light shouldn't blink when BLE fails, fail the service also?
 x Patch the BLE fails, add delay to the redo when fails
 x Make app work with old wiroc version
 x Change to use 'single' BLE service to speed up connection
+x Show repeater/sender/receiver somewhere
 
 possible HW enhancments
 -----------------------

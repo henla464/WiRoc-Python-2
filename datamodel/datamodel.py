@@ -582,7 +582,16 @@ class LoraRadioMessage(object):
         return False
 
     def GetByteArray(self):
-        return self.MessageData
+        if self.rssiByteExpected:
+            return self.MessageData[:-1]
+        else:
+            return self.MessageData
+
+    def GetSIMessageByteArray(self):
+        if self.rssiByteExpected:
+            return self.MessageData[self.GetHeaderSize():-1]
+        else:
+            return self.MessageData[self.GetHeaderSize():]
 
     def AddByte(self, newByte):
         if self.IsFilled():

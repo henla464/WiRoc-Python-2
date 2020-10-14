@@ -530,6 +530,7 @@ class Main:
                     didTasks = True
                     self.doInfrequentMaintenanceTasks()
 
+                #todo: call UpdateInfrequently in i%499
                 self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
                                             if inputAdapter.UpdateInfreqently() and inputAdapter.GetIsInitialized()]
 

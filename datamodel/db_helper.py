@@ -818,11 +818,10 @@ class DatabaseHelper:
 
         siPayloadData = None
         if messageTypeName == "LORA" and messageSubTypeName == "SIMessage":
-            loraHeaderSize = LoraRadioMessage.GetHeaderSize()
-            siPayloadData = data[loraHeaderSize:]
             loraMessage = LoraRadioMessage()
             loraMessage.AddPayload(data)
             mbd.LowBattery = loraMessage.GetBatteryLowBit()
+            siPayloadData = loraMessage.GetSIMessageByteArray()
         elif messageSubTypeName == "SIMessage":
             #source WiRoc, SIStation
             siPayloadData = data
@@ -906,14 +905,13 @@ class DatabaseHelper:
 
         siPayloadData = None
         if messageTypeName == "LORA" and messageSubTypeName == "SIMessage":
-            loraHeaderSize = LoraRadioMessage.GetHeaderSize()
-            siPayloadData = data[loraHeaderSize:]
             loraMessage = LoraRadioMessage()
             loraMessage.AddPayload(data)
             rmbd.LowBattery = loraMessage.GetBatteryLowBit()
             rmbd.MessageID = messageID
             rmbd.AckRequested = loraMessage.GetAcknowledgementRequested()
             rmbd.RepeaterRequested = loraMessage.GetRepeaterBit()
+            siPayloadData = loraMessage.GetSIMessageByteArray()
 
         if siPayloadData != None:
             siMsg = SIMessage()

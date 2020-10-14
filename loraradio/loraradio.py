@@ -132,10 +132,8 @@ class LoraRadio:
         self.hardwareAbstraction = hardwareAbstraction
 
     def GetIsInitialized(self, channel, range, loraPower):
-        LoraRadio.WiRocLogger.debug(
-            "LoraRadio::GetIsInitialized(): " + str(channel) + ":" + str(range) + ":" + str(loraPower))
-        LoraRadio.WiRocLogger.debug(
-            "LoraRadio::GetIsInitialized(): " + Utils.GetDataInHex(data, logging.DEBUG))
+        #LoraRadio.WiRocLogger.debug(
+        #    "LoraRadio::GetIsInitialized(): " + str(channel) + ":" + str(range) + ":" + str(loraPower))
         return self.isInitialized and \
                channel == self.channel and \
                loraPower == self.loraPower and \

@@ -38,8 +38,7 @@ class LoraSIMessageToSirapTransform(object):
         payloadData = msgSub.MessageData
         msg = LoraRadioMessage()
         msg.AddPayload(payloadData)
-        loraHeaderSize = LoraRadioMessage.GetHeaderSize()
-        siPayloadData = payloadData[loraHeaderSize:]
+        siPayloadData = msg.GetSIMessageByteArray()
         siMsg = SIMessage()
         siMsg.AddPayload(siPayloadData)
         return {"Data": Utils.GetSirapDataFromSIData(siMsg), "MessageID": None}

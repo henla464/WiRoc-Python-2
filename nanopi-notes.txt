@@ -24,7 +24,7 @@ Put the SD card in
 Connect usb to computer
 > screen /dev/ttyACM0
 log in with user root, password 1234
-set new root password to chipchip when asked
+set new root password to chipchip when asked (WiRocWiRoc is used on some)
 enter chip as username
 enter chip as password
 press enter to enter empty strings for names etc

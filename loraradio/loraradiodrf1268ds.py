@@ -153,7 +153,6 @@ class LoraRadioDRF1268DS:
         self.radioSerial = serial.Serial()
         self.receivedMessage = LoraRadioMessage()
         self.receivedMessage.SetRSSIByteExpected(True)
-        self.receivedMessage2 = None
         self.portName = portName
         self.isInitialized = False
         self.channel = None
@@ -451,11 +450,6 @@ class LoraRadioDRF1268DS:
             return False
 
     def GetRadioData(self):
-        if self.receivedMessage2 != None:
-            message = self.receivedMessage2
-            self.receivedMessage2 = None
-            LoraRadioDRF1268DS.WiRocLogger.info("LoraRadioDRF1268DS::GetRadioData() received message 2!")
-            return message
         if self.radioSerial.in_waiting == 0:
             return None
         LoraRadioDRF1268DS.WiRocLogger.debug("LoraRadioDRF1268DS::GetRadioData() data to fetch")
