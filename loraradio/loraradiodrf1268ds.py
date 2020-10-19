@@ -346,7 +346,7 @@ class LoraRadioDRF1268DS:
         self.channel = channel
         self.loraPower = loraPower
         self.loraRange = loraRange
-        loraDataRate = SettingsClass.GetDataRate(loraRange)
+        #loraDataRate = SettingsClass.GetDataRate(loraRange)
 
         self.radioSerial.baudrate = 9600
         self.radioSerial.port = self.portName
@@ -391,6 +391,9 @@ class LoraRadioDRF1268DS:
             if not newSettingsWritten: # when new settings is written then a reset/restart is done automatically
                 if not self.exitATMode():
                     LoraRadioDRF1268DS.WiRocLogger.error("LoraRadioDRF1268DS::Init() Could not exit ATMode")
+                self.hardwareAbstraction.DisableLora()
+                time.sleep(0.1)
+                self.hardwareAbstraction.EnableLora()
 
 #    def isSliceInList(self, listSlice, fullList):
 #        len_s = len(listSlice)  # so we don't recompute length of listSlice on every iteration
