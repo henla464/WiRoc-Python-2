@@ -218,6 +218,10 @@ class Main:
                         # WiRoc is in repeater mode and received a LORA message
                         self.wirocLogger.info("Start::handleInput() In repeater mode")
 
+                        if not checksumOK:
+                            self.wirocLogger.error(
+                                "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " Checksum WRONG")
+                            continue
                         loraMessage = inputData.get("LoraRadioMessage", None)
                         if loraMessage == None:
                             self.wirocLogger.error(
@@ -231,20 +235,25 @@ class Main:
                     else:
                         rssiValue = 0
                         if messageTypeName == "LORA":
-                            loraMessage = inputData.get("LoraRadioMessage", None)
-                            if loraMessage != None:
-                                self.wirocLogger.debug(
-                                    "Start::handleInput() MessageType: " + messageTypeName + ", WiRocMode: " + SettingsClass.GetWiRocMode() + " RepeaterBit: " + str(
-                                        loraMessage.GetRepeaterBit()))
-                                if SettingsClass.GetWiRocMode() == "RECEIVER":
-                                    if not loraMessage.GetRepeaterBit():
-                                        # Message received that might come from repeater. Archive any already scheduled ack message
-                                        # from previously received message (directly from sender)
-                                        # Message number ignored, remove acks for same SI-card-number and SI-Station-number
-                                        DatabaseHelper.archive_lora_ack_message_subscription(messageID)
-                            else:
-                                self.wirocLogger.error("Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
+                            if not checksumOK:
+                                self.wirocLogger.error(
+                                    "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " Checksum WRONG")
                                 continue
+                            loraMessage = inputData.get("LoraRadioMessage", None)
+                            if loraMessage == None:
+                                self.wirocLogger.error(
+                                    "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
+                                continue
+
+                            self.wirocLogger.debug(
+                                "Start::handleInput() MessageType: " + messageTypeName + ", WiRocMode: " + SettingsClass.GetWiRocMode() + " RepeaterBit: " + str(
+                                    loraMessage.GetRepeaterBit()))
+                            if SettingsClass.GetWiRocMode() == "RECEIVER":
+                                if not loraMessage.GetRepeaterBit():
+                                    # Message received that might come from repeater. Archive any already scheduled ack message
+                                    # from previously received message (directly from sender)
+                                    # Message number ignored, remove acks for same SI-card-number and SI-Station-number
+                                    DatabaseHelper.archive_lora_ack_message_subscription(messageID)
 
                         mbd = DatabaseHelper.create_message_box_data(messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK, powerCycle, SIStationSerialNumber, messageData, rssiValue)
                         mbdid = DatabaseHelper.save_message_box(mbd)
