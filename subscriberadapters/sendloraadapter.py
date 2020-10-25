@@ -302,5 +302,5 @@ class SendLoraAdapter(object):
             callbackQueue.put((successCB,))
         else:
             # failed to send now, probably because 'busy' was returned, ie. something else was sending on same frequence. Delay a short bit.
-            self.BlockSendingUntilMessageSentAndAckReceived(0.1)
+            self.BlockSendingUntilMessageSentAndAckReceived(self.GetDelayAfterMessageSent()/4)
             callbackQueue.put((notSentCB,))
