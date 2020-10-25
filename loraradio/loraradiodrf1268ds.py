@@ -450,13 +450,22 @@ class LoraRadioDRF1268DS:
             return False
         else:
             LoraRadioDRF1268DS.WiRocLogger.error("LoraRadioDRF1268DS::SendData() Module returned: " + Utils.GetDataInHex(sendReply, logging.ERROR))
+            if (sendReply[0] == 0x02):
+                # seems to be start of new message. Add it to receivedData so it is not lost
+                self.receivedMessage.AddByte(sendReply[0])
+                self.receivedMessage.AddByte(sendReply[1])
+                self.receivedMessage.AddByte(sendReply[2])
+                self.receivedMessage.AddByte(sendReply[3])
             return False
 
     def GetRadioData(self):
         if self.radioSerial.in_waiting == 0:
             return None
         LoraRadioDRF1268DS.WiRocLogger.debug("LoraRadioDRF1268DS::GetRadioData() data to fetch")
-        startFound = False
+        if len(self.receivedMessage.MessageData) > 0:
+            startFound = True
+        else:
+            startFound = False
         allReceivedData = bytearray()
         while self.radioSerial.in_waiting > 0:
             bytesRead = self.radioSerial.read(1)
