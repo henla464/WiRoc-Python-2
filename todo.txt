@@ -1,5 +1,8 @@
 WiRoc
 =====
+Add success should only be done when ack received for a matching message
+When module returns 'busy' we should wait longer before retrying
+
 
 App
 ===
@@ -21,6 +24,9 @@ x Patch the BLE fails, add delay to the redo when fails
 x Make app work with old wiroc version
 x Change to use 'single' BLE service to speed up connection
 x Show repeater/sender/receiver somewhere
+x RSSI value not saved in database
+x SITEST doesn't set SI message kolumn values in messagebox
+x when module returns something but it is not busy or ok it can be beginning of other message.
 
 possible HW enhancments
 -----------------------
@@ -45,6 +51,8 @@ IDs
 ----
 Options for IDs
 Logical MessageID: cardno, time (and stationo) [4 bytes + 4 bytes] (all included in serialmessage)
-Real MessageID: MemoryAddress 2 bytes, WiRoc-serialno 2 bytes
+other option?: MemoryAddress 2 bytes, WiRoc-serialno 2 bytes (=>could be same memoryaddress from different SI masters)
+other option?: WiRoc-serialno + messageid in database 2+2 bytes (=> adds 3 bytes to message)
+
 
 Ack could include request to resend missed messages. Good idea? Or just a resend adapter fetching from failed messages?
