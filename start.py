@@ -248,6 +248,7 @@ class Main:
                             self.wirocLogger.debug(
                                 "Start::handleInput() MessageType: " + messageTypeName + ", WiRocMode: " + SettingsClass.GetWiRocMode() + " RepeaterBit: " + str(
                                     loraMessage.GetRepeaterBit()))
+                            rssiValue = loraMessage.GetRSSIValue()
                             if SettingsClass.GetWiRocMode() == "RECEIVER":
                                 if not loraMessage.GetRepeaterBit():
                                     # Message received that might come from repeater. Archive any already scheduled ack message
