@@ -825,6 +825,9 @@ class DatabaseHelper:
         elif messageSubTypeName == "SIMessage":
             #source WiRoc, SIStation
             siPayloadData = data
+        elif messageSubTypeName == "Test":
+            #source recievetestpunches adapter
+            siPayloadData = data
 
         if siPayloadData != None:
             siMsg = SIMessage()
