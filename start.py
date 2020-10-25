@@ -296,44 +296,18 @@ class Main:
                                 "Start::handleInput() Message has no subscribers, being archived, msgid: " + str(mbdid))
                             DatabaseHelper.archive_message_box(mbdid)
                 elif inputData["MessageType"] == "ACK":
-                    messageID = inputData["MessageID"]
-                    loraMessage = inputData["LoraRadioMessage"]
-                    if not inputData["ChecksumOK"]:
-                        subscriptionView = DatabaseHelper.get_last_message_subscription_view_that_was_sent_to_lora()
-                        if Utils.IsEnoughAlike(messageID, subscriptionView.MessageID):
-                            messageID = subscriptionView.MessageID
-                    destinationHasAcked = loraMessage.GetAcknowledgementRequested()
-                    receivedFromRepeater = loraMessage.GetRepeaterBit()
-                    rssiValue = loraMessage.GetRSSIValue()
-                    wirocMode = SettingsClass.GetWiRocMode()
-                    if wirocMode == "REPEATER" and len(messageID) == 6:
-                        self.wirocLogger.debug("Start::handleInput() Received ack, for repeater message number: " + str(
-                            messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6])))
-                        DatabaseHelper.repeater_message_acked(messageID, rssiValue)
-                        DatabaseHelper.archive_repeater_lora_message_subscription_after_ack(messageID, rssiValue)
-                        if destinationHasAcked:
-                            DatabaseHelper.set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(
-                                messageID)
-                    else:
-                        if len(messageID) == 6:
-                            self.wirocLogger.debug("Start::handleInput() Received ack, for message number: " + str(
-                                messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6]))
-                                          + " receivedFromRepeater: " + str(receivedFromRepeater)
-                                          + " destinationHasAcked: " + str(destinationHasAcked))
-                        else:
-                            self.wirocLogger.debug(
-                                "Start::handleInput() Received ack, for status message number: " + str(messageID[0]))
-                        DatabaseHelper.archive_message_subscription_after_ack(messageID, rssiValue)
-
                     loraSubAdapters = [subAdapter for subAdapter in self.subscriberAdapters if
                                        subAdapter.GetTypeName() == "LORA"]
                     if len(loraSubAdapters) > 0:
                         loraSubAdapter = loraSubAdapters[0]
-                        if receivedFromRepeater:
-                            loraSubAdapter.AddSuccessWithRepeaterBit()
-                        else:
-                            loraSubAdapter.AddSuccessWithoutRepeaterBit()
+                        messageID = inputData["MessageID"]
+                        loraMessage = inputData["LoraRadioMessage"]
+                        destinationHasAcked = loraMessage.GetAcknowledgementRequested()
+                        receivedFromRepeater = loraMessage.GetRepeaterBit()
+                        rssiValue = loraMessage.GetRSSIValue()
+                        wirocMode = SettingsClass.GetWiRocMode()
 
+                        # block/unblock should be done regardless if this is an ack for message sent from this checkpoint or another
                         if wirocMode == "SENDER" and receivedFromRepeater:
                             if not destinationHasAcked:
                                 # delay an extra message + ack, same as a normal delay after a message is sent
@@ -343,6 +317,48 @@ class Main:
                                 loraSubAdapter.RemoveBlock()
                         else:
                             loraSubAdapter.RemoveBlock()
+
+                        subscriptionView = DatabaseHelper.get_last_message_subscription_view_that_was_sent_to_lora()
+                        if not inputData["ChecksumOK"]:
+                            if Utils.IsEnoughAlike(messageID, subscriptionView.MessageID):
+                                messageID = subscriptionView.MessageID
+                            else:
+                                self.wirocLogger.debug(
+                                    "Start::handleInput() Received ack but checksum is wrong and acked message id is not found")
+                                continue
+                        else:
+                            if messageID != subscriptionView.MessageID:
+                                # ack is probably an ack of a message sent from another checkpoint
+                                self.wirocLogger.debug("Start::handleInput() Received ack but last sent message doesn't match the message id")
+                                continue
+
+                        # Only add success when matching message found
+                        if messageID == subscriptionView.MessageID:
+                            if receivedFromRepeater:
+                                loraSubAdapter.AddSuccessWithRepeaterBit()
+                            else:
+                                loraSubAdapter.AddSuccessWithoutRepeaterBit()
+
+                            if wirocMode == "REPEATER" and len(messageID) == 6:
+                                self.wirocLogger.debug("Start::handleInput() Received ack, for repeater message number: " + str(
+                                    messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6])))
+                                DatabaseHelper.repeater_message_acked(messageID, rssiValue)
+                                DatabaseHelper.archive_repeater_lora_message_subscription_after_ack(messageID, rssiValue)
+                                if destinationHasAcked:
+                                    DatabaseHelper.set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(
+                                        messageID)
+                            else:
+                                if len(messageID) == 6:
+                                    self.wirocLogger.debug("Start::handleInput() Received ack, for message number: " + str(
+                                        messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6]))
+                                                  + " receivedFromRepeater: " + str(receivedFromRepeater)
+                                                  + " destinationHasAcked: " + str(destinationHasAcked))
+                                else:
+                                    self.wirocLogger.debug(
+                                        "Start::handleInput() Received ack, for status message number: " + str(messageID[0]))
+                                DatabaseHelper.archive_message_subscription_after_ack(messageID, rssiValue)
+
+
 
     def handleOutput(self, settDict):
         #self.wirocLogger.debug("IsReadyToSend: " + str(SendLoraAdapter.Instances[0].IsReadyToSend()) + " DateTime: " + str(datetime.now()))
