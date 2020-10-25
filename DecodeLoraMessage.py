@@ -9,6 +9,7 @@ def GetDataInHex(data):
 
 hexString = input("Enter your the LoraRadioMessage hex string: ")
 rssiExpected = len(hexString) >= 50 or (int(hexString[5],16)&0x07)==0x01
+print('rssiExpected: ' + str(rssiExpected))
 loraMessage = LoraRadioMessage()
 loraMessage.SetRSSIByteExpected(rssiExpected)
 
@@ -113,7 +114,7 @@ print("messageType: " + format(messageType, '02x'))
 hour = siMsg.GetHour()
 print("Hour: " + str(hour))
 minute = siMsg.GetMinute()
-print("Minute: " + str(hour))
+print("Minute: " + str(minute))
 second = siMsg.GetSeconds()
 print("Second: " + str(second))
 subSecond = siMsg.GetSubSecondAsTenthOfSeconds()
