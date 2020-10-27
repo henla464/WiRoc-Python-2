@@ -104,6 +104,48 @@ def setPower(power):
     SettingsClass.SetSettingUpdatedByWebService()
     return jsonpickle.encode(MicroMock(Value=int(sd.Value)))
 
+@app.route('/api/coderate/', methods=['GET'])
+def getCodeRate():
+    DatabaseHelper.reInit()
+    setting = DatabaseHelper.get_setting_by_key('CodeRate')
+    # 0x00->4/5, 0x01->4/6, 0x02->4/7, 0x03->4/8
+    codeRate = 0x00
+    if setting != None:
+        codeRate = int(setting.Value)
+    return jsonpickle.encode(MicroMock(Value=codeRate))
+
+@app.route('/api/coderate/<int:coderate>/', methods=['GET'])
+def setCodeRate(codeRate):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('CodeRate')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'CodeRate'
+    sd.Value = codeRate
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    return jsonpickle.encode(MicroMock(Value=int(sd.Value)))
+
+@app.route('/api/rxgainenabled/', methods=['GET'])
+def getRxGainEnabled():
+    setting = DatabaseHelper.get_setting_by_key('RxGainEnabled')
+    enabled = '0'
+    if setting != None:
+        enabled = setting.Value
+    return jsonpickle.encode(MicroMock(Value=enabled))
+
+@app.route('/api/rxgainenabled/<enabled>/', methods=['GET'])
+def setRxGainEnabled(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('RxGainEnabled')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'RxGainEnabled'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
 @app.route('/api/sendtosirapenabled/', methods=['GET'])
 def getSendToSirapEnabled():
     setting = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')

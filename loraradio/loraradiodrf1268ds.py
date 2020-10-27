@@ -158,6 +158,8 @@ class LoraRadioDRF1268DS:
         self.channel = None
         self.loraRange = None
         self.loraPower = None
+        self.codeRate = None
+        self.rxGain = None
         self.totalNumberOfMessagesSent = 0
         self.totalNumberOfAcksReceived = 0
         self.acksReceivedSinceLastMessageSent = 0
@@ -165,11 +167,13 @@ class LoraRadioDRF1268DS:
         self.chip = False
         self.hardwareAbstraction = hardwareAbstraction
 
-    def GetIsInitialized(self, channel, loraRange, loraPower):
+    def GetIsInitialized(self, channel, loraRange, loraPower, codeRate, rxGain):
         return self.isInitialized and \
-               channel == self.channel and \
-               loraPower == self.loraPower and \
-               loraRange == self.loraRange
+                channel == self.channel and \
+                loraPower == self.loraPower and \
+                loraRange == self.loraRange and \
+                codeRate == self.codeRate and \
+                rxGain == self.rxGain
 
     def GetPortName(self):
         return self.portName
@@ -260,7 +264,7 @@ class LoraRadioDRF1268DS:
             self.radioSerial.baudrate = 57600
             return False
 
-    def setParameters(self, channelData, channel, loraPower):
+    def setParameters(self, channelData, channel, loraPower, codeRate, rxGain):
         LoraRadioDRF1268DS.WiRocLogger.debug("LoraRadioDRF1268DS::setParameters(): Enter, read parameters")
         self.radioSerial.write(LoraRadioDRF1268DS.ReadParameter)
         self.radioSerial.flush()
@@ -271,8 +275,12 @@ class LoraRadioDRF1268DS:
         readParameterResp[6] = channel
         readParameterResp[11] = channelData.RfFactor
         readParameterResp[12] = 0x05 # Bandwidth 31,25kHz
+        readParameterResp[13] = codeRate
         readParameterResp[14] = loraPower
-        readParameterResp[23] = 0x81 # ID / Rx Gain enable
+        if rxGain:
+            readParameterResp[23] = 0x81 # ID / Rx Gain enable
+        else:
+            readParameterResp[23] = 0x01 # ID / Rx Gain disabled
         readParameterResp[24] = 0x01 # LBT enable
         readParameterResp[25] = 0x01 # RSSI enable
         struct.pack_into('II', readParameterResp, 15, channelData.Frequency, channelData.Frequency)
@@ -338,15 +346,18 @@ class LoraRadioDRF1268DS:
                 break
             time.sleep(0.01)
 
-    def Init(self, channel, loraRange, loraPower):
-        LoraRadioDRF1268DS.WiRocLogger.info("LoraRadioDRF1268DS::Init() Port name: " + self.portName + " Channel: " + str(channel) + " LoraRange: " + loraRange + " LoraPower: " + str(loraPower))
+    def Init(self, channel, loraRange, loraPower, codeRate, rxGain):
+        LoraRadioDRF1268DS.WiRocLogger.info("LoraRadioDRF1268DS::Init() Port name: " + self.portName + " Channel: " +
+                                            str(channel) + " LoraRange: " + loraRange + " LoraPower: " +
+                                            str(loraPower) + " CodeRate: " + str(codeRate) + " RxGain: " + str(rxGain))
         self.hardwareAbstraction.EnableLora()
         time.sleep(0.1)
 
         self.channel = channel
         self.loraPower = loraPower
         self.loraRange = loraRange
-        #loraDataRate = SettingsClass.GetDataRate(loraRange)
+        self.codeRate = codeRate
+        self.rxGain = rxGain
 
         self.radioSerial.baudrate = 9600
         self.radioSerial.port = self.portName
@@ -358,7 +369,6 @@ class LoraRadioDRF1268DS:
 
         newSettingsWritten = False
         try:
-            #if self.enterATModeAndChangeBaudRateIfRequired():
             if self.enterATMode():
                 LoraRadioDRF1268DS.LoraModuleParameters = self.getParameters()
                 channelData = DatabaseHelper.get_channel(channel, loraRange, 'DRF1268DS')
@@ -368,13 +378,15 @@ class LoraRadioDRF1268DS:
                     loraPower == LoraRadioDRF1268DS.LoraModuleParameters.TransmitPower and \
                     channelData.RfBw == LoraRadioDRF1268DS.LoraModuleParameters.Bandwidth and \
                     channel == LoraRadioDRF1268DS.LoraModuleParameters.NetID and \
-                    0x81 == LoraRadioDRF1268DS.LoraModuleParameters.IDRxGainEnable:
+                    codeRate == LoraRadioDRF1268DS.LoraModuleParameters.CodeRate and \
+                    ((rxGain and 0x81 == LoraRadioDRF1268DS.LoraModuleParameters.IDRxGainEnable) or
+                    (not rxGain and 0x01 == LoraRadioDRF1268DS.LoraModuleParameters.IDRxGainEnable)):
                     self.isInitialized = True
                     LoraRadioDRF1268DS.WiRocLogger.info("LoraRadioDRF1268DS::Init() Already correct parameters")
                     return True
                 else:
                     LoraRadioDRF1268DS.WiRocLogger.info("LoraRadioDRF1268DS::Init() frequency" + str(channelData.Frequency))
-                    if self.setParameters(channelData, channel, loraPower):
+                    if self.setParameters(channelData, channel, loraPower, codeRate, rxGain):
                         LoraRadioDRF1268DS.WiRocLogger.info("LoraRadioDRF1268DS::Init() Parameters set")
                         self.isInitialized = True
                         newSettingsWritten = True

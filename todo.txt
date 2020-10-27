@@ -1,8 +1,7 @@
 WiRoc
 =====
-Add success should only be done when ack received for a matching message
-When module returns 'busy' we should wait longer before retrying
-
+Add option to reconfigure remote wiroc
+Change from bleno to use python/bluez, with option to connect to BT-serial
 
 App
 ===
@@ -27,6 +26,9 @@ x Show repeater/sender/receiver somewhere
 x RSSI value not saved in database
 x SITEST doesn't set SI message kolumn values in messagebox
 x when module returns something but it is not busy or ok it can be beginning of other message.
+x When module returns 'busy' we should wait longer before retrying
+x Add success should only be done when ack received for a matching message
+x Add option to change ECC rate
 
 possible HW enhancments
 -----------------------

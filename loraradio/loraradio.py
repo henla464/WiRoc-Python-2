@@ -131,7 +131,7 @@ class LoraRadio:
         self.chip = False
         self.hardwareAbstraction = hardwareAbstraction
 
-    def GetIsInitialized(self, channel, range, loraPower):
+    def GetIsInitialized(self, channel, range, loraPower, codeRate, rxGain):
         #LoraRadio.WiRocLogger.debug(
         #    "LoraRadio::GetIsInitialized(): " + str(channel) + ":" + str(range) + ":" + str(loraPower))
         return self.isInitialized and \
@@ -215,7 +215,7 @@ class LoraRadio:
                 break
             time.sleep(0.01)
 
-    def Init(self, channel, loraRange, loraPower):
+    def Init(self, channel, loraRange, loraPower, codeRate, rxGain):
         if loraPower > 0x07:
             loraPower = 0x07
             SettingsClass.SetLoraPower(0x07)

@@ -314,6 +314,24 @@ class SettingsClass(object):
         cache.clear()
 
     @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetCodeRate'), lock=rlock)
+    def GetCodeRate():
+        sett = DatabaseHelper.get_setting_by_key('CodeRate')
+        if sett is None:
+            SettingsClass.SetSetting("CodeRate", str(0x00))
+            return False
+        return int(sett.Value)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetRxGainEnabled'), lock=rlock)
+    def GetRxGainEnabled():
+        sett = DatabaseHelper.get_setting_by_key('RxGainEnabled')
+        if sett is None:
+            SettingsClass.SetSetting("RxGainEnabled", "0")
+            return False
+        return (sett.Value == "1")
+
+    @staticmethod
     @cached(cache, key=partial(hashkey, 'GetAcknowledgementRequested'), lock=rlock)
     def GetAcknowledgementRequested():
         sett = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
@@ -403,10 +421,13 @@ class SettingsClass(object):
         loraRange = SettingsClass.GetLoraRange()
         channel = SettingsClass.GetChannel()
         loraModule = SettingsClass.GetLoraModule()
+        codeRate = SettingsClass.GetCodeRate()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
         messageLengthInBytes = 24 # typical length
         SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
-        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 1)*SettingsClass.microSecondsToSendAMessage
+        # extra delay for higher error coderates
+        SettingsClass.microSecondsToSendAMessage += SettingsClass.microSecondsToSendAMessage * (1+0.2*codeRate)
+        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 2)*SettingsClass.microSecondsToSendAMessage
         return microSecondsDelay
 
     @staticmethod
@@ -416,10 +437,12 @@ class SettingsClass(object):
             loraRange = SettingsClass.GetLoraRange()
             channel = SettingsClass.GetChannel()
             loraModule = SettingsClass.GetLoraModule()
+            codeRate = SettingsClass.GetCodeRate()
             SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
             messageLengthInBytes = 24  # typical length
             SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
-
+            # extra delay for higher error coderates
+            SettingsClass.microSecondsToSendAMessage += SettingsClass.microSecondsToSendAMessage * (1 + 0.2 * codeRate)
         return 1+(SettingsClass.microSecondsToSendAMessage * 2.1)/1000000
 
 
@@ -430,10 +453,12 @@ class SettingsClass(object):
             loraRange = SettingsClass.GetLoraRange()
             channel = SettingsClass.GetChannel()
             loraModule = SettingsClass.GetLoraModule()
+            codeRate = SettingsClass.GetCodeRate()
             SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
             messageLengthInBytes = 10  # typical length
             SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
-
+            # extra delay for higher error coderates
+            SettingsClass.microSecondsToSendAnAckMessage += SettingsClass.microSecondsToSendAnAckMessage * (1 + 0.2 * codeRate)
         return 0.2+(SettingsClass.microSecondsToSendAnAckMessage)/1000000
 
     @staticmethod
@@ -444,8 +469,11 @@ class SettingsClass(object):
         loraRange = SettingsClass.GetLoraRange()
         channel = SettingsClass.GetChannel()
         loraModule = SettingsClass.GetLoraModule()
+        codeRate = SettingsClass.GetCodeRate()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
         microSecs = SettingsClass.channelData.SlopeCoefficient * (noOfBytes + SettingsClass.channelData.M)
+        # extra delay for higher error coderates
+        microSecs += microSecs * (1 + 0.2 * codeRate)
         return microSecs/1000000
 
     @staticmethod

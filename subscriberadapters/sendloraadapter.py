@@ -172,12 +172,14 @@ class SendLoraAdapter(object):
         channel = SettingsClass.GetChannel()
         loraRange = SettingsClass.GetLoraRange()
         loraPower = SettingsClass.GetLoraPower()
+        codeRate = SettingsClass.GetCodeRate()
+        rxGain = SettingsClass.GetRxGainEnabled()
         # set the AdapterInitialized to same value as loraRadios initialized
         # if loraRadio changes initialize value later we can detect this.
-        if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower):
+        if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain):
             SendLoraAdapter.Instances[0].AdapterInitialized = True
             return True
-        loraInitialized = self.loraRadio.Init(channel, loraRange, loraPower)
+        loraInitialized = self.loraRadio.Init(channel, loraRange, loraPower, codeRate, rxGain)
         SendLoraAdapter.Instances[0].AdapterInitialized = loraInitialized
         return loraInitialized
 
