@@ -663,9 +663,20 @@ def getAllMainSettings():
 
     wirocMode = getWiRocMode()
 
+    sett = DatabaseHelper.get_setting_by_key('RxGainEnabled')
+    rxGain ='1'
+    if sett is not None:
+        rxGain = sett.Value
+
+    sett = DatabaseHelper.get_setting_by_key('CodeRate')
+    codeRate = '0'
+    if sett is not None:
+        codeRate = sett.Value
+
     all = ('1' if isCharging else '0') + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \
-          acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + '%batteryPercent%' + '¤' + \
-          '%ipAddress%'+ '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wirocPythonVersion + '¤' + \
-          wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive + '¤' + force4800BaudRate + '¤'+ wirocMode
+        acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + '%batteryPercent%' + '¤' + \
+        '%ipAddress%'+ '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wirocPythonVersion + '¤' + \
+        wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive + '¤' + force4800BaudRate + '¤' + wirocMode + '¤' + \
+        rxGain + '¤' + codeRate
 
     return jsonpickle.encode(MicroMock(Value=all))
