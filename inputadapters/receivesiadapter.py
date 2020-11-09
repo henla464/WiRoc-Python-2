@@ -137,7 +137,7 @@ class ReceiveSIAdapter(object):
         try:
             self.siSerial.open()
             self.siSerial.reset_input_buffer()
-            self.siSerial.reset_output_buffer()
+            #self.siSerial.reset_output_buffer() shouldn't be needed for oneway
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitOneWay() opened serial")
         except Exception as ex:
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitOneWay() opening serial exception:")
@@ -203,6 +203,7 @@ class ReceiveSIAdapter(object):
         try:
             if self.GetIsInitialized() and self.siSerial.is_open:
                 return True
+            self.isInitialized = False
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::Init() SI Station port name: " + self.portName)
             self.siSerial.close()
             self.siSerial.port = self.portName

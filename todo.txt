@@ -32,22 +32,26 @@ x Add option to change ECC rate
 
 possible HW enhancments
 -----------------------
-RS232 Serialport (use TTL->RS232 converter embedded in R232Connector)
-  -- Need to move GPIOA0-GPIO3 pins to GPIOC0-3 (GPIOA0 = TX, GPIOA1 = RX)
 RTC (realtime clock)
-Make the PCB the size and shape of the box
-Move the Rx and Tx LEDs together, use different colors
-Reroute SDA, SCK to the display
-Test resistor in series with button to see if we can get it not triggering under water
-    -- Gummiknappen ~50kohm
-    -- vitknapp ~30+kohm
-    -- svartknapp ~35kohm
--> 51 kOhm fungerar (51+35kohm - 86 fungerar inte)
--> 31 kOhm fungerar (31+35kohm - 66 fungerar inte)
--> 26 kOhm fungerar (26+35kohm - 61 fungerar inte)
-===> Seem to only be a problem when the antennaconnector is under water too, so shouldnt be an issue in real life. Even though, change the resistor from 1K to 24Kohm
+Add RS232 conversion on board
 
 
+Done
+x Reroute SDA, SCK to the display
+x RS232 Serialport (use TTL->RS232 converter embedded in R232Connector)
+x  -- Need to move GPIOA0-GPIO3 pins to GPIOC0-3 (GPIOA0 = TX, GPIOA1 = RX)
+x Make the PCB the size and shape of the box
+x Move the Rx and Tx LEDs together, use different colors. 
+   -- Removed the status led and moved Rx and Tx apart instead
+x Test resistor in series with button to see if we can get it not triggering under water
+x     -- Gummiknappen ~50kohm
+x     -- vitknapp ~30+kohm
+x     -- svartknapp ~35kohm
+x -> 51 kOhm fungerar (51+35kohm - 86 fungerar inte)
+x -> 31 kOhm fungerar (31+35kohm - 66 fungerar inte)
+x -> 26 kOhm fungerar (26+35kohm - 61 fungerar inte)
+x ===> Seem to only be a problem when the antennaconnector is under water too, so shouldnt be an issue in real life. 
+x      Even though, change the resistor  from 1K to 24Kohm
 
 IDs
 ----
