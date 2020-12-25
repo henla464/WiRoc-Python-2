@@ -115,13 +115,13 @@ def getCodeRate():
     return jsonpickle.encode(MicroMock(Value=codeRate))
 
 @app.route('/api/coderate/<int:coderate>/', methods=['GET'])
-def setCodeRate(codeRate):
+def setCodeRate(coderate):
     DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('CodeRate')
     if sd is None:
         sd = SettingData()
         sd.Key = 'CodeRate'
-    sd.Value = codeRate
+    sd.Value = coderate
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
     return jsonpickle.encode(MicroMock(Value=int(sd.Value)))

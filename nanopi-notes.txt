@@ -45,7 +45,34 @@ Paste in the script
 
 
 
+Get SPP working in bluetooth
+----------------------------
+See: https://unix.stackexchange.com/questions/96693/connect-to-a-bluetooth-device-via-terminal
+See: https://www.raspberrypi.org/forums/viewtopic.php?p=947185#p947185
+See: https://raspberrypi.stackexchange.com/questions/41776/failed-to-connect-to-sdp-server-on-ffffff000000-no-such-file-or-directory
+See: https://scribles.net/setting-up-bluetooth-serial-port-profile-on-raspberry-pi/
 
+start bluetoothd in compat mode,
+change /lib/systemd/system/bluetooth.service to ExecStart=/usr/lib/bluetooth/bluetoothd --compat --noplugin=sap
+Add: ExecStartPost=/usr/bin/sdptool add SP
+
+hcitool scan  # to get the MAC address of your device
+
+find channel with command: sudo sdptool browse local
+or: sudo sdptool browse local | grep Channel
+
+#seem to not need to use bluetoothctl
+#bluetoothctl
+#agent on
+#scan on  # wait for your device's address to show up here
+#scan off
+#trust MAC_ADDRESS
+#pair MAC_ADDRRESS
+#connect MAC_ADDRESS
+
+sudo rfcomm bind <rfcomm port no> <btmacaddr> <channel>
+"rfcomm port no" is the number of the device, for example 0 for /dev/rfcomm0.
+sudo rfcomm bind 10 00:0C:BF:02:29:61 1
 
 --------------
 #recompile bluez with fix

@@ -151,6 +151,70 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PowerObj"
+  /coderate/:
+    get:
+      tags:
+      - "Radio"
+      summary: "Get lora radio code rate"
+      operationId: "getCodeRate"
+      responses:
+        "200":
+          description: "The code rate"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CodeRateObj"
+  /coderate/{coderate}:
+    get:
+      tags:
+      - "Radio"
+      summary: "Set the lora radio code rate"
+      operationId: "setCodeRate"
+      parameters:
+        - name: coderate
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/CodeRate'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CodeRateObj"
+  /rxgainenabled/:
+    get:
+      tags:
+      - "Radio"
+      summary: "Get if RxGain is enabled"
+      operationId: "GetRxGainEnabled"
+      responses:
+        "200":
+          description: "0/1 depending on if RxGain is enabled or not"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /rxgainenabled/{rxgainenabled}:
+    get:
+      tags:
+      - "Radio"
+      summary: "Enable/Disable RxGain"
+      operationId: "setRxGainEnabled"
+      parameters:
+        - name: rxgainenabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /sendtosirapenabled/:
     get:
       tags:
@@ -795,6 +859,21 @@ components:
       properties:
         Value:
           $ref: '#/components/schemas/Power'
+        py/object:
+          type: "string"
+    CodeRate:
+      type: "string"
+      description: "The code rate"
+      enum:
+      - "0"
+      - "1"
+      - "2"
+      - "3"
+    CodeRateObj:
+      type: "object"
+      properties:
+        Value:
+          $ref: '#/components/schemas/CodeRate'
         py/object:
           type: "string"
     IPAddress:
