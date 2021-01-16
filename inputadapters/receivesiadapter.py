@@ -7,6 +7,7 @@ from utils.utils import Utils
 from battery import Battery
 from datamodel.datamodel import SIMessage
 from datamodel.db_helper import DatabaseHelper
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 import serial.tools.list_ports
 
 class ReceiveSIAdapter(object):
@@ -24,6 +25,10 @@ class ReceiveSIAdapter(object):
         # 067b:2303 Prolific Technology, Inc. PL2303 Serial Port                                -- Works
         # 0403:6001 Future Technology Devices International, Ltd FT232 USB-Serial (UART) IC     -- Works
         # 0557:2008 ATEN International Co., Ltd UC-232A Serial Port [pl2303]                    -- Works
+
+        # Add any HW serial ports used for SportIdent units
+        hwSISerialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
+        serialPorts.extend(hwSISerialPorts)
 
         # already existing
         previouslyCreated = [instance for instance in ReceiveSIAdapter.Instances if instance.GetSerialDevicePath() in serialPorts]

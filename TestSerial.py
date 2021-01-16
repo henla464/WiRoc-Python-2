@@ -9,7 +9,7 @@ for eachArg in sys.argv:
 
 mySerial = serial.Serial()
 
-baud = 38400
+baud = 9600
 #mySerial.baudrate = baud
 mySerial.port = sys.argv[1]
 mySerial.writeTimeout = 1
@@ -47,7 +47,11 @@ if sys.argv[2] == '1':
 
 if sys.argv[2] == '2':
     print("Write a byte")
-    msdMode = bytes([0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
+    #msdMode = bytes([0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
+    #AT+NAMEWiRoc: 
+    msdMode = bytes([0x41, 0x54, 0x2B, 0x4E, 0x41, 0x4D, 0x45, 0x57, 0x69, 0x52, 0x6f, 0x63])
+    #AT+BAUD 38400
+    #msdMode = bytes([0x41, 0x54, 0x2B, 0x42, 0x41, 0x55, 0x44, 0x36])
     time.sleep(2)
     noOfBytes = mySerial.write(msdMode)
     time.sleep(0.1)
@@ -73,7 +77,7 @@ if sys.argv[2] == '3':
            myBytes = mySerial.read(1)
            print(myBytes)
            #print("After read a byte")
-   
+
 
 mySerial.close()
 

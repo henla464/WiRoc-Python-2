@@ -203,7 +203,15 @@ class SendLoraAdapter(object):
         now = datetime.now()
         if self.blockSendingFromThisDate is None or self.blockSendingForSeconds is None or \
             (self.blockSendingFromThisDate + timedelta(seconds=self.blockSendingForSeconds)) < now:
-            return self.loraRadio.IsReadyToSend()
+            isRadioRecOrSend =  self.loraRadio.IsReadyToSend()
+            if isRadioRecOrSend:
+                # The radio is sending or receiveing. It could be another WiRoc sending its message.
+                # If this WiRoc tries to send every few ms then there is a chance that we start sending
+                # directly after the other WiRoc finished sending, but before the reciever had time to reply.
+                # To lower the chance of this we should block sending for a bit.
+                self.blockSendingForSeconds = 0.5
+                self.blockSendingFromThisDate = datetime.now()
+            return isRadioRecOrSend
         if self.blockSendingFromThisDate > now:
              # computer time must have changed, so reset blockSendingFromThisDate
              self.blockSendingFromThisDate = None

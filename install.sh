@@ -18,7 +18,7 @@ then
     WiRocBLEVersion=$wBLEOption
 fi
 
-echo "Which hardware is this runnig on: 1: CHIP+7SEG, 2: CHIP+OLED, 3: NanoPi"
+echo "Which hardware is this runnig on: 1: CHIP+7SEG, 2: CHIP+OLED, 3: NanoPi, 4: NanoPi+SerialPort"
 read hwOption
 WiRocHWVersion="3Rev2"
 if [[ $hwOption = 1 ]]; then
@@ -29,6 +29,9 @@ if [[ $hwOption = 2 ]]; then
 fi
 if [[ $hwOption = 3 ]]; then
     WiRocHWVersion="3Rev2"
+fi
+if [[ $hwOption = 4 ]]; then
+    WiRocHWVersion="4Rev1"
 fi
 
 echo "update"
@@ -102,14 +105,34 @@ apt-get -y install libfreetype6-dev
 pip3 install pillow
 # nanopi: apt-get install python3-pillow
 
-echo "newer nodejs"
-#read line
-#Install newer nodejs
-wget https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-armv7l.tar.xz
-#wget https://nodejs.org/dist/v8.11.3/node-v8.11.3-linux-armv7l.tar.xz
-tar -C /usr/local --strip-components 1 -xJf node-v6.9.1-linux-armv7l.tar.xz
-ln -s /usr/local/bin/node /usr/bin/nodejs
-ln -s /usr/local/bin/npm /usr/bin/npm
+
+if [[ $(hostname -s) = nanopiair ]]; then
+    echo "nanopiair"
+    wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.cfg https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.cfg
+else
+    echo "chip"
+    echo "newer nodejs"
+    #read line
+    #Install newer nodejs
+    wget https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-armv7l.tar.xz
+    #wget https://nodejs.org/dist/v8.11.3/node-v8.11.3-linux-armv7l.tar.xz
+    tar -C /usr/local --strip-components 1 -xJf node-v6.9.1-linux-armv7l.tar.xz
+    ln -s /usr/local/bin/node /usr/bin/nodejs
+    ln -s /usr/local/bin/npm /usr/bin/npm
+
+    #npm install -g node-gyp
+    echo "install bluetooth-hci-socket"
+    cd /home/chip/
+    npm --unsafe-perm install bluetooth-hci-socket
+
+    echo "install bleno"
+    #read line
+    #install bleno
+    npm install henla464/bleno
+    npm install sleep
+fi
+
+
 
 echo "Install python 2"
 #read line
@@ -137,22 +160,38 @@ cat << EOF > WiRocPythonVersion.txt
 ${WiRocPython2Version}
 EOF
 
+if [[ $(hostname -s) = nanopiair ]]; then
+    echo "nanopiair"
+    echo "WiRoc-BLE"
+    #install WiRoc-BLE
+    wget -O WiRoc-BLE-API.tar.gz https://github.com/henla464/WiRoc-BLE-API/archive/v$WiRocBLEVersion.tar.gz
+    rm -rf WiRoc-BLE-API
+    tar xvfz WiRoc-BLE-API.tar.gz WiRoc-BLE-API-$WiRocBLEVersion
+    mv WiRoc-BLE-API-$WiRocBLEVersion WiRoc-BLE-API
+    mv WiRoc-BLE-API/installWiRocBLEAPI.sh .
+    chmod ugo+x installWiRocBLEAPI.sh
+    echo "Update WiRocBLEAPI version"
+cat << EOF > WiRocBLEAPIVersion.txt
+${WiRocBLEVersion}
+EOF
 
-echo "WiRoc-BLE"
-#read line
-#install WiRoc-BLE
-wget -O WiRoc-BLE-Device.tar.gz https://github.com/henla464/WiRoc-BLE-Device/archive/v$WiRocBLEVersion.tar.gz
-rm -rf WiRoc-BLE-Device
-tar xvfz WiRoc-BLE-Device.tar.gz WiRoc-BLE-Device-$WiRocBLEVersion
-mv WiRoc-BLE-Device-$WiRocBLEVersion WiRoc-BLE-Device
-mv WiRoc-BLE-Device/installWiRocBLE.sh .
-chmod ugo+x installWiRocBLE.sh
-
-
-echo "Update WiRocBLE version"
+else
+    echo "chip"
+    echo "WiRoc-BLE"
+    #install WiRoc-BLE
+    wget -O WiRoc-BLE-Device.tar.gz https://github.com/henla464/WiRoc-BLE-Device/archive/v$WiRocBLEVersion.tar.gz
+    rm -rf WiRoc-BLE-Device
+    tar xvfz WiRoc-BLE-Device.tar.gz WiRoc-BLE-Device-$WiRocBLEVersion
+    mv WiRoc-BLE-Device-$WiRocBLEVersion WiRoc-BLE-Device
+    mv WiRoc-BLE-Device/installWiRocBLE.sh .
+    chmod ugo+x installWiRocBLE.sh
+    echo "Update WiRocBLE version"
 cat << EOF > WiRocBLEVersion.txt
 ${WiRocBLEVersion}
 EOF
+
+fi
+
 
 
 echo "Update HW version"
@@ -166,16 +205,7 @@ WiRocDeviceName: WiRoc Device
 
 EOF
 
-#npm install -g node-gyp
-echo "install bluetooth-hci-socket"
-cd /home/chip/
-npm --unsafe-perm install bluetooth-hci-socket
 
-echo "install bleno"
-#read line
-#install bleno
-npm install henla464/bleno
-npm install sleep
 
 echo "install startup scripts"
 #read line
@@ -183,21 +213,25 @@ echo "install startup scripts"
 mkdir WiRoc-StartupScripts
 wget -O /home/chip/WiRoc-StartupScripts/Startup.sh https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/Startup.sh
 chmod +x /home/chip/WiRoc-StartupScripts/Startup.sh
-if ! [[ $(hostname -s) = nanopiair ]]; then
-    wget -O /home/chip/WiRoc-StartupScripts/setGPIOuart2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/setGPIOuart2
-    chmod +x /home/chip/WiRoc-StartupScripts/setGPIOuart2
-else
+if [[ $(hostname -s) = nanopiair ]]; then
+    echo "nanopiair"
     wget -O /usr/bin/devmem2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/devmem2
     chmod ugo+x /usr/bin/devmem2
+    wget -O /etc/systemd/system/WiRocBLEAPI.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocBLEAPI.service
+    systemctl enable /etc/systemd/system/WiRocBLEAPI.service
+else
+    wget -O /home/chip/WiRoc-StartupScripts/setGPIOuart2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/setGPIOuart2
+    chmod +x /home/chip/WiRoc-StartupScripts/setGPIOuart2
+    wget -O /etc/systemd/system/WiRocBLE.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocBLE.service
+    systemctl enable /etc/systemd/system/WiRocBLE.service
 fi
+
 wget -O /etc/systemd/system/WiRocPython.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPython.service
 wget -O /etc/systemd/system/WiRocPythonWS.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPythonWS.service
-wget -O /etc/systemd/system/WiRocBLE.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocBLE.service
 wget -O /etc/systemd/system/WiRocStartup.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocStartup.service
 #wget -O /etc/systemd/system/ifup-wait-all-auto.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/ifup-wait-all-auto.service
 #systemctl enable /etc/systemd/system/ifup-wait-all-auto.service
 systemctl enable /etc/systemd/system/WiRocStartup.service
-systemctl enable /etc/systemd/system/WiRocBLE.service
 systemctl enable /etc/systemd/system/WiRocPython.service
 systemctl enable /etc/systemd/system/WiRocPythonWS.service
 
@@ -208,7 +242,7 @@ echo "install wiroc-monitor"
 wget -O /home/chip/WiRoc-WatchDog/gpio.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/gpio.sh
 wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.sh
 chmod +x /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh
-wget -O /etc/systemd/system/WiRoc-WatchDog.service https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.service
+wget -O /etc/systemd/system/WiRocWatchDog.service https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRocWatchDog.service
 if [[ $(hostname -s) = nanopiair ]]; then
     echo "nanopiair"
     wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.cfg https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.cfg
@@ -216,7 +250,7 @@ else
     echo "chip"
     wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.cfg https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.chip.cfg
 fi
-systemctl enable /etc/systemd/system/WiRoc-WatchDog.service
+systemctl enable /etc/systemd/system/WiRocWatchDog.service
 
 echo "add user to dialout"
 #read line
@@ -230,8 +264,6 @@ EOF
 
 
 
-
-
 if [[ $(hostname -s) = nanopiair ]]; then
     echo "nanopiair"
     if ! grep -Fxq "setenv video-mode sunxi:1920x1080,monitor=none,hpd=0,edid=1" /boot/boot.cmd
@@ -241,11 +273,20 @@ if [[ $(hostname -s) = nanopiair ]]; then
         mkimage -C none -A arm -T script -d /boot/boot.cmd /boot/boot.scr
         echo "Changed boot.cmd and recompiled it"
     fi
-
-    if ! grep -Fxq "overlays=uart1 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
+    
+    if [[ $WiRocHWVersion = '4Rev1']]
     then
-        echo "Change overlays"
-        sed -i -E "s/(overlays=).*/overlays=uart1 uart3 usbhost1 usbhost2 i2c0/" /boot/armbianEnv.txt
+       if ! grep -Fxq "overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
+       then
+           echo "Change overlays"
+           sed -i -E "s/(overlays=).*/overlays=uart1 uart2 uart3 usbhost1 usbhost2 i2c0/" /boot/armbianEnv.txt
+       fi
+    else
+       if ! grep -Fxq "overlays=uart1 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
+       then
+           echo "Change overlays"
+           sed -i -E "s/(overlays=).*/overlays=uart1 uart3 usbhost1 usbhost2 i2c0/" /boot/armbianEnv.txt
+       fi
     fi
 
     if ! grep -Fxq "param_uart3_rtscts=1" /boot/armbianEnv.txt
@@ -285,6 +326,4 @@ else
     #Install the new dtb on chip
     rm /boot/sun5i-r8-chip.dtb
     wget -O /boot/sun5i-r8-chip.dtb https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/sun5i-r8-chip.dtb
-
-
 fi

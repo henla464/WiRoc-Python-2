@@ -12,12 +12,21 @@ class HardwareAbstraction(object):
         self.typeOfDisplay = typeOfDisplay
         self.runningOnChip = socket.gethostname() == 'chip'
         self.runningOnNanoPi = socket.gethostname() == 'nanopiair'
+        f = open("../WiRocHWVersion.txt", "r")
+        wirocHWVersion = f.read()
+        self.wirocHWVersion = wirocHWVersion.strip()
+        f.close()
 
     def SetupPins(self):
         if self.runningOnNanoPi:
-            pinModeNonXIO(0, INPUT)  # lora aux pin
-            pinModeNonXIO(2, OUTPUT) #lora enable pin
-            digitalWriteNonXIO(2, 1)
+            if self.wirocHWVersion == 'v4Rev1':
+                pinModeNonXIO(64, INPUT)  # lora aux pin (corresponds to pin 19)
+                pinModeNonXIO(2, OUTPUT) #lora enable pin (corresponds to pin 13)
+                digitalWriteNonXIO(2, 1)
+            else:
+                pinModeNonXIO(0, INPUT)  # lora aux pin
+                pinModeNonXIO(2, OUTPUT) #lora enable pin
+                digitalWriteNonXIO(2, 1)
         elif self.runningOnChip:
             pinMode(0, OUTPUT)
             pinMode(1, OUTPUT)
@@ -36,12 +45,17 @@ class HardwareAbstraction(object):
                 pinModeNonXIO(135, OUTPUT)
                 digitalWriteNonXIO(135, 1)
 
+    def GetSISerialPorts(self):
+        if self.wirocHWVersion == 'v4Rev1':
+            return ['/dev/ttyS2']
+        return []
 
     def EnableLora(self):
-        # enable radio module 139; #with new oled design: 135
+        # enable radio module 139;
+        # with new oled design: 135
         # pin 2 for nanopiair
         if self.runningOnNanoPi:
-            digitalWriteNonXIO(2, 0)
+                digitalWriteNonXIO(2, 0) #lora enable pin (corresponds to pin 13)
         elif self.runningOnChip:
             if self.typeOfDisplay == '7SEG':
                 digitalWriteNonXIO(139, 0)
@@ -53,7 +67,7 @@ class HardwareAbstraction(object):
         # disable radio module 139; #with new oled design: 135
         # pin 2 for nanopiair
         if self.runningOnNanoPi:
-            digitalWriteNonXIO(2, 1)
+            digitalWriteNonXIO(2, 1) #lora enable pin (corresponds to pin 13)
         elif self.runningOnChip:
             if self.typeOfDisplay == '7SEG':
                 digitalWriteNonXIO(139, 1)
@@ -62,14 +76,16 @@ class HardwareAbstraction(object):
 
     def GetIsTransmittingReceiving(self):
         # aux 138, with new oled design: 134
-        # pin 0 for nanopiair
         if self.runningOnChip:
             if self.typeOfDisplay == '7SEG':
                 return digitalReadNonXIO(138) == 0
             else:
                 return digitalReadNonXIO(134) == 0
         elif self.runningOnNanoPi:
-            return digitalReadNonXIO(0) == 0
+            if self.wirocHWVersion == 'v4Rev1':
+                return digitalReadNonXIO(64) == 0  # lora aux pin (corresponds to pin 19)
+            else:
+                return digitalReadNonXIO(0) == 0 # lora aux pin (corresponds to pin 11)
         return False
 
     def GetWifiSignalStrength(self):
