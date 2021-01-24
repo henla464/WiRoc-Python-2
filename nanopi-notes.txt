@@ -62,7 +62,7 @@ find channel with command: sudo sdptool browse local
 or: sudo sdptool browse local | grep Channel
 
 #seem to not need to use bluetoothctl
-#bluetoothctl
+#sudo bluetoothctl
 #agent on
 #scan on  # wait for your device's address to show up here
 #scan off
@@ -73,6 +73,8 @@ or: sudo sdptool browse local | grep Channel
 sudo rfcomm bind <rfcomm port no> <btmacaddr> <channel>
 "rfcomm port no" is the number of the device, for example 0 for /dev/rfcomm0.
 sudo rfcomm bind 10 00:0C:BF:02:29:61 1
+
+It connects when /dev/rfcomm0 is opened
 
 --------------
 #recompile bluez with fix
