@@ -17,6 +17,7 @@ class ReceiveSIAdapter(object):
 
     @staticmethod
     def CreateInstances():
+        # Add USB serial ports
         portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa|1a86:7523|067b:2303|0403:6001|0557:2008')
         serialPorts = [portInfo.device for portInfo in portInfoList]
         # SPORTident USB device                                                                 -- Works
@@ -29,6 +30,10 @@ class ReceiveSIAdapter(object):
         # Add any HW serial ports used for SportIdent units
         hwSISerialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
         serialPorts.extend(hwSISerialPorts)
+
+        # Add BT Serial ports
+        btSISerialPorts = HardwareAbstraction.Instance.GetRFCommsSerialPorts()
+        serialPorts.extend(btSISerialPorts)
 
         # already existing
         previouslyCreated = [instance for instance in ReceiveSIAdapter.Instances if instance.GetSerialDevicePath() in serialPorts]

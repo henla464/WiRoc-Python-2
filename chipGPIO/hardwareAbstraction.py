@@ -113,3 +113,14 @@ class HardwareAbstraction(object):
         if self.runningOnChip or self.runningOnNanoPi:
             HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearShortKeyPress")
             os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x4a 0x02'")
+
+    def GetRFCommsSerialPorts(self):
+        if self.runningOnNanoPi:
+            boundResult = subprocess.run(['rfcomm'], stdout=subprocess.PIPE, check=True)
+            rfComms = boundResult.stdout.decode('utf-8').strip()
+            if len(rfComms) == 0:
+                return []
+            rfCommsArray = rfComms.split('\n')
+            rfCommsSerialPortArray = ['/dev/' + rfComm.split(' ')[0][:-1] for rfComm in rfCommsArray]
+            return rfCommsSerialPortArray
+        return []

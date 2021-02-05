@@ -13,6 +13,7 @@ import time
 import socket
 import subprocess
 import re
+import datetime
 
 @app.route('/api/openapicontent/', methods=['GET'])
 def getOpenApiContent():
@@ -477,7 +478,6 @@ def getApiKey():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=apiKey))
 
-@app.route('/api/webserverurl/', methods=['GET'])
 def getWebServerUrl():
     DatabaseHelper.reInit()
     webServerUrl = SettingsClass.GetWebServerUrl()
@@ -485,19 +485,27 @@ def getWebServerUrl():
     addrs = socket.getaddrinfo(host, 80)
     ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
     webServerUrl = webServerUrl.replace(host, ipv4_addrs[0])
+    return webServerUrl
+
+@app.route('/api/webserverurl/', methods=['GET'])
+def getWebServerUrl2():
+    webServerUrl = getWebServerUrl()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=webServerUrl))
 
-@app.route('/api/webserverhost/', methods=['GET'])
 def getWebServerHost():
     DatabaseHelper.reInit()
     webServerUrl = SettingsClass.GetWebServerUrl()
     webServerHost = webServerUrl.replace('http://', '').replace('https://', '')
+    return webServerHost
+
+@app.route('/api/webserverhost/', methods=['GET'])
+def getWebServerHost2():
+    webServerHost = getWebServerHost()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=webServerHost))
-
 
 @app.route('/api/onewayreceive/', methods=['GET'])
 def getOneWayReceive():
@@ -765,6 +773,219 @@ def bindRFComm(btAddress):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=rfCommsArray))
 
+def getIP():
+    result = subprocess.run(['hostname', '-I'], stdout=subprocess.PIPE, check=True)
+    ip = result.stdout.decode('utf-8').strip()
+    return ip
+
+def zipLogArchive(zipFilePath):
+    result = subprocess.run(['zip', zipFilePath, '/home/chip/WiRoc-Python-2/WiRoc.db', '/home/chip/WiRoc-Python-2/WiRoc.log*'], stdout=subprocess.PIPE)
+    if result.returncode != 0:
+        errStr = result.stderr.decode('utf-8')
+        print('Helper.zipLogArchive: error: ' + errStr)
+        raise Exception("Error: " + errStr)
+
+    return 'OK'
+
+@app.route('/api/ip/', methods=['GET'])
+def getIP():
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=getIP()))
+
+@app.route('/api/renewip/<ifaceNetType>/', methods=['GET'])
+def renewIP(ifaceNetType):
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    result = subprocess.run(['nmcli', '-m', 'multiline', '-f', 'device,type', 'device', 'status'], stdout=subprocess.PIPE, check=True)
+    if result.returncode != 0:
+        errStr = result.stderr.decode('utf-8')
+        raise Exception("Error: " + errStr)
+    devices = result.stdout.decode('utf-8').splitlines()[0, -1] # remove last empty element
+    devices = [dev[40:] for dev in devices]
+    ifaces = devices[::2]
+    ifaceNetworkTypes = devices[1::2]
+    for iface, ifaceNetworkType in zip(ifaces, ifaceNetworkTypes):
+        if (ifaceNetType == ifaceNetworkType):
+            result2 = subprocess.run(['dhclient', '-v', '-1', iface], stdout=subprocess.PIPE, check=True)
+            if result2.returncode != 0:
+                errStr = result2.stderr.decode('utf-8')
+                raise Exception("Error: " + errStr)
+            resultStr = result2.stdout.decode('utf-8')
+            return jsonpickle.encode(MicroMock(Value='OK'))
+    return jsonpickle.encode(MicroMock(Value='Error: No matching iface'))
+
+
+@app.route('/api/services/', methods=['GET'])
+def getServices():
+    statusServices = []
+    result = subprocess.run(['systemctl', 'is-active', 'WiRocPython.service'], stdout=subprocess.PIPE)
+    if result.returncode != 0:
+        errStr = result.stderr.decode('utf-8')
+        raise Exception("Error: " + errStr)
+
+    statusServices.append({'Name': 'WiRocPython', 'Status': result.stdout.decode('utf-8').strip('\n')})
+
+    result = subprocess.run(['systemctl', 'is-active', 'WiRocPythonWS.service'], stdout=subprocess.PIPE)
+    if result.returncode != 0:
+        errStr = result.stderr.decode('utf-8')
+        raise Exception("Error: " + errStr)
+
+    statusServices.append({'Name': 'WiRocPythonWS', 'Status': result.stdout.decode('utf-8').strip('\n')})
+
+    result = subprocess.run(['systemctl', 'is-active', 'blink.service'], stdout=subprocess.PIPE)
+    if result.returncode != 0:
+        errStr = result.stderr.decode('utf-8')
+        raise Exception("Error: " + errStr)
+
+    statusServices.append({'Name': 'WiRocMonitor', 'Status': result.stdout.decode('utf-8').strip('\n')})
+    jsonStr = json.dumps({'services': statusServices })
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=jsonStr))
+
+
+def getBTAddress():
+    result = subprocess.run(['hcitool', 'dev'], stdout=subprocess.PIPE)
+    if result.returncode != 0:
+        errStr = result.stderr.decode('utf-8')
+        raise Exception("Error: " + errStr)
+
+    stdout = result.stdout.decode('utf-8').replace("Devices:", "")
+    stdout = stdout.strip()
+    btAddress = "NoBTAddress"
+    stdoutWords = stdout.split("\t")
+    if stdoutWords.length > 1 and len(stdoutWords[1]) == 17:
+        btAddress = stdoutWords[1]
+    return btAddress
+
+def uploadLogArchiveToServer(apiKey, filePath, serverUrl, serverHost):
+    result = subprocess.run(
+        ['curl', -X, 'POST', '"' + serverUrl + '/api/v1/LogArchives\"', '-H', '"host: ' + serverHost + '"', '-H',
+         '"accept: application/json"', '-H', '"Authorization: ' + apiKey + '"', '-F', '"newfile=@' + filePath + '"'], stdout=subprocess.PIPE)
+    if result.returncode != 0:
+        errStr = result.stderr.decode('utf-8')
+        print('Helper.uploadLogArchive2: error: ' + errStr)
+        raise Exception("Error: " + errStr)
+
+    stdout = result.stdout.decode('utf-8')
+    if len(stdout) > 0:
+        print(stdout)
+    return 'OK'
+
+def getZipFilePath(btAddress, date):
+    filePath = "/home/chip/LogArchive/LogArchive_" + btAddress + "_" + date.now.strftime("%Y-%m-%d-%H:%M:%S") + ".zip"
+    return filePath
+
+@app.route('/api/services/', methods=['GET'])
+def getListWifi():
+    #Get new wifi list
+    result = subprocess.run(['nmcli', '-m', 'multiline', '-f', 'ssid,active,signal', 'device', 'wifi', 'list'], stdout=subprocess.PIPE)
+    if result.returncode != 0:
+        errStr = result.stderr.decode('utf-8')
+        raise Exception("Error: " + errStr)
+
+    wifiNetworks = result.stdout.decode('utf-8').splitlines()[0:-1] # remove last empty element
+    wifiNetworks2 = [netName[40:].strip() for netName in wifiNetworks]
+    wifiDataList = '\n'.join(wifiNetworks2)
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=wifiDataList))
+
+@app.route('/api/connectwifi/<wifiName>/<wifiPassword>/', methods=['GET'])
+def connectWifi(wifiName, wifiPassword):
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    wlanIFace = 'wlan0'
+
+    result = subprocess.run(['nmcli', 'device', 'wifi', 'connect', wifiName, 'password', wifiPassword, 'ifname', wlanIFace], stdout=subprocess.PIPE)
+    if result.returncode != 0:
+        errStr = result.stderr.decode('utf-8')
+        return jsonpickle.encode(MicroMock(Value='Error: ' + errStr))
+
+    return jsonpickle.encode(MicroMock(Value='OK'))
+
+@app.route('/api/disconnectwifi/', methods=['GET'])
+def disconnectWifi():
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    wlanIFace = 'wlan0'
+
+    result = subprocess.run(['nmcli', 'device', 'disconnect', wlanIFace], stdout=subprocess.PIPE)
+    if result.returncode != 0:
+        errStr = result.stderr.decode('utf-8')
+        return jsonpickle.encode(MicroMock(Value='Error: ' + errStr))
+
+    return jsonpickle.encode(MicroMock(Value='OK'))
+
+def getBatteryLevel():
+    hostname = socket.gethostname()
+    if hostname == "chip" or hostname == "nanopiair":
+        print("chip or nanopi")
+        result = subprocess.run(['/usr/sbin/i2cget', '-f', '-y', '0', '0x34', '0xb9'], stdout=subprocess.PIPE)
+        if result.returncode != 0:
+            print('return code not 0')
+            errStr = result.stderr.decode('utf-8')
+            return 'Error: ' + errStr
+
+        intPercent = int(result.stdout.decode('utf-8').splitlines()[0], 0)
+        print('Battery level - onReadRequest: value (dec)=' + str(intPercent))
+        return str(intPercent)
+    else:
+        return '1'
+
+@app.route('/api/battery/', methods=['GET'])
+def getBatteryLevel2():
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    batteryPercent = getBatteryLevel()
+    return jsonpickle.encode(MicroMock(Value=batteryPercent))
+
+@app.route('/api/uploadlogarchive/', methods=['GET'])
+def uploadLogArchive():
+    print('Helper.uploadLogArchive')
+    btAddress = getBTAddress()
+    dateNow = datetime.datetime.now()
+    zipFilePath = getZipFilePath(btAddress, dateNow)
+
+    zipLogArchive(zipFilePath)
+
+    apiKey = SettingsClass.GetAPIKey()
+    serverUrl = getWebServerUrl()
+    serverHost = getWebServerHost()
+
+    uploadLogArchiveToServer(apiKey, zipFilePath, serverUrl, serverHost)
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value='OK'))
+
+@app.route('/api/startpatchap6212/', methods=['GET'])
+def startPatchAP6212():
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    hostname = socket.gethostname()
+    if hostname != "nanopiair":
+        return jsonpickle.encode(MicroMock(Value='OK')) # only nanopiair needs patching
+
+    result = subprocess.run(
+        ['systemctl', 'start', 'ap6212-bluetooth'], stdout=subprocess.PIPE)
+    if result.returncode != 0:
+        errStr = result.stderr.decode('utf-8')
+        print('Helper.startPatchAP6212: error: ' + errStr)
+
+        result = subprocess.run(
+            ['systemctl', 'start', 'ap6212-bluetooth'], stdout=subprocess.PIPE)
+        if result.returncode != 0:
+            errStr = result.stderr.decode('utf-8')
+            print('Helper.startPatchAP6212: second try error: ' + errStr)
+            return jsonpickle.encode(MicroMock(Value='Error: ' + errStr))
+
+    stdout = result.stdout.decode('utf-8')
+    if len(stdout) > 0:
+        print(stdout)
+
+    return jsonpickle.encode(MicroMock(Value='OK'))
+
 @app.route('/api/all/', methods=['GET'])
 def getAllMainSettings():
     DatabaseHelper.reInit()
@@ -854,9 +1075,12 @@ def getAllMainSettings():
     if sett is not None:
         codeRate = sett.Value
 
+    ipAddress = getIP()
+    batteryPercent = getBatteryLevel()
+
     all = ('1' if isCharging else '0') + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \
-        acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + '%batteryPercent%' + '¤' + \
-        '%ipAddress%'+ '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wirocPythonVersion + '¤' + \
+        acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + batteryPercent + '¤' + \
+        ipAddress + '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wirocPythonVersion + '¤' + \
         wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive + '¤' + force4800BaudRate + '¤' + wirocMode + '¤' + \
         rxGain + '¤' + codeRate
 
