@@ -983,7 +983,7 @@ def upgradeWiRocBLE(version):
         with open(logfile, 'a') as out:
             p = Popen(['./installWiRocBLEAPI.sh %s' % version], shell=True, stdin=DEVNULL, stdout=out, stderr=out, close_fds=True, cwd='..')
 
-    return 'OK'
+    return jsonpickle.encode(MicroMock(Value='OK'))
 
 @app.route('/api/all/', methods=['GET'])
 def getAllMainSettings():
