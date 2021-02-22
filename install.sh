@@ -309,8 +309,8 @@ if [[ $(hostname -s) = nanopiair ]]; then
         chmod ugo+x /etc/init.d/ap6212-bluetooth
     fi
 
-    wget -O /home/chip/bluez_5.43-2%2Bdeb9u1_armhf-fix.deb https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/bluez_5.43-2%2Bdeb9u1_armhf-fix.deb
-    dpkg -i /home/chip/bluez_5.43-2%2Bdeb9u1_armhf-fix.deb
+    #wget -O /home/chip/bluez_5.43-2%2Bdeb9u1_armhf-fix.deb https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/bluez_5.43-2%2Bdeb9u1_armhf-fix.deb
+    #dpkg -i /home/chip/bluez_5.43-2%2Bdeb9u1_armhf-fix.deb
 
 else
     mkdir /lib/modules/4.4.13-ntc-mlc/kernel/drivers/usb/class

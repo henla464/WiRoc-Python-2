@@ -14,6 +14,9 @@ import socket
 import subprocess
 import re
 import datetime
+import os
+from subprocess import Popen
+
 
 @app.route('/api/openapicontent/', methods=['GET'])
 def getOpenApiContent():
@@ -788,7 +791,7 @@ def zipLogArchive(zipFilePath):
     return 'OK'
 
 @app.route('/api/ip/', methods=['GET'])
-def getIP():
+def getIP2():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=getIP()))
@@ -820,24 +823,10 @@ def renewIP(ifaceNetType):
 def getServices():
     statusServices = []
     result = subprocess.run(['systemctl', 'is-active', 'WiRocPython.service'], stdout=subprocess.PIPE)
-    if result.returncode != 0:
-        errStr = result.stderr.decode('utf-8')
-        raise Exception("Error: " + errStr)
-
     statusServices.append({'Name': 'WiRocPython', 'Status': result.stdout.decode('utf-8').strip('\n')})
-
     result = subprocess.run(['systemctl', 'is-active', 'WiRocPythonWS.service'], stdout=subprocess.PIPE)
-    if result.returncode != 0:
-        errStr = result.stderr.decode('utf-8')
-        raise Exception("Error: " + errStr)
-
     statusServices.append({'Name': 'WiRocPythonWS', 'Status': result.stdout.decode('utf-8').strip('\n')})
-
     result = subprocess.run(['systemctl', 'is-active', 'blink.service'], stdout=subprocess.PIPE)
-    if result.returncode != 0:
-        errStr = result.stderr.decode('utf-8')
-        raise Exception("Error: " + errStr)
-
     statusServices.append({'Name': 'WiRocMonitor', 'Status': result.stdout.decode('utf-8').strip('\n')})
     jsonStr = json.dumps({'services': statusServices })
     jsonpickle.set_preferred_backend('json')
@@ -846,7 +835,7 @@ def getServices():
 
 
 def getBTAddress():
-    result = subprocess.run(['hcitool', 'dev'], stdout=subprocess.PIPE)
+    result = subprocess.run(['hcitool', 'dev'], capture_output=True)
     if result.returncode != 0:
         errStr = result.stderr.decode('utf-8')
         raise Exception("Error: " + errStr)
@@ -855,29 +844,29 @@ def getBTAddress():
     stdout = stdout.strip()
     btAddress = "NoBTAddress"
     stdoutWords = stdout.split("\t")
-    if stdoutWords.length > 1 and len(stdoutWords[1]) == 17:
+    if len(stdoutWords) > 1 and len(stdoutWords[1]) == 17:
         btAddress = stdoutWords[1]
     return btAddress
 
 def uploadLogArchiveToServer(apiKey, filePath, serverUrl, serverHost):
-    result = subprocess.run(
-        ['curl', -X, 'POST', '"' + serverUrl + '/api/v1/LogArchives\"', '-H', '"host: ' + serverHost + '"', '-H',
-         '"accept: application/json"', '-H', '"Authorization: ' + apiKey + '"', '-F', '"newfile=@' + filePath + '"'], stdout=subprocess.PIPE)
+    parameters = ['curl', '-X', 'POST', '-H', 'host:' + serverHost, '-H',
+         'accept:application/json', '-H', 'Authorization:' + apiKey, '-F', 'newfile=@' + filePath, serverUrl + '/api/v1/LogArchives']
+    print(parameters)
+    result = subprocess.run(parameters, capture_output=True)
     if result.returncode != 0:
         errStr = result.stderr.decode('utf-8')
         print('Helper.uploadLogArchive2: error: ' + errStr)
         raise Exception("Error: " + errStr)
-
     stdout = result.stdout.decode('utf-8')
     if len(stdout) > 0:
         print(stdout)
     return 'OK'
 
 def getZipFilePath(btAddress, date):
-    filePath = "/home/chip/LogArchive/LogArchive_" + btAddress + "_" + date.now.strftime("%Y-%m-%d-%H:%M:%S") + ".zip"
+    filePath = "/home/chip/LogArchive/LogArchive_" + btAddress + "_" + date.now().strftime("%Y-%m-%d-%H:%M:%S") + ".zip"
     return filePath
 
-@app.route('/api/services/', methods=['GET'])
+@app.route('/api/listwifi/', methods=['GET'])
 def getListWifi():
     #Get new wifi list
     result = subprocess.run(['nmcli', '-m', 'multiline', '-f', 'ssid,active,signal', 'device', 'wifi', 'list'], stdout=subprocess.PIPE)
@@ -934,7 +923,7 @@ def getBatteryLevel():
     else:
         return '1'
 
-@app.route('/api/battery/', methods=['GET'])
+@app.route('/api/batterylevel/', methods=['GET'])
 def getBatteryLevel2():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -985,6 +974,16 @@ def startPatchAP6212():
         print(stdout)
 
     return jsonpickle.encode(MicroMock(Value='OK'))
+
+@app.route('/api/upgradewirocble/<version>/', methods=['GET'])
+def upgradeWiRocBLE(version):
+    print("upgradeWiRocBLE")
+    logfile = '../installWiRocBLE.log'
+    with open(os.devnull, 'r+b') as DEVNULL:
+        with open(logfile, 'a') as out:
+            p = Popen(['./installWiRocBLEAPI.sh %s' % version], shell=True, stdin=DEVNULL, stdout=out, stderr=out, close_fds=True, cwd='..')
+
+    return 'OK'
 
 @app.route('/api/all/', methods=['GET'])
 def getAllMainSettings():
