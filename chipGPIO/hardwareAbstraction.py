@@ -121,6 +121,7 @@ class HardwareAbstraction(object):
             if len(rfComms) == 0:
                 return []
             rfCommsArray = rfComms.split('\n')
-            rfCommsSerialPortArray = ['/dev/' + rfComm.split(' ')[0][:-1] for rfComm in rfCommsArray]
+
+            rfCommsSerialPortArray = ['/dev/' + rfComm.split(' ')[0][:-1] for rfComm in rfCommsArray if rfComm.split(' ')[4] == "clean" or rfComm.split(' ')[4] == "connected"]
             return rfCommsSerialPortArray
         return []

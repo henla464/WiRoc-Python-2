@@ -713,6 +713,7 @@ def getRFComms():
                                  Status=rfComm.split(' ')[4]) for rfComm in rfCommsArray]
     return rfCommsObjArray
 
+BTAddressAndNameMapping = {}
 @app.route('/api/scanbtaddresses/', methods=['GET'])
 def getBTAddresses():
     result = subprocess.run(['hcitool', 'scan'], stdout=subprocess.PIPE, check=True)
@@ -726,7 +727,23 @@ def getBTAddresses():
     rfCommsObjArray = getRFComms()
 
     combinedList = []
+    for rfCommObj in rfCommsObjArray:
+        btName = "unknown"
+        if rfCommObj.BTAddress in BTAddressAndNameMapping:
+            btName = BTAddressAndNameMapping[rfCommObj.BTAddress]
+
+        combinedObj = MicroMock(SerialPortName=rfCommObj.SerialPortName,
+                                PortNumber=rfCommObj.SerialPortName.replace("rfcomm", ""),
+                                BTAddress=rfCommObj.BTAddress,
+                                Channel=rfCommObj.Channel,
+                                Status=rfCommObj.Status,
+                                Name=btName)
+        combinedList.append(combinedObj)
+
     for btAddrObj in btAddressesAndNameObjArray:
+        if any(rfCommObj.BTAddress == btAddrObj.BTAddress for rfCommObj in rfCommsObjArray):
+            #Already added BTAddress
+            continue
         combinedObj = MicroMock(SerialPortName=None,
                                 PortNumber=None,
                                 BTAddress=btAddrObj.BTAddress,
@@ -734,15 +751,7 @@ def getBTAddresses():
                                 Status=None,
                                 Name=btAddrObj.Name)
         combinedList.append(combinedObj)
-
-    for rfCommObj in rfCommsObjArray:
-        combinedObj = MicroMock(SerialPortName=rfCommObj.SerialPortName,
-                                PortNumber=rfCommObj.SerialPortName.replace("rfcomm", ""),
-                                BTAddress=rfCommObj.BTAddress,
-                                Channel=rfCommObj.Channel,
-                                Status=rfCommObj.Status,
-                                Name="")
-        combinedList.append(combinedObj)
+        BTAddressAndNameMapping[btAddrObj.BTAddress] = btAddrObj.Name
 
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -771,20 +780,20 @@ def bindRFComm(btAddress):
                 # Bind the device to a serial port
                 res = subprocess.run(['rfcomm', 'bind', str(portNumberToUse), btAddress, channel], stdout=subprocess.PIPE, check=True)
 
-    rfCommsArray = getRFComms()
+    btAddresses = getBTAddresses()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=rfCommsArray))
+    return jsonpickle.encode(MicroMock(Value=btAddresses))
 
 @app.route('/api/releaserfcomm/<portNumberUsed>/', methods=['GET'])
 def releaseRFComm(portNumberUsed):
     # Bind the device to a serial port
     res = subprocess.run(['rfcomm', 'release', portNumberUsed], stdout=subprocess.PIPE, check=True)
     releaseStr = res.stdout.decode('utf-8').strip()
+    btAddresses = getBTAddresses()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    rfCommsArray = getRFComms()
-    return jsonpickle.encode(MicroMock(Value=rfCommsArray))
+    return jsonpickle.encode(MicroMock(Value=btAddresses))
 
 def getIP():
     result = subprocess.run(['hostname', '-I'], stdout=subprocess.PIPE, check=True)
