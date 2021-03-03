@@ -727,22 +727,22 @@ def getBTAddresses():
 
     combinedList = []
     for btAddrObj in btAddressesAndNameObjArray:
-        matchingBinds = [rfCommObj for rfCommObj in rfCommsObjArray if rfCommObj.BTAddress==btAddrObj.BTAddress]
-        if len(matchingBinds) > 0:
-            matchingBind = matchingBinds[0]
-            combinedObj = MicroMock(SerialPortName=matchingBind.SerialPortName,
-                                    BTAddress=btAddrObj.BTAddress,
-                                    Channel=matchingBind.Channel,
-                                    Status=matchingBind.Status,
-                                    Name=btAddrObj.Name)
-            combinedList.append(combinedObj)
-        else:
-            combinedObj = MicroMock(SerialPortName=None,
-                                    BTAddress=btAddrObj.BTAddress,
-                                    Channel=None,
-                                    Status=None,
-                                    Name=btAddrObj.Name)
-            combinedList.append(combinedObj)
+        combinedObj = MicroMock(SerialPortName=None,
+                                PortNumber=None,
+                                BTAddress=btAddrObj.BTAddress,
+                                Channel=None,
+                                Status=None,
+                                Name=btAddrObj.Name)
+        combinedList.append(combinedObj)
+
+    for rfCommObj in rfCommsObjArray:
+        combinedObj = MicroMock(SerialPortName=rfCommObj.SerialPortName,
+                                PortNumber=rfCommObj.SerialPortName.replace("rfcomm", ""),
+                                BTAddress=rfCommObj.BTAddress,
+                                Channel=rfCommObj.Channel,
+                                Status=rfCommObj.Status,
+                                Name="")
+        combinedList.append(combinedObj)
 
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -774,6 +774,16 @@ def bindRFComm(btAddress):
     rfCommsArray = getRFComms()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=rfCommsArray))
+
+@app.route('/api/releaserfcomm/<portNumberUsed>/', methods=['GET'])
+def releaseRFComm(portNumberUsed):
+    # Bind the device to a serial port
+    res = subprocess.run(['rfcomm', 'release', portNumberUsed], stdout=subprocess.PIPE, check=True)
+    releaseStr = res.stdout.decode('utf-8').strip()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    rfCommsArray = getRFComms()
     return jsonpickle.encode(MicroMock(Value=rfCommsArray))
 
 def getIP():

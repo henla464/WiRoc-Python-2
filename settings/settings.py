@@ -327,7 +327,7 @@ class SettingsClass(object):
     def GetRxGainEnabled():
         sett = DatabaseHelper.get_setting_by_key('RxGainEnabled')
         if sett is None:
-            SettingsClass.SetSetting("RxGainEnabled", "0")
+            SettingsClass.SetSetting("RxGainEnabled", "1")
             return False
         return (sett.Value == "1")
 
