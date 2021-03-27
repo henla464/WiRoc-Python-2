@@ -28,7 +28,7 @@ class LoraSIMessageToLoraAckTransform(object):
 
         if loraMsg.GetRepeaterBit() and \
                 loraMsg.GetAcknowledgementRequested() \
-                and SettingsClass.GetWiRocMode() == "RECEIVER":
+                and SettingsClass.GetLoraMode() == "RECEIVER":
             # ack (10), waiting for repeater to reply with ack
             # and send message (23) to receiver
             # + little delay 0.15 sec
@@ -48,7 +48,7 @@ class LoraSIMessageToLoraAckTransform(object):
     def Transform(msgSub, subscriberAdapter):
         # This transform is only used to send ack message from the receiver
         # when repeater is requested (because then we should delay sending ack)
-        if SettingsClass.GetWiRocMode() == "RECEIVER":
+        if SettingsClass.GetLoraMode() == "RECEIVER":
             payloadData = msgSub.MessageData
             loraMsg = LoraRadioMessage()
             loraMsg.AddPayload(payloadData)

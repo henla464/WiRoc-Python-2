@@ -337,36 +337,62 @@ def setWiRocDeviceName(deviceName):
     return jsonpickle.encode(MicroMock(Value=deviceName))
 
 
-def getWiRocMode():
-    DatabaseHelper.reInit()
+#def getWiRocMode():
+#    DatabaseHelper.reInit()
 
-    sett = DatabaseHelper.get_setting_by_key('SendSerialAdapterActive')
-    sendSerialAdapterActive = (sett is not None and sett.Value == "1")
+#    sett = DatabaseHelper.get_setting_by_key('SendSerialAdapterActive')
+#    sendSerialAdapterActive = (sett is not None and sett.Value == "1")
 
-    sett = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
-    sendToSirapEnabled = (sett is not None and sett.Value == "1")
+#    sett = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
+#    sendToSirapEnabled = (sett is not None and sett.Value == "1")
 
-    sett = DatabaseHelper.get_setting_by_key('ReceiveSIAdapterActive')
-    receiveSIAdapterActive = (sett is not None and sett.Value == "1")
+#    sett = DatabaseHelper.get_setting_by_key('ReceiveSIAdapterActive')
+#    receiveSIAdapterActive = (sett is not None and sett.Value == "1")
 
-    if sendSerialAdapterActive:  # and output = SERIAL
+#    if sendSerialAdapterActive:  # and output = SERIAL
         # connected to computer or other WiRoc
-        wirocMode = "RECEIVER"
-    elif sendToSirapEnabled:  # and output = SIRAP
+#        wirocMode = "RECEIVER"
+#    elif sendToSirapEnabled:  # and output = SIRAP
         # configured to send to Sirap over network/wifi
-        wirocMode = "RECEIVER"
-    elif receiveSIAdapterActive:
-        wirocMode = "SENDER"
-    else:
-        wirocMode = "REPEATER"
-    return wirocMode
+#        wirocMode = "RECEIVER"
+#    elif receiveSIAdapterActive:
+#        wirocMode = "SENDER"
+#    else:
+#        wirocMode = "REPEATER"
+#    return wirocMode
 
-@app.route('/api/wirocmode/', methods=['GET'])
-def getWiRocModeJson():
-    wirocMode = getWiRocMode()
+#@app.route('/api/wirocmode/', methods=['GET'])
+#def getWiRocModeJson():
+#    wirocMode = getWiRocMode()
+#    jsonpickle.set_preferred_backend('json')
+#    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+#    return jsonpickle.encode(MicroMock(Value=wirocMode))
+
+@app.route('/api/loramode/', methods=['GET'])
+def getLoraMode():
+    setting = DatabaseHelper.get_setting_by_key('LoraMode')
+    if setting != None:
+        loramode = setting.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=wirocMode))
+    return jsonpickle.encode(MicroMock(Value=loramode))
+
+@app.route('/api/loramode/<loramode>/', methods=['GET'])
+def setLoraMode(loramode):
+    if loramode == "RECEIVER" or loramode == "REPEATER" or loramode == "SENDER":
+        DatabaseHelper.reInit()
+        sd = DatabaseHelper.get_setting_by_key('LoraMode')
+        if sd is None:
+            sd = SettingData()
+            sd.Key = 'LoraMode'
+        sd.Value = loramode
+        sd = DatabaseHelper.save_setting(sd)
+        SettingsClass.SetSettingUpdatedByWebService()
+        jsonpickle.set_preferred_backend('json')
+        jsonpickle.set_encoder_options('json', ensure_ascii=False)
+        return jsonpickle.encode(MicroMock(Value=sd.Value))
+    else:
+        raise Exception("Error: not a valid Lora/Radio Mode")
 
 @app.route('/api/punches/', methods=['GET'])
 def getPunches():
@@ -559,6 +585,69 @@ def SetForce4800BaudRateEnabled(enabled):
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
+@app.route('/api/rs232mode/', methods=['GET'])
+def getRS232Mode():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('RS232Mode')
+    rs232Mode = 'Receive'
+    if sett is not None:
+        rs232Mode = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=rs232Mode))
+
+@app.route('/api/rs232onewayreceive/', methods=['GET'])
+def getRS232OneWayReceive():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('RS232OneWayReceive')
+    oneWayReceive = '0'
+    if sett is not None:
+        oneWayReceive = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=oneWayReceive))
+
+@app.route('/api/rs232onewayreceive/<enabled>/', methods=['GET'])
+def SetRS232OneWayReceive(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('RS232OneWayReceive')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'RS232OneWayReceive'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/forcers2324800baudrate/', methods=['GET'])
+def getForceRS2324800BaudRate():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('ForceRS2324800BaudRate')
+    force4800BaudRate = '0'
+    if sett is not None:
+        force4800BaudRate = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=force4800BaudRate))
+
+@app.route('/api/forcers2324800baudrate/<enabled>/', methods=['GET'])
+def SetForceRS2324800BaudRateEnabled(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('ForceRS2324800BaudRate')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'ForceRS2324800BaudRate'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
 
 @app.route('/api/sendtoblenoenabled/', methods=['GET'])
 def getSendToBlenoEnabled():
@@ -1081,7 +1170,7 @@ def getAllMainSettings():
     if sett is not None:
         force4800BaudRate = sett.Value
 
-    wirocMode = getWiRocMode()
+    loraMode = getLoraMode()
 
     sett = DatabaseHelper.get_setting_by_key('RxGainEnabled')
     rxGain ='1'
@@ -1096,11 +1185,26 @@ def getAllMainSettings():
     ipAddress = getIP()
     batteryPercent = getBatteryLevel()
 
+    sett = DatabaseHelper.get_setting_by_key('RS232Mode')
+    rs232Mode = 'Receive'
+    if sett is not None:
+        rs232Mode = sett.Value
+
+    sett = DatabaseHelper.get_setting_by_key('RS232OneWayReceive')
+    RS232OneWayReceive = '0'
+    if sett is not None:
+        RS232OneWayReceive = sett.Value
+
+    sett = DatabaseHelper.get_setting_by_key('ForceRS2324800BaudRate')
+    forceRS2324800BaudRate = '0'
+    if sett is not None:
+        forceRS2324800BaudRate = sett.Value
+
     all = ('1' if isCharging else '0') + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \
         acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + batteryPercent + '¤' + \
         ipAddress + '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wirocPythonVersion + '¤' + \
-        wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive + '¤' + force4800BaudRate + '¤' + wirocMode + '¤' + \
-        rxGain + '¤' + codeRate
+        wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive + '¤' + force4800BaudRate + '¤' + loraMode + '¤' + \
+        rxGain + '¤' + codeRate + '¤' + rs232Mode + '¤' + RS232OneWayReceive + '¤' + forceRS2324800BaudRate
 
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)

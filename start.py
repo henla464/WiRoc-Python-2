@@ -155,7 +155,7 @@ class Main:
             wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
             channel = SettingsClass.GetChannel()
             ackRequested = SettingsClass.GetAcknowledgementRequested()
-            wirocMode = SettingsClass.GetWiRocMode()
+            wirocMode = SettingsClass.GetLoraMode()
             loraRange = SettingsClass.GetLoraRange()
             sirapTCPEnabled = SettingsClass.GetSendToSirapEnabled()
             sendSerialActive = SettingsClass.GetSendSerialAdapterActive()
@@ -214,7 +214,7 @@ class Main:
                     messageData = inputData["Data"]
                     messageSubTypeName = inputData["MessageSubTypeName"]
                     SIStationSerialNumber = inputData.get("SIStationSerialNumber", None)
-                    if messageTypeName == "LORA" and SettingsClass.GetWiRocMode() == "REPEATER":
+                    if messageTypeName == "LORA" and SettingsClass.GetLoraMode() == "REPEATER":
                         # WiRoc is in repeater mode and received a LORA message
                         self.wirocLogger.info("Start::handleInput() In repeater mode")
 
@@ -246,10 +246,10 @@ class Main:
                                 continue
 
                             self.wirocLogger.debug(
-                                "Start::handleInput() MessageType: " + messageTypeName + ", WiRocMode: " + SettingsClass.GetWiRocMode() + " RepeaterBit: " + str(
+                                "Start::handleInput() MessageType: " + messageTypeName + ", WiRocMode: " + SettingsClass.GetLoraMode() + " RepeaterBit: " + str(
                                     loraMessage.GetRepeaterBit()))
                             rssiValue = loraMessage.GetRSSIValue()
-                            if SettingsClass.GetWiRocMode() == "RECEIVER":
+                            if SettingsClass.GetLoraMode() == "RECEIVER":
                                 if not loraMessage.GetRepeaterBit():
                                     # Message received that might come from repeater. Archive any already scheduled ack message
                                     # from previously received message (directly from sender)
@@ -305,7 +305,7 @@ class Main:
                         destinationHasAcked = loraMessage.GetAcknowledgementRequested()
                         receivedFromRepeater = loraMessage.GetRepeaterBit()
                         rssiValue = loraMessage.GetRSSIValue()
-                        wirocMode = SettingsClass.GetWiRocMode()
+                        wirocMode = SettingsClass.GetLoraMode()
 
                         # block/unblock should be done regardless if this is an ack for message sent from this checkpoint or another
                         if wirocMode == "SENDER" and receivedFromRepeater:

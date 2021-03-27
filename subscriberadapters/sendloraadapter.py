@@ -37,7 +37,7 @@ class SendLoraAdapter(object):
                 if SendLoraAdapter.Instances[0].GetSerialDevicePath() != serialPorts[0]:
                     SendLoraAdapter.Instances[0] = SendLoraAdapter(1, serialPorts[0])
                     return True
-                elif SendLoraAdapter.WiRocMode is None or SendLoraAdapter.WiRocMode != SettingsClass.GetWiRocMode():
+                elif SendLoraAdapter.WiRocMode is None or SendLoraAdapter.WiRocMode != SettingsClass.GetLoraMode():
                     return True
             else:
                 SendLoraAdapter.Instances.append(SendLoraAdapter(1, serialPorts[0], hardwareAbstraction))
@@ -69,8 +69,8 @@ class SendLoraAdapter(object):
     @staticmethod
     def EnableDisableTransforms():
         if len(SendLoraAdapter.Instances) > 0:
-            if SendLoraAdapter.WiRocMode is None or SendLoraAdapter.WiRocMode != SettingsClass.GetWiRocMode():
-                SendLoraAdapter.WiRocMode = SettingsClass.GetWiRocMode()
+            if SendLoraAdapter.WiRocMode is None or SendLoraAdapter.WiRocMode != SettingsClass.GetLoraMode():
+                SendLoraAdapter.WiRocMode = SettingsClass.GetLoraMode()
                 enableSendTransforms = (SendLoraAdapter.WiRocMode == "SENDER" or SendLoraAdapter.WiRocMode == "REPEATER")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SISIMessageToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestTestToLoraTransform")

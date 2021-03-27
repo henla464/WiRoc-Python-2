@@ -1,7 +1,10 @@
 WiRoc
 =====
+Make it possible to select Lora mode
+Set Receive or Send for RS232, app + api + recievesi class + sendcomputer?
+
 Add option to reconfigure remote wiroc
-Change from bleno to use python/bluez, with option to connect to BT-serial
+Test using python/bluez instead of bleno also for CHIP version
 
 App
 ===
@@ -29,6 +32,7 @@ x when module returns something but it is not busy or ok it can be beginning of 
 x When module returns 'busy' we should wait longer before retrying
 x Add success should only be done when ack received for a matching message
 x Add option to change ECC rate
+x Change from bleno to use python/bluez, with option to connect to BT-serial
 
 possible HW enhancments
 -----------------------

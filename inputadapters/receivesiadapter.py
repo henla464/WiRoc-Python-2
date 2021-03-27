@@ -137,12 +137,8 @@ class ReceiveSIAdapter(object):
         ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::sendCommand() response: " + Utils.GetDataInHex(response, logging.DEBUG))
         return response
 
-    def InitOneWay(self):
-        if SettingsClass.GetForce4800BaudRateFromSIStation():
-            # can only be forced to 4800 when in one-way receive
-            self.siSerial.baudrate = 4800
-        else:
-            self.siSerial.baudrate = 38400
+    def InitOneWay(self, baudrate):
+        self.siSerial.baudrate = baudrate
 
         try:
             self.siSerial.open()
@@ -217,11 +213,30 @@ class ReceiveSIAdapter(object):
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::Init() SI Station port name: " + self.portName)
             self.siSerial.close()
             self.siSerial.port = self.portName
-            if SettingsClass.GetOneWayReceiveFromSIStation():
-                return self.InitOneWay()
-            else:
-                return self.InitTwoWay()
 
+            hwSISerialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
+            btSISerialPorts = HardwareAbstraction.Instance.GetRFCommsSerialPorts()
+
+            if self.portName in hwSISerialPorts:
+                if SettingsClass.GetRS232OneWayReceiveFromSIStation():
+                    baudrate = 38400
+                    if SettingsClass.GetForceRS2324800BaudRateFromSIStation():
+                        # can only be forced to 4800 when in one-way receive
+                        baudrate = 4800
+                    return self.InitOneWay(baudrate)
+                else:
+                    return self.InitTwoWay()
+            elif self.portName in btSISerialPorts:
+                return self.InitTwoWay()
+            else:
+                if SettingsClass.GetOneWayReceiveFromSIStation():
+                    baudrate = 38400
+                    if SettingsClass.GetForce4800BaudRateFromSIStation():
+                        # can only be forced to 4800 when in one-way receive
+                        baudrate = 4800
+                    return self.InitOneWay(baudrate)
+                else:
+                    return self.InitTwoWay()
         except (Exception) as msg:
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::Init() Exception: " + str(msg))
             return False

@@ -21,7 +21,7 @@ class LoraStatusToLoraAckTransform(object):
 
     @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
-        if SettingsClass.GetWiRocMode() == "RECEIVER":
+        if SettingsClass.GetLoraMode() == "RECEIVER":
             payloadData = messageBoxData.MessageData
             loraMsg = LoraRadioMessage()
             loraMsg.AddPayload(payloadData)
@@ -45,7 +45,7 @@ class LoraStatusToLoraAckTransform(object):
     def Transform(msgSub, subscriberAdapter):
         # This transform is only used to send ack message from the receiver
         # when repeater is requested (because then we should delay sending ack)
-        if SettingsClass.GetWiRocMode() == "RECEIVER":
+        if SettingsClass.GetLoraMode() == "RECEIVER":
             payloadData = msgSub.MessageData
             loraMsg = LoraRadioMessage()
             loraMsg.AddPayload(payloadData)

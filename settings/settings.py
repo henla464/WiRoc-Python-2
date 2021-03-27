@@ -235,24 +235,31 @@ class SettingsClass(object):
      # Changed both locally and via web services
      #####
 
-    # Also see the code for wirocmode in the api. This is duplicated there.
-    @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetWiRocMode'), lock=rlock)
-    def GetWiRocMode():
-        if SettingsClass.GetSendSerialAdapterActive():  # and output = SERIAL
-            # connected to computer or other WiRoc
-            return "RECEIVER"
-        elif SettingsClass.GetSendToSirapEnabled():  # and output = SIRAP
-            # configured to send to Sirap over network/wifi
-            return "RECEIVER"
-        elif SettingsClass.GetReceiveSIAdapterActive():
-            return "SENDER"
-        else:
-            return "REPEATER"
-
     #####
     # DB settings changed via web services only
     #####
+
+    # Also see the code for wirocmode in the api. This is duplicated there.
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetLoraMode'), lock=rlock)
+    def GetLoraMode():
+        sett = DatabaseHelper.get_setting_by_key('LoraMode')
+        if sett is None:
+            SettingsClass.SetSetting("LoraMode", 'RECEIVER')
+            return 'RECEIVER'
+        return sett.Value
+
+        #if SettingsClass.GetSendSerialAdapterActive():  # and output = SERIAL
+            # connected to computer or other WiRoc
+        #    return "RECEIVER"
+        #elif SettingsClass.GetSendToSirapEnabled():  # and output = SIRAP
+            # configured to send to Sirap over network/wifi
+        #    return "RECEIVER"
+        #elif SettingsClass.GetReceiveSIAdapterActive():
+        #    return "SENDER"
+        #else:
+        #    return "REPEATER"
+
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetChannel'), lock=rlock)
@@ -540,6 +547,24 @@ class SettingsClass(object):
         sett = DatabaseHelper.get_setting_by_key('Force4800BaudRate')
         if sett is None:
             SettingsClass.SetSetting("Force4800BaudRate", "0")
+            return False
+        return (sett.Value == "1")
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetRS232OneWayReceiveFromSIStation'), lock=rlock)
+    def GetRS232OneWayReceiveFromSIStation():
+        sett = DatabaseHelper.get_setting_by_key('RS232OneWayReceive')
+        if sett is None:
+            SettingsClass.SetSetting("RS232OneWayReceive", "0")
+            return False
+        return (sett.Value == "1")
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetForceRS2324800BaudRateFromSIStation'), lock=rlock)
+    def GetForceRS2324800BaudRateFromSIStation():
+        sett = DatabaseHelper.get_setting_by_key('ForceRS2324800BaudRate')
+        if sett is None:
+            SettingsClass.SetSetting("ForceRS2324800BaudRate", "0")
             return False
         return (sett.Value == "1")
 
