@@ -599,6 +599,20 @@ def getRS232Mode():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=rs232Mode))
 
+@app.route('/api/rs232mode/<mode>', methods=['GET'])
+def setRS232Mode(mode):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('RS232Mode')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'RS232Mode'
+    sd.Value = 'SEND' if mode.lower() == 'send' else 'RECEIVE'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
 @app.route('/api/rs232onewayreceive/', methods=['GET'])
 def getRS232OneWayReceive():
     DatabaseHelper.reInit()
