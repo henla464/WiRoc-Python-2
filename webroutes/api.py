@@ -370,6 +370,7 @@ def setWiRocDeviceName(deviceName):
 
 @app.route('/api/loramode/', methods=['GET'])
 def getLoraMode():
+    loramode = "RECEIVER"
     setting = DatabaseHelper.get_setting_by_key('LoraMode')
     if setting != None:
         loramode = setting.Value
@@ -591,7 +592,7 @@ def SetForce4800BaudRateEnabled(enabled):
 def getRS232Mode():
     DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('RS232Mode')
-    rs232Mode = 'Receive'
+    rs232Mode = 'RECEIVE'
     if sett is not None:
         rs232Mode = sett.Value
     jsonpickle.set_preferred_backend('json')
@@ -1170,7 +1171,10 @@ def getAllMainSettings():
     if sett is not None:
         force4800BaudRate = sett.Value
 
-    loraMode = getLoraMode()
+    loramode = "RECEIVER"
+    sett = DatabaseHelper.get_setting_by_key('LoraMode')
+    if sett != None:
+        loramode = sett.Value
 
     sett = DatabaseHelper.get_setting_by_key('RxGainEnabled')
     rxGain ='1'
@@ -1186,7 +1190,7 @@ def getAllMainSettings():
     batteryPercent = getBatteryLevel()
 
     sett = DatabaseHelper.get_setting_by_key('RS232Mode')
-    rs232Mode = 'Receive'
+    rs232Mode = 'RECEIVE'
     if sett is not None:
         rs232Mode = sett.Value
 
@@ -1203,7 +1207,7 @@ def getAllMainSettings():
     all = ('1' if isCharging else '0') + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \
         acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + batteryPercent + '¤' + \
         ipAddress + '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wirocPythonVersion + '¤' + \
-        wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive + '¤' + force4800BaudRate + '¤' + loraMode + '¤' + \
+        wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive + '¤' + force4800BaudRate + '¤' + loramode + '¤' + \
         rxGain + '¤' + codeRate + '¤' + rs232Mode + '¤' + RS232OneWayReceive + '¤' + forceRS2324800BaudRate
 
     jsonpickle.set_preferred_backend('json')
