@@ -599,7 +599,7 @@ def getRS232Mode():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=rs232Mode))
 
-@app.route('/api/rs232mode/<mode>', methods=['GET'])
+@app.route('/api/rs232mode/<mode>/', methods=['GET'])
 def setRS232Mode(mode):
     DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('RS232Mode')
