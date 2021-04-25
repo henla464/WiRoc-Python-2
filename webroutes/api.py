@@ -817,6 +817,7 @@ def getRFComms():
                                  Status=rfComm.split(' ')[4]) for rfComm in rfCommsArray]
     return rfCommsObjArray
 
+
 BTAddressAndNameMapping = {}
 @app.route('/api/scanbtaddresses/', methods=['GET'])
 def getBTAddresses():
@@ -846,7 +847,7 @@ def getBTAddresses():
 
     for btAddrObj in btAddressesAndNameObjArray:
         if any(rfCommObj.BTAddress == btAddrObj.BTAddress for rfCommObj in rfCommsObjArray):
-            #Already added BTAddress
+            # Already added BTAddress
             continue
         combinedObj = MicroMock(SerialPortName=None,
                                 PortNumber=None,
@@ -860,6 +861,7 @@ def getBTAddresses():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=combinedList))
+
 
 @app.route('/api/bindrfcomm/<btAddress>/', methods=['GET'])
 def bindRFComm(btAddress):

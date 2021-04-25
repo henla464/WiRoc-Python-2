@@ -556,13 +556,12 @@ class Main:
                     didTasks = True
                     self.doInfrequentMaintenanceTasks()
 
-                #todo: call UpdateInfrequently in i%499
                 self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
                                             if inputAdapter.UpdateInfreqently() and inputAdapter.GetIsInitialized()]
 
                 if not didTasks:
                     time.sleep(0.04)
-                #print("time: " + str(datetime.now()))
+                # print("time: " + str(datetime.now()))
                 self.handleInput()
                 self.handleOutput(settDict)
                 self.sendMessageStats()
