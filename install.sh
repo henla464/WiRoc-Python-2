@@ -163,6 +163,7 @@ EOF
 if [[ $(hostname -s) = nanopiair ]]; then
     echo "nanopiair"
     echo "WiRoc-BLE"
+    pip3 install dbus
     #install WiRoc-BLE
     wget -O WiRoc-BLE-API.tar.gz https://github.com/henla464/WiRoc-BLE-API/archive/v$WiRocBLEVersion.tar.gz
     rm -rf WiRoc-BLE-API
