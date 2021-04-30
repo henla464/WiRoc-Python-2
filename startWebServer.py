@@ -31,19 +31,20 @@ if __name__ == '__main__':
     logging.getLogger('').addHandler(rotFileHandler)
     logging.getLogger('').addHandler(console)
 
-    keep_fds = [rotFileHandler.stream.fileno()]
-    wd = os.getcwd()
-    logging.info("before daemonize")
-    pidfile = "/var/run/WiRocPythonWS.pid"
-    daemon = Daemonize(app="WiRocPythonWS",
-                       pid=pidfile,
-                       logger=logging.getLogger(''),
-                       foreground=False,
-                       action=startWebServer,
-                       #chdir="/home/chip/WiRoc-Python-2",
-                       chdir=wd, #"/home/henla464/Documents/WiRoc/WiRoc-Python-2"
-                       keep_fds=keep_fds)
-    daemon.start()
+    startWebServer()
+    #keep_fds = [rotFileHandler.stream.fileno()]
+    #wd = os.getcwd()
+    #logging.info("before daemonize")
+    #pidfile = "/var/run/WiRocPythonWS.pid"
+    #daemon = Daemonize(app="WiRocPythonWS",
+    #                   pid=pidfile,
+    #                   logger=logging.getLogger(''),
+    #                   foreground=False,
+    #                   action=startWebServer,
+    #                   #chdir="/home/chip/WiRoc-Python-2",
+    #                   chdir=wd, #"/home/henla464/Documents/WiRoc/WiRoc-Python-2"
+    #                   keep_fds=keep_fds)
+    #daemon.start()
 
 
 

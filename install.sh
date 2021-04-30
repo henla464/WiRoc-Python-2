@@ -108,7 +108,6 @@ pip3 install pillow
 
 if [[ $(hostname -s) = nanopiair ]]; then
     echo "nanopiair"
-    wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.cfg https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.cfg
 else
     echo "chip"
     echo "newer nodejs"

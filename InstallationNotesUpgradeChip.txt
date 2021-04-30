@@ -1,0 +1,151 @@
+
+
+sudo nano /etc/apt/sources.list
+>change the last two lines to:
+> deb http://archive.debian.org/debian jessie-backports main contrib non-free
+> deb-src http://archive.debian.org/debian jessie-backports main contrib non-free
+sudo su
+echo "Acquire::Check-Valid-Until \"false\";" > /etc/apt/apt.conf.d/100disablechecks
+exit
+sudo apt-get update
+sudo apt-get install apt-transport-https
+sudo apt-get install libffi-dev
+sudo apt-get install build-essential checkinstall libreadline-gplv2-dev libncursesw5-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev
+
+
+
+# SSL
+wget https://www.openssl.org/source/openssl-1.0.2o.tar.gz
+tar -xf openssl-1.0.2o.tar.gz
+sudo mv openssl-1.0.2o openssl
+cd openssl
+./config --prefix=/usr/local/ssl/ --openssldir=/usr/local/ssl/ shared zlib
+make -j 4
+sudo make install
+
+sudo nano /etc/ld.so.conf.d/openssl-1.0.2o.conf
+> Add /usr/local/ssl/lib
+sudo ldconfig -v
+
+
+sudo mv /usr/bin/c_rehash /usr/bin/c_rehash.BACKUP
+sudo mv /usr/bin/openssl /usr/bin/openssl.BACKUP
+
+
+
+sudo nano ~/.bashrc
+> Add PATH=$PATH:/usr/local/ssl/bin
+> Add export LD_LIBRARY_PATH="/usr/local/ssl/lib/:$LD_LIBRARY_PATH"
+sudo nano /root/.bashrc
+> Add PATH=$PATH:/usr/local/ssl/bin
+> Add export LD_LIBRARY_PATH="/usr/local/ssl/lib/:$LD_LIBRARY_PATH"
+
+
+PATH=$PATH:/usr/local/ssl/bin
+
+
+# Python
+#export LDFLAGS="-L/usr/local/ssl/lib/"
+export LD_LIBRARY_PATH="/usr/local/ssl/lib/:$LD_LIBRARY_PATH" # this one required for RUNNING pip3.8
+#export CPPFLAGS="-I/usr/local/ssl/include -I/usr/local/ssl/include/openssl"
+#export LD_RUN_PATH=/usr/local/ssl/lib/
+cd ~
+
+curl https://www.python.org/ftp/python/3.8.4/Python-3.8.4.tgz | tar xz
+cd Python-3.8.4
+
+Modify Python-3.8.1/Modules/Setup in a text editor. If this file doesn't exist you may need to go through a failed run first. Uncomment lines and adjust the alias for SSL in lines 206 to 213:
+sudo nano Modules/Setup
+		#_socket socketmodule.c
+
+		# Socket module helper for SSL support; you must comment out the other
+		# socket line above, and possibly edit the SSL variable:
+		SSL=/usr/local/ssl
+		_ssl _ssl.c \
+		  -DUSE_SSL -I$(SSL)/include -I$(SSL)/include/openssl \
+		  -L$(SSL)/lib -lssl -lcrypto
+  
+
+#sudo make distclean
+./configure --with-ensurepip=install --with-openssl=/usr/local/ssl
+make -j 4
+make altinstall
+
+sudo unlink /usr/bin/python3
+sudo ln -s /usr/local/bin/python3.8 /usr/bin/python3
+sudo mv /usr/bin/pip3 /usr/bin/pip3.old
+sudo ln -s /usr/local/bin/pip3.8 /usr/bin/pip3
+
+# python modules
+pip3 install wheel
+pip3 install flask
+pip3 install flask-swagger-ui
+pip3 install pyyaml
+pip3 install cachetools
+pip3 install daemonize
+pip3 install jsonpickle
+pip3 install requests
+pip3 install serial
+pip3 install pyudev
+pip3 install pyserial
+pip3 install smbus2
+pip3 install Adafruit_BBIO==1.0.0  #maybe needed to go to sudo su
+pip3 install Adafruit_SSD1306      #maybe needed to go to sudo su
+pip3 install pillow
+
+
+Modify 
+sudo nano /usr/local/lib/python3.8/site-packages/Adafruit_GPIO/GPIO.py
+replace raise RuntimeError('Could not determine platform.')
+with    return None
+
+
+mkdir /home/chip/WiRoc-WatchDog
+wget -O /home/chip/WiRoc-WatchDog/gpio.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/gpio.sh
+wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.cfg https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.cfg
+wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.sh
+chmod +x /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh
+sudo wget -O /etc/systemd/system/WiRocWatchDog.service https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRocWatchDog.service
+
+
+sudo systemctl disable /etc/systemd/system/blink.service
+sudo systemctl enable /etc/systemd/system/WiRocWatchDog.service
+
+
+sudo npm install sleep
+
+
+
+sudo chown chip.chip __pycache__
+sudo chown chip.chip asyncio
+sudo chown chip.chip collections
+sudo chown chip.chip concurrent
+sudo chown chip.chip ctypes
+sudo chown chip.chip curses
+sudo chown chip.chip dbm
+sudo chown chip.chip distutils
+sudo chown chip.chip email
+sudo chown chip.chip encodings
+sudo chown chip.chip ensurepip
+sudo chown chip.chip html
+sudo chown chip.chip http
+sudo chown chip.chip idlelib
+sudo chown chip.chip importlib
+sudo chown chip.chip json
+sudo chown chip.chip lib2to3
+sudo chown chip.chip logging
+sudo chown chip.chip multiprocessing
+sudo chown chip.chip pydoc_data
+sudo chown chip.chip site-packages
+sudo chown chip.chip sqlite3
+sudo chown chip.chip test
+sudo chown chip.chip tkinter
+sudo chown chip.chip turtledemo
+sudo chown chip.chip unittest
+sudo chown chip.chip urllib
+sudo chown chip.chip venv
+sudo chown chip.chip wsgiref
+sudo chown chip.chip xml
+sudo chown chip.chip xmlrpc
+
+
