@@ -8,9 +8,7 @@ sudo su
 echo "Acquire::Check-Valid-Until \"false\";" > /etc/apt/apt.conf.d/100disablechecks
 exit
 sudo apt-get update
-sudo apt-get install apt-transport-https
-sudo apt-get install libffi-dev
-sudo apt-get install build-essential checkinstall libreadline-gplv2-dev libncursesw5-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev
+sudo apt-get install apt-transport-https libffi-dev build-essential checkinstall libreadline-gplv2-dev libncursesw5-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev
 
 
 
@@ -23,8 +21,7 @@ cd openssl
 make -j 4
 sudo make install
 
-sudo nano /etc/ld.so.conf.d/openssl-1.0.2o.conf
-> Add /usr/local/ssl/lib
+sudo echo "/usr/local/ssl/lib" > /etc/ld.so.conf.d/openssl-1.0.2o.conf
 sudo ldconfig -v
 
 
@@ -33,24 +30,17 @@ sudo mv /usr/bin/openssl /usr/bin/openssl.BACKUP
 
 
 
-sudo nano ~/.bashrc
-> Add PATH=$PATH:/usr/local/ssl/bin
-> Add export LD_LIBRARY_PATH="/usr/local/ssl/lib/:$LD_LIBRARY_PATH"
-sudo nano /root/.bashrc
-> Add PATH=$PATH:/usr/local/ssl/bin
-> Add export LD_LIBRARY_PATH="/usr/local/ssl/lib/:$LD_LIBRARY_PATH"
+bash -c 'echo "PATH=\$PATH:/usr/local/ssl/bin" >> ~/.bashrc'
+bash -c 'echo "export LD_LIBRARY_PATH=\"/usr/local/ssl/lib/:\$LD_LIBRARY_PATH\"" >> ~/.bashrc'
+sudo bash -c 'echo "PATH=\$PATH:/usr/local/ssl/bin" >> /root/.bashrc'
+sudo bash -c 'echo "export LD_LIBRARY_PATH=\"/usr/local/ssl/lib/:\$LD_LIBRARY_PATH\"" >> /root/.bashrc'
 
-
+export LD_LIBRARY_PATH="/usr/local/ssl/lib/:$LD_LIBRARY_PATH"
 PATH=$PATH:/usr/local/ssl/bin
 
 
 # Python
-#export LDFLAGS="-L/usr/local/ssl/lib/"
-export LD_LIBRARY_PATH="/usr/local/ssl/lib/:$LD_LIBRARY_PATH" # this one required for RUNNING pip3.8
-#export CPPFLAGS="-I/usr/local/ssl/include -I/usr/local/ssl/include/openssl"
-#export LD_RUN_PATH=/usr/local/ssl/lib/
 cd ~
-
 curl https://www.python.org/ftp/python/3.8.4/Python-3.8.4.tgz | tar xz
 cd Python-3.8.4
 
@@ -89,8 +79,9 @@ pip3 install serial
 pip3 install pyudev
 pip3 install pyserial
 pip3 install smbus2
-pip3 install Adafruit_BBIO==1.0.0  #maybe needed to go to sudo su
-pip3 install Adafruit_SSD1306      #maybe needed to go to sudo su
+pip3 install pillow
+pip3 install Adafruit_BBIO==1.0.0
+pip3 install Adafruit_SSD1306
 pip3 install pillow
 
 
@@ -102,7 +93,7 @@ with    return None
 
 mkdir /home/chip/WiRoc-WatchDog
 wget -O /home/chip/WiRoc-WatchDog/gpio.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/gpio.sh
-wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.cfg https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.cfg
+wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.cfg https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.chip.cfg
 wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.sh
 chmod +x /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh
 sudo wget -O /etc/systemd/system/WiRocWatchDog.service https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRocWatchDog.service
@@ -114,6 +105,14 @@ sudo systemctl enable /etc/systemd/system/WiRocWatchDog.service
 
 sudo npm install sleep
 
+sudo wget -O /etc/systemd/system/WiRocPythonWS.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPythonWS.service
+sudo systemctl daemon-reload 
+
+cd ~
+echo "v1Rev1" > WiRocHWVersion.txt
+echo "WiRocDeviceName: WiRoc Device" > settings.yaml
+sudo ./installWiRocBLE.sh 0.59
+sudo ./installWiRocPython.sh 0.172
 
 
 sudo chown chip.chip __pycache__

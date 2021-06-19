@@ -1,0 +1,8 @@
+Hardware versions
+
+v1Rev1 CHIP, RF1276T, 7-SEG
+v2Rev1 CHIP, RF1276T, OLED
+v3Rev1 NanoPi, RF1276T (only test version created)
+v3Rev2 NanoPi, DRF1268DS, Ipx antenna right, two usb
+v4Rev1 NanoPi, DRF1268DS, Antenna left, two usb + serial, uses NanoPi LED for blinking
+V5Rev1 NanoPi, DRF1268DS, Antenna left, two usb + serial, uses NanoPi LED for blinking neater routing - AXP209 rotated left (not manufactured)

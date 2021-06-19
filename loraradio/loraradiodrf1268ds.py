@@ -271,19 +271,19 @@ class LoraRadioDRF1268DS:
         time.sleep(0.2)
         expectedLength = 0x26
         readParameterResp = self.getRadioSettingsReply(expectedLength)
-        readParameterResp[3] = 0x03 # write
+        readParameterResp[3] = 0x03  # write
         readParameterResp[6] = channel
         readParameterResp[11] = channelData.RfFactor
-        readParameterResp[12] = 0x05 # Bandwidth 31,25kHz
+        readParameterResp[12] = 0x05  # Bandwidth 31,25kHz
         readParameterResp[13] = codeRate
         readParameterResp[14] = loraPower
         if rxGain:
-            readParameterResp[23] = 0x81 # ID / Rx Gain enable
+            readParameterResp[23] = 0x81  # ID / Rx Gain enable
         else:
-            readParameterResp[23] = 0x01 # ID / Rx Gain disabled
-        readParameterResp[24] = 0x01 # LBT enable
-        readParameterResp[25] = 0x01 # RSSI enable
-        struct.pack_into('II', readParameterResp, 15, channelData.Frequency, channelData.Frequency)
+            readParameterResp[23] = 0x01  # ID / Rx Gain disabled
+        readParameterResp[24] = 0x01  # LBT enable
+        readParameterResp[25] = 0x01  # RSSI enable
+        struct.pack_into('>II', readParameterResp, 15, channelData.Frequency, channelData.Frequency)
         readParameterResp = self.addCRC(readParameterResp)
         LoraRadioDRF1268DS.WiRocLogger.debug("LoraRadioDRF1268DS::setParameters(): Write new parameters: " + Utils.GetDataInHex(readParameterResp, logging.DEBUG))
         self.radioSerial.write(readParameterResp)
@@ -313,8 +313,8 @@ class LoraRadioDRF1268DS:
             loraModuleParameters.Bandwidth = readParameterResp[12]
             loraModuleParameters.CodeRate = readParameterResp[13]
             loraModuleParameters.TransmitPower = readParameterResp[14]
-            loraModuleParameters.TransmitFrequency = struct.unpack_from("I", bytes(readParameterResp[15:]))[0]
-            loraModuleParameters.ReceiveFrequency = struct.unpack_from("I", bytes(readParameterResp[19:]))[0]
+            loraModuleParameters.TransmitFrequency = struct.unpack_from(">I", bytes(readParameterResp[15:]))[0]
+            loraModuleParameters.ReceiveFrequency = struct.unpack_from(">I", bytes(readParameterResp[19:]))[0]
             loraModuleParameters.IDRxGainEnable = readParameterResp[23]
             loraModuleParameters.LBTEnable = readParameterResp[24]
             loraModuleParameters.RSSIEnable = readParameterResp[25]
