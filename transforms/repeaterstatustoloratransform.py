@@ -1,5 +1,7 @@
-from datamodel.datamodel import LoraRadioMessage
 from battery import Battery
+from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
+from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from settings.settings import SettingsClass
 
 class RepeaterStatusToLoraTransform(object):
@@ -23,14 +25,13 @@ class RepeaterStatusToLoraTransform(object):
 
     @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
-        loraRadioMessage = LoraRadioMessage()
-        loraRadioMessage.AddPayload(messageBoxData.MessageData)
-        if loraRadioMessage.GetRepeaterBit():
+        repeater = LoraRadioDataHandler.GetRepeater(messageBoxData.MessageData)
+        if repeater:
             # no ack expected from receiver, should be sent after repeater sent ack
             return 0
         else:
             # possible ack from receiver 10 + ack sent from repeater 10
-            return SettingsClass.GetLoraMessageTimeSendingTimeS(20)+0.1
+            return SettingsClass.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck)*2+0.1
 
     @staticmethod
     def GetDeleteAfterSent():
@@ -46,15 +47,13 @@ class RepeaterStatusToLoraTransform(object):
     @staticmethod
     def Transform(msgSub, subscriberAdapter):
         payloadData = msgSub.MessageData
-        loraMsg = LoraRadioMessage()
-        loraMsg.AddPayload(payloadData)
-        loraMsg.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(),
+        loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
+        loraStatusMsg.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(),
                                                 Battery.GetBatteryPercent4Bits())
-        batteryLow = Battery.GetIsBatteryLow() or loraMsg.GetBatteryLowBit()
-        loraMsg.SetBatteryLowBit(batteryLow)
+        batteryLow = Battery.GetIsBatteryLow() or loraStatusMsg.GetBatteryLow()
+        loraStatusMsg.SetBatteryLow(batteryLow)
         ackReq = SettingsClass.GetAcknowledgementRequested()
-        loraMsg.SetAcknowledgementRequested(ackReq)
-        loraMsg.SetMessageNumber(msgSub.MessageNumber)
-        loraMsg.SetRepeaterBit(False)
-        loraMsg.UpdateChecksum()
-        return {"Data": loraMsg.GetByteArray(), "MessageID": loraMsg.GetMessageID()}
+        loraStatusMsg.SetAckRequested(ackReq)
+        loraStatusMsg.SetRepeater(False)
+        loraStatusMsg.GenerateRSCode()
+        return {"Data": loraStatusMsg.GetByteArray(), "MessageID": loraStatusMsg.GetHash()}

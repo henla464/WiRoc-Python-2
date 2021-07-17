@@ -1,14 +1,19 @@
+from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
+from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from loraradio.loraradio import LoraRadio
-from loraradio.loraradiodrf1268ds import LoraRadioDRF1268DS
+from loraradio.LoraRadioDRF1268DS_RS import LoraRadioDRF1268DS_RS
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
-#import pyudev
 import serial
 import logging
 import socket
 import collections
 from datetime import datetime, timedelta
-from datamodel.datamodel import LoraRadioMessage
+
+
+class LoraRadioMessageHandler:
+    pass
+
 
 class SendLoraAdapter(object):
     WiRocLogger =  logging.getLogger('WiRoc.Output')
@@ -35,7 +40,7 @@ class SendLoraAdapter(object):
         if len(serialPorts) > 0:
             if len(SendLoraAdapter.Instances) > 0:
                 if SendLoraAdapter.Instances[0].GetSerialDevicePath() != serialPorts[0]:
-                    SendLoraAdapter.Instances[0] = SendLoraAdapter(1, serialPorts[0])
+                    SendLoraAdapter.Instances[0] = SendLoraAdapter(1, serialPorts[0], hardwareAbstraction)
                     return True
                 elif SendLoraAdapter.WiRocMode is None or SendLoraAdapter.WiRocMode != SettingsClass.GetLoraMode():
                     return True
@@ -76,18 +81,18 @@ class SendLoraAdapter(object):
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestTestToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "StatusStatusToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SILoraRadioMessageToLoraTransform")
-                DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraSIMessageToLoraAckTransform")
-                DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraStatusToLoraAckTransform")
+                #DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraSIMessageToLoraAckTransform")
+                #DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraStatusToLoraAckTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraAckTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterStatusToLoraAckTransform")
+                #DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterStatusToLoraAckTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterStatusToLoraTransform")
 
     def __init__(self, instanceNumber, portName, hardwareAbstraction):
         self.instanceNumber = instanceNumber
         self.portName = portName
         if hardwareAbstraction.runningOnNanoPi:
-            self.loraRadio = LoraRadioDRF1268DS.GetInstance(portName, hardwareAbstraction)
+            self.loraRadio = LoraRadioDRF1268DS_RS.GetInstance(portName, hardwareAbstraction)
         else:
             self.loraRadio = LoraRadio.GetInstance(portName, hardwareAbstraction)
         self.transforms = {}
@@ -302,14 +307,15 @@ class SendLoraAdapter(object):
             SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::SendData() Air signal detected, skip sending now")
             callbackQueue.put((notSentCB,))
             return
-        msg = LoraRadioMessage()
-        msg.AddPayload(messageData)
-        if msg.GetMessageType() != msg.MessageTypeLoraAck:
+
+        headerMessageType = LoraRadioDataHandler.GetHeaderMessageType(messageData)
+        if headerMessageType != LoraRadioMessageRS.MessageTypeLoraAck:
             SettingsClass.SetTimeOfLastMessageSentToLora()
         delayS = settingsDictionary["DelayAfterMessageSent"]
         self.BlockSendingUntilMessageSentAndAckReceived(delayS)
         if self.loraRadio.SendData(messageData):
-            if SendLoraAdapter.WiRocMode == "SENDER" and msg.GetRepeaterBit():
+            repeater = LoraRadioDataHandler.GetRepeater(messageData)
+            if SendLoraAdapter.WiRocMode == "SENDER" and repeater:
                 self.AddSentWithRepeaterBit()
             else:
                 self.AddSentWithoutRepeaterBit()

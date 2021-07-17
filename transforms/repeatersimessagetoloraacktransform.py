@@ -1,4 +1,6 @@
-from datamodel.datamodel import LoraRadioMessage
+from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
+from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from settings.settings import SettingsClass
 
 class RepeaterSIMessageToLoraAckTransform(object):
@@ -22,12 +24,11 @@ class RepeaterSIMessageToLoraAckTransform(object):
     @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         payloadData = messageBoxData.MessageData
-        loraMsg = LoraRadioMessage()
-        loraMsg.AddPayload(payloadData)
-
+        ackReq = LoraRadioDataHandler.GetAckRequested(payloadData)
+        repeater = LoraRadioDataHandler.GetRepeater(payloadData)
         # when repeater is requested, ack is sent directly from receiveloraadapter
-        if loraMsg.GetAcknowledgementRequested() and not loraMsg.GetRepeaterBit():
-            return SettingsClass.GetLoraMessageTimeSendingTimeS(10) + 0.15 #ack 10, waiting for the destination wiroc to reply with ack + 0.15 delay
+        if ackReq and not repeater:
+            return SettingsClass.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck) + 0.15 #ack 10, waiting for the destination wiroc to reply with ack + 0.15 delay
         return None
 
     @staticmethod
@@ -42,19 +43,21 @@ class RepeaterSIMessageToLoraAckTransform(object):
     @staticmethod
     def Transform(msgSub, subscriberAdapter):
         payloadData = msgSub.MessageData
-        loraMsg = LoraRadioMessage()
-        loraMsg.AddPayload(payloadData)
+        ackReq = LoraRadioDataHandler.GetAckRequested(payloadData)
+        repeaterReq = LoraRadioDataHandler.GetRepeater(payloadData)
 
         # when repeater is requested, ack is sent directly from receiveloraadapter
-        if loraMsg.GetAcknowledgementRequested() and not loraMsg.GetRepeaterBit():
-            incomingMsgType = loraMsg.GetMessageType()
-            messageType = LoraRadioMessage.MessageTypeLoraAck
-            loraMessage2 = LoraRadioMessage(5, messageType, False, False)
-            if incomingMsgType == loraMsg.MessageTypeStatus:
-                loraMessage2 = LoraRadioMessage(0, messageType, False, False)
-            loraMessage2.SetAcknowledgementRequested(msgSub.AckReceivedFromReceiver)  # indicate ack received from receiver
-            loraMessage2.SetRepeaterBit(True)  # indicate this ack comes from repeater
-            loraMessage2.SetMessageIDToAck(loraMsg.GetMessageID())
-            loraMessage2.UpdateChecksum()
-            return {"Data": loraMessage2.GetByteArray(), "MessageID": loraMessage2.GetMessageID()}
+        if ackReq and not repeaterReq:
+            incomingMsgType = LoraRadioDataHandler.GetHeaderMessageType(payloadData)
+            # never ack status messages
+            if incomingMsgType == LoraRadioMessageRS.MessageTypeStatus:
+                return None
+
+            loraPunchMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(payloadData, rssiByte=None)
+            md5Hash = loraPunchMsg.GetHash()
+            loraAck = LoraRadioMessageCreator.GetAckMessage(md5Hash)
+            loraAck.SetAckRequested(msgSub.AckReceivedFromReceiver)  # indicate ack received from receiver
+            loraAck.SetRepeaterBit(True)  # indicate this ack comes from repeater
+            loraAck.GenerateRSCode()
+            return {"Data": loraAck.GetByteArray(), "MessageID": None}
         return None

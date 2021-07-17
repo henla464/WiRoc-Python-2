@@ -1,5 +1,6 @@
 from settings.settings import SettingsClass
-from datamodel.datamodel import LoraRadioMessage
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageStatusRS
 from battery import Battery
 import logging
 import time
@@ -28,7 +29,6 @@ class CreateStatusAdapter(object):
         self.isInitialized = False
         self.TimeToFetch = False
         self.LastTimeCreated = time.monotonic()
-        self.loraRadioMessage = LoraRadioMessage(payloadDataLength = 0, messageType = LoraRadioMessage.MessageTypeStatus, batteryLow = False, ackReq = False)
 
     def GetInstanceName(self):
         return self.instanceName
@@ -54,10 +54,9 @@ class CreateStatusAdapter(object):
         if self.TimeToFetch:
             self.LastTimeCreated = time.monotonic()
             self.TimeToFetch = False
-            self.loraRadioMessage.SetBatteryLowBit(Battery.GetIsBatteryLow())
-            self.loraRadioMessage.UpdateChecksum()
+            msgStatus = LoraRadioMessageCreator.GetStatusMessage(Battery.GetIsBatteryLow())
             self.WiRocLogger.debug("CreateStatusAdapter::GetData() Data to fetch")
-            return {"MessageType": "DATA", "MessageSubTypeName": "Status", "MessageSource":"Status", "Data": self.loraRadioMessage.GetByteArray(), "ChecksumOK": True}
+            return {"MessageType": "DATA", "MessageSubTypeName": "Status", "MessageSource":"Status", "Data": msgStatus.GetByteArray(), "ChecksumOK": True}
 
     def AddedToMessageBox(self, mbid):
         return None

@@ -1,5 +1,5 @@
 from datamodel.datamodel import SIMessage
-from datamodel.datamodel import LoraRadioMessage
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from settings.settings import SettingsClass
 from battery import Battery
 from utils.utils import Utils
@@ -42,15 +42,15 @@ class LoraStatusToSITransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSub, subscriberAdapter):
-        payloadData = msgSub.MessageData
-        loraMessage = LoraRadioMessage()
-        loraMessage.AddPayload(payloadData)
+
         LoraStatusToSITransform.WiRocLogger.debug("LoraToSITransform::Transform() Message type status")
         if SettingsClass.GetConnectedComputerIsWiRocDevice():
-            loraMessage.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())
+            payloadData = msgSub.MessageData
+            loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
+            loraStatusMsg.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())
             siMsg = SIMessage()
             siMsg.AddHeader(SIMessage.WiRocToWiRoc)
-            siMsg.AddPayload(loraMessage.GetByteArray())
+            siMsg.AddPayload(loraStatusMsg.GetByteArray())
             siMsg.AddFooter()
             LoraStatusToSITransform.WiRocLogger.debug("LoraToSITransform::Transform() data: " +  + Utils.GetDataInHex(siMsg.GetByteArray(), logging.DEBUG))
             return {"Data": siMsg.GetByteArray(), "MessageID": None}

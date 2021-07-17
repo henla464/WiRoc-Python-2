@@ -1,4 +1,4 @@
-from datamodel.datamodel import LoraRadioMessage
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from settings.settings import SettingsClass
 from battery import Battery
 
@@ -38,15 +38,13 @@ class StatusStatusToLoraTransform(object):
     @staticmethod
     def Transform(msgSub, subscriberAdapter):
         payloadData = msgSub.MessageData
-        loraMessage = LoraRadioMessage()
-        loraMessage.AddPayload(payloadData)
-        loraMessage.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())
-        loraMessage.SetMessageNumber(msgSub.MessageNumber)
+        loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
+        loraStatusMsg.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())
         ackReq = SettingsClass.GetStatusAcknowledgementRequested()
-        loraMessage.SetAcknowledgementRequested(ackReq)
+        loraStatusMsg.SetAckRequested(ackReq)
         reqRepeater = False
         if SettingsClass.GetLoraMode() == "SENDER":
             reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
-        loraMessage.SetRepeaterBit(reqRepeater)
-        loraMessage.UpdateChecksum()
-        return {"Data": loraMessage.GetByteArray(), "MessageID": loraMessage.GetMessageID()}
+        loraStatusMsg.SetRepeater(reqRepeater)
+        loraStatusMsg.GenerateRSCode()
+        return {"Data": loraStatusMsg.GetByteArray(), "MessageID": loraStatusMsg.GetHash()}

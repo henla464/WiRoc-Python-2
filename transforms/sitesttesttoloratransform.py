@@ -1,6 +1,6 @@
-from datamodel.datamodel import LoraRadioMessage
 from datamodel.datamodel import SIMessage
 from battery import Battery
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from settings.settings import SettingsClass
 
 class SITestTestToLoraTransform(object):
@@ -43,15 +43,13 @@ class SITestTestToLoraTransform(object):
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
         if siMsg.GetMessageType() == SIMessage.SIPunch:
-            payloadDataLength = len(payloadData)
-            messageType = LoraRadioMessage.MessageTypeSIPunch
+            loraPunchMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(payloadData, rssiByte=None)
             batteryLow = Battery.GetIsBatteryLow()
+            loraPunchMsg.SetBatteryLow(batteryLow)
             ackReq = SettingsClass.GetAcknowledgementRequested()
-            loraMessage = LoraRadioMessage(payloadDataLength, messageType, batteryLow, ackReq)
-            loraMessage.AddPayload(payloadData)
-            loraMessage.SetMessageNumber(msgSub.MessageNumber)
+            loraPunchMsg.SetAckRequested(ackReq)
             reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
-            loraMessage.SetRepeaterBit(reqRepeater)
-            loraMessage.UpdateChecksum()
-            return {"Data": loraMessage.GetByteArray(), "MessageID": loraMessage.GetMessageID()}
+            loraPunchMsg.SetRepeater(reqRepeater)
+            loraPunchMsg.GenerateRS()
+            return {"Data": loraPunchMsg.GetByteArray(), "MessageID": loraPunchMsg.GetHash()}
         return None

@@ -490,6 +490,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
+  /batterylevel/:
+    get:
+      tags:
+      - "Status"
+      summary: "Get the current battery level percentage"
+      operationId: "getBatteryLevel"
+      responses:
+        "200":
+          description: "Battery level in percentage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /apikey/:
     get:
       tags:

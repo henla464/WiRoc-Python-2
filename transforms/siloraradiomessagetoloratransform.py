@@ -1,6 +1,7 @@
-from datamodel.datamodel import LoraRadioMessage
 from datamodel.datamodel import SIMessage
 from battery import Battery
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
+from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from settings.settings import SettingsClass
 
 class SILoraRadioMessageToLoraTransform(object):
@@ -29,12 +30,11 @@ class SILoraRadioMessageToLoraTransform(object):
         siMsg.AddPayload(payloadData)
         # WiRoc to WiRoc message
         unwrappedMessage = payloadData[3:-3]
-        # Assume it is a LoraRadioMessage that is wrapped
-        loraMessage = LoraRadioMessage()
-        loraMessage.AddPayload(unwrappedMessage)
-        if loraMessage.GetMessageType() == LoraRadioMessage.MessageTypeStatus:
+        # Assume it is a LoraRadioMessageRS that is wrapped
+        headerMessageType = unwrappedMessage[1] & 0x1F
+        if headerMessageType == LoraRadioMessageRS.MessageTypeStatus:
             if messageBoxData.MessageSource == "WiRoc":
-                return SettingsClass.GetLoraMessageTimeSendingTimeS(10)+0.1 # ack 10 bytes + 2 loop extra
+                return SettingsClass.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck)+0.1 # ack 10 bytes + 2 loop extra
         return None
 
     @staticmethod
@@ -56,21 +56,20 @@ class SILoraRadioMessageToLoraTransform(object):
         #WiRoc to WiRoc message
         unwrappedMessage = payloadData[3:-3]
         # Assume it is a LoraRadioMessage that is wrapped
-        loraMessage = LoraRadioMessage()
-        loraMessage.AddPayload(unwrappedMessage)
-        if loraMessage.GetMessageType() == LoraRadioMessage.MessageTypeStatus:
+        headerMessageType = unwrappedMessage[1] & 0x1F
+        if headerMessageType == LoraRadioMessageRS.MessageTypeStatus:
             # We received a status message wrapped in a WiRoc to WiRoc message
             # We want to send it on, but add information about this WiRoc
-            loraMessage.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(),
+            loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(unwrappedMessage)
+            loraStatusMsg.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(),
                                                     Battery.GetBatteryPercent4Bits())
-            batteryLow = Battery.GetIsBatteryLow() or loraMessage.GetBatteryLowBit()
-            loraMessage.SetBatteryLowBit(batteryLow)
+            batteryLow = Battery.GetIsBatteryLow() or loraStatusMsg.GetBatteryLow()
+            loraStatusMsg.SetBatteryLowBit(batteryLow)
             ackReq = SettingsClass.GetAcknowledgementRequested()
-            loraMessage.SetAcknowledgementRequested(ackReq)
-            loraMessage.SetMessageNumber(msgSub.MessageNumber)
+            loraStatusMsg.SetAckRequested(ackReq)
             reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
-            loraMessage.SetRepeaterBit(reqRepeater)
-            loraMessage.UpdateChecksum()
-            return {"Data": loraMessage.GetByteArray(), "MessageID": loraMessage.GetMessageID()}
+            loraStatusMsg.SetRepeater(reqRepeater)
+            loraStatusMsg.GenerateRSCode()
+            return {"Data": loraStatusMsg.GetByteArray(), "MessageID": loraStatusMsg.GetHash()}
         else:
             return None

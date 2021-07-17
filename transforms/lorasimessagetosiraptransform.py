@@ -1,5 +1,5 @@
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from utils.utils import Utils
-from datamodel.datamodel import LoraRadioMessage
 from datamodel.datamodel import SIMessage
 
 class LoraSIMessageToSirapTransform(object):
@@ -36,8 +36,7 @@ class LoraSIMessageToSirapTransform(object):
     @staticmethod
     def Transform(msgSub, subscriberAdapter):
         payloadData = msgSub.MessageData
-        msg = LoraRadioMessage()
-        msg.AddPayload(payloadData)
+        msg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(payloadData, rssiByte=None)
         siPayloadData = msg.GetSIMessageByteArray()
         siMsg = SIMessage()
         siMsg.AddPayload(siPayloadData)

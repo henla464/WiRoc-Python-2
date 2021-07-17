@@ -20,18 +20,18 @@ fi
 
 echo "Which hardware is this runnig on: 1: CHIP+7SEG, 2: CHIP+OLED, 3: NanoPi, 4: NanoPi+SerialPort"
 read hwOption
-WiRocHWVersion="3Rev2"
+WiRocHWVersion="v3Rev2"
 if [[ $hwOption = 1 ]]; then
-    WiRocHWVersion="2Rev1"
+    WiRocHWVersion="v2Rev1"
 fi
 if [[ $hwOption = 2 ]]; then
-    WiRocHWVersion="2Rev2"
+    WiRocHWVersion="v2Rev2"
 fi
 if [[ $hwOption = 3 ]]; then
-    WiRocHWVersion="3Rev2"
+    WiRocHWVersion="v3Rev2"
 fi
 if [[ $hwOption = 4 ]]; then
-    WiRocHWVersion="4Rev1"
+    WiRocHWVersion="v4Rev1"
 fi
 
 echo "update"
@@ -171,7 +171,7 @@ if [[ $(hostname -s) = nanopiair ]]; then
     mv WiRoc-BLE-API/installWiRocBLEAPI.sh .
     chmod ugo+x installWiRocBLEAPI.sh
     echo "Update WiRocBLEAPI version"
-cat << EOF > WiRocBLEAPIVersion.txt
+cat << EOF > WiRocBLEVersion.txt
 ${WiRocBLEVersion}
 EOF
 
@@ -239,6 +239,7 @@ systemctl enable /etc/systemd/system/WiRocPythonWS.service
 echo "install wiroc-monitor"
 #read line
 #Install WiRoc-Monitor
+mkdir WiRoc-WatchDog
 wget -O /home/chip/WiRoc-WatchDog/gpio.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/gpio.sh
 wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.sh
 chmod +x /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh
@@ -274,7 +275,7 @@ if [[ $(hostname -s) = nanopiair ]]; then
         echo "Changed boot.cmd and recompiled it"
     fi
     
-    if [[ $WiRocHWVersion = '4Rev1']]
+    if [[ $WiRocHWVersion = 'v4Rev1' ]]
     then
        if ! grep -Fxq "overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
        then

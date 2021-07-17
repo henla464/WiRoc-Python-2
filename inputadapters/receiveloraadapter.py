@@ -1,14 +1,13 @@
-import pyudev
 import traceback
 from loraradio.loraradio import LoraRadio
-from loraradio.loraradiodrf1268ds import LoraRadioDRF1268DS
-from datamodel.datamodel import LoraRadioMessage
+from loraradio.LoraRadioDRF1268DS_RS import LoraRadioDRF1268DS_RS
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
 import serial
 import time
 import logging
-import socket
+from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 
 class ReceiveLoraAdapter(object):
     Instances = []
@@ -64,7 +63,7 @@ class ReceiveLoraAdapter(object):
         self.instanceNumber = instanceNumber
         self.portName = portName
         if hardwareAbstraction.runningOnNanoPi:
-            self.loraRadio = LoraRadioDRF1268DS.GetInstance(portName, hardwareAbstraction)
+            self.loraRadio = LoraRadioDRF1268DS_RS.GetInstance(portName, hardwareAbstraction)
         else:
             self.loraRadio = LoraRadio.GetInstance(portName, hardwareAbstraction)
         self.hardwareAbstraction = hardwareAbstraction
@@ -116,7 +115,8 @@ class ReceiveLoraAdapter(object):
             if time.monotonic() - startTrySendTime > (SettingsClass.GetRetryDelay(1) / 2000):
                 # Wait half of a first retrydelay (GetRetryDelay returns in microseconds)
                 ReceiveLoraAdapter.WiRocLogger.error("ReceiveLoraAdapter::TrySendData() Wasn't able to send ack (busy response)")
-                break
+                return False
+        return True
 
     # messageData is a bytearray
     def GetData(self):
@@ -124,87 +124,71 @@ class ReceiveLoraAdapter(object):
         try:
             loraMessage = self.loraRadio.GetRadioData()
         except Exception as ex:
-            ReceiveLoraAdapter.WiRocLogger.error("ReceiveLoraAdapter::GetData() Error reading from lora " + traceback.format_exc())
+            ReceiveLoraAdapter.WiRocLogger.error(
+                "ReceiveLoraAdapter::GetData() Error reading from lora " + traceback.format_exc())
             time.sleep(0.5)
 
         if loraMessage is not None:
             receivedData = loraMessage.GetByteArray()
-            isChecksumOK = loraMessage.GetIsChecksumOK()
-            if isChecksumOK:
-                ackRequested = loraMessage.GetAcknowledgementRequested()
-                repeaterRequested = loraMessage.GetRepeaterBit()
-                messageType = loraMessage.GetMessageType()
-                if messageType == LoraRadioMessage.MessageTypeLoraAck:
-                    if repeaterRequested:
-                        SettingsClass.SetHasReceivedMessageFromRepeater()
-                    if ((SettingsClass.GetLoraMode() == "SENDER") or (SettingsClass.GetLoraMode() == "REPEATER")):
-                        messageID =  loraMessage.GetMessageIDThatIsAcked()
-                        return {"MessageType": "ACK", "MessageSource":"Lora", "MessageSubTypeName": "Ack", "MessageID": messageID, "ChecksumOK": True, "LoraRadioMessage": loraMessage}
-                elif messageType == LoraRadioMessage.MessageTypeStatus:
-                    if ReceiveLoraAdapter.TestRepeater and \
-                            SettingsClass.GetLoraMode() == "RECEIVER" and \
-                            repeaterRequested:
-                        return None
-
-                    if loraMessage.GetBatteryLowBit():
-                        SettingsClass.SetBatteryIsLowReceived(True)
-
-                    if ackRequested and \
-                            ((SettingsClass.GetLoraMode() == "RECEIVER" and not repeaterRequested)
-                            or (SettingsClass.GetLoraMode() == "REPEATER" and repeaterRequested)):
-                            ReceiveLoraAdapter.WiRocLogger.debug("Lora status message received, send ack. WiRocMode: " + SettingsClass.GetLoraMode() + " Repeater requested: " + str(repeaterRequested))
-                            messageType = LoraRadioMessage.MessageTypeLoraAck
-                            loraMessage2 = LoraRadioMessage(0, messageType, False, False)
-                            if SettingsClass.GetLoraMode() == "RECEIVER":
-                                loraMessage2.SetAcknowledgementRequested(True) # indicate this is receiver acking
-                            if SettingsClass.GetLoraMode() == "REPEATER":
-                                loraMessage2.SetRepeaterBit(True)  # indicate this is repeater acking
-                            loraMessage2.SetMessageIDToAck(loraMessage.GetMessageID())
-                            loraMessage2.UpdateChecksum()
-                            self.TrySendData(loraMessage2.GetByteArray())
-                    relayPathNo = loraMessage.GetLastRelayPathNoFromStatusMessage()
-                    SettingsClass.UpdateRelayPathNumber(relayPathNo)
-                    DatabaseHelper.add_message_stat(self.GetInstanceName(), "Status", "Received", 1)
-                    return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "Status", "Data": receivedData, "MessageID": loraMessage.GetMessageID(), "LoraRadioMessage": loraMessage, "ChecksumOK": True}
-                else:
-                    if ReceiveLoraAdapter.TestRepeater and \
-                            SettingsClass.GetLoraMode() == "RECEIVER" and \
-                            repeaterRequested:
-                        return None
-
-                    if loraMessage.GetBatteryLowBit():
-                        SettingsClass.SetBatteryIsLowReceived(True)
-
-                    messageID = loraMessage.GetMessageID()
-                    if ackRequested and \
-                            ((SettingsClass.GetLoraMode() == "RECEIVER" and not repeaterRequested)
-                             or (SettingsClass.GetLoraMode() == "REPEATER" and repeaterRequested)):
-                            ReceiveLoraAdapter.WiRocLogger.debug("Lora message received, send ack. WiRocMode: " + SettingsClass.GetLoraMode() + " Repeater requested: " + str(repeaterRequested))
-                            messageType = LoraRadioMessage.MessageTypeLoraAck
-                            loraMessage2 = LoraRadioMessage(5, messageType, False, False)
-                            if SettingsClass.GetLoraMode() == "RECEIVER":
-                                loraMessage2.SetAcknowledgementRequested(True) # indicate this is receiver acking
-                            if SettingsClass.GetLoraMode() == "REPEATER":
-                                loraMessage2.SetRepeaterBit(True)  # indicate this is repeater acking
-                            loraMessage2.SetMessageIDToAck(messageID)
-                            loraMessage2.UpdateChecksum()
-                            try:
-                                self.TrySendData(loraMessage2.GetByteArray())
-                            except Exception as ex2:
-                                ReceiveLoraAdapter.WiRocLogger.error("ReceiveLoraAdapter::GetData() Error sending ack: " + str(ex2))
-                    try:
-                        DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Received", 1)
-                    except Exception as ex:
-                        ReceiveLoraAdapter.WiRocLogger.error("ReceiveLoraAdapter::GetData() Error saving statistics: " + str(ex))
-                    return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName": "SIMessage", "Data": receivedData, "MessageID": messageID, "LoraRadioMessage": loraMessage, "ChecksumOK": True}
-            else:
-                messageType = loraMessage.GetMessageType()
-                if messageType == LoraRadioMessage.MessageTypeLoraAck:
+            ackRequested = loraMessage.GetAckRequested()
+            repeaterRequested = loraMessage.GetRepeater()
+            messageType = loraMessage.GetMessageType()
+            if messageType == LoraRadioMessageRS.MessageTypeLoraAck:
+                if repeaterRequested:
+                    SettingsClass.SetHasReceivedMessageFromRepeater()
+                if ((SettingsClass.GetLoraMode() == "SENDER") or (SettingsClass.GetLoraMode() == "REPEATER")):
                     messageID = loraMessage.GetMessageIDThatIsAcked()
-                    return {"MessageType": "ACK", "MessageSource": "Lora", "MessageSubTypeName":"Ack", "Data": receivedData, "MessageID":messageID, "ChecksumOK": False, "LoraRadioMessage": loraMessage}
-                else:
-                    return {"MessageType": "DATA", "MessageSource":"Lora", "MessageSubTypeName":"Unknown", "Data": receivedData, "MessageID":None, "ChecksumOK": False}
+                    return {"MessageType": "ACK", "MessageSource": "Lora", "MessageSubTypeName": "Ack",
+                            "MessageID": messageID, "ChecksumOK": True, "LoraRadioMessage": loraMessage}
+            elif messageType == LoraRadioMessageRS.MessageTypeStatus:
+                if ReceiveLoraAdapter.TestRepeater and \
+                        SettingsClass.GetLoraMode() == "RECEIVER" and \
+                        repeaterRequested:
+                    return None
 
+                if loraMessage.GetBatteryLow():
+                    SettingsClass.SetBatteryIsLowReceived(True)
+
+                relayPathNo = loraMessage.GetLastRelayPathNoFromStatusMessage()
+                SettingsClass.UpdateRelayPathNumber(relayPathNo)
+                DatabaseHelper.add_message_stat(self.GetInstanceName(), "Status", "Received", 1)
+                return {"MessageType": "DATA", "MessageSource": "Lora", "MessageSubTypeName": "Status",
+                        "Data": receivedData, "MessageID": loraMessage.GetMessageID(),
+                        "LoraRadioMessage": loraMessage, "ChecksumOK": True}
+            else:
+                if ReceiveLoraAdapter.TestRepeater and \
+                        SettingsClass.GetLoraMode() == "RECEIVER" and \
+                        repeaterRequested:
+                    return None
+
+                if loraMessage.GetBatteryLow():
+                    SettingsClass.SetBatteryIsLowReceived(True)
+
+                messageID = loraMessage.GetMD5Hash()
+                if ackRequested and \
+                        ((SettingsClass.GetLoraMode() == "RECEIVER" and not repeaterRequested)
+                         or (SettingsClass.GetLoraMode() == "REPEATER" and repeaterRequested)):
+                    ReceiveLoraAdapter.WiRocLogger.debug(
+                        "Lora message received, send ack. WiRocMode: " + SettingsClass.GetLoraMode() + " Repeater requested: " + str(
+                            repeaterRequested))
+                    ackMsg = LoraRadioMessageCreator.GetAckMessage(messageID)
+                    if SettingsClass.GetLoraMode() == "RECEIVER":
+                        ackMsg.SetAckRequested(True)  # indicate this is receiver acking
+                    if SettingsClass.GetLoraMode() == "REPEATER":
+                        ackMsg.SetRepeater(True)  # indicate this is repeater acking
+                    try:
+                        self.TrySendData(ackMsg.GetByteArray())
+                    except Exception as ex2:
+                        ReceiveLoraAdapter.WiRocLogger.error(
+                            "ReceiveLoraAdapter::GetData() Error sending ack: " + str(ex2))
+                try:
+                    DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Received", 1)
+                except Exception as ex:
+                    ReceiveLoraAdapter.WiRocLogger.error(
+                        "ReceiveLoraAdapter::GetData() Error saving statistics: " + str(ex))
+                return {"MessageType": "DATA", "MessageSource": "Lora", "MessageSubTypeName": "SIMessage",
+                        "Data": receivedData, "MessageID": messageID, "LoraRadioMessage": loraMessage,
+                        "ChecksumOK": True}
         return None
 
     def AddedToMessageBox(self, mbid):

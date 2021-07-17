@@ -7,6 +7,8 @@ from datetime import timedelta, datetime
 #from settings.settings import SettingsClass
 import time
 
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
+
 
 class DatabaseHelper:
     db = None
@@ -818,10 +820,9 @@ class DatabaseHelper:
 
         siPayloadData = None
         if messageTypeName == "LORA" and messageSubTypeName == "SIMessage":
-            loraMessage = LoraRadioMessage()
-            loraMessage.AddPayload(data)
-            mbd.LowBattery = loraMessage.GetBatteryLowBit()
-            siPayloadData = loraMessage.GetSIMessageByteArray()
+            loraPunchMessage = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(data)
+            mbd.LowBattery = loraPunchMessage.GetBatteryLow()
+            siPayloadData = loraPunchMessage.GetSIMessageByteArray()
         elif messageSubTypeName == "SIMessage":
             #source WiRoc, SIStation
             siPayloadData = data
@@ -908,13 +909,12 @@ class DatabaseHelper:
 
         siPayloadData = None
         if messageTypeName == "LORA" and messageSubTypeName == "SIMessage":
-            loraMessage = LoraRadioMessage()
-            loraMessage.AddPayload(data)
-            rmbd.LowBattery = loraMessage.GetBatteryLowBit()
+            loraPunchMessage = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(data, rssiByte= None)
+            rmbd.LowBattery = loraPunchMessage.GetBatteryLow()
             rmbd.MessageID = messageID
-            rmbd.AckRequested = loraMessage.GetAcknowledgementRequested()
-            rmbd.RepeaterRequested = loraMessage.GetRepeaterBit()
-            siPayloadData = loraMessage.GetSIMessageByteArray()
+            rmbd.AckRequested = loraPunchMessage.GetAckRequested()
+            rmbd.RepeaterRequested = loraPunchMessage.GetRepeater()
+            siPayloadData = loraPunchMessage.GetSIMessageByteArray()
 
         if siPayloadData != None:
             siMsg = SIMessage()

@@ -109,7 +109,7 @@ class Utils:
 
            Byte 0 seem to always be 0 regardless of card series...
         """
-
+        # Should probably change to number[0:4] so that this will work when card numbers >= 16 777 216
         nr = Utils.toInt(number[1:4])
         if nr < 500000:
             # SI5 card

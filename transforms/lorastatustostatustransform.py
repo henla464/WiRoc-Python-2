@@ -1,4 +1,4 @@
-from datamodel.datamodel import LoraRadioMessage
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from settings.settings import SettingsClass
 from battery import Battery
 import logging
@@ -38,7 +38,6 @@ class LoraStatusToStatusTransform(object):
     @staticmethod
     def Transform(msgSub, subscriberAdapter):
         LoraStatusToStatusTransform.WiRocLogger.debug("LoraStatusToStatusTransform::Transform() Message type status")
-        loraMessage = LoraRadioMessage()
-        loraMessage.AddPayload(msgSub.MessageData)
-        loraMessage.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())
-        return {"Data": loraMessage.GetByteArray(), "MessageID": None}
+        loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(msgSub.MessageData)
+        loraStatusMsg.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())
+        return {"Data": loraStatusMsg.GetByteArray(), "MessageID": None}

@@ -208,7 +208,7 @@ class Main:
                     messageID = inputData.get("MessageID", None)
                     messageTypeName = inputAdapter.GetTypeName()
                     messageSource = inputData["MessageSource"]
-                    checksumOK = inputData["ChecksumOK"]
+                    #checksumOK = inputData["ChecksumOK"]
                     instanceName = inputAdapter.GetInstanceName()
                     powerCycle = SettingsClass.GetPowerCycle()
                     messageData = inputData["Data"]
@@ -218,10 +218,10 @@ class Main:
                         # WiRoc is in repeater mode and received a LORA message
                         self.wirocLogger.info("Start::handleInput() In repeater mode")
 
-                        if not checksumOK:
-                            self.wirocLogger.error(
-                                "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " Checksum WRONG")
-                            continue
+                        #if not checksumOK:
+                        #    self.wirocLogger.error(
+                        #        "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " Checksum WRONG")
+                        #    continue
                         loraMessage = inputData.get("LoraRadioMessage", None)
                         if loraMessage == None:
                             self.wirocLogger.error(
@@ -229,16 +229,16 @@ class Main:
                             continue
                         rssiValue = loraMessage.GetRSSIValue()
                         rmbd = DatabaseHelper.create_repeater_message_box_data(messageSource, messageTypeName, messageSubTypeName,
-                                                                     instanceName, checksumOK, powerCycle,
+                                                                     instanceName, True, powerCycle,
                                                                      SIStationSerialNumber, messageID, messageData, rssiValue)
                         rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
                     else:
                         rssiValue = 0
                         if messageTypeName == "LORA":
-                            if not checksumOK:
-                                self.wirocLogger.error(
-                                    "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " Checksum WRONG")
-                                continue
+                            #if not checksumOK:
+                            #    self.wirocLogger.error(
+                            #        "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " Checksum WRONG")
+                            #    continue
                             loraMessage = inputData.get("LoraRadioMessage", None)
                             if loraMessage == None:
                                 self.wirocLogger.error(
@@ -247,16 +247,16 @@ class Main:
 
                             self.wirocLogger.debug(
                                 "Start::handleInput() MessageType: " + messageTypeName + ", WiRocMode: " + SettingsClass.GetLoraMode() + " RepeaterBit: " + str(
-                                    loraMessage.GetRepeaterBit()))
+                                    loraMessage.GetRepeater()))
                             rssiValue = loraMessage.GetRSSIValue()
                             if SettingsClass.GetLoraMode() == "RECEIVER":
-                                if not loraMessage.GetRepeaterBit():
+                                if not loraMessage.GetRepeater():
                                     # Message received that might come from repeater. Archive any already scheduled ack message
                                     # from previously received message (directly from sender)
                                     # Message number ignored, remove acks for same SI-card-number and SI-Station-number
                                     DatabaseHelper.archive_lora_ack_message_subscription(messageID)
 
-                        mbd = DatabaseHelper.create_message_box_data(messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK, powerCycle, SIStationSerialNumber, messageData, rssiValue)
+                        mbd = DatabaseHelper.create_message_box_data(messageSource, messageTypeName, messageSubTypeName, instanceName, True, powerCycle, SIStationSerialNumber, messageData, rssiValue)
                         mbdid = DatabaseHelper.save_message_box(mbd)
                         SettingsClass.SetTimeOfLastMessageAdded()
                         inputAdapter.AddedToMessageBox(mbdid)
@@ -302,8 +302,8 @@ class Main:
                         loraSubAdapter = loraSubAdapters[0]
                         messageID = inputData["MessageID"]
                         loraMessage = inputData["LoraRadioMessage"]
-                        destinationHasAcked = loraMessage.GetAcknowledgementRequested()
-                        receivedFromRepeater = loraMessage.GetRepeaterBit()
+                        destinationHasAcked = loraMessage.GetAckRequested()
+                        receivedFromRepeater = loraMessage.GetRepeater()
                         rssiValue = loraMessage.GetRSSIValue()
                         wirocMode = SettingsClass.GetLoraMode()
 
@@ -319,18 +319,18 @@ class Main:
                             loraSubAdapter.RemoveBlock()
 
                         subscriptionView = DatabaseHelper.get_last_message_subscription_view_that_was_sent_to_lora()
-                        if not inputData["ChecksumOK"]:
-                            if Utils.IsEnoughAlike(messageID, subscriptionView.MessageID):
-                                messageID = subscriptionView.MessageID
-                            else:
-                                self.wirocLogger.debug(
-                                    "Start::handleInput() Received ack but checksum is wrong and acked message id is not found")
-                                continue
-                        else:
-                            if messageID != subscriptionView.MessageID:
-                                # ack is probably an ack of a message sent from another checkpoint
-                                self.wirocLogger.debug("Start::handleInput() Received ack but last sent message doesn't match the message id")
-                                continue
+                        #if not inputData["ChecksumOK"]:
+                        #    if Utils.IsEnoughAlike(messageID, subscriptionView.MessageID):
+                        #        messageID = subscriptionView.MessageID
+                        #    else:
+                        #        self.wirocLogger.debug(
+                        #            "Start::handleInput() Received ack but checksum is wrong and acked message id is not found")
+                        #        continue
+                        #else:
+                        if messageID != subscriptionView.MessageID:
+                            # ack is probably an ack of a message sent from another checkpoint
+                            self.wirocLogger.debug("Start::handleInput() Received ack but last sent message doesn't match the message id")
+                            continue
 
                         # Only add success when matching message found
                         if messageID == subscriptionView.MessageID:
@@ -339,24 +339,18 @@ class Main:
                             else:
                                 loraSubAdapter.AddSuccessWithoutRepeaterBit()
 
-                            if wirocMode == "REPEATER" and len(messageID) == 6:
-                                self.wirocLogger.debug("Start::handleInput() Received ack, for repeater message number: " + str(
-                                    messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6])))
+                            if wirocMode == "REPEATER":
+                                self.wirocLogger.debug("Start::handleInput() Received ack, for repeater message id: " + Utils.GetDataInHex(messageID, logging.DEBUG))
                                 DatabaseHelper.repeater_message_acked(messageID, rssiValue)
                                 DatabaseHelper.archive_repeater_lora_message_subscription_after_ack(messageID, rssiValue)
                                 if destinationHasAcked:
                                     DatabaseHelper.set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(
                                         messageID)
                             else:
-                                if len(messageID) == 6:
-                                    self.wirocLogger.debug("Start::handleInput() Received ack, for message number: " + str(
-                                        messageID[0]) + " sicardno: " + str(Utils.DecodeCardNr(messageID[2:6]))
-                                                  + " receivedFromRepeater: " + str(receivedFromRepeater)
-                                                  + " destinationHasAcked: " + str(destinationHasAcked))
-                                else:
-                                    self.wirocLogger.debug(
-                                        "Start::handleInput() Received ack, for status message number: " + str(messageID[0]))
-                                DatabaseHelper.archive_message_subscription_after_ack(messageID, rssiValue)
+                                self.wirocLogger.debug("Start::handleInput() Received ack, for message id: " + Utils.GetDataInHex(messageID, logging.DEBUG) + " "
+                                              + " receivedFromRepeater: " + str(receivedFromRepeater)
+                                              + " destinationHasAcked: " + str(destinationHasAcked))
+                            DatabaseHelper.archive_message_subscription_after_ack(messageID, rssiValue)
 
 
 

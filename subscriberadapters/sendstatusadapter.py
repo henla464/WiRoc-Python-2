@@ -1,6 +1,5 @@
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
-from datamodel.datamodel import LoraRadioMessage
 from battery import Battery
 import logging
 import requests

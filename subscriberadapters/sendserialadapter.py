@@ -107,7 +107,7 @@ class SendSerialAdapter(object):
         return False
 
     def GetTransformNames(self):
-        return ["LoraSIMessageToSITransform", "SISIMessageToSITransform"]
+        return ["LoraSIMessageToSITransform", "SISIMessageToSITransform", "LoraStatusToSITransform"]
 
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass

@@ -1,6 +1,6 @@
-from datamodel.datamodel import LoraRadioMessage
-from datamodel.datamodel import SIMessage
 from battery import Battery
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
+from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from settings.settings import SettingsClass
 
 class SISIMessageToLoraTransform(object):
@@ -25,7 +25,7 @@ class SISIMessageToLoraTransform(object):
     @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         if messageBoxData.MessageSource == "WiRoc":
-            return SettingsClass.GetLoraMessageTimeSendingTimeS(10)+0.1 # ack 10 bytes + 2 loop
+            return SettingsClass.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck)+0.1 # ack 10 bytes + 2 loop
         return 0
 
     @staticmethod
@@ -42,16 +42,11 @@ class SISIMessageToLoraTransform(object):
     @staticmethod
     def Transform(msgSub, subscriberAdapter):
         payloadData = msgSub.MessageData
-        siMsg = SIMessage()
-        siMsg.AddPayload(payloadData)
-        payloadDataLength = len(payloadData)
-        messageType = LoraRadioMessage.MessageTypeSIPunch
         batteryLow = Battery.GetIsBatteryLow()
         ackReq = SettingsClass.GetAcknowledgementRequested()
-        loraMessage = LoraRadioMessage(payloadDataLength, messageType, batteryLow, ackReq)
-        loraMessage.AddPayload(payloadData)
-        loraMessage.SetMessageNumber(msgSub.MessageNumber)
+        loraPunchMsg = LoraRadioMessageCreator.GetPunchMessage(batteryLow, ackReq, None)
+        loraPunchMsg.SetSIMessageByteArray(payloadData)
         reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
-        loraMessage.SetRepeaterBit(reqRepeater)
-        loraMessage.UpdateChecksum()
-        return {"Data": loraMessage.GetByteArray(), "MessageID": loraMessage.GetMessageID()}
+        loraPunchMsg.SetRepeater(reqRepeater)
+        loraPunchMsg.GenerateRSCode()
+        return {"Data": loraPunchMsg.GetByteArray(), "MessageID": loraPunchMsg.GetHash()}
