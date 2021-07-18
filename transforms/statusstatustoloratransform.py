@@ -22,6 +22,10 @@ class StatusStatusToLoraTransform(object):
         return "StatusStatusToLoraTransform"
 
     @staticmethod
+    def GetBatchSize():
+        return 1
+
+    @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         return 0
 

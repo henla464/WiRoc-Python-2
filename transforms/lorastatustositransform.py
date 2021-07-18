@@ -25,6 +25,10 @@ class LoraStatusToSITransform(object):
         return "LoraStatusToSITransform"
 
     @staticmethod
+    def GetBatchSize():
+        return 1
+
+    @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         if SettingsClass.GetConnectedComputerIsWiRocDevice():
             return 0

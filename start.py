@@ -126,7 +126,7 @@ class Main:
         msgSubscriptions = DatabaseHelper.get_message_subscriptions_view_to_archive(SettingsClass.GetMaxRetries(), 100)
         for msgSub in msgSubscriptions:
             self.wirocLogger.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
-            DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
+            DatabaseHelper.archive_message_subscription_view_not_sent(msgSub.id)
 
     def reconfigureBackground(self, sendToSirap, webServerIPUrl, webServerHost, loggingServerHost, loggingServerPort, logToServer):
         if any(isinstance(h, logging.handlers.HTTPHandler) for h in logging.getLogger('').handlers):
@@ -357,27 +357,28 @@ class Main:
     def handleOutput(self, settDict):
         #self.wirocLogger.debug("IsReadyToSend: " + str(SendLoraAdapter.Instances[0].IsReadyToSend()) + " DateTime: " + str(datetime.now()))
         if self.messagesToSendExists:
-            noOfMsgSubWaiting, msgSub = DatabaseHelper.get_message_subscriptions_view_to_send(SettingsClass.GetMaxRetries())
+            noOfMsgSubWaiting, msgSubBatch = DatabaseHelper.get_message_subscriptions_view_to_send(SettingsClass.GetMaxRetries())
             if noOfMsgSubWaiting == 0:
                 self.messagesToSendExists = False
-            if msgSub != None:
+            if msgSubBatch != None:
                 #self.wirocLogger.info("msgSub count: " + str(len(msgSubscriptions)))
                 # find the right adapter
                 adapterFound = False
                 for subAdapter in self.subscriberAdapters:
-                    if (msgSub.SubscriberInstanceName == subAdapter.GetInstanceName() and
-                                msgSub.SubscriberTypeName == subAdapter.GetTypeName()):
+                    if (msgSubBatch.SubscriberInstanceName == subAdapter.GetInstanceName() and
+                                msgSubBatch.SubscriberTypeName == subAdapter.GetTypeName()):
                         adapterFound = True
 
                         if subAdapter.IsReadyToSend():
                             # transform the data before sending
-                            transformClass = subAdapter.GetTransform(msgSub.TransformName)
-                            transformedData = transformClass.Transform(msgSub, subAdapter)
+                            transformClass = subAdapter.GetTransform(msgSubBatch.TransformName)
+                            transformedData = transformClass.Transform(msgSubBatch, subAdapter)
                             if transformedData is not None:
                                 if transformedData["MessageID"] is not None:
-                                    DatabaseHelper.update_messageid(msgSub.id, transformedData["MessageID"])
+                                    for item in msgSubBatch.MessageSubscriptionBatchItems:
+                                        DatabaseHelper.update_messageid(item.id, transformedData["MessageID"])
 
-                                if msgSub.DeleteAfterSent:
+                                if msgSubBatch.DeleteAfterSent:
                                     # shouldn't wait for ack. (ie. repeater message ack)
                                     self.wirocLogger.debug("In loop: subadapter: " + str(type(subAdapter)) + " DeleteAfterSent")
                                     settDict["DelayAfterMessageSent"] = 0
@@ -388,36 +389,40 @@ class Main:
                                 def createSuccessCB(innerSubAdapter):
                                     def successCB():
                                         self.wirocLogger.info(
-                                            "Start::Run() successCB() Message sent to " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName)
-                                        if msgSub.DeleteAfterSent:  # move msgsub to archive
-                                            DatabaseHelper.archive_message_subscription_view_after_sent(msgSub)
+                                            "Start::Run() successCB() Message sent to " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName + " Trans:" + msgSubBatch.TransformName)
+                                        if msgSubBatch.DeleteAfterSent:  # move msgsub to archive
+                                            for item in msgSubBatch.MessageSubscriptionBatchItems:
+                                                DatabaseHelper.archive_message_subscription_view_after_sent(item.id)
                                         else:  # set SentDate and increment NoOfSendTries
-                                            retryDelay = innerSubAdapter.GetRetryDelay(msgSub.NoOfSendTries + 1)
-                                            DatabaseHelper.increment_send_tries_and_set_sent_date(msgSub, retryDelay)
-                                            self.wirocLogger.debug("Start::Run() successCB() Subadapter: " +str(type(innerSubAdapter)) +
-                                                          " Increment send tries, NoOfSendTries: " + str(msgSub.NoOfSendTries) +
+                                            for item in msgSubBatch.MessageSubscriptionBatchItems:
+                                                retryDelay = innerSubAdapter.GetRetryDelay(item.NoOfSendTries + 1)
+                                                DatabaseHelper.increment_send_tries_and_set_sent_date(item.id, retryDelay)
+                                                self.wirocLogger.debug("Start::Run() successCB() Subadapter: " +str(type(innerSubAdapter)) +
+                                                          " Increment send tries, NoOfSendTries: " + str(item.NoOfSendTries) +
                                                           " retryDelay: " + str(retryDelay))
                                     return successCB
 
                                 def createFailureCB(innerSubAdapter):
                                     def failureCB():
                                         # failed to send
-                                        self.wirocLogger.warning(
-                                            "Start::Run() Failed to send message: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName + " id:"+ str(msgSub.id))
-                                        retryDelay = innerSubAdapter.GetRetryDelay(msgSub.NoOfSendTries + 1)
-                                        DatabaseHelper.increment_send_tries_and_set_send_failed_date(msgSub, retryDelay)
-                                        self.wirocLogger.debug(
-                                            "Start::Run() failureCB() Subadapter: " + str(type(innerSubAdapter)) +
-                                            " Increment send tries, NoOfSendTries: " + str(msgSub.NoOfSendTries) +
-                                            " retryDelay: " + str(retryDelay))
+                                        for item in msgSubBatch.MessageSubscriptionBatchItems:
+                                            self.wirocLogger.warning(
+                                                "Start::Run() Failed to send message: " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName + " Trans:" + msgSubBatch.TransformName + " id:"+ str(item.id))
+                                            retryDelay = innerSubAdapter.GetRetryDelay(item.NoOfSendTries + 1)
+                                            DatabaseHelper.increment_send_tries_and_set_send_failed_date(item.id, retryDelay)
+                                            self.wirocLogger.debug(
+                                                "Start::Run() failureCB() Subadapter: " + str(type(innerSubAdapter)) +
+                                                " Increment send tries, NoOfSendTries: " + str(item.NoOfSendTries) +
+                                                " retryDelay: " + str(retryDelay))
                                     return failureCB
 
                                 def createNotSentCB():
                                     def notSentCB():
-                                        # msg not sent
-                                        self.wirocLogger.warning(
-                                            "Start::Run() Message was not sent: " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName + " Trans:" + msgSub.TransformName + " id:"+ str(msgSub.id))
-                                        DatabaseHelper.clear_fetched_for_sending(msgSub)
+                                        for item in msgSubBatch.MessageSubscriptionBatchItems:
+                                            # msg not sent
+                                            self.wirocLogger.warning(
+                                                "Start::Run() Message was not sent: " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName + " Trans:" + msgSubBatch.TransformName + " id:"+ str(item.id))
+                                            DatabaseHelper.clear_fetched_for_sending(item.id)
                                     return notSentCB
 
                                 t = threading.Thread(target=subAdapter.SendData,
@@ -427,10 +432,12 @@ class Main:
                             else:
                                 # shouldn't be sent, so just archive the message subscription
                                 # (Probably a Lora message that doesn't request ack
-                                self.wirocLogger.debug("Start::Run() " + msgSub.TransformName + " return None so not sent")
-                                DatabaseHelper.archive_message_subscription_view_not_sent(msgSub)
+                                for item in msgSubBatch.MessageSubscriptionBatchItems:
+                                    self.wirocLogger.debug("Start::Run() " + msgSubBatch.TransformName + " return None so not sent")
+                                    DatabaseHelper.archive_message_subscription_view_not_sent(item.id)
                         else:
-                            DatabaseHelper.clear_fetched_for_sending(msgSub)
+                            for item in msgSubBatch.MessageSubscriptionBatchItems:
+                                DatabaseHelper.clear_fetched_for_sending(item.id)
                             return
 
                         return

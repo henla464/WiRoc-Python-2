@@ -20,6 +20,10 @@ class SISIMessageToSirapTransform(object):
         return "SISIMessageToSirapTransform"
 
     @staticmethod
+    def GetBatchSize():
+        return 1
+
+    @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         return 0
 

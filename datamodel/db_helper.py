@@ -313,8 +313,9 @@ class DatabaseHelper:
         cls.db.save_table_object(messageSubscription, False)
 
     @classmethod
-    def archive_message_subscription_view_after_sent(cls, messageSubscriptionView):
+    def archive_message_subscription_view_after_sent(cls, messageSubscriptionId):
         cls.init()
+        messageSubscriptionView = DatabaseHelper.get_message_subscriptions_view_by_id(messageSubscriptionId)
         msa = MessageSubscriptionArchiveData()
         msa.OrigId = messageSubscriptionView.id
         msa.MessageID = messageSubscriptionView.MessageID
@@ -338,8 +339,9 @@ class DatabaseHelper:
             cls.archive_message_box(messageSubscriptionView.MessageBoxId)
 
     @classmethod
-    def archive_message_subscription_view_not_sent(cls, messageSubscriptionView):
+    def archive_message_subscription_view_not_sent(cls, messageSubscriptionId):
         cls.init()
+        messageSubscriptionView = DatabaseHelper.get_message_subscriptions_view_by_id(messageSubscriptionId)
         msa = MessageSubscriptionArchiveData()
         msa.OrigId = messageSubscriptionView.id
         msa.MessageID = messageSubscriptionView.MessageID
@@ -363,9 +365,9 @@ class DatabaseHelper:
             cls.archive_message_box(messageSubscriptionView.MessageBoxId)
 
     @classmethod
-    def increment_send_tries_and_set_sent_date(cls, messageSubscriptionView, retryDelay):
+    def increment_send_tries_and_set_sent_date(cls, messageSubscriptionId, retryDelay):
         cls.init()
-        msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
+        msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionId)
         if msa is None:
             return None
         msa.SentDate = datetime.now()
@@ -381,16 +383,16 @@ class DatabaseHelper:
         cls.db.save_table_object(msa, False)
 
     @classmethod
-    def clear_fetched_for_sending(cls, messageSubscriptionView):
+    def clear_fetched_for_sending(cls, messageSubscriptionId):
         cls.init()
-        msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
+        msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionId)
         msa.FetchedForSending = None
         cls.db.save_table_object(msa, False)
 
     @classmethod
-    def increment_send_tries_and_set_send_failed_date(cls, messageSubscriptionView, retryDelay):
+    def increment_send_tries_and_set_send_failed_date(cls, messageSubscriptionId, retryDelay):
         cls.init()
-        msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
+        msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionId)
         msa.SendFailedDate = datetime.now()
         msa.NoOfSendTries = msa.NoOfSendTries + 1
         msa.FindAdapterTryDate = None
@@ -640,6 +642,44 @@ class DatabaseHelper:
                 return messageSubscription
 
     @classmethod
+    def get_message_subscriptions_view_by_id(cls, messageSubscriptionId):
+        cls.init()
+        sql = ("SELECT MessageSubscriptionData.id, "
+               "MessageSubscriptionData.MessageID, "
+               "MessageSubscriptionData.AckReceivedFromReceiver, "
+               "MessageSubscriptionData.MessageNumber, "
+               "MessageSubscriptionData.SentDate, "
+               "MessageSubscriptionData.SendFailedDate, "
+               "MessageSubscriptionData.FindAdapterTryDate, "
+               "MessageSubscriptionData.FindAdapterTries, "
+               "MessageSubscriptionData.NoOfSendTries, "
+               "MessageSubscriptionData.AckReceivedDate, "
+               "MessageSubscriptionData.Delay, "
+               "MessageSubscriptionData.RetryDelay, "
+               "MessageSubscriptionData.FindAdapterRetryDelay, "
+               "MessageSubscriptionData.MessageBoxId, "
+               "MessageSubscriptionData.SubscriptionId, "
+               "MessageSubscriptionData.FetchedForSending, "
+               "SubscriptionData.DeleteAfterSent, "
+               "SubscriptionData.Enabled, "
+               "SubscriptionData.SubscriberId, "
+               "SubscriberData.TypeName as SubscriberTypeName, "
+               "SubscriberData.InstanceName as SubscriberInstanceName, "
+               "TransformData.Name as TransformName, "
+               "MessageBoxData.MessageData,"
+               "MessageBoxData.CreatedDate as CreatedDate "
+               "FROM TransformData JOIN SubscriptionData "
+               "ON TransformData.id = SubscriptionData.TransformId "
+               "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
+               "JOIN MessageSubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
+               "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
+               "WHERE MessageSubscriptionData.id = ?")
+        messageSubscriptions = cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql, (messageSubscriptionId,))
+        if len(messageSubscriptions) > 0:
+            return messageSubscriptions[0]
+        return None
+
+    @classmethod
     def get_message_subscriptions_view_to_send(cls, maxRetries):
         sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData")
         cls.init()
@@ -681,7 +721,7 @@ class DatabaseHelper:
                    "MessageSubscriptionData.SentDate asc")
             messageSubscriptions = cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
 
-            messageSubscriptionToSend = None
+            messageSubscriptionBatch = MessageSubscriptionBatch()
             adapterTypesAlreadyHandlingMessages = set()
             for messageSubscription in messageSubscriptions:
                 if messageSubscription.SubscriberTypeName in adapterTypesAlreadyHandlingMessages:
@@ -720,13 +760,40 @@ class DatabaseHelper:
                     # Ignore messages exceeding find adapter tries. Has not yet been archived.
                     continue
 
-                messageSubscriptionToSend = messageSubscription
-                break
+                if messageSubscriptionBatch is None:
+                    messageSubscriptionBatch = MessageSubscriptionBatch()
+                    messageSubscriptionBatch.AckReceivedFromReceiver = messageSubscription.AckReceivedFromReceiver
+                    messageSubscriptionBatch.DeleteAfterSent = messageSubscription.DeleteAfterSent
+                    messageSubscriptionBatch.SubscriberTypeName = messageSubscription.SubscriberTypeName
+                    messageSubscriptionBatch.SubscriberInstanceName = messageSubscription.SubscriberInstanceName
+                    messageSubscriptionBatch.TransformName = messageSubscription.TransformName
+                    item = MessageSubscriptionBatchItem()
+                    item.id = messageSubscription.id
+                    item.MessageData = messageSubscription.MessageData
+                    item.NoOfSendTries = messageSubscription.NoOfSendTries
+                    messageSubscriptionBatch.MessageSubscriptionBatchItems.append(item)
+                else:
+                    if (messageSubscriptionBatch.AckReceivedFromReceiver == messageSubscription.AckReceivedFromReceiver and
+                            messageSubscriptionBatch.DeleteAfterSent == messageSubscription.DeleteAfterSent and
+                            messageSubscriptionBatch.SubscriberTypeName == messageSubscription.SubscriberTypeName and
+                            messageSubscriptionBatch.SubscriberInstanceName == messageSubscription.SubscriberInstanceName and
+                            messageSubscriptionBatch.TransformName == messageSubscription.TransformName):
+                        item = MessageSubscriptionBatchItem()
+                        item.id = messageSubscription.id
+                        item.MessageData = messageSubscription.MessageData
+                        item.NoOfSendTries = messageSubscription.NoOfSendTries
+                        messageSubscriptionBatch.MessageSubscriptionBatchItems.append(item)
 
-            if messageSubscriptionToSend != None:
-                sql = "UPDATE MessageSubscriptionData SET FetchedForSending = ? WHERE Id = ?"
-                cls.db.execute_SQL(sql, (datetime.now(), messageSubscriptionToSend.id))
-                return cnt, messageSubscriptionToSend
+                if messageSubscriptionBatch is not None and \
+                        len(messageSubscriptionBatch.MessageSubscriptionBatchItems) >= messageSubscription.BatchSize:
+                    # Batch is full
+                    break
+
+            if messageSubscriptionBatch is not None:
+                for item in messageSubscriptionBatch.MessageSubscriptionBatchItems:
+                    sql = "UPDATE MessageSubscriptionData SET FetchedForSending = ? WHERE Id = ?"
+                    cls.db.execute_SQL(sql, (datetime.now(), item.id))
+                return cnt, messageSubscriptionBatch
         return cnt, None
 
     @classmethod

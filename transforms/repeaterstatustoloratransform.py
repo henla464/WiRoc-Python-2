@@ -24,6 +24,10 @@ class RepeaterStatusToLoraTransform(object):
         return "RepeaterStatusToLoraTransform"
 
     @staticmethod
+    def GetBatchSize():
+        return 1
+
+    @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         repeater = LoraRadioDataHandler.GetRepeater(messageBoxData.MessageData)
         if repeater:

@@ -23,7 +23,10 @@ class RepeaterSIMessageToLoraTransform(object):
     def GetName():
         return "RepeaterSIMessageToLoraTransform"
 
-    #todo:
+    @staticmethod
+    def GetBatchSize():
+        return 1
+
     @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         if LoraRadioDataHandler.GetRepeater(messageBoxData.MessageData):

@@ -206,15 +206,17 @@ class TransformData(object):
 
 class SubscriptionData(object):
     columns = [("DeleteAfterSent", bool), ("Enabled", bool),
-               ("SubscriberId", int), ("TransformId", int)]
+               ("SubscriberId", int), ("TransformId", int),
+               ("BatchSize", int)]
 
     def __init__(self, DeleteAfterSent=None, Enabled=None,
-                 SubscriberId=None, TransformId=None):
+                 SubscriberId=None, TransformId=None, BatchSize=1):
         self.id = None
         self.DeleteAfterSent = DeleteAfterSent
         self.Enabled = Enabled
         self.SubscriberId = SubscriberId
         self.TransformId = TransformId
+        self.BatchSize = BatchSize
 
 
 class SubscriptionViewData(object):
@@ -759,3 +761,20 @@ class SIMessage(object):
     def GetBackupMemoryAddressAsInt(self):
         addr = self.MessageData[13] << 16 | self.MessageData[14] << 8 | self.MessageData[15]
         return addr
+
+
+class MessageSubscriptionBatchItem(object):
+    def __init__(self):
+        self.id = None
+        self.NoOfSendTries = None
+        self.MessageData = None
+
+class MessageSubscriptionBatch(object):
+    def __init__(self):
+        self.AckReceivedFromReceiver = None
+        self.DeleteAfterSent = None
+        self.SubscriberTypeName = None
+        self.SubscriberInstanceName = None
+        self.TransformName = None
+        self.MessageSubscriptionBatchItems = []
+

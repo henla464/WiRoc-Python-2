@@ -19,6 +19,10 @@ class SISIMessageToSITransform(object):
         return "SISIMessageToSITransform"
 
     @staticmethod
+    def GetBatchSize():
+        return 1
+
+    @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         return 0
 

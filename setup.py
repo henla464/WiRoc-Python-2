@@ -129,6 +129,7 @@ class Setup:
                             # add message types to database
                             messageTypeName = transformClass.GetInputMessageType()
                             messageSubTypeName = transformClass.GetInputMessageSubType()
+                            batchSize = transformClass.GetBatchSize()
                             messageTypeData = MessageTypeData(messageTypeName, messageSubTypeName)
                             inputMessageDataId = DatabaseHelper.save_message_type(messageTypeData)
                             messageTypeName = transformClass.GetOutputMessageType()
@@ -142,7 +143,7 @@ class Setup:
                             # add subscription to database
                             deleteAfterSent = transformClass.GetDeleteAfterSent()
                             enabled = False
-                            subscriptionData = SubscriptionData(deleteAfterSent, enabled, subscriberDataId, transformDataId)
+                            subscriptionData = SubscriptionData(deleteAfterSent, enabled, subscriberDataId, transformDataId, batchSize)
                             DatabaseHelper.save_subscription(subscriptionData)
                 adapter.SetIsDBInitialized()
 

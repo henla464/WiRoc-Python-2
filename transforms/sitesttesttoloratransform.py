@@ -23,6 +23,10 @@ class SITestTestToLoraTransform(object):
         return "SITestTestToLoraTransform"
 
     @staticmethod
+    def GetBatchSize():
+        return 2
+
+    @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         return 0
 
