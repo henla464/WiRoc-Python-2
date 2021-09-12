@@ -45,8 +45,8 @@ class RepeaterSIMessageToLoraAckTransform(object):
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSub, subscriberAdapter):
-        payloadData = msgSub.MessageData
+    def Transform(msgSubBatch, subscriberAdapter):
+        payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         ackReq = LoraRadioDataHandler.GetAckRequested(payloadData)
         repeaterReq = LoraRadioDataHandler.GetRepeater(payloadData)
 
@@ -60,7 +60,7 @@ class RepeaterSIMessageToLoraAckTransform(object):
             loraPunchMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(payloadData, rssiByte=None)
             md5Hash = loraPunchMsg.GetHash()
             loraAck = LoraRadioMessageCreator.GetAckMessage(md5Hash)
-            loraAck.SetAckRequested(msgSub.AckReceivedFromReceiver)  # indicate ack received from receiver
+            loraAck.SetAckRequested(msgSubBatch.AckReceivedFromReceiver)  # indicate ack received from receiver
             loraAck.SetRepeaterBit(True)  # indicate this ack comes from repeater
             loraAck.GenerateRSCode()
             return {"Data": loraAck.GetByteArray(), "MessageID": None}

@@ -444,9 +444,10 @@ class Main:
 
                 if not adapterFound:
                     self.wirocLogger.warning(
-                        "Start::Run() Send adapter not found for " + msgSub.SubscriberInstanceName + " " + msgSub.SubscriberTypeName)
-                    retryDelay = SettingsClass.GetRetryDelay(msgSub.FindAdapterTries + 1)
-                    DatabaseHelper.increment_find_adapter_tries_and_set_find_adapter_try_date(msgSub, retryDelay)
+                        "Start::Run() Send adapter not found for " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName)
+                    retryDelay = SettingsClass.GetRetryDelay(msgSubBatch.FindAdapterTries + 1)
+                    for item in msgSubBatch.MessageSubscriptionBatchItems:
+                        DatabaseHelper.increment_find_adapter_tries_and_set_find_adapter_try_date(item.id, retryDelay)
 
     def updateBatteryIsLow(self):
         if self.webServerUp:

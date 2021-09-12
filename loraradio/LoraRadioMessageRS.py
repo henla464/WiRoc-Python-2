@@ -12,7 +12,8 @@ class LoraRadioMessageRS(object):
     MessageTypeSIPunch = 3
     MessageTypeStatus = 4
     MessageTypeLoraAck = 5
-    MessageLengths = [24, 16, 7, 14, 13, 7]
+    MessageTypeSIPunchDouble = 6
+    MessageLengths = [24, 16, 7, 14, 13, 7, 27]
 
     def __init__(self):
         self.messageType = None
@@ -113,7 +114,7 @@ class LoraRadioMessagePunchRS(LoraRadioMessageRS):
         return self.payloadData[1:5]
 
     def GetSICardNo(self):
-        return Utils.DecodeCardNr(self.GetCardNoByteArray())
+        return Utils.DecodeCardNr(self.GetSICardNoByteArray())
 
     def GetFourWeekCounter(self):
         return self.payloadData[5] & 0x30
@@ -181,7 +182,7 @@ class LoraRadioMessagePunchRS(LoraRadioMessageRS):
         return siMsg.GetByteArray()
 
     def SetSIMessageByteArray(self, siMessageByteArray):
-        self.payloadData = bytearray([0,0,0,0,0,0,0,0, 0])
+        self.payloadData = bytearray([0,0,0,0,0,0,0,0,0])
         self.payloadData[0] = siMessageByteArray[4]
         self.payloadData[1] = siMessageByteArray[5]
         self.payloadData[2] = siMessageByteArray[6]
@@ -192,6 +193,23 @@ class LoraRadioMessagePunchRS(LoraRadioMessageRS):
         self.payloadData[7] = siMessageByteArray[11]
         self.payloadData[8] = siMessageByteArray[12]
 
+class LoraRadioMessagePunchDoubleRS(LoraRadioMessageRS):
+    def __init__(self):
+        super().__init__()
+        self.messageType = LoraRadioMessageRS.MessageTypeSIPunchDouble
+
+    def SetSIMessageByteArrays(self, firstSIMessageByteArray, secondSIMessageByteArray):
+        msg = LoraRadioMessagePunchRS()
+        msg.SetSIMessageByteArray(firstSIMessageByteArray)
+        firstArray = msg.GetPayloadByteArray()
+        msg.SetSIMessageByteArray(secondSIMessageByteArray)
+        secondArray = msg.GetPayloadByteArray()
+        self.payloadData = firstArray + secondArray
+
+    def GenerateRSCode(self):
+        rsMessageData = self.GetHeaderData() + self.payloadData
+        rsCodeOnly = RSCoderLora.encodeLong(rsMessageData)
+        self.rsCodeData = rsCodeOnly
 
 class LoraRadioMessageAckRS(LoraRadioMessageRS):
     def __init__(self):

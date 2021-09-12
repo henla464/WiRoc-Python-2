@@ -9,13 +9,11 @@ from loraradio.RSCoderLora import RSCoderLora
 
 class TestLoraRadioDataHandler(unittest.TestCase):
                                         # stx         31                            37800=>10:30
-    PunchMsg_Correct_1 = bytearray(bytes([0x02, 0x83, 0x1F, 0x00, 0x00, 0xFF, 0x00, 0X93, 0xA8, 0x00]))
-    PunchMsg_Corrupted_1 = bytearray(bytes([0x02, 0x84, 0x10, 0x00, 0x01, 0xFF, 0x01, 0X93, 0xA8, 0x00]))
+    PunchMsg_Correct_1 =   bytearray(bytes([0x83, 0x1F, 0x00, 0x00, 0x00, 0xFF, 0x00, 0X93, 0xA8, 0x00]))
+    PunchMsg_Corrupted_1 = bytearray(bytes([0x84, 0x10, 0x00, 0x00, 0x01, 0xFF, 0x01, 0X93, 0xA8, 0x00]))
+    PunchMsg_Correct_HighestTHTL = bytearray(bytes([0x83, 0x1F, 0x00, 0x00, 0x00, 0xFF, 0x00, 0XA8, 0xC0, 0x00]))
 
-    PunchMsg_4bytes_Correct_1 = bytearray(bytes([0x02, 0x83, 0x1F, 0x00, 0x00, 0x00, 0xFF, 0x00, 0X93, 0xA8, 0x00]))
-    PunchMsg_Correct_HighestTHTL = bytearray(bytes([0x02, 0x83, 0x1F, 0x00, 0x00, 0xFF, 0x00, 0XA8, 0xC0, 0x00]))
-
-    dataHandler = LoraRadioDataHandler()
+    dataHandler = LoraRadioDataHandler(False)
 
     def test_AddData(self):
 
@@ -40,7 +38,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
 
     def test_CacheMessage(self):
-        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1[1:])
+        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1)
         loraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes)
         self.dataHandler.ReceivedPunchMessageDict = {}
         self.dataHandler.LastPunchMessageTime = None
@@ -52,7 +50,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(self.dataHandler.LastPunchMessage,loraMsg)
 
     def test_FindPunchErasures(self):
-        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1[1:])
+        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1)
         loraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
             TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes)
         self.dataHandler.ReceivedPunchMessageDict = {}
@@ -69,10 +67,10 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         # ack requested
         corruptedMessageAckReq = TestLoraRadioDataHandler.PunchMsg_Correct_1[:]
-        corruptedMessageAckReq[1] = corruptedMessageAckReq[1] & 0x7F
+        corruptedMessageAckReq[0] = corruptedMessageAckReq[0] & 0x7F
         corruptedLoraMsgAckReq = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(corruptedMessageAckReq + rsCodes)
         erasures = self.dataHandler._FindPunchErasures(corruptedLoraMsgAckReq)
-        self.assertEqual(erasures, [1], "ackreq erasure not correct")
+        self.assertEqual(erasures, [0], "ackreq erasure not correct")
 
         #TH changed to more than 5 minutes more
         corruptedMessageTH = TestLoraRadioDataHandler.PunchMsg_Correct_1[:]
@@ -113,11 +111,11 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         #TH changed to more than 5 minutes more and the combination TH TL too high
         corruptedMessageCN0 = TestLoraRadioDataHandler.PunchMsg_Correct_1[:]
-        corruptedMessageCN0[2] = 0x20
+        corruptedMessageCN0[1] = 0x20
         corruptedLoraMsgCN0 = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
             corruptedMessageCN0 + rsCodes)
         erasures = self.dataHandler._FindPunchErasures(corruptedLoraMsgCN0)
-        self.assertEqual(erasures, [2], "TH, TL erasure not correct")
+        self.assertEqual(erasures, [1], "TH, TL erasure not correct")
 
     def test_CheckAndRemoveLoraModuleRXError(self):
         rxerrorMessage = TestLoraRadioDataHandler.PunchMsg_Correct_1[:]
@@ -131,30 +129,22 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(TestLoraRadioDataHandler.PunchMsg_Correct_1, self.dataHandler.DataReceived)
 
     def test_GetMessageTypeByLength(self):
-        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1[1:])
+        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1)
         self.dataHandler.ReceivedPunchMessageDict = {}
         self.dataHandler.LastPunchMessageTime = None
         self.dataHandler.LastPunchMessage = None
         self.dataHandler.DataReceived = bytearray()
         for i in range(0, len(TestLoraRadioDataHandler.PunchMsg_Correct_1)):
             self.dataHandler.AddData(TestLoraRadioDataHandler.PunchMsg_Correct_1[i:i+1])
+        #print(rsCodes)
         for i in range(0, len(rsCodes)):
             self.dataHandler.AddData(rsCodes[i:i+1])
         msgType = self.dataHandler._GetMessageTypeByLength()
         self.assertEqual(msgType, 0x03, "Didn't get the expected message type")
 
-        self.dataHandler.DataReceived = bytearray()
-        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_4bytes_Correct_1)
-        for i in range(0, len(TestLoraRadioDataHandler.PunchMsg_4bytes_Correct_1)):
-            self.dataHandler.AddData(TestLoraRadioDataHandler.PunchMsg_4bytes_Correct_1[i:i+1])
-        for i in range(0, len(rsCodes)):
-            self.dataHandler.AddData(rsCodes[i:i+1])
-        msgType = self.dataHandler._GetMessageTypeByLength()
-        self.assertEqual(msgType, 0x04, "Didn't get the expected message type")
-
 
     def test_GetLikelyMessageTypes(self):
-        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1[1:])
+        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1)
         loraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
             TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes)
         self.dataHandler.ReceivedPunchMessageDict = {}
@@ -174,21 +164,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         self.dataHandler.DataReceived = bytearray()
 
-        # controlnumber bit 8
-        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_4bytes_Correct_1[1:])
-        corruptedMsgType = TestLoraRadioDataHandler.PunchMsg_4bytes_Correct_1[:]
-        corruptedMsgType[1] = 0x83
-        for i in range(0, len(corruptedMsgType)):
-            self.dataHandler.AddData(corruptedMsgType[i:i + 1])
-        for i in range(0, len(rsCodes)):
-            self.dataHandler.AddData(rsCodes[i:i + 1])
-
-        messageTypes = self.dataHandler._GetLikelyMessageTypes()
-        self.assertEqual(messageTypes, list({0x03, 0x04}), "Didn't get the expected message type, long punch with message type as short punch")
-
     def test_GetPunchMessage(self):
         #messageTypeToTry, erasures = None):
-        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1[1:])
+        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1)
         self.dataHandler.ReceivedPunchMessageDict = {}
         self.dataHandler.LastPunchMessageTime = None
         self.dataHandler.LastPunchMessage = None
@@ -227,7 +205,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_GetMessage(self):
         # messageTypeToTry, erasures = None):
-        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1[1:])
+        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1)
         self.dataHandler.ReceivedPunchMessageDict = {}
         self.dataHandler.LastPunchMessageTime = None
         self.dataHandler.LastPunchMessage = None
@@ -238,6 +216,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             self.dataHandler.AddData(rsCodes[i:i + 1])
 
         msg = self.dataHandler.GetMessage()
+        self.assertIsNotNone(msg, "expected to receive the message back")
         self.assertEqual(TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes, msg.GetByteArray(), "Didn't receive the same bytes back")
 
 
@@ -245,13 +224,15 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             self.dataHandler.AddData(TestLoraRadioDataHandler.PunchMsg_Corrupted_1[i:i + 1])
         for i in range(0, len(rsCodes)):
             self.dataHandler.AddData(rsCodes[i:i + 1])
-        print("before")
+        #print("before")
         msg2 = self.dataHandler.GetMessage()
-        print("after")
+        #print("after")
         self.assertIsNone(msg2, "Received a message but it shouldn't be decodable")
 
         # correct one byte, then it should be decodable
         self.dataHandler.DataReceived[4] = 0x00
+        print("the correct: " + str(TestLoraRadioDataHandler.PunchMsg_Correct_1) + " len: " + str(len(TestLoraRadioDataHandler.PunchMsg_Correct_1)))
+        print("the corrupted: " + str(self.dataHandler.DataReceived) + " len: " + str(len(self.dataHandler.DataReceived)))
         msg3 = self.dataHandler.GetMessage()
         self.assertIsNotNone(msg3, "Didn't receive a message, it should be decodable")
         #self.assertEqual(TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes, msg2.GetByteArray(), "Didn't receive a corrected message")

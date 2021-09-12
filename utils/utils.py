@@ -31,6 +31,8 @@ class Utils:
             return (byteArr[0] << 8) + byteArr[1]
         elif len(byteArr) == 3:
             return (byteArr[0] << 16) + (byteArr[1] << 8) + (byteArr[2])
+        elif len(byteArr) == 4:
+            return (byteArr[0] << 24) + (byteArr[1] << 16) + (byteArr[2] << 8) + byteArr[3]
 
     @staticmethod
     def CalculateCRC(byteArr):

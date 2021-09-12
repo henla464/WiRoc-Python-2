@@ -37,8 +37,8 @@ class SITestTestToSirapTransform(object):
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSub, subscriberAdapter):
-        payloadData = msgSub.MessageData
+    def Transform(msgSubBatch, subscriberAdapter):
+        payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
         return {"Data": Utils.GetSirapDataFromSIData(siMsg), "MessageID": None}

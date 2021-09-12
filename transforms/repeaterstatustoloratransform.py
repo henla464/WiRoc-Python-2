@@ -49,8 +49,8 @@ class RepeaterStatusToLoraTransform(object):
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSub, subscriberAdapter):
-        payloadData = msgSub.MessageData
+    def Transform(msgSubBatch, subscriberAdapter):
+        payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
         loraStatusMsg.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(),
                                                 Battery.GetBatteryPercent4Bits())

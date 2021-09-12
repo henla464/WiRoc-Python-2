@@ -49,8 +49,8 @@ class RepeaterSIMessageToLoraTransform(object):
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSub, subscriberAdapter):
-        payloadData = msgSub.MessageData
+    def Transform(msgSubBatch, subscriberAdapter):
+        payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         loraPunchMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(payloadData)
         batteryLow = Battery.GetIsBatteryLow() or loraPunchMsg.GetBatteryLow()
         ackReq = SettingsClass.GetAcknowledgementRequested()

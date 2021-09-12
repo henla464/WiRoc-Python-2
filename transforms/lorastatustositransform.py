@@ -45,11 +45,11 @@ class LoraStatusToSITransform(object):
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSub, subscriberAdapter):
+    def Transform(msgSubBatch, subscriberAdapter):
 
         LoraStatusToSITransform.WiRocLogger.debug("LoraToSITransform::Transform() Message type status")
         if SettingsClass.GetConnectedComputerIsWiRocDevice():
-            payloadData = msgSub.MessageData
+            payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
             loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
             loraStatusMsg.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())
             siMsg = SIMessage()

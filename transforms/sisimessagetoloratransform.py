@@ -1,4 +1,5 @@
 from battery import Battery
+from datamodel.datamodel import SIMessage
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from settings.settings import SettingsClass
@@ -44,13 +45,25 @@ class SISIMessageToLoraTransform(object):
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSub, subscriberAdapter):
-        payloadData = msgSub.MessageData
-        batteryLow = Battery.GetIsBatteryLow()
-        ackReq = SettingsClass.GetAcknowledgementRequested()
-        loraPunchMsg = LoraRadioMessageCreator.GetPunchMessage(batteryLow, ackReq, None)
-        loraPunchMsg.SetSIMessageByteArray(payloadData)
-        reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
-        loraPunchMsg.SetRepeater(reqRepeater)
-        loraPunchMsg.GenerateRSCode()
-        return {"Data": loraPunchMsg.GetByteArray(), "MessageID": loraPunchMsg.GetHash()}
+    def Transform(msgSubBatch, subscriberAdapter):
+        payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
+        siMsg = SIMessage()
+        siMsg.AddPayload(payloadData)
+        if siMsg.GetMessageType() == SIMessage.SIPunch:
+            # all MessageSubscriptionBatchItems will be SIPunch because only SIPunch is sent from SI SIMessage
+            ackReq = SettingsClass.GetAcknowledgementRequested()
+            reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
+            batteryLow = Battery.GetIsBatteryLow()
+            if len(msgSubBatch.MessageSubscriptionBatchItems) == 1:
+                loraPunchMsg = LoraRadioMessageCreator.GetPunchMessage(batteryLow, ackReq, None)
+                loraPunchMsg.SetSIMessageByteArray(payloadData)
+                loraPunchMsg.SetRepeater(reqRepeater)
+                loraPunchMsg.GenerateRSCode()
+                return {"Data": loraPunchMsg.GetByteArray(), "MessageID": loraPunchMsg.GetHash()}
+            elif len(msgSubBatch.MessageSubscriptionBatchItems) == 2:
+                loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleMessage(batteryLow, ackReq, None)
+                loraPunchDoubleMsg.SetSIMessageByteArrays(payloadData,
+                                                          msgSubBatch.MessageSubscriptionBatchItems[1].MessageData)
+                loraPunchDoubleMsg.SetRepeater(reqRepeater)
+                loraPunchDoubleMsg.GenerateRSCode()
+                return {"Data": loraPunchDoubleMsg.GetByteArray(), "MessageID": loraPunchDoubleMsg.GetHash()}

@@ -12,7 +12,7 @@ from utils.utils import Utils
 
 class LoraRadioDataHandler(object):
     WiRocLogger = logging.getLogger('WiRoc')
-    MessageTypesExpected = [3, 4, 5]
+    MessageTypesExpected = [3, 4, 5, 6]
     RSSIByteCount = 0
 
     def __init__(self, rssiByteExpected):
@@ -32,7 +32,7 @@ class LoraRadioDataHandler(object):
         self.DataReceived.extend(dataByte)
 
     def _IsLongEnoughToBeMessage(self):
-        return len(self.DataReceived) >= min(LoraRadioMessageRS.MessageLengths) + self.RSSIByteCount
+        return len(self.DataReceived) >= (min(LoraRadioMessageRS.MessageLengths) + self.RSSIByteCount)
 
     def _CacheMessage(self, loraMsg):
         controlNumber = loraMsg.GetControlNumber()
@@ -93,7 +93,8 @@ class LoraRadioDataHandler(object):
                 # Assuming a delay of delivery of a message of max 5 minutes
                 highestTimeWeAssumeCanBeCorrect = self.LastPunchMessage.GetTwelveHourTimerAsInt() \
                     + noOfSecondsSinceLastMessage + 5 * 60
-                # print("highestTimeWeAssumeCanBeCorrect: " + str(highestTimeWeAssumeCanBeCorrect))
+                #print("highestTimeWeAssumeCanBeCorrect: " + str(highestTimeWeAssumeCanBeCorrect))
+                #print("theTimeInTheMessage: " + str(loraMsg.GetTwelveHourTimerAsInt()))
                 if loraMsg.GetTwelveHourTimerAsInt() < lowestTimeWeAssumeCanBeCorrect:
                     if loraMsg.GetTwelveHourTimer()[0] != self.LastPunchMessage.GetTwelveHourTimer()[0]:
                         # TH differs so this must be the reason for time being too low
@@ -147,10 +148,12 @@ class LoraRadioDataHandler(object):
                     erasuresToUse = []
                 print("Erasures to use: " + str(erasuresToUse))
                 LoraRadioDataHandler.WiRocLogger.debug(
-                    "LoraRadioDataHandler::_GetPunchMessageWithErasures() ErasuresToUse: " + Utils.GetDataInHex(erasuresToUse, logging.debug))
+                    "LoraRadioDataHandler::_GetPunchMessageWithErasures() ErasuresToUse: " + str(erasuresToUse), logging.debug)
+                print("to be corrected ... ")
                 correctedData2 = RSCoderLora.decode(messageDataToConsider, erasuresToUse)
+                print("correcteddata2: " + str(correctedData2))
                 if not RSCoderLora.check(correctedData2):
-                    # for some reason sometimes decode just returnes the corrupted message with not change
+                    # for some reason sometimes decode just returns the corrupted message with not change
                     # and no exception thrown. So check the decoded message to make sure we dont return
                     # a message that is clearly wrong
                     return None
@@ -286,6 +289,8 @@ class LoraRadioDataHandler(object):
     def _GetMessageTypeByLength(self):
         expectedMessageLengths = [LoraRadioMessageRS.MessageLengths[idx] + self.RSSIByteCount for idx in
                                   LoraRadioDataHandler.MessageTypesExpected]
+        #print("expectedMessageLengths: " + str(expectedMessageLengths))
+        #print("length of datareceived: " + str(len(self.DataReceived)))
         if len(self.DataReceived) in expectedMessageLengths:
             indexwithinMessageTypesExpected = expectedMessageLengths.index(
                 len(self.DataReceived))
@@ -296,6 +301,7 @@ class LoraRadioDataHandler(object):
     def _GetLikelyMessageTypes(self):
         messageTypes = []
         headerMessageType = LoraRadioDataHandler.GetHeaderMessageType(self.DataReceived)
+        #print(headerMessageType)
         if headerMessageType in LoraRadioDataHandler.MessageTypesExpected:
             expectedMessageLength = LoraRadioMessageRS.MessageLengths[headerMessageType] + self.RSSIByteCount
             if len(self.DataReceived) == expectedMessageLength:
@@ -344,12 +350,16 @@ class LoraRadioDataHandler(object):
         else:
             expectedMessageLengths = [LoraRadioMessageRS.MessageLengths[idx] + self.RSSIByteCount for idx in
                                       LoraRadioDataHandler.MessageTypesExpected]
+            #print("len datarec:" + str(len(self.DataReceived)))
             if len(self.DataReceived) > max(expectedMessageLengths):
                 # too many bytes for a single message. We should remove one likely message
-                likelyStartOfNextMessage = self.LikelyStartOfMessageIndex.pop(0)
-                LoraRadioDataHandler.DataReceived = LoraRadioDataHandler.DataReceived[likelyStartOfNextMessage:]
-                for i in range(len(self.LikelyStartOfMessageIndex)):
-                    self.LikelyStartOfMessageIndex[i] -= likelyStartOfNextMessage
+                if len(self.LikelyStartOfMessageIndex) > 0:
+                    likelyStartOfNextMessage = self.LikelyStartOfMessageIndex.pop(0)
+                    LoraRadioDataHandler.DataReceived = self.DataReceived[likelyStartOfNextMessage:]
+                    for i in range(len(self.LikelyStartOfMessageIndex)):
+                        self.LikelyStartOfMessageIndex[i] -= likelyStartOfNextMessage
+                else:
+                    LoraRadioDataHandler.DataReceived = bytearray()
                 return True
 
     def _TryGetMessage(self):
@@ -364,6 +374,7 @@ class LoraRadioDataHandler(object):
         messageTypes = self._GetLikelyMessageTypes()
         for messageType in messageTypes:
             if messageType == LoraRadioMessageRS.MessageTypeSIPunch:
+                print("messagetypetotry: " + str(messageType))
                 loraPunchMessage = self._GetPunchMessage(messageTypeToTry=messageType)
                 if loraPunchMessage is not None:
                     return loraPunchMessage

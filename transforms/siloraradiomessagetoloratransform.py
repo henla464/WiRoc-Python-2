@@ -1,8 +1,11 @@
 from datamodel.datamodel import SIMessage
 from battery import Battery
+from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from settings.settings import SettingsClass
+from subscriberadapters.sendloraadapter import LoraRadioMessageHandler
+
 
 class SILoraRadioMessageToLoraTransform(object):
     DeleteAfterSent = False
@@ -53,14 +56,14 @@ class SILoraRadioMessageToLoraTransform(object):
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSub, subscriberAdapter):
-        payloadData = msgSub.MessageData
+    def Transform(msgSubBatch, subscriberAdapter):
+        payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
         #WiRoc to WiRoc message
         unwrappedMessage = payloadData[3:-3]
         # Assume it is a LoraRadioMessage that is wrapped
-        headerMessageType = unwrappedMessage[1] & 0x1F
+        headerMessageType = LoraRadioDataHandler.GetHeaderMessageType(unwrappedMessage)
         if headerMessageType == LoraRadioMessageRS.MessageTypeStatus:
             # We received a status message wrapped in a WiRoc to WiRoc message
             # We want to send it on, but add information about this WiRoc

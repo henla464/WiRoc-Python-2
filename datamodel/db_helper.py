@@ -403,15 +403,13 @@ class DatabaseHelper:
         cls.db.save_table_object(msa, False)
 
     @classmethod
-    def increment_find_adapter_tries_and_set_find_adapter_try_date(cls, messageSubscriptionView, retryDelay):
+    def increment_find_adapter_tries_and_set_find_adapter_try_date(cls, messageSubscriptionId, retryDelay):
         cls.init()
-        msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionView.id)
+        msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionId)
         msa.FindAdapterTryDate = datetime.now()
         msa.FindAdapterTries = msa.FindAdapterTries + 1
         msa.FindAdpterRetryDelay = retryDelay
         cls.db.save_table_object(msa, False)
-
-
 
     @classmethod
     def set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(cls, messageID):

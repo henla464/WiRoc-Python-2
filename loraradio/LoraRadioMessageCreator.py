@@ -1,7 +1,7 @@
 __author__ = 'henla464'
 
 from loraradio.LoraRadioMessageRS import LoraRadioMessageAckRS, LoraRadioMessagePunchRS, \
-    LoraRadioMessageStatusRS
+    LoraRadioMessageStatusRS, LoraRadioMessagePunchDoubleRS
 
 
 class LoraRadioMessageCreator(object):
@@ -14,7 +14,7 @@ class LoraRadioMessageCreator(object):
         loraAckMessage.SetRepeater(False)
         loraAckMessage.AddPayload(hash)
         loraAckMessage.GenerateRSCode()
-        return loraAckMessage\
+        return loraAckMessage
 
     @staticmethod
     def GetAckMessageByFullMessageData(fullMessageData, rssiByte=None):
@@ -34,6 +34,16 @@ class LoraRadioMessageCreator(object):
             loraPunchMessage.AddPayload(payload)
             loraPunchMessage.GenerateRSCode()
         return loraPunchMessage
+
+    @staticmethod
+    def GetPunchDoubleMessage(batteryLow, ackReq, payload=None):
+        loraPunchDoubleMessage = LoraRadioMessagePunchDoubleRS()
+        loraPunchDoubleMessage.SetBatteryLow(batteryLow)
+        loraPunchDoubleMessage.SetAckRequested(ackReq)
+        if payload is not None:
+            loraPunchDoubleMessage.AddPayload(payload)
+            loraPunchDoubleMessage.GenerateRSCode()
+        return loraPunchDoubleMessage
 
     @staticmethod
     def GetPunchMessageByFullMessageData(fullMessageData, rssiByte = None):

@@ -42,18 +42,26 @@ class SITestTestToLoraTransform(object):
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSub, subscriberAdapter):
-        payloadData = msgSub.MessageData
+    def Transform(msgSubBatch, subscriberAdapter):
+        payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
         if siMsg.GetMessageType() == SIMessage.SIPunch:
-            loraPunchMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(payloadData, rssiByte=None)
-            batteryLow = Battery.GetIsBatteryLow()
-            loraPunchMsg.SetBatteryLow(batteryLow)
+            # all MessageSubscriptionBatchItems will be SIPunch because only SIPunch is sent from SITest
             ackReq = SettingsClass.GetAcknowledgementRequested()
-            loraPunchMsg.SetAckRequested(ackReq)
             reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
-            loraPunchMsg.SetRepeater(reqRepeater)
-            loraPunchMsg.GenerateRS()
-            return {"Data": loraPunchMsg.GetByteArray(), "MessageID": loraPunchMsg.GetHash()}
+            batteryLow = Battery.GetIsBatteryLow()
+            if len(msgSubBatch.MessageSubscriptionBatchItems) == 1:
+                loraPunchMsg = LoraRadioMessageCreator.GetPunchMessage(batteryLow, ackReq, None)
+                loraPunchMsg.SetSIMessageByteArray(payloadData)
+                loraPunchMsg.SetRepeater(reqRepeater)
+                loraPunchMsg.GenerateRSCode()
+                return {"Data": loraPunchMsg.GetByteArray(), "MessageID": loraPunchMsg.GetHash()}
+            elif len(msgSubBatch.MessageSubscriptionBatchItems) == 2:
+                loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleMessage(batteryLow, ackReq, None)
+                loraPunchDoubleMsg.SetSIMessageByteArrays(payloadData, msgSubBatch.MessageSubscriptionBatchItems[1].MessageData)
+                loraPunchDoubleMsg.SetRepeater(reqRepeater)
+                loraPunchDoubleMsg.GenerateRSCode()
+                return {"Data": loraPunchDoubleMsg.GetByteArray(), "MessageID": loraPunchDoubleMsg.GetHash()}
+
         return None

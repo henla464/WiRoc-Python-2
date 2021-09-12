@@ -11,8 +11,6 @@ import collections
 from datetime import datetime, timedelta
 
 
-class LoraRadioMessageHandler:
-    pass
 
 
 class SendLoraAdapter(object):
