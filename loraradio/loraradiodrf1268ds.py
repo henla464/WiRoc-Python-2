@@ -223,7 +223,7 @@ class LoraRadioDRF1268DS:
         LoraRadioDRF1268DS.WiRocLogger.debug("LoraRadioDRF1268DS::enterATMode() Enter")
         self.radioSerial.write(LoraRadioDRF1268DS.EnterATMode)
         self.radioSerial.flush()
-        time.sleep(0.2)
+        time.sleep(0.3)
         correctEnterATModeResp = LoraRadioDRF1268DS.EnterATModeResponse
         enterATModeResp = self.getRadioSettingsReply(len(correctEnterATModeResp))
         return enterATModeResp == correctEnterATModeResp
@@ -232,12 +232,18 @@ class LoraRadioDRF1268DS:
         LoraRadioDRF1268DS.WiRocLogger.debug("LoraRadioDRF1268DS::exitATMode() Enter")
         self.radioSerial.write(LoraRadioDRF1268DS.Quit)
         self.radioSerial.flush()
-        time.sleep(0.2)
+        time.sleep(0.3)
         correctExitATModeResp = LoraRadioDRF1268DS.QuitResponse
         LoraRadioDRF1268DS.WiRocLogger.debug("LoraRadioDRF1268DS::exitATMode() correct resp: " + Utils.GetDataInHex(correctExitATModeResp, logging.DEBUG))
         exitATModeResp = self.getRadioSettingsReply(len(correctExitATModeResp))
-        LoraRadioDRF1268DS.WiRocLogger.debug("LoraRadioDRF1268DS::exitATMode() resp: " + Utils.GetDataInHex(exitATModeResp, logging.DEBUG))
-        return exitATModeResp == correctExitATModeResp
+        if exitATModeResp == correctExitATModeResp:
+            LoraRadioDRF1268DS.WiRocLogger.debug("LoraRadioDRF1268DS::exitATMode() Success, received " + Utils.GetDataInHex(exitATModeResp, logging.DEBUG))
+            return True
+        else:
+            LoraRadioDRF1268DS.WiRocLogger.debug(
+                "LoraRadioDRF1268DS::exitATMode() Wrong response, expected : " + Utils.GetDataInHex(correctExitATModeResp, logging.DEBUG) + " got: " + Utils.GetDataInHex(exitATModeResp, logging.DEBUG))
+            return False
+
 
     def enterATModeAndChangeBaudRateIfRequired(self):
         LoraRadioDRF1268DS.WiRocLogger.debug("LoraRadioDRF1268DS::changeTo57600BaudRate(): Enter")
@@ -297,7 +303,7 @@ class LoraRadioDRF1268DS:
         LoraRadioDRF1268DS.WiRocLogger.debug("LoraRadioDRF1268DS::getParameters(): Enter, read parameters")
         self.radioSerial.write(LoraRadioDRF1268DS.ReadParameter)
         self.radioSerial.flush()
-        time.sleep(0.2)
+        time.sleep(0.3)
         expectedLength = 0x26
         readParameterResp = self.getRadioSettingsReply(expectedLength)
         LoraRadioDRF1268DS.WiRocLogger.debug("LoraRadioDRF1268DS::getParameters(): got: " + str(len(readParameterResp)) + " bytes, expected: " + str(expectedLength))
@@ -371,6 +377,10 @@ class LoraRadioDRF1268DS:
         try:
             if self.enterATMode():
                 LoraRadioDRF1268DS.LoraModuleParameters = self.getParameters()
+                if LoraRadioDRF1268DS.LoraModuleParameters is None:
+                    LoraRadioDRF1268DS.WiRocLogger.error("LoraRadioDRF1268DS::Init() Could not get parameters")
+                    return False
+
                 channelData = DatabaseHelper.get_channel(channel, loraRange, 'DRF1268DS')
                 if channelData.Frequency ==  LoraRadioDRF1268DS.LoraModuleParameters.TransmitFrequency and \
                     channelData.Frequency == LoraRadioDRF1268DS.LoraModuleParameters.ReceiveFrequency and \
