@@ -3,16 +3,11 @@ __author__ = 'henla464'
 import serial
 import time
 import logging
-from constants import *
 from datamodel.db_helper import DatabaseHelper
 from utils.utils import Utils
 from loraradio.loraparameters import LoraParameters
-from LoraRadioDataHandler import LoraRadioDataHandler
+from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 import struct
-from settings.settings import SettingsClass
-import socket
-import binascii
-from datetime import datetime
 import errno
 
 class LoraRadioDRF1268DS_RS:
@@ -151,8 +146,6 @@ class LoraRadioDRF1268DS_RS:
 
     def __init__(self, portName, hardwareAbstraction):
         self.radioSerial = serial.Serial()
-        #self.receivedMessage = LoraRadioMessage()
-        #self.receivedMessage.SetRSSIByteExpected(True)
         self.portName = portName
         self.isInitialized = False
         self.channel = None
@@ -465,10 +458,10 @@ class LoraRadioDRF1268DS_RS:
             LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::SendData() Module returned: " + Utils.GetDataInHex(sendReply, logging.ERROR))
             if (sendReply[0] == 0x02):
                 # seems to be start of new message. Add it to receivedData so it is not lost
-                self.receivedMessage.AddByte(sendReply[0])
-                self.receivedMessage.AddByte(sendReply[1])
-                self.receivedMessage.AddByte(sendReply[2])
-                self.receivedMessage.AddByte(sendReply[3])
+                self.loraRadioDataHandler.AddData(sendReply[0])
+                self.loraRadioDataHandler.AddData(sendReply[1])
+                self.loraRadioDataHandler.AddData(sendReply[2])
+                self.loraRadioDataHandler.AddData(sendReply[3])
             return False
 
     def GetRadioData(self):

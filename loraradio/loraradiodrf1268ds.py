@@ -4,7 +4,7 @@ import serial
 import time
 import logging
 from constants import *
-from datamodel.datamodel import LoraRadioMessage
+from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from datamodel.db_helper import DatabaseHelper
 from utils.utils import Utils
 from loraradio.loraparameters import LoraParameters
@@ -151,8 +151,8 @@ class LoraRadioDRF1268DS:
 
     def __init__(self, portName, hardwareAbstraction):
         self.radioSerial = serial.Serial()
-        self.receivedMessage = LoraRadioMessage()
-        self.receivedMessage.SetRSSIByteExpected(True)
+        self.receivedMessage = LoraRadioMessageRS()
+        #self.receivedMessage.SetRSSIByteExpected(True)
         self.portName = portName
         self.isInitialized = False
         self.channel = None

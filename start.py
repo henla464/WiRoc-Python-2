@@ -1,10 +1,6 @@
 __author__ = 'henla464'
 
-from datamodel.datamodel import MessageBoxData
-from datamodel.datamodel import RepeaterMessageBoxData
 from datamodel.datamodel import MessageSubscriptionData
-from datamodel.datamodel import LoraRadioMessage
-from datamodel.datamodel import SIMessage
 from subscriberadapters.sendstatusadapter import SendStatusAdapter
 from subscriberadapters.sendloraadapter import SendLoraAdapter
 from inputadapters.receiveloraadapter import ReceiveLoraAdapter

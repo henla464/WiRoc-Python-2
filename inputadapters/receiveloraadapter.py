@@ -22,7 +22,7 @@ class ReceiveLoraAdapter(object):
             serialPorts.append('/dev/ttyS2')
         elif hardwareAbstraction.runningOnNanoPi:
             serialPorts.append('/dev/ttyS1')
-        else:
+        else: #TODO: figure out why this else is here...
             portInfoList = serial.tools.list_ports.grep('10c4:ea60')
             for portInfo in portInfoList:
                 serialPorts.append(portInfo.device)

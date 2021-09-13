@@ -316,7 +316,8 @@ class MessageSubscriptionView(object):
                ("Delay", int),
                ("RetryDelay", int),
                ("FindAdapterRetryDelay", int),
-               ("MessageBoxId", int), ("SubscriptionId", int),("FetchedForSending", datetime),
+               ("MessageBoxId", int), ("SubscriptionId", int), ("BatchSize", int),
+               ("FetchedForSending", datetime),
                ("DeleteAfterSent", bool), ("Enabled", bool), ("SubscriberId", int),
                ("SubscriberTypeName", str), ("SubscriberInstanceName", str),
                ("TransformName", str), ("MessageData", bytearray),
@@ -339,6 +340,7 @@ class MessageSubscriptionView(object):
         self.FindAdapterRetryDelay = 0
         self.MessageBoxId = None
         self.SubscriptionId = None
+        self.BatchSize = None
         self.FetchedForSending = None
         self.DeleteAfterSent = None
         self.Enabled = None

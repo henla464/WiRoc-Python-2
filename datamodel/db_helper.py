@@ -703,6 +703,7 @@ class DatabaseHelper:
                    "SubscriptionData.DeleteAfterSent, "
                    "SubscriptionData.Enabled, "
                    "SubscriptionData.SubscriberId, "
+                   "SubscriptionData.BatchSize, "
                    "SubscriberData.TypeName as SubscriberTypeName, "
                    "SubscriberData.InstanceName as SubscriberInstanceName, "
                    "TransformData.Name as TransformName, "
