@@ -164,7 +164,7 @@ class ReceiveLoraAdapter(object):
                 if loraMessage.GetBatteryLow():
                     SettingsClass.SetBatteryIsLowReceived(True)
 
-                messageID = loraMessage.GetMD5Hash()
+                messageID = loraMessage.GetHash()
                 if ackRequested and \
                         ((SettingsClass.GetLoraMode() == "RECEIVER" and not repeaterRequested)
                          or (SettingsClass.GetLoraMode() == "REPEATER" and repeaterRequested)):

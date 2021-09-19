@@ -36,6 +36,15 @@ class LoraRadioMessageCreator(object):
         return loraPunchMessage
 
     @staticmethod
+    def GetPunchMessageByFullMessageData(fullMessageData, rssiByte = None):
+        loraPunchMessage = LoraRadioMessagePunchRS()
+        loraPunchMessage.SetHeader(fullMessageData[0:1])
+        loraPunchMessage.AddPayload(fullMessageData[1:-4])
+        loraPunchMessage.AddRSCode(fullMessageData[-4:])
+        loraPunchMessage.SetRSSIByte(rssiByte)
+        return loraPunchMessage
+
+    @staticmethod
     def GetPunchDoubleMessage(batteryLow, ackReq, payload=None):
         loraPunchDoubleMessage = LoraRadioMessagePunchDoubleRS()
         loraPunchDoubleMessage.SetBatteryLow(batteryLow)
@@ -46,13 +55,13 @@ class LoraRadioMessageCreator(object):
         return loraPunchDoubleMessage
 
     @staticmethod
-    def GetPunchMessageByFullMessageData(fullMessageData, rssiByte = None):
-        loraPunchMessage = LoraRadioMessagePunchRS()
-        loraPunchMessage.SetHeader(fullMessageData[0:1])
-        loraPunchMessage.AddPayload(fullMessageData[1:-4])
-        loraPunchMessage.AddRSCode(fullMessageData[-4:])
-        loraPunchMessage.SetRSSIByte(rssiByte)
-        return loraPunchMessage
+    def GetPunchDoubleMessageByFullMessageData(fullMessageData, rssiByte=None):
+        loraPunchDoubleMessage = LoraRadioMessagePunchDoubleRS()
+        loraPunchDoubleMessage.SetHeader(fullMessageData[0:1])
+        loraPunchDoubleMessage.AddPayload(fullMessageData[1:-8])
+        loraPunchDoubleMessage.AddRSCode(fullMessageData[-8:0])
+        loraPunchDoubleMessage.SetRSSIByte(rssiByte)
+        return loraPunchDoubleMessage
 
     @staticmethod
     def GetStatusMessage(batteryLow):
@@ -60,6 +69,7 @@ class LoraRadioMessageCreator(object):
         loraStatusMessage.SetBatteryLow(batteryLow)
         loraStatusMessage.SetAckRequested(False)
         loraStatusMessage.SetRepeater(False)
+        loraStatusMessage.AddPayload(bytearray(bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])))
         loraStatusMessage.GenerateRSCode()
         return loraStatusMessage
 

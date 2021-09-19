@@ -439,6 +439,11 @@ class Main:
                         return
 
                 if not adapterFound:
+                    if msgSubBatch.SubscriberInstanceName is None:
+                        self.wirocLogger.debug("SubscriberInstanceName none")
+                        self.wirocLogger.debug(msgSubBatch.SubscriberTypeName)
+                    if msgSubBatch.SubscriberTypeName is None:
+                        self.wirocLogger.debug("SubscriberTypeName none")
                     self.wirocLogger.warning(
                         "Start::Run() Send adapter not found for " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName)
                     retryDelay = SettingsClass.GetRetryDelay(msgSubBatch.FindAdapterTries + 1)

@@ -720,7 +720,7 @@ class DatabaseHelper:
                    "MessageSubscriptionData.SentDate asc")
             messageSubscriptions = cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
 
-            messageSubscriptionBatch = MessageSubscriptionBatch()
+            messageSubscriptionBatch = None
             adapterTypesAlreadyHandlingMessages = set()
             for messageSubscription in messageSubscriptions:
                 if messageSubscription.SubscriberTypeName in adapterTypesAlreadyHandlingMessages:

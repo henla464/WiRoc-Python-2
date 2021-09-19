@@ -60,7 +60,13 @@ class LoraRadioMessageRS(object):
         return self.repeater
 
     def SetRSSIByte(self, rssiByte):
-        self.rssiByte = rssiByte
+        if  rssiByte is None:
+            self.rssiByte = bytearray()
+            return
+        if len(self.rssiByte) > 0:
+            self.rssiByte[0] = rssiByte
+        else:
+            self.rssiByte.append(rssiByte)
 
     def GetRSSIValue(self):
         if len(self.rssiByte) > 0:
@@ -253,10 +259,10 @@ class LoraRadioMessageStatusRS(LoraRadioMessageRS):
         elif self.payloadData[2] == 0x00 and self.payloadData[3] == 0x00:
             indexToWriteTo = 2
             realWiRocRelayPathNo = 1
-        if self.payloadData[4] == 0x00 and self.payloadData[5] == 0x00:
+        elif self.payloadData[4] == 0x00 and self.payloadData[5] == 0x00:
             indexToWriteTo = 4
             realWiRocRelayPathNo = 2
-        if self.payloadData[6] == 0x00 and self.payloadData[7] == 0x00:
+        elif self.payloadData[6] == 0x00 and self.payloadData[7] == 0x00:
             indexToWriteTo = 6
             realWiRocRelayPathNo = 3
         else:
