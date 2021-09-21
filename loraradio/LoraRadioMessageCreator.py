@@ -59,7 +59,7 @@ class LoraRadioMessageCreator(object):
         loraPunchDoubleMessage = LoraRadioMessagePunchDoubleRS()
         loraPunchDoubleMessage.SetHeader(fullMessageData[0:1])
         loraPunchDoubleMessage.AddPayload(fullMessageData[1:-8])
-        loraPunchDoubleMessage.AddRSCode(fullMessageData[-8:0])
+        loraPunchDoubleMessage.AddRSCode(fullMessageData[-8:])
         loraPunchDoubleMessage.SetRSSIByte(rssiByte)
         return loraPunchDoubleMessage
 
