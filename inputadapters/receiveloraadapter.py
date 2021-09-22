@@ -153,7 +153,7 @@ class ReceiveLoraAdapter(object):
                 SettingsClass.UpdateRelayPathNumber(relayPathNo)
                 DatabaseHelper.add_message_stat(self.GetInstanceName(), "Status", "Received", 1)
                 return {"MessageType": "DATA", "MessageSource": "Lora", "MessageSubTypeName": "Status",
-                        "Data": receivedData, "MessageID": loraMessage.GetMessageID(),
+                        "Data": receivedData, "MessageID": loraMessage.GetHash(),
                         "LoraRadioMessage": loraMessage, "ChecksumOK": True}
             else:
                 if ReceiveLoraAdapter.TestRepeater and \
