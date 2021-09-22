@@ -3,9 +3,11 @@ from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from settings.settings import SettingsClass
+import logging
 
 class RepeaterStatusToLoraTransform(object):
     DeleteAfterSent = False
+    WiRocLogger = logging.getLogger('WiRoc.Output')
 
     @staticmethod
     def GetInputMessageType():
@@ -50,6 +52,7 @@ class RepeaterStatusToLoraTransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch, subscriberAdapter):
+        RepeaterStatusToLoraTransform.WiRocLogger.debug("RepeaterStatusToLoraTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
         loraStatusMsg.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(),

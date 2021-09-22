@@ -315,14 +315,7 @@ class Main:
                             loraSubAdapter.RemoveBlock()
 
                         subscriptionView = DatabaseHelper.get_last_message_subscription_view_that_was_sent_to_lora()
-                        #if not inputData["ChecksumOK"]:
-                        #    if Utils.IsEnoughAlike(messageID, subscriptionView.MessageID):
-                        #        messageID = subscriptionView.MessageID
-                        #    else:
-                        #        self.wirocLogger.debug(
-                        #            "Start::handleInput() Received ack but checksum is wrong and acked message id is not found")
-                        #        continue
-                        #else:
+
                         if messageID != subscriptionView.MessageID:
                             # ack is probably an ack of a message sent from another checkpoint
                             self.wirocLogger.debug("Start::handleInput() Received ack but last sent message doesn't match the message id")
@@ -337,8 +330,8 @@ class Main:
 
                             if wirocMode == "REPEATER":
                                 self.wirocLogger.debug("Start::handleInput() Received ack, for repeater message id: " + Utils.GetDataInHex(messageID, logging.DEBUG))
-                                DatabaseHelper.repeater_message_acked(messageID, rssiValue)
-                                DatabaseHelper.archive_repeater_lora_message_subscription_after_ack(messageID, rssiValue)
+                                DatabaseHelper.repeater_messages_acked(messageID, rssiValue)  #todo: does this work, is messageID same?
+                                DatabaseHelper.archive_repeater_lora_message_subscriptions_after_ack(messageID, rssiValue)
                                 if destinationHasAcked:
                                     DatabaseHelper.set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(
                                         messageID)
@@ -346,7 +339,7 @@ class Main:
                                 self.wirocLogger.debug("Start::handleInput() Received ack, for message id: " + Utils.GetDataInHex(messageID, logging.DEBUG) + " "
                                               + " receivedFromRepeater: " + str(receivedFromRepeater)
                                               + " destinationHasAcked: " + str(destinationHasAcked))
-                            DatabaseHelper.archive_message_subscription_after_ack(messageID, rssiValue)
+                            DatabaseHelper.archive_message_subscriptions_after_ack(messageID, rssiValue)
 
 
 
@@ -372,6 +365,7 @@ class Main:
                             if transformedData is not None:
                                 if transformedData["MessageID"] is not None:
                                     for item in msgSubBatch.MessageSubscriptionBatchItems:
+                                        self.wirocLogger.debug("Start::handleOutput() Update MessageID: " + str(transformedData["MessageID"]))
                                         DatabaseHelper.update_messageid(item.id, transformedData["MessageID"])
 
                                 if msgSubBatch.DeleteAfterSent:

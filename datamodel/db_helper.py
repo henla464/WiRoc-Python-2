@@ -418,11 +418,10 @@ class DatabaseHelper:
                "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
                "JOIN TransformData ON SubscriptionData.TransformId = TransformData.id "
                "WHERE TransformData.Name = 'RepeaterToLoraAckTransform' AND "
-               "MessageSubscriptionData.MessageID = ? ORDER BY SentDate desc LIMIT 1")
+               "MessageSubscriptionData.MessageID = ? ORDER BY SentDate desc LIMIT 2")
         rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID,))
 
-        if len(rows) > 0:
-            msd = rows[0]
+        for msd in rows:
             msd.AckReceivedFromReceiver = True
             DatabaseHelper.WiRocLogger.debug("DatabaseHelper::set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(): The ack sent from repeater to sender should indicate the message has been received by receiver")
             cls.db.save_table_object(msd, False)
@@ -467,19 +466,18 @@ class DatabaseHelper:
 
 
     @classmethod
-    def archive_repeater_lora_message_subscription_after_ack(cls, messageID, rssiValue):
+    def archive_repeater_lora_message_subscriptions_after_ack(cls, messageID, rssiValue):
         cls.init()
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData JOIN SubscriptionData "
                 "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
                 "JOIN TransformData ON SubscriptionData.TransformId = TransformData.id "
                 "WHERE (TransformData.Name = 'RepeaterSIMessageToLoraTransform' OR "
                 "TransformData.Name = 'SITestTestToLoraTransform') AND "
-                "MessageSubscriptionData.MessageID = ? ORDER BY SentDate desc LIMIT 1")
+                "MessageSubscriptionData.MessageID = ? ORDER BY SentDate desc LIMIT 2")
         rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID, ))
 
-        if len(rows) > 0:
+        for msd in rows:
             now = datetime.now()
-            msd = rows[0]
             msa = MessageSubscriptionArchiveData()
             msa.OrigId = msd.id
             msa.MessageID = msd.MessageID
@@ -507,17 +505,16 @@ class DatabaseHelper:
                 cls.archive_message_box(msd.MessageBoxId)
 
     @classmethod
-    def archive_message_subscription_after_ack(cls, messageID, ackRSSIValue):
+    def archive_message_subscriptions_after_ack(cls, messageID, ackRSSIValue):
         cls.init()
         sixtySecondsAgo = datetime.now() - timedelta(seconds=60)
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData WHERE "
                                        "MessageID = ? AND SentDate > ? "
-                                        "ORDER BY SentDate desc LIMIT 1")
+                                        "ORDER BY SentDate desc LIMIT 2")
         rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID, sixtySecondsAgo))
 
-        if len(rows) > 0:
+        for msd in rows:
             now = datetime.now()
-            msd = rows[0]
             msa = MessageSubscriptionArchiveData()
             msa.OrigId = msd.id
             msa.MessageID = msd.MessageID
@@ -537,7 +534,7 @@ class DatabaseHelper:
             if len(subscriberView) > 0:
                 msa.SubscriberTypeName = subscriberView[0].TypeName
                 msa.TransformName = subscriberView[0].TransformName
-            DatabaseHelper.WiRocLogger.debug("DatabaseHelper::archive_message_subscription_after_ack(): Archive message")
+            DatabaseHelper.WiRocLogger.debug("DatabaseHelper::archive_message_subscriptions_after_ack(): Archive message, messageID " + Utils.GetDataInHex(messageID, logging.DEBUG))
             cls.db.save_table_object(msa, False)
             cls.db.delete_table_object(MessageSubscriptionData, msd.id)
             remainingMsgSub = cls.get_no_of_message_subscriptions_by_message_box_id(msd.MessageBoxId)
@@ -545,20 +542,19 @@ class DatabaseHelper:
                 cls.archive_message_box(msd.MessageBoxId)
 
     @classmethod
-    def repeater_message_acked(cls, messageID, ackRSSIValue):
+    def repeater_messages_acked(cls, messageID, ackRSSIValue):
         cls.init()
         sql = ("SELECT RepeaterMessageBoxData.* FROM RepeaterMessageBoxData WHERE "
                "MessageID = ?")
         rows = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData, sql, (messageID, ))
-        if len(rows) > 0:
-            msgToUpdate = rows[0]
+        for msgToUpdate in rows:
             msgToUpdate.Acked = True
             msgToUpdate.NoOfTimesAckSeen = msgToUpdate.NoOfTimesAckSeen + 1
             msgToUpdate.AckRSSIValue = ackRSSIValue
             if msgToUpdate.AckedTime is None:
                 msgToUpdate.AckedTime = datetime.now()
-            DatabaseHelper.WiRocLogger.debug("DatabaseHelper::repeater_message_acked(): Marking RepeaterMessageBoxData message as acked")
-            return cls.db.save_table_object(msgToUpdate, False)
+            DatabaseHelper.WiRocLogger.debug("DatabaseHelper::repeater_messages_acked(): Marking RepeaterMessageBoxData message as acked")
+            cls.db.save_table_object(msgToUpdate, False)
 
     @classmethod
     def archive_repeater_message_after_added_to_message_box(cls, repeaterMessageBoxId, messageBoxId):

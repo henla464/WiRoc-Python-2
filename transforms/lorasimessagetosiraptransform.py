@@ -1,8 +1,10 @@
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from utils.utils import Utils
 from datamodel.datamodel import SIMessage
+import logging
 
 class LoraSIMessageToSirapTransform(object):
+    WiRocLogger = logging.getLogger('WiRoc.Output')
 
     @staticmethod
     def GetInputMessageType():
@@ -39,6 +41,7 @@ class LoraSIMessageToSirapTransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch, subscriberAdapter):
+        LoraSIMessageToSirapTransform.WiRocLogger.debug("LoraSIMessageToSirapTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         msg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(payloadData, rssiByte=None)
         siPayloadData = msg.GetSIMessageByteArray()

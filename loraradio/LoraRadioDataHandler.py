@@ -497,16 +497,16 @@ class LoraRadioDataHandler(object):
                     LoraRadioDataHandler.WiRocLogger.debug(
                         "LoraRadioDataHandler::_RemoveLikelyMessage() Likely start of next message: " + str(likelyStartOfNextMessage))
                     if likelyStartOfNextMessage < len(self.DataReceived):
-                        LoraRadioDataHandler.DataReceived = self.DataReceived[likelyStartOfNextMessage:]
+                        self.DataReceived = self.DataReceived[likelyStartOfNextMessage:]
                         for i in range(len(self.LikelyStartOfMessageIndex)):
                             self.LikelyStartOfMessageIndex[i] -= likelyStartOfNextMessage
                     else:
-                        LoraRadioDataHandler.DataReceived = bytearray()
+                        self.DataReceived = bytearray()
                         self.LikelyStartOfMessageIndex = []
                 else:
                     LoraRadioDataHandler.WiRocLogger.debug(
                         "LoraRadioDataHandler::_RemoveLikelyMessage() no likely message starts so reset DataReceived")
-                    LoraRadioDataHandler.DataReceived = bytearray()
+                    self.DataReceived = bytearray()
                     self.LikelyStartOfMessageIndex = []
                 return True
         return False

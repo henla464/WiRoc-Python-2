@@ -1,7 +1,10 @@
 from utils.utils import Utils
 from datamodel.datamodel import SIMessage
+import logging
+
 
 class SISIMessageToSirapTransform(object):
+    WiRocLogger = logging.getLogger('WiRoc.Output')
 
     @staticmethod
     def GetInputMessageType():
@@ -38,6 +41,7 @@ class SISIMessageToSirapTransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch, subscriberAdapter):
+        SISIMessageToSirapTransform.WiRocLogger.debug("SISIMessageToSirapTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
