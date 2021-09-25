@@ -199,6 +199,38 @@ class LoraRadioMessagePunchRS(LoraRadioMessageRS):
         self.payloadData[7] = siMessageByteArray[11]
         self.payloadData[8] = siMessageByteArray[12]
 
+    #def GetSIMessageByteArray(self):
+    #    siMessageByteArray = bytearray([0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0])
+    #    siMessageByteArray[0] = 0x02
+    #    siMessageByteArray[1] = 0xD3
+    #    siMessageByteArray[2] = 0x0D
+    #    siMessageByteArray[3] = (self.payloadData[5] & 0x40) >> 6
+    #    siMessageByteArray[4] = self.payloadData[0]
+    #    siMessageByteArray[5] = self.payloadData[1]
+    #    siMessageByteArray[6] = self.payloadData[2]
+    #    siMessageByteArray[7] = self.payloadData[3]
+    #    siMessageByteArray[8] = self.payloadData[4]
+    #    siMessageByteArray[9] = self.payloadData[5] & 0x3F
+    #    siMessageByteArray[10] = self.payloadData[6]
+    #    siMessageByteArray[11] = self.payloadData[7]
+    #    siMessageByteArray[12] = self.payloadData[8]
+    #    siMessageByteArray[13] = 0x00
+    #    siMessageByteArray[14] = 0x00
+    #    siMessageByteArray[15] = 0x00
+    #    partToCalculateCRSOn = siMessageByteArray[1:-3]
+    #    calculatedCrc = Utils.CalculateCRC(partToCalculateCRSOn)
+    #    siMessageByteArray[16] = calculatedCrc[0]
+    #    siMessageByteArray[17] = calculatedCrc[1]
+    #    siMessageByteArray[18] = 0x03  # ETX
+    #    return siMessageByteArray
+
+    def GetMessageCategory(self):
+        return "DATA"
+
+    def GetMessageSubType(self):
+        return "SIMessage"
+
+
 class LoraRadioMessagePunchDoubleRS(LoraRadioMessageRS):
     def __init__(self):
         super().__init__()
@@ -212,10 +244,44 @@ class LoraRadioMessagePunchDoubleRS(LoraRadioMessageRS):
         secondArray = msg.GetPayloadByteArray()
         self.payloadData = firstArray + secondArray
 
+    def GetSIMessageByteTuple(self):
+        firstArray = self.payloadData[0:9]
+        secondArray = self.payloadData[9:18]
+        loraPunchMessage1 = LoraRadioMessagePunchRS()
+        header = 0x00
+        if self.ackRequest:
+            header = header | 0x80
+        if self.batteryLow:
+            header = header | 0x40
+        if self.repeater:
+            header = header | 0x20
+        if self.messageType:
+            header = header | self.messageType
+        loraPunchMessage1.SetHeader(bytearray([header]))
+        loraPunchMessage1.AddPayload(firstArray)
+        #loraPunchMessage.AddRSCode()
+        loraPunchMessage1.SetRSSIByte(self.rssiByte)
+        firstSIMessageByteArray = loraPunchMessage1.GetSIMessageByteArray()
+
+        loraPunchMessage2 = LoraRadioMessagePunchRS()
+        loraPunchMessage2.SetHeader(bytearray([header]))
+        loraPunchMessage2.AddPayload(secondArray)
+        # loraPunchMessage.AddRSCode()
+        loraPunchMessage2.SetRSSIByte(self.rssiByte)
+        secondSIMessageByteArray = loraPunchMessage2.GetSIMessageByteArray()
+        return firstSIMessageByteArray, secondSIMessageByteArray
+
     def GenerateRSCode(self):
         rsMessageData = self.GetHeaderData() + self.payloadData
         rsCodeOnly = RSCoderLora.encodeLong(rsMessageData)
         self.rsCodeData = rsCodeOnly
+
+    def GetMessageCategory(self):
+        return "DATA"
+
+    def GetMessageSubType(self):
+        return "SIMessageDouble"
+
 
 class LoraRadioMessageAckRS(LoraRadioMessageRS):
     def __init__(self):
@@ -224,6 +290,12 @@ class LoraRadioMessageAckRS(LoraRadioMessageRS):
 
     def GetMessageIDThatIsAcked(self):
         return self.payloadData
+
+    def GetMessageCategory(self):
+        return "ACK"
+
+    def GetMessageSubType(self):
+        return "Ack"
 
 
 class LoraRadioMessageStatusRS(LoraRadioMessageRS):
@@ -274,3 +346,9 @@ class LoraRadioMessageStatusRS(LoraRadioMessageRS):
         self.payloadData[indexToWriteTo] = highByte
         self.payloadData[indexToWriteTo+1] = lowByte
         self.GenerateRSCode()
+
+    def GetMessageCategory(self):
+        return "DATA"
+
+    def GetMessageSubType(self):
+        return "Status"

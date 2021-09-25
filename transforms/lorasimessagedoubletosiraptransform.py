@@ -1,18 +1,19 @@
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from utils.utils import Utils
 from datamodel.datamodel import SIMessage
 import logging
 
 
-class SITestTestToSirapTransform(object):
+class LoraSIMessageDoubleToSirapTransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 
     @staticmethod
     def GetInputMessageType():
-        return "SITEST"
+        return "LORA"
 
     @staticmethod
     def GetInputMessageSubType():
-        return "Test"
+        return "SIMessageDouble"
 
     @staticmethod
     def GetOutputMessageType():
@@ -20,7 +21,7 @@ class SITestTestToSirapTransform(object):
 
     @staticmethod
     def GetName():
-        return "SITestTestToSirapTransform"
+        return "LoraSIMessageToSirapTransform"
 
     @staticmethod
     def GetBatchSize():
@@ -41,8 +42,16 @@ class SITestTestToSirapTransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch, subscriberAdapter):
-        SITestTestToSirapTransform.WiRocLogger.debug("SITestTestToSirapTransform::Transform()")
+        LoraSIMessageDoubleToSirapTransform.WiRocLogger.debug("LoraSIMessageToSirapTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
+        msg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(payloadData, rssiByte=None)
+        siPayloadDatas = msg.GetSIMessageByteTuple()
         siMsg = SIMessage()
-        siMsg.AddPayload(payloadData)
-        return {"Data": (Utils.GetSirapDataFromSIData(siMsg),), "MessageID": None}
+        siMsg.AddPayload(siPayloadDatas[0])
+        sirapData = Utils.GetSirapDataFromSIData(siMsg)
+
+        siMsg2 = SIMessage()
+        siMsg2.AddPayload(siPayloadDatas[1])
+        sirapData2 = Utils.GetSirapDataFromSIData(siMsg2)
+        sirapDataTuple = (sirapData, sirapData2)
+        return {"Data": sirapDataTuple, "MessageID": None}

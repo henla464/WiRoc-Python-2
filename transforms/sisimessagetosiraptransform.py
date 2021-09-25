@@ -45,4 +45,4 @@ class SISIMessageToSirapTransform(object):
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
-        return {"Data": Utils.GetSirapDataFromSIData(siMsg), "MessageID": None}
+        return {"Data": (Utils.GetSirapDataFromSIData(siMsg),), "MessageID": None}

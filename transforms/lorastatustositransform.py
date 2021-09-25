@@ -57,7 +57,7 @@ class LoraStatusToSITransform(object):
             siMsg.AddPayload(loraStatusMsg.GetByteArray())
             siMsg.AddFooter()
             LoraStatusToSITransform.WiRocLogger.debug("LoraToSITransform::Transform() data: " +  + Utils.GetDataInHex(siMsg.GetByteArray(), logging.DEBUG))
-            return {"Data": siMsg.GetByteArray(), "MessageID": None}
+            return {"Data": (siMsg.GetByteArray(),), "MessageID": None}
         else:
             LoraStatusToSITransform.WiRocLogger.debug("LoraToSITransform::Transform() return None, not connected to wiroc device")
             return None

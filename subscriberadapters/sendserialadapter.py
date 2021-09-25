@@ -146,14 +146,20 @@ class SendSerialAdapter(object):
 
     # messageData is a bytearray
     def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
-        if self.serialComputer.SendData(messageData):
-            callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "Sent", 1))
+        returnSuccess = True
+        for data in messageData:
+            if self.serialComputer.SendData(data):
+                callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "Sent", 1))
+                SendSerialAdapter.WiRocLogger.debug("SendSerialAdapter::SendData() Sent to computer, data: " + Utils.GetDataInHex(messageData, logging.DEBUG))
+            else:
+                returnSuccess = False
+                callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "NotSent", 0))
+                SendSerialAdapter.WiRocLogger.warning("SendSerialAdapter::SendData() Could not send to computer")
+                #SendSerialAdapter.EnableDisableSubscription()
+
+        if returnSuccess:
             callbackQueue.put((successCB,))
-            SendSerialAdapter.WiRocLogger.debug("SendSerialAdapter::SendData() Sent to computer, data: " + Utils.GetDataInHex(messageData, logging.DEBUG))
             return True
         else:
-            callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "NotSent", 0))
             callbackQueue.put((failureCB,))
-            SendSerialAdapter.WiRocLogger.warning("SendSerialAdapter::SendData() Could not send to computer")
-            #SendSerialAdapter.EnableDisableSubscription()
             return False

@@ -1,9 +1,8 @@
-from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
-from settings.settings import SettingsClass
-from battery import Battery
 import logging
 
-class LoraStatusToStatusTransform(object):
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
+
+class LoraSIMessageToSITransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 
     @staticmethod
@@ -12,15 +11,15 @@ class LoraStatusToStatusTransform(object):
 
     @staticmethod
     def GetInputMessageSubType():
-        return "Status"
+        return "SIMessageDouble"
 
     @staticmethod
     def GetOutputMessageType():
-        return "STATUS"
+        return "SI"
 
     @staticmethod
     def GetName():
-        return "LoraStatusToStatusTransform"
+        return "LoraSIMessageToSITransform"
 
     @staticmethod
     def GetBatchSize():
@@ -38,11 +37,11 @@ class LoraStatusToStatusTransform(object):
     def GetDeleteAfterSentChanged():
         return False
 
-    #msgSub.MessageData is a bytearray
+    #payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch, subscriberAdapter):
-        LoraStatusToStatusTransform.WiRocLogger.debug("LoraStatusToStatusTransform::Transform() Message type status")
+        LoraSIMessageToSITransform.WiRocLogger.debug("LoraSIMessageToSITransform::Transform() MessageTypeSIPunchDouble")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-        loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
-        loraStatusMsg.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())
-        return {"Data": (loraStatusMsg.GetByteArray(),), "MessageID": None}
+        loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(payloadData)
+        messageByteTuple = loraPunchDoubleMsg.GetSIMessageByteTuple()
+        return {"Data": messageByteTuple, "MessageID": None}

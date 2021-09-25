@@ -62,11 +62,11 @@ class SISIMessageToLoraTransform(object):
                 loraPunchMsg.SetSIMessageByteArray(payloadData)
                 loraPunchMsg.SetRepeater(reqRepeater)
                 loraPunchMsg.GenerateRSCode()
-                return {"Data": loraPunchMsg.GetByteArray(), "MessageID": loraPunchMsg.GetHash()}
+                return {"Data": (loraPunchMsg.GetByteArray(),), "MessageID": loraPunchMsg.GetHash()}
             elif len(msgSubBatch.MessageSubscriptionBatchItems) == 2:
                 loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleMessage(batteryLow, ackReq, None)
                 loraPunchDoubleMsg.SetSIMessageByteArrays(payloadData,
                                                           msgSubBatch.MessageSubscriptionBatchItems[1].MessageData)
                 loraPunchDoubleMsg.SetRepeater(reqRepeater)
                 loraPunchDoubleMsg.GenerateRSCode()
-                return {"Data": loraPunchDoubleMsg.GetByteArray(), "MessageID": loraPunchDoubleMsg.GetHash()}
+                return {"Data": (loraPunchDoubleMsg.GetByteArray(),), "MessageID": loraPunchDoubleMsg.GetHash()}

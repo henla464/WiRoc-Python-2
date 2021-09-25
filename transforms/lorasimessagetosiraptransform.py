@@ -3,6 +3,7 @@ from utils.utils import Utils
 from datamodel.datamodel import SIMessage
 import logging
 
+
 class LoraSIMessageToSirapTransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 
@@ -47,4 +48,4 @@ class LoraSIMessageToSirapTransform(object):
         siPayloadData = msg.GetSIMessageByteArray()
         siMsg = SIMessage()
         siMsg.AddPayload(siPayloadData)
-        return {"Data": Utils.GetSirapDataFromSIData(siMsg), "MessageID": None}
+        return {"Data": (Utils.GetSirapDataFromSIData(siMsg),), "MessageID": None}

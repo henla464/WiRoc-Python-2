@@ -66,5 +66,5 @@ class RepeaterSIMessageToLoraAckTransform(object):
             loraAck.SetAckRequested(msgSubBatch.AckReceivedFromReceiver)  # indicate ack received from receiver
             loraAck.SetRepeaterBit(True)  # indicate this ack comes from repeater
             loraAck.GenerateRSCode()
-            return {"Data": loraAck.GetByteArray(), "MessageID": None}
+            return {"Data": (loraAck.GetByteArray(),), "MessageID": None}
         return None

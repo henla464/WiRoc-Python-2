@@ -94,17 +94,17 @@ class SendToBlenoAdapter(object):
     def GetRetryDelay(self, tryNo):
         return 1
 
-    # messageData is a bytearray
+    # messageData is a tuple of bytearray
     def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
-        SIMsg = SIMessage()
-        SIMsg.AddPayload(messageData)
-        #punchData = PunchData(messageData)
-        blenoPunchData = BlenoPunchData()
-        blenoPunchData.StationNumber = SIMsg.GetStationNumber()
-        blenoPunchData.SICardNumber = SIMsg.GetSICardNumber()
-        blenoPunchData.TwentyFourHour = SIMsg.GetTwentyFourHour()
-        blenoPunchData.TwelveHourTimer = (SIMsg.GetTwelveHourTimer()[0] << 8) + SIMsg.GetTwelveHourTimer()[1]
-        blenoPunchData.SubSecond = SIMsg.GetSubSecondAsTenthOfSeconds()
-        callbackQueue.put((DatabaseHelper.save_bleno_punch_data, blenoPunchData))
+        for data in messageData:
+            SIMsg = SIMessage()
+            SIMsg.AddPayload(data)
+            blenoPunchData = BlenoPunchData()
+            blenoPunchData.StationNumber = SIMsg.GetStationNumber()
+            blenoPunchData.SICardNumber = SIMsg.GetSICardNumber()
+            blenoPunchData.TwentyFourHour = SIMsg.GetTwentyFourHour()
+            blenoPunchData.TwelveHourTimer = (SIMsg.GetTwelveHourTimer()[0] << 8) + SIMsg.GetTwelveHourTimer()[1]
+            blenoPunchData.SubSecond = SIMsg.GetSubSecondAsTenthOfSeconds()
+            callbackQueue.put((DatabaseHelper.save_bleno_punch_data, blenoPunchData))
         callbackQueue.put((successCB,))
         return True

@@ -43,4 +43,4 @@ class LoraSIMessageToSITransform(object):
         LoraSIMessageToSITransform.WiRocLogger.debug("LoraSIMessageToSITransform::Transform() MessageTypeSIPunch")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         loraPunchMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(payloadData)
-        return {"Data": loraPunchMsg.GetSIMessageByteArray(), "MessageID": None}
+        return {"Data": (loraPunchMsg.GetSIMessageByteArray(),), "MessageID": None}

@@ -44,4 +44,4 @@ class SISIMessageToSITransform(object):
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
-        return {"Data":payloadData, "MessageID": None}
+        return {"Data": (payloadData,), "MessageID": None}

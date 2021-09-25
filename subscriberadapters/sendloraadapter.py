@@ -304,21 +304,27 @@ class SendLoraAdapter(object):
         if self.loraRadio.IsAirSignalDetected():
             SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::SendData() Air signal detected, skip sending now")
             callbackQueue.put((notSentCB,))
-            return
+            return False
 
-        headerMessageType = LoraRadioDataHandler.GetHeaderMessageType(messageData)
-        if headerMessageType != LoraRadioMessageRS.MessageTypeLoraAck:
-            SettingsClass.SetTimeOfLastMessageSentToLora()
-        delayS = settingsDictionary["DelayAfterMessageSent"]
-        self.BlockSendingUntilMessageSentAndAckReceived(delayS)
-        if self.loraRadio.SendData(messageData):
-            repeater = LoraRadioDataHandler.GetRepeater(messageData)
-            if SendLoraAdapter.WiRocMode == "SENDER" and repeater:
-                self.AddSentWithRepeaterBit()
+        returnSuccess = True
+        for data in messageData:
+            headerMessageType = LoraRadioDataHandler.GetHeaderMessageType(data)
+            if headerMessageType != LoraRadioMessageRS.MessageTypeLoraAck:
+                SettingsClass.SetTimeOfLastMessageSentToLora()
+            delayS = settingsDictionary["DelayAfterMessageSent"]
+            self.BlockSendingUntilMessageSentAndAckReceived(delayS)
+            if self.loraRadio.SendData(messageData):
+                repeater = LoraRadioDataHandler.GetRepeater(messageData)
+                if SendLoraAdapter.WiRocMode == "SENDER" and repeater:
+                    self.AddSentWithRepeaterBit()
+                else:
+                    self.AddSentWithoutRepeaterBit()
             else:
-                self.AddSentWithoutRepeaterBit()
+                # failed to send now, probably because 'busy' was returned, ie. something else was sending on same frequency. Delay a short bit.
+                self.BlockSendingUntilMessageSentAndAckReceived(self.GetDelayAfterMessageSent()/4)
+                returnSuccess = False
+
+        if returnSuccess:
             callbackQueue.put((successCB,))
         else:
-            # failed to send now, probably because 'busy' was returned, ie. something else was sending on same frequency. Delay a short bit.
-            self.BlockSendingUntilMessageSentAndAckReceived(self.GetDelayAfterMessageSent()/4)
             callbackQueue.put((notSentCB,))

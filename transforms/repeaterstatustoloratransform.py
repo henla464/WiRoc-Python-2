@@ -63,4 +63,4 @@ class RepeaterStatusToLoraTransform(object):
         loraStatusMsg.SetAckRequested(ackReq)
         loraStatusMsg.SetRepeater(False)
         loraStatusMsg.GenerateRSCode()
-        return {"Data": loraStatusMsg.GetByteArray(), "MessageID": loraStatusMsg.GetHash()}
+        return {"Data": (loraStatusMsg.GetByteArray(),), "MessageID": loraStatusMsg.GetHash()}

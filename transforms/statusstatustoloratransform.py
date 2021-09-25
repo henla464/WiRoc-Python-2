@@ -55,4 +55,4 @@ class StatusStatusToLoraTransform(object):
             reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
         loraStatusMsg.SetRepeater(reqRepeater)
         loraStatusMsg.GenerateRSCode()
-        return {"Data": loraStatusMsg.GetByteArray(), "MessageID": loraStatusMsg.GetHash()}
+        return {"Data": (loraStatusMsg.GetByteArray(),), "MessageID": loraStatusMsg.GetHash()}
