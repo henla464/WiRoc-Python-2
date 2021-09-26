@@ -242,7 +242,7 @@ class Main:
                                 continue
 
                             self.wirocLogger.debug(
-                                "Start::handleInput() MessageType: " + messageTypeName + ", WiRocMode: " + SettingsClass.GetLoraMode() + " RepeaterBit: " + str(
+                                "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " WiRocMode: " + SettingsClass.GetLoraMode() + " RepeaterBit: " + str(
                                     loraMessage.GetRepeater()))
                             rssiValue = loraMessage.GetRSSIValue()
                             if SettingsClass.GetLoraMode() == "RECEIVER":

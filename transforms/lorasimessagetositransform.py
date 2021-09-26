@@ -1,6 +1,6 @@
 import logging
-
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
+
 
 class LoraSIMessageToSITransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')

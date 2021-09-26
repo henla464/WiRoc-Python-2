@@ -462,9 +462,9 @@ class LoraRadio:
             return True
 
     def GetRadioData(self):
-        if self.radioSerial.in_waiting == 0:
+        if self.radioSerial.in_waiting == 0 and len(self.loraRadioDataHandler.DataReceived) == 0:
             return None
-        LoraRadio.WiRocLogger.debug("LoraRadio::GetRadioData() data to fetch")
+        LoraRadio.WiRocLogger.debug("LoraRadio::GetRadioData() data to fetch or data present in loraRadioDataHandler")
         allReceivedData = bytearray()
         while self.radioSerial.in_waiting > 0:
             bytesRead = self.radioSerial.read(1)
@@ -472,7 +472,7 @@ class LoraRadio:
             self.loraRadioDataHandler.AddData(bytesRead[0])
 
         LoraRadio.WiRocLogger.debug(
-            "LoraRadio::GetRadioData() data fetched" + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
+            "LoraRadio::GetRadioData() data fetched and added to loraRadioDataHandler: " + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
 
         msg = self.loraRadioDataHandler.GetMessage()
 

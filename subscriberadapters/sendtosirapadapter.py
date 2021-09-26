@@ -79,7 +79,7 @@ class SendToSirapAdapter(object):
         self.isDBInitialized = val
 
     def GetTransformNames(self):
-        return ["LoraSIMessageToSirapTransform", "SISIMessageToSirapTransform", "SITestTestToSirapTransform"]
+        return ["LoraSIMessageToSirapTransform", "SISIMessageToSirapTransform", "SITestTestToSirapTransform", "LoraSIMessageDoubleToSirapTransform"]
 
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass
@@ -114,6 +114,7 @@ class SendToSirapAdapter(object):
                 self.sock.settimeout(2)
                 self.sock.connect(server_address)
                 SendToSirapAdapter.WiRocLogger.debug("SendToSirapAdapter::SendData() After connect")
+                return True
             except socket.gaierror as msg:
                 SendToSirapAdapter.WiRocLogger.error(
                     "SendToSirapAdapter::SendData() Address-related error connecting to server: " + str(msg))
@@ -129,10 +130,12 @@ class SendToSirapAdapter(object):
                 self.sock = None
                 callbackQueue.put((failureCB,))
                 return False
+        return True
 
     # messageData is tuple of bytearray
     def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
         if not self.OpenConnection(failureCB, callbackQueue, settingsDictionary):
+            self.sock = None
             return False
 
         try:

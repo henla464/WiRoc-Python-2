@@ -2,7 +2,7 @@ import logging
 
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 
-class LoraSIMessageToSITransform(object):
+class LoraSIMessageDoubleToSITransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 
     @staticmethod
@@ -19,7 +19,7 @@ class LoraSIMessageToSITransform(object):
 
     @staticmethod
     def GetName():
-        return "LoraSIMessageToSITransform"
+        return "LoraSIMessageDoubleToSITransform"
 
     @staticmethod
     def GetBatchSize():
@@ -40,7 +40,7 @@ class LoraSIMessageToSITransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch, subscriberAdapter):
-        LoraSIMessageToSITransform.WiRocLogger.debug("LoraSIMessageToSITransform::Transform() MessageTypeSIPunchDouble")
+        LoraSIMessageDoubleToSITransform.WiRocLogger.debug("LoraSIMessageToSITransform::Transform() MessageTypeSIPunchDouble")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(payloadData)
         messageByteTuple = loraPunchDoubleMsg.GetSIMessageByteTuple()

@@ -21,7 +21,7 @@ class LoraSIMessageDoubleToSirapTransform(object):
 
     @staticmethod
     def GetName():
-        return "LoraSIMessageToSirapTransform"
+        return "LoraSIMessageDoubleToSirapTransform"
 
     @staticmethod
     def GetBatchSize():
