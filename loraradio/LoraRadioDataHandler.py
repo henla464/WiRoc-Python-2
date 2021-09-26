@@ -361,6 +361,7 @@ class LoraRadioDataHandler(object):
         if RSCoderLora.check(messageDataToConsider):
             # everything checks out, message should be correct
             loraAckMsg = LoraRadioMessageCreator.GetAckMessageByFullMessageData(messageDataToConsider, rssiByte=rssiByteValue)
+            self._RemoveMessageFromDataReceived(loraAckMsg)
             return loraAckMsg
         else:
             try:
@@ -369,6 +370,7 @@ class LoraRadioDataHandler(object):
                     LoraRadioDataHandler.WiRocLogger.info(
                         "LoraRadioDataHandler::_GetAckMessage() Decoded, corrected data correctly it seems")
                     loraAckMsg = LoraRadioMessageCreator.GetAckMessageByFullMessageData(correctedData, rssiByte=rssiByteValue)
+                    self._RemoveMessageFromDataReceived(loraAckMsg)
                     return loraAckMsg
                 else:
                     LoraRadioDataHandler.WiRocLogger.info(

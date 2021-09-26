@@ -318,7 +318,7 @@ class Main:
 
                         if messageID != subscriptionView.MessageID:
                             # ack is probably an ack of a message sent from another checkpoint
-                            self.wirocLogger.debug("Start::handleInput() Received ack but last sent message doesn't match the message id")
+                            self.wirocLogger.debug("Start::handleInput() Received ack but last sent message: " + Utils.GetDataInHex(subscriptionView.MessageID, logging.INFO) + " doesn't match the ack message id: " + Utils.GetDataInHex(messageID, logging.INFO))
                             continue
 
                         # Only add success when matching message found

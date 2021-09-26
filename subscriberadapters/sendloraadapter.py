@@ -299,7 +299,7 @@ class SendLoraAdapter(object):
             SendLoraAdapter.WiRocLogger.debug("Request repeater: " + str(reqRepeater))
             return reqRepeater
 
-    # messageData is a bytearray
+    # messageData is a tuple of bytearrays
     def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
         if self.loraRadio.IsAirSignalDetected():
             SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::SendData() Air signal detected, skip sending now")
@@ -313,8 +313,8 @@ class SendLoraAdapter(object):
                 SettingsClass.SetTimeOfLastMessageSentToLora()
             delayS = settingsDictionary["DelayAfterMessageSent"]
             self.BlockSendingUntilMessageSentAndAckReceived(delayS)
-            if self.loraRadio.SendData(messageData):
-                repeater = LoraRadioDataHandler.GetRepeater(messageData)
+            if self.loraRadio.SendData(data):
+                repeater = LoraRadioDataHandler.GetRepeater(data)
                 if SendLoraAdapter.WiRocMode == "SENDER" and repeater:
                     self.AddSentWithRepeaterBit()
                 else:

@@ -492,7 +492,7 @@ class LoraRadioDRF1268DS_RS:
             bytesRead = self.radioSerial.read(1)
             allReceivedData.append(bytesRead[0])
             self.loraRadioDataHandler.AddData(bytesRead[0])
-        LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::GetRadioData() data fetched" + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
+        LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::GetRadioData() data fetched: " + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
 
         msg = self.loraRadioDataHandler.GetMessage()
 

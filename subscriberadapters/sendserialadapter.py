@@ -144,13 +144,13 @@ class SendSerialAdapter(object):
     def GetRetryDelay(self, tryNo):
         return 1
 
-    # messageData is a bytearray
+    # messageData is a tuple of bytearrays
     def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
         returnSuccess = True
         for data in messageData:
             if self.serialComputer.SendData(data):
                 callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "Sent", 1))
-                SendSerialAdapter.WiRocLogger.debug("SendSerialAdapter::SendData() Sent to computer, data: " + Utils.GetDataInHex(messageData, logging.DEBUG))
+                SendSerialAdapter.WiRocLogger.debug("SendSerialAdapter::SendData() Sent to computer, data: " + Utils.GetDataInHex(data, logging.DEBUG))
             else:
                 returnSuccess = False
                 callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "NotSent", 0))
