@@ -42,7 +42,7 @@ class LoraSIMessageDoubleToSirapTransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch, subscriberAdapter):
-        LoraSIMessageDoubleToSirapTransform.WiRocLogger.debug("LoraSIMessageToSirapTransform::Transform()")
+        LoraSIMessageDoubleToSirapTransform.WiRocLogger.debug("LoraSIMessageDoubleToSirapTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         msg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(payloadData, rssiByte=None)
         siPayloadDatas = msg.GetSIMessageByteTuple()

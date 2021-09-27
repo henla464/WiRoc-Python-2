@@ -272,8 +272,8 @@ class LoraRadioDataHandler(object):
                 print("LoraRadioDataHandler::_GetPunchDoubleMessageWithErasures() CorrectedData2: " + Utils.GetDataInHex(correctedData2, logging.DEBUG))
 
                 if not RSCoderLora.checkLong(correctedData2):
-                    # for some reason sometimes decode just returns the corrupted message with not change
-                    # and no exception thrown. So check the decoded message to make sure we dont return
+                    # for some reason sometimes decode just returns the corrupted message with no change
+                    # and no exception thrown. So check the decoded message to make sure we don't return
                     # a message that is clearly wrong
                     return None
                 loraMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(correctedData2,

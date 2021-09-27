@@ -22,7 +22,7 @@ class LoraRadioMessageRS(object):
         self.repeater = False
         self.payloadData = bytearray()
         self.rsCodeData = bytearray()
-        self.rssiByte = bytearray()
+        self.rssiByteArray = bytearray()
 
     @staticmethod
     def getHeaderFormatString():
@@ -60,17 +60,17 @@ class LoraRadioMessageRS(object):
         return self.repeater
 
     def SetRSSIByte(self, rssiByte):
-        if  rssiByte is None:
-            self.rssiByte = bytearray()
+        if rssiByte is None:
+            self.rssiByteArray = bytearray()
             return
-        if len(self.rssiByte) > 0:
-            self.rssiByte[0] = rssiByte
+        if len(self.rssiByteArray) > 0:
+            self.rssiByteArray[0] = rssiByte
         else:
-            self.rssiByte.append(rssiByte)
+            self.rssiByteArray.append(rssiByte)
 
     def GetRSSIValue(self):
-        if len(self.rssiByte) > 0:
-            return self.rssiByte[0]
+        if len(self.rssiByteArray) > 0:
+            return self.rssiByteArray[0]
         else:
             return 0
 
@@ -260,14 +260,16 @@ class LoraRadioMessagePunchDoubleRS(LoraRadioMessageRS):
         loraPunchMessage1.SetHeader(bytearray([header]))
         loraPunchMessage1.AddPayload(firstArray)
         #loraPunchMessage.AddRSCode()
-        loraPunchMessage1.SetRSSIByte(self.rssiByte)
+        if len(self.rssiByteArray) > 0:
+            loraPunchMessage1.SetRSSIByte(self.rssiByteArray[0])
         firstSIMessageByteArray = loraPunchMessage1.GetSIMessageByteArray()
 
         loraPunchMessage2 = LoraRadioMessagePunchRS()
         loraPunchMessage2.SetHeader(bytearray([header]))
         loraPunchMessage2.AddPayload(secondArray)
         # loraPunchMessage.AddRSCode()
-        loraPunchMessage2.SetRSSIByte(self.rssiByte)
+        if len(self.rssiByteArray) > 0:
+            loraPunchMessage2.SetRSSIByte(self.rssiByteArray[0])
         secondSIMessageByteArray = loraPunchMessage2.GetSIMessageByteArray()
         return firstSIMessageByteArray, secondSIMessageByteArray
 
