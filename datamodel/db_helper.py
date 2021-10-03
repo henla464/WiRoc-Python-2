@@ -885,6 +885,18 @@ class DatabaseHelper:
             loraPunchMessage = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(data)
             mbd.LowBattery = loraPunchMessage.GetBatteryLow()
             siPayloadData = loraPunchMessage.GetSIMessageByteArray()
+        elif messageTypeName == "REPEATER" and messageSubTypeName == "SIMessage":
+            loraPunchMessage = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(data)
+            mbd.LowBattery = loraPunchMessage.GetBatteryLow()
+            siPayloadData = loraPunchMessage.GetSIMessageByteArray()
+        if messageTypeName == "LORA" and messageSubTypeName == "SIMessageDouble":
+            loraPunchMessage = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(data)
+            mbd.LowBattery = loraPunchMessage.GetBatteryLow()
+            siPayloadData = loraPunchMessage.GetSIMessageByteTuple()[0]
+        elif messageTypeName == "REPEATER" and messageSubTypeName == "SIMessageDouble":
+            loraPunchMessage = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(data)
+            mbd.LowBattery = loraPunchMessage.GetBatteryLow()
+            siPayloadData = loraPunchMessage.GetSIMessageByteTuple()[0]
         elif messageSubTypeName == "SIMessage":
             #source WiRoc, SIStation
             siPayloadData = data
@@ -969,14 +981,21 @@ class DatabaseHelper:
         rmbd.SIStationSerialNumber = None
         rmbd.LowBattery = None
 
+        rmbd.MessageID = messageID
+
         siPayloadData = None
         if messageTypeName == "LORA" and messageSubTypeName == "SIMessage":
             loraPunchMessage = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(data, rssiByte= None)
             rmbd.LowBattery = loraPunchMessage.GetBatteryLow()
-            rmbd.MessageID = messageID
             rmbd.AckRequested = loraPunchMessage.GetAckRequested()
             rmbd.RepeaterRequested = loraPunchMessage.GetRepeater()
             siPayloadData = loraPunchMessage.GetSIMessageByteArray()
+        elif messageTypeName == "LORA" and messageSubTypeName == "SIMessageDouble":
+            loraPunchDoubleMessage = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(data, rssiByte=None)
+            rmbd.LowBattery = loraPunchDoubleMessage.GetBatteryLow()
+            rmbd.AckRequested = loraPunchDoubleMessage.GetAckRequested()
+            rmbd.RepeaterRequested = loraPunchDoubleMessage.GetRepeater()
+            siPayloadData = loraPunchDoubleMessage.GetSIMessageByteTuple()[0]
 
         if siPayloadData != None:
             siMsg = SIMessage()

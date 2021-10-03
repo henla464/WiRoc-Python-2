@@ -4,7 +4,8 @@ from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from settings.settings import SettingsClass
 import logging
 
-class RepeaterSIMessageToLoraAckTransform(object):
+
+class RepeaterSIMessageDoubleToLoraAckTransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 
     @staticmethod
@@ -13,7 +14,7 @@ class RepeaterSIMessageToLoraAckTransform(object):
 
     @staticmethod
     def GetInputMessageSubType():
-        return "SIMessage"
+        return "SIMessageDouble"
 
     @staticmethod
     def GetOutputMessageType():
@@ -21,7 +22,7 @@ class RepeaterSIMessageToLoraAckTransform(object):
 
     @staticmethod
     def GetName():
-        return "RepeaterSIMessageToLoraAckTransform"
+        return "RepeaterSIMessageDoubleToLoraAckTransform"
 
     @staticmethod
     def GetBatchSize():
@@ -48,7 +49,7 @@ class RepeaterSIMessageToLoraAckTransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch, subscriberAdapter):
-        RepeaterSIMessageToLoraAckTransform.WiRocLogger.debug("RepeaterSIMessageToLoraAckTransform::Transform()")
+        RepeaterSIMessageDoubleToLoraAckTransform.WiRocLogger.debug("RepeaterSIMessageDoubleToLoraAckTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         ackReq = LoraRadioDataHandler.GetAckRequested(payloadData)
         repeaterReq = LoraRadioDataHandler.GetRepeater(payloadData)
@@ -60,9 +61,9 @@ class RepeaterSIMessageToLoraAckTransform(object):
             if incomingMsgType == LoraRadioMessageRS.MessageTypeStatus:
                 return None
 
-            loraPunchMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(payloadData, rssiByte=None)
-            md5Hash = loraPunchMsg.GetHash()
-            loraAck = LoraRadioMessageCreator.GetAckMessage(md5Hash)
+            loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(payloadData, rssiByte=None)
+            hash = loraPunchDoubleMsg.GetHash()
+            loraAck = LoraRadioMessageCreator.GetAckMessage(hash)
             loraAck.SetAckRequested(msgSubBatch.AckReceivedFromReceiver)  # indicate ack received from receiver
             loraAck.SetRepeater(True)  # indicate this ack comes from repeater
             loraAck.GenerateRSCode()

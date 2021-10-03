@@ -531,20 +531,24 @@ class LoraRadioDataHandler(object):
         print("MessageTypes: " + str(messageTypes))
 
         for messageType in messageTypes:
+            print("messagetypetotry: " + str(messageType))
             if messageType == LoraRadioMessageRS.MessageTypeSIPunch:
-                print("messagetypetotry: " + str(messageType))
+                print("SiPunch")
                 loraPunchMessage = self._GetPunchMessage(startOfMessageIndex)
                 if loraPunchMessage is not None:
                     return loraPunchMessage
             elif messageType == LoraRadioMessageRS.MessageTypeLoraAck:
+                print("Ack")
                 loraAckMessage = self._GetAckMessage(startOfMessageIndex)
                 if loraAckMessage is not None:
                     return loraAckMessage
             elif messageType == LoraRadioMessageRS.MessageTypeStatus:
+                print("Status")
                 loraStatusMessage = self._GetStatusMessage(startOfMessageIndex)
                 if loraStatusMessage is not None:
                     return loraStatusMessage
             elif messageType == LoraRadioMessageRS.MessageTypeSIPunchDouble:
+                print("SiPunchDouble")
                 loraPunchDoubleMessage = self._GetPunchDoubleMessage(startOfMessageIndex)
                 if loraPunchDoubleMessage is not None:
                     return loraPunchDoubleMessage

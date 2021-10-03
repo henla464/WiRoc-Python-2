@@ -1,7 +1,10 @@
 __author__ = 'henla464'
 
+import logging
+from utils.utils import Utils
 from loraradio.LoraRadioMessageRS import LoraRadioMessageAckRS, LoraRadioMessagePunchRS, \
     LoraRadioMessageStatusRS, LoraRadioMessagePunchDoubleRS
+
 
 
 class LoraRadioMessageCreator(object):
@@ -40,6 +43,7 @@ class LoraRadioMessageCreator(object):
         loraPunchMessage = LoraRadioMessagePunchRS()
         loraPunchMessage.SetHeader(fullMessageData[0:1])
         loraPunchMessage.AddPayload(fullMessageData[1:-4])
+        print("punchmessage payload: " + Utils.GetDataInHex(fullMessageData[1:-4], logging.DEBUG))
         loraPunchMessage.AddRSCode(fullMessageData[-4:])
         loraPunchMessage.SetRSSIByte(rssiByte)
         return loraPunchMessage

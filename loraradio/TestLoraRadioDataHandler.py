@@ -5,6 +5,7 @@ import unittest
 
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
+from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from loraradio.RSCoderLora import RSCoderLora
 
 # Run with python3 -m unittest loraradio/TestLoraRadioDataHandler.py
@@ -15,6 +16,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     PunchMsg_Corrupted_1 = bytearray(bytes([0x84, 0x10, 0x00, 0x00, 0x01, 0xFF, 0x01, 0X93, 0xA8, 0x00]))
     PunchDoubleMsg_Corrupted_1 = bytearray(bytes([0x86, 0xff, 0x01, 0x01, 0x63, 0x67, 0x01, 0x03, 0x86, 0x12, 0xff, 0x01, 0x01, 0x63, 0x67, 0x01, 0x0c, 0x9d, 0x6e]))
     PunchMsg_Correct_HighestTHTL = bytearray(bytes([0x83, 0x1F, 0x00, 0x00, 0x00, 0xFF, 0x00, 0XA8, 0xC0, 0x00]))
+    StatusMsg_Correct_WithRS = bytearray(bytes([0xa4, 0xe0, 0x58, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xef, 0xa0, 0xe5, 0xb6]))
 
     dataHandler = LoraRadioDataHandler(False)
 
@@ -349,5 +351,21 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNotNone(msg3, "Didn't receive a message, it should be decodable")
         print("=== END test_GetMessage_PunchDoubleMessage ===")
         #self.assertEqual(TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes, msg2.GetByteArray(), "Didn't receive a corrected message")
+
+    def test_GetMessage_Status(self):
+
+        # messageTypeToTry, erasures = None):
+        print("=== START test_GetMessage_Status ===")
+        for i in range(0, len(TestLoraRadioDataHandler.StatusMsg_Correct_WithRS)):
+            self.dataHandler.AddData(TestLoraRadioDataHandler.StatusMsg_Correct_WithRS[i:i + 1])
+
+        msg = self.dataHandler.GetMessage()
+        self.assertIsNotNone(msg, "Expected to receive the message back")
+        self.assertEqual(TestLoraRadioDataHandler.StatusMsg_Correct_WithRS, msg.GetByteArray(),
+                         "Didn't receive the same bytes back")
+        self.assertEqual(msg.GetMessageCategory(), "DATA")
+        self.assertTrue(isinstance(msg, LoraRadioMessageRS))
+        print("=== END test_GetMessage_Status ===")
+        # self.assertEqual(TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes, msg2.GetByteArray(), "Didn't receive a corrected message")
 
 #rint(loraPunchMsg1.GetByteArray())

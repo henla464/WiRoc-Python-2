@@ -764,9 +764,6 @@ class SIMessage(object):
         addr = self.MessageData[13] << 16 | self.MessageData[14] << 8 | self.MessageData[15]
         return addr
 
-    def SetLoraPunchByteArray(self, loraPunchByteArray):
-        a = 1
-        #todo: or maybe get in lora message is better
 
 
 class MessageSubscriptionBatchItem(object):
