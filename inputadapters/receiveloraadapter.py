@@ -8,10 +8,11 @@ import time
 import logging
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
+from utils.utils import Utils
+
 
 class ReceiveLoraAdapter(object):
     Instances = []
-    TestRepeater = False
     WiRocLogger = logging.getLogger('WiRoc.Input')
 
     @staticmethod
@@ -141,9 +142,8 @@ class ReceiveLoraAdapter(object):
                 if ((SettingsClass.GetLoraMode() == "SENDER") or (SettingsClass.GetLoraMode() == "REPEATER")):
                     messageIDToReturn = loraMessage.GetMessageIDThatIsAcked()
             elif messageType == LoraRadioMessageRS.MessageTypeStatus:
-                if ReceiveLoraAdapter.TestRepeater and \
-                        SettingsClass.GetLoraMode() == "RECEIVER" and \
-                        repeaterRequested:
+                simulatedMessageDropPercentage = SettingsClass.GetSimulatedMessageDropPercentage()
+                if simulatedMessageDropPercentage > 0 and Utils.GetShouldDropMessage(simulatedMessageDropPercentage):
                     return None
 
                 if loraMessage.GetBatteryLow():
@@ -153,9 +153,8 @@ class ReceiveLoraAdapter(object):
                 SettingsClass.UpdateRelayPathNumber(relayPathNo)
                 DatabaseHelper.add_message_stat(self.GetInstanceName(), "Status", "Received", 1)
             elif messageType == LoraRadioMessageRS.MessageTypeSIPunch or messageType == LoraRadioMessageRS.MessageTypeSIPunchDouble:
-                if ReceiveLoraAdapter.TestRepeater and \
-                        SettingsClass.GetLoraMode() == "RECEIVER" and \
-                        repeaterRequested:
+                simulatedMessageDropPercentage = SettingsClass.GetSimulatedMessageDropPercentage()
+                if simulatedMessageDropPercentage > 0 and Utils.GetShouldDropMessage(simulatedMessageDropPercentage):
                     return None
 
                 if loraMessage.GetBatteryLow():

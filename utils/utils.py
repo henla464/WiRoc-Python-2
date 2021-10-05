@@ -2,23 +2,7 @@ __author__ = 'henla464'
 
 from struct import pack
 from datetime import datetime
-import logging, os
-
-#class PunchData(object):
-#    def __init__(self, siPayloadData = None):
-#        if siPayloadData is None:
-#            self.StationNumber = None
-#            self.SICardNumber = None
-#            self.TwentyFourHour = None
-#            self.TwelveHourTimer = None
-#            self.SubSecond = None
-#        else:
-#            self.StationNumber = (siPayloadData[3] << 8) + siPayloadData[4]
-#            self.SICardNumber = Utils.DecodeCardNr(siPayloadData[5:9])
-#            self.TwentyFourHour = siPayloadData[9] & 0x01
-#            self.TwelveHourTimer = siPayloadData[10:12]
-#            self.SubSecond = int(siPayloadData[12] // 25.6)
-
+import logging, os, random
 
 class Utils:
     WiRocLogger = logging.getLogger('WiRoc')
@@ -233,17 +217,6 @@ class Utils:
         return "(Not printed in this logging level)"
 
     @staticmethod
-    def IsEnoughAlike(receivedMessageID, expectedMessageID):
-        if receivedMessageID == expectedMessageID:
-            return True
-        if len(receivedMessageID) != len(expectedMessageID):
-            return False
-        receivedMessageIDBinary = ''.join(format(byte, '08b') for byte in receivedMessageID)
-        expectedMessageIDBinary = ''.join(format(byte, '08b') for byte in expectedMessageID)
-        noOfBitsWrong = 0
-        for recBitVal, expBitVal in zip(receivedMessageIDBinary, expectedMessageIDBinary):
-            if recBitVal != expBitVal:
-                noOfBitsWrong += 1
-            if noOfBitsWrong >= 2:
-                return False
-        return True
+    def GetShouldDropMessage(dropPercentage):
+        return random.choices([True, False], weights=[dropPercentage, 100-dropPercentage], k=1)
+

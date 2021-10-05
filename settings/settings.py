@@ -239,6 +239,14 @@ class SettingsClass(object):
     #####
     # DB settings changed via web services only
     #####
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSimulatedMessageDropPercentage'), lock=rlock)
+    def GetSimulatedMessageDropPercentage():
+        sett = DatabaseHelper.get_setting_by_key('GetSimulatedMessageDropPercentage')
+        if sett is None:
+            SettingsClass.SetSetting("GetSimulatedMessageDropPercentage", "0")
+            return 0
+        return int(sett.Value)
 
     # Also see the code for wirocmode in the api. This is duplicated there.
     @staticmethod
