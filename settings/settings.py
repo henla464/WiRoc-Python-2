@@ -240,11 +240,20 @@ class SettingsClass(object):
     # DB settings changed via web services only
     #####
     @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetSimulatedMessageDropPercentage'), lock=rlock)
-    def GetSimulatedMessageDropPercentage():
-        sett = DatabaseHelper.get_setting_by_key('GetSimulatedMessageDropPercentage')
+    @cached(cache, key=partial(hashkey, 'GetSimulatedMessageDropPercentageRepeaterNotRequested'), lock=rlock)
+    def GetSimulatedMessageDropPercentageRepeaterNotRequested():
+        sett = DatabaseHelper.get_setting_by_key('SimulatedMessageDropPercentageRepeaterNotRequested')
         if sett is None:
-            SettingsClass.SetSetting("GetSimulatedMessageDropPercentage", "0")
+            SettingsClass.SetSetting("SimulatedMessageDropPercentageRepeaterNotRequested", "0")
+            return 0
+        return int(sett.Value)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSimulatedMessageDropPercentageRepeaterRequested'), lock=rlock)
+    def GetSimulatedMessageDropPercentageRepeaterRequested():
+        sett = DatabaseHelper.get_setting_by_key('SimulatedMessageDropPercentageRepeaterRequested')
+        if sett is None:
+            SettingsClass.SetSetting("SimulatedMessageDropPercentageRepeaterRequested", "0")
             return 0
         return int(sett.Value)
 

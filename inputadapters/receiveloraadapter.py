@@ -133,6 +133,16 @@ class ReceiveLoraAdapter(object):
             receivedData = loraMessage.GetByteArray()
             ackRequested = loraMessage.GetAckRequested()
             repeaterRequested = loraMessage.GetRepeater()
+            # For testing purposes we can set SimulatedMessageDropPercentageRepeaterNotRequested and/or
+            # SimulatedMessageDropPercentageRepeaterRequested to randomly drop a percentage of messages
+            if repeaterRequested:
+                simulatedMessageDropPercentageRepReq = SettingsClass.GetSimulatedMessageDropPercentageRepeaterRequested()
+                if simulatedMessageDropPercentageRepReq > 0 and Utils.GetShouldDropMessage(simulatedMessageDropPercentageRepReq):
+                    return None
+            else:
+                simulatedMessageDropPercentageRepNotReq = SettingsClass.GetSimulatedMessageDropPercentageRepeaterNotRequested()
+                if simulatedMessageDropPercentageRepNotReq > 0 and Utils.GetShouldDropMessage(simulatedMessageDropPercentageRepNotReq):
+                    return None
             messageType = loraMessage.GetMessageType()
             messageID = loraMessage.GetHash()
             messageIDToReturn = messageID
@@ -142,10 +152,6 @@ class ReceiveLoraAdapter(object):
                 if ((SettingsClass.GetLoraMode() == "SENDER") or (SettingsClass.GetLoraMode() == "REPEATER")):
                     messageIDToReturn = loraMessage.GetMessageIDThatIsAcked()
             elif messageType == LoraRadioMessageRS.MessageTypeStatus:
-                simulatedMessageDropPercentage = SettingsClass.GetSimulatedMessageDropPercentage()
-                if simulatedMessageDropPercentage > 0 and Utils.GetShouldDropMessage(simulatedMessageDropPercentage):
-                    return None
-
                 if loraMessage.GetBatteryLow():
                     SettingsClass.SetBatteryIsLowReceived(True)
 
@@ -153,10 +159,6 @@ class ReceiveLoraAdapter(object):
                 SettingsClass.UpdateRelayPathNumber(relayPathNo)
                 DatabaseHelper.add_message_stat(self.GetInstanceName(), "Status", "Received", 1)
             elif messageType == LoraRadioMessageRS.MessageTypeSIPunch or messageType == LoraRadioMessageRS.MessageTypeSIPunchDouble:
-                simulatedMessageDropPercentage = SettingsClass.GetSimulatedMessageDropPercentage()
-                if simulatedMessageDropPercentage > 0 and Utils.GetShouldDropMessage(simulatedMessageDropPercentage):
-                    return None
-
                 if loraMessage.GetBatteryLow():
                     SettingsClass.SetBatteryIsLowReceived(True)
 
