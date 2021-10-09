@@ -396,7 +396,7 @@ class LoraRadioDataHandler(object):
         messageDataToConsider = self.DataReceived[startOfMessageIndex:startOfMessageIndex+expectedMessageLength]
         messageDataToConsider[0] = (messageDataToConsider[0] & 0xE0) | messageTypeToTry
         LoraRadioDataHandler.WiRocLogger.debug(
-            "LoraRadioDataHandler::_GetAckMessage() MessageDataToConsider: " + Utils.GetDataInHex(messageDataToConsider,
+            "LoraRadioDataHandler::_GetStatusMessage() MessageDataToConsider: " + Utils.GetDataInHex(messageDataToConsider,
                                                                                                   logging.DEBUG))
         rssiByteValue = self.DataReceived[startOfMessageIndex+expectedMessageLength] if self.RSSIByteCount == 1 else None
 

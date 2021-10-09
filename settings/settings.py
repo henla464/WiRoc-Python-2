@@ -240,6 +240,15 @@ class SettingsClass(object):
     # DB settings changed via web services only
     #####
     @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetShouldAlwaysRequestRepeater'), lock=rlock)
+    def GetShouldAlwaysRequestRepeater():
+        sett = DatabaseHelper.get_setting_by_key('ShouldAlwaysRequestRepeater')
+        if sett is None:
+            SettingsClass.SetSetting("ShouldAlwaysRequestRepeater", "0")
+            return False
+        return sett.Value == "1"
+
+    @staticmethod
     @cached(cache, key=partial(hashkey, 'GetSimulatedMessageDropPercentageRepeaterNotRequested'), lock=rlock)
     def GetSimulatedMessageDropPercentageRepeaterNotRequested():
         sett = DatabaseHelper.get_setting_by_key('SimulatedMessageDropPercentageRepeaterNotRequested')
@@ -266,18 +275,6 @@ class SettingsClass(object):
             SettingsClass.SetSetting("LoraMode", 'RECEIVER')
             return 'RECEIVER'
         return sett.Value
-
-        #if SettingsClass.GetSendSerialAdapterActive():  # and output = SERIAL
-            # connected to computer or other WiRoc
-        #    return "RECEIVER"
-        #elif SettingsClass.GetSendToSirapEnabled():  # and output = SIRAP
-            # configured to send to Sirap over network/wifi
-        #    return "RECEIVER"
-        #elif SettingsClass.GetReceiveSIAdapterActive():
-        #    return "SENDER"
-        #else:
-        #    return "REPEATER"
-
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetChannel'), lock=rlock)
@@ -354,7 +351,7 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("RxGainEnabled", "1")
             return False
-        return (sett.Value == "1")
+        return sett.Value == "1"
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetAcknowledgementRequested'), lock=rlock)
@@ -363,7 +360,7 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("AcknowledgementRequested", "1")
             return True
-        return  (sett.Value == "1")
+        return  sett.Value == "1"
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetSendToSirapEnabled'), lock=rlock)
@@ -372,7 +369,7 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("SendToSirapEnabled", "0")
             return False
-        return (sett.Value == "1")
+        return sett.Value == "1"
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetSendToSirapIP'), lock=rlock)
@@ -441,7 +438,6 @@ class SettingsClass(object):
     microSecondsToSendAMessage = None
     microSecondsToSendAnAckMessage = None
     @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetRetryDelay'), lock=rlock)
     def GetRetryDelay(retryNumber):
         loraRange = SettingsClass.GetLoraRange()
         channel = SettingsClass.GetChannel()
@@ -451,7 +447,7 @@ class SettingsClass(object):
         messageLengthInBytes = 24 # typical length
         SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
         # extra delay for higher error coderates
-        SettingsClass.microSecondsToSendAMessage += SettingsClass.microSecondsToSendAMessage * (1+0.2*codeRate)
+        SettingsClass.microSecondsToSendAMessage = SettingsClass.microSecondsToSendAMessage * (1+0.2*codeRate)
         microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 2)*SettingsClass.microSecondsToSendAMessage
         return microSecondsDelay
 
@@ -467,7 +463,7 @@ class SettingsClass(object):
             messageLengthInBytes = 24  # typical length
             SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
             # extra delay for higher error coderates
-            SettingsClass.microSecondsToSendAMessage += SettingsClass.microSecondsToSendAMessage * (1 + 0.2 * codeRate)
+            SettingsClass.microSecondsToSendAMessage = SettingsClass.microSecondsToSendAMessage * (1 + 0.2 * codeRate)
         return 1+(SettingsClass.microSecondsToSendAMessage * 2.1)/1000000
 
 
@@ -483,7 +479,7 @@ class SettingsClass(object):
             messageLengthInBytes = 10  # typical length
             SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
             # extra delay for higher error coderates
-            SettingsClass.microSecondsToSendAnAckMessage += SettingsClass.microSecondsToSendAnAckMessage * (1 + 0.2 * codeRate)
+            SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.microSecondsToSendAnAckMessage * (1 + 0.2 * codeRate)
         return 0.2+(SettingsClass.microSecondsToSendAnAckMessage)/1000000
 
     @staticmethod
@@ -498,7 +494,7 @@ class SettingsClass(object):
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
         microSecs = SettingsClass.channelData.SlopeCoefficient * (noOfBytes + SettingsClass.channelData.M)
         # extra delay for higher error coderates
-        microSecs += microSecs * (1 + 0.2 * codeRate)
+        microSecs = microSecs * (1 + 0.2 * codeRate)
         return microSecs/1000000
 
     @staticmethod

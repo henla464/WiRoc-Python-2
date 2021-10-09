@@ -889,7 +889,7 @@ class DatabaseHelper:
             loraPunchMessage = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(data)
             mbd.LowBattery = loraPunchMessage.GetBatteryLow()
             siPayloadData = loraPunchMessage.GetSIMessageByteArray()
-        if messageTypeName == "LORA" and messageSubTypeName == "SIMessageDouble":
+        elif messageTypeName == "LORA" and messageSubTypeName == "SIMessageDouble":
             loraPunchMessage = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(data)
             mbd.LowBattery = loraPunchMessage.GetBatteryLow()
             siPayloadData = loraPunchMessage.GetSIMessageByteTuple()[0]
@@ -911,6 +911,7 @@ class DatabaseHelper:
             mbd.SportIdentHour = siMsg.GetHour()
             mbd.SportIdentMinute = siMsg.GetMinute()
             mbd.SportIdentSecond = siMsg.GetSeconds()
+
             mbd.MemoryAddress = siMsg.GetBackupMemoryAddressAsInt()
             mbd.SIStationNumber = siMsg.GetStationNumber()
         return mbd

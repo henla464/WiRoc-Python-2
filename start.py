@@ -24,10 +24,6 @@ from logging.handlers import HTTPHandler
 class Main:
     def __init__(self):
         self.wirocLogger = logging.getLogger("WiRoc")
-        if len(sys.argv) > 1 and sys.argv[1] == "testrepeater":
-            self.wirocLogger.debug("Test repeater")
-            ReceiveLoraAdapter.TestRepeater = True
-            SendLoraAdapter.TestRepeater = True
         self.shouldReconfigure = False
         self.forceReconfigure = False
         self.nextTimeToReconfigure = time.monotonic() + 10

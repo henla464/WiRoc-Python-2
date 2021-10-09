@@ -218,5 +218,5 @@ class Utils:
 
     @staticmethod
     def GetShouldDropMessage(dropPercentage):
-        return random.choices([True, False], weights=[dropPercentage, 100-dropPercentage], k=1)
+        return random.choices([True, False], weights=[dropPercentage, 100-dropPercentage], k=1)[0]
 

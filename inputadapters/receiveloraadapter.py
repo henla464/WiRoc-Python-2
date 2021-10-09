@@ -138,10 +138,13 @@ class ReceiveLoraAdapter(object):
             if repeaterRequested:
                 simulatedMessageDropPercentageRepReq = SettingsClass.GetSimulatedMessageDropPercentageRepeaterRequested()
                 if simulatedMessageDropPercentageRepReq > 0 and Utils.GetShouldDropMessage(simulatedMessageDropPercentageRepReq):
+                    ReceiveLoraAdapter.WiRocLogger.info("ReceiveLoraAdapter::GetData() simulating dropping message (repeater requested)")
                     return None
             else:
                 simulatedMessageDropPercentageRepNotReq = SettingsClass.GetSimulatedMessageDropPercentageRepeaterNotRequested()
                 if simulatedMessageDropPercentageRepNotReq > 0 and Utils.GetShouldDropMessage(simulatedMessageDropPercentageRepNotReq):
+                    ReceiveLoraAdapter.WiRocLogger.info(
+                        "ReceiveLoraAdapter::GetData() simulating dropping message (repeater not requested)")
                     return None
             messageType = loraMessage.GetMessageType()
             messageID = loraMessage.GetHash()
