@@ -1,3 +1,4 @@
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from serialcomputer.serialcomputer import SerialComputer
 import os
 import logging
@@ -8,19 +9,22 @@ from settings.settings import SettingsClass
 import random
 from datetime import datetime, time, date
 
+
 class ReceiveSerialComputerAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Input')
     Instances = []
     randomSerialNumber = None
+
     @staticmethod
     def CreateInstances(hardwareAbstraction):
-        serialPort = None
+        serialPorts = []
 
-        if hardwareAbstraction.runningOnChip or hardwareAbstraction.runningOnChip:
-            if os.path.exists('/dev/ttyGS0'):
-                serialPort = '/dev/ttyGS0'
+        if SettingsClass.GetRS232Mode == "SEND":
+            hwSISerialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
+            serialPorts.extend(hwSISerialPorts)
 
-        if serialPort is not None:
+        # handles only one serialport now
+        for serialPort in serialPorts:
             if len(ReceiveSerialComputerAdapter.Instances) == 0:
                 ReceiveSerialComputerAdapter.Instances.append(
                     ReceiveSerialComputerAdapter('rcvSer1', serialPort))
@@ -94,7 +98,6 @@ class ReceiveSerialComputerAdapter(object):
         replyMessage.append(ETX)
         return replyMessage
 
-
     def replyGetStationSettingSystemValue(self, data):
         # Get system value
         replyMessage = bytearray()
@@ -121,7 +124,6 @@ class ReceiveSerialComputerAdapter(object):
         replyMessage.append(crc[1])  # crc0
         replyMessage.append(ETX)
         return replyMessage
-
 
     def replyGetBackupPointerSystemValue(self, data):
         address = data["Data"][3]
@@ -181,15 +183,15 @@ class ReceiveSerialComputerAdapter(object):
         for i in range(0, numberOfBytesRequested):
             replyMessage.append(0x00)
 
-        #crc = Utils.CalculateCRC(replyMessage[1:])
-        #replyMessage.append(crc[0])  # crc1
-        #replyMessage.append(crc[1])  # crc0
-        replyMessage.append(0x00) # add invalid crc, because this doesn't have a correct punch
-        replyMessage.append(0x00) # add invalid crc
+        # crc = Utils.CalculateCRC(replyMessage[1:])
+        # replyMessage.append(crc[0])  # crc1
+        # replyMessage.append(crc[1])  # crc0
+        replyMessage.append(0x00)  # add invalid crc, because this doesn't have a correct punch
+        replyMessage.append(0x00)  # add invalid crc
         replyMessage.append(ETX)
         return replyMessage
 
-    #[0xFF, 0x02, 0x02, 0xF7, 0x00, 0xF7, 0x00, 0x03])
+    # [0xFF, 0x02, 0x02, 0xF7, 0x00, 0xF7, 0x00, 0x03])
     def replyStationTimeAndStationNumber(self, data):
         replyMessage = bytearray()
         replyMessage.append(STX)  # STX
@@ -202,7 +204,7 @@ class ReceiveSerialComputerAdapter(object):
         replyMessage.append(todaysDateTime.month)
         replyMessage.append(todaysDateTime.day)
         if todaysDateTime.time() >= time(hour=12):
-            #not sure if it should be > or >= 12
+            # not sure if it should be > or >= 12
             replyMessage.append(0x01)
         else:
             replyMessage.append(0x00)
@@ -239,22 +241,23 @@ class ReceiveSerialComputerAdapter(object):
         # and restores it in reconfigure call to Tick
         if data["Data"][3] == 0x01:
             # Host WiRoc has power supplied so lets charge too, but slowly
-            ReceiveSerialComputerAdapter.WiRocLogger.debug("ReceiveSerialComputerAdapter::GetData() Change to slow charging...")
+            ReceiveSerialComputerAdapter.WiRocLogger.debug(
+                "ReceiveSerialComputerAdapter::GetData() Change to slow charging...")
             Battery.DisableChargingIfBatteryOK()
             Battery.LimitCurrentDrawTo100IfBatteryOK()
         else:
-            ReceiveSerialComputerAdapter.WiRocLogger.debug("ReceiveSerialComputerAdapter::GetData() Disable charging...")
+            ReceiveSerialComputerAdapter.WiRocLogger.debug(
+                "ReceiveSerialComputerAdapter::GetData() Disable charging...")
             Battery.DisableChargingIfBatteryOK()
             Battery.LimitCurrentDrawTo100IfBatteryOK()
         SettingsClass.SetConnectedComputerIsWiRocDevice()
 
-
-    # messageData is a bytearray
     def GetData(self):
         data = self.serialComputer.GetData()
         if data is not None:
             if not data["ChecksumOK"]:
-                ReceiveSerialComputerAdapter.WiRocLogger.debug("ReceiveSerialComputerAdapter::GetData() Checksum not ok, message thrown away")
+                ReceiveSerialComputerAdapter.WiRocLogger.debug(
+                    "ReceiveSerialComputerAdapter::GetData() Checksum not ok, message thrown away")
                 return None
 
             replyMessage = bytearray()
@@ -270,8 +273,8 @@ class ReceiveSerialComputerAdapter(object):
                     replyMessage = self.replyGetStationSettingSystemValue(data)
                 elif address == 0x1C:
                     replyMessage = self.replyGetBackupPointerSystemValue(data)
-            elif commandCode ==0x81:
-                    replyMessage = self.replyGetBackupPunch(data)
+            elif commandCode == 0x81:
+                replyMessage = self.replyGetBackupPunch(data)
             elif commandCode == 0xF7:
                 replyMessage = self.replyStationTimeAndStationNumber(data)
             elif commandCode == 0xF0:
@@ -281,14 +284,19 @@ class ReceiveSerialComputerAdapter(object):
                 self.handleWiRocToWiRoc(data)
                 return None
             else:
-                ReceiveSerialComputerAdapter.WiRocLogger.debug("ReceiveSerialComputerAdapter::GetData() Unknown command received")
+                ReceiveSerialComputerAdapter.WiRocLogger.debug(
+                    "ReceiveSerialComputerAdapter::GetData() Unknown command received")
                 return None
 
-            ReceiveSerialComputerAdapter.WiRocLogger.debug("ReceiveSerialComputerAdapter::GetData() Received: " + Utils.GetDataInHex(data["Data"], logging.DEBUG) + " Sending reply message: " + Utils.GetDataInHex(replyMessage, logging.DEBUG))
+            ReceiveSerialComputerAdapter.WiRocLogger.debug(
+                "ReceiveSerialComputerAdapter::GetData() Received: " + Utils.GetDataInHex(data["Data"],
+                                                                                          logging.DEBUG) + " Sending reply message: " + Utils.GetDataInHex(
+                    replyMessage, logging.DEBUG))
             try:
                 self.serialComputer.SendData(replyMessage)
             except:
-                ReceiveSerialComputerAdapter.WiRocLogger.error("ReceiveSerialComputerAdapter::GetData() Error sending reply message")
+                ReceiveSerialComputerAdapter.WiRocLogger.error(
+                    "ReceiveSerialComputerAdapter::GetData() Error sending reply message")
         return None
 
     def AddedToMessageBox(self, mbid):

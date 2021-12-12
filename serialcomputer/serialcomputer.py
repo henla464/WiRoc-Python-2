@@ -2,6 +2,8 @@ __author__ = 'henla464'
 
 import serial
 from time import sleep
+
+from settings.settings import SettingsClass
 from utils.utils import Utils
 import logging
 from constants import *
@@ -25,7 +27,6 @@ class SerialComputer:
         self.compSerial = serial.Serial()
         self.portName = portName
         self.isInitialized = False
-        self.noOfTimesUSBCableInserted = 0
 
     def GetIsInitialized(self):
         return self.isInitialized
@@ -37,18 +38,18 @@ class SerialComputer:
         shouldTest = False
         if self.GetIsInitialized():
             shouldTest = True
+            SerialComputer.WiRocLogger.debug("SerialComputer::TestConnection() Is initialized")
         else:
-            strNoOfTimesUSBCableInserted = os.popen('dmesg | grep "g_cdc gadget: high-speed config" | wc -l').read()
-            noOfTimesUSBCableInserted = int(strNoOfTimesUSBCableInserted)
-            SerialComputer.WiRocLogger.debug("SerialComputer::TestConnection() noOfTimesUSBCableInserted " + str(noOfTimesUSBCableInserted) + " last time: " + str(self.noOfTimesUSBCableInserted))
-            if noOfTimesUSBCableInserted > self.noOfTimesUSBCableInserted:
-                shouldTest = True
-                self.noOfTimesUSBCableInserted = noOfTimesUSBCableInserted
+            shouldTest = True
+            SerialComputer.WiRocLogger.debug("SerialComputer::TestConnection() Not initialized")
 
         if shouldTest:
             try:
                 if not self.compSerial.is_open:
-                    self.compSerial.baudrate = 38400
+                    if SettingsClass.GetForceRS2324800BaudRateFromSIStation():
+                        self.compSerial.baudrate = 4800
+                    else:
+                        self.compSerial.baudrate = 38400
                     self.compSerial.port = self.portName
                     self.compSerial.writeTimeout = 0.01
                     self.compSerial.open()
@@ -83,7 +84,10 @@ class SerialComputer:
             return True
         SerialComputer.WiRocLogger.info("SerialComputer::Init() Computer port name: " + self.portName)
         self.compSerial.close()
-        baudRate = 38400
+        if SettingsClass.GetForceRS2324800BaudRateFromSIStation():
+            baudRate = 4800
+        else:
+            baudRate = 38400
         try:
             self.compSerial.baudrate = baudRate
             self.compSerial.port = self.portName

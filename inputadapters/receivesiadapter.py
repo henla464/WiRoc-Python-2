@@ -28,8 +28,9 @@ class ReceiveSIAdapter(object):
         # 0557:2008 ATEN International Co., Ltd UC-232A Serial Port [pl2303]                    -- Works
 
         # Add any HW serial ports used for SportIdent units
-        hwSISerialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
-        serialPorts.extend(hwSISerialPorts)
+        if SettingsClass.GetRS232Mode == "RECEIVE":
+            hwSISerialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
+            serialPorts.extend(hwSISerialPorts)
 
         # Add BT Serial ports
         btSISerialPorts = HardwareAbstraction.Instance.GetRFCommsSerialPorts()
@@ -468,13 +469,13 @@ class ReceiveSIAdapter(object):
             if checksumOK:
                 ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::GetData() I am a WiRoc message received!")
                 self.isConnectedToWiRocDevice = True
-                powerSupplied = int(Battery.IsPowerSupplied())
-                imAWiRocReply = bytearray([0x02, 0x01, 0x01, powerSupplied, 0x00, 0x00, 0x03])
-                calculatedCRC = Utils.CalculateCRC(imAWiRocReply[1:-3])
-                imAWiRocReply[4] = calculatedCRC[0]
-                imAWiRocReply[5] = calculatedCRC[1]
-                self.siSerial.write(imAWiRocReply)
-                self.siSerial.flush()
+                #powerSupplied = int(Battery.IsPowerSupplied())
+                #imAWiRocReply = bytearray([0x02, 0x01, 0x01, powerSupplied, 0x00, 0x00, 0x03])
+                #calculatedCRC = Utils.CalculateCRC(imAWiRocReply[1:-3])
+                #imAWiRocReply[4] = calculatedCRC[0]
+                #imAWiRocReply[5] = calculatedCRC[1]
+                #self.siSerial.write(imAWiRocReply)
+                #self.siSerial.flush()
             else:
                 ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::GetData() I am a WiRoc message, WRONG CHECKSUM!")
             return None

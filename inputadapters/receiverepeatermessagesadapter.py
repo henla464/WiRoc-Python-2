@@ -48,7 +48,7 @@ class ReceiveRepeaterMessagesAdapter(object):
             self.lastRepeaterMessageBoxIdAdded = messageToAdd.id
 
             ReceiveRepeaterMessagesAdapter.WiRocLogger.debug("ReceiveRepeaterMessagesAdapter::GetData() Data to fetch: " + Utils.GetDataInHex(messageToAdd.MessageData, logging.DEBUG))
-            return {"MessageType": "DATA", "MessageSource":"Repeater", "MessageSubTypeName": "SIMessage", "Data": messageToAdd.MessageData, "MessageID": messageToAdd.MessageID, "ChecksumOK": True}
+            return {"MessageType": "DATA", "MessageSource":"Repeater", "MessageSubTypeName": messageToAdd.MessageSubTypeName, "Data": messageToAdd.MessageData, "MessageID": messageToAdd.MessageID, "ChecksumOK": True}
         return None
 
     def AddedToMessageBox(self, mbid):

@@ -40,6 +40,8 @@ class LoraRadioMessageCreator(object):
 
     @staticmethod
     def GetPunchMessageByFullMessageData(fullMessageData, rssiByte = None):
+        if len(fullMessageData) < 14:
+            raise Exception('Message data too short for a LoraRadioMessagePunchRS message')
         loraPunchMessage = LoraRadioMessagePunchRS()
         loraPunchMessage.SetHeader(fullMessageData[0:1])
         loraPunchMessage.AddPayload(fullMessageData[1:-4])

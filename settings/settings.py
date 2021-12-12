@@ -360,7 +360,7 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("AcknowledgementRequested", "1")
             return True
-        return  sett.Value == "1"
+        return sett.Value == "1"
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetSendToSirapEnabled'), lock=rlock)
@@ -423,7 +423,7 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("LogToServer", "0")
             return False
-        return (sett.Value == "1")
+        return sett.Value == "1"
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetSendToBlenoEnabled'), lock=rlock)
@@ -432,7 +432,7 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("SendToBlenoEnabled", "0")
             return False
-        return (sett.Value == "1")
+        return sett.Value == "1"
 
     channelData = None
     microSecondsToSendAMessage = None
@@ -550,7 +550,7 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("SendStatusMessages", "1")
             return True
-        return (sett.Value == "1")
+        return sett.Value == "1"
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetOneWayReceiveFromSIStation'), lock=rlock)
@@ -559,7 +559,7 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("OneWayReceive", "0")
             return False
-        return (sett.Value == "1")
+        return sett.Value == "1"
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetSendStatusMessage'), lock=rlock)
@@ -568,7 +568,7 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("Force4800BaudRate", "0")
             return False
-        return (sett.Value == "1")
+        return sett.Value == "1"
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetRS232OneWayReceiveFromSIStation'), lock=rlock)
@@ -577,7 +577,7 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("RS232OneWayReceive", "0")
             return False
-        return (sett.Value == "1")
+        return sett.Value == "1"
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetForceRS2324800BaudRateFromSIStation'), lock=rlock)
@@ -586,7 +586,16 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("ForceRS2324800BaudRate", "0")
             return False
-        return (sett.Value == "1")
+        return sett.Value == "1"
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetRS232Mode'), lock=rlock)
+    def GetRS232Mode():
+        sett = DatabaseHelper.get_setting_by_key('RS232Mode')
+        if sett is None:
+            SettingsClass.SetSetting("RS232Mode", "RECEIVE")
+            return "RECEIVE"
+        return sett.Value
 
     #####
     # Not changed from web services

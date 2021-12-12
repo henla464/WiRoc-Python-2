@@ -135,7 +135,9 @@ class LoraRadioMessagePunchRS(LoraRadioMessageRS):
         return self.payloadData[6:8]
 
     def GetSubSecondRaw(self):
-        return self.payloadData[8]
+        if len(self.payloadData) > 8:
+            return self.payloadData[8]
+        return 0
 
     def GetSubSecondAsTenthOfSeconds(self):
         return int(self.payloadData[8] // 25.6)

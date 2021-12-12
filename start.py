@@ -248,7 +248,14 @@ class Main:
                                     # Message number ignored, remove acks for same SI-card-number and SI-Station-number
                                     DatabaseHelper.archive_lora_ack_message_subscription(messageID)
 
-                        mbd = DatabaseHelper.create_message_box_data(messageSource, messageTypeName, messageSubTypeName, instanceName, True, powerCycle, SIStationSerialNumber, messageData, rssiValue)
+                        try:
+                            mbd = DatabaseHelper.create_message_box_data(messageSource, messageTypeName, messageSubTypeName, instanceName, True, powerCycle, SIStationSerialNumber, messageData, rssiValue)
+                        except Exception as ex:
+                            self.shouldReconfigure = True
+                            self.wirocLogger.error("Error creating message box data")
+                            self.wirocLogger.error(ex)
+                            continue
+
                         mbdid = DatabaseHelper.save_message_box(mbd)
                         SettingsClass.SetTimeOfLastMessageAdded()
                         inputAdapter.AddedToMessageBox(mbdid)
@@ -312,8 +319,13 @@ class Main:
 
                         subscriptionView = DatabaseHelper.get_last_message_subscription_view_that_was_sent_to_lora()
 
+                        if subscriptionView is None:
+                            # ack is probably an ack of a message sent from another checkpoint or repeater
+                            self.wirocLogger.debug("Start::handleInput() Received ack but could not find that a message was sent. The ack message id: " + Utils.GetDataInHex(messageID, logging.INFO))
+                            continue
+
                         if messageID != subscriptionView.MessageID:
-                            # ack is probably an ack of a message sent from another checkpoint
+                            # ack is probably an ack of a message sent from another checkpoint or repeater
                             self.wirocLogger.debug("Start::handleInput() Received ack but last sent message: " + Utils.GetDataInHex(subscriptionView.MessageID, logging.INFO) + " doesn't match the ack message id: " + Utils.GetDataInHex(messageID, logging.INFO))
                             continue
 

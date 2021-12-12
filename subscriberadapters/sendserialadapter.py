@@ -1,3 +1,4 @@
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from settings.settings import SettingsClass
 from serialcomputer.serialcomputer import SerialComputer
 from datamodel.db_helper import DatabaseHelper
@@ -5,6 +6,7 @@ from utils.utils import Utils
 import socket
 import logging
 import os
+
 
 class SendSerialAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
@@ -15,9 +17,9 @@ class SendSerialAdapter(object):
     def CreateInstances():
         serialPorts = []
 
-        if socket.gethostname() == 'chip' or socket.gethostname() == 'nanopiair':
-            if os.path.exists('/dev/ttyGS0'):
-                serialPorts.append('/dev/ttyGS0')
+        if SettingsClass.GetRS232Mode == "SEND":
+            hwSISerialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
+            serialPorts.extend(hwSISerialPorts)
 
         if len(serialPorts) > 0:
             if len(SendSerialAdapter.Instances) > 0:

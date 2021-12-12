@@ -22,6 +22,8 @@ tags:
     description: ""
   - name: "Debug"
     description: ""
+  - name: "Network"
+    description: ""
 paths:
   /channel/:
     get:
@@ -389,6 +391,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
+  /loramode/:
+    get:
+      tags:
+      - "Radio"
+      summary: "Get the device name"
+      operationId: "getLoraMode"
+      responses:
+        "200":
+          description: "The lora mode (RECEIVER, REPEATER, SENDER)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /loramode/{loramode}:
+    get:
+      tags:
+      - "Radio"
+      summary: "Set the Lora mode (RECEIVER, REPEATER, SENDER)"
+      operationId: "setLoraMode"
+      parameters:
+        - name: loramode
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Property'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /punches/:
     get:
       tags:
@@ -606,6 +640,102 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
+  /rs232mode/:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Get the mode of the RS232 port(s), SEND or RECEIVE"
+      operationId: "getR232Mode"
+      responses:
+        "200":
+          description: "The lora mode (RECEIVER, REPEATER, SENDER)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /rs232mode/{rs232mode}:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Set the mode of the RS232 port(s), SEND or RECEIVE"
+      operationId: "setRS232Mode"
+      parameters:
+        - name: rs232mode
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Property'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /rs232onewayreceive/:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Get if one-way recieve from SportIdent master station is enabled for the RS232 port(s)"
+      operationId: "getRS232OneWayReceive"
+      responses:
+        "200":
+          description: "0/1 depending on if one-way recieve is enabled"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /rs232onewayreceive/{onewayenabled}:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Enable/Disable one-way recieve from SportIdent master station for the RS232 port(s)"
+      operationId: "setRS232OneWayReceive"
+      parameters:
+        - name: onewayenabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /forcers2324800baudrate/:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Get if 4800 baudrate is set on RS232 port"
+      operationId: "getForceRS2324800BaudRate"
+      responses:
+        "200":
+          description: "0/1 depending on if one-way recieve is enabled"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /forcers2324800baudrate/{forceenabled}:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Enable/Disable one-way recieve from SportIdent master station"
+      operationId: "setForceRS2324800BaudRateEnabled"
+      parameters:
+        - name: forceenabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /sendtoblenoenabled/:
     get:
       tags:
@@ -760,6 +890,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
+  /wirocbleapiversion/:
+    get:
+      tags:
+      - "Status"
+      summary: "Get the WiRoc BLE API version"
+      operationId: "getWiRocBLEAPIVersion"
+      responses:
+        "200":
+          description: "The version"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /wirochwversion/:
     get:
       tags:
@@ -769,6 +912,197 @@ paths:
       responses:
         "200":
           description: "The version"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /scanbtaddresses/:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Gets a bluetooth devices"
+      operationId: "getBTAddresses"
+      responses:
+        "200":
+          description: "A list of bluetooth devices found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /bindrfcomm/{btAddress}:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Bind a serial port to the bluetooth address"
+      operationId: "bindRFComm"
+      parameters:
+        - name: btAddress
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/PropertyObj'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /releaserfcomm/{portNumberUsed}:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Release a serial port from the bluetooth address"
+      operationId: "releaseRFComm"
+      parameters:
+        - name: portNumberUsed
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/PropertyObj'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /ip/:
+      get:
+        tags:
+        - "Network"
+        summary: "Gets the current ip"
+        operationId: "getIP2"
+        responses:
+          "200":
+            description: "The current ip address"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/PropertyObj"
+  /renewip/{ifaceNetType}:
+    get:
+      tags:
+      - "Network"
+      summary: "Renew the IP address"
+      operationId: "renewIP"
+      parameters:
+        - name: ifaceNetType
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/PropertyObj'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /services/:
+    get:
+      tags:
+      - "Status"
+      summary: "Gets a list of services and their status"
+      operationId: "getServices"
+      responses:
+        "200":
+          description: "The list of services"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /listwifi/:
+    get:
+      tags:
+      - "Network"
+      summary: "Gets a list of available wifi networks"
+      operationId: "getListWifi"
+      responses:
+        "200":
+          description: "The list of available wifi networks"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /connectwifi/{wifiName}/{wifiPassword}:
+    get:
+      tags:
+      - "Network"
+      summary: "Connect to a wifi network"
+      operationId: "connectWifi"
+      parameters:
+        - name: wifiName
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/PropertyObj'
+        - name: wifiPassword
+            in: path
+            required: true
+            schema:
+              $ref: '#/components/schemas/PropertyObj'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /disconnectwifi/:
+    get:
+      tags:
+      - "Network"
+      summary: "Disconnect from the wifi network"
+      operationId: "disconnectWifi"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /uploadlogarchive/:
+    get:
+      tags:
+      - "Debug"
+      summary: "Upload log archive to webserver"
+      operationId: "uploadLogArchive"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /startpatchap6212/:
+    get:
+      tags:
+      - "Debug"
+      summary: "Start patching the AP6212 chip"
+      operationId: "startPatchAP6212"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /upgradewirocble/{version}:
+    get:
+      tags:
+      - "Debug"
+      summary: "Upgrade WiRoc BLE service"
+      operationId: "upgradeWiRocBLE"
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/PropertyObj'
+      responses:
+        "200":
+          description: "successful operation"
           content:
             application/json:
               schema:

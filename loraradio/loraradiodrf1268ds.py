@@ -481,7 +481,7 @@ class LoraRadioDRF1268DS:
             return False
 
     def GetRadioData(self):
-        if self.radioSerial.in_waiting == 0:
+        if self.radioSerial.in_waiting == 0 and len(self.loraRadioDataHandler.DataReceived) == 0:
             return None
         LoraRadioDRF1268DS.WiRocLogger.debug("LoraRadioDRF1268DS::GetRadioData() data to fetch")
         if len(self.receivedMessage.MessageData) > 0:

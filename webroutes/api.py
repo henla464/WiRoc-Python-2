@@ -31,11 +31,12 @@ def getChannel():
     DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('Channel')
     channel = 1
-    if setting != None:
+    if setting is not None:
         channel = int(setting.Value)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=channel))
+
 
 @app.route('/api/channel/<int:channel>/', methods=['GET'])
 def setChannel(channel):
@@ -51,16 +52,18 @@ def setChannel(channel):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=int(sd.Value)))
 
+
 @app.route('/api/lorarange/', methods=['GET'])
 def getLoraRange():
     DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('LoraRange')
     loraRange = 'L'
-    if setting != None:
+    if setting is not None:
         loraRange = setting.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=loraRange))
+
 
 @app.route('/api/lorarange/<lorarange>/', methods=['GET'])
 def setLoraRange(lorarange):
@@ -76,16 +79,18 @@ def setLoraRange(lorarange):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
+
 @app.route('/api/acknowledgementrequested/', methods=['GET'])
 def getAcknowledgementRequested():
     DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
     acksRequested = '0'
-    if setting != None:
+    if setting is not None:
         acksRequested = setting.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=acksRequested))
+
 
 @app.route('/api/acknowledgementrequested/<ack>/', methods=['GET'])
 def setAcknowledgementRequested(ack):
@@ -101,16 +106,18 @@ def setAcknowledgementRequested(ack):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
+
 @app.route('/api/power/', methods=['GET'])
 def getPower():
     DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('LoraPower')
     power = 0x07
-    if setting != None:
+    if setting is not None:
         power = int(setting.Value)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=power))
+
 
 @app.route('/api/power/<int:power>/', methods=['GET'])
 def setPower(power):
@@ -126,17 +133,19 @@ def setPower(power):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=int(sd.Value)))
 
+
 @app.route('/api/coderate/', methods=['GET'])
 def getCodeRate():
     DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('CodeRate')
     # 0x00->4/5, 0x01->4/6, 0x02->4/7, 0x03->4/8
     codeRate = 0x00
-    if setting != None:
+    if setting is not None:
         codeRate = int(setting.Value)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=codeRate))
+
 
 @app.route('/api/coderate/<int:coderate>/', methods=['GET'])
 def setCodeRate(coderate):
@@ -152,15 +161,17 @@ def setCodeRate(coderate):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=int(sd.Value)))
 
+
 @app.route('/api/rxgainenabled/', methods=['GET'])
 def getRxGainEnabled():
     setting = DatabaseHelper.get_setting_by_key('RxGainEnabled')
     enabled = '0'
-    if setting != None:
+    if setting is not None:
         enabled = setting.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=enabled))
+
 
 @app.route('/api/rxgainenabled/<enabled>/', methods=['GET'])
 def setRxGainEnabled(enabled):
@@ -176,15 +187,17 @@ def setRxGainEnabled(enabled):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
+
 @app.route('/api/sendtosirapenabled/', methods=['GET'])
 def getSendToSirapEnabled():
     setting = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
     enabled = '0'
-    if setting != None:
+    if setting is not None:
         enabled = setting.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=enabled))
+
 
 @app.route('/api/sendtosirapenabled/<enabled>/', methods=['GET'])
 def setSendToSirapEnabled(enabled):
@@ -200,15 +213,17 @@ def setSendToSirapEnabled(enabled):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
+
 @app.route('/api/sendtosirapip/', methods=['GET'])
 def getSendToSirapIP():
     setting = DatabaseHelper.get_setting_by_key('SendToSirapIP')
     ip = ""
-    if setting != None:
+    if setting is not None:
         ip = setting.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=ip))
+
 
 @app.route('/api/sendtosirapip/<ip>/', methods=['GET'])
 def setSendToSirapIP(ip):
@@ -224,15 +239,17 @@ def setSendToSirapIP(ip):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
+
 @app.route('/api/sendtosirapipport/', methods=['GET'])
 def getSendToSirapIPPort():
     setting = DatabaseHelper.get_setting_by_key('SendToSirapIPPort')
     port = ""
-    if setting != None:
+    if setting is not None:
         port = setting.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=port))
+
 
 @app.route('/api/sendtosirapipport/<port>/', methods=['GET'])
 def setSendToSirapIPPort(port):
@@ -248,35 +265,30 @@ def setSendToSirapIPPort(port):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
+
 @app.route('/api/status/', methods=['GET'])
 def getStatus():
     DatabaseHelper.reInit()
     subscribersView = DatabaseHelper.get_subscribers()
     subAdpts = []
     for sub in subscribersView:
-        subscriberAdapter = {}
-        subscriberAdapter['TypeName'] = sub.TypeName
-        subscriberAdapter['InstanceName'] = sub.InstanceName
-        subscriberAdapter['Enabled'] = sub.Enabled and sub.TransformEnabled
-        subscriberAdapter['MessageInName'] = sub.MessageInName
-        subscriberAdapter['MessageOutName'] = sub.MessageOutName
+        subscriberAdapter = {'TypeName': sub.TypeName, 'InstanceName': sub.InstanceName,
+                             'Enabled': sub.Enabled and sub.TransformEnabled, 'MessageInName': sub.MessageInName,
+                             'MessageOutName': sub.MessageOutName}
         subAdpts.append(subscriberAdapter)
 
     inputAdaptersInstances = DatabaseHelper.get_input_adapter_instances()
     inputAdapters = []
     for sub in inputAdaptersInstances:
-        inputAdapter = {}
-        inputAdapter['TypeName'] = sub.TypeName
-        inputAdapter['InstanceName'] = sub.InstanceName
+        inputAdapter = {'TypeName': sub.TypeName, 'InstanceName': sub.InstanceName}
         inputAdapters.append(inputAdapter)
 
-    data = {}
-    data['inputAdapters'] = inputAdapters
-    data['subscriberAdapters'] = subAdpts
+    data = {'inputAdapters': inputAdapters, 'subscriberAdapters': subAdpts}
     json_data = json.dumps(data)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=json_data))
+
 
 @app.route('/api/settings/', methods=['GET'])
 def getSettings():
@@ -284,17 +296,15 @@ def getSettings():
     settings = DatabaseHelper.get_settings()
     setts = []
     for setting in settings:
-        sett = {}
-        sett['Key'] = setting.Key
-        sett['Value'] = setting.Value
+        sett = {'Key': setting.Key, 'Value': setting.Value}
         setts.append(sett)
 
-    data = {}
-    data['settings'] = setts
+    data = {'settings': setts}
     json_data = json.dumps(data)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=json_data))
+
 
 @app.route('/api/setting/<path:keyandvalue>/', methods=['GET'])
 def setSetting(keyandvalue):
@@ -315,6 +325,7 @@ def setSetting(keyandvalue):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=settingData.Key + ';' + settingData.Value))
 
+
 @app.route('/api/wirocdevicename/', methods=['GET'])
 def getWiRocDeviceName():
     f = open("../settings.yaml", "r")
@@ -323,6 +334,7 @@ def getWiRocDeviceName():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=settings['WiRocDeviceName']))
+
 
 @app.route('/api/wirocdevicename/<deviceName>/', methods=['GET'])
 def setWiRocDeviceName(deviceName):
@@ -337,46 +349,16 @@ def setWiRocDeviceName(deviceName):
     return jsonpickle.encode(MicroMock(Value=deviceName))
 
 
-#def getWiRocMode():
-#    DatabaseHelper.reInit()
-
-#    sett = DatabaseHelper.get_setting_by_key('SendSerialAdapterActive')
-#    sendSerialAdapterActive = (sett is not None and sett.Value == "1")
-
-#    sett = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
-#    sendToSirapEnabled = (sett is not None and sett.Value == "1")
-
-#    sett = DatabaseHelper.get_setting_by_key('ReceiveSIAdapterActive')
-#    receiveSIAdapterActive = (sett is not None and sett.Value == "1")
-
-#    if sendSerialAdapterActive:  # and output = SERIAL
-        # connected to computer or other WiRoc
-#        wirocMode = "RECEIVER"
-#    elif sendToSirapEnabled:  # and output = SIRAP
-        # configured to send to Sirap over network/wifi
-#        wirocMode = "RECEIVER"
-#    elif receiveSIAdapterActive:
-#        wirocMode = "SENDER"
-#    else:
-#        wirocMode = "REPEATER"
-#    return wirocMode
-
-#@app.route('/api/wirocmode/', methods=['GET'])
-#def getWiRocModeJson():
-#    wirocMode = getWiRocMode()
-#    jsonpickle.set_preferred_backend('json')
-#    jsonpickle.set_encoder_options('json', ensure_ascii=False)
-#    return jsonpickle.encode(MicroMock(Value=wirocMode))
-
 @app.route('/api/loramode/', methods=['GET'])
 def getLoraMode():
     loramode = "RECEIVER"
     setting = DatabaseHelper.get_setting_by_key('LoraMode')
-    if setting != None:
+    if setting is not None:
         loramode = setting.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=loramode))
+
 
 @app.route('/api/loramode/<loramode>/', methods=['GET'])
 def setLoraMode(loramode):
@@ -395,15 +377,14 @@ def setLoraMode(loramode):
     else:
         raise Exception("Error: not a valid Lora/Radio Mode")
 
+
 @app.route('/api/punches/', methods=['GET'])
 def getPunches():
     DatabaseHelper.reInit()
     blenoPunches = DatabaseHelper.get_bleno_punches()
     punches = []
     for blenoPunch in blenoPunches:
-        punch = {}
-        punch['StationNumber'] = blenoPunch.StationNumber
-        punch['SICardNumber'] = blenoPunch.SICardNumber
+        punch = {'StationNumber': blenoPunch.StationNumber, 'SICardNumber': blenoPunch.SICardNumber}
         timeInSeconds = blenoPunch.TwelveHourTimer
         if blenoPunch.TwentyFourHour == 1:
             timeInSeconds += 3600 * 12
@@ -411,11 +392,10 @@ def getPunches():
         remainingSeconds = timeInSeconds % 3600
         minutes = remainingSeconds // 60
         seconds = remainingSeconds % 60
-        punch['Time'] = str(hours) + ':' + str(minutes).zfill(2) +':' + str(seconds).zfill(2)
+        punch['Time'] = str(hours) + ':' + str(minutes).zfill(2) + ':' + str(seconds).zfill(2)
         punches.append(punch)
 
-    data = {}
-    data['punches'] = punches
+    data = {'punches': punches}
     json_data = json.dumps(data)
 
     for blenoPunch in blenoPunches:
@@ -425,6 +405,7 @@ def getPunches():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=json_data))
 
+
 @app.route('/api/deletepunches/', methods=['GET'])
 def deletePunches():
     DatabaseHelper.reInit()
@@ -433,6 +414,7 @@ def deletePunches():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value="OK"))
 
+
 @app.route('/api/dropalltables/', methods=['GET'])
 def dropAllTables():
     DatabaseHelper.reInit()
@@ -440,6 +422,7 @@ def dropAllTables():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value="OK"))
+
 
 @app.route('/api/testpunches/gettestpunches/<testBatchGuid>/<includeAll>/', methods=['GET'])
 def getTestPunches(testBatchGuid, includeAll):
@@ -451,14 +434,9 @@ def getTestPunches(testBatchGuid, includeAll):
         testPunches = DatabaseHelper.get_test_punches_not_fetched(testBatchGuid)
     punches = []
     for testPunch in testPunches:
-        punch = {}
-        punch['Id'] = testPunch.id
-        punch['MsgId'] = testPunch.MessageBoxId
-        punch['Status'] = testPunch.Status
-        punch['SINo'] = testPunch.SICardNumber
-        punch['NoOfSendTries'] = testPunch.NoOfSendTries
-        punch['SubscrId'] = testPunch.SubscriptionId
-        punch['RSSI'] = testPunch.AckRSSIValue
+        punch = {'Id': testPunch.id, 'MsgId': testPunch.MessageBoxId, 'Status': testPunch.Status,
+                 'SINo': testPunch.SICardNumber, 'NoOfSendTries': testPunch.NoOfSendTries,
+                 'SubscrId': testPunch.SubscriptionId, 'RSSI': testPunch.AckRSSIValue}
         timeInSeconds = testPunch.TwelveHourTimer
         if testPunch.TwentyFourHour == 1:
             timeInSeconds += 3600 * 12
@@ -466,13 +444,13 @@ def getTestPunches(testBatchGuid, includeAll):
         remainingSeconds = timeInSeconds % 3600
         minutes = remainingSeconds // 60
         seconds = remainingSeconds % 60
-        punch['Time'] = str(hours) + ':' + str(minutes).zfill(2) +':' + str(seconds).zfill(2)
+        punch['Time'] = str(hours) + ':' + str(minutes).zfill(2) + ':' + str(seconds).zfill(2)
         punches.append(punch)
 
-    data = {}
-    data['punches'] = punches
+    data = {'punches': punches}
     json_data = json.dumps(data)
     return json_data
+
 
 @app.route('/api/testpunches/addtestpunch/<testBatchGuid>/<SINo>/', methods=['GET'])
 def addTestPunch(testBatchGuid, SINo):
@@ -493,12 +471,39 @@ def addTestPunch(testBatchGuid, SINo):
     json_data = jsonpickle.encode(MicroMock(Value="OK"))
     return json_data
 
+
 @app.route('/api/ischarging/', methods=['GET'])
 def getIsCharging():
     isCharging = Battery.IsCharging()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=('1' if isCharging else '0')))
+
+
+def getBatteryLevel():
+    hostname = socket.gethostname()
+    if hostname == "chip" or hostname == "nanopiair":
+        print("chip or nanopi")
+        result = subprocess.run(['/usr/sbin/i2cget', '-f', '-y', '0', '0x34', '0xb9'], stdout=subprocess.PIPE)
+        if result.returncode != 0:
+            print('return code not 0')
+            errStr = result.stderr.decode('utf-8')
+            return 'Error: ' + errStr
+
+        intPercent = int(result.stdout.decode('utf-8').splitlines()[0], 0)
+        print('Battery level - onReadRequest: value (dec)=' + str(intPercent))
+        return str(intPercent)
+    else:
+        return '1'
+
+
+@app.route('/api/batterylevel/', methods=['GET'])
+def getBatteryLevel2():
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    batteryPercent = getBatteryLevel()
+    return jsonpickle.encode(MicroMock(Value=batteryPercent))
+
 
 @app.route('/api/apikey/', methods=['GET'])
 def getApiKey():
@@ -507,6 +512,7 @@ def getApiKey():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=apiKey))
+
 
 def getWebServerUrl():
     DatabaseHelper.reInit()
@@ -517,6 +523,7 @@ def getWebServerUrl():
     webServerUrl = webServerUrl.replace(host, ipv4_addrs[0])
     return webServerUrl
 
+
 @app.route('/api/webserverurl/', methods=['GET'])
 def getWebServerUrl2():
     webServerUrl = getWebServerUrl()
@@ -524,11 +531,13 @@ def getWebServerUrl2():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=webServerUrl))
 
+
 def getWebServerHost():
     DatabaseHelper.reInit()
     webServerUrl = SettingsClass.GetWebServerUrl()
     webServerHost = webServerUrl.replace('http://', '').replace('https://', '')
     return webServerHost
+
 
 @app.route('/api/webserverhost/', methods=['GET'])
 def getWebServerHost2():
@@ -537,16 +546,16 @@ def getWebServerHost2():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=webServerHost))
 
+
 @app.route('/api/onewayreceive/', methods=['GET'])
 def getOneWayReceive():
     DatabaseHelper.reInit()
-    sett = DatabaseHelper.get_setting_by_key('OneWayReceive')
-    oneWayReceive = '0'
-    if sett is not None:
-        oneWayReceive = sett.Value
+    oneWayReceiveBool = SettingsClass.GetRS232OneWayReceiveFromSIStation()
+    oneWayReceive = '1' if oneWayReceiveBool else '0'
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=oneWayReceive))
+
 
 @app.route('/api/onewayreceive/<enabled>/', methods=['GET'])
 def SetOneWayReceive(enabled):
@@ -562,16 +571,16 @@ def SetOneWayReceive(enabled):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
+
 @app.route('/api/force4800baudrate/', methods=['GET'])
 def getForce4800BaudRate():
     DatabaseHelper.reInit()
-    sett = DatabaseHelper.get_setting_by_key('Force4800BaudRate')
-    force4800BaudRate = '0'
-    if sett is not None:
-        force4800BaudRate = sett.Value
+    force4800BaudRateBool = SettingsClass.GetForceRS2324800BaudRateFromSIStation()
+    force4800BaudRate = '1' if force4800BaudRateBool else '0'
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=force4800BaudRate))
+
 
 @app.route('/api/force4800baudrate/<enabled>/', methods=['GET'])
 def SetForce4800BaudRateEnabled(enabled):
@@ -591,13 +600,11 @@ def SetForce4800BaudRateEnabled(enabled):
 @app.route('/api/rs232mode/', methods=['GET'])
 def getRS232Mode():
     DatabaseHelper.reInit()
-    sett = DatabaseHelper.get_setting_by_key('RS232Mode')
-    rs232Mode = 'RECEIVE'
-    if sett is not None:
-        rs232Mode = sett.Value
+    rs232Mode = SettingsClass.GetRS232Mode()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=rs232Mode))
+
 
 @app.route('/api/rs232mode/<mode>/', methods=['GET'])
 def setRS232Mode(mode):
@@ -613,6 +620,7 @@ def setRS232Mode(mode):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
+
 @app.route('/api/rs232onewayreceive/', methods=['GET'])
 def getRS232OneWayReceive():
     DatabaseHelper.reInit()
@@ -624,8 +632,9 @@ def getRS232OneWayReceive():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=oneWayReceive))
 
+
 @app.route('/api/rs232onewayreceive/<enabled>/', methods=['GET'])
-def SetRS232OneWayReceive(enabled):
+def setRS232OneWayReceive(enabled):
     DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('RS232OneWayReceive')
     if sd is None:
@@ -638,6 +647,7 @@ def SetRS232OneWayReceive(enabled):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
+
 @app.route('/api/forcers2324800baudrate/', methods=['GET'])
 def getForceRS2324800BaudRate():
     DatabaseHelper.reInit()
@@ -649,8 +659,9 @@ def getForceRS2324800BaudRate():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=force4800BaudRate))
 
+
 @app.route('/api/forcers2324800baudrate/<enabled>/', methods=['GET'])
-def SetForceRS2324800BaudRateEnabled(enabled):
+def setForceRS2324800BaudRateEnabled(enabled):
     DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('ForceRS2324800BaudRate')
     if sd is None:
@@ -675,6 +686,7 @@ def getSendToBlenoEnabled():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sendToBlenoEnabled))
 
+
 @app.route('/api/sendtoblenoenabled/<enabled>/', methods=['GET'])
 def setSendToBlenoEnabled(enabled):
     DatabaseHelper.reInit()
@@ -689,6 +701,7 @@ def setSendToBlenoEnabled(enabled):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
+
 @app.route('/api/logtoserver/', methods=['GET'])
 def getLogToServer():
     DatabaseHelper.reInit()
@@ -700,8 +713,9 @@ def getLogToServer():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=logToServer))
 
+
 @app.route('/api/logtoserver/<enabled>/', methods=['GET'])
-def SetLogToServerEnabled(enabled):
+def setLogToServerEnabled(enabled):
     DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('LogToServer')
     if sd is None:
@@ -726,6 +740,7 @@ def getLoggingServerHost():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=loggingServerHost))
 
+
 @app.route('/api/loggingserverhost/<host>/', methods=['GET'])
 def SetLoggingServerHost(host):
     DatabaseHelper.reInit()
@@ -740,6 +755,7 @@ def SetLoggingServerHost(host):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
+
 @app.route('/api/loggingserverport/', methods=['GET'])
 def getLoggingServerPort():
     DatabaseHelper.reInit()
@@ -750,6 +766,7 @@ def getLoggingServerPort():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=loggingServerPort))
+
 
 @app.route('/api/loggingserverport/<port>/', methods=['GET'])
 def setLoggingServerPort(port):
@@ -765,6 +782,7 @@ def setLoggingServerPort(port):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
+
 @app.route('/api/wirocpythonversion/', methods=['GET'])
 def getWiRocPythonVersion():
     f = open("../WiRocPythonVersion.txt", "r")
@@ -774,6 +792,7 @@ def getWiRocPythonVersion():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=wirocPythonVersion))
+
 
 @app.route('/api/wirocbleversion/', methods=['GET'])
 def getWiRocBLEVersion():
@@ -785,6 +804,7 @@ def getWiRocBLEVersion():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=wirocBLEVersion))
 
+
 @app.route('/api/wirocbleapiversion/', methods=['GET'])
 def getWiRocBLEAPIVersion():
     f = open("../WiRocBLEAPIVersion.txt", "r")
@@ -795,6 +815,7 @@ def getWiRocBLEAPIVersion():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=wirocBLEVersion))
 
+
 @app.route('/api/wirochwversion/', methods=['GET'])
 def getWiRocHWVersion():
     f = open("../WiRocHWVersion.txt", "r")
@@ -804,6 +825,7 @@ def getWiRocHWVersion():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=wirocHWVersion))
+
 
 def getRFComms():
     boundResult = subprocess.run(['rfcomm'], stdout=subprocess.PIPE, check=True)
@@ -819,6 +841,8 @@ def getRFComms():
 
 
 BTAddressAndNameMapping = {}
+
+
 @app.route('/api/scanbtaddresses/', methods=['GET'])
 def getBTAddresses():
     result = subprocess.run(['hcitool', 'scan'], stdout=subprocess.PIPE, check=True)
@@ -865,11 +889,11 @@ def getBTAddresses():
 
 @app.route('/api/bindrfcomm/<btAddress>/', methods=['GET'])
 def bindRFComm(btAddress):
-    result = subprocess.run(['sdptool','browse', 'local'], stdout=subprocess.PIPE, check=True)
+    result = subprocess.run(['sdptool', 'browse', 'local'], stdout=subprocess.PIPE, check=True)
     sdpToolResult = result.stdout.decode('utf-8').strip()
     pattern = re.compile('.*Channel: (.*?)$.*', re.MULTILINE | re.DOTALL)
     match = pattern.match(sdpToolResult)
-    if match != None:
+    if match is not None:
         channel = match.group(1)
         rfCommsObjArray = getRFComms()
         matchingPortsByBTAddress = [rfCommObj for rfCommObj in rfCommsObjArray if rfCommObj.BTAddress == btAddress]
@@ -879,10 +903,10 @@ def bindRFComm(btAddress):
             for portNumber in range(10):
                 portName = 'rfcomm'+str(portNumber)
                 matchingPorts = [rfCommObj for rfCommObj in rfCommsObjArray if rfCommObj.SerialPortName == portName]
-                if len(matchingPorts)==0:
+                if len(matchingPorts) == 0:
                     portNumberToUse = portNumber
                     break
-            if portNumberToUse != None:
+            if portNumberToUse is not None:
                 # Bind the device to a serial port
                 res = subprocess.run(['rfcomm', 'bind', str(portNumberToUse), btAddress, channel], stdout=subprocess.PIPE, check=True)
 
@@ -890,6 +914,7 @@ def bindRFComm(btAddress):
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=btAddresses))
+
 
 @app.route('/api/releaserfcomm/<portNumberUsed>/', methods=['GET'])
 def releaseRFComm(portNumberUsed):
@@ -901,10 +926,12 @@ def releaseRFComm(portNumberUsed):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=btAddresses))
 
+
 def getIP():
     result = subprocess.run(['hostname', '-I'], stdout=subprocess.PIPE, check=True)
     ip = result.stdout.decode('utf-8').strip()
     return ip
+
 
 def zipLogArchive(zipFilePath):
     result = subprocess.run(['zip', zipFilePath, '/home/chip/WiRoc-Python-2/WiRoc.db', '/home/chip/WiRoc-Python-2/WiRoc.log*'], stdout=subprocess.PIPE)
@@ -915,11 +942,13 @@ def zipLogArchive(zipFilePath):
 
     return 'OK'
 
+
 @app.route('/api/ip/', methods=['GET'])
 def getIP2():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=getIP()))
+
 
 @app.route('/api/renewip/<ifaceNetType>/', methods=['GET'])
 def renewIP(ifaceNetType):
@@ -929,12 +958,12 @@ def renewIP(ifaceNetType):
     if result.returncode != 0:
         errStr = result.stderr.decode('utf-8')
         raise Exception("Error: " + errStr)
-    devices = result.stdout.decode('utf-8').splitlines()[0, -1] # remove last empty element
+    devices = result.stdout.decode('utf-8').splitlines()[0, -1]  # remove last empty element
     devices = [dev[40:] for dev in devices]
     ifaces = devices[::2]
     ifaceNetworkTypes = devices[1::2]
     for iface, ifaceNetworkType in zip(ifaces, ifaceNetworkTypes):
-        if (ifaceNetType == ifaceNetworkType):
+        if ifaceNetType == ifaceNetworkType:
             result2 = subprocess.run(['dhclient', '-v', '-1', iface], stdout=subprocess.PIPE, check=True)
             if result2.returncode != 0:
                 errStr = result2.stderr.decode('utf-8')
@@ -951,9 +980,9 @@ def getServices():
     statusServices.append({'Name': 'WiRocPython', 'Status': result.stdout.decode('utf-8').strip('\n')})
     result = subprocess.run(['systemctl', 'is-active', 'WiRocPythonWS.service'], stdout=subprocess.PIPE)
     statusServices.append({'Name': 'WiRocPythonWS', 'Status': result.stdout.decode('utf-8').strip('\n')})
-    result = subprocess.run(['systemctl', 'is-active', 'blink.service'], stdout=subprocess.PIPE)
-    statusServices.append({'Name': 'WiRocMonitor', 'Status': result.stdout.decode('utf-8').strip('\n')})
-    jsonStr = json.dumps({'services': statusServices })
+    result = subprocess.run(['systemctl', 'is-active', 'WiRocWatchDog.service.service'], stdout=subprocess.PIPE)
+    statusServices.append({'Name': 'WiRocWatchDog', 'Status': result.stdout.decode('utf-8').strip('\n')})
+    jsonStr = json.dumps({'services': statusServices})
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=jsonStr))
@@ -973,9 +1002,10 @@ def getBTAddress():
         btAddress = stdoutWords[1]
     return btAddress
 
+
 def uploadLogArchiveToServer(apiKey, filePath, serverUrl, serverHost):
     parameters = ['curl', '-X', 'POST', '-H', 'host:' + serverHost, '-H',
-         'accept:application/json', '-H', 'Authorization:' + apiKey, '-F', 'newfile=@' + filePath, serverUrl + '/api/v1/LogArchives']
+                  'accept:application/json', '-H', 'Authorization:' + apiKey, '-F', 'newfile=@' + filePath, serverUrl + '/api/v1/LogArchives']
     print(parameters)
     result = subprocess.run(parameters, capture_output=True)
     if result.returncode != 0:
@@ -987,24 +1017,27 @@ def uploadLogArchiveToServer(apiKey, filePath, serverUrl, serverHost):
         print(stdout)
     return 'OK'
 
+
 def getZipFilePath(btAddress, date):
     filePath = "/home/chip/LogArchive/LogArchive_" + btAddress + "_" + date.now().strftime("%Y-%m-%d-%H:%M:%S") + ".zip"
     return filePath
 
+
 @app.route('/api/listwifi/', methods=['GET'])
 def getListWifi():
-    #Get new wifi list
+    # Get new wifi list
     result = subprocess.run(['nmcli', '-m', 'multiline', '-f', 'ssid,active,signal', 'device', 'wifi', 'list'], stdout=subprocess.PIPE)
     if result.returncode != 0:
         errStr = result.stderr.decode('utf-8')
         raise Exception("Error: " + errStr)
 
-    wifiNetworks = result.stdout.decode('utf-8').splitlines()[0:-1] # remove last empty element
+    wifiNetworks = result.stdout.decode('utf-8').splitlines()[0:-1]  # remove last empty element
     wifiNetworks2 = [netName[40:].strip() for netName in wifiNetworks]
     wifiDataList = '\n'.join(wifiNetworks2)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=wifiDataList))
+
 
 @app.route('/api/connectwifi/<wifiName>/<wifiPassword>/', methods=['GET'])
 def connectWifi(wifiName, wifiPassword):
@@ -1019,6 +1052,7 @@ def connectWifi(wifiName, wifiPassword):
 
     return jsonpickle.encode(MicroMock(Value='OK'))
 
+
 @app.route('/api/disconnectwifi/', methods=['GET'])
 def disconnectWifi():
     jsonpickle.set_preferred_backend('json')
@@ -1032,28 +1066,6 @@ def disconnectWifi():
 
     return jsonpickle.encode(MicroMock(Value='OK'))
 
-def getBatteryLevel():
-    hostname = socket.gethostname()
-    if hostname == "chip" or hostname == "nanopiair":
-        print("chip or nanopi")
-        result = subprocess.run(['/usr/sbin/i2cget', '-f', '-y', '0', '0x34', '0xb9'], stdout=subprocess.PIPE)
-        if result.returncode != 0:
-            print('return code not 0')
-            errStr = result.stderr.decode('utf-8')
-            return 'Error: ' + errStr
-
-        intPercent = int(result.stdout.decode('utf-8').splitlines()[0], 0)
-        print('Battery level - onReadRequest: value (dec)=' + str(intPercent))
-        return str(intPercent)
-    else:
-        return '1'
-
-@app.route('/api/batterylevel/', methods=['GET'])
-def getBatteryLevel2():
-    jsonpickle.set_preferred_backend('json')
-    jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    batteryPercent = getBatteryLevel()
-    return jsonpickle.encode(MicroMock(Value=batteryPercent))
 
 @app.route('/api/uploadlogarchive/', methods=['GET'])
 def uploadLogArchive():
@@ -1073,13 +1085,14 @@ def uploadLogArchive():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value='OK'))
 
+
 @app.route('/api/startpatchap6212/', methods=['GET'])
 def startPatchAP6212():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     hostname = socket.gethostname()
     if hostname != "nanopiair":
-        return jsonpickle.encode(MicroMock(Value='OK')) # only nanopiair needs patching
+        return jsonpickle.encode(MicroMock(Value='OK'))  # only nanopiair needs patching
 
     result = subprocess.run(
         ['systemctl', 'start', 'ap6212-bluetooth'], stdout=subprocess.PIPE)
@@ -1100,15 +1113,17 @@ def startPatchAP6212():
 
     return jsonpickle.encode(MicroMock(Value='OK'))
 
+
 @app.route('/api/upgradewirocble/<version>/', methods=['GET'])
 def upgradeWiRocBLE(version):
     print("upgradeWiRocBLE")
     logfile = '../installWiRocBLE.log'
     with open(os.devnull, 'r+b') as DEVNULL:
         with open(logfile, 'a') as out:
-            p = Popen(['./installWiRocBLEAPI.sh %s' % version], shell=True, stdin=DEVNULL, stdout=out, stderr=out, close_fds=True, cwd='..')
+            Popen(['./installWiRocBLEAPI.sh %s' % version], shell=True, stdin=DEVNULL, stdout=out, stderr=out, close_fds=True, cwd='..')
 
     return jsonpickle.encode(MicroMock(Value='OK'))
+
 
 @app.route('/api/all/', methods=['GET'])
 def getAllMainSettings():
@@ -1120,30 +1135,29 @@ def getAllMainSettings():
     f.close()
     deviceName = settings['WiRocDeviceName']
 
-
     setting = DatabaseHelper.get_setting_by_key('SendToSirapIPPort')
     sirapPort = ""
-    if setting != None:
+    if setting is not None:
         sirapPort = setting.Value
 
     setting = DatabaseHelper.get_setting_by_key('SendToSirapIP')
     sirapIP = ""
-    if setting != None:
+    if setting is not None:
         sirapIP = setting.Value
 
     setting = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
     sirapEnabled = '0'
-    if setting != None:
+    if setting is not None:
         sirapEnabled = setting.Value
 
     setting = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
     acksRequested = '1'
-    if setting != None:
+    if setting is not None:
         acksRequested = setting.Value
 
     setting = DatabaseHelper.get_setting_by_key('LoraRange')
     loraRange = 'L'
-    if setting != None:
+    if setting is not None:
         loraRange = setting.Value
 
     loraModule = SettingsClass.GetLoraModule()
@@ -1152,19 +1166,19 @@ def getAllMainSettings():
 
     setting = DatabaseHelper.get_setting_by_key('Channel')
     channel = 1
-    if setting != None:
+    if setting is not None:
         channel = int(setting.Value)
 
     setting = DatabaseHelper.get_setting_by_key('LoraPower')
     loraPower = '7'
-    if setting != None:
+    if setting is not None:
         loraPower = setting.Value
     if loraModule == 'RF1276T' and int(loraPower) > 7:
         loraPower = '7'
 
     f = open("../WiRocPythonVersion.txt", "r")
     wirocPythonVersion = f.read()
-    wirocPythonVersion = wirocPythonVersion.replace("\n","")
+    wirocPythonVersion = wirocPythonVersion.replace("\n", "")
     f.close()
 
     f = open("../WiRocBLEVersion.txt", "r")
@@ -1189,11 +1203,11 @@ def getAllMainSettings():
 
     loramode = "RECEIVER"
     sett = DatabaseHelper.get_setting_by_key('LoraMode')
-    if sett != None:
+    if sett is not None:
         loramode = sett.Value
 
     sett = DatabaseHelper.get_setting_by_key('RxGainEnabled')
-    rxGain ='1'
+    rxGain = '1'
     if sett is not None:
         rxGain = sett.Value
 
@@ -1220,7 +1234,7 @@ def getAllMainSettings():
     if sett is not None:
         forceRS2324800BaudRate = sett.Value
 
-    all = ('1' if isCharging else '0') + '¤' + deviceName + '¤' +  sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \
+    allStr = ('1' if isCharging else '0') + '¤' + deviceName + '¤' + sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \
         acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + batteryPercent + '¤' + \
         ipAddress + '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wirocPythonVersion + '¤' + \
         wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive + '¤' + force4800BaudRate + '¤' + loramode + '¤' + \
@@ -1228,4 +1242,4 @@ def getAllMainSettings():
 
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=all))
+    return jsonpickle.encode(MicroMock(Value=allStr))
