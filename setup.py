@@ -13,7 +13,6 @@ from subscriberadapters.sendtosirapadapter import SendToSirapAdapter
 from subscriberadapters.sendstatusadapter import SendStatusAdapter
 from inputadapters.createstatusadapter import CreateStatusAdapter
 from inputadapters.receiveloraadapter import ReceiveLoraAdapter
-from inputadapters.receiveserialcomputeradapter import ReceiveSerialComputerAdapter
 from inputadapters.receivesiadapter import ReceiveSIAdapter
 from inputadapters.receivetestpunchesadapter import ReceiveTestPunchesAdapter
 from inputadapters.receiverepeatermessagesadapter import ReceiveRepeaterMessagesAdapter
@@ -32,13 +31,11 @@ class Setup:
         inputObjects = []
         inChange1 = CreateStatusAdapter.CreateInstances()  #uses db
         inChange2 = ReceiveLoraAdapter.CreateInstances(HardwareAbstraction.Instance) #doesn't use db, init uses
-        inChange3 = ReceiveSerialComputerAdapter.CreateInstances(HardwareAbstraction.Instance) #doesn't use db,
         inChange4 = ReceiveSIAdapter.CreateInstances() #uses db, writes to it
         inChange5 = ReceiveTestPunchesAdapter.CreateInstances() #no doesnt use db
         inChange6 = ReceiveRepeaterMessagesAdapter.CreateInstances() #no doesnt use db
         inputObjects.extend(CreateStatusAdapter.Instances)
         inputObjects.extend(ReceiveLoraAdapter.Instances)
-        inputObjects.extend(ReceiveSerialComputerAdapter.Instances)
         inputObjects.extend(ReceiveSIAdapter.Instances)
         inputObjects.extend(ReceiveTestPunchesAdapter.Instances)
         inputObjects.extend(ReceiveRepeaterMessagesAdapter.Instances)
@@ -49,7 +46,7 @@ class Setup:
                 anyShouldBeInitialized = True
 
         if (not anyShouldBeInitialized and not SettingsClass.GetForceReconfigure()
-            and not inChange1 and not inChange2 and not inChange3 and not inChange4
+            and not inChange1 and not inChange2 and not inChange4
             and not inChange5 and not inChange6):
             return False
 
@@ -81,13 +78,11 @@ class Setup:
         inputObjects = []
         inChange1 = CreateStatusAdapter.CreateInstances()
         inChange2 = ReceiveLoraAdapter.CreateInstances(HardwareAbstraction.Instance)
-        inChange3 = ReceiveSerialComputerAdapter.CreateInstances(HardwareAbstraction.Instance)
         inChange4 = ReceiveSIAdapter.CreateInstances()
         inChange5 = ReceiveTestPunchesAdapter.CreateInstances()
         inChange6 = ReceiveRepeaterMessagesAdapter.CreateInstances()
         inputObjects.extend(CreateStatusAdapter.Instances)
         inputObjects.extend(ReceiveLoraAdapter.Instances)
-        inputObjects.extend(ReceiveSerialComputerAdapter.Instances)
         inputObjects.extend(ReceiveSIAdapter.Instances)
         inputObjects.extend(ReceiveTestPunchesAdapter.Instances)
         inputObjects.extend(ReceiveRepeaterMessagesAdapter.Instances)
@@ -104,7 +99,7 @@ class Setup:
 
         if (not anyShouldBeInitialized and not SettingsClass.GetForceReconfigure()
             and not change1 and not change3 and not change4 and not change5 and not change2
-            and not inChange1 and not inChange2 and not inChange4 and not inChange3
+            and not inChange1 and not inChange2 and not inChange4 and
             and not inChange5 and not inChange6):
             return False
 

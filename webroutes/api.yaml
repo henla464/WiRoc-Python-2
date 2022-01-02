@@ -648,7 +648,7 @@ paths:
       operationId: "getR232Mode"
       responses:
         "200":
-          description: "The lora mode (RECEIVER, REPEATER, SENDER)"
+          description: "The RS232 mode (SEND, RECEIVE)"
           content:
             application/json:
               schema:

@@ -1,6 +1,5 @@
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from settings.settings import SettingsClass
-from serialcomputer.serialcomputer import SerialComputer
 from datamodel.db_helper import DatabaseHelper
 from utils.utils import Utils
 import socket
@@ -11,34 +10,18 @@ import os
 class SendSerialAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
     Instances = []
-    SendSerialAdapterActive = None
 
     @staticmethod
     def CreateInstances():
         serialPorts = []
 
-        if SettingsClass.GetRS232Mode == "SEND":
+        if SettingsClass.GetRS232Mode() == "SEND":
             hwSISerialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
             serialPorts.extend(hwSISerialPorts)
 
         if len(serialPorts) > 0:
             if len(SendSerialAdapter.Instances) > 0:
-                if SendSerialAdapter.Instances[0].GetSerialDevicePath() != serialPorts[0]:
-                    SendSerialAdapter.Instances[0] = SendSerialAdapter(1, serialPorts[0])
-                    return True
-                else:
-                    if SendSerialAdapter.SendSerialAdapterActive is None:
-                        return True
-                    if SendSerialAdapter.Instances[0].TestConnection():
-                        if not SendSerialAdapter.SendSerialAdapterActive:
-                            return True
-                        else:
-                            return False
-                    else:
-                        if SendSerialAdapter.SendSerialAdapterActive:
-                            return True # change, so setup will call init
-                        else:
-                            return False
+                return not SendSerialAdapter.Instances[0].GetIsInitialized()
             else:
                 SendSerialAdapter.Instances.append(SendSerialAdapter(1, serialPorts[0]))
                 return True
@@ -50,28 +33,25 @@ class SendSerialAdapter(object):
 
     @staticmethod
     def EnableDisableSubscription():
+        # called before init
         SendSerialAdapter.WiRocLogger.debug("SendSerialAdapter::EnableDisableSubscription()")
         if len(SendSerialAdapter.Instances) > 0:
-            if SendSerialAdapter.Instances[0].TestConnection():
+            if SendSerialAdapter.Instances[0].GetIsInitialized():
                 if SendSerialAdapter.SendSerialAdapterActive is None or not SendSerialAdapter.SendSerialAdapterActive:
                     SendSerialAdapter.WiRocLogger.info("SendSerialAdapter::EnableDisableSubscription() update subscription enable")
                     SendSerialAdapter.SendSerialAdapterActive = True
-                    SettingsClass.SetSendSerialAdapterActive(True)
                     DatabaseHelper.update_subscriptions(True, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
                     SettingsClass.SetForceReconfigure(True)
             else:
                 if SendSerialAdapter.SendSerialAdapterActive is None or SendSerialAdapter.SendSerialAdapterActive:
                     SendSerialAdapter.WiRocLogger.info("SendSerialAdapter::EnableDisableSubscription() update subscription disable")
                     SendSerialAdapter.SendSerialAdapterActive = False
-                    SettingsClass.SetSendSerialAdapterActive(False)
                     DatabaseHelper.update_subscriptions(False, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
                     SettingsClass.SetForceReconfigure(True)
         else:
             SendSerialAdapter.WiRocLogger.debug("SendSerialAdapter::EnableDisableSubscription() Setting SetSendSerialAdapterActive False 2")
-            if SettingsClass.GetSendSerialAdapterActive():
-                SendSerialAdapter.SendSerialAdapterActive = False
-                SettingsClass.SetSendSerialAdapterActive(False)
-                SettingsClass.SetForceReconfigure(True)
+            SendSerialAdapter.SendSerialAdapterActive = False
+            SettingsClass.SetForceReconfigure(True)
 
     @staticmethod
     def GetTypeName():
@@ -84,9 +64,9 @@ class SendSerialAdapter(object):
     def __init__(self, instanceNumber, portName):
         self.instanceNumber = instanceNumber
         self.portName = portName
-        self.serialComputer = SerialComputer.GetInstance(portName)
         self.transforms = {}
         self.isDBInitialized = False
+        self.isInitialized = False
 
     def GetInstanceNumber(self):
         return self.instanceNumber
@@ -109,7 +89,7 @@ class SendSerialAdapter(object):
         return False
 
     def GetTransformNames(self):
-        return ["LoraSIMessageToSITransform", "SISIMessageToSITransform", "LoraStatusToSITransform", "LoraSIMessageDoubleToSITransform"]
+        return ["LoraSIMessageToSITransform", "SISIMessageToSITransform", "LoraSIMessageDoubleToSITransform"]
 
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass
@@ -118,13 +98,13 @@ class SendSerialAdapter(object):
         return self.transforms[transformName]
 
     def TestConnection(self):
-        return self.serialComputer.TestConnection()
+        return self.isOpen()
 
     def GetIsInitialized(self):
-        return self.serialComputer.GetIsInitialized()
+        return self.isInitialized
 
     def ShouldBeInitialized(self):
-        return not self.serialComputer.GetIsInitialized() and SendSerialAdapter.SendSerialAdapterActive
+        return not self.isInitialized and SettingsClass.GetRS232Mode == "SEND"
 
     # has adapter, transforms, subscriptions etc been added to database?
     def GetIsDBInitialized(self):
@@ -134,10 +114,11 @@ class SendSerialAdapter(object):
         self.isDBInitialized = val
 
     def Init(self):
-        return self.serialComputer.Init()
+        ...
+        return True
 
     def IsReadyToSend(self):
-        return self.serialComputer.GetIsInitialized()
+        return self.GetIsInitialized()
 
     @staticmethod
     def GetDelayAfterMessageSent():

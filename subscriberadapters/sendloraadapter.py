@@ -78,7 +78,9 @@ class SendLoraAdapter(object):
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestTestToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "StatusStatusToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SILoraRadioMessageToLoraTransform")
-                #DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraSIMessageToLoraAckTransform")
+                # For receiver: Sends schedules an ack for message received from sender when sender requested repeater
+                # (we don't send ack directly because repeater is expected reply with ack directly)
+                DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraSIMessageToLoraAckTransform")
                 #DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraStatusToLoraAckTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraAckTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraTransform")
@@ -137,7 +139,7 @@ class SendLoraAdapter(object):
         transforms.append("SILoraRadioMessageToLoraTransform") # status message received through serial wiroc-wiroc
         transforms.append("RepeaterSIMessageToLoraAckTransform")
         transforms.append("RepeaterSIMessageToLoraTransform")
-        transforms.append("RepeaterStatusToLoraAckTransform")
+        #transforms.append("RepeaterStatusToLoraAckTransform")
         transforms.append("RepeaterStatusToLoraTransform")
         transforms.append("LoraSIMessageToLoraAckTransform")
         transforms.append("LoraStatusToLoraAckTransform")

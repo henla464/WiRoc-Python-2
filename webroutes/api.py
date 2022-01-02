@@ -600,7 +600,10 @@ def SetForce4800BaudRateEnabled(enabled):
 @app.route('/api/rs232mode/', methods=['GET'])
 def getRS232Mode():
     DatabaseHelper.reInit()
-    rs232Mode = SettingsClass.GetRS232Mode()
+    sett = DatabaseHelper.get_setting_by_key('RS232Mode')
+    rs232Mode = "RECEIVE"
+    if sett is not None:
+        rs232Mode = sett.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=rs232Mode))
