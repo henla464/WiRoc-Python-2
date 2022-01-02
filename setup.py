@@ -99,7 +99,7 @@ class Setup:
 
         if (not anyShouldBeInitialized and not SettingsClass.GetForceReconfigure()
             and not change1 and not change3 and not change4 and not change5 and not change2
-            and not inChange1 and not inChange2 and not inChange4 and
+            and not inChange1 and not inChange2 and not inChange4
             and not inChange5 and not inChange6):
             return False
 
