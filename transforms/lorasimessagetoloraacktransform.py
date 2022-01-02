@@ -23,7 +23,7 @@ class LoraSIMessageToLoraAckTransform(object):
     @staticmethod
     def GetBatchSize():
         return 1
-    
+
     @staticmethod
     def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
         payloadData = messageBoxData.MessageData

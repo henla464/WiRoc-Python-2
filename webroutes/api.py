@@ -550,8 +550,10 @@ def getWebServerHost2():
 @app.route('/api/onewayreceive/', methods=['GET'])
 def getOneWayReceive():
     DatabaseHelper.reInit()
-    oneWayReceiveBool = SettingsClass.GetRS232OneWayReceiveFromSIStation()
-    oneWayReceive = '1' if oneWayReceiveBool else '0'
+    sett = DatabaseHelper.get_setting_by_key('OneWayReceive')
+    oneWayReceive = '0'
+    if sett is not None:
+        oneWayReceive = sett.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=oneWayReceive))

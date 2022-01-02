@@ -28,7 +28,7 @@ class ReceiveSIAdapter(object):
         # 0557:2008 ATEN International Co., Ltd UC-232A Serial Port [pl2303]                    -- Works
 
         # Add any HW serial ports used for SportIdent units
-        if SettingsClass.GetRS232Mode == "RECEIVE":
+        if SettingsClass.GetRS232Mode() == "RECEIVE":
             hwSISerialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
             serialPorts.extend(hwSISerialPorts)
 
@@ -166,6 +166,11 @@ class ReceiveSIAdapter(object):
         except Exception as ex:
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() opening serial exception:")
             ReceiveSIAdapter.WiRocLogger.error(ex)
+            try:
+                self.siSerial.close()
+            except Exception as ex2:
+                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() close serial exception:")
+                ReceiveSIAdapter.WiRocLogger.error(ex2)
             return False
 
         if self.siSerial.is_open:
@@ -190,6 +195,11 @@ class ReceiveSIAdapter(object):
                 if not self.isCorrectMSModeDirectResponse(response):
                     ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() not correct msmodedirectresponse: " + str(response))
                     ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() could not communicate with master station")
+                    try:
+                        self.siSerial.close()
+                    except Exception as ex2:
+                        ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() close serial exception (2):")
+                        ReceiveSIAdapter.WiRocLogger.error(ex2)
                     return False
 
                 ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() SI Station 4800 kbit/s works")
@@ -218,17 +228,23 @@ class ReceiveSIAdapter(object):
             hwSISerialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
             btSISerialPorts = HardwareAbstraction.Instance.GetRFCommsSerialPorts()
 
+            baudrate = 38400
             if self.portName in hwSISerialPorts:
                 if SettingsClass.GetRS232OneWayReceiveFromSIStation():
-                    baudrate = 38400
                     if SettingsClass.GetForceRS2324800BaudRateFromSIStation():
                         # can only be forced to 4800 when in one-way receive
                         baudrate = 4800
                     return self.InitOneWay(baudrate)
                 else:
-                    return self.InitTwoWay()
+                    if self.InitTwoWay():
+                        return True
+                    else: # better with init one way if two way is not working than aborting
+                        return self.InitOneWay(baudrate)
             elif self.portName in btSISerialPorts:
-                return self.InitTwoWay()
+                if self.InitTwoWay():
+                    return True
+                else:  # better with init one way if two way is not working than aborting
+                    return self.InitOneWay(baudrate)
             else:
                 if SettingsClass.GetOneWayReceiveFromSIStation():
                     baudrate = 38400
@@ -237,11 +253,13 @@ class ReceiveSIAdapter(object):
                         baudrate = 4800
                     return self.InitOneWay(baudrate)
                 else:
-                    return self.InitTwoWay()
+                    if self.InitTwoWay():
+                        return True
+                    else:  # better with init one way if two way is not working than aborting
+                        return self.InitOneWay(baudrate)
         except (Exception) as msg:
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::Init() Exception: " + str(msg))
             return False
-
 
     def GetTimeAsTenthOfSeconds(self, twelveHourTime, subSecondsAsTensOfSeconds, twentyFourHour):
         time = ((twelveHourTime[0] << 8) + twelveHourTime[1]) * 10 + subSecondsAsTensOfSeconds
@@ -271,7 +289,7 @@ class ReceiveSIAdapter(object):
         month = timeResp[6]
         day = timeResp[7]
         siStationCode = (timeResp[3] << 8) + timeResp[4]
-        return (year, month, day, hour, minute, second, siStationCode)
+        return year, month, day, hour, minute, second, siStationCode
 
     def getStationSettingSystemValue(self):
         getSystemValueCmd = bytes([0xFF, 0x02, 0x02, 0x83, 0x02, 0x74, 0x01, 0x04, 0x14, 0x03])
@@ -280,7 +298,7 @@ class ReceiveSIAdapter(object):
         autoSend = sysValResp[6] & 0x02
         readOut = sysValResp[6] & 0x80
         stationNumber = (sysValResp[3] << 8) | sysValResp[4]
-        return (extendedProtocol, autoSend, readOut, stationNumber)
+        return extendedProtocol, autoSend, readOut, stationNumber
 
     def getSerialNumberSystemValue(self):
         addr = 0x00
@@ -294,7 +312,7 @@ class ReceiveSIAdapter(object):
         return serialNumber
 
     def getBackupPunchAsSIMessageArray(self, address):
-        if self.siStationNumber == None:
+        if self.siStationNumber is None:
             self.siStationNumber = self.getStationSettingSystemValue()[3]
         addressArr = [((address >> 16) & 0xFF), ((address >> 8) & 0xFF), (address & 0xFF)]
         getBackupPunchCmdArr = [0xFF, 0x02, 0x02, 0x81, 0x04, addressArr[0], addressArr[1], addressArr[2], 0x08, 0x00, 0x00, 0x03]
@@ -377,7 +395,7 @@ class ReceiveSIAdapter(object):
         lastAddr = ReceiveSIAdapter.AddressOfLastPunch.get(self.serialNumber, None)
         curAddr = siMsg.GetBackupMemoryAddressAsInt()
         ReceiveSIAdapter.AddressOfLastPunch[self.serialNumber] = curAddr
-        if lastAddr == None:
+        if lastAddr is None:
             return False
         if self.fetchFromBackup:
             #already in fetch from backup mode
@@ -385,7 +403,7 @@ class ReceiveSIAdapter(object):
 
         if curAddr > lastAddr:
             noOfMissedPunches = ((curAddr - lastAddr) / 8) -1
-            if noOfMissedPunches > 0 and noOfMissedPunches <= 30:
+            if 0 < noOfMissedPunches <= 30:
                 #We missed punches...
                 ReceiveSIAdapter.WiRocLogger.info(
                     "ReceiveSIAdapter::detectMissedPunches Punches missed, lastAddr: " + str(
@@ -399,7 +417,7 @@ class ReceiveSIAdapter(object):
             addrToPunch = self.fetchFromBackupAddress + 8
             if addrToPunch < self.fetchToBackupAddress:
                 SIMsgByteArray = self.getBackupPunchAsSIMessageArray(addrToPunch)
-                if SIMsgByteArray == None:
+                if SIMsgByteArray is None:
                     return None
                 self.fetchFromBackupAddress = addrToPunch
                 source = "SIStation"
@@ -410,8 +428,6 @@ class ReceiveSIAdapter(object):
             else:
                 self.fetchFromBackup = False
         return None
-
-
 
     # messageData is a bytearray
     def GetData(self):

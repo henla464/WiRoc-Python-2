@@ -9,9 +9,8 @@ for eachArg in sys.argv:
 
 mySerial = serial.Serial()
 
-baud = 9600
-#mySerial.baudrate = baud
-mySerial.port = sys.argv[1]
+mySerial.baudrate = int(sys.argv[1])
+mySerial.port = sys.argv[2]
 mySerial.writeTimeout = 1
 #mySerial.port = '/dev/ttyUSB5'
 #mySerial.port = '/dev/ttyGS0'
@@ -28,8 +27,6 @@ if not mySerial.is_open:
     print("Try to open")
     mySerial.open()
     time.sleep(1)
-    mySerial.baudrate = baud
-    time.sleep(1)
     mySerial.reset_input_buffer()
     mySerial.reset_output_buffer()
 
@@ -40,12 +37,12 @@ if mySerial.is_open:
 else:
     print("Serial is still not open")
 
-if sys.argv[2] == '1':
+if sys.argv[3] == '1':
     print("Check if any bytes waiting")
     noOfBytes = mySerial.inWaiting()
     print("No of bytes: " + str(noOfBytes))
 
-if sys.argv[2] == '2':
+if sys.argv[3] == '2':
     print("Write a byte")
     #msdMode = bytes([0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
     #AT+NAMEWiRoc: 
@@ -56,8 +53,8 @@ if sys.argv[2] == '2':
     noOfBytes = mySerial.write(msdMode)
     time.sleep(0.1)
     outw = mySerial.out_waiting
-    print(noOfBytes)
-    print(outw)
+    print("bytes written " + str(noOfBytes))
+    print("bytes left in outbuffer" + str(outw))
     mySerial.flush()
     print("After write a byte")
     time.sleep(2)
@@ -68,7 +65,7 @@ if sys.argv[2] == '2':
     print(bytesRead)
     print("After read a byte")
 
-if sys.argv[2] == '3':
+if sys.argv[3] == '3':
     print("Read a byte")
     while True:
         time.sleep(0.1)

@@ -2,14 +2,14 @@ from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
 from utils.utils import Utils
-import socket
+import serial
 import logging
-import os
 
 
 class SendSerialAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
     Instances = []
+    SendSerialAdapterActive = None
 
     @staticmethod
     def CreateInstances():
@@ -67,6 +67,7 @@ class SendSerialAdapter(object):
         self.transforms = {}
         self.isDBInitialized = False
         self.isInitialized = False
+        self.rs232Serial = serial.Serial()
 
     def GetInstanceNumber(self):
         return self.instanceNumber
@@ -97,9 +98,6 @@ class SendSerialAdapter(object):
     def GetTransform(self, transformName):
         return self.transforms[transformName]
 
-    def TestConnection(self):
-        return self.isOpen()
-
     def GetIsInitialized(self):
         return self.isInitialized
 
@@ -114,7 +112,18 @@ class SendSerialAdapter(object):
         self.isDBInitialized = val
 
     def Init(self):
-        ...
+        if SettingsClass.GetForceRS2324800BaudRateFromSIStation():
+            self.rs232Serial.baudrate = 4800
+        else:
+            self.rs232Serial.baudrate = 38400
+        self.rs232Serial.port = self.portName
+        if not self.rs232Serial.is_open:
+            self.rs232Serial.open()
+        if not self.rs232Serial.is_open:
+            SendSerialAdapter.WiRocLogger.error("SendSerialAdapter::Init() Serial port not open")
+            return False
+
+        self.isInitialized = True
         return True
 
     def IsReadyToSend(self):
@@ -130,15 +139,18 @@ class SendSerialAdapter(object):
     # messageData is a tuple of bytearrays
     def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
         returnSuccess = True
+
         for data in messageData:
-            if self.serialComputer.SendData(data):
+            try:
+                self.rs232Serial.write(data)
+                self.rs232Serial.flush()
                 callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "Sent", 1))
-                SendSerialAdapter.WiRocLogger.debug("SendSerialAdapter::SendData() Sent to computer, data: " + Utils.GetDataInHex(data, logging.DEBUG))
-            else:
+                SendSerialAdapter.WiRocLogger.error(
+                    "SendSerialAdapter::SendData() Sent to RS232 Serial, data: " + Utils.GetDataInHex(data, logging.DEBUG))
+            except IOError as ioe:
                 returnSuccess = False
                 callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "NotSent", 0))
-                SendSerialAdapter.WiRocLogger.warning("SendSerialAdapter::SendData() Could not send to computer")
-                #SendSerialAdapter.EnableDisableSubscription()
+                SendSerialAdapter.WiRocLogger.error("SendSerialAdapter::SendData() Could not send to RS232 serial: " + str(ioe))
 
         if returnSuccess:
             callbackQueue.put((successCB,))
