@@ -72,8 +72,8 @@ class ReceiveSIAdapter(object):
         self.portName = portName
         self.siSerial = serial.Serial()
         self.isInitialized = False
+        self.oneWay = False
         self.siStationNumber = 0
-        self.isConnectedToWiRocDevice = False
         self.hasTimeBeenSet = False
         self.serialNumber = None
         self.fetchFromBackup = False
@@ -153,6 +153,7 @@ class ReceiveSIAdapter(object):
 
         if self.siSerial.is_open:
             self.isInitialized = True
+            self.oneWay = True
             return True
         return False
 
@@ -213,6 +214,7 @@ class ReceiveSIAdapter(object):
             self.detectMissedPunchesDuringInit()
 
             self.isInitialized = True
+            self.oneWay = False
             return True
         return False
 
@@ -413,7 +415,7 @@ class ReceiveSIAdapter(object):
                 self.fetchFromBackup = True
 
     def getBackupPunch(self):
-        if self.fetchFromBackup and not self.isConnectedToWiRocDevice:
+        if self.fetchFromBackup:
             addrToPunch = self.fetchFromBackupAddress + 8
             if addrToPunch < self.fetchToBackupAddress:
                 SIMsgByteArray = self.getBackupPunchAsSIMessageArray(addrToPunch)
@@ -471,30 +473,15 @@ class ReceiveSIAdapter(object):
             if len(allReceivedData) != len(receivedData):
                 logging.error("ReceiveSIAdapter::GetData() Received more data than expected, all data: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
 
-            if not SettingsClass.GetOneWayReceiveFromSIStation():
+            if not self.oneWay:
                 self.detectMissedPunches(SIMsg)
 
             DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Received", 1)
-            source = "WiRoc" if self.isConnectedToWiRocDevice else "SIStation"
+            source = "SIStation"
             return {"MessageType": "DATA", "MessageSource": source,
                     "MessageSubTypeName": "SIMessage", "Data": receivedData,
                     "SerialNumber": self.serialNumber,
                     "ChecksumOK": self.IsChecksumOK(receivedData)}
-        elif SIMsg.GetMessageType() == SIMessage.IAmAWiRocDevice:
-            checksumOK = self.IsChecksumOK(receivedData)
-            if checksumOK:
-                ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::GetData() I am a WiRoc message received!")
-                self.isConnectedToWiRocDevice = True
-                #powerSupplied = int(Battery.IsPowerSupplied())
-                #imAWiRocReply = bytearray([0x02, 0x01, 0x01, powerSupplied, 0x00, 0x00, 0x03])
-                #calculatedCRC = Utils.CalculateCRC(imAWiRocReply[1:-3])
-                #imAWiRocReply[4] = calculatedCRC[0]
-                #imAWiRocReply[5] = calculatedCRC[1]
-                #self.siSerial.write(imAWiRocReply)
-                #self.siSerial.flush()
-            else:
-                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::GetData() I am a WiRoc message, WRONG CHECKSUM!")
-            return None
         elif SIMsg.GetMessageType() == SIMessage.WiRocToWiRoc: # Generic WiRoc to WiRoc data message
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::GetData() WiRoc to WiRoc data message!")
             return {"MessageType": "DATA", "MessageSource": "WiRoc",
