@@ -19,6 +19,10 @@ class SITestTestToSirapTransform(object):
         return "SIRAP"
 
     @staticmethod
+    def GetOutputMessageSubType():
+        return "Punch"
+
+    @staticmethod
     def GetName():
         return "SITestTestToSirapTransform"
 

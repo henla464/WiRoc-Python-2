@@ -19,6 +19,10 @@ class StatusStatusToStatusTransform(object):
         return "STATUS"
 
     @staticmethod
+    def GetOutputMessageSubType():
+        return "Status"
+
+    @staticmethod
     def GetName():
         return "StatusStatusToStatusTransform"
 

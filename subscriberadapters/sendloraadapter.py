@@ -138,7 +138,9 @@ class SendLoraAdapter(object):
         transforms.append("StatusStatusToLoraTransform")
         transforms.append("SILoraRadioMessageToLoraTransform") # status message received through serial wiroc-wiroc
         transforms.append("RepeaterSIMessageToLoraAckTransform")
+        transforms.append("RepeaterSIMessageDoubleToLoraAckTransform")
         transforms.append("RepeaterSIMessageToLoraTransform")
+        transforms.append("RepeaterSIMessageDoubleToLoraTransform")
         #transforms.append("RepeaterStatusToLoraAckTransform")
         transforms.append("RepeaterStatusToLoraTransform")
         transforms.append("LoraSIMessageToLoraAckTransform")

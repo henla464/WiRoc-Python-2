@@ -20,6 +20,10 @@ class RepeaterSIMessageToLoraAckTransform(object):
         return "LORA"
 
     @staticmethod
+    def GetOutputMessageSubType():
+        return "Ack"
+
+    @staticmethod
     def GetName():
         return "RepeaterSIMessageToLoraAckTransform"
 

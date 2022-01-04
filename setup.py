@@ -128,7 +128,8 @@ class Setup:
                             messageTypeData = MessageTypeData(messageTypeName, messageSubTypeName)
                             inputMessageDataId = DatabaseHelper.save_message_type(messageTypeData)
                             messageTypeName = transformClass.GetOutputMessageType()
-                            messageTypeData = MessageTypeData(messageTypeName, "OUT")
+                            messageSubTypeName = transformClass.GetOutputMessageSubType()
+                            messageTypeData = MessageTypeData(messageTypeName, messageSubTypeName)
                             outputMessageDataId = DatabaseHelper.save_message_type(messageTypeData)
 
                             # add transform to database

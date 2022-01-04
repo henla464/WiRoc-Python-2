@@ -22,6 +22,10 @@ class RepeaterStatusToLoraTransform(object):
         return "LORA"
 
     @staticmethod
+    def GetOutputMessageSubType():
+        return "Status"
+
+    @staticmethod
     def GetName():
         return "RepeaterStatusToLoraTransform"
 

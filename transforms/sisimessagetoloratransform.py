@@ -22,6 +22,10 @@ class SISIMessageToLoraTransform(object):
         return "LORA"
 
     @staticmethod
+    def GetOutputMessageSubType():
+        return "Punch"
+
+    @staticmethod
     def GetName():
         return "SISIMessageToLoraTransform"
 

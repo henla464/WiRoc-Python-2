@@ -18,6 +18,10 @@ class SISIMessageToSITransform(object):
         return "SI"
 
     @staticmethod
+    def GetOutputMessageSubType():
+        return "Punch"
+
+    @staticmethod
     def GetName():
         return "SISIMessageToSITransform"
 

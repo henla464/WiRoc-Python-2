@@ -26,6 +26,10 @@ class SITestTestToLoraTransform(object):
         return "SITestTestToLoraTransform"
 
     @staticmethod
+    def GetOutputMessageSubType():
+        return "Punch"
+
+    @staticmethod
     def GetBatchSize():
         return 2
 

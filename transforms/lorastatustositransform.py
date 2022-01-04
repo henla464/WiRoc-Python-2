@@ -21,6 +21,10 @@ class LoraStatusToSITransform(object):
         return "SI"
 
     @staticmethod
+    def GetOutputMessageSubType():
+        return "Status"
+
+    @staticmethod
     def GetName():
         return "LoraStatusToSITransform"
 

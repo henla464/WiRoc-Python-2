@@ -23,6 +23,10 @@ class RepeaterSIMessageDoubleToLoraTransform(object):
         return "LORA"
 
     @staticmethod
+    def GetOutputMessageSubType():
+        return "Punch"
+
+    @staticmethod
     def GetName():
         return "RepeaterSIMessageDoubleToLoraTransform"
 

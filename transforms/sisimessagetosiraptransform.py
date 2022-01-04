@@ -19,6 +19,10 @@ class SISIMessageToSirapTransform(object):
         return "SIRAP"
 
     @staticmethod
+    def GetOutputMessageSubType():
+        return "Punch"
+
+    @staticmethod
     def GetName():
         return "SISIMessageToSirapTransform"
 

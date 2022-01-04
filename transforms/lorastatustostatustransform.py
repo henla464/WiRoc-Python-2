@@ -19,6 +19,10 @@ class LoraStatusToStatusTransform(object):
         return "STATUS"
 
     @staticmethod
+    def GetOutputMessageSubType():
+        return "Status"
+
+    @staticmethod
     def GetName():
         return "LoraStatusToStatusTransform"
 

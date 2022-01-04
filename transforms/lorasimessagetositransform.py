@@ -18,6 +18,10 @@ class LoraSIMessageToSITransform(object):
         return "SI"
 
     @staticmethod
+    def GetOutputMessageSubType():
+        return "Punch"
+
+    @staticmethod
     def GetName():
         return "LoraSIMessageToSITransform"
 
