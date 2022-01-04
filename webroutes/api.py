@@ -273,6 +273,7 @@ def getStatus():
     subAdpts = []
     for sub in subscribersView:
         subscriberAdapter = {'TypeName': sub.TypeName, 'InstanceName': sub.InstanceName,
+                             'MessageInSubTypeName': sub.MessageInSubTypeName,
                              'Enabled': sub.Enabled and sub.TransformEnabled, 'MessageInName': sub.MessageInName,
                              'MessageOutName': sub.MessageOutName}
         subAdpts.append(subscriberAdapter)
@@ -560,7 +561,7 @@ def getOneWayReceive():
 
 
 @app.route('/api/onewayreceive/<enabled>/', methods=['GET'])
-def SetOneWayReceive(enabled):
+def setOneWayReceive(enabled):
     DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('OneWayReceive')
     if sd is None:
@@ -577,8 +578,10 @@ def SetOneWayReceive(enabled):
 @app.route('/api/force4800baudrate/', methods=['GET'])
 def getForce4800BaudRate():
     DatabaseHelper.reInit()
-    force4800BaudRateBool = SettingsClass.GetForceRS2324800BaudRateFromSIStation()
-    force4800BaudRate = '1' if force4800BaudRateBool else '0'
+    sett = DatabaseHelper.get_setting_by_key('Force4800BaudRate')
+    force4800BaudRate = '0'
+    if sett is not None:
+        force4800BaudRate = sett.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=force4800BaudRate))
