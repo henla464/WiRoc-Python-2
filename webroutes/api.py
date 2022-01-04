@@ -985,7 +985,7 @@ def getServices():
     statusServices.append({'Name': 'WiRocPython', 'Status': result.stdout.decode('utf-8').strip('\n')})
     result = subprocess.run(['systemctl', 'is-active', 'WiRocPythonWS.service'], stdout=subprocess.PIPE)
     statusServices.append({'Name': 'WiRocPythonWS', 'Status': result.stdout.decode('utf-8').strip('\n')})
-    result = subprocess.run(['systemctl', 'is-active', 'WiRocWatchDog.service.service'], stdout=subprocess.PIPE)
+    result = subprocess.run(['systemctl', 'is-active', 'WiRocWatchDog.service'], stdout=subprocess.PIPE)
     statusServices.append({'Name': 'WiRocWatchDog', 'Status': result.stdout.decode('utf-8').strip('\n')})
     jsonStr = json.dumps({'services': statusServices})
     jsonpickle.set_preferred_backend('json')
