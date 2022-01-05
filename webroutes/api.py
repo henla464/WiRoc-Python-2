@@ -275,7 +275,7 @@ def getStatus():
         subscriberAdapter = {'TypeName': sub.TypeName, 'InstanceName': sub.InstanceName,
                              'MessageInSubTypeName': sub.MessageInSubTypeName,
                              'Enabled': sub.Enabled and sub.TransformEnabled, 'MessageInName': sub.MessageInName,
-                             'MessageOutName': sub.MessageOutName}
+                             'MessageOutName': sub.MessageOutName, 'MessageOutSubTypeName': sub.MessageOutSubTypeName}
         subAdpts.append(subscriberAdapter)
 
     inputAdaptersInstances = DatabaseHelper.get_input_adapter_instances()
