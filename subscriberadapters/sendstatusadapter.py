@@ -1,3 +1,4 @@
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
@@ -80,7 +81,7 @@ class SendStatusAdapter(object):
         self.isDBInitialized = val
 
     def GetTransformNames(self):
-        return ["LoraStatusToStatusTransform", "StatusStatusToStatusTransform"]
+        return ["LoraStatusToStatusTransform", "StatusStatusToStatusTransform", "SIStatusToStatusTransform"]
 
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass
@@ -122,74 +123,47 @@ class SendStatusAdapter(object):
     # messageData is a bytearray
     def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
         try:
-            if settingsDictionary["WebServerIPUrl"]== None:
+            if settingsDictionary["WebServerIPUrl"] is None:
                 SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::SendData No webserveripurl")
                 callbackQueue.put((failureCB,))
                 return False
 
-            btAddress = SettingsClass.GetBTAddress()
             host = settingsDictionary["WebServerHost"]
             headers = {'Authorization': settingsDictionary["ApiKey"], 'host': host}
 
-            if SettingsClass.GetDeviceId() == None:
-                URL = settingsDictionary["WebServerIPUrl"] + "/api/v1/Devices/LookupDeviceByBTAddress/" + btAddress
-                resp = requests.get(url=URL,timeout=1, headers=headers)
-                if resp.status_code == 404:
-                    wiRocDeviceName = settingsDictionary["WiRocDeviceName"]
-                    device = {"BTAddress": btAddress, "name": wiRocDeviceName}  # "description": None
-                    URL = settingsDictionary["WebServerIPUrl"] + "/api/v1/Devices"
-                    resp = requests.post(url=URL, json=device, timeout=1, headers=headers)
-                    if resp.status_code == 200:
-                        retDevice = resp.json()
-                        SettingsClass.SetDeviceId(retDevice['id'])
-                    else:
-                        callbackQueue.put((failureCB, ))
-                        return False
-                else:
-                    retDevice = resp.json()
-                    SettingsClass.SetDeviceId(retDevice['id'])
+            thisWiRocBtAddress = SettingsClass.GetBTAddress()
 
-            # subdevices
-            returnSuccess = True
-            for data in messageData:
-                subDeviceData = data[LoraRadioMessageRS.GetHeaderSize():]
-                def grouped(iterable, n):
-                    "s -> (s0,s1,s2,...sn-1), (sn,sn+1,sn+2,...s2n-1), (s2n,s2n+1,s2n+2,...s3n-1), ..."
-                    return zip(*[iter(iterable)] * n)
-                #/api/v1/SubDevices
-                previousPathNo = None
-                groupedStatii = list(grouped(subDeviceData, 2))
-                distanceToHead = groupedStatii[-1][1] & 0x07
-                for byte1,byte2 in groupedStatii:
-                    batteryPercent = (byte1 & 0xF0) >> 4
-                    siStationNumber = (byte1 & 0x0F) << 5
-                    siStationNumber = siStationNumber | (byte2 & 0xF8) >> 3
-                    pathNo = byte2 & 0x07
-                    if previousPathNo is not None:
-                        distanceToHead -= (pathNo - previousPathNo)
-                    previousPathNo = pathNo
-                    subDevice = {"headBTAddress": btAddress, "distanceToHead": distanceToHead}
-                    URL = settingsDictionary["WebServerIPUrl"] + "/api/v1/SubDevices"
-                    resp = requests.put(url=URL, json=subDevice,timeout=1, headers=headers)
-                    if resp.status_code == 200 or resp.status_code == 303:
-                        subDevice2 = resp.json()
-                        #subDevice stats
-                        subDeviceStatus = None
-                        if pathNo >= len(groupedStatii)-1: #last status (pathNo could be higher than index so >=)
-                            # this WiRoc so we can get a higher precision battery percentage
-                            subDeviceStatus = {"subDeviceId": subDevice2['id'],"batteryLevel":Battery.GetBatteryPercent(),
-                                               "batteryLevelPrecision":101, "siStationNumber": siStationNumber}
-                        else:
-                            subDeviceStatus = {"subDeviceId": subDevice2['id'], "batteryLevel": batteryPercent,
-                                               "batteryLevelPrecision": 16, "siStationNumber": siStationNumber}
-                        URL = settingsDictionary["WebServerIPUrl"] + "/api/v1/SubDeviceStatuses"
-                        resp = requests.post(url=URL, json=subDeviceStatus,timeout=1, allow_redirects=False, headers=headers)
-                        success = (resp.status_code == 200 or resp.status_code == 303)
-                        if not success:
-                            returnSuccess = False
-                    else:
-                        returnSuccess = False
-            if returnSuccess:
+            # Add/Update device
+            loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(messageData)
+            relayPathNo = loraStatusMsg.GetRelayPathNo()
+            btAddress = loraStatusMsg.GetBTAddress()
+            device = {"BTAddress": btAddress, "headBTAddress": thisWiRocBtAddress, "relayPathNo": relayPathNo}
+            URL = settingsDictionary["WebServerIPUrl"] + "/api/v1/Devices"
+            resp = requests.post(url=URL, json=device, timeout=1, headers=headers)
+            if resp.status_code == 200:
+                retDevice = resp.json()
+            else:
+                callbackQueue.put((failureCB, ))
+                return False
+
+            # Set the device name
+            if thisWiRocBtAddress == btAddress:
+                thisWiRocDeviceName = settingsDictionary["WiRocDeviceName"]
+                URL2 = settingsDictionary["WebServerIPUrl"] + "/api/v1/Devices/" + thisWiRocBtAddress + "/UpdateDeviceName/" + thisWiRocDeviceName
+                resp = requests.get(url=URL2, timeout=1, headers=headers)
+                if resp.status_code == 200:
+                    retDevice = resp.json()
+                else:
+                    callbackQueue.put((failureCB,))
+                    return False
+
+            # Add new status
+            batteryLevel = loraStatusMsg.GetBatteryPercent()
+            siStationNumber = loraStatusMsg.GetSIStationNumber()
+            URL3 = settingsDictionary["WebServerIPUrl"] + "/api/v1/DeviceStatuses"
+            deviceStatus = {"BTAddress": btAddress, "batteryLevel": batteryLevel, "siStationNumber": siStationNumber}
+            resp = requests.post(url=URL3, json=deviceStatus, timeout=1, headers=headers)
+            if resp.status_code == 200:
                 callbackQueue.put((successCB,))
                 return True
             else:

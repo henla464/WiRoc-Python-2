@@ -1,6 +1,5 @@
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from settings.settings import SettingsClass
-from battery import Battery
 import logging
 
 
@@ -51,9 +50,6 @@ class StatusStatusToLoraTransform(object):
         StatusStatusToLoraTransform.WiRocLogger.debug("StatusStatusToLoraTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
-        loraStatusMsg.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())
-        ackReq = SettingsClass.GetStatusAcknowledgementRequested()
-        loraStatusMsg.SetAckRequested(ackReq)
         reqRepeater = False
         if SettingsClass.GetLoraMode() == "SENDER":
             reqRepeater = subscriberAdapter.GetShouldRequestRepeater()

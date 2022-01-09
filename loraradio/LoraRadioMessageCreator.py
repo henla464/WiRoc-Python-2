@@ -6,9 +6,7 @@ from loraradio.LoraRadioMessageRS import LoraRadioMessageAckRS, LoraRadioMessage
     LoraRadioMessageStatusRS, LoraRadioMessagePunchDoubleRS
 
 
-
 class LoraRadioMessageCreator(object):
-
     @staticmethod
     def GetAckMessage(hash):
         loraAckMessage = LoraRadioMessageAckRS()
@@ -70,12 +68,11 @@ class LoraRadioMessageCreator(object):
         return loraPunchDoubleMessage
 
     @staticmethod
-    def GetStatusMessage(batteryLow):
+    def GetStatusMessage(batteryLow, siStationNumber, batteryPercent):
         loraStatusMessage = LoraRadioMessageStatusRS()
         loraStatusMessage.SetBatteryLow(batteryLow)
         loraStatusMessage.SetAckRequested(False)
         loraStatusMessage.SetRepeater(False)
-        loraStatusMessage.AddPayload(bytearray(bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])))
         loraStatusMessage.GenerateRSCode()
         return loraStatusMessage
 

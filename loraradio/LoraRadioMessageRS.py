@@ -5,6 +5,8 @@ from struct import *
 from datamodel.datamodel import SIMessage
 from loraradio.RSCoderLora import RSCoderLora
 from utils.utils import Utils
+from settings.settings import SettingsClass
+from battery import *
 
 
 class LoraRadioMessageRS(object):
@@ -41,13 +43,13 @@ class LoraRadioMessageRS(object):
         theHash = shake.digest(2)
         return theHash
 
-    def SetBatteryLow(self, batteryLow = False):
+    def SetBatteryLow(self, batteryLow=False):
         self.batteryLow = batteryLow
 
     def GetBatteryLow(self):
         return self.batteryLow
 
-    def SetAckRequested(self,ackReq):
+    def SetAckRequested(self, ackReq):
         self.ackRequest = ackReq
 
     def GetAckRequested(self):
@@ -143,7 +145,8 @@ class LoraRadioMessagePunchRS(LoraRadioMessageRS):
         return int(self.payloadData[8] // 25.6)
 
     def GetTimeAsTenthOfSeconds(self):
-        time = ((self.GetTwelveHourTimer()[0] << 8) + self.GetTwelveHourTimer()[1]) * 10 + self.GetSubSecondAsTenthOfSeconds()
+        time = ((self.GetTwelveHourTimer()[0] << 8) + self.GetTwelveHourTimer()[
+            1]) * 10 + self.GetSubSecondAsTenthOfSeconds()
         if self.GetTwentyFourHour() == 1:
             time += 36000 * 12
         return time
@@ -153,12 +156,12 @@ class LoraRadioMessagePunchRS(LoraRadioMessageRS):
 
     def GetMinute(self):
         tenthOfSecs = self.GetTimeAsTenthOfSeconds()
-        numberOfMinutesInTenthOfSecs = (tenthOfSecs - self.GetHour()*36000)
+        numberOfMinutesInTenthOfSecs = (tenthOfSecs - self.GetHour() * 36000)
         return numberOfMinutesInTenthOfSecs // 600
 
     def GetSeconds(self):
         tenthOfSecs = self.GetTimeAsTenthOfSeconds()
-        numberOfSecondsInTenthOfSecs = (tenthOfSecs - self.GetHour() * 36000 - self.GetMinute()*600)
+        numberOfSecondsInTenthOfSecs = (tenthOfSecs - self.GetHour() * 36000 - self.GetMinute() * 600)
         return numberOfSecondsInTenthOfSecs // 10
 
     def GetTwelveHourTimerAsInt(self):
@@ -190,7 +193,7 @@ class LoraRadioMessagePunchRS(LoraRadioMessageRS):
         return siMsg.GetByteArray()
 
     def SetSIMessageByteArray(self, siMessageByteArray):
-        self.payloadData = bytearray([0,0,0,0,0,0,0,0,0])
+        self.payloadData = bytearray([0, 0, 0, 0, 0, 0, 0, 0, 0])
         self.payloadData[0] = siMessageByteArray[4]
         self.payloadData[1] = siMessageByteArray[5]
         self.payloadData[2] = siMessageByteArray[6]
@@ -200,31 +203,6 @@ class LoraRadioMessagePunchRS(LoraRadioMessageRS):
         self.payloadData[6] = siMessageByteArray[10]
         self.payloadData[7] = siMessageByteArray[11]
         self.payloadData[8] = siMessageByteArray[12]
-
-    #def GetSIMessageByteArray(self):
-    #    siMessageByteArray = bytearray([0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0])
-    #    siMessageByteArray[0] = 0x02
-    #    siMessageByteArray[1] = 0xD3
-    #    siMessageByteArray[2] = 0x0D
-    #    siMessageByteArray[3] = (self.payloadData[5] & 0x40) >> 6
-    #    siMessageByteArray[4] = self.payloadData[0]
-    #    siMessageByteArray[5] = self.payloadData[1]
-    #    siMessageByteArray[6] = self.payloadData[2]
-    #    siMessageByteArray[7] = self.payloadData[3]
-    #    siMessageByteArray[8] = self.payloadData[4]
-    #    siMessageByteArray[9] = self.payloadData[5] & 0x3F
-    #    siMessageByteArray[10] = self.payloadData[6]
-    #    siMessageByteArray[11] = self.payloadData[7]
-    #    siMessageByteArray[12] = self.payloadData[8]
-    #    siMessageByteArray[13] = 0x00
-    #    siMessageByteArray[14] = 0x00
-    #    siMessageByteArray[15] = 0x00
-    #    partToCalculateCRSOn = siMessageByteArray[1:-3]
-    #    calculatedCrc = Utils.CalculateCRC(partToCalculateCRSOn)
-    #    siMessageByteArray[16] = calculatedCrc[0]
-    #    siMessageByteArray[17] = calculatedCrc[1]
-    #    siMessageByteArray[18] = 0x03  # ETX
-    #    return siMessageByteArray
 
     def GetMessageCategory(self):
         return "DATA"
@@ -261,7 +239,7 @@ class LoraRadioMessagePunchDoubleRS(LoraRadioMessageRS):
             header = header | self.messageType
         loraPunchMessage1.SetHeader(bytearray([header]))
         loraPunchMessage1.AddPayload(firstArray)
-        #loraPunchMessage.AddRSCode()
+        # loraPunchMessage.AddRSCode()
         if len(self.rssiByteArray) > 0:
             loraPunchMessage1.SetRSSIByte(self.rssiByteArray[0])
         firstSIMessageByteArray = loraPunchMessage1.GetSIMessageByteArray()
@@ -306,50 +284,43 @@ class LoraRadioMessageStatusRS(LoraRadioMessageRS):
     def __init__(self):
         super().__init__()
         self.messageType = LoraRadioMessageRS.MessageTypeStatus
-
-    def GetLastRelayPathNoFromStatusMessage(self):
-        if self.GetMessageType() != LoraRadioMessageRS.MessageTypeStatus:
-            raise Exception('Lora message is not a status message!')
-
-        if self.payloadData[6] != 0x00 or self.payloadData[7] != 0x00:
-            return (self.payloadData[7] & 0x07) + 1
-        elif self.payloadData[4] != 0x00 or self.payloadData[5] == 0x00:
-            return (self.payloadData[5] & 0x07) + 1
-        elif self.payloadData[2] != 0x00 or self.payloadData[3] == 0x00:
-            return (self.payloadData[3] & 0x07) + 1
-        else:
-            return (self.payloadData[1] & 0x07) + 1
-
-    def AddThisWiRocToStatusMessage(self, siStationNumber, batteryPercent4Bits):
-        if self.GetMessageType() != LoraRadioMessageRS.MessageTypeStatus:
-            raise Exception('Lora message is not a status message!')
-
-        # batteryPercent | siStationNo      |  pathNo  |
-        #      ####            ####  #####      ###    |
-        #       high byte          |       low byte    |
-        indexToWriteTo = -1
-        realWiRocRelayPathNo = -1
-        if self.payloadData[0] == 0x00 and self.payloadData[1] == 0x00:
-            indexToWriteTo = 0
-            realWiRocRelayPathNo = 0
-        elif self.payloadData[2] == 0x00 and self.payloadData[3] == 0x00:
-            indexToWriteTo = 2
-            realWiRocRelayPathNo = 1
-        elif self.payloadData[4] == 0x00 and self.payloadData[5] == 0x00:
-            indexToWriteTo = 4
-            realWiRocRelayPathNo = 2
-        elif self.payloadData[6] == 0x00 and self.payloadData[7] == 0x00:
-            indexToWriteTo = 6
-            realWiRocRelayPathNo = 3
-        else:
-            indexToWriteTo = 6
-            realWiRocRelayPathNo = self.payloadData[7] & 0x07
-
-        highByte = batteryPercent4Bits << 4 | ((siStationNumber & 0x1E0) >> 5)
-        lowByte = ((siStationNumber & 0x1F) << 3) | realWiRocRelayPathNo
-        self.payloadData[indexToWriteTo] = highByte
-        self.payloadData[indexToWriteTo+1] = lowByte
+        siStationNumber = SettingsClass.GetSIStationNumber()
+        batteryPercent = Battery.GetBatteryPercent()
+        relayPathNo = SettingsClass.GetRelayPathNumber()
+        btAddressAsInt = SettingsClass.GetBTAddressAsInt()
+        self.payloadData = bytearray(bytes([batteryPercent, siStationNumber, relayPathNo,
+                                            (btAddressAsInt & 0xFF0000000000) > 40,
+                                            (btAddressAsInt & 0x00FF00000000) > 32,
+                                            (btAddressAsInt & 0x0000FF000000) > 24,
+                                            (btAddressAsInt & 0x000000FF0000) > 16,
+                                            (btAddressAsInt & 0x00000000FF00) > 8,
+                                            (btAddressAsInt & 0x0000000000FF),
+                                            ]))
         self.GenerateRSCode()
+
+    def GetBatteryPercent(self):
+        return self.payloadData[0]
+
+    def GetSIStationNumber(self):
+        return self.payloadData[1]
+
+    def GetRelayPathNo(self):
+        return self.payloadData[2]
+
+    def GetBTAddressAsInt(self):
+        return (self.payloadData[3] < 40) | \
+               (self.payloadData[4] < 32) | \
+               (self.payloadData[5] < 24) | \
+               (self.payloadData[6] < 16) | \
+               (self.payloadData[7] < 8) | \
+               self.payloadData[8]
+
+    def GetBTAddress(self):
+        btAddrAsInt = self.GetBTAddressAsInt()
+        btAddress = '{:x}'.format(btAddrAsInt).upper()
+        btAddress = btAddress[0:2] + ':' + btAddress[2:4] + ':' + btAddress[4:6] + \
+            ':' + btAddress[6:8] + ':' + btAddress[8:10] + ':' + btAddress[10:12]
+        return btAddress
 
     def GetMessageCategory(self):
         return "DATA"

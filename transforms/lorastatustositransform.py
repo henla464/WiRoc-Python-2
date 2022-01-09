@@ -55,9 +55,8 @@ class LoraStatusToSITransform(object):
         if SettingsClass.GetConnectedComputerIsWiRocDevice():
             payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
             loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
-            loraStatusMsg.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(), Battery.GetBatteryPercent4Bits())
             siMsg = SIMessage()
-            siMsg.AddHeader(SIMessage.WiRocToWiRoc)
+            siMsg.AddHeader(SIMessage.Status)
             siMsg.AddPayload(loraStatusMsg.GetByteArray())
             siMsg.AddFooter()
             LoraStatusToSITransform.WiRocLogger.debug("LoraToSITransform::Transform() data: " +  + Utils.GetDataInHex(siMsg.GetByteArray(), logging.DEBUG))

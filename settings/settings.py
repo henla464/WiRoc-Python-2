@@ -614,6 +614,18 @@ class SettingsClass(object):
         return btAddress
 
     @staticmethod
+    @cached(cacheForEver, key=partial(hashkey, 'GetBTAddressAsInt'), lock=rlock)
+    def GetBTAddressAsInt():
+        btAddressAsString = SettingsClass.GetBTAddress()
+        if btAddressAsString == "NoBTAddress":
+            return 0
+        else:
+            btAddressAsString = btAddressAsString.replace(':','')
+            btAddressAsInt = int(btAddressAsString, 16)
+            return btAddressAsInt
+
+
+    @staticmethod
     @cached(cacheForEver, key=partial(hashkey, 'GetAPIKey'), lock=rlock)
     def GetAPIKey():
         sett = DatabaseHelper.get_setting_by_key('APIKey')

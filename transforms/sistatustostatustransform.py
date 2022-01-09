@@ -1,14 +1,15 @@
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
-from settings.settings import SettingsClass
-from battery import Battery
+from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
+from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 import logging
 
-class StatusStatusToStatusTransform(object):
+
+class SIStatusToStatusTransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 
     @staticmethod
     def GetInputMessageType():
-        return "STATUS"
+        return "SI"
 
     @staticmethod
     def GetInputMessageSubType():
@@ -24,7 +25,7 @@ class StatusStatusToStatusTransform(object):
 
     @staticmethod
     def GetName():
-        return "StatusStatusToStatusTransform"
+        return "SIStatusToStatusTransform"
 
     @staticmethod
     def GetBatchSize():
@@ -42,10 +43,17 @@ class StatusStatusToStatusTransform(object):
     def GetDeleteAfterSentChanged():
         return False
 
-    #payloadData is a bytearray
+    # msgSub.MessageData is a bytearray
     @staticmethod
     def Transform(msgSubBatch, subscriberAdapter):
-        StatusStatusToStatusTransform.WiRocLogger.debug("StatusStatusToStatusTransform::Transform()")
+        SIStatusToStatusTransform.WiRocLogger.debug("SIStatusToStatusTransform::Transform() Message type status")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-        loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
-        return {"Data": (loraStatusMsg.GetByteArray(),), "MessageID": None}
+        # WiRoc to WiRoc message
+        unwrappedMessage = payloadData[3:-3]
+        # Assume it is a LoraRadioMessage that is wrapped
+        headerMessageType = LoraRadioDataHandler.GetHeaderMessageType(unwrappedMessage)
+        if headerMessageType == LoraRadioMessageRS.MessageTypeStatus:
+            loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(unwrappedMessage)
+            return {"Data": (loraStatusMsg.GetByteArray(),), "MessageID": None}
+        else:
+            return None

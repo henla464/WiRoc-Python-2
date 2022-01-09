@@ -158,8 +158,8 @@ class ReceiveLoraAdapter(object):
                 if loraMessage.GetBatteryLow():
                     SettingsClass.SetBatteryIsLowReceived(True)
 
-                relayPathNo = loraMessage.GetLastRelayPathNoFromStatusMessage()
-                SettingsClass.UpdateRelayPathNumber(relayPathNo)
+                relayPathNo = loraMessage.GetRelayPathNoFromStatusMessage()
+                SettingsClass.UpdateRelayPathNumber(relayPathNo+1)
                 DatabaseHelper.add_message_stat(self.GetInstanceName(), "Status", "Received", 1)
             elif messageType == LoraRadioMessageRS.MessageTypeSIPunch or messageType == LoraRadioMessageRS.MessageTypeSIPunchDouble:
                 if loraMessage.GetBatteryLow():

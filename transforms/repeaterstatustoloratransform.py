@@ -59,12 +59,6 @@ class RepeaterStatusToLoraTransform(object):
         RepeaterStatusToLoraTransform.WiRocLogger.debug("RepeaterStatusToLoraTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
-        loraStatusMsg.AddThisWiRocToStatusMessage(SettingsClass.GetSIStationNumber(),
-                                                Battery.GetBatteryPercent4Bits())
-        batteryLow = Battery.GetIsBatteryLow() or loraStatusMsg.GetBatteryLow()
-        loraStatusMsg.SetBatteryLow(batteryLow)
-        ackReq = SettingsClass.GetAcknowledgementRequested()
-        loraStatusMsg.SetAckRequested(ackReq)
         loraStatusMsg.SetRepeater(False)
         loraStatusMsg.GenerateRSCode()
         return {"Data": (loraStatusMsg.GetByteArray(),), "MessageID": loraStatusMsg.GetHash()}

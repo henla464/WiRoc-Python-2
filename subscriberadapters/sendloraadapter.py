@@ -77,14 +77,12 @@ class SendLoraAdapter(object):
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SISIMessageToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestTestToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "StatusStatusToLoraTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "SILoraRadioMessageToLoraTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "SIStatusToLoraTransform")
                 # For receiver: Sends schedules an ack for message received from sender when sender requested repeater
                 # (we don't send ack directly because repeater is expected reply with ack directly)
                 DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraSIMessageToLoraAckTransform")
-                #DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraStatusToLoraAckTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraAckTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraTransform")
-                #DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterStatusToLoraAckTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterStatusToLoraTransform")
 
     def __init__(self, instanceNumber, portName, hardwareAbstraction):
@@ -136,7 +134,7 @@ class SendLoraAdapter(object):
         transforms.append("SISIMessageToLoraTransform")
         transforms.append("SITestTestToLoraTransform")
         transforms.append("StatusStatusToLoraTransform")
-        transforms.append("SILoraRadioMessageToLoraTransform") # status message received through serial wiroc-wiroc
+        transforms.append("SIStatusToLoraTransform") # status message received through serial wiroc-wiroc
         transforms.append("RepeaterSIMessageToLoraAckTransform")
         transforms.append("RepeaterSIMessageDoubleToLoraAckTransform")
         transforms.append("RepeaterSIMessageToLoraTransform")
@@ -144,7 +142,6 @@ class SendLoraAdapter(object):
         #transforms.append("RepeaterStatusToLoraAckTransform")
         transforms.append("RepeaterStatusToLoraTransform")
         transforms.append("LoraSIMessageToLoraAckTransform")
-        transforms.append("LoraStatusToLoraAckTransform")
         return transforms
 
     def SetTransform(self, transformClass):

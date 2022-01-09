@@ -683,6 +683,60 @@ def setForceRS2324800BaudRateEnabled(enabled):
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 
+@app.route('/api/btserialonewayreceive/', methods=['GET'])
+def getBTSerialOneWayReceive():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('BTSerialOneWayReceive')
+    oneWayReceive = '0'
+    if sett is not None:
+        oneWayReceive = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=oneWayReceive))
+
+
+@app.route('/api/btserialonewayreceive/<enabled>/', methods=['GET'])
+def setBTSerialOneWayReceive(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('BTSerialOneWayReceive')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'BTSerialOneWayReceive'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
+@app.route('/api/forcebtserial4800baudrate/', methods=['GET'])
+def getForceBTSerial4800BaudRate():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('ForceBTSerial4800BaudRate')
+    force4800BaudRate = '0'
+    if sett is not None:
+        force4800BaudRate = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=force4800BaudRate))
+
+
+@app.route('/api/forcebtserial4800baudrate/<enabled>/', methods=['GET'])
+def setForceBTSerial4800BaudRateEnabled(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('ForceBTSerial4800BaudRate')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'ForceBTSerial4800BaudRate'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
 @app.route('/api/sendtoblenoenabled/', methods=['GET'])
 def getSendToBlenoEnabled():
     DatabaseHelper.reInit()
@@ -844,7 +898,9 @@ def getRFComms():
     rfCommsObjArray = [MicroMock(SerialPortName=rfComm.split(' ')[0][:-1],
                                  BTAddress=rfComm.split(' ')[1],
                                  Channel=rfComm.split(' ')[3],
-                                 Status=rfComm.split(' ')[4]) for rfComm in rfCommsArray]
+                                 Status=rfComm.split(' ')[4],
+                                 AttachedText=rfComm.split(' ')[5][1:-1] if len(rfComm.split(' ')) > 5 else ''
+                                 ) for rfComm in rfCommsArray]
     return rfCommsObjArray
 
 
@@ -874,10 +930,16 @@ def getBTAddresses():
                                 BTAddress=rfCommObj.BTAddress,
                                 Channel=rfCommObj.Channel,
                                 Status=rfCommObj.Status,
+                                AttachedText=rfCommObj.AttachedText,
                                 Name=btName)
         combinedList.append(combinedObj)
 
     for btAddrObj in btAddressesAndNameObjArray:
+        if btAddrObj.BTAddress not in BTAddressAndNameMapping:
+            BTAddressAndNameMapping[btAddrObj.BTAddress] = btAddrObj.Name
+        elif btAddrObj.Name != "n/a":
+            BTAddressAndNameMapping[btAddrObj.BTAddress] = btAddrObj.Name
+
         if any(rfCommObj.BTAddress == btAddrObj.BTAddress for rfCommObj in rfCommsObjArray):
             # Already added BTAddress
             continue
@@ -886,6 +948,7 @@ def getBTAddresses():
                                 BTAddress=btAddrObj.BTAddress,
                                 Channel=None,
                                 Status=None,
+                                AttachedText='',
                                 Name=btAddrObj.Name)
         combinedList.append(combinedObj)
         BTAddressAndNameMapping[btAddrObj.BTAddress] = btAddrObj.Name
@@ -1242,11 +1305,22 @@ def getAllMainSettings():
     if sett is not None:
         forceRS2324800BaudRate = sett.Value
 
+    sett = DatabaseHelper.get_setting_by_key('BTSerialOneWayReceive')
+    BTSerialOneWayReceive = '0'
+    if sett is not None:
+        BTSerialOneWayReceive = sett.Value
+
+    sett = DatabaseHelper.get_setting_by_key('ForceBTSerial4800BaudRate')
+    forceBTSerial4800BaudRate = '0'
+    if sett is not None:
+        forceBTSerial4800BaudRate = sett.Value
+
     allStr = ('1' if isCharging else '0') + '¤' + deviceName + '¤' + sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \
         acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + batteryPercent + '¤' + \
         ipAddress + '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wirocPythonVersion + '¤' + \
         wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive + '¤' + force4800BaudRate + '¤' + loramode + '¤' + \
-        rxGain + '¤' + codeRate + '¤' + rs232Mode + '¤' + RS232OneWayReceive + '¤' + forceRS2324800BaudRate
+        rxGain + '¤' + codeRate + '¤' + rs232Mode + '¤' + RS232OneWayReceive + '¤' + forceRS2324800BaudRate + '¤' + \
+        BTSerialOneWayReceive + '¤' + forceBTSerial4800BaudRate
 
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)

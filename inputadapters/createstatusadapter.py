@@ -54,7 +54,10 @@ class CreateStatusAdapter(object):
         if self.TimeToFetch:
             self.LastTimeCreated = time.monotonic()
             self.TimeToFetch = False
-            msgStatus = LoraRadioMessageCreator.GetStatusMessage(Battery.GetIsBatteryLow())
+            msgStatus = LoraRadioMessageCreator.GetStatusMessage(Battery.GetIsBatteryLow(),
+                                                                 SettingsClass.GetSIStationNumber(),
+                                                                 Battery.GetBatteryPercent4Bits())
+
             self.WiRocLogger.debug("CreateStatusAdapter::GetData() Data to fetch")
             return {"MessageType": "DATA", "MessageSubTypeName": "Status", "MessageSource":"Status", "Data": msgStatus.GetByteArray(), "ChecksumOK": True}
 

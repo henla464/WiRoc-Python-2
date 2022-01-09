@@ -535,6 +535,8 @@ class Main:
         settDict["SendToSirapIPPort"] = SettingsClass.GetSendToSirapIPPort()
         settDict["ApiKey"] = SettingsClass.GetAPIKey()
 
+        self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
+                                    if inputAdapter.UpdateInfreqently() and inputAdapter.GetIsInitialized()]
         while True:
             for i in range(1,1004):
                 didTasks = False
@@ -555,14 +557,15 @@ class Main:
                     settDict["SendToSirapIPPort"] = SettingsClass.GetSendToSirapIPPort()
                     settDict["ApiKey"] = SettingsClass.GetAPIKey()
                     self.reconfigure()
+                    self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
+                                                if inputAdapter.UpdateInfreqently() and inputAdapter.GetIsInitialized()]
 
                 if i % 499 == 0:
                     print("infrequent maintenance time: " + str(datetime.now()))
                     didTasks = True
                     self.doInfrequentMaintenanceTasks()
 
-                self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
-                                            if inputAdapter.UpdateInfreqently() and inputAdapter.GetIsInitialized()]
+
 
                 if not didTasks:
                     time.sleep(0.04)
