@@ -8,12 +8,12 @@ from loraradio.LoraRadioMessageRS import LoraRadioMessageAckRS, LoraRadioMessage
 
 class LoraRadioMessageCreator(object):
     @staticmethod
-    def GetAckMessage(hash):
+    def GetAckMessage(theHash):
         loraAckMessage = LoraRadioMessageAckRS()
         loraAckMessage.SetAckRequested(False)
         loraAckMessage.SetBatteryLow(False)
         loraAckMessage.SetRepeater(False)
-        loraAckMessage.AddPayload(hash)
+        loraAckMessage.AddPayload(theHash)
         loraAckMessage.GenerateRSCode()
         return loraAckMessage
 
@@ -27,7 +27,7 @@ class LoraRadioMessageCreator(object):
         return loraAckMessage
 
     @staticmethod
-    def GetPunchMessage(batteryLow, ackReq, payload = None):
+    def GetPunchMessage(batteryLow, ackReq, payload=None):
         loraPunchMessage = LoraRadioMessagePunchRS()
         loraPunchMessage.SetBatteryLow(batteryLow)
         loraPunchMessage.SetAckRequested(ackReq)
@@ -37,7 +37,7 @@ class LoraRadioMessageCreator(object):
         return loraPunchMessage
 
     @staticmethod
-    def GetPunchMessageByFullMessageData(fullMessageData, rssiByte = None):
+    def GetPunchMessageByFullMessageData(fullMessageData, rssiByte=None):
         if len(fullMessageData) < 14:
             raise Exception('Message data too short for a LoraRadioMessagePunchRS message')
         loraPunchMessage = LoraRadioMessagePunchRS()
@@ -77,7 +77,7 @@ class LoraRadioMessageCreator(object):
         return loraStatusMessage
 
     @staticmethod
-    def GetStatusMessageByFullMessageData(fullMessageData, rssiByte = None):
+    def GetStatusMessageByFullMessageData(fullMessageData, rssiByte=None):
         loraStatusMessage = LoraRadioMessageStatusRS()
         loraStatusMessage.SetHeader(fullMessageData[0:1])
         loraStatusMessage.AddPayload(fullMessageData[1:-4])

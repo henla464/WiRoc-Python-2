@@ -5,7 +5,6 @@ from struct import *
 from datamodel.datamodel import SIMessage
 from loraradio.RSCoderLora import RSCoderLora
 from utils.utils import Utils
-from settings.settings import SettingsClass
 from battery import *
 
 

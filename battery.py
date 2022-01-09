@@ -2,7 +2,6 @@ __author__ = 'henla464'
 
 import os
 import time
-from settings.settings import SettingsClass
 import logging
 import socket
 

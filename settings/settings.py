@@ -20,6 +20,7 @@ cacheForEver = TTLCache(maxsize=100, ttl=30000)  # 30000 seconds (500 min)
 cacheUntilChangedByProcess = TTLCache(maxsize=100, ttl=30000)  # 30000 seconds (500 min)
 rlock = RLock()
 
+
 class SettingsClass(object):
     timeOfLastMessageAdded = time.monotonic()
     timeOfLastMessageSentToLora = time.monotonic()
@@ -155,6 +156,7 @@ class SettingsClass(object):
         SettingsClass.webServerIP = ip
 
     relayPathNo = 0
+
     @staticmethod
     def UpdateRelayPathNumber(sequenceNo):
         if sequenceNo > SettingsClass.relayPathNo:
@@ -167,7 +169,7 @@ class SettingsClass(object):
     @staticmethod
     def GetWebServerIPUrlBackground(webServerUrl):
         ip = SettingsClass.GetWebServerIP()
-        if ip == None:
+        if ip is None:
             return None
         host = webServerUrl.replace('http://', '').replace('https://', '')
         IPUrl = webServerUrl.replace(host, ip)
@@ -204,13 +206,13 @@ class SettingsClass(object):
         if val == SettingsClass.receiveSIAdapterActive:
             return None
 
-        if val == True:
+        if val:
             sett = SettingsClass.SetSetting('ReceiveSIAdapterActive', "1")
         else:
             sett = SettingsClass.SetSetting('ReceiveSIAdapterActive', "0")
         SettingsClass.receiveSIAdapterActive = (sett.Value == "1")
         cacheUntilChangedByProcess.clear()
-        cache.clear()  #GetWiRocMode uses this value so needs to be invalidated
+        cache.clear()  # GetWiRocMode uses this value so needs to be invalidated
 
     @staticmethod
     def SetSetting(key, value):
@@ -230,11 +232,11 @@ class SettingsClass(object):
         sett = SettingsClass.SetSetting('SendSerialAdapterActive', val)
         SettingsClass.sendSerialAdapterActive = (sett.Value == "1")
         cacheUntilChangedByProcess.clear()
-        cache.clear() #GetWiRocMode uses this value so needs to be invalidated
+        cache.clear()  # GetWiRocMode uses this value so needs to be invalidated
 
-     #####
-     # Changed both locally and via web services
-     #####
+    #####
+    # Changed both locally and via web services
+    #####
 
     #####
     # DB settings changed via web services only
@@ -437,6 +439,7 @@ class SettingsClass(object):
     channelData = None
     microSecondsToSendAMessage = None
     microSecondsToSendAnAckMessage = None
+
     @staticmethod
     def GetRetryDelay(retryNumber):
         loraRange = SettingsClass.GetLoraRange()
@@ -444,7 +447,7 @@ class SettingsClass(object):
         loraModule = SettingsClass.GetLoraModule()
         codeRate = SettingsClass.GetCodeRate()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
-        messageLengthInBytes = 24 # typical length
+        messageLengthInBytes = 24  # typical length
         SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
         # extra delay for higher error coderates
         SettingsClass.microSecondsToSendAMessage = SettingsClass.microSecondsToSendAMessage * (1+0.2*codeRate)
@@ -466,7 +469,6 @@ class SettingsClass(object):
             SettingsClass.microSecondsToSendAMessage = SettingsClass.microSecondsToSendAMessage * (1 + 0.2 * codeRate)
         return 1+(SettingsClass.microSecondsToSendAMessage * 2.1)/1000000
 
-
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetLoraAckMessageSendingTimeS'), lock=rlock)
     def GetLoraAckMessageSendingTimeS():
@@ -480,7 +482,7 @@ class SettingsClass(object):
             SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
             # extra delay for higher error coderates
             SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.microSecondsToSendAnAckMessage * (1 + 0.2 * codeRate)
-        return 0.2+(SettingsClass.microSecondsToSendAnAckMessage)/1000000
+        return 0.2+SettingsClass.microSecondsToSendAnAckMessage/1000000
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetLoraMessageTimeSendingTimeS'), lock=rlock)
@@ -536,7 +538,7 @@ class SettingsClass(object):
     @cached(cache, key=partial(hashkey, 'GetWebServerIPUrl'), lock=rlock)
     def GetWebServerIPUrl():
         ip = SettingsClass.GetWebServerIP()
-        if ip == None:
+        if ip is None:
             return None
         webServerUrl = SettingsClass.GetWebServerUrl()
         host = webServerUrl.replace('http://', '').replace('https://', '')
@@ -631,7 +633,6 @@ class SettingsClass(object):
             btAddress = hcitoolRespWords[1]
         return btAddress
 
-
     @staticmethod
     @cached(cacheForEver, key=partial(hashkey, 'GetBTAddressAsInt'), lock=rlock)
     def GetBTAddressAsInt():
@@ -639,7 +640,7 @@ class SettingsClass(object):
         if btAddressAsString == "NoBTAddress":
             return 0
         else:
-            btAddressAsString = btAddressAsString.replace(':','')
+            btAddressAsString = btAddressAsString.replace(':', '')
             btAddressAsInt = int(btAddressAsString, 16)
             return btAddressAsInt
 
@@ -680,5 +681,3 @@ class SettingsClass(object):
             SettingsClass.SetSetting("SendSerialAdapterActive", "0")
             return False
         return sett.Value == "1"
-
-

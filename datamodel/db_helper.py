@@ -4,9 +4,6 @@ from datamodel.datamodel import *
 from databaselib.db import DB
 from databaselib.datamapping import DataMapping
 from datetime import timedelta, datetime
-#from settings.settings import SettingsClass
-import time
-
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 
 
@@ -16,7 +13,7 @@ class DatabaseHelper:
 
     @classmethod
     def init(cls):
-        if cls.db == None:
+        if cls.db is None:
             cls.db = DB("WiRoc.db", DataMapping())
 
     @classmethod
@@ -123,7 +120,7 @@ class DatabaseHelper:
         db.execute_SQL("DELETE FROM RepeaterMessageBoxData")
         db.execute_SQL("DELETE FROM RepeaterMessageBoxArchiveData")
 
-#Settings
+    # Settings
     @classmethod
     def save_setting(cls, settingData):
         cls.init()
@@ -155,33 +152,33 @@ class DatabaseHelper:
             return None
         return row_list[0]
 
-#Subscriber
+    # Subscriber
     @classmethod
     def save_subscriber(cls, subscriberData):
         cls.init()
         rows = cls.db.get_table_objects_by_SQL(SubscriberData, "SELECT * FROM SubscriberData WHERE TypeName = '" +
-                                    subscriberData.TypeName + "' and InstanceName = '" +
-                                    subscriberData.InstanceName + "'")
+                                               subscriberData.TypeName + "' and InstanceName = '" +
+                                               subscriberData.InstanceName + "'")
         if len(rows) == 0:
             return cls.db.save_table_object(subscriberData, False)
         else:
-            #nothing to update
+            # nothing to update
             return rows[0].id
 
     @classmethod
     def get_subscribers(cls):
         cls.init()
         rows = cls.db.get_table_objects_by_SQL(SubscriberView, "SELECT "
-            "SubscriberData.id, SubscriberData.TypeName, SubscriberData.InstanceName, "
-            "SubscriptionData.Enabled, MsgIn.Name MessageInName, MsgIn.MessageSubTypeName MessageInSubTypeName, "
-            "MsgOut.Name MessageOutName, MsgOut.MessageSubTypeName MessageOutSubTypeName, "
-            "TransformData.Enabled as TransformEnabled, "
-            "TransformData.Name as TransformName "
-            "from SubscriptionData JOIN SubscriberData "
-            "ON SubscriptionData.SubscriberId = SubscriberData.Id "
-            "JOIN TransformData ON TransformData.Id = SubscriptionData.TransformId "
-            "JOIN MessageTypeData MsgIn on MsgIn.Id = TransformData.InputMessageTypeId "
-            "JOIN MessageTypeData MsgOut on MsgOut.Id = TransformData.OutputMessageTypeId")
+                "SubscriberData.id, SubscriberData.TypeName, SubscriberData.InstanceName, "
+                "SubscriptionData.Enabled, MsgIn.Name MessageInName, MsgIn.MessageSubTypeName MessageInSubTypeName, "
+                "MsgOut.Name MessageOutName, MsgOut.MessageSubTypeName MessageOutSubTypeName, "
+                "TransformData.Enabled as TransformEnabled, "
+                "TransformData.Name as TransformName "
+                "from SubscriptionData JOIN SubscriberData "
+                "ON SubscriptionData.SubscriberId = SubscriberData.Id "
+                "JOIN TransformData ON TransformData.Id = SubscriptionData.TransformId "
+                "JOIN MessageTypeData MsgIn on MsgIn.Id = TransformData.InputMessageTypeId "
+                "JOIN MessageTypeData MsgOut on MsgOut.Id = TransformData.OutputMessageTypeId")
         return rows
 
     @classmethod
@@ -201,16 +198,6 @@ class DatabaseHelper:
             "WHERE SubscriptionData.id = %s" % subscriptionId)
         return rows
 
-#MessageTypes
-    #@classmethod
-    #def get_message_type(cls, messageTypeName, messageSubTypeName):
-    #    cls.init()
-    #    sql = "SELECT * FROM MessageTypeData WHERE Name = ? AND MessageSubTypeName = ?"
-    #    rows = cls.db.get_table_objects_by_SQL(MessageTypeData, sql, (messageTypeName, messageSubTypeName))
-    #    if len(rows) >= 1:
-    #        return rows[0]
-    #    return None
-
     @classmethod
     def save_message_type(cls, messageTypeData):
         cls.init()
@@ -222,8 +209,7 @@ class DatabaseHelper:
             # nothing to update
             return rows[0].id
 
-#Transforms
-
+    # Transforms
     @classmethod
     def save_transform(cls, transformData):
         cls.init()
@@ -242,7 +228,7 @@ class DatabaseHelper:
         DatabaseHelper.WiRocLogger.debug(sql)
         cls.db.execute_SQL(sql)
 
-#Subscriptions
+    # Subscriptions
     @classmethod
     def save_subscription(cls, subscriptionData):
         cls.init()
@@ -271,7 +257,7 @@ class DatabaseHelper:
                "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
                 "JOIN MessageTypeData ON MessageTypeData.id = TransformData.InputMessageTypeID "
                "WHERE TransformData.Enabled = 1 AND SubscriptionData.Enabled = 1 AND "
-               "MessageTypeData.Name = '" + str(messageTypeName) + "' AND MessageSubTypeName = '" + str(messageSubTypeName) +"'")
+               "MessageTypeData.Name = '" + str(messageTypeName) + "' AND MessageSubTypeName = '" + str(messageSubTypeName) + "'")
         rows = cls.db.get_table_objects_by_SQL(SubscriptionViewData, sql)
         return rows
 
@@ -293,11 +279,11 @@ class DatabaseHelper:
                 "(SELECT id from TransformData WHERE TransformData.Name = '" + str(transformName) + "') ")
         cls.db.execute_SQL(sql)
 
-#MessageSubscriptions
+    # MessageSubscriptions
     @classmethod
     def get_no_of_message_subscriptions_by_message_box_id(cls, msgBoxId):
         cls.init()
-        sql = "SELECT count(*) FROM MessageSubscriptionData WHERE MessageBoxId = %s" %(msgBoxId)
+        sql = "SELECT count(*) FROM MessageSubscriptionData WHERE MessageBoxId = %s" % msgBoxId
         no = cls.db.get_scalar_by_SQL(sql)
         return no
 
@@ -305,7 +291,7 @@ class DatabaseHelper:
     def update_messageid(cls, subscriptionId, messageID):
         cls.init()
         sql = "UPDATE MessageSubscriptionData SET MessageID = ? WHERE id = ?"
-        cls.db.execute_SQL(sql,(messageID, subscriptionId))
+        cls.db.execute_SQL(sql, (messageID, subscriptionId))
 
     @classmethod
     def save_message_subscription(cls, messageSubscription):
@@ -464,7 +450,6 @@ class DatabaseHelper:
             if remainingMsgSub == 0:
                 cls.archive_message_box(msd.MessageBoxId)
 
-
     @classmethod
     def archive_repeater_lora_message_subscriptions_after_ack(cls, messageID, rssiValue):
         cls.init()
@@ -589,7 +574,7 @@ class DatabaseHelper:
         cls.db.save_table_object(msa, False)
         cls.db.delete_table_object(RepeaterMessageBoxData, repeaterMessageBox.id)
 
-#MessageSubscriptionView
+    # MessageSubscriptionView
     @classmethod
     def get_last_message_subscription_view_that_was_sent_to_lora(cls):
         sql = ("SELECT MessageSubscriptionData.id, "
@@ -630,9 +615,9 @@ class DatabaseHelper:
         messageSubscriptions = cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
         now = datetime.now()
         for messageSubscription in messageSubscriptions:
-            if messageSubscription.SentDate != None and messageSubscription.SentDate < now < messageSubscription.SentDate + timedelta(
+            if messageSubscription.SentDate is not None and messageSubscription.SentDate < now < messageSubscription.SentDate + timedelta(
                     microseconds=messageSubscription.RetryDelay):
-                    # has been sent, not yet passed the retry delay (may still be waiting for ack)
+                # has been sent, not yet passed the retry delay (may still be waiting for ack)
                 return messageSubscription
 
     @classmethod
@@ -675,7 +660,7 @@ class DatabaseHelper:
 
     @classmethod
     def get_message_subscriptions_view_to_send(cls, maxRetries):
-        sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData")
+        sql = "SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData"
         cls.init()
         cnt = cls.db.get_scalar_by_SQL(sql)
         if cnt > 0:
@@ -731,17 +716,17 @@ class DatabaseHelper:
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
 
-                if  messageSubscription.CreatedDate < now < messageSubscription.CreatedDate + timedelta(microseconds=messageSubscription.Delay):
+                if messageSubscription.CreatedDate < now < messageSubscription.CreatedDate + timedelta(microseconds=messageSubscription.Delay):
                     # Should have an initial delay that has not passed yet
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
 
-                if messageSubscription.SentDate != None and messageSubscription.SentDate < now < messageSubscription.SentDate + timedelta(microseconds=messageSubscription.RetryDelay):
+                if messageSubscription.SentDate is not None and messageSubscription.SentDate < now < messageSubscription.SentDate + timedelta(microseconds=messageSubscription.RetryDelay):
                     # has been sent, not yet passed the retry delay (may still be waiting for ack)
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
 
-                if messageSubscription.FindAdapterTryDate != None and messageSubscription.FindAdapterTryDate < now < messageSubscription.FindAdapterTryDate + timedelta(microseconds=messageSubscription.FindAdapterRetryDelay):
+                if messageSubscription.FindAdapterTryDate is not None and messageSubscription.FindAdapterTryDate < now < messageSubscription.FindAdapterTryDate + timedelta(microseconds=messageSubscription.FindAdapterRetryDelay):
                     # should wait longer before trying to find adapter again
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
@@ -793,7 +778,7 @@ class DatabaseHelper:
 
     @classmethod
     def get_message_subscriptions_view_to_archive(cls, maxRetries, limit=100):
-        sql = ("SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData ")
+        sql = "SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData "
         cls.init()
         cnt = cls.db.get_scalar_by_SQL(sql)
         if cnt > 0:
@@ -838,7 +823,7 @@ class DatabaseHelper:
     @classmethod
     def change_future_sent_dates(cls):
         cls.init()
-        sql = ("SELECT * FROM MessageSubscriptionData ORDER BY SentDate desc")
+        sql = "SELECT * FROM MessageSubscriptionData ORDER BY SentDate desc"
         subs = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql)
         now = datetime.now()
         for sub in subs:
@@ -852,7 +837,7 @@ class DatabaseHelper:
     @classmethod
     def change_future_created_dates(cls):
         cls.init()
-        sql = ("SELECT * FROM MessageBoxData ORDER BY CreatedDate desc")
+        sql = "SELECT * FROM MessageBoxData ORDER BY CreatedDate desc"
         messageBoxDatas = cls.db.get_table_objects_by_SQL(MessageBoxData, sql)
         now = datetime.now()
         for msg in messageBoxDatas:
@@ -862,7 +847,8 @@ class DatabaseHelper:
                 DatabaseHelper.WiRocLogger.debug('Set future CreatedDate: ' + str(msg.CreatedDate) + " to: " + str(now))
             else:
                 return
-#MessageBox
+
+    # MessageBox
     @classmethod
     def create_message_box_data(cls, messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK, powerCycle, serialNumber, data, rssiValue):
         mbd = MessageBoxData()
@@ -898,13 +884,13 @@ class DatabaseHelper:
             mbd.LowBattery = loraPunchMessage.GetBatteryLow()
             siPayloadData = loraPunchMessage.GetSIMessageByteTuple()[0]
         elif messageSubTypeName == "SIMessage":
-            #source WiRoc, SIStation
+            # source WiRoc, SIStation
             siPayloadData = data
         elif messageSubTypeName == "Test":
-            #source recievetestpunches adapter
+            # source recievetestpunches adapter
             siPayloadData = data
 
-        if siPayloadData != None:
+        if siPayloadData is not None:
             siMsg = SIMessage()
             siMsg.AddPayload(siPayloadData)
             mbd.SICardNumber = siMsg.GetSICardNumber()
@@ -915,7 +901,6 @@ class DatabaseHelper:
             mbd.MemoryAddress = siMsg.GetBackupMemoryAddressAsInt()
             mbd.SIStationNumber = siMsg.GetStationNumber()
         return mbd
-
 
     @classmethod
     def save_message_box(cls, messageBoxData):
@@ -961,7 +946,7 @@ class DatabaseHelper:
               "MessageSubscriptionData.MessageboxId WHERE MessageSubscriptionData.id IS NULL)"
         cls.db.execute_SQL(sql)
 
-#RepeaterMessageBox
+    # RepeaterMessageBox
     @classmethod
     def create_repeater_message_box_data(cls, messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK,
                                 powerCycle, serialNumber, messageID, data, rssiValue):
@@ -986,7 +971,7 @@ class DatabaseHelper:
 
         siPayloadData = None
         if messageTypeName == "LORA" and messageSubTypeName == "SIMessage":
-            loraPunchMessage = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(data, rssiByte= None)
+            loraPunchMessage = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(data, rssiByte=None)
             rmbd.LowBattery = loraPunchMessage.GetBatteryLow()
             rmbd.AckRequested = loraPunchMessage.GetAckRequested()
             rmbd.RepeaterRequested = loraPunchMessage.GetRepeater()
@@ -998,7 +983,7 @@ class DatabaseHelper:
             rmbd.RepeaterRequested = loraPunchDoubleMessage.GetRepeater()
             siPayloadData = loraPunchDoubleMessage.GetSIMessageByteTuple()[0]
 
-        if siPayloadData != None:
+        if siPayloadData is not None:
             siMsg = SIMessage()
             siMsg.AddPayload(siPayloadData)
             rmbd.SICardNumber = siMsg.GetSICardNumber()
@@ -1014,7 +999,7 @@ class DatabaseHelper:
     def save_repeater_message_box(cls, repeaterMessageBoxData):
         cls.init()
         msgID = repeaterMessageBoxData.MessageID
-        sql = ("SELECT RepeaterMessageBoxData.* FROM RepeaterMessageBoxData WHERE MessageID = ?")
+        sql = "SELECT RepeaterMessageBoxData.* FROM RepeaterMessageBoxData WHERE MessageID = ?"
         rows = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData, sql, (msgID,))
         if len(rows) > 0:
             msgToUpdate = rows[0]
@@ -1047,7 +1032,7 @@ class DatabaseHelper:
                "? as CreatedDate "
                "FROM RepeaterMessageBoxData WHERE LastSeenTime < ?")
         cls.db.execute_SQL(sql, (datetime.now(), datetime.now(), fiveMinutesAgo))
-        sql = ("DELETE FROM RepeaterMessageBoxData WHERE LastSeenTime < ? ")
+        sql = "DELETE FROM RepeaterMessageBoxData WHERE LastSeenTime < ? "
         cls.db.execute_SQL(sql, (fiveMinutesAgo,))
 
     @classmethod
@@ -1061,11 +1046,11 @@ class DatabaseHelper:
             return repeaterMessages[0]
         return None
 
-#InputAdapterInstances
+    # InputAdapterInstances
     @classmethod
     def update_input_adapter_instances(cls, inputAdapterObjects):
         cls.init()
-        sql = ("UPDATE InputAdapterInstances SET ToBeDeleted = 1")
+        sql = "UPDATE InputAdapterInstances SET ToBeDeleted = 1"
         cls.db.execute_SQL_no_commit(sql)
         for inputAdapter in inputAdapterObjects:
             sql = ("WITH new (TypeName, InstanceName, ToBeDeleted) AS "
@@ -1076,7 +1061,7 @@ class DatabaseHelper:
                     "FROM new LEFT JOIN InputAdapterInstances AS old "
                     "ON new.InstanceName = old.InstanceName") % (inputAdapter.GetTypeName(), inputAdapter.GetInstanceName())
             cls.db.execute_SQL_no_commit(sql)
-        sql = ("DELETE FROM InputAdapterInstances WHERE ToBeDeleted = 1")
+        sql = "DELETE FROM InputAdapterInstances WHERE ToBeDeleted = 1"
         cls.db.execute_SQL(sql)
 
     @classmethod
@@ -1085,7 +1070,7 @@ class DatabaseHelper:
         inputAdapterInstances = cls.db.get_table_objects(InputAdapterInstances)
         return inputAdapterInstances
 
-#BlenoPunchData
+    # BlenoPunchData
     @classmethod
     def save_bleno_punch_data(cls, blenoPunchData):
         cls.init()
@@ -1101,7 +1086,7 @@ class DatabaseHelper:
         cls.init()
         cls.db.delete_table_object(BlenoPunchData, rowId)
 
-#TestPunchData
+    # TestPunchData
     @classmethod
     def add_test_punch(cls, testBatchGuid, SINo, twelveHourTimer, twentyFourHour):
         cls.init()
@@ -1210,7 +1195,7 @@ class DatabaseHelper:
         sql = "UPDATE MessageStatsData SET Uploaded = 1 WHERE Id = " + str(messageStatId)
         cls.db.execute_SQL(sql)
 
-#Channels
+    # Channels
     @classmethod
     def get_channelold(cls, channel, dataRate, loraModem):
         cls.init()
@@ -1239,108 +1224,94 @@ class DatabaseHelper:
     @classmethod
     def add_default_channels(cls):
         cls.init()
-        channels = []
+        channels = [ChannelData(1, 293, 'L', 439750000, 52590, 16, 12, 7, "RF1276T"),
+                    ChannelData(2, 293, 'L', 439775000, 52590, 16, 12, 7, "RF1276T"),
+                    ChannelData(3, 293, 'L', 439800000, 52590, 16, 12, 7, "RF1276T"),
+                    ChannelData(4, 293, 'L', 439825000, 52590, 16, 12, 7, "RF1276T"),
+                    ChannelData(5, 293, 'L', 439850000, 52590, 16, 12, 7, "RF1276T"),
+                    ChannelData(6, 293, 'L', 439875000, 52590, 16, 12, 7, "RF1276T"),
+                    ChannelData(7, 293, 'L', 439900000, 52590, 16, 12, 7, "RF1276T"),
+                    ChannelData(8, 293, 'L', 439925000, 52590, 16, 12, 7, "RF1276T"),
+                    ChannelData(1, 537, 'ML', 439750000, 24130, 16, 11, 7, "RF1276T"),
+                    ChannelData(2, 537, 'ML', 439775000, 24130, 16, 11, 7, "RF1276T"),
+                    ChannelData(3, 537, 'ML', 439800000, 24130, 16, 11, 7, "RF1276T"),
+                    ChannelData(4, 537, 'ML', 439825000, 24130, 16, 11, 7, "RF1276T"),
+                    ChannelData(5, 537, 'ML', 439850000, 24130, 16, 11, 7, "RF1276T"),
+                    ChannelData(6, 537, 'ML', 439875000, 24130, 16, 11, 7, "RF1276T"),
+                    ChannelData(7, 537, 'ML', 439900000, 24130, 16, 11, 7, "RF1276T"),
+                    ChannelData(8, 537, 'ML', 439925000, 24130, 16, 11, 7, "RF1276T"),
+                    ChannelData(1, 977, 'MS', 439750000, 15680, 16, 10, 7, "RF1276T"),
+                    ChannelData(2, 977, 'MS', 439775000, 15680, 16, 10, 7, "RF1276T"),
+                    ChannelData(3, 977, 'MS', 439800000, 15680, 16, 10, 7, "RF1276T"),
+                    ChannelData(4, 977, 'MS', 439825000, 15680, 16, 10, 7, "RF1276T"),
+                    ChannelData(5, 977, 'MS', 439850000, 15680, 16, 10, 7, "RF1276T"),
+                    ChannelData(6, 977, 'MS', 439875000, 15680, 16, 10, 7, "RF1276T"),
+                    ChannelData(7, 977, 'MS', 439900000, 15680, 16, 10, 7, "RF1276T"),
+                    ChannelData(8, 977, 'MS', 439925000, 15680, 16, 10, 7, "RF1276T"),
+                    ChannelData(1, 1758, 'S', 439750000, 8714, 15, 9, 7, "RF1276T"),
+                    ChannelData(2, 1758, 'S', 439775000, 8714, 15, 9, 7, "RF1276T"),
+                    ChannelData(3, 1758, 'S', 439800000, 8714, 15, 9, 7, "RF1276T"),
+                    ChannelData(4, 1758, 'S', 439825000, 8714, 15, 9, 7, "RF1276T"),
+                    ChannelData(5, 1758, 'S', 439850000, 8714, 15, 9, 7, "RF1276T"),
+                    ChannelData(6, 1758, 'S', 439875000, 8714, 15, 9, 7, "RF1276T"),
+                    ChannelData(7, 1758, 'S', 439900000, 8714, 15, 9, 7, "RF1276T"),
+                    ChannelData(8, 1758, 'S', 439925000, 8714, 15, 9, 7, "RF1276T"),
+                    ChannelData(1, 3125, 'XS', 439750000, 4793, 15, 8, 7, "RF1276T"),
+                    ChannelData(2, 3125, 'XS', 439775000, 4793, 15, 8, 7, "RF1276T"),
+                    ChannelData(3, 3125, 'XS', 439800000, 4793, 15, 8, 7, "RF1276T"),
+                    ChannelData(4, 3125, 'XS', 439825000, 4793, 15, 8, 7, "RF1276T"),
+                    ChannelData(5, 3125, 'XS', 439850000, 4793, 15, 8, 7, "RF1276T"),
+                    ChannelData(6, 3125, 'XS', 439875000, 4793, 15, 8, 7, "RF1276T"),
+                    ChannelData(7, 3125, 'XS', 439900000, 4793, 15, 8, 7, "RF1276T"),
+                    ChannelData(8, 3125, 'XS', 439925000, 4793, 15, 8, 7, "RF1276T"),
+                    ChannelData(1, 5470, 'US', 439750000, 2736, 15, 7, 7, "RF1276T"),
+                    ChannelData(2, 5470, 'US', 439775000, 2736, 15, 7, 7, "RF1276T"),
+                    ChannelData(3, 5470, 'US', 439800000, 2736, 15, 7, 7, "RF1276T"),
+                    ChannelData(4, 5470, 'US', 439825000, 2736, 15, 7, 7, "RF1276T"),
+                    ChannelData(5, 5470, 'US', 439850000, 2736, 15, 7, 7, "RF1276T"),
+                    ChannelData(6, 5470, 'US', 439875000, 2736, 15, 7, 7, "RF1276T"),
+                    ChannelData(7, 5470, 'US', 439900000, 2736, 15, 7, 7, "RF1276T"),
+                    ChannelData(8, 5470, 'US', 439925000, 2736, 15, 7, 7, "RF1276T"),
+                    ChannelData(1, 73, 'UL', 439712500, 210410, 16, 12, 5, "DRF1268DS"),
+                    ChannelData(2, 73, 'UL', 439762500, 210410, 16, 12, 5, "DRF1268DS"),
+                    ChannelData(3, 73, 'UL', 439812500, 210410, 16, 12, 5, "DRF1268DS"),
+                    ChannelData(4, 73, 'UL', 439862500, 210410, 16, 12, 5, "DRF1268DS"),
+                    ChannelData(5, 73, 'UL', 439912500, 210410, 16, 12, 5, "DRF1268DS"),
+                    ChannelData(6, 73, 'UL', 439962500, 210410, 16, 12, 5, "DRF1268DS"),
+                    ChannelData(1, 134, 'XL', 439712500, 114626, 16, 11, 5, "DRF1268DS"),
+                    ChannelData(2, 134, 'XL', 439762500, 114626, 16, 11, 5, "DRF1268DS"),
+                    ChannelData(3, 134, 'XL', 439812500, 114626, 16, 11, 5, "DRF1268DS"),
+                    ChannelData(4, 134, 'XL', 439862500, 114626, 16, 11, 5, "DRF1268DS"),
+                    ChannelData(5, 134, 'XL', 439912500, 114626, 16, 11, 5, "DRF1268DS"),
+                    ChannelData(6, 134, 'XL', 439962500, 114626, 16, 11, 5, "DRF1268DS"),
+                    ChannelData(1, 244, 'L', 439712500, 62950, 16, 10, 5, "DRF1268DS"),
+                    ChannelData(2, 244, 'L', 439762500, 62950, 16, 10, 5, "DRF1268DS"),
+                    ChannelData(3, 244, 'L', 439812500, 62950, 16, 10, 5, "DRF1268DS"),
+                    ChannelData(4, 244, 'L', 439862500, 62950, 16, 10, 5, "DRF1268DS"),
+                    ChannelData(5, 244, 'L', 439912500, 62950, 16, 10, 5, "DRF1268DS"),
+                    ChannelData(6, 244, 'L', 439962500, 62950, 16, 10, 5, "DRF1268DS"),
+                    ChannelData(1, 439, 'ML', 439712500, 34988, 16, 9, 5, "DRF1268DS"),
+                    ChannelData(2, 439, 'ML', 439762500, 34988, 16, 9, 5, "DRF1268DS"),
+                    ChannelData(3, 439, 'ML', 439812500, 34988, 16, 9, 5, "DRF1268DS"),
+                    ChannelData(4, 439, 'ML', 439862500, 34988, 16, 9, 5, "DRF1268DS"),
+                    ChannelData(5, 439, 'ML', 439912500, 34988, 16, 9, 5, "DRF1268DS"),
+                    ChannelData(6, 439, 'ML', 439962500, 34988, 16, 9, 5, "DRF1268DS"),
+                    ChannelData(1, 781, 'MS', 439712500, 19667, 16, 8, 5, "DRF1268DS"),
+                    ChannelData(2, 781, 'MS', 439762500, 19667, 16, 8, 5, "DRF1268DS"),
+                    ChannelData(3, 781, 'MS', 439812500, 19667, 16, 8, 5, "DRF1268DS"),
+                    ChannelData(4, 781, 'MS', 439862500, 19667, 16, 8, 5, "DRF1268DS"),
+                    ChannelData(5, 781, 'MS', 439912500, 19667, 16, 8, 5, "DRF1268DS"),
+                    ChannelData(6, 781, 'MS', 439962500, 19667, 16, 8, 5, "DRF1268DS"),
+                    ChannelData(1, 1367, 'S', 439712500, 11236, 16, 7, 5, "DRF1268DS"),
+                    ChannelData(2, 1367, 'S', 439762500, 11236, 16, 7, 5, "DRF1268DS"),
+                    ChannelData(3, 1367, 'S', 439812500, 11236, 16, 7, 5, "DRF1268DS"),
+                    ChannelData(4, 1367, 'S', 439862500, 11236, 16, 7, 5, "DRF1268DS"),
+                    ChannelData(5, 1367, 'S', 439912500, 11236, 16, 7, 5, "DRF1268DS"),
+                    ChannelData(6, 1367, 'S', 439962500, 11236, 16, 7, 5, "DRF1268DS")]
         # =========================      RF1276T      ==============================
-        channels.append(ChannelData(1, 293, 'L', 439750000, 52590, 16, 12, 7, "RF1276T"))
-        channels.append(ChannelData(2, 293, 'L', 439775000, 52590, 16, 12, 7, "RF1276T"))
-        channels.append(ChannelData(3, 293, 'L', 439800000, 52590, 16, 12, 7, "RF1276T"))
-        channels.append(ChannelData(4, 293, 'L', 439825000, 52590, 16, 12, 7, "RF1276T"))
-        channels.append(ChannelData(5, 293, 'L', 439850000, 52590, 16, 12, 7, "RF1276T"))
-        channels.append(ChannelData(6, 293, 'L', 439875000, 52590, 16, 12, 7, "RF1276T"))
-        channels.append(ChannelData(7, 293, 'L', 439900000, 52590, 16, 12, 7, "RF1276T"))
-        channels.append(ChannelData(8, 293, 'L', 439925000, 52590, 16, 12, 7, "RF1276T"))
 
-        channels.append(ChannelData(1, 537, 'ML', 439750000, 24130, 16, 11, 7, "RF1276T"))
-        channels.append(ChannelData(2, 537, 'ML', 439775000, 24130, 16, 11, 7, "RF1276T"))
-        channels.append(ChannelData(3, 537, 'ML', 439800000, 24130, 16, 11, 7, "RF1276T"))
-        channels.append(ChannelData(4, 537, 'ML', 439825000, 24130, 16, 11, 7, "RF1276T"))
-        channels.append(ChannelData(5, 537, 'ML', 439850000, 24130, 16, 11, 7, "RF1276T"))
-        channels.append(ChannelData(6, 537, 'ML', 439875000, 24130, 16, 11, 7, "RF1276T"))
-        channels.append(ChannelData(7, 537, 'ML', 439900000, 24130, 16, 11, 7, "RF1276T"))
-        channels.append(ChannelData(8, 537, 'ML', 439925000, 24130, 16, 11, 7, "RF1276T"))
-
-        channels.append(ChannelData(1, 977, 'MS', 439750000, 15680, 16, 10, 7, "RF1276T"))
-        channels.append(ChannelData(2, 977, 'MS', 439775000, 15680, 16, 10, 7, "RF1276T"))
-        channels.append(ChannelData(3, 977, 'MS', 439800000, 15680, 16, 10, 7, "RF1276T"))
-        channels.append(ChannelData(4, 977, 'MS', 439825000, 15680, 16, 10, 7, "RF1276T"))
-        channels.append(ChannelData(5, 977, 'MS', 439850000, 15680, 16, 10, 7, "RF1276T"))
-        channels.append(ChannelData(6, 977, 'MS', 439875000, 15680, 16, 10, 7, "RF1276T"))
-        channels.append(ChannelData(7, 977, 'MS', 439900000, 15680, 16, 10, 7, "RF1276T"))
-        channels.append(ChannelData(8, 977, 'MS', 439925000, 15680, 16, 10, 7, "RF1276T"))
-
-        channels.append(ChannelData(1, 1758, 'S', 439750000, 8714, 15, 9, 7, "RF1276T"))
-        channels.append(ChannelData(2, 1758, 'S', 439775000, 8714, 15, 9, 7, "RF1276T"))
-        channels.append(ChannelData(3, 1758, 'S', 439800000, 8714, 15, 9, 7, "RF1276T"))
-        channels.append(ChannelData(4, 1758, 'S', 439825000, 8714, 15, 9, 7, "RF1276T"))
-        channels.append(ChannelData(5, 1758, 'S', 439850000, 8714, 15, 9, 7, "RF1276T"))
-        channels.append(ChannelData(6, 1758, 'S', 439875000, 8714, 15, 9, 7, "RF1276T"))
-        channels.append(ChannelData(7, 1758, 'S', 439900000, 8714, 15, 9, 7, "RF1276T"))
-        channels.append(ChannelData(8, 1758, 'S', 439925000, 8714, 15, 9, 7, "RF1276T"))
-
-        channels.append(ChannelData(1, 3125, 'XS', 439750000, 4793, 15, 8, 7, "RF1276T"))
-        channels.append(ChannelData(2, 3125, 'XS', 439775000, 4793, 15, 8, 7, "RF1276T"))
-        channels.append(ChannelData(3, 3125, 'XS', 439800000, 4793, 15, 8, 7, "RF1276T"))
-        channels.append(ChannelData(4, 3125, 'XS', 439825000, 4793, 15, 8, 7, "RF1276T"))
-        channels.append(ChannelData(5, 3125, 'XS', 439850000, 4793, 15, 8, 7, "RF1276T"))
-        channels.append(ChannelData(6, 3125, 'XS', 439875000, 4793, 15, 8, 7, "RF1276T"))
-        channels.append(ChannelData(7, 3125, 'XS', 439900000, 4793, 15, 8, 7, "RF1276T"))
-        channels.append(ChannelData(8, 3125, 'XS', 439925000, 4793, 15, 8, 7, "RF1276T"))
-
-        channels.append(ChannelData(1, 5470, 'US', 439750000, 2736, 15, 7, 7, "RF1276T"))
-        channels.append(ChannelData(2, 5470, 'US', 439775000, 2736, 15, 7, 7, "RF1276T"))
-        channels.append(ChannelData(3, 5470, 'US', 439800000, 2736, 15, 7, 7, "RF1276T"))
-        channels.append(ChannelData(4, 5470, 'US', 439825000, 2736, 15, 7, 7, "RF1276T"))
-        channels.append(ChannelData(5, 5470, 'US', 439850000, 2736, 15, 7, 7, "RF1276T"))
-        channels.append(ChannelData(6, 5470, 'US', 439875000, 2736, 15, 7, 7, "RF1276T"))
-        channels.append(ChannelData(7, 5470, 'US', 439900000, 2736, 15, 7, 7, "RF1276T"))
-        channels.append(ChannelData(8, 5470, 'US', 439925000, 2736, 15, 7, 7, "RF1276T"))
-
-        #======================
+        #  ======================
         #                     channel, datarate, freq, slopek, M, rffactor, rfBw, loramodem
-        channels.append(ChannelData(1, 73, 'UL', 439712500, 210410, 16, 12, 5, "DRF1268DS"))
-        channels.append(ChannelData(2, 73, 'UL', 439762500, 210410, 16, 12, 5, "DRF1268DS"))
-        channels.append(ChannelData(3, 73, 'UL', 439812500, 210410, 16, 12, 5, "DRF1268DS"))
-        channels.append(ChannelData(4, 73, 'UL', 439862500, 210410, 16, 12, 5, "DRF1268DS"))
-        channels.append(ChannelData(5, 73, 'UL', 439912500, 210410, 16, 12, 5, "DRF1268DS"))
-        channels.append(ChannelData(6, 73, 'UL', 439962500, 210410, 16, 12, 5, "DRF1268DS"))
-
-        channels.append(ChannelData(1, 134, 'XL', 439712500, 114626, 16, 11, 5, "DRF1268DS"))
-        channels.append(ChannelData(2, 134, 'XL', 439762500, 114626, 16, 11, 5, "DRF1268DS"))
-        channels.append(ChannelData(3, 134, 'XL', 439812500, 114626, 16, 11, 5, "DRF1268DS"))
-        channels.append(ChannelData(4, 134, 'XL', 439862500, 114626, 16, 11, 5, "DRF1268DS"))
-        channels.append(ChannelData(5, 134, 'XL', 439912500, 114626, 16, 11, 5, "DRF1268DS"))
-        channels.append(ChannelData(6, 134, 'XL', 439962500, 114626, 16, 11, 5, "DRF1268DS"))
-
-        channels.append(ChannelData(1, 244, 'L', 439712500, 62950, 16, 10, 5, "DRF1268DS"))
-        channels.append(ChannelData(2, 244, 'L', 439762500, 62950, 16, 10, 5, "DRF1268DS"))
-        channels.append(ChannelData(3, 244, 'L', 439812500, 62950, 16, 10, 5, "DRF1268DS"))
-        channels.append(ChannelData(4, 244, 'L', 439862500, 62950, 16, 10, 5, "DRF1268DS"))
-        channels.append(ChannelData(5, 244, 'L', 439912500, 62950, 16, 10, 5, "DRF1268DS"))
-        channels.append(ChannelData(6, 244, 'L', 439962500, 62950, 16, 10, 5, "DRF1268DS"))
-
-        channels.append(ChannelData(1, 439, 'ML', 439712500, 34988, 16, 9, 5, "DRF1268DS"))
-        channels.append(ChannelData(2, 439, 'ML', 439762500, 34988, 16, 9, 5, "DRF1268DS"))
-        channels.append(ChannelData(3, 439, 'ML', 439812500, 34988, 16, 9, 5, "DRF1268DS"))
-        channels.append(ChannelData(4, 439, 'ML', 439862500, 34988, 16, 9, 5, "DRF1268DS"))
-        channels.append(ChannelData(5, 439, 'ML', 439912500, 34988, 16, 9, 5, "DRF1268DS"))
-        channels.append(ChannelData(6, 439, 'ML', 439962500, 34988, 16, 9, 5, "DRF1268DS"))
-
-        channels.append(ChannelData(1, 781, 'MS', 439712500, 19667, 16, 8, 5, "DRF1268DS"))
-        channels.append(ChannelData(2, 781, 'MS', 439762500, 19667, 16, 8, 5, "DRF1268DS"))
-        channels.append(ChannelData(3, 781, 'MS', 439812500, 19667, 16, 8, 5, "DRF1268DS"))
-        channels.append(ChannelData(4, 781, 'MS', 439862500, 19667, 16, 8, 5, "DRF1268DS"))
-        channels.append(ChannelData(5, 781, 'MS', 439912500, 19667, 16, 8, 5, "DRF1268DS"))
-        channels.append(ChannelData(6, 781, 'MS', 439962500, 19667, 16, 8, 5, "DRF1268DS"))
-
-        channels.append(ChannelData(1, 1367, 'S', 439712500, 11236, 16, 7, 5, "DRF1268DS"))
-        channels.append(ChannelData(2, 1367, 'S', 439762500, 11236, 16, 7, 5, "DRF1268DS"))
-        channels.append(ChannelData(3, 1367, 'S', 439812500, 11236, 16, 7, 5, "DRF1268DS"))
-        channels.append(ChannelData(4, 1367, 'S', 439862500, 11236, 16, 7, 5, "DRF1268DS"))
-        channels.append(ChannelData(5, 1367, 'S', 439912500, 11236, 16, 7, 5, "DRF1268DS"))
-        channels.append(ChannelData(6, 1367, 'S', 439962500, 11236, 16, 7, 5, "DRF1268DS"))
 
         for channel in channels:
             cls.save_channel(channel)
-
-
-
