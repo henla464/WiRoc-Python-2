@@ -597,6 +597,24 @@ class SettingsClass(object):
             return "RECEIVE"
         return sett.Value
 
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetBTSerialOneWayReceiveFromSIStation'), lock=rlock)
+    def GetBTSerialOneWayReceiveFromSIStation():
+        sett = DatabaseHelper.get_setting_by_key('BTSerialOneWayReceive')
+        if sett is None:
+            SettingsClass.SetSetting("BTSerialOneWayReceive", "0")
+            return False
+        return sett.Value == "1"
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetForceBTSerial4800BaudRateFromSIStation'), lock=rlock)
+    def GetForceBTSerial4800BaudRateFromSIStation():
+        sett = DatabaseHelper.get_setting_by_key('ForceBTSerial4800BaudRate')
+        if sett is None:
+            SettingsClass.SetSetting("ForceBTSerial4800BaudRate", "0")
+            return False
+        return sett.Value == "1"
+
     #####
     # Not changed from web services
     #####
@@ -613,6 +631,7 @@ class SettingsClass(object):
             btAddress = hcitoolRespWords[1]
         return btAddress
 
+
     @staticmethod
     @cached(cacheForEver, key=partial(hashkey, 'GetBTAddressAsInt'), lock=rlock)
     def GetBTAddressAsInt():
@@ -623,7 +642,6 @@ class SettingsClass(object):
             btAddressAsString = btAddressAsString.replace(':','')
             btAddressAsInt = int(btAddressAsString, 16)
             return btAddressAsInt
-
 
     @staticmethod
     @cached(cacheForEver, key=partial(hashkey, 'GetAPIKey'), lock=rlock)
@@ -645,7 +663,6 @@ class SettingsClass(object):
             return 1
         return int(sett.Value)
 
-
     @staticmethod
     @cached(cacheUntilChangedByProcess, key=partial(hashkey, 'GetReceiveSIAdapterActive'), lock=rlock)
     def GetReceiveSIAdapterActive():
@@ -653,7 +670,7 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("ReceiveSIAdapterActive", "0")
             return False
-        return (sett.Value == "1")
+        return sett.Value == "1"
 
     @staticmethod
     @cached(cacheUntilChangedByProcess, key=partial(hashkey, 'GetSendSerialAdapterActive'), lock=rlock)
@@ -662,6 +679,6 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("SendSerialAdapterActive", "0")
             return False
-        return (sett.Value == "1")
+        return sett.Value == "1"
 
 

@@ -360,16 +360,27 @@ class ReceiveSIAdapter(object):
                     HardwareAbstraction.Instance.ReleaseRFCommByPortName(self.portName)
                     self.noOfFailedInitializations = 0
                     return False
-                if self.InitTwoWay():
-                    self.noOfFailedInitializations = 0
-                    return True
-                else:  # better with init one way if two way is not working than aborting
+                if SettingsClass.GetBTSerialOneWayReceiveFromSIStation():
+                    if SettingsClass.GetForceBTSerial4800BaudRateFromSIStation():
+                        # can only be forced to 4800 when in one-way receive
+                        baudrate = 4800
                     success = self.InitBTSerialOneWay(baudrate)
                     if success:
                         self.noOfFailedInitializations = 0
                     else:
                         self.noOfFailedInitializations += 1
                     return success
+                else:
+                    if self.InitTwoWay():
+                        self.noOfFailedInitializations = 0
+                        return True
+                    else:  # better with init one way if two way is not working than aborting
+                        success = self.InitBTSerialOneWay(baudrate)
+                        if success:
+                            self.noOfFailedInitializations = 0
+                        else:
+                            self.noOfFailedInitializations += 1
+                        return success
             else:
                 if SettingsClass.GetOneWayReceiveFromSIStation():
                     baudrate = 38400
