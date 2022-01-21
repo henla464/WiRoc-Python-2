@@ -39,7 +39,7 @@ class ReceiveTestPunchesAdapter(object):
         self.isInitialized = True
         return True
 
-    def UpdateInfreqently(self):
+    def UpdateInfrequently(self):
         self.TimeToFetch = True
         return self.TimeToFetch
 

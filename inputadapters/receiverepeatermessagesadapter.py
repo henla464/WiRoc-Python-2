@@ -39,7 +39,7 @@ class ReceiveRepeaterMessagesAdapter(object):
         self.isInitialized = True
         return True
 
-    def UpdateInfreqently(self):
+    def UpdateInfrequently(self):
         return True
 
     def GetData(self):

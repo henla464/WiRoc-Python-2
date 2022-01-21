@@ -104,7 +104,7 @@ class ReceiveLoraAdapter(object):
             return True
         self.loraRadio.Init(channel, loraRange, loraPower, codeRate, rxGain)
 
-    def UpdateInfreqently(self):
+    def UpdateInfrequently(self):
         return True
 
     def TrySendData(self, messageData):

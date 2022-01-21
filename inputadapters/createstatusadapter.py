@@ -45,9 +45,9 @@ class CreateStatusAdapter(object):
         self.isInitialized = True
         return True
 
-    def UpdateInfreqently(self):
+    def UpdateInfrequently(self):
         currentTime = time.monotonic()
-        self.TimeToFetch = (currentTime - max(SettingsClass.GetTimeOfLastMessageSentToLora(), self.LastTimeCreated) > SettingsClass.GetStatusMessageInterval())
+        self.TimeToFetch = (currentTime - self.LastTimeCreated > SettingsClass.GetStatusMessageInterval())
         return self.TimeToFetch
 
     def GetData(self):

@@ -167,15 +167,6 @@ class SettingsClass(object):
         return SettingsClass.relayPathNo
 
     @staticmethod
-    def GetWebServerIPUrlBackground(webServerUrl):
-        ip = SettingsClass.GetWebServerIP()
-        if ip is None:
-            return None
-        host = webServerUrl.replace('http://', '').replace('https://', '')
-        IPUrl = webServerUrl.replace(host, ip)
-        return IPUrl
-
-    @staticmethod
     def GetWebServerHostBackground(wsUrl):
         return wsUrl.replace('http://', '').replace('https://', '')
 
@@ -395,7 +386,7 @@ class SettingsClass(object):
     def GetWebServerUrl():
         sett = DatabaseHelper.get_setting_by_key('WebServerUrl')
         if sett is None:
-            url = "http://monitor.wiroc.se"
+            url = "https://monitor.wiroc.se"
             SettingsClass.SetSetting("WebServerUrl", url)
             return url
         return sett.Value
@@ -533,17 +524,6 @@ class SettingsClass(object):
     def GetWebServerHost():
         wsUrl = SettingsClass.GetWebServerUrl()
         return wsUrl.replace('http://', '').replace('https://', '')
-
-    @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetWebServerIPUrl'), lock=rlock)
-    def GetWebServerIPUrl():
-        ip = SettingsClass.GetWebServerIP()
-        if ip is None:
-            return None
-        webServerUrl = SettingsClass.GetWebServerUrl()
-        host = webServerUrl.replace('http://', '').replace('https://', '')
-        IPUrl = webServerUrl.replace(host, ip)
-        return IPUrl
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetSendStatusMessage'), lock=rlock)

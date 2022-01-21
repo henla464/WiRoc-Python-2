@@ -511,7 +511,7 @@ class ReceiveSIAdapter(object):
         DatabaseHelper.change_future_sent_dates()
 
 
-    def UpdateInfreqently(self):
+    def UpdateInfrequently(self):
         #SettingsClass.SetSIStationNumber(self.siStationNumber)
         return True
 
