@@ -39,7 +39,7 @@ class RepeaterSIMessageDoubleToLoraAckTransform(object):
         repeater = LoraRadioDataHandler.GetRepeater(payloadData)
         # when repeater is requested, ack is sent directly from receiveloraadapter
         if ackReq and not repeater:
-            return SettingsClass.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck) + 0.15 #ack 10, waiting for the destination wiroc to reply with ack + 0.15 delay
+            return LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck) + 0.15 #ack 10, waiting for the destination wiroc to reply with ack + 0.15 delay
         return None
 
     @staticmethod

@@ -13,8 +13,6 @@ from cachetools.keys import hashkey
 from functools import partial
 from threading import RLock
 
-from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
-
 cache = TTLCache(maxsize=100, ttl=300)  # 300 seconds
 cacheForEver = TTLCache(maxsize=100, ttl=30000)  # 30000 seconds (500 min)
 cacheUntilChangedByProcess = TTLCache(maxsize=100, ttl=30000)  # 30000 seconds (500 min)
@@ -489,12 +487,6 @@ class SettingsClass(object):
         # extra delay for higher error coderates
         microSecs = microSecs * (1 + 0.2 * codeRate)
         return microSecs/1000000
-
-    @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetLoraMessageTimeSendingTimeSByMessageType'), lock=rlock)
-    def GetLoraMessageTimeSendingTimeSByMessageType(messageType):
-        noOfBytes = LoraRadioMessageRS.MessageLengths[messageType]
-        return SettingsClass.GetLoraMessageTimeSendingTimeS(noOfBytes)
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetStatusMessageInterval'), lock=rlock)

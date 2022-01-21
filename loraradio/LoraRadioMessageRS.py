@@ -6,6 +6,7 @@ from datamodel.datamodel import SIMessage
 from loraradio.RSCoderLora import RSCoderLora
 from utils.utils import Utils
 from battery import *
+from settings.settings import SettingsClass
 
 
 class LoraRadioMessageRS(object):
@@ -24,6 +25,11 @@ class LoraRadioMessageRS(object):
         self.payloadData = bytearray()
         self.rsCodeData = bytearray()
         self.rssiByteArray = bytearray()
+
+    @staticmethod
+    def GetLoraMessageTimeSendingTimeSByMessageType(messageType):
+        noOfBytes = LoraRadioMessageRS.MessageLengths[messageType]
+        return SettingsClass.GetLoraMessageTimeSendingTimeS(noOfBytes)
 
     @staticmethod
     def getHeaderFormatString():

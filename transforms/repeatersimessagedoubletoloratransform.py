@@ -42,7 +42,7 @@ class RepeaterSIMessageDoubleToLoraTransform(object):
         else:
             # possible ack from receiver 10 + ack sent from repeater 10
             # add 2 extra loop
-            return SettingsClass.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck)*2+0.1
+            return LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck)*2+0.1
 
     @staticmethod
     def GetDeleteAfterSent():

@@ -39,8 +39,8 @@ class LoraSIMessageToLoraAckTransform(object):
             # and send message to receiver
             # + little delay 0.15 sec
             incomingMsgType = LoraRadioDataHandler.GetHeaderMessageType(payloadData)
-            return SettingsClass.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck) + \
-                SettingsClass.GetLoraMessageTimeSendingTimeSByMessageType(incomingMsgType) + \
+            return LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck) + \
+                LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(incomingMsgType) + \
                 0.15  # ack sent from repeater + 0.15 delay
 
         return None
