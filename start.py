@@ -2,24 +2,19 @@ __author__ = 'henla464'
 
 from datamodel.datamodel import MessageSubscriptionData
 from subscriberadapters.sendstatusadapter import SendStatusAdapter
-from subscriberadapters.sendloraadapter import SendLoraAdapter
-from inputadapters.receiveloraadapter import ReceiveLoraAdapter
 from setup import Setup
 import time
 import logging, logging.handlers
 from datetime import datetime, timedelta
 from datamodel.db_helper import DatabaseHelper
+from datamodel.MessageHelper import MessageHelper
 from settings.settings import SettingsClass
 import cProfile
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
-import socket
-from itertools import repeat
 from battery import Battery
 from utils.utils import Utils
 from display.displaystatemachine import DisplayStateMachine
 import requests, queue, threading
-import sys
-from logging.handlers import HTTPHandler
 
 class Main:
     def __init__(self):
@@ -230,7 +225,8 @@ class Main:
                                     DatabaseHelper.archive_lora_ack_message_subscription(messageID)
 
                         try:
-                            mbd = DatabaseHelper.create_message_box_data(messageSource, messageTypeName, messageSubTypeName, instanceName, True, powerCycle, SIStationSerialNumber, messageData, rssiValue)
+                            lowBattery, siPayloadData = MessageHelper.GetLowBatterySIPayload(messageTypeName, messageSubTypeName, messageData)
+                            mbd = DatabaseHelper.create_message_box_data(messageSource, messageTypeName, messageSubTypeName, instanceName, True, powerCycle, SIStationSerialNumber, lowBattery, siPayloadData, messageData, rssiValue)
                         except Exception as ex:
                             self.shouldReconfigure = True
                             self.wirocLogger.error("Error creating message box data")
