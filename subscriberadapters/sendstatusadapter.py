@@ -120,7 +120,7 @@ class SendStatusAdapter(object):
     def GetRetryDelay(self, tryNo):
         return 1
 
-    # messageData is a bytearray
+    # messageData is a tuple of bytearrays
     def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
         try:
             if settingsDictionary["WebServerUrl"] is None:
@@ -130,45 +130,45 @@ class SendStatusAdapter(object):
 
             host = settingsDictionary["WebServerHost"]
             headers = {'Authorization': settingsDictionary["ApiKey"], 'host': host}
-
             thisWiRocBtAddress = SettingsClass.GetBTAddress()
 
-            # Add/Update device
-            loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(messageData)
-            relayPathNo = loraStatusMsg.GetRelayPathNo()
-            btAddress = loraStatusMsg.GetBTAddress()
-            device = {"BTAddress": btAddress, "headBTAddress": thisWiRocBtAddress, "relayPathNo": relayPathNo}
-            URL = settingsDictionary["WebServerUrl"] + "/api/v1/Devices"
-            resp = requests.post(url=URL, json=device, timeout=1, headers=headers)
-            if resp.status_code == 200:
-                retDevice = resp.json()
-            else:
-                callbackQueue.put((failureCB, ))
-                return False
-
-            # Set the device name
-            if thisWiRocBtAddress == btAddress:
-                thisWiRocDeviceName = settingsDictionary["WiRocDeviceName"]
-                URL2 = settingsDictionary["WebServerUrl"] + "/api/v1/Devices/" + thisWiRocBtAddress + "/UpdateDeviceName/" + thisWiRocDeviceName
-                resp = requests.get(url=URL2, timeout=1, headers=headers)
+            returnSuccess = True
+            for data in messageData:
+                # Add/Update device
+                loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(data)
+                relayPathNo = loraStatusMsg.GetRelayPathNo()
+                btAddress = loraStatusMsg.GetBTAddress()
+                device = {"BTAddress": btAddress, "headBTAddress": thisWiRocBtAddress, "relayPathNo": relayPathNo}
+                URL = settingsDictionary["WebServerUrl"] + "/api/v1/Devices"
+                resp = requests.post(url=URL, json=device, timeout=1, headers=headers)
                 if resp.status_code == 200:
                     retDevice = resp.json()
                 else:
-                    callbackQueue.put((failureCB,))
-                    return False
+                    returnSuccess = False
 
-            # Add new status
-            batteryLevel = loraStatusMsg.GetBatteryPercent()
-            siStationNumber = loraStatusMsg.GetSIStationNumber()
-            URL3 = settingsDictionary["WebServerUrl"] + "/api/v1/DeviceStatuses"
-            deviceStatus = {"BTAddress": btAddress, "batteryLevel": batteryLevel, "siStationNumber": siStationNumber}
-            resp = requests.post(url=URL3, json=deviceStatus, timeout=1, headers=headers)
-            if resp.status_code == 200:
+                # Set the device name
+                if thisWiRocBtAddress == btAddress:
+                    thisWiRocDeviceName = settingsDictionary["WiRocDeviceName"]
+                    URL2 = settingsDictionary["WebServerUrl"] + "/api/v1/Devices/" + thisWiRocBtAddress + "/UpdateDeviceName/" + thisWiRocDeviceName
+                    resp = requests.get(url=URL2, timeout=1, headers=headers)
+                    if resp.status_code == 200:
+                        retDevice = resp.json()
+                    else:
+                        returnSuccess = False
+
+                # Add new status
+                batteryLevel = loraStatusMsg.GetBatteryPercent()
+                siStationNumber = loraStatusMsg.GetSIStationNumber()
+                URL3 = settingsDictionary["WebServerUrl"] + "/api/v1/DeviceStatuses"
+                deviceStatus = {"BTAddress": btAddress, "batteryLevel": batteryLevel, "siStationNumber": siStationNumber}
+                resp = requests.post(url=URL3, json=deviceStatus, timeout=1, headers=headers)
+                if resp.status_code != 200:
+                    returnSuccess = False
+
+            if returnSuccess:
                 callbackQueue.put((successCB,))
-                return True
             else:
                 callbackQueue.put((failureCB,))
-                return False
         except Exception as ex:
             SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::SendData() Exception: " + str(ex))
             callbackQueue.put((failureCB, ))

@@ -294,11 +294,11 @@ class LoraRadioMessageStatusRS(LoraRadioMessageRS):
         relayPathNo = SettingsClass.GetRelayPathNumber()
         btAddressAsInt = SettingsClass.GetBTAddressAsInt()
         self.payloadData = bytearray(bytes([batteryPercent, siStationNumber, relayPathNo,
-                                            (btAddressAsInt & 0xFF0000000000) > 40,
-                                            (btAddressAsInt & 0x00FF00000000) > 32,
-                                            (btAddressAsInt & 0x0000FF000000) > 24,
-                                            (btAddressAsInt & 0x000000FF0000) > 16,
-                                            (btAddressAsInt & 0x00000000FF00) > 8,
+                                            (btAddressAsInt & 0xFF0000000000) >> 40,
+                                            (btAddressAsInt & 0x00FF00000000) >> 32,
+                                            (btAddressAsInt & 0x0000FF000000) >> 24,
+                                            (btAddressAsInt & 0x000000FF0000) >> 16,
+                                            (btAddressAsInt & 0x00000000FF00) >> 8,
                                             (btAddressAsInt & 0x0000000000FF),
                                             ]))
         self.GenerateRSCode()
@@ -313,11 +313,11 @@ class LoraRadioMessageStatusRS(LoraRadioMessageRS):
         return self.payloadData[2]
 
     def GetBTAddressAsInt(self):
-        return (self.payloadData[3] < 40) | \
-               (self.payloadData[4] < 32) | \
-               (self.payloadData[5] < 24) | \
-               (self.payloadData[6] < 16) | \
-               (self.payloadData[7] < 8) | \
+        return (self.payloadData[3] << 40) | \
+               (self.payloadData[4] << 32) | \
+               (self.payloadData[5] << 24) | \
+               (self.payloadData[6] << 16) | \
+               (self.payloadData[7] << 8) | \
                self.payloadData[8]
 
     def GetBTAddress(self):

@@ -83,7 +83,7 @@ class Main:
             device = {"BTAddress": btAddress, "headBTAddress": btAddress, "name": wiRocDeviceName}  # "description": None
             URL = webServerUrl + "/api/v1/Devices"
             resp = requests.post(url=URL, json=device, timeout=1, headers=headers)
-            self.wirocLogger.warning("Start::Init resp statuscode " + resp.status_code)
+            self.wirocLogger.warning("Start::Init resp statuscode " + str(resp.status_code) + " " + resp.text)
             if resp.status_code == 200:
                 retDevice = resp.json()
                 SettingsClass.SetDeviceId(retDevice['id'])
@@ -122,7 +122,7 @@ class Main:
     def doFrequentMaintenanceTasks(self):
         SettingsClass.Tick()
         if HardwareAbstraction.Instance.runningOnChip or HardwareAbstraction.Instance.runningOnNanoPi:
-            wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
+            wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
             channel = SettingsClass.GetChannel()
             ackRequested = SettingsClass.GetAcknowledgementRequested()
             wirocMode = SettingsClass.GetLoraMode()
@@ -137,7 +137,6 @@ class Main:
             channel, ackRequested, wirocMode, loraRange, wiRocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress))
             t.daemon = True
             t.start()
-
 
     def doInfrequentMaintenanceTasks(self):
         self.archiveFailedMessages()
@@ -490,6 +489,32 @@ class Main:
             except Exception as ex:
                 self.wirocLogger.error("Start::sendMessageStats() Exception: " + str(ex))
 
+    def sendSetConnectedToInternetBackground(self, webServerUrl, webServerHost, apiKey):
+        btAddress = SettingsClass.GetBTAddress()
+        headers = {'Authorization': apiKey, 'host': webServerHost}
+        URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetConnectedToInternetTime"
+        #bodyToSend = {}
+        #json = messageStatToSend,
+        try:
+            resp = requests.post(url=URL, timeout=1, allow_redirects=False, headers=headers)
+            if resp.status_code != 200 and resp.status_code != 303:
+                self.webServerUp = False
+        except Exception as ex:
+            self.wirocLogger.error("Start::sendSetConnectedToInternetBackground() Exception: " + str(ex))
+
+    def sendSetConnectedToInternet(self):
+        if self.webServerUp:
+            try:
+                webServerUrl = SettingsClass.GetWebServerUrl()
+                webServerHost = SettingsClass.GetWebServerHost()
+                apiKey = SettingsClass.GetAPIKey()
+                t = threading.Thread(target=self.sendSetConnectedToInternetBackground,
+                                     args=(webServerUrl, webServerHost, apiKey))
+                t.daemon = True
+                t.start()
+            except Exception as ex:
+                self.wirocLogger.error("Start::sendSetConnectedToInternet() Exception: " + str(ex))
+
     def handleCallbacks(self):
         try:
             cbt = self.callbackQueue.get(False)
@@ -516,7 +541,7 @@ class Main:
         while True:
             for i in range(1,1004):
                 didTasks = False
-                if i % 149 == 0: #use prime numbers to avoid the tasks happening on the same interation
+                if i % 149 == 0: # use prime numbers to avoid the tasks happening on the same iteration
                     print("frequent maintenance time: " + str(datetime.now()))
                     didTasks = True
                     self.doFrequentMaintenanceTasks()
@@ -540,8 +565,7 @@ class Main:
                     print("infrequent maintenance time: " + str(datetime.now()))
                     didTasks = True
                     self.doInfrequentMaintenanceTasks()
-
-
+                    self.sendSetConnectedToInternet()
 
                 if not didTasks:
                     time.sleep(0.04)
@@ -549,7 +573,7 @@ class Main:
                 self.handleInput()
                 self.handleOutput(settDict)
                 self.sendMessageStats()
-                while not self.threadQueue.empty():  #ensure that messages are sent before handleCallbacks. Maybe separate send threads from others in future
+                while not self.threadQueue.empty():  # ensure that messages are sent before handleCallbacks. Maybe separate send threads from others in future
                     try:
                         bgThread = self.threadQueue.get(False)
                         bgThread.join()
@@ -559,6 +583,8 @@ class Main:
 
 
 main = None
+
+
 def main():
     logging.info("Start::main() Start main")
     global main
@@ -569,10 +595,12 @@ def run():
     global main
     main.Run()
 
+
 def startMain():
     main()
     run()
-    #cProfile.run('run()')
+    # cProfile.run('run()')
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.ERROR,
