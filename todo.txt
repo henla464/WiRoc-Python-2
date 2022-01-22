@@ -1,8 +1,8 @@
 WiRoc
 =====
-Make it possible to select Lora mode
-Set Receive or Send for RS232, app + api + recievesi class + sendcomputer?
-
+Change how RS232 input works to avoid it from trying to init every 10s. Maybe always open read only. And when first message arrive reconfigure/reinit with two-way if that is selected.
+Make subclasses for receivesiadapter with each type (USB, RS232, Bluetooth)
+Save devicename in persistent textfile that survives database recreation and upgrade
 Add option to reconfigure remote wiroc
 Test using python/bluez instead of bleno also for CHIP version
 
@@ -33,6 +33,8 @@ x When module returns 'busy' we should wait longer before retrying
 x Add success should only be done when ack received for a matching message
 x Add option to change ECC rate
 x Change from bleno to use python/bluez, with option to connect to BT-serial
+x Make it possible to select Lora mode
+x Set Receive or Send for RS232, app + api + recievesi class + sendcomputer?
 
 possible HW enhancments
 -----------------------

@@ -306,17 +306,14 @@ def getSettings():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=json_data))
 
-
-@app.route('/api/setting/<path:keyandvalue>/', methods=['GET'])
-def setSetting(keyandvalue):
+@app.route('/api/setting/<key>/<value>/', methods=['GET'])
+def setSetting(key, value):
     DatabaseHelper.reInit()
     settingData = None
-    keyandvaluelist = keyandvalue.split(';')
-    if len(keyandvaluelist) > 1:
-        settingData = SettingData()
-        settingData.Key = keyandvaluelist[0]
-        settingData.Value = keyandvaluelist[1]
-        settingData = DatabaseHelper.save_setting(settingData)
+    settingData = SettingData()
+    settingData.Key = key
+    settingData.Value = value
+    settingData = DatabaseHelper.save_setting(settingData)
 
     if settingData is None:
         return ''
@@ -324,7 +321,7 @@ def setSetting(keyandvalue):
     SettingsClass.SetSettingUpdatedByWebService()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=settingData.Key + ';' + settingData.Value))
+    return jsonpickle.encode(MicroMock(Value=settingData.Key + '\t' + settingData.Value))
 
 
 @app.route('/api/wirocdevicename/', methods=['GET'])

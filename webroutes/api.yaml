@@ -339,15 +339,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /setting/{keyandvalue}:
+  /setting/{key}/{value}:
     get:
       tags:
       - "Status"
       summary: "Add or change a setting"
       operationId: "setSetting"
       parameters:
-        - name: keyandvalue
-          description: "Enter in the format key;value"
+        - name: key
+          description: "The settings key name"
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Property'
+        - name: value
+          description: "The settings value"
           in: path
           required: true
           schema:

@@ -10,6 +10,7 @@ from datamodel.db_helper import DatabaseHelper
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 import serial.tools.list_ports
 
+
 class ReceiveSIAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Input')
     Instances = []
