@@ -152,7 +152,7 @@ class ReceiveLoraAdapter(object):
             if messageType == LoraRadioMessageRS.MessageTypeLoraAck:
                 if repeaterRequested:
                     SettingsClass.SetHasReceivedMessageFromRepeater()
-                if ((SettingsClass.GetLoraMode() == "SENDER") or (SettingsClass.GetLoraMode() == "REPEATER")):
+                if SettingsClass.GetLoraMode() == "SENDER" or SettingsClass.GetLoraMode() == "REPEATER":
                     messageIDToReturn = loraMessage.GetMessageIDThatIsAcked()
             elif messageType == LoraRadioMessageRS.MessageTypeStatus:
                 if loraMessage.GetBatteryLow():

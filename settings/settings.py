@@ -47,7 +47,7 @@ class SettingsClass(object):
 
     @staticmethod
     def GetStatusAcknowledgementRequested():
-        return True
+        return False
 
     @staticmethod
     def GetMaxRetries():

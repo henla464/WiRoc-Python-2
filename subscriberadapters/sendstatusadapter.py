@@ -81,7 +81,7 @@ class SendStatusAdapter(object):
         self.isDBInitialized = val
 
     def GetTransformNames(self):
-        return ["LoraStatusToStatusTransform", "StatusStatusToStatusTransform", "SIStatusToStatusTransform"]
+        return ["LoraStatusToStatusTransform", "StatusStatusToStatusTransform"]
 
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass

@@ -511,14 +511,13 @@ class ReceiveSIAdapter(object):
         DatabaseHelper.change_future_created_dates()
         DatabaseHelper.change_future_sent_dates()
 
-
     def UpdateInfrequently(self):
         #SettingsClass.SetSIStationNumber(self.siStationNumber)
         return True
 
     def detectMissedPunchesDuringInit(self):
         lastAddr = ReceiveSIAdapter.AddressOfLastPunch.get(self.serialNumber, None)
-        if lastAddr == None:
+        if lastAddr is None:
             return False
         getBackupPointerCmd = bytes([0xFF, 0x02, 0x02, 0x83, 0x02, 0x1C, 0x07, 0x74,0x06, 0x03])
         response = self.sendCommand(getBackupPointerCmd)
@@ -527,12 +526,12 @@ class ReceiveSIAdapter(object):
         if not SIMsg.GetIsChecksumOK():
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::detectMissedPunchesDuringInit getBackupPointerCmd returned invalid checksum")
             return None
-        curAddr = (response[7] << 16) | (response[11] << 8 ) | response[12] #next free memory address
+        curAddr = (response[7] << 16) | (response[11] << 8 ) | response[12] # next free memory address
 
         if curAddr > lastAddr:
             noOfMissedPunches = ((curAddr - lastAddr) / 8) -1
-            if noOfMissedPunches > 0 and noOfMissedPunches <= 30:
-                #We missed punches...
+            if 0 < noOfMissedPunches <= 30:
+                # We missed punches...
                 ReceiveSIAdapter.WiRocLogger.info(
                     "ReceiveSIAdapter::detectMissedPunchesDuringInit Punches missed, lastAddr: " + str(lastAddr) + " curAddr: " + str(curAddr))
                 self.fetchFromBackupAddress = lastAddr
@@ -546,13 +545,13 @@ class ReceiveSIAdapter(object):
         if lastAddr is None:
             return False
         if self.fetchFromBackup:
-            #already in fetch from backup mode
+            # already in fetch from backup mode
             return False
 
         if curAddr > lastAddr:
             noOfMissedPunches = ((curAddr - lastAddr) / 8) -1
             if 0 < noOfMissedPunches <= 30:
-                #We missed punches...
+                # We missed punches...
                 ReceiveSIAdapter.WiRocLogger.info(
                     "ReceiveSIAdapter::detectMissedPunches Punches missed, lastAddr: " + str(
                         lastAddr) + " curAddr: " + str(curAddr))
@@ -571,8 +570,8 @@ class ReceiveSIAdapter(object):
                 source = "SIStation"
                 ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::getBackupPunch Fetched backup punch")
                 return {"MessageType": "DATA", "MessageSource": source,
-                    "MessageSubTypeName": "SIMessage", "Data": SIMsgByteArray,
-                    "ChecksumOK": self.IsChecksumOK(SIMsgByteArray)}
+                        "MessageSubTypeName": "SIMessage", "Data": SIMsgByteArray,
+                        "ChecksumOK": self.IsChecksumOK(SIMsgByteArray)}
             else:
                 self.fetchFromBackup = False
         return None

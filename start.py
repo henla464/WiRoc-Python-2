@@ -134,7 +134,7 @@ class Main:
             wiRocIPAddress = HardwareAbstraction.Instance.GetWiRocIPAddresses()
 
             t = threading.Thread(target=self.updateDisplayBackground, args=(
-            channel, ackRequested, wirocMode, loraRange, wiRocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress))
+                channel, ackRequested, wirocMode, loraRange, wiRocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress))
             t.daemon = True
             t.start()
 
@@ -190,14 +190,17 @@ class Main:
                         #        "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " Checksum WRONG")
                         #    continue
                         loraMessage = inputData.get("LoraRadioMessage", None)
-                        if loraMessage == None:
+                        if loraMessage is None:
                             self.wirocLogger.error(
                                 "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
                             continue
                         rssiValue = loraMessage.GetRSSIValue()
+
+                        lowBattery, ackRequested, repeater, siPayloadData = MessageHelper.GetLowBatterySIPayload(messageTypeName, messageSubTypeName, messageData)
                         rmbd = DatabaseHelper.create_repeater_message_box_data(messageSource, messageTypeName, messageSubTypeName,
-                                                                     instanceName, True, powerCycle,
-                                                                     SIStationSerialNumber, messageID, messageData, rssiValue)
+                                                                               instanceName, True, powerCycle, SIStationSerialNumber,
+                                                                               lowBattery, ackRequested, repeater, siPayloadData,
+                                                                               messageID, messageData, rssiValue)
                         rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
                     else:
                         rssiValue = 0
@@ -207,7 +210,7 @@ class Main:
                             #        "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " Checksum WRONG")
                             #    continue
                             loraMessage = inputData.get("LoraRadioMessage", None)
-                            if loraMessage == None:
+                            if loraMessage is None:
                                 self.wirocLogger.error(
                                     "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
                                 continue
@@ -224,7 +227,7 @@ class Main:
                                     DatabaseHelper.archive_lora_ack_message_subscription(messageID)
 
                         try:
-                            lowBattery, siPayloadData = MessageHelper.GetLowBatterySIPayload(messageTypeName, messageSubTypeName, messageData)
+                            lowBattery, ackRequested, repeater, siPayloadData = MessageHelper.GetLowBatterySIPayload(messageTypeName, messageSubTypeName, messageData)
                             mbd = DatabaseHelper.create_message_box_data(messageSource, messageTypeName, messageSubTypeName, instanceName, True, powerCycle, SIStationSerialNumber, lowBattery, siPayloadData, messageData, rssiValue)
                         except Exception as ex:
                             self.shouldReconfigure = True
@@ -248,7 +251,7 @@ class Main:
                                 subAdapter = subAdapters[0]
                                 transform = subAdapter.GetTransform(subscription.TransformName)
                                 noOfSecondsToWait = transform.GetWaitThisNumberOfSeconds(mbd, subscription, subAdapter)
-                                if noOfSecondsToWait == None:
+                                if noOfSecondsToWait is None:
                                     continue  # skip this subscription
                                 msgSubscription.Delay = noOfSecondsToWait * 1000000
                                 self.wirocLogger.debug('Start::handleInput() Delay: ' + str(noOfSecondsToWait * 1000000))
@@ -258,7 +261,7 @@ class Main:
 
                             msgSubscription.MessageBoxId = mbdid
                             msgSubscription.SubscriptionId = subscription.id
-                            if messageID != None:
+                            if messageID is not None:
                                 self.wirocLogger.debug("MessageID: " + Utils.GetDataInHex(messageID, logging.DEBUG))
                             # messageid is used for messages from repeater table or test table. Is updated after transform when sent
                             msgSubscription.MessageID = messageID
@@ -293,53 +296,43 @@ class Main:
                         else:
                             loraSubAdapter.RemoveBlock()
 
-                        subscriptionView = DatabaseHelper.get_last_message_subscription_view_that_was_sent_to_lora()
-
-                        if subscriptionView is None:
+                        if not DatabaseHelper.does_message_id_exist(messageID):
                             # ack is probably an ack of a message sent from another checkpoint or repeater
-                            self.wirocLogger.debug("Start::handleInput() Received ack but could not find that a message was sent. The ack message id: " + Utils.GetDataInHex(messageID, logging.INFO))
-                            continue
-
-                        if messageID != subscriptionView.MessageID:
-                            # ack is probably an ack of a message sent from another checkpoint or repeater
-                            self.wirocLogger.debug("Start::handleInput() Received ack but last sent message: " + Utils.GetDataInHex(subscriptionView.MessageID, logging.INFO) + " doesn't match the ack message id: " + Utils.GetDataInHex(messageID, logging.INFO))
+                            self.wirocLogger.debug("Start::handleInput() Received ack but could not find a message with the id. The ack message id: " + Utils.GetDataInHex(messageID, logging.INFO))
                             continue
 
                         # Only add success when matching message found
-                        if messageID == subscriptionView.MessageID:
-                            if receivedFromRepeater:
-                                loraSubAdapter.AddSuccessWithRepeaterBit()
-                            else:
-                                loraSubAdapter.AddSuccessWithoutRepeaterBit()
+                        if receivedFromRepeater:
+                            loraSubAdapter.AddSuccessWithRepeaterBit()
+                        else:
+                            loraSubAdapter.AddSuccessWithoutRepeaterBit()
 
-                            if wirocMode == "REPEATER":
-                                self.wirocLogger.debug("Start::handleInput() Received ack, for repeater message id: " + Utils.GetDataInHex(messageID, logging.DEBUG))
-                                DatabaseHelper.repeater_messages_acked(messageID, rssiValue)  #todo: does this work, is messageID same?
-                                DatabaseHelper.archive_repeater_lora_message_subscriptions_after_ack(messageID, rssiValue)
-                                if destinationHasAcked:
-                                    DatabaseHelper.set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(
-                                        messageID)
-                            else:
-                                self.wirocLogger.debug("Start::handleInput() Received ack, for message id: " + Utils.GetDataInHex(messageID, logging.DEBUG) + " "
-                                              + " receivedFromRepeater: " + str(receivedFromRepeater)
-                                              + " destinationHasAcked: " + str(destinationHasAcked))
-                            DatabaseHelper.archive_message_subscriptions_after_ack(messageID, rssiValue)
-
-
+                        if wirocMode == "REPEATER":
+                            self.wirocLogger.debug("Start::handleInput() Received ack, for repeater message id: " + Utils.GetDataInHex(messageID, logging.DEBUG))
+                            DatabaseHelper.repeater_messages_acked(messageID, rssiValue)  #todo: does this work, is messageID same?
+                            DatabaseHelper.archive_repeater_lora_message_subscriptions_after_ack(messageID, rssiValue)
+                            if destinationHasAcked:
+                                DatabaseHelper.set_ack_received_from_receiver_on_repeater_lora_ack_message_subscription(
+                                    messageID)
+                        else:
+                            self.wirocLogger.debug("Start::handleInput() Received ack, for message id: " + Utils.GetDataInHex(messageID, logging.DEBUG) + " "
+                                          + " receivedFromRepeater: " + str(receivedFromRepeater)
+                                          + " destinationHasAcked: " + str(destinationHasAcked))
+                        DatabaseHelper.archive_message_subscriptions_after_ack(messageID, rssiValue)
 
     def handleOutput(self, settDict):
-        #self.wirocLogger.debug("IsReadyToSend: " + str(SendLoraAdapter.Instances[0].IsReadyToSend()) + " DateTime: " + str(datetime.now()))
+        # self.wirocLogger.debug("IsReadyToSend: " + str(SendLoraAdapter.Instances[0].IsReadyToSend()) + " DateTime: " + str(datetime.now()))
         if self.messagesToSendExists:
             noOfMsgSubWaiting, msgSubBatch = DatabaseHelper.get_message_subscriptions_view_to_send(SettingsClass.GetMaxRetries())
             if noOfMsgSubWaiting == 0:
                 self.messagesToSendExists = False
-            if msgSubBatch != None:
-                #self.wirocLogger.info("msgSub count: " + str(len(msgSubscriptions)))
+            if msgSubBatch is not None:
+                # self.wirocLogger.info("msgSub count: " + str(len(msgSubscriptions)))
                 # find the right adapter
                 adapterFound = False
                 for subAdapter in self.subscriberAdapters:
                     if (msgSubBatch.SubscriberInstanceName == subAdapter.GetInstanceName() and
-                                msgSubBatch.SubscriberTypeName == subAdapter.GetTypeName()):
+                            msgSubBatch.SubscriberTypeName == subAdapter.GetTypeName()):
                         adapterFound = True
 
                         if subAdapter.IsReadyToSend():
@@ -349,45 +342,47 @@ class Main:
                             if transformedData is not None:
                                 if transformedData["MessageID"] is not None:
                                     for item in msgSubBatch.MessageSubscriptionBatchItems:
-                                        self.wirocLogger.debug("Start::handleOutput() Update MessageID: " + str(transformedData["MessageID"]))
+                                        self.wirocLogger.debug("Start::handleOutput() Update MessageID: " + Utils.GetDataInHex(transformedData["MessageID"]))
                                         DatabaseHelper.update_messageid(item.id, transformedData["MessageID"])
 
                                 if msgSubBatch.DeleteAfterSent:
                                     # shouldn't wait for ack. (ie. repeater message ack)
-                                    self.wirocLogger.debug("In loop: subadapter: " + str(type(subAdapter)) + " DeleteAfterSent")
+                                    self.wirocLogger.debug("In loop: sub adapter: " + str(type(subAdapter)) + " DeleteAfterSent")
                                     settDict["DelayAfterMessageSent"] = 0
+                                    settDict["DelayAfterMessageSentWhenAck"] = subAdapter.GetDelayAfterMessageSent()
                                 else:
-                                    self.wirocLogger.debug("In loop: subadapter: " + str(type(subAdapter)) + " DelayAfterMessageSent: " + str(subAdapter.GetDelayAfterMessageSent()))
+                                    self.wirocLogger.debug("In loop: sub adapter: " + str(type(subAdapter)) + " DelayAfterMessageSent: " + str(subAdapter.GetDelayAfterMessageSent()))
                                     settDict["DelayAfterMessageSent"] = subAdapter.GetDelayAfterMessageSent()
+                                    settDict["DelayAfterMessageSentWhenAck"] = settDict["DelayAfterMessageSent"]
 
                                 def createSuccessCB(innerSubAdapter):
                                     def successCB():
                                         self.wirocLogger.info(
                                             "Start::Run() successCB() Message sent to " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName + " Trans:" + msgSubBatch.TransformName)
-                                        if msgSubBatch.DeleteAfterSent:  # move msgsub to archive
-                                            for item in msgSubBatch.MessageSubscriptionBatchItems:
-                                                DatabaseHelper.archive_message_subscription_view_after_sent(item.id)
+                                        if msgSubBatch.DeleteAfterSent:  # move msg subsription to archive
+                                            for batchItem in msgSubBatch.MessageSubscriptionBatchItems:
+                                                DatabaseHelper.archive_message_subscription_view_after_sent(batchItem.id)
                                         else:  # set SentDate and increment NoOfSendTries
-                                            for item in msgSubBatch.MessageSubscriptionBatchItems:
-                                                retryDelay = innerSubAdapter.GetRetryDelay(item.NoOfSendTries + 1)
-                                                DatabaseHelper.increment_send_tries_and_set_sent_date(item.id, retryDelay)
-                                                self.wirocLogger.debug("Start::Run() successCB() Subadapter: " +str(type(innerSubAdapter)) +
-                                                          " Increment send tries, NoOfSendTries: " + str(item.NoOfSendTries) +
-                                                          " retryDelay: " + str(retryDelay))
+                                            for batchItem in msgSubBatch.MessageSubscriptionBatchItems:
+                                                innerRetryDelay = innerSubAdapter.GetRetryDelay(batchItem.NoOfSendTries + 1)
+                                                DatabaseHelper.increment_send_tries_and_set_sent_date(batchItem.id, innerRetryDelay)
+                                                self.wirocLogger.debug("Start::Run() successCB() Sub adapter: " +str(type(innerSubAdapter)) +
+                                                                       " Increment send tries, NoOfSendTries: " + str(batchItem.NoOfSendTries) +
+                                                                       " retryDelay: " + str(innerRetryDelay))
                                     return successCB
 
                                 def createFailureCB(innerSubAdapter):
                                     def failureCB():
                                         # failed to send
-                                        for item in msgSubBatch.MessageSubscriptionBatchItems:
+                                        for batchItem in msgSubBatch.MessageSubscriptionBatchItems:
                                             self.wirocLogger.warning(
                                                 "Start::Run() Failed to send message: " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName + " Trans:" + msgSubBatch.TransformName + " id:"+ str(item.id))
-                                            retryDelay = innerSubAdapter.GetRetryDelay(item.NoOfSendTries + 1)
-                                            DatabaseHelper.increment_send_tries_and_set_send_failed_date(item.id, retryDelay)
+                                            innerRetryDelay = innerSubAdapter.GetRetryDelay(batchItem.NoOfSendTries + 1)
+                                            DatabaseHelper.increment_send_tries_and_set_send_failed_date(batchItem.id, innerRetryDelay)
                                             self.wirocLogger.debug(
                                                 "Start::Run() failureCB() Subadapter: " + str(type(innerSubAdapter)) +
-                                                " Increment send tries, NoOfSendTries: " + str(item.NoOfSendTries) +
-                                                " retryDelay: " + str(retryDelay))
+                                                " Increment send tries, NoOfSendTries: " + str(batchItem.NoOfSendTries) +
+                                                " retryDelay: " + str(innerRetryDelay))
                                     return failureCB
 
                                 def createNotSentCB():

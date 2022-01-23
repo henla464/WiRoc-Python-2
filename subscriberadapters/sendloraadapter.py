@@ -77,7 +77,6 @@ class SendLoraAdapter(object):
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SISIMessageToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestTestToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "StatusStatusToLoraTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "SIStatusToLoraTransform")
                 # For receiver: Sends schedules an ack for message received from sender when sender requested repeater
                 # (we don't send ack directly because repeater is expected reply with ack directly)
                 DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraSIMessageToLoraAckTransform")
@@ -134,7 +133,6 @@ class SendLoraAdapter(object):
         transforms.append("SISIMessageToLoraTransform")
         transforms.append("SITestTestToLoraTransform")
         transforms.append("StatusStatusToLoraTransform")
-        transforms.append("SIStatusToLoraTransform") # status message received through serial wiroc-wiroc
         transforms.append("RepeaterSIMessageToLoraAckTransform")
         transforms.append("RepeaterSIMessageDoubleToLoraAckTransform")
         transforms.append("RepeaterSIMessageToLoraTransform")
@@ -321,7 +319,8 @@ class SendLoraAdapter(object):
                     self.AddSentWithoutRepeaterBit()
             else:
                 # failed to send now, probably because 'busy' was returned, ie. something else was sending on same frequency. Delay a short bit.
-                self.BlockSendingUntilMessageSentAndAckReceived(self.GetDelayAfterMessageSent()/4)
+                delayWhenAckS = settingsDictionary["DelayAfterMessageSentWhenAck"]
+                self.BlockSendingUntilMessageSentAndAckReceived(delayWhenAckS/4)
                 returnSuccess = False
 
         if returnSuccess:

@@ -946,7 +946,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/PropertyObj'
+            type: string
       responses:
         "200":
           description: "successful operation"

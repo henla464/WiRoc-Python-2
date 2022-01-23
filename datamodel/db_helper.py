@@ -5,6 +5,7 @@ from databaselib.db import DB
 from databaselib.datamapping import DataMapping
 from datetime import timedelta, datetime
 
+
 class DatabaseHelper:
     db = None
     WiRocLogger = logging.getLogger('WiRoc')
@@ -166,7 +167,8 @@ class DatabaseHelper:
     @classmethod
     def get_subscribers(cls):
         cls.init()
-        rows = cls.db.get_table_objects_by_SQL(SubscriberView, "SELECT "
+        rows = cls.db.get_table_objects_by_SQL(
+                SubscriberView, "SELECT "
                 "SubscriberData.id, SubscriberData.TypeName, SubscriberData.InstanceName, "
                 "SubscriptionData.Enabled, MsgIn.Name MessageInName, MsgIn.MessageSubTypeName MessageInSubTypeName, "
                 "MsgOut.Name MessageOutName, MsgOut.MessageSubTypeName MessageOutSubTypeName, "
@@ -182,7 +184,9 @@ class DatabaseHelper:
     @classmethod
     def get_subscriber_by_subscription_id(cls, subscriptionId):
         cls.init()
-        rows = cls.db.get_table_objects_by_SQL(SubscriberView, "SELECT "
+        rows = cls.db.get_table_objects_by_SQL(
+            SubscriberView,
+            "SELECT "
             "SubscriberData.id, SubscriberData.TypeName, SubscriberData.InstanceName, "
             "SubscriptionData.Enabled, MsgIn.Name MessageInName, MsgIn.MessageSubTypeName MessageInSubTypeName, "
             "MsgOut.Name MessageOutName, MsgOut.MessageSubTypeName MessageOutSubTypeName, "
@@ -212,7 +216,7 @@ class DatabaseHelper:
     def save_transform(cls, transformData):
         cls.init()
         rows = cls.db.get_table_objects_by_SQL(TransformData, "SELECT * FROM TransformData WHERE Name = '" +
-                                           transformData.Name + "'")
+                                                              transformData.Name + "'")
         if len(rows) > 0:
             transformData.id = rows[0].id
         return cls.db.save_table_object(transformData, False)
@@ -230,9 +234,10 @@ class DatabaseHelper:
     @classmethod
     def save_subscription(cls, subscriptionData):
         cls.init()
-        rows = cls.db.get_table_objects_by_SQL(SubscriptionData, ("SELECT * FROM SubscriptionData WHERE "
-                                           "SubscriberId = " + str(subscriptionData.SubscriberId) +
-                                           " and TransformId = " + str(subscriptionData.TransformId)))
+        rows = cls.db.get_table_objects_by_SQL(SubscriptionData,
+                                               "SELECT * FROM SubscriptionData WHERE "
+                                               "SubscriberId = " + str(subscriptionData.SubscriberId) +
+                                               " and TransformId = " + str(subscriptionData.TransformId))
         if len(rows) > 0:
             subscriptionData.id = rows[0].id
         return cls.db.save_table_object(subscriptionData, False)
@@ -253,7 +258,7 @@ class DatabaseHelper:
         sql = ("SELECT SubscriptionData.*, TransformData.Name as TransformName, SubscriberData.TypeName as SubscriberTypeName "
                "FROM TransformData JOIN SubscriptionData ON TransformData.id = SubscriptionData.TransformId "
                "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
-                "JOIN MessageTypeData ON MessageTypeData.id = TransformData.InputMessageTypeID "
+               "JOIN MessageTypeData ON MessageTypeData.id = TransformData.InputMessageTypeID "
                "WHERE TransformData.Enabled = 1 AND SubscriptionData.Enabled = 1 AND "
                "MessageTypeData.Name = '" + str(messageTypeName) + "' AND MessageSubTypeName = '" + str(messageSubTypeName) + "'")
         rows = cls.db.get_table_objects_by_SQL(SubscriptionViewData, sql)
@@ -274,7 +279,7 @@ class DatabaseHelper:
                "DeleteAfterSent = " + str(1 if deleteAfterSent else 0) + " WHERE SubscriberId IN "
                "(SELECT id from SubscriberData WHERE SubscriberData.TypeName = '" + str(subscriberTypeName) + "') "
                "AND TransformId IN "
-                "(SELECT id from TransformData WHERE TransformData.Name = '" + str(transformName) + "') ")
+               "(SELECT id from TransformData WHERE TransformData.Name = '" + str(transformName) + "') ")
         cls.db.execute_SQL(sql)
 
     # MessageSubscriptions
@@ -414,10 +419,10 @@ class DatabaseHelper:
     def archive_lora_ack_message_subscription(cls, messageID):
         cls.init()
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData JOIN SubscriptionData "
-                "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
-                "JOIN TransformData ON SubscriptionData.TransformId = TransformData.id "
-                "WHERE TransformData.Name = 'LoraSIMessageToLoraAckTransform' AND "
-                "hex(MessageSubscriptionData.MessageID) like '__' || hex(?)")
+               "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
+               "JOIN TransformData ON SubscriptionData.TransformId = TransformData.id "
+               "WHERE TransformData.Name = 'LoraSIMessageToLoraAckTransform' AND "
+               "hex(MessageSubscriptionData.MessageID) like '__' || hex(?)")
         rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID[1:], ))
 
         if len(rows) > 0:
@@ -452,11 +457,11 @@ class DatabaseHelper:
     def archive_repeater_lora_message_subscriptions_after_ack(cls, messageID, rssiValue):
         cls.init()
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData JOIN SubscriptionData "
-                "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
-                "JOIN TransformData ON SubscriptionData.TransformId = TransformData.id "
-                "WHERE (TransformData.Name = 'RepeaterSIMessageToLoraTransform' OR "
-                "TransformData.Name = 'SITestTestToLoraTransform') AND "
-                "MessageSubscriptionData.MessageID = ? ORDER BY SentDate desc LIMIT 2")
+               "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
+               "JOIN TransformData ON SubscriptionData.TransformId = TransformData.id "
+               "WHERE (TransformData.Name = 'RepeaterSIMessageToLoraTransform' OR "
+               "TransformData.Name = 'SITestTestToLoraTransform') AND "
+               "MessageSubscriptionData.MessageID = ? ORDER BY SentDate desc LIMIT 2")
         rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID, ))
 
         for msd in rows:
@@ -492,8 +497,7 @@ class DatabaseHelper:
         cls.init()
         sixtySecondsAgo = datetime.now() - timedelta(seconds=60)
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData WHERE "
-                                       "MessageID = ? AND SentDate > ? "
-                                        "ORDER BY SentDate desc LIMIT 2")
+               "MessageID = ? AND SentDate > ? ORDER BY SentDate desc LIMIT 2")
         rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID, sixtySecondsAgo))
 
         for msd in rows:
@@ -573,50 +577,16 @@ class DatabaseHelper:
         cls.db.delete_table_object(RepeaterMessageBoxData, repeaterMessageBox.id)
 
     # MessageSubscriptionView
+
     @classmethod
-    def get_last_message_subscription_view_that_was_sent_to_lora(cls):
-        sql = ("SELECT MessageSubscriptionData.id, "
-               "MessageSubscriptionData.MessageID, "
-               "MessageSubscriptionData.AckReceivedFromReceiver, "
-               "MessageSubscriptionData.MessageNumber, "
-               "MessageSubscriptionData.SentDate, "
-               "MessageSubscriptionData.SendFailedDate, "
-               "MessageSubscriptionData.FindAdapterTryDate, "
-               "MessageSubscriptionData.FindAdapterTries, "
-               "MessageSubscriptionData.NoOfSendTries, "
-               "MessageSubscriptionData.AckReceivedDate, "
-               "MessageSubscriptionData.Delay, "
-               "MessageSubscriptionData.RetryDelay, "
-               "MessageSubscriptionData.FindAdapterRetryDelay, "
-               "MessageSubscriptionData.MessageBoxId, "
-               "MessageSubscriptionData.SubscriptionId, "
-               "MessageSubscriptionData.FetchedForSending, "
-               "SubscriptionData.DeleteAfterSent, "
-               "SubscriptionData.Enabled, "
-               "SubscriptionData.SubscriberId, "
-               "SubscriberData.TypeName as SubscriberTypeName, "
-               "SubscriberData.InstanceName as SubscriberInstanceName, "
-               "TransformData.Name as TransformName, "
-               "MessageBoxData.MessageData,"
-               "MessageBoxData.CreatedDate as CreatedDate "
-               "FROM TransformData JOIN SubscriptionData "
-               "ON TransformData.id = SubscriptionData.TransformId "
-               "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
-               "JOIN MessageSubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
-               "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
-               "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
-               "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
-               "SubscriberData.TypeName = 'LORA' AND "
-               "MessageSubscriptionData.SentDate IS NOT NULL "
-               "ORDER BY MessageBoxData.CreatedDate asc, "
-               "MessageSubscriptionData.SentDate asc")
-        messageSubscriptions = cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
-        now = datetime.now()
-        for messageSubscription in messageSubscriptions:
-            if messageSubscription.SentDate is not None and messageSubscription.SentDate < now < messageSubscription.SentDate + timedelta(
-                    microseconds=messageSubscription.RetryDelay):
-                # has been sent, not yet passed the retry delay (may still be waiting for ack)
-                return messageSubscription
+    def does_message_id_exist(cls, messageID):
+        sql = ("SELECT MessageSubscriptionData.id "
+               "FROM MessageSubscriptionData "
+               "WHERE SubscriptionData.MessageID = ?")
+        messageSubscriptions = cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql, (messageID,))
+        if len(messageSubscriptions) > 0:
+            return True
+        return False
 
     @classmethod
     def get_message_subscriptions_view_by_id(cls, messageSubscriptionId):
@@ -923,7 +893,8 @@ class DatabaseHelper:
     # RepeaterMessageBox
     @classmethod
     def create_repeater_message_box_data(cls, messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK,
-                                powerCycle, serialNumber, messageID, data, rssiValue):
+                                         powerCycle, serialNumber, lowBattery, ackRequested, repeater, siPayloadData,
+                                         messageID, data, rssiValue):
         rmbd = RepeaterMessageBoxData()
         rmbd.MessageData = data
         rmbd.MessageTypeName = messageTypeName
@@ -936,26 +907,12 @@ class DatabaseHelper:
         rmbd.RSSIValue = rssiValue
         rmbd.NoOfTimesSeen = 1
         rmbd.NoOfTimesAckSeen = 0
-
         rmbd.SIStationNumber = None
         rmbd.SIStationSerialNumber = None
-        rmbd.LowBattery = None
-
         rmbd.MessageID = messageID
-
-        siPayloadData = None
-        if messageTypeName == "LORA" and messageSubTypeName == "SIMessage":
-            loraPunchMessage = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(data, rssiByte=None)
-            rmbd.LowBattery = loraPunchMessage.GetBatteryLow()
-            rmbd.AckRequested = loraPunchMessage.GetAckRequested()
-            rmbd.RepeaterRequested = loraPunchMessage.GetRepeater()
-            siPayloadData = loraPunchMessage.GetSIMessageByteArray()
-        elif messageTypeName == "LORA" and messageSubTypeName == "SIMessageDouble":
-            loraPunchDoubleMessage = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(data, rssiByte=None)
-            rmbd.LowBattery = loraPunchDoubleMessage.GetBatteryLow()
-            rmbd.AckRequested = loraPunchDoubleMessage.GetAckRequested()
-            rmbd.RepeaterRequested = loraPunchDoubleMessage.GetRepeater()
-            siPayloadData = loraPunchDoubleMessage.GetSIMessageByteTuple()[0]
+        rmbd.LowBattery = lowBattery
+        rmbd.AckRequested = ackRequested
+        rmbd.RepeaterRequested = repeater
 
         if siPayloadData is not None:
             siMsg = SIMessage()
@@ -1013,9 +970,9 @@ class DatabaseHelper:
     def get_repeater_message_to_add(cls):
         cls.init()
         repeaterMessages = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData,
-                                                      "SELECT * FROM RepeaterMessageBoxData WHERE "
-                                                      "(RepeaterRequested = 1 or NoOfTimesSeen > 1) ORDER BY "
-                                                      "SportIdentHour, SportIdentMinute, SportIdentSecond LIMIT 1")
+                                                           "SELECT * FROM RepeaterMessageBoxData WHERE "
+                                                           "(RepeaterRequested = 1 or NoOfTimesSeen > 1) ORDER BY "
+                                                           "SportIdentHour, SportIdentMinute, SportIdentSecond LIMIT 1")
         if len(repeaterMessages) > 0:
             return repeaterMessages[0]
         return None
@@ -1029,11 +986,11 @@ class DatabaseHelper:
         for inputAdapter in inputAdapterObjects:
             sql = ("WITH new (TypeName, InstanceName, ToBeDeleted) AS "
                    "( VALUES('%s', '%s', 0) ) "
-                    "INSERT OR REPLACE INTO InputAdapterInstances "
-                    "(id, TypeName, InstanceName, ToBeDeleted) "
-                    "SELECT old.id, new.TypeName, new.InstanceName, new.ToBeDeleted "
-                    "FROM new LEFT JOIN InputAdapterInstances AS old "
-                    "ON new.InstanceName = old.InstanceName") % (inputAdapter.GetTypeName(), inputAdapter.GetInstanceName())
+                   "INSERT OR REPLACE INTO InputAdapterInstances "
+                   "(id, TypeName, InstanceName, ToBeDeleted) "
+                   "SELECT old.id, new.TypeName, new.InstanceName, new.ToBeDeleted "
+                   "FROM new LEFT JOIN InputAdapterInstances AS old "
+                   "ON new.InstanceName = old.InstanceName") % (inputAdapter.GetTypeName(), inputAdapter.GetInstanceName())
             cls.db.execute_SQL_no_commit(sql)
         sql = "DELETE FROM InputAdapterInstances WHERE ToBeDeleted = 1"
         cls.db.execute_SQL(sql)
