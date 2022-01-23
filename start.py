@@ -342,7 +342,7 @@ class Main:
                             if transformedData is not None:
                                 if transformedData["MessageID"] is not None:
                                     for item in msgSubBatch.MessageSubscriptionBatchItems:
-                                        self.wirocLogger.debug("Start::handleOutput() Update MessageID: " + Utils.GetDataInHex(transformedData["MessageID"]))
+                                        self.wirocLogger.debug("Start::handleOutput() Update MessageID: " + Utils.GetDataInHex(transformedData["MessageID"], logging.DEBUG))
                                         DatabaseHelper.update_messageid(item.id, transformedData["MessageID"])
 
                                 if msgSubBatch.DeleteAfterSent:
