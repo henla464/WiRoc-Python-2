@@ -582,7 +582,7 @@ class DatabaseHelper:
     def does_message_id_exist(cls, messageID):
         sql = ("SELECT MessageSubscriptionData.id "
                "FROM MessageSubscriptionData "
-               "WHERE SubscriptionData.MessageID = ?")
+               "WHERE MessageSubscriptionData.MessageID = ?")
         messageSubscriptions = cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql, (messageID,))
         if len(messageSubscriptions) > 0:
             return True
