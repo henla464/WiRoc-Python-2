@@ -131,19 +131,11 @@ class SettingsClass(object):
         return SettingsClass.batteryIsLowReceived
 
     @staticmethod
-    def SetDeviceId(deviceId):
-        SettingsClass.deviceId = deviceId
-
-    @staticmethod
     def GetLoraModule():
         if socket.gethostname() == 'chip':
             return 'RF1276T'
         else:
             return 'DRF1268DS'
-
-    @staticmethod
-    def GetDeviceId():
-        return SettingsClass.deviceId
 
     @staticmethod
     def GetWebServerIP():
@@ -592,21 +584,22 @@ class SettingsClass(object):
     #####
     # Not changed from web services
     #####
-
+    TheBTAddress = "NoBTAddress"
     @staticmethod
-    @cached(cacheForEver, key=partial(hashkey, 'GetBTAddress'), lock=rlock)
+    # @cached(cacheForEver, key=partial(hashkey, 'GetBTAddress'), lock=rlock) seems sometimes NoBTAddress is returned, we dont want to cache that...
     def GetBTAddress():
-        hcitoolResp = os.popen("hcitool dev").read()
-        hcitoolResp = hcitoolResp.replace("Devices:", "")
-        hcitoolResp = hcitoolResp.strip()
-        hcitoolRespWords = hcitoolResp.split()
-        btAddress = "NoBTAddress"
-        if len(hcitoolRespWords) > 1 and len(hcitoolRespWords[1]) == 17:
-            btAddress = hcitoolRespWords[1]
-        return btAddress
+        if SettingsClass.TheBTAddress == "NoBTAddress":
+            hcitoolResp = os.popen("hcitool dev").read()
+            hcitoolResp = hcitoolResp.replace("Devices:", "")
+            hcitoolResp = hcitoolResp.strip()
+            hcitoolRespWords = hcitoolResp.split()
+            if len(hcitoolRespWords) > 1 and len(hcitoolRespWords[1]) == 17:
+                btAddress = hcitoolRespWords[1]
+                SettingsClass.TheBTAddress = btAddress
+        return SettingsClass.TheBTAddress
 
     @staticmethod
-    @cached(cacheForEver, key=partial(hashkey, 'GetBTAddressAsInt'), lock=rlock)
+    #@cached(cacheForEver, key=partial(hashkey, 'GetBTAddressAsInt'), lock=rlock)
     def GetBTAddressAsInt():
         btAddressAsString = SettingsClass.GetBTAddress()
         if btAddressAsString == "NoBTAddress":

@@ -2,13 +2,16 @@ WiRoc
 =====
 Change how RS232 input works to avoid it from trying to init every 10s. Maybe always open read only. And when first message arrive reconfigure/reinit with two-way if that is selected.
 Make subclasses for receivesiadapter with each type (USB, RS232, Bluetooth)
-Save devicename in persistent textfile that survives database recreation and upgrade
-Add option to reconfigure remote wiroc
 Test using python/bluez instead of bleno also for CHIP version
+Investigate if we need to release rfcomm if it is in closed state. Noticed when testing, but not sure how to replicate.
+
+-- Maybe (probably pretty complex, unsure how useful)
+Add option to reconfigure remote wiroc
 
 App
 ===
-
+- Getting releases from github has a low limit of calls per hour, need to find another solution. Maybe get from monitor.wiroc.se api instead.
+  Maybe have it cache the result and only refresh infrequently or if "forced"
 
 
 Done

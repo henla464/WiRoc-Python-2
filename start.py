@@ -72,7 +72,7 @@ class Main:
         webServerUrl = SettingsClass.GetWebServerUrl()
         btAddress = SettingsClass.GetBTAddress()
         apiKey = SettingsClass.GetAPIKey()
-        wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() != None else "WiRoc Device"
+        wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
         t = threading.Thread(target=self.addDeviceBackground, args=(webServerHost, webServerUrl, btAddress, apiKey, wiRocDeviceName))
         t.daemon = True
         t.start()
@@ -83,10 +83,9 @@ class Main:
             device = {"BTAddress": btAddress, "headBTAddress": btAddress, "name": wiRocDeviceName}  # "description": None
             URL = webServerUrl + "/api/v1/Devices"
             resp = requests.post(url=URL, json=device, timeout=1, headers=headers)
-            self.wirocLogger.warning("Start::Init resp statuscode " + str(resp.status_code) + " " + resp.text)
+            self.wirocLogger.warning("Start::Init resp statuscode btaddress " + btAddress + "  " + str(resp.status_code) + " " + resp.text)
             if resp.status_code == 200:
                 retDevice = resp.json()
-                SettingsClass.SetDeviceId(retDevice['id'])
         except Exception as ex:
             self.wirocLogger.warning("Start::Init error creating device on webserver")
             self.wirocLogger.warning("Start::Init " + str(ex))
@@ -537,12 +536,12 @@ class Main:
             for i in range(1,1004):
                 didTasks = False
                 if i % 149 == 0: # use prime numbers to avoid the tasks happening on the same iteration
-                    print("frequent maintenance time: " + str(datetime.now()))
+                    # print("frequent maintenance time: " + str(datetime.now()))
                     didTasks = True
                     self.doFrequentMaintenanceTasks()
 
                 if i % 251 == 0:
-                    print("reconfigure time: " + str(datetime.now()))
+                    # print("reconfigure time: " + str(datetime.now()))
                     didTasks = True
                     self.shouldReconfigure = False
                     settDict["WebServerUrl"] = SettingsClass.GetWebServerUrl()
@@ -557,7 +556,7 @@ class Main:
                                                 if inputAdapter.UpdateInfrequently() and inputAdapter.GetIsInitialized()]
 
                 if i % 499 == 0:
-                    print("infrequent maintenance time: " + str(datetime.now()))
+                    # print("infrequent maintenance time: " + str(datetime.now()))
                     didTasks = True
                     self.doInfrequentMaintenanceTasks()
                     self.sendSetConnectedToInternet()

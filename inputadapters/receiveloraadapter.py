@@ -23,7 +23,7 @@ class ReceiveLoraAdapter(object):
             serialPorts.append('/dev/ttyS2')
         elif hardwareAbstraction.runningOnNanoPi:
             serialPorts.append('/dev/ttyS1')
-        else: #TODO: figure out why this else is here...
+        else: # TODO: figure out why this else is here...
             portInfoList = serial.tools.list_ports.grep('10c4:ea60')
             for portInfo in portInfoList:
                 serialPorts.append(portInfo.device)
@@ -54,7 +54,6 @@ class ReceiveLoraAdapter(object):
             return True
         else:
             return False
-
 
     @staticmethod
     def GetTypeName():
@@ -158,7 +157,7 @@ class ReceiveLoraAdapter(object):
                 if loraMessage.GetBatteryLow():
                     SettingsClass.SetBatteryIsLowReceived(True)
 
-                relayPathNo = loraMessage.GetRelayPathNoFromStatusMessage()
+                relayPathNo = loraMessage.GetRelayPathNo()
                 SettingsClass.UpdateRelayPathNumber(relayPathNo+1)
                 DatabaseHelper.add_message_stat(self.GetInstanceName(), "Status", "Received", 1)
             elif messageType == LoraRadioMessageRS.MessageTypeSIPunch or messageType == LoraRadioMessageRS.MessageTypeSIPunchDouble:

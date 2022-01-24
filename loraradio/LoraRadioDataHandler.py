@@ -427,7 +427,6 @@ class LoraRadioDataHandler(object):
                     "LoraRadioDataHandler::_GetStatusMessage() No message could be decoded")
                 return None
 
-
     def _GetMessageTypeByLength(self, startOfMessageIndex):
         expectedMessageLengths = [LoraRadioMessageRS.MessageLengths[idx] + self.RSSIByteCount for idx in
                                   LoraRadioDataHandler.MessageTypesExpected]
@@ -560,7 +559,7 @@ class LoraRadioDataHandler(object):
     # Call GetMessage only when you believe you might have a message
     def GetMessage(self):
         self.LikelyStartOfMessageIndex.append(len(self.DataReceived))
-        print("Data considered: " + Utils.GetDataInHex(self.DataReceived, logging.DEBUG))
+        LoraRadioDataHandler.WiRocLogger.debug("Data considered: " + Utils.GetDataInHex(self.DataReceived, logging.DEBUG))
 
         startofMessageIndeces = [0] + self.LikelyStartOfMessageIndex
         for startOfMessageIndex in startofMessageIndeces:

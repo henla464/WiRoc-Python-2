@@ -1,6 +1,7 @@
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from settings.settings import SettingsClass
 import logging
+from utils.utils import Utils
 
 
 class StatusStatusToLoraTransform(object):
@@ -44,12 +45,15 @@ class StatusStatusToLoraTransform(object):
     def GetDeleteAfterSentChanged():
         return StatusStatusToLoraTransform.DeleteAfterSent != (not SettingsClass.GetStatusAcknowledgementRequested())
 
-    #payloadData is a bytearray
+    # payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch, subscriberAdapter):
         StatusStatusToLoraTransform.WiRocLogger.debug("StatusStatusToLoraTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
+        StatusStatusToLoraTransform.WiRocLogger.debug("StatusStatusToLoraTransform::Transform() MessageData: " + Utils.GetDataInHex(payloadData, logging.DEBUG))
         loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
+        StatusStatusToLoraTransform.WiRocLogger.debug(
+            "StatusStatusToLoraTransform::Transform() Before generate RSCode: " + Utils.GetDataInHex(loraStatusMsg.GetByteArray(), logging.DEBUG))
         reqRepeater = False
         if SettingsClass.GetLoraMode() == "SENDER":
             reqRepeater = subscriberAdapter.GetShouldRequestRepeater()

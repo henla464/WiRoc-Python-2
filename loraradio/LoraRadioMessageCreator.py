@@ -80,7 +80,7 @@ class LoraRadioMessageCreator(object):
     def GetStatusMessageByFullMessageData(fullMessageData, rssiByte=None):
         loraStatusMessage = LoraRadioMessageStatusRS()
         loraStatusMessage.SetHeader(fullMessageData[0:1])
-        loraStatusMessage.AddPayload(fullMessageData[1:-4])
-        loraStatusMessage.AddRSCode(fullMessageData[-4:])
+        loraStatusMessage.SetPayload(fullMessageData[1:-8])
+        loraStatusMessage.AddRSCode(fullMessageData[-8:])
         loraStatusMessage.SetRSSIByte(rssiByte)
         return loraStatusMessage

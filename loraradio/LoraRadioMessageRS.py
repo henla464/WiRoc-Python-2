@@ -15,7 +15,7 @@ class LoraRadioMessageRS(object):
     MessageTypeStatus = 4
     MessageTypeLoraAck = 5
     MessageTypeSIPunchDouble = 6
-    MessageLengths = [24, 16, 7, 14, 13, 7, 27]
+    MessageLengths = [24, 16, 7, 14, 14, 7, 27]
 
     def __init__(self):
         self.messageType = None
@@ -311,6 +311,9 @@ class LoraRadioMessageStatusRS(LoraRadioMessageRS):
 
     def GetRelayPathNo(self):
         return self.payloadData[2]
+
+    def SetPayload(self, payload):
+        self.payloadData = payload
 
     def GetBTAddressAsInt(self):
         return (self.payloadData[3] << 40) | \
