@@ -68,7 +68,7 @@ class LoraRadioMessageCreator(object):
         return loraPunchDoubleMessage
 
     @staticmethod
-    def GetStatusMessage(batteryLow, siStationNumber, batteryPercent):
+    def GetStatusMessage(batteryLow):
         loraStatusMessage = LoraRadioMessageStatusRS()
         loraStatusMessage.SetBatteryLow(batteryLow)
         loraStatusMessage.SetAckRequested(False)
@@ -80,7 +80,7 @@ class LoraRadioMessageCreator(object):
     def GetStatusMessageByFullMessageData(fullMessageData, rssiByte=None):
         loraStatusMessage = LoraRadioMessageStatusRS()
         loraStatusMessage.SetHeader(fullMessageData[0:1])
-        loraStatusMessage.SetPayload(fullMessageData[1:-8])
-        loraStatusMessage.AddRSCode(fullMessageData[-8:])
+        loraStatusMessage.SetPayload(fullMessageData[1:-4])
+        loraStatusMessage.AddRSCode(fullMessageData[-4:])
         loraStatusMessage.SetRSSIByte(rssiByte)
         return loraStatusMessage
