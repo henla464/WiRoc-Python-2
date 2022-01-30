@@ -141,6 +141,7 @@ class Main:
         self.archiveFailedMessages()
         DatabaseHelper.archive_old_repeater_message()
         self.updateBatteryIsLow()
+        self.sendSetConnectedToInternet()
 
     def reconfigure(self):
         if Setup.SetupAdapters():
@@ -555,11 +556,10 @@ class Main:
                     self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
                                                 if inputAdapter.UpdateInfrequently() and inputAdapter.GetIsInitialized()]
 
-                if i % 499 == 0:
+                if i % 997 == 0:
                     # print("infrequent maintenance time: " + str(datetime.now()))
                     didTasks = True
                     self.doInfrequentMaintenanceTasks()
-                    self.sendSetConnectedToInternet()
 
                 if not didTasks:
                     time.sleep(0.04)

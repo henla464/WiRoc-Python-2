@@ -2,7 +2,7 @@
 #systemctl disable apt-daily.service # disable run when system boot
 #systemctl disable apt-daily.timer   # disable timer run
 
-WiRocPython2Version="0.157"
+WiRocPython2Version="0.206"
 echo "Which WiRocPython2Version? [$WiRocPython2Version]"
 read wPOption
 if ! [[ -z "$wPOption" ]];
@@ -10,7 +10,7 @@ then
     WiRocPython2Version=$wPOption
 fi
 
-WiRocBLEVersion="0.53"
+WiRocBLEVersion="0.7"
 echo "Which WiRocBLEVersion? [$WiRocBLEVersion]"
 read wBLEOption
 if ! [[ -z "$wBLEOption" ]];
@@ -68,7 +68,7 @@ pip3 install -U setuptools
 pip3 install wheel
 pip3 install requests
 pip3 install cachetools
-
+pip3 install reedsolo
 
 echo "flask"
 #read line
@@ -280,13 +280,13 @@ if [[ $(hostname -s) = nanopiair ]]; then
        if ! grep -Fxq "overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
        then
            echo "Change overlays"
-           sed -i -E "s/(overlays=).*/overlays=uart1 uart2 uart3 usbhost1 usbhost2 i2c0/" /boot/armbianEnv.txt
+           sed -i -E "s/(overlays=).*/overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0/" /boot/armbianEnv.txt
        fi
     else
        if ! grep -Fxq "overlays=uart1 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
        then
            echo "Change overlays"
-           sed -i -E "s/(overlays=).*/overlays=uart1 uart3 usbhost1 usbhost2 i2c0/" /boot/armbianEnv.txt
+           sed -i -E "s/(overlays=).*/overlays=uart1 uart3 usbhost1 usbhost2 usbhost3 i2c0/" /boot/armbianEnv.txt
        fi
     fi
 
@@ -302,12 +302,32 @@ if [[ $(hostname -s) = nanopiair ]]; then
         sed -i 's/PORT=ttyS1/PORT=ttyS3/' /etc/default/ap6212
     fi
 
+    # with x command echo 205 will never be found since that means it matches the whole line, not sure what we try to look for...
     if ! grep -Fxq "echo 205" /etc/init.d/ap6212-bluetooth
     then
         echo "Replace ap6212-bluetooth"
         cp /etc/init.d/ap6212-bluetooth ~/ap6212-bluetooth.backup
         wget -O /etc/init.d/ap6212-bluetooth https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/ap6212-bluetooth
         chmod ugo+x /etc/init.d/ap6212-bluetooth
+    fi
+
+    if ! grep -Fq 'compat' /lib/systemd/system/bluetooth.service
+    then
+        echo "change to compat mode"
+        sed -i -E "s@(ExecStart=).*@ExecStart=/usr/lib/bluetooth/bluetoothd --compat --noplugin=sap@" /lib/systemd/system/bluetooth.service
+        systemctl daemon-reload
+    else
+        echo "compat"
+    fi
+
+
+    if ! grep -Fxq 'ExecStartPost=/usr/bin/sdptool add SP' /lib/systemd/system/bluetooth.service
+    then
+        echo "add SP profile"
+        sed -i '/ExecStart=.*/a ExecStartPost=/usr/bin/sdptool add SP' /lib/systemd/system/bluetooth.service
+        systemctl daemon-reload
+    else
+        echo "SP profile already exist"
     fi
 
     #wget -O /home/chip/bluez_5.43-2%2Bdeb9u1_armhf-fix.deb https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/bluez_5.43-2%2Bdeb9u1_armhf-fix.deb
