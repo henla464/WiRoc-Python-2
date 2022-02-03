@@ -567,6 +567,8 @@ class ReceiveSIAdapter(object):
                 if SIMsgByteArray is None:
                     return None
                 self.fetchFromBackupAddress = addrToPunch
+                if ReceiveSIAdapter.AddressOfLastPunch[self.serialNumber] < addrToPunch:
+                    ReceiveSIAdapter.AddressOfLastPunch[self.serialNumber] = addrToPunch
                 source = "SIStation"
                 ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::getBackupPunch Fetched backup punch")
                 return {"MessageType": "DATA", "MessageSource": source,
