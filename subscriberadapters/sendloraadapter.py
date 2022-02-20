@@ -216,9 +216,9 @@ class SendLoraAdapter(object):
         if self.blockSendingFromThisDate > now:
             # computer time must have changed, so reset blockSendingFromThisDate
             self.blockSendingFromThisDate = None
-        SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::IsReadyToSend() blocked from sending until: " +
-                                          str(("None" if self.blockSendingFromThisDate is None else self.blockSendingFromThisDate) +
-                                              timedelta(seconds=self.blockSendingForSeconds)))
+        SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::IsReadyToSend() blocked from sending until: "
+                                          + "None" if self.blockSendingFromThisDate is None
+                                            else str(self.blockSendingFromThisDate + timedelta(seconds=self.blockSendingForSeconds)))
         return False
 
     @staticmethod

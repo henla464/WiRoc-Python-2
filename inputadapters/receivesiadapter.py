@@ -9,59 +9,18 @@ from datamodel.datamodel import SIMessage
 from datamodel.db_helper import DatabaseHelper
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 import serial.tools.list_ports
+import socket
+import select
 
 
 class ReceiveSIAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Input')
-    Instances = []
     AddressOfLastPunch = {}
+    MSDMode = bytes([0xFF, 0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
 
     @staticmethod
     def CreateInstances():
-        # Add USB serial ports
-        portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa|1a86:7523|067b:2303|0403:6001|0557:2008')
-        serialPorts = [portInfo.device for portInfo in portInfoList]
-        # SPORTident USB device                                                                 -- Works
-        # Linux-USB CDC Composite Gadge (Ethernet and ACM)      {ie:Chip computer}              -- Works
-        # 1a86:7523 QinHeng Electronics HL-340 USB-Serial adapter                               -- Doesn't work (possibly works one-way)
-        # 067b:2303 Prolific Technology, Inc. PL2303 Serial Port                                -- Works
-        # 0403:6001 Future Technology Devices International, Ltd FT232 USB-Serial (UART) IC     -- Works
-        # 0557:2008 ATEN International Co., Ltd UC-232A Serial Port [pl2303]                    -- Works
-
-        # Add any HW serial ports used for SportIdent units
-        if SettingsClass.GetRS232Mode() == "RECEIVE":
-            hwSISerialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
-            serialPorts.extend(hwSISerialPorts)
-
-        # Add BT Serial ports
-        btSISerialPorts = HardwareAbstraction.Instance.GetRFCommsSerialPorts()
-        serialPorts.extend(btSISerialPorts)
-
-        # already existing
-        previouslyCreated = [instance for instance in ReceiveSIAdapter.Instances if instance.GetSerialDevicePath() in serialPorts]
-        highestInstanceNumber = max([instance.GetInstanceNumber() for instance in previouslyCreated], default=0)
-
-        # new serial paths that we should create receivesiadapter for
-        newSerialPaths = [serialPath for serialPath in serialPorts if serialPath not in [instance.GetSerialDevicePath() for instance in previouslyCreated]]
-
-        newInstances = []
-        for serialPath in newSerialPaths:
-            highestInstanceNumber = highestInstanceNumber+1
-            newInstances.append(ReceiveSIAdapter('si' + str(highestInstanceNumber), highestInstanceNumber, serialPath))
-
-        newIntancesFound = len(newInstances) > 0
-        instancesRemoved = len(previouslyCreated) < len(ReceiveSIAdapter.Instances)
-
-        if newIntancesFound or instancesRemoved:
-            ReceiveSIAdapter.Instances = previouslyCreated + newInstances
-
-            if len(ReceiveSIAdapter.Instances) > 0:
-                SettingsClass.SetReceiveSIAdapterActive(True)
-            else:
-                SettingsClass.SetReceiveSIAdapterActive(False)
-            return True
-        else:
-            return False
+        return False
 
     @staticmethod
     def GetTypeName():
@@ -71,10 +30,10 @@ class ReceiveSIAdapter(object):
         self.instanceName = instanceName
         self.instanceNumber = instanceNumber
         self.portName = portName
-        self.siSerial = serial.Serial()
-        self.write_timeout = 0.02
         self.isInitialized = False
         self.oneWay = False
+        self.oneWayFallback = False
+        self.shouldReinitialize = False
         self.siStationNumber = 0
         self.hasTimeBeenSet = False
         self.serialNumber = None
@@ -93,25 +52,25 @@ class ReceiveSIAdapter(object):
     def GetSerialDevicePath(self):
         return self.portName
 
+    # abstract/virtual method
     def GetIsInitialized(self):
-        hwSISerialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
-        btSISerialPorts = HardwareAbstraction.Instance.GetRFCommsSerialPorts()
-        rfCommStatus = None
-        if self.portName in hwSISerialPorts:
-            oneWayConfig = SettingsClass.GetRS232OneWayReceiveFromSIStation()
-            baudRateConfig = 4800 if oneWayConfig and SettingsClass.GetForceRS2324800BaudRateFromSIStation() else 38400
-        elif self.portName in btSISerialPorts:
-            oneWayConfig = False
-            baudRateConfig = 38400
-            rfCommStatus = HardwareAbstraction.Instance.GetRFCommStatus(self.portName)
-        else:
-            oneWayConfig = SettingsClass.GetOneWayReceiveFromSIStation()
-            baudRateConfig = 4800 if oneWayConfig and SettingsClass.GetForce4800BaudRateFromSIStation() else 38400
+        return False
 
-        ReceiveSIAdapter.WiRocLogger.debug(
-            "ReceiveSIAdapter::GetIsInitialized() " + self.GetInstanceName() + " isInitialized: " + str(self.isInitialized) + " oneWayConfig: " + str(oneWayConfig) + " oneWay: " + str(self.oneWay)
-            + " baudRateConfig: " + str(baudRateConfig) + " baudRate: " + str(self.siSerial.baudrate) + " rfCommStatus: " + str(rfCommStatus))
-        return self.isInitialized and oneWayConfig == self.oneWay and baudRateConfig == self.siSerial.baudrate and (rfCommStatus is None or rfCommStatus == "connected")
+    # abstract/virtual method
+    def writeData(self, dataToWrite):
+        return None
+
+    # abstract/virtual method
+    def readData(self, waitMS, expectedLength):
+        return bytearray(), bytearray(), 0
+
+    # abstract/virtual method
+    def Init(self):
+        return False
+
+    # abstract/virtual method
+    def IsDataAvailable(self):
+        return False
 
     def ShouldBeInitialized(self):
         return not self.GetIsInitialized()
@@ -126,288 +85,11 @@ class ReceiveSIAdapter(object):
 
     def sendCommand(self, command):
         ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::sendCommand() command: " + Utils.GetDataInHex(command, logging.DEBUG))
-        self.siSerial.write(command)
+        self.writeData(command)
         ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::sendCommand(): after write")
-        self.siSerial.flush()
-        expectedLength = 3
-        response = bytearray()
-        allBytesReceived = bytearray()
-        startFound = False
-        idx = 0
-        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::sendCommand(): before waiting response")
-        while self.siSerial.in_waiting == 0 and idx < 30:
-            sleep(0.01)
-            idx = idx + 1
-        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::sendCommand(): after waiting for response")
-
-        while self.siSerial.in_waiting > 0:
-            # print("looking for stx: ", end="")
-            bytesRead = self.siSerial.read(1)
-            allBytesReceived.append(bytesRead[0])
-            # print(bytesRead)
-            if bytesRead[0] == STX:
-                startFound = True
-                if len(response) == 1:
-                    # second STX found, discard
-                    continue
-            if startFound:
-                response.append(bytesRead[0])
-                if len(response) == 3:
-                    expectedLength = response[2] + 6
-                if len(response) == expectedLength:
-                    break
-                if len(response) < expectedLength and self.siSerial.in_waiting == 0:
-                    logging.debug("ReceiveSIAdapter::sendCommand() sleep and wait for more bytes")
-                    sleep(0.05)
+        response, allData, expectedLength = self.readData(300, 3)
         ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::sendCommand() response: " + Utils.GetDataInHex(response, logging.DEBUG))
         return response
-
-    def InitOneWay(self, baudrate):
-        self.siSerial.baudrate = baudrate
-
-        try:
-            self.siSerial.open()
-            self.siSerial.reset_input_buffer()
-            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitOneWay() " + self.instanceName + " opened serial")
-        except Exception as ex:
-            ReceiveSIAdapter.WiRocLogger.error(
-                "ReceiveSIAdapter::InitOneWay() " + self.instanceName + " opening serial exception:")
-            ReceiveSIAdapter.WiRocLogger.error(ex)
-            try:
-                self.siSerial.close()
-            except Exception as ex2:
-                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitOneWay() close serial exception 1:")
-                ReceiveSIAdapter.WiRocLogger.error(ex2)
-            return False
-
-        if self.siSerial.is_open:
-            self.isInitialized = True
-            self.oneWay = True
-            return True
-        return False
-
-    def InitBTSerialOneWay(self, baudrate):
-        self.siSerial.baudrate = baudrate
-
-        try:
-            self.siSerial.open()
-            self.siSerial.reset_input_buffer()
-            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitBTSerialOneWay() " + self.instanceName + " opened serial")
-        except Exception as ex:
-            ReceiveSIAdapter.WiRocLogger.error(
-                "ReceiveSIAdapter::InitBTSerialOneWay() " + self.instanceName + " opening serial exception:")
-            ReceiveSIAdapter.WiRocLogger.error(ex)
-            try:
-                self.siSerial.close()
-            except Exception as ex2:
-                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitBTSerialOneWay() close serial exception 1:")
-                ReceiveSIAdapter.WiRocLogger.error(ex2)
-            return False
-
-        try:
-            # Check that we can get in_waiting. This seem to always work with the hardware serial ports regardless whether
-            # SI Station/other device is connected or not. But for a BT-To-Serial device it fails after a few tries
-            # (after ~0.05 seconds) if there is no SI Station connected to the BT-To-Serial device. We want it to fail
-            # during init so that we don't get loads of errors in GetData method, and so that it will be reconfigured again
-            # with InitTwoWay when InitOneWay was called as fallback (ie when one-way is not requested in the configuration).
-            for i in range(10):
-                noOfWaiting = self.siSerial.in_waiting
-                ReceiveSIAdapter.WiRocLogger.error(
-                    "ReceiveSIAdapter::InitBTSerialOneWay() " + self.instanceName + " in_waiting: " + str(noOfWaiting))
-                sleep(0.02)
-        except Exception as ex2:
-            ReceiveSIAdapter.WiRocLogger.error(
-                "ReceiveSIAdapter::InitBTSerialOneWay() " + self.instanceName + " Could not get in_waiting (not possible to read serial):")
-            ReceiveSIAdapter.WiRocLogger.error(ex2)
-            try:
-                self.siSerial.close()
-            except Exception as ex2:
-                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitBTSerialOneWay() close serial exception 2:")
-                ReceiveSIAdapter.WiRocLogger.error(ex2)
-            return False
-
-        rfCommStatus = HardwareAbstraction.Instance.GetRFCommStatus(self.portName)
-        if rfCommStatus != "connected":
-            ReceiveSIAdapter.WiRocLogger.error(
-                "ReceiveSIAdapter::InitBTSerialOneWay() " + self.instanceName + " rfCommStatus: " + rfCommStatus)
-            try:
-                self.siSerial.close()
-            except Exception as ex3:
-                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitBTSerialOneWay() close serial exception 3:")
-                ReceiveSIAdapter.WiRocLogger.error(ex3)
-            return False
-
-        if self.siSerial.is_open:
-            self.isInitialized = True
-            self.oneWay = True
-            return True
-        return False
-
-    def InitTwoWay(self):
-        self.siSerial.baudrate = 38400
-        try:
-            self.siSerial.open()
-            self.siSerial.reset_input_buffer()
-            self.siSerial.reset_output_buffer()
-            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitTwoWay() opened serial")
-        except Exception as ex:
-            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() opening serial exception:")
-            ReceiveSIAdapter.WiRocLogger.error(ex)
-            try:
-                self.siSerial.close()
-            except Exception as ex2:
-                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() close serial exception:")
-                ReceiveSIAdapter.WiRocLogger.error(ex2)
-            return False
-
-        if self.siSerial.is_open:
-            try:
-                # set master - mode to direct
-                ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitTwoWay() serial port open")
-                msdMode = bytes([0xFF, 0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
-                response = self.sendCommand(msdMode)
-
-                if not self.isCorrectMSModeDirectResponse(response):
-                    ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() not correct msmodedirectresponse: " + str(response))
-
-                    # something wrong, try other baudrate
-                    self.siSerial.close()
-                    self.siSerial.port = self.portName
-                    self.siSerial.baudrate = 4800
-                    self.siSerial.open()
-                    self.siSerial.reset_input_buffer()
-                    self.siSerial.reset_output_buffer()
-
-                    response = self.sendCommand(msdMode)
-
-                    if not self.isCorrectMSModeDirectResponse(response):
-                        ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() not correct msmodedirectresponse: " + str(response))
-                        ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() could not communicate with master station")
-                        try:
-                            self.siSerial.close()
-                        except Exception as ex2:
-                            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() close serial exception (2):")
-                            ReceiveSIAdapter.WiRocLogger.error(ex2)
-                        return False
-
-                    ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() SI Station 4800 kbit/s works")
-                else:
-                    ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() SI Station 38400 kbit/s works")
-
-                # If this is the first instance then update the computer time
-                if ReceiveSIAdapter.Instances[0].GetSerialDevicePath() == self.GetSerialDevicePath():
-                    self.updateComputerTimeAndSiStationNumber()
-                self.serialNumber = self.getSerialNumberSystemValue()
-                self.detectMissedPunchesDuringInit()
-
-                self.isInitialized = True
-                self.oneWay = False
-                return True
-            except Exception as ex2:
-                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() exception:")
-                ReceiveSIAdapter.WiRocLogger.error(ex2)
-                try:
-                    self.siSerial.close()
-                except Exception as ex3:
-                    ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() close serial exception:")
-                    ReceiveSIAdapter.WiRocLogger.error(ex2)
-                return False
-        else:
-            return False
-
-    def Init(self):
-        try:
-            if self.GetIsInitialized() and self.siSerial.is_open:
-                return True
-            self.isInitialized = False
-            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::Init() SI Station port name: " + self.portName)
-            self.siSerial.close()
-            self.siSerial.port = self.portName
-
-            hwSISerialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
-            btSISerialPorts = HardwareAbstraction.Instance.GetRFCommsSerialPorts()
-
-            baudrate = 38400
-            if self.portName in hwSISerialPorts:
-                if SettingsClass.GetRS232OneWayReceiveFromSIStation():
-                    if SettingsClass.GetForceRS2324800BaudRateFromSIStation():
-                        # can only be forced to 4800 when in one-way receive
-                        baudrate = 4800
-                    success = self.InitOneWay(baudrate)
-                    if success:
-                        self.noOfFailedInitializations = 0
-                    else:
-                        self.noOfFailedInitializations +=1
-                    return success
-                else:
-                    if self.InitTwoWay():
-                        self.noOfFailedInitializations = 0
-                        return True
-                    else:
-                        # better with init one way if two way is not working than aborting
-                        # Since configuration for one-way and the initialization doesn't match
-                        # configuration for InitTwoWay will be retried each adapter configure interval.
-                        success = self.InitOneWay(baudrate)
-                        if success:
-                            self.noOfFailedInitializations = 0
-                        else:
-                            self.noOfFailedInitializations += 1
-                        return success
-            elif self.portName in btSISerialPorts:
-                if self.noOfFailedInitializations == 2:
-                    # Try to release and rebind, maybe that fixes the problem
-                    HardwareAbstraction.Instance.ReleaseClosedRFCommsAndRebind()
-                if self.noOfFailedInitializations == 4:
-                    HardwareAbstraction.Instance.ReleaseRFCommByPortName(self.portName)
-                    self.noOfFailedInitializations = 0
-                    return False
-                if SettingsClass.GetBTSerialOneWayReceiveFromSIStation():
-                    if SettingsClass.GetForceBTSerial4800BaudRateFromSIStation():
-                        # can only be forced to 4800 when in one-way receive
-                        baudrate = 4800
-                    success = self.InitBTSerialOneWay(baudrate)
-                    if success:
-                        self.noOfFailedInitializations = 0
-                    else:
-                        self.noOfFailedInitializations += 1
-                    return success
-                else:
-                    if self.InitTwoWay():
-                        self.noOfFailedInitializations = 0
-                        return True
-                    else:  # better with init one way if two way is not working than aborting
-                        success = self.InitBTSerialOneWay(baudrate)
-                        if success:
-                            self.noOfFailedInitializations = 0
-                        else:
-                            self.noOfFailedInitializations += 1
-                        return success
-            else:
-                if SettingsClass.GetOneWayReceiveFromSIStation():
-                    baudrate = 38400
-                    if SettingsClass.GetForce4800BaudRateFromSIStation():
-                        # can only be forced to 4800 when in one-way receive
-                        baudrate = 4800
-                    success = self.InitOneWay(baudrate)
-                    if success:
-                        self.noOfFailedInitializations = 0
-                    else:
-                        self.noOfFailedInitializations += 1
-                    return success
-                else:
-                    if self.InitTwoWay():
-                        self.noOfFailedInitializations = 0
-                        return True
-                    else:  # better with init one way if two way is not working than aborting
-                        success = self.InitOneWay(baudrate)
-                        if success:
-                            self.noOfFailedInitializations = 0
-                        else:
-                            self.noOfFailedInitializations += 1
-                        return success
-        except (Exception) as msg:
-            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::Init() Exception: " + str(msg))
-            return False
 
     def GetTimeAsTenthOfSeconds(self, twelveHourTime, subSecondsAsTensOfSeconds, twentyFourHour):
         time = ((twelveHourTime[0] << 8) + twelveHourTime[1]) * 10 + subSecondsAsTensOfSeconds
@@ -539,13 +221,16 @@ class ReceiveSIAdapter(object):
                 self.fetchFromBackup = True
 
     def detectMissedPunches(self, siMsg):
+        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::detectMissedPunches enter")
         lastAddr = ReceiveSIAdapter.AddressOfLastPunch.get(self.serialNumber, None)
         curAddr = siMsg.GetBackupMemoryAddressAsInt()
         ReceiveSIAdapter.AddressOfLastPunch[self.serialNumber] = curAddr
         if lastAddr is None:
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::detectMissedPunches lastAddr is None")
             return False
         if self.fetchFromBackup:
             # already in fetch from backup mode
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::detectMissedPunches alreaty in fetch from backup mode")
             return False
 
         if curAddr > lastAddr:
@@ -558,6 +243,10 @@ class ReceiveSIAdapter(object):
                 self.fetchFromBackupAddress = lastAddr
                 self.fetchToBackupAddress = curAddr
                 self.fetchFromBackup = True
+                ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::detectMissedPunches missed punches detected")
+                return True
+        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::detectMissedPunches no missed punches detected")
+        return False
 
     def getBackupPunch(self):
         if self.fetchFromBackup:
@@ -580,33 +269,15 @@ class ReceiveSIAdapter(object):
 
     # messageData is a bytearray
     def GetData(self):
-        if self.siSerial.in_waiting == 0:
+        if not self.IsDataAvailable():
             if self.oneWay:
                 return None
             else:
                 return self.getBackupPunch()
         ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::GetData() Data to fetch")
+
         expectedLength = 3
-        receivedData = bytearray()
-        allReceivedData = bytearray()
-        startFound = False
-        while self.siSerial.in_waiting > 0:
-            bytesRead = self.siSerial.read(1)
-            allReceivedData.append(bytesRead[0])
-            if bytesRead[0] == STX:
-                startFound = True
-                if len(receivedData) == 1:
-                    # second STX found, discard
-                    continue
-            if startFound:
-                receivedData.append(bytesRead[0])
-                if len(receivedData) == 3:
-                    expectedLength = receivedData[2]+6
-                if len(receivedData) == expectedLength:
-                    break
-                if len(receivedData) < expectedLength and self.siSerial.in_waiting == 0:
-                    ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::GetData() sleep and wait for more bytes")
-                    sleep(0.05)
+        receivedData, allReceivedData, expectedLength = self.readData(waitMS=0, expectedLength=expectedLength)
 
         if len(receivedData) != expectedLength:
             # throw away the data, isn't correct
@@ -640,3 +311,540 @@ class ReceiveSIAdapter(object):
 
     def AddedToMessageBox(self, mbid):
         return None
+
+
+class ReceiveSISerialPort(ReceiveSIAdapter):
+    def __init__(self, instanceName, instanceNumber, portName):
+        super().__init__(instanceName, instanceNumber, portName)
+        self.siSerial = serial.Serial()  # not for SIBTSP
+
+    def writeData(self, dataToWrite):
+        self.siSerial.write(dataToWrite)
+        self.siSerial.flush()
+
+    def readData(self, waitMS, expectedLength):
+        if waitMS > 0:
+            idx = 0
+            while self.siSerial.in_waiting == 0 and idx < waitMS:
+                sleep(0.001)
+                idx = idx + 1
+
+        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::readData(): after waiting for response")
+
+        allBytesReceived = bytearray()
+        startFound = False
+        response = bytearray()
+
+        while self.siSerial.in_waiting > 0:
+            # print("looking for stx: ", end="")
+            bytesRead = self.siSerial.read(1)
+            allBytesReceived.append(bytesRead[0])
+            if bytesRead[0] == STX:
+                startFound = True
+                if len(response) == 1:
+                    # second STX found, discard
+                    continue
+            if startFound:
+                response.append(bytesRead[0])
+                if len(response) == 3:
+                    expectedLength = response[2] + 6
+                if len(response) == expectedLength:
+                    break
+                if len(response) < expectedLength and self.siSerial.in_waiting == 0:
+                    logging.debug("ReceiveSIAdapter::sendCommand() sleep and wait for more bytes")
+                    sleep(0.05)
+        return response, allBytesReceived, expectedLength
+
+    def InitOneWay(self, baudrate):
+        self.siSerial.baudrate = baudrate
+
+        try:
+            self.siSerial.open()
+            self.siSerial.reset_input_buffer()
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitOneWay() " + self.instanceName + " opened serial")
+        except Exception as ex:
+            ReceiveSIAdapter.WiRocLogger.error(
+                "ReceiveSIAdapter::InitOneWay() " + self.instanceName + " opening serial exception:")
+            ReceiveSIAdapter.WiRocLogger.error(ex)
+            try:
+                self.siSerial.close()
+            except Exception as ex2:
+                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitOneWay() close serial exception 1:")
+                ReceiveSIAdapter.WiRocLogger.error(ex2)
+            return False
+
+        if self.siSerial.is_open:
+            self.isInitialized = True
+            self.oneWay = True
+            return True
+        return False
+
+    def InitTwoWay(self):
+        self.siSerial.baudrate = 38400
+        try:
+            self.siSerial.open()
+            self.siSerial.reset_input_buffer()
+            self.siSerial.reset_output_buffer()
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitTwoWay() opened serial")
+        except Exception as ex:
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() opening serial exception:")
+            ReceiveSIAdapter.WiRocLogger.error(ex)
+            try:
+                self.siSerial.close()
+            except Exception as ex2:
+                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() close serial exception:")
+                ReceiveSIAdapter.WiRocLogger.error(ex2)
+            return False
+
+        if self.siSerial.is_open:
+            try:
+                # set master - mode to direct
+                ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitTwoWay() serial port open")
+                response = self.sendCommand(ReceiveSIAdapter.MSDMode)
+
+                if not self.isCorrectMSModeDirectResponse(response):
+                    ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() not correct msmodedirectresponse: " + str(response))
+
+                    # something wrong, try other baudrate
+                    self.siSerial.close()
+                    self.siSerial.port = self.portName
+                    self.siSerial.baudrate = 4800
+                    self.siSerial.open()
+                    self.siSerial.reset_input_buffer()
+                    self.siSerial.reset_output_buffer()
+
+                    response = self.sendCommand(ReceiveSIAdapter.MSDMode)
+
+                    if not self.isCorrectMSModeDirectResponse(response):
+                        ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() not correct msmodedirectresponse: " + str(response))
+                        ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() could not communicate with master station")
+                        try:
+                            self.siSerial.close()
+                        except Exception as ex2:
+                            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() close serial exception (2):")
+                            ReceiveSIAdapter.WiRocLogger.error(ex2)
+                        return False
+
+                    ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() SI Station 4800 kbit/s works")
+                else:
+                    ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() SI Station 38400 kbit/s works")
+
+                self.updateComputerTimeAndSiStationNumber()
+                self.serialNumber = self.getSerialNumberSystemValue()
+                self.detectMissedPunchesDuringInit()
+
+                self.isInitialized = True
+                self.oneWay = False
+                return True
+            except Exception as ex2:
+                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() exception:")
+                ReceiveSIAdapter.WiRocLogger.error(ex2)
+                try:
+                    self.siSerial.close()
+                except Exception as ex3:
+                    ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() close serial exception:")
+                    ReceiveSIAdapter.WiRocLogger.error(ex2)
+                return False
+        else:
+            return False
+
+    def IsDataAvailable(self):
+        return self.siSerial.in_waiting > 0
+
+    def GetData(self):
+        data = super().GetData()
+        if data is not None:
+            if self.oneWayFallback:
+                self.shouldReinitialize = True
+        return data
+
+
+class ReceiveSIHWSerialPort(ReceiveSISerialPort):
+    Instances = []
+
+    @staticmethod
+    def CreateInstances():
+        serialPorts = []
+        # Add any HW serial ports used for SportIdent units
+        if SettingsClass.GetRS232Mode() == "RECEIVE":
+            hwSISerialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
+            serialPorts.extend(hwSISerialPorts)
+
+        # already existing
+        previouslyCreated = [instance for instance in ReceiveSIHWSerialPort.Instances if instance.GetSerialDevicePath() in serialPorts]
+        highestInstanceNumber = max([instance.GetInstanceNumber() for instance in previouslyCreated], default=0)
+
+        # new serial paths that we should create ReceiveSIHWSerialPort for
+        newSerialPaths = [serialPath for serialPath in serialPorts if serialPath not in [instance.GetSerialDevicePath() for instance in previouslyCreated]]
+
+        newInstances = []
+        for serialPath in newSerialPaths:
+            highestInstanceNumber = highestInstanceNumber+1
+            newInstances.append(ReceiveSIHWSerialPort('sihw' + str(highestInstanceNumber), highestInstanceNumber, serialPath))
+
+        newIntancesFound = len(newInstances) > 0
+        instancesRemoved = len(previouslyCreated) < len(ReceiveSIHWSerialPort.Instances)
+
+        if newIntancesFound or instancesRemoved:
+            ReceiveSIHWSerialPort.Instances = previouslyCreated + newInstances
+        else:
+            return False
+
+    def GetIsInitialized(self):
+        oneWayConfig = SettingsClass.GetRS232OneWayReceiveFromSIStation()
+        baudRateConfig = 4800 if oneWayConfig and SettingsClass.GetForceRS2324800BaudRateFromSIStation() else 38400
+
+        ReceiveSIAdapter.WiRocLogger.debug(
+            "ReceiveSIHWSerialPort::GetIsInitialized() " + self.GetInstanceName()
+            + " isInitialized: " + str(self.isInitialized)
+            + " oneWayConfig: " + str(oneWayConfig)
+            + " oneWay: " + str(self.oneWay)
+            + " oneWayFallback: " + str(self.oneWayFallback)
+            + " baudRateConfig: " + str(baudRateConfig) + " baudRate: " + str(self.siSerial.baudrate))
+        return self.isInitialized and not self.shouldReinitialize \
+            and (oneWayConfig == self.oneWay or (self.oneWay and self.oneWayFallback)) \
+            and baudRateConfig == self.siSerial.baudrate
+
+    def Init(self):
+        try:
+            if self.GetIsInitialized() and self.siSerial.is_open:
+                return True
+            self.isInitialized = False
+            self.shouldReinitialize = False
+            self.oneWayFallback = False
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIHWSerialPort::Init() SI Station port name: " + self.portName)
+            self.siSerial.close()
+            self.siSerial.port = self.portName
+
+            baudrate = 38400
+            if SettingsClass.GetRS232OneWayReceiveFromSIStation():
+                if SettingsClass.GetForceRS2324800BaudRateFromSIStation():
+                    # can only be forced to 4800 when in one-way receive
+                    baudrate = 4800
+                success = self.InitOneWay(baudrate)
+                if success:
+                    self.noOfFailedInitializations = 0
+                else:
+                    self.noOfFailedInitializations +=1
+                return success
+            else:
+                if self.InitTwoWay():
+                    self.noOfFailedInitializations = 0
+                    return True
+                else:
+                    # better with init one way if two way is not working than aborting
+                    success = self.InitOneWay(baudrate)
+                    if success:
+                        self.oneWayFallback = True
+                        self.noOfFailedInitializations = 0
+                    else:
+                        self.noOfFailedInitializations += 1
+                    return success
+
+        except (Exception) as msg:
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIHWSerialPort::Init() Exception: " + str(msg))
+            return False
+
+
+class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
+    Instances = []
+
+    @staticmethod
+    def CreateInstances():
+        # Add USB serial ports
+        portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa|1a86:7523|067b:2303|0403:6001|0557:2008')
+        serialPorts = [portInfo.device for portInfo in portInfoList]
+        # SPORTident USB device                                                                 -- Works
+        # Linux-USB CDC Composite Gadge (Ethernet and ACM)      {ie:Chip computer}              -- Works
+        # 1a86:7523 QinHeng Electronics HL-340 USB-Serial adapter                               -- Doesn't work (possibly works one-way)
+        # 067b:2303 Prolific Technology, Inc. PL2303 Serial Port                                -- Works
+        # 0403:6001 Future Technology Devices International, Ltd FT232 USB-Serial (UART) IC     -- Works
+        # 0557:2008 ATEN International Co., Ltd UC-232A Serial Port [pl2303]                    -- Works
+
+        # already existing
+        previouslyCreated = [instance for instance in ReceiveSIUSBSerialPort.Instances if
+                             instance.GetSerialDevicePath() in serialPorts]
+        highestInstanceNumber = max([instance.GetInstanceNumber() for instance in previouslyCreated], default=0)
+
+        # new serial paths that we should create receivesiadapter for
+        newSerialPaths = [serialPath for serialPath in serialPorts if
+                          serialPath not in [instance.GetSerialDevicePath() for instance in previouslyCreated]]
+
+        newInstances = []
+        for serialPath in newSerialPaths:
+            highestInstanceNumber = highestInstanceNumber + 1
+            newInstances.append(ReceiveSIUSBSerialPort('si' + str(highestInstanceNumber), highestInstanceNumber, serialPath))
+
+        newIntancesFound = len(newInstances) > 0
+        instancesRemoved = len(previouslyCreated) < len(ReceiveSIUSBSerialPort.Instances)
+
+        if newIntancesFound or instancesRemoved:
+            ReceiveSIUSBSerialPort.Instances = previouslyCreated + newInstances
+
+            if len(ReceiveSIUSBSerialPort.Instances) > 0:
+                SettingsClass.SetReceiveSIAdapterActive(True)
+            else:
+                SettingsClass.SetReceiveSIAdapterActive(False)
+            return True
+        else:
+            return False
+
+    def GetIsInitialized(self):
+        oneWayConfig = SettingsClass.GetOneWayReceiveFromSIStation()
+        baudRateConfig = 4800 if oneWayConfig and SettingsClass.GetForce4800BaudRateFromSIStation() else 38400
+
+        ReceiveSIAdapter.WiRocLogger.debug(
+            "ReceiveSIUSBSerialPort::GetIsInitialized() " + self.GetInstanceName() + " isInitialized: " + str(
+                self.isInitialized) + " oneWayConfig: " + str(oneWayConfig) + " oneWay: " + str(self.oneWay)
+                + " oneWayFallback: " + str(self.oneWayFallback)
+                + " baudRateConfig: " + str(baudRateConfig) + " baudRate: " + str(self.siSerial.baudrate))
+        return self.isInitialized and not self.shouldReinitialize \
+            and (oneWayConfig == self.oneWay or (self.oneWay and self.oneWayFallback)) \
+            and baudRateConfig == self.siSerial.baudrate
+
+    def Init(self):
+        try:
+            if self.GetIsInitialized() and self.siSerial.is_open:
+                return True
+            self.isInitialized = False
+            self.shouldReinitialize = False
+            self.oneWayFallback = False
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIUSBSerialPort::Init() SI Station port name: " + self.portName)
+            self.siSerial.close()
+            self.siSerial.port = self.portName
+
+            baudrate = 38400
+
+            if SettingsClass.GetOneWayReceiveFromSIStation():
+                baudrate = 38400
+                if SettingsClass.GetForce4800BaudRateFromSIStation():
+                    # can only be forced to 4800 when in one-way receive
+                    baudrate = 4800
+                success = self.InitOneWay(baudrate)
+                if success:
+                    self.noOfFailedInitializations = 0
+                else:
+                    self.noOfFailedInitializations += 1
+                return success
+            else:
+                if self.InitTwoWay():
+                    self.noOfFailedInitializations = 0
+                    return True
+                else:  # better with init one way if two way is not working than aborting
+                    success = self.InitOneWay(baudrate)
+                    if success:
+                        self.oneWayFallback = True
+                        self.noOfFailedInitializations = 0
+                    else:
+                        self.noOfFailedInitializations += 1
+                    return success
+        except Exception as msg:
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIUSBSerialPort::Init() Exception: " + str(msg))
+            return False
+
+
+class ReceiveSIBluetoothSP(ReceiveSIAdapter):
+    Instances = []
+
+    def __init__(self, instanceName, instanceNumber, portName):
+        super().__init__(instanceName, instanceNumber, portName)
+        self.sock = None
+
+    @staticmethod
+    def CreateInstances():
+        # Get BT Serial ports from database
+        btSerialPortData = DatabaseHelper.get_bluetooth_serial_ports()
+        serialPorts = ["rfcomm" + btSerialPort.DeviceBTAddress for btSerialPort in btSerialPortData]
+
+        # already existing
+        previouslyCreated = [instance for instance in ReceiveSIBluetoothSP.Instances if
+                             instance.GetSerialDevicePath() in serialPorts]
+        highestInstanceNumber = max([instance.GetInstanceNumber() for instance in previouslyCreated], default=0)
+
+        # new serial paths that we should create receivesiadapter for
+        newSerialPaths = [serialPath for serialPath in serialPorts if
+                          serialPath not in [instance.GetSerialDevicePath() for instance in previouslyCreated]]
+
+        newInstances = []
+        for serialPath in newSerialPaths:
+            highestInstanceNumber = highestInstanceNumber + 1
+            newInstances.append(ReceiveSIBluetoothSP('sibtsp' + str(highestInstanceNumber), highestInstanceNumber, serialPath))
+
+        newIntancesFound = len(newInstances) > 0
+        instancesRemoved = len(previouslyCreated) < len(ReceiveSIBluetoothSP.Instances)
+
+        if newIntancesFound or instancesRemoved:
+            ReceiveSIBluetoothSP.Instances = previouslyCreated + newInstances
+            return True
+        else:
+            return False
+
+    def GetIsInitialized(self):
+        oneWayConfig = SettingsClass.GetBTSerialOneWayReceiveFromSIStation()
+
+        ReceiveSIAdapter.WiRocLogger.debug(
+            "ReceiveSIBluetoothSP::GetIsInitialized() " + self.GetInstanceName() + " isInitialized: "
+            + str(self.isInitialized) + " oneWayConfig: " + str(oneWayConfig) + " oneWay: "
+            + str(self.oneWay) + " oneWayFallback: " + str(self.oneWayFallback))
+        return self.isInitialized and not self.shouldReinitialize and (oneWayConfig == self.oneWay or (self.oneWay and self.oneWayFallback))
+
+    # implements abstract/virtual method
+    def writeData(self, dataToWrite):
+        try:
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::writeData enter")
+            self.sock.send(dataToWrite)
+        except OSError as oserror:
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIBluetoothSP::writeData() exception:" + str(oserror))
+            if oserror.errno==107:
+                # BT device disconnected
+                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIBluetoothSP::writeData() BT Device not connected!")
+                self.sock = None
+                self.isInitialized = False
+                self.oneWay = False
+        except Exception as ex:
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIBluetoothSP::writeData() exception:")
+            ReceiveSIAdapter.WiRocLogger.error(ex)
+            btSerialPortDatas = DatabaseHelper.get_bluetooth_serial_port(self.portName.replace('rfcomm', ''))
+            if len(btSerialPortDatas)>0:
+                btSerialPortDatas[0].Status = "WriteError"
+                DatabaseHelper.save_bluetooth_serial_port(btSerialPortDatas[0])
+        return None
+
+    # abstract/virtual method
+    def readData(self, waitMS, expectedLength):
+        try:
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::readData(): enter")
+            ready = select.select([self.sock], [], [], waitMS/1000)
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::readData(): 1")
+            if ready[0]:
+                ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::readData(): 2")
+                self.sock.settimeout(0.01)
+                allBytes = bytearray(self.sock.recv(100))
+                ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::readData(): 3")
+                response = bytearray(allBytes)
+                ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::readData(): after waiting for response")
+                while len(response) > 0 and response[0] != STX:
+                    response = response[1:]
+                if len(response) > 1:
+                    if response[0] == STX and response[1] == STX:
+                        response = response[1:]
+
+                if len(response) > 2:
+                    expectedLength = response[2] + 6
+
+                return response, allBytes, expectedLength
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::readData(): return nothing")
+            return bytearray(), bytearray(), expectedLength
+        except Exception as ex:
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIBluetoothSP::readData() exception:")
+            ReceiveSIAdapter.WiRocLogger.error(ex)
+            self.isInitialized = False
+            btSerialPortDatas = DatabaseHelper.get_bluetooth_serial_port(self.portName.replace('rfcomm',''))
+            if len(btSerialPortDatas)>0:
+                btSerialPortDatas[0].Status = "ReadError"
+                DatabaseHelper.save_bluetooth_serial_port(btSerialPortDatas[0])
+            return bytearray(), bytearray(), expectedLength
+
+    def InitOneWay(self, baudrate):
+        try:
+            # Need to test if oneway is possible, if the bt device is connected at all
+            self.sock.send(bytearray(bytes([0])))
+            self.isInitialized = True
+            self.oneWay = True
+            return True
+        except socket.timeout as socktimeout:
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIBluetoothSP::InitOneWay() exception:" + str(socktimeout))
+            return False
+        except OSError as oserror:
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIBluetoothSP::InitOneWay() exception:" + str(oserror))
+            if oserror.errno==107:
+                # BT device disconnected
+                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIBluetoothSP::InitOneWay() BT Device not connected!")
+                self.sock = None
+                self.isInitialized = False
+                self.oneWay = False
+
+    def InitTwoWay(self):
+        try:
+            # set master - mode to direct
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::InitTwoWay()")
+            response = self.sendCommand(ReceiveSIAdapter.MSDMode)
+
+            if not self.isCorrectMSModeDirectResponse(response):
+                ReceiveSIAdapter.WiRocLogger.info("ReceiveSIBluetoothSP::InitTwoWay() not correct msmodedirectresponse: " + str(response))
+                return False
+
+            self.updateComputerTimeAndSiStationNumber()
+            self.serialNumber = self.getSerialNumberSystemValue()
+            self.detectMissedPunchesDuringInit()
+
+            self.isInitialized = True
+            self.oneWay = False
+            return True
+        except Exception as ex2:
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIBluetoothSP::InitTwoWay() exception:")
+            ReceiveSIAdapter.WiRocLogger.error(ex2)
+            return False
+
+    def Init(self):
+        try:
+            if self.GetIsInitialized():
+                return True
+            self.isInitialized = False
+            self.shouldReinitialize = False
+            self.oneWayFallback = False
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::Init() SI Station port name: " + self.portName)
+
+            if self.sock is None:
+                self.sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+                deviceBTAddress = self.portName.replace('rfcomm', '') # get only the BTAddress from the portName
+                port = 1
+                self.sock.connect((deviceBTAddress, port))
+                self.sock.setblocking(False)
+
+            if SettingsClass.GetBTSerialOneWayReceiveFromSIStation():
+                self.oneWayFallback = False
+                success = self.InitOneWay(None)
+                if success:
+                    self.noOfFailedInitializations = 0
+                else:
+                    self.noOfFailedInitializations += 1
+            else:
+                if self.InitTwoWay():
+                    self.noOfFailedInitializations = 0
+                    return True
+                else:  # better with init one way if two way is not working than aborting
+                    success = self.InitOneWay(None)
+                    if success:
+                        self.oneWayFallback = True
+                        self.noOfFailedInitializations = 0
+                    else:
+                        self.noOfFailedInitializations += 1
+
+            btSerialPortDatas = DatabaseHelper.get_bluetooth_serial_port(self.portName.replace('rfcomm', ''))
+            if len(btSerialPortDatas) > 0:
+                btSerialPortData = btSerialPortDatas[0]
+                if success:
+                    btSerialPortData.Status = "Connected"
+                    DatabaseHelper.save_bluetooth_serial_port(btSerialPortData)
+                else:
+                    btSerialPortData.Status = "NotConnected"
+                    DatabaseHelper.save_bluetooth_serial_port(btSerialPortData)
+            else:
+                raise Exception("Could not find the BluetoothSerialPortData row in database")
+            return success
+        except Exception as msg:
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIBluetoothSP::Init() Exception: " + str(msg))
+            return False
+
+    # abstract/virtual method
+    def IsDataAvailable(self):
+        ready = select.select([self.sock], [], [], 0)
+        return ready[0]
+
+    def GetData(self):
+        data = super().GetData()
+        if data is not None:
+            if self.oneWayFallback:
+                self.shouldReinitialize = True
+        return data

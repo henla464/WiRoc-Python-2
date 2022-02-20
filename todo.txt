@@ -1,9 +1,6 @@
 WiRoc
 =====
-Change how RS232 input works to avoid it from trying to init every 10s. Maybe always open read only. And when first message arrive reconfigure/reinit with two-way if that is selected.
-Make subclasses for receivesiadapter with each type (USB, RS232, Bluetooth)
 Test using python/bluez instead of bleno also for CHIP version
-Investigate if we need to release rfcomm if it is in closed state. Noticed when testing, but not sure how to replicate.
 
 -- Maybe (probably pretty complex, unsure how useful)
 Add option to reconfigure remote wiroc
@@ -38,6 +35,12 @@ x Add option to change ECC rate
 x Change from bleno to use python/bluez, with option to connect to BT-serial
 x Make it possible to select Lora mode
 x Set Receive or Send for RS232, app + api + recievesi class + sendcomputer?
+x Investigate if we need to release rfcomm if it is in closed state. Noticed when testing, but not sure how to replicate.
+x -- https://unix.stackexchange.com/questions/352494/alternative-to-the-now-deprecated-rfcomm-binary-in-bluez
+x -- https://stackoverflow.com/questions/62652901/how-do-i-broadcast-bluetooth-inquiry-with-python-sockets-af-bluetooth-socket
+x Changed to use sockets from Python instead of serial ports and RFCOMM to connect to Bluetooth serial devices
+x Change how RS232 input works to avoid it from trying to init every 10s. Maybe always open read only. And when first message arrive reconfigure/reinit with two-way if that is selected.
+x Make subclasses for receivesiadapter with each type (USB, RS232, Bluetooth)
 
 possible HW enhancments
 -----------------------

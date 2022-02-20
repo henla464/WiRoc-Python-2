@@ -2,6 +2,8 @@ from chipGPIO.chipGPIO import *
 import logging
 import socket
 import subprocess
+import pydbus
+
 
 class HardwareAbstraction(object):
     WiRocLogger = logging.getLogger('WiRoc')
@@ -115,6 +117,11 @@ class HardwareAbstraction(object):
         if self.runningOnChip or self.runningOnNanoPi:
             HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearShortKeyPress")
             os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x4a 0x02'")
+
+    def GetAdapterBTAddress(self):
+        bus = pydbus.SystemBus()
+        adapter = bus.get('org.bluez', '/org/bluez/hci0')
+        return adapter.Address
 
     def ReleaseRFComm(self, portNumber):
         res = subprocess.run(['rfcomm', 'release', portNumber], stdout=subprocess.PIPE, check=True)

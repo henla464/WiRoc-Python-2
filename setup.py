@@ -14,6 +14,9 @@ from subscriberadapters.sendstatusadapter import SendStatusAdapter
 from inputadapters.createstatusadapter import CreateStatusAdapter
 from inputadapters.receiveloraadapter import ReceiveLoraAdapter
 from inputadapters.receivesiadapter import ReceiveSIAdapter
+from inputadapters.receivesiadapter import ReceiveSIUSBSerialPort
+from inputadapters.receivesiadapter import ReceiveSIHWSerialPort
+from inputadapters.receivesiadapter import ReceiveSIBluetoothSP
 from inputadapters.receivetestpunchesadapter import ReceiveTestPunchesAdapter
 from inputadapters.receiverepeatermessagesadapter import ReceiveRepeaterMessagesAdapter
 #import requests.packages.urllib3.util.connection as urllib3_cn
@@ -21,48 +24,14 @@ import urllib3.util.connection as urllib3_cn
 import logging
 from settings.settings import SettingsClass
 
+
 class Setup:
     SubscriberAdapters = None
     InputAdapters = None
     WiRocLogger = logging.getLogger('WiRoc')
 
     @staticmethod
-    def SetupInputAdapters():  # createMessageTypeIfNotExist = False):
-        inputObjects = []
-        inChange1 = CreateStatusAdapter.CreateInstances()  #uses db
-        inChange2 = ReceiveLoraAdapter.CreateInstances(HardwareAbstraction.Instance) #doesn't use db, init uses
-        inChange4 = ReceiveSIAdapter.CreateInstances() #uses db, writes to it
-        inChange5 = ReceiveTestPunchesAdapter.CreateInstances() #no doesnt use db
-        inChange6 = ReceiveRepeaterMessagesAdapter.CreateInstances() #no doesnt use db
-        inputObjects.extend(CreateStatusAdapter.Instances)
-        inputObjects.extend(ReceiveLoraAdapter.Instances)
-        inputObjects.extend(ReceiveSIAdapter.Instances)
-        inputObjects.extend(ReceiveTestPunchesAdapter.Instances)
-        inputObjects.extend(ReceiveRepeaterMessagesAdapter.Instances)
-
-        anyShouldBeInitialized = False
-        for inst in inputObjects:
-            if inst.ShouldBeInitialized():
-                anyShouldBeInitialized = True
-
-        if (not anyShouldBeInitialized and not SettingsClass.GetForceReconfigure()
-            and not inChange1 and not inChange2 and not inChange4
-            and not inChange5 and not inChange6):
-            return False
-
-        SettingsClass.SetForceReconfigure(False)
-
-        for adapterObj in inputObjects:
-            Setup.WiRocLogger.debug(
-                "Setup::SetupInputAdapters() Before Init() input adapter: " + str(adapterObj.GetInstanceName()))
-            adapterObj.Init()
-        DatabaseHelper.update_input_adapter_instances(inputObjects)
-
-        Setup.InputAdapters = inputObjects
-        return True
-
-    @staticmethod
-    def SetupAdapters(): #createMessageTypeIfNotExist = False):
+    def SetupAdapters():
         subscriberObjects = []
         change1 = SendLoraAdapter.CreateInstances(HardwareAbstraction.Instance)
         change2 = SendSerialAdapter.CreateInstances()
@@ -78,15 +47,18 @@ class Setup:
         inputObjects = []
         inChange1 = CreateStatusAdapter.CreateInstances()
         inChange2 = ReceiveLoraAdapter.CreateInstances(HardwareAbstraction.Instance)
-        inChange4 = ReceiveSIAdapter.CreateInstances()
-        inChange5 = ReceiveTestPunchesAdapter.CreateInstances()
-        inChange6 = ReceiveRepeaterMessagesAdapter.CreateInstances()
+        inChange4 = ReceiveSIUSBSerialPort.CreateInstances()  # uses db, writes to it
+        inChange5 = ReceiveSIHWSerialPort.CreateInstances() # uses db, writes to it
+        inChange6 = ReceiveSIBluetoothSP.CreateInstances() # uses db, writes to it
+        inChange7 = ReceiveTestPunchesAdapter.CreateInstances()
+        inChange8 = ReceiveRepeaterMessagesAdapter.CreateInstances()
         inputObjects.extend(CreateStatusAdapter.Instances)
         inputObjects.extend(ReceiveLoraAdapter.Instances)
-        inputObjects.extend(ReceiveSIAdapter.Instances)
+        inputObjects.extend(ReceiveSIUSBSerialPort.Instances)
+        inputObjects.extend(ReceiveSIHWSerialPort.Instances)
+        inputObjects.extend(ReceiveSIBluetoothSP.Instances)
         inputObjects.extend(ReceiveTestPunchesAdapter.Instances)
         inputObjects.extend(ReceiveRepeaterMessagesAdapter.Instances)
-
 
         anyShouldBeInitialized = False
         for inst in subscriberObjects:
@@ -98,9 +70,9 @@ class Setup:
                 anyShouldBeInitialized = True
 
         if (not anyShouldBeInitialized and not SettingsClass.GetForceReconfigure()
-            and not change1 and not change3 and not change4 and not change5 and not change2
-            and not inChange1 and not inChange2 and not inChange4
-            and not inChange5 and not inChange6):
+                and not change1 and not change3 and not change4 and not change5 and not change2
+                and not inChange1 and not inChange2 and not inChange4
+                and not inChange5 and not inChange6 and not inChange7 and not inChange8):
             return False
 
         SettingsClass.SetForceReconfigure(False)

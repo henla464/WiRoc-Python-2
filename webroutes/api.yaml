@@ -935,7 +935,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /bindrfcomm/{btAddress}:
+  /bindrfcomm/{btAddress}/{btName}:
     get:
       tags:
       - "SportIdent"
@@ -943,6 +943,11 @@ paths:
       operationId: "bindRFComm"
       parameters:
         - name: btAddress
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: btName
           in: path
           required: true
           schema:

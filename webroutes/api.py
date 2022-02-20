@@ -2,7 +2,7 @@ __author__ = 'henla464'
 
 from datamodel.db_helper import DatabaseHelper
 from settings.settings import SettingsClass
-from datamodel.datamodel import SettingData
+from datamodel.datamodel import SettingData, BluetoothSerialPortData
 from battery import Battery
 from init import *
 from flask import request
@@ -885,25 +885,6 @@ def getWiRocHWVersion():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=wirocHWVersion))
 
-
-def getRFComms():
-    boundResult = subprocess.run(['rfcomm'], stdout=subprocess.PIPE, check=True)
-    rfComms = boundResult.stdout.decode('utf-8').strip()
-    if len(rfComms) == 0:
-        return []
-    rfCommsArray = rfComms.split('\n')
-    rfCommsObjArray = [MicroMock(SerialPortName=rfComm.split(' ')[0][:-1],
-                                 BTAddress=rfComm.split(' ')[1],
-                                 Channel=rfComm.split(' ')[3],
-                                 Status=rfComm.split(' ')[4],
-                                 AttachedText=rfComm.split(' ')[5][1:-1] if len(rfComm.split(' ')) > 5 else ''
-                                 ) for rfComm in rfCommsArray]
-    return rfCommsObjArray
-
-
-BTAddressAndNameMapping = {}
-
-
 @app.route('/api/scanbtaddresses/', methods=['GET'])
 def getBTAddresses():
     result = subprocess.run(['hcitool', 'scan'], stdout=subprocess.PIPE, check=True)
@@ -912,83 +893,47 @@ def getBTAddresses():
     btAddressAndNameArray = btAddressAndNameArray[1:]
     btAddressAndNameArray = [btAddrAndName.strip('\t') for btAddrAndName in btAddressAndNameArray]
     btAddressesAndNameObjArray = [MicroMock(BTAddress=btAddrAndName.split('\t')[0],
-                                            Name=btAddrAndName.split('\t')[1]) for btAddrAndName in btAddressAndNameArray]
-
-    rfCommsObjArray = getRFComms()
-
-    combinedList = []
-    for rfCommObj in rfCommsObjArray:
-        btName = "unknown"
-        if rfCommObj.BTAddress in BTAddressAndNameMapping:
-            btName = BTAddressAndNameMapping[rfCommObj.BTAddress]
-
-        combinedObj = MicroMock(SerialPortName=rfCommObj.SerialPortName,
-                                PortNumber=rfCommObj.SerialPortName.replace("rfcomm", ""),
-                                BTAddress=rfCommObj.BTAddress,
-                                Channel=rfCommObj.Channel,
-                                Status=rfCommObj.Status,
-                                AttachedText=rfCommObj.AttachedText,
-                                Name=btName)
-        combinedList.append(combinedObj)
-
-    for btAddrObj in btAddressesAndNameObjArray:
-        if btAddrObj.BTAddress not in BTAddressAndNameMapping:
-            BTAddressAndNameMapping[btAddrObj.BTAddress] = btAddrObj.Name
-        elif btAddrObj.Name != "n/a":
-            BTAddressAndNameMapping[btAddrObj.BTAddress] = btAddrObj.Name
-
-        if any(rfCommObj.BTAddress == btAddrObj.BTAddress for rfCommObj in rfCommsObjArray):
-            # Already added BTAddress
-            continue
-        combinedObj = MicroMock(SerialPortName=None,
-                                PortNumber=None,
-                                BTAddress=btAddrObj.BTAddress,
-                                Channel=None,
-                                Status=None,
-                                AttachedText='',
-                                Name=btAddrObj.Name)
-        combinedList.append(combinedObj)
-        BTAddressAndNameMapping[btAddrObj.BTAddress] = btAddrObj.Name
+                                            Name=btAddrAndName.split('\t')[1],
+                                            Found='True',
+                                            Status='NotConnected')
+                                  for btAddrAndName in btAddressAndNameArray]
+    DatabaseHelper.reInit()
+    btSerialPortDatas = DatabaseHelper.get_bluetooth_serial_ports()
+    for btSerialPortData in btSerialPortDatas:
+        found = False
+        for btAddressAndName in btAddressesAndNameObjArray:
+            if btAddressAndName.BTAddress == btSerialPortData.DeviceBTAddress:
+                btAddressAndName.Status = btSerialPortData.Status
+                found = True
+        if not found:
+            btAddressesAndNameObjArray.append(MicroMock(BTAddress=btSerialPortData.DeviceBTAddress,
+                                                        Name=btSerialPortData.Name,
+                                                        Found='False',
+                                                        Status=btSerialPortData.Status))
 
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=combinedList))
+    return jsonpickle.encode(MicroMock(Value=btAddressesAndNameObjArray))
 
 
-@app.route('/api/bindrfcomm/<btAddress>/', methods=['GET'])
-def bindRFComm(btAddress):
-    result = subprocess.run(['sdptool', 'browse', 'local'], stdout=subprocess.PIPE, check=True)
-    sdpToolResult = result.stdout.decode('utf-8').strip()
-    pattern = re.compile('.*Channel: (.*?)$.*', re.MULTILINE | re.DOTALL)
-    match = pattern.match(sdpToolResult)
-    if match is not None:
-        channel = match.group(1)
-        rfCommsObjArray = getRFComms()
-        matchingPortsByBTAddress = [rfCommObj for rfCommObj in rfCommsObjArray if rfCommObj.BTAddress == btAddress]
-        if len(matchingPortsByBTAddress) == 0:
-            # Not bound already
-            portNumberToUse = None
-            for portNumber in range(10):
-                portName = 'rfcomm'+str(portNumber)
-                matchingPorts = [rfCommObj for rfCommObj in rfCommsObjArray if rfCommObj.SerialPortName == portName]
-                if len(matchingPorts) == 0:
-                    portNumberToUse = portNumber
-                    break
-            if portNumberToUse is not None:
-                # Bind the device to a serial port
-                res = subprocess.run(['rfcomm', 'bind', str(portNumberToUse), btAddress, channel], stdout=subprocess.PIPE, check=True)
-
+@app.route('/api/bindrfcomm/<btAddress>/<btName>/', methods=['GET'])
+def bindRFComm(btAddress, btName):
+    btSerialPortDatas = DatabaseHelper.get_bluetooth_serial_port(btAddress)
+    if len(btSerialPortDatas) == 0:
+        btSerialPortData = BluetoothSerialPortData()
+        btSerialPortData.DeviceBTAddress = btAddress
+        btSerialPortData.Name = btName
+        btSerialPortData.Status = 'NotConnected'
+        DatabaseHelper.save_bluetooth_serial_port(btSerialPortData)
     btAddresses = getBTAddresses()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=btAddresses))
 
 
-@app.route('/api/releaserfcomm/<portNumberUsed>/', methods=['GET'])
-def releaseRFComm(portNumberUsed):
-    # Bind the device to a serial port
-    res = subprocess.run(['rfcomm', 'release', portNumberUsed], stdout=subprocess.PIPE, check=True)
-    releaseStr = res.stdout.decode('utf-8').strip()
+@app.route('/api/releaserfcomm/<btAddress>/', methods=['GET'])
+def releaseRFComm(btAddress):
+    DatabaseHelper.delete_bluetooth_serial_port(btAddress)
     btAddresses = getBTAddresses()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)

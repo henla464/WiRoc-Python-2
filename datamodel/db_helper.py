@@ -56,6 +56,8 @@ class DatabaseHelper:
         db.ensure_table_created(table)
         table = MessageStatsData()
         db.ensure_table_created(table)
+        table = BluetoothSerialPortData()
+        db.ensure_table_created(table)
 
     @classmethod
     def drop_all_tables(cls):
@@ -91,6 +93,8 @@ class DatabaseHelper:
         table = RepeaterMessageBoxData()
         db.drop_table(table)
         table = RepeaterMessageBoxArchiveData()
+        db.drop_table(table)
+        table = BluetoothSerialPortData()
         db.drop_table(table)
 
     @classmethod
@@ -795,7 +799,7 @@ class DatabaseHelper:
         subs = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql)
         now = datetime.now()
         for sub in subs:
-            if sub.SentDate > now:
+            if sub.SentDate is not None and sub.SentDate > now:
                 sub.SentDate = now
                 cls.db.save_table_object(sub, False)
                 DatabaseHelper.WiRocLogger.debug('Set future SentDate: ' + str(sub.SentDate) + " to: " + str(now))
@@ -1128,16 +1132,6 @@ class DatabaseHelper:
 
     # Channels
     @classmethod
-    def get_channelold(cls, channel, dataRate, loraModem):
-        cls.init()
-        sql = ("SELECT * FROM ChannelData WHERE Channel = " + str(channel) +
-               " and DataRate = " + str(dataRate) + " and LoraModem = '" + loraModem + "'")
-        rows = cls.db.get_table_objects_by_SQL(ChannelData, sql)
-        if len(rows) >= 1:
-            return rows[0]
-        return None
-
-    @classmethod
     def get_channel(cls, channel, loraRange, loraModem):
         cls.init()
         sql = ("SELECT * FROM ChannelData WHERE Channel = " + str(channel) +
@@ -1246,3 +1240,30 @@ class DatabaseHelper:
 
         for channel in channels:
             cls.save_channel(channel)
+
+    # BluetoothSerialPortData
+    @classmethod
+    def get_bluetooth_serial_ports(cls):
+        cls.init()
+        rows = cls.db.get_table_objects(BluetoothSerialPortData)
+        return rows
+
+    @classmethod
+    def get_bluetooth_serial_port(cls, deviceBluetoothAddress):
+        cls.init()
+        sql = ("SELECT * FROM BluetoothSerialPortData WHERE DeviceBTAddress = '" + deviceBluetoothAddress + "'")
+        rows = cls.db.get_table_objects_by_SQL(BluetoothSerialPortData, sql)
+        return rows
+
+    @classmethod
+    def save_bluetooth_serial_port(cls, bluetoothSerialPortData):
+        cls.init()
+        rowid = cls.db.save_table_object(bluetoothSerialPortData)
+        return rowid
+
+    @classmethod
+    def delete_bluetooth_serial_port(cls, deviceBluetoothAddress):
+        cls.init()
+        db = cls.db
+        db.execute_SQL("DELETE FROM BluetoothSerialPortData WHERE DeviceBTAddress = '" + deviceBluetoothAddress + "'")
+        return None

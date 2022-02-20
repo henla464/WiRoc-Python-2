@@ -418,6 +418,7 @@ class TestPunchView(object):
         self.Status = None
         self.AckRSSIValue = 0
 
+
 class MessageStatsData(object):
         columns = [("AdapterInstanceName", str), ("MessageSubTypeName", str), ("Status", str),
                    ("NoOfMessages", int), ("Uploaded", bool),("FetchedForUpload", datetime),
@@ -432,6 +433,16 @@ class MessageStatsData(object):
             self.Uploaded = False
             self.FetchedForUpload = None
             self.CreatedDate = None
+
+
+class BluetoothSerialPortData(object):
+    columns = [("DeviceBTAddress", str),  ("Name", str), ("Status", str)]
+
+    def __init__(self):
+        self.id = None
+        self.DeviceBTAddress = None
+        self.Name = "N/A"
+        self.Status = "NotConnected"
 
 
 class SIMessage(object):
@@ -553,12 +564,12 @@ class SIMessage(object):
         return addr
 
 
-
 class MessageSubscriptionBatchItem(object):
     def __init__(self):
         self.id = None
         self.NoOfSendTries = None
         self.MessageData = None
+
 
 class MessageSubscriptionBatch(object):
     def __init__(self):
