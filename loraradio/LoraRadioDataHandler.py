@@ -165,7 +165,7 @@ class LoraRadioDataHandler(object):
                 for i in range(len(self.LikelyStartOfMessageIndex)):
                     if self.LikelyStartOfMessageIndex[i] >= startOfMessageIndex:
                         self.LikelyStartOfMessageIndex[i] -= 10
-                for i in range(len(self.LikelyStartOfMessageIndex)):
+                for i in range(len(self.LikelyStartOfMessageIndex)-1, -1, -1):
                     if self.LikelyStartOfMessageIndex[i] <= 0:
                         self.LikelyStartOfMessageIndex.pop(i)
 
@@ -569,7 +569,6 @@ class LoraRadioDataHandler(object):
                 if message is not None:
                     return message
                 firstTimeOrMessageRemoved = self._RemoveLikelyMessage()
-
 
         return None
 

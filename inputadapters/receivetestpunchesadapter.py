@@ -4,6 +4,7 @@ from utils.utils import Utils
 from struct import *
 import logging
 
+
 class ReceiveTestPunchesAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Input')
     Instances = []
@@ -21,7 +22,7 @@ class ReceiveTestPunchesAdapter(object):
     def __init__(self, instanceName):
         self.instanceName = instanceName
         self.isInitialized = False
-        self.TimeToFetch = False
+        self.TimeToFetchCounter = 0
         self.LastPunchIdAdded = None
 
     def GetInstanceName(self):
@@ -40,12 +41,12 @@ class ReceiveTestPunchesAdapter(object):
         return True
 
     def UpdateInfrequently(self):
-        self.TimeToFetch = True
-        return self.TimeToFetch
+        return True
 
     def GetData(self):
-        if self.TimeToFetch:
-            self.TimeToFetch = False
+        self.TimeToFetchCounter += 1
+        if self.TimeToFetchCounter == 10:
+            self.TimeToFetchCounter = 0
             punchToAdd = DatabaseHelper.get_test_punch_to_add()
             if punchToAdd is not None:
                 self.LastPunchIdAdded = punchToAdd.id
@@ -54,20 +55,20 @@ class ReceiveTestPunchesAdapter(object):
                 stationCode = 999
                 subSecond = 0
                 payload = bytearray(pack(">HIcHcccc", stationCode,
-                                                Utils.EncodeCardNr(punchToAdd.SICardNumber),
-                                                bytes([punchToAdd.TwentyFourHour]),
-                                                punchToAdd.TwelveHourTimer,
-                                                bytes([subSecond]),
-                                                bytes([0x00]), #mem2
-                                                bytes([0x00]), #mem1
-                                                bytes([0x00])  #mem0
-                                         ))
+                                    Utils.EncodeCardNr(punchToAdd.SICardNumber),
+                                    bytes([punchToAdd.TwentyFourHour]),
+                                    punchToAdd.TwelveHourTimer,
+                                    bytes([subSecond]),
+                                    bytes([0x00]), # mem2
+                                    bytes([0x00]), # mem1
+                                    bytes([0x00])  # mem0
+                                ))
                 siMessage.AddPayload(payload)
                 siMessage.AddFooter()
 
                 ReceiveTestPunchesAdapter.WiRocLogger.debug("ReceiveTestPunchesAdapter::GetData() Data to fetch")
                 ReceiveTestPunchesAdapter.WiRocLogger.debug("ReceiveTestPunchesAdapter::GetData() Data to fetch: " + Utils.GetDataInHex(siMessage.GetByteArray(), logging.DEBUG))
-                return {"MessageType": "DATA", "MessageSource":"Test", "MessageSubTypeName": "Test", "Data": siMessage.GetByteArray(), "ChecksumOK": True, "MessageID": siMessage.GetMessageID(0)}
+                return {"MessageType": "DATA", "MessageSource": "Test", "MessageSubTypeName": "Test", "Data": siMessage.GetByteArray(), "ChecksumOK": True, "MessageID": siMessage.GetMessageID(0)}
         return None
 
     def AddedToMessageBox(self, mbid):
