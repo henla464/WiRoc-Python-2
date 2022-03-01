@@ -1023,13 +1023,14 @@ class DatabaseHelper:
 
     # TestPunchData
     @classmethod
-    def add_test_punch(cls, testBatchGuid, SINo, twelveHourTimer, twentyFourHour):
+    def add_test_punch(cls, testBatchGuid, SINo, twelveHourTimer, twentyFourHour, subSecond):
         cls.init()
         testPunch = TestPunchData()
         testPunch.BatchGuid = testBatchGuid
         testPunch.MessageBoxId = None
         testPunch.TwelveHourTimer = twelveHourTimer
         testPunch.TwentyFourHour = twentyFourHour
+        testPunch.SubSecond = subSecond
         testPunch.SICardNumber = SINo
         cls.db.save_table_object(testPunch, False)
 

@@ -453,16 +453,18 @@ def getTestPunches(testBatchGuid, includeAll):
 @app.route('/api/testpunches/addtestpunch/<testBatchGuid>/<SINo>/', methods=['GET'])
 def addTestPunch(testBatchGuid, SINo):
     DatabaseHelper.reInit()
-    localtime = time.localtime(time.time())
+    theTimeInSecondsFloat = time.time()
+    localtime = time.localtime(theTimeInSecondsFloat)
     twelveHourTimer = 0
     twentyFourHour = 0
+    subSecond = round((theTimeInSecondsFloat - int(theTimeInSecondsFloat)) * 255)
     if localtime.tm_hour >= 12:
         twelveHourTimer = (localtime.tm_hour-12) * 3600 + localtime.tm_min * 60 + localtime.tm_sec
         twentyFourHour = 1
     else:
         twelveHourTimer = localtime.tm_hour * 3600 + localtime.tm_min * 60 + localtime.tm_sec
     DatabaseHelper.delete_other_test_punches(testBatchGuid)
-    DatabaseHelper.add_test_punch(testBatchGuid, SINo, twelveHourTimer, twentyFourHour)
+    DatabaseHelper.add_test_punch(testBatchGuid, SINo, twelveHourTimer, twentyFourHour, subSecond)
 
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)

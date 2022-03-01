@@ -53,7 +53,7 @@ class ReceiveTestPunchesAdapter(object):
                 siMessage = SIMessage()
                 siMessage.AddHeader(SIMessage.SIPunch)
                 stationCode = 999
-                subSecond = 0
+                subSecond = punchToAdd.SubSecond
                 payload = bytearray(pack(">HIcHcccc", stationCode,
                                     Utils.EncodeCardNr(punchToAdd.SICardNumber),
                                     bytes([punchToAdd.TwentyFourHour]),
@@ -66,7 +66,6 @@ class ReceiveTestPunchesAdapter(object):
                 siMessage.AddPayload(payload)
                 siMessage.AddFooter()
 
-                ReceiveTestPunchesAdapter.WiRocLogger.debug("ReceiveTestPunchesAdapter::GetData() Data to fetch")
                 ReceiveTestPunchesAdapter.WiRocLogger.debug("ReceiveTestPunchesAdapter::GetData() Data to fetch: " + Utils.GetDataInHex(siMessage.GetByteArray(), logging.DEBUG))
                 return {"MessageType": "DATA", "MessageSource": "Test", "MessageSubTypeName": "Test", "Data": siMessage.GetByteArray(), "ChecksumOK": True, "MessageID": siMessage.GetMessageID(0)}
         return None
