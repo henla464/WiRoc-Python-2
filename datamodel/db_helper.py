@@ -1043,7 +1043,7 @@ class DatabaseHelper:
     @classmethod
     def get_test_punch_to_add(cls):
         cls.init()
-        testPunches = cls.db.get_table_objects_by_SQL(TestPunchData, "SELECT * FROM TestPunchData WHERE AddedToMessageBox = 0 ORDER BY TwentyFourHour, TwelveHourTimer, id LIMIT 1")
+        testPunches = cls.db.get_table_objects_by_SQL(TestPunchData, "SELECT * FROM TestPunchData WHERE AddedToMessageBox = 0 ORDER BY TwentyFourHour, TwelveHourTimer, SubSecond, id LIMIT 1")
         if len(testPunches) > 0:
             return testPunches[0]
         return None

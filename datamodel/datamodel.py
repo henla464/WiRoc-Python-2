@@ -135,6 +135,7 @@ class RepeaterMessageBoxData(object):
         self.LastSeenTime = None
         self.CreatedDate = None
 
+
 class RepeaterMessageBoxArchiveData(object):
     columns = [("OrigId", int) ,("MessageData", bytes), ("MessageTypeName", str), ("PowerCycleCreated", int),
                ("InstanceName", str), ("MessageSubTypeName", str), ("ChecksumOK", bool),
@@ -232,6 +233,7 @@ class SubscriptionViewData(object):
         self.TransformId = None
         self.TransformName = None
         self.SubscriberTypeName = None
+
 
 class MessageSubscriptionData(object):
     columns = [("MessageID", bytes), ("AckReceivedFromReceiver", bool), ("MessageNumber", int),

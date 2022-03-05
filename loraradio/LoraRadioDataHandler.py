@@ -17,7 +17,6 @@ class LoraRadioDataHandler(object):
 
     def __init__(self, rssiByteExpected):
         self.DataReceived = bytearray()
-        self.LikelyStartOfMessageIndex = []
         # Dictionary of correctly received Punch message by control number
         self.ReceivedPunchMessageDict = {}
         self.LastPunchMessage = None
@@ -34,8 +33,8 @@ class LoraRadioDataHandler(object):
         else:
             self.DataReceived.append(dataByteOrArray)
 
-    def _IsLongEnoughToBeMessage(self, startOfMessageIndex):
-        return len(self.DataReceived[startOfMessageIndex:]) >= (min(LoraRadioMessageRS.MessageLengths) + self.RSSIByteCount)
+    def _IsLongEnoughToBeMessage(self):
+        return len(self.DataReceived) >= (min(LoraRadioMessageRS.MessageLengths) + self.RSSIByteCount)
 
     def _CacheMessage(self, loraMsg):
         controlNumber = loraMsg.GetControlNumber()
@@ -45,10 +44,8 @@ class LoraRadioDataHandler(object):
         self.LastPunchMessage = loraMsg
         self.RxError = False
 
-    def _RemoveMessageFromDataReceived(self, startOfMessageIndex, loraMsg):
-        # remove the bytes belonging to this lora message from DataReceived
-        #self.DataReceived = self.DataReceived[len(loraMsg.GetByteArray()) + self.RSSIByteCount:]
-        self.DataReceived = self.DataReceived[startOfMessageIndex+len(loraMsg.GetByteArray()) + self.RSSIByteCount:]
+    def _RemoveMessageFromDataReceived(self):
+        self.DataReceived = bytearray([])
 
     def _FindPunchErasures(self, loraMsg):
         controlNumber = loraMsg.GetControlNumber()
@@ -69,7 +66,7 @@ class LoraRadioDataHandler(object):
 
             cardNoByteArray = loraMsg.GetSICardNoByteArray()[0:4]
             cardNo = Utils.toInt(cardNoByteArray)
-            if cardNo > 0x4FFFF and cardNo < 500000: #500 000 = 0x7A120
+            if 0x4FFFF < cardNo < 500000: # 500 000 = 0x7A120
                 erasures.append(3) # at least CN2 should be wrong
             if cardNoByteArray[0] != 0x00: # CN3 not currently used so should always be 0
                 erasures.append(2)
@@ -147,6 +144,7 @@ class LoraRadioDataHandler(object):
             if erasures2[i] == 0:
                 # if the header is wrong it is already added in erasures1.
                 erasures2.pop(i)
+        for i in range(len(erasures2)):
             # Add the length of the first part of the double message minus the RSCodes (2) minus the header of the second
             loraMsgLength = LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunch]
             erasures2[i] += loraMsgLength-5
@@ -155,21 +153,15 @@ class LoraRadioDataHandler(object):
             "LoraRadioDataHandler::_FindPunchDoubleErasures " + str(len(erasures1)) + " erasures found. " + str(erasures1))
         return erasures1
 
-    def _CheckAndRemoveLoraModuleRXError(self, startOfMessageIndex):
-        if len(self.DataReceived[startOfMessageIndex:]) >= 10:
-            if self.DataReceived[startOfMessageIndex:startOfMessageIndex+10] == bytearray('rx error\r\n'.encode('latin-1')):
+    def _CheckAndRemoveLoraModuleRXError(self):
+        if len(self.DataReceived) >= 10:
+            if self.DataReceived[0:10] == bytearray('rx error\r\n'.encode('latin-1')):
                 LoraRadioDataHandler.WiRocLogger.debug(
                     "LoraRadioDataHandler::CheckAndRemoveLoraModuleRXError 'rx error' returned by module")
                 self.RxError = True
-                self.DataReceived = self.DataReceived[0:startOfMessageIndex] + self.DataReceived[startOfMessageIndex+10:]
-                for i in range(len(self.LikelyStartOfMessageIndex)):
-                    if self.LikelyStartOfMessageIndex[i] >= startOfMessageIndex:
-                        self.LikelyStartOfMessageIndex[i] -= 10
-                for i in range(len(self.LikelyStartOfMessageIndex)-1, -1, -1):
-                    if self.LikelyStartOfMessageIndex[i] <= 0:
-                        self.LikelyStartOfMessageIndex.pop(i)
+                self.DataReceived = self.DataReceived[10:]
 
-    def _GetPunchMessageWithErasures(self, startOfMessageIndex, messageDataToConsider, rssiByteValue, erasures=None):
+    def _GetPunchMessageWithErasures(self, messageDataToConsider, rssiByteValue, erasures=None):
         loraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(messageDataToConsider,
                                                                            rssiByte=rssiByteValue)
         print("erasures: " + str(erasures))
@@ -195,7 +187,7 @@ class LoraRadioDataHandler(object):
                 loraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(correctedData2,
                                                                                    rssiByte=rssiByteValue)
                 self._CacheMessage(loraMsg)
-                self._RemoveMessageFromDataReceived(startOfMessageIndex, loraMsg)
+                self._RemoveMessageFromDataReceived()
                 return loraMsg
             except Exception as err2:
                 LoraRadioDataHandler.WiRocLogger.error(
@@ -207,23 +199,23 @@ class LoraRadioDataHandler(object):
                 "LoraRadioDataHandler::GetPunchMessage() No erasures found so could not decode")
             return None
 
-    def _GetPunchMessage(self, startOfMessageIndex, erasures=None):
+    def _GetPunchMessage(self, erasures=None):
         messageTypeToTry = LoraRadioMessageRS.MessageTypeSIPunch
         expectedMessageLength = LoraRadioMessageRS.MessageLengths[messageTypeToTry]
-        if len(self.DataReceived[startOfMessageIndex:]) < expectedMessageLength + self.RSSIByteCount:
+        if len(self.DataReceived) < expectedMessageLength + self.RSSIByteCount:
             return None
         if erasures is None:
             erasures = []
 
-        messageDataToConsider = self.DataReceived[startOfMessageIndex:startOfMessageIndex+expectedMessageLength]
+        messageDataToConsider = self.DataReceived[0:expectedMessageLength]
         messageDataToConsider[0] = (messageDataToConsider[0] & 0xE0) | messageTypeToTry
-        rssiByteValue = self.DataReceived[startOfMessageIndex+expectedMessageLength] if self.RSSIByteCount == 1 else None
+        rssiByteValue = self.DataReceived[expectedMessageLength] if self.RSSIByteCount == 1 else None
 
         if RSCoderLora.check(messageDataToConsider):
             # everything checks out, message should be correct
             loraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(messageDataToConsider, rssiByte=rssiByteValue)
             self._CacheMessage(loraMsg)
-            self._RemoveMessageFromDataReceived(startOfMessageIndex, loraMsg)
+            self._RemoveMessageFromDataReceived()
             return loraMsg
         else:
             try:
@@ -236,21 +228,20 @@ class LoraRadioDataHandler(object):
                         "LoraRadioDataHandler::_GetPunchMessage() Decoded, corrected data correctly it seems")
                     loraPunchMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(correctedData, rssiByte=rssiByteValue)
                     self._CacheMessage(loraPunchMsg)
-                    self._RemoveMessageFromDataReceived(startOfMessageIndex, loraPunchMsg)
+                    self._RemoveMessageFromDataReceived()
                     return loraPunchMsg
                 else:
                     LoraRadioDataHandler.WiRocLogger.info(
                         "LoraRadioDataHandler::_GetPunchMessage() Could not decode correctly, try with erasures next")
-                    loraPunchMsg = self._GetPunchMessageWithErasures(startOfMessageIndex, messageDataToConsider, rssiByteValue,
-                                                                     erasures=erasures)
+                    loraPunchMsg = self._GetPunchMessageWithErasures(messageDataToConsider, rssiByteValue, erasures=erasures)
                     return loraPunchMsg
             except Exception as err:
                 LoraRadioDataHandler.WiRocLogger.error(
                     "LoraRadioDataHandler::GetPunchMessage() RS decoding failed with exception: " + str(err))
-                loraPunchMsg = self._GetPunchMessageWithErasures(startOfMessageIndex, messageDataToConsider, rssiByteValue, erasures=erasures)
+                loraPunchMsg = self._GetPunchMessageWithErasures(messageDataToConsider, rssiByteValue, erasures=erasures)
                 return loraPunchMsg
 
-    def _GetPunchDoubleMessageWithErasures(self, startOfMessageIndex, messageDataToConsider, rssiByteValue, erasures=None):
+    def _GetPunchDoubleMessageWithErasures(self, messageDataToConsider, rssiByteValue, erasures=None):
         loraMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(messageDataToConsider,
                                                                            rssiByte=rssiByteValue)
         erasures.extend(self._FindPunchDoubleErasures(loraMsg))
@@ -284,7 +275,7 @@ class LoraRadioDataHandler(object):
                 # Cache individual messages but remove the whole double message from data received
                 self._CacheMessage(loraPunchMsg1)
                 self._CacheMessage(loraPunchMsg2)
-                self._RemoveMessageFromDataReceived(startOfMessageIndex, loraMsg)
+                self._RemoveMessageFromDataReceived()
                 return loraMsg
             except Exception as err2:
                 LoraRadioDataHandler.WiRocLogger.error(
@@ -296,16 +287,16 @@ class LoraRadioDataHandler(object):
                 "LoraRadioDataHandler::_GetPunchDoubleMessageWithErasures() No erasures found so could not decode")
             return None
 
-    def _GetPunchDoubleMessage(self, startOfMessageIndex, erasures=None):
+    def _GetPunchDoubleMessage(self, erasures=None):
         messageTypeToTry = LoraRadioMessageRS.MessageTypeSIPunchDouble
         expectedMessageLength = LoraRadioMessageRS.MessageLengths[messageTypeToTry]
-        if len(self.DataReceived[startOfMessageIndex:]) < expectedMessageLength + self.RSSIByteCount:
+        if len(self.DataReceived) < expectedMessageLength + self.RSSIByteCount:
             return None
         if erasures is None:
             erasures = []
-        messageDataToConsider = self.DataReceived[startOfMessageIndex:startOfMessageIndex+expectedMessageLength]
+        messageDataToConsider = self.DataReceived[0:expectedMessageLength]
         messageDataToConsider[0] = (messageDataToConsider[0] & 0xE0) | messageTypeToTry
-        rssiByteValue = self.DataReceived[startOfMessageIndex+expectedMessageLength] if self.RSSIByteCount == 1 else None
+        rssiByteValue = self.DataReceived[expectedMessageLength] if self.RSSIByteCount == 1 else None
 
         if RSCoderLora.checkLong(messageDataToConsider):
             # everything checks out, message should be correct
@@ -315,7 +306,7 @@ class LoraRadioDataHandler(object):
             # Cache individual messages but remove the whole double message from data received
             self._CacheMessage(loraPunchMsg1)
             self._CacheMessage(loraPunchMsg2)
-            self._RemoveMessageFromDataReceived(startOfMessageIndex, loraDoubleMsg)
+            self._RemoveMessageFromDataReceived()
             return loraDoubleMsg
         else:
             try:
@@ -332,38 +323,36 @@ class LoraRadioDataHandler(object):
                     # Cache individual messages but remove the whole double message from data received
                     self._CacheMessage(loraPunchMsg1)
                     self._CacheMessage(loraPunchMsg2)
-                    self._RemoveMessageFromDataReceived(startOfMessageIndex, loraPunchMsg)
+                    self._RemoveMessageFromDataReceived()
                     return loraPunchMsg
                 else:
                     LoraRadioDataHandler.WiRocLogger.info(
                         "LoraRadioDataHandler::_GetPunchDoubleMessage() Could not decode correctly, try with erasures next")
-                    loraPunchMsg = self._GetPunchDoubleMessageWithErasures(startOfMessageIndex, messageDataToConsider, rssiByteValue,
-                                                                     erasures=erasures)
+                    loraPunchMsg = self._GetPunchDoubleMessageWithErasures(messageDataToConsider, rssiByteValue, erasures=erasures)
                     return loraPunchMsg
             except Exception as err:
                 LoraRadioDataHandler.WiRocLogger.error(
                     "LoraRadioDataHandler::_GetPunchDoubleMessage() RS decoding failed with exception: " + str(err))
-                loraPunchMsg = self._GetPunchDoubleMessageWithErasures(startOfMessageIndex, messageDataToConsider, rssiByteValue,
-                                                                 erasures=erasures)
+                loraPunchMsg = self._GetPunchDoubleMessageWithErasures(messageDataToConsider, rssiByteValue, erasures=erasures)
                 return loraPunchMsg
 
-    def _GetAckMessage(self, startOfMessageIndex, erasures=None):
+    def _GetAckMessage(self, erasures=None):
         messageTypeToTry = LoraRadioMessageRS.MessageTypeLoraAck
         expectedMessageLength = LoraRadioMessageRS.MessageLengths[messageTypeToTry]
-        if len(self.DataReceived[startOfMessageIndex:]) < expectedMessageLength + self.RSSIByteCount:
+        if len(self.DataReceived) < expectedMessageLength + self.RSSIByteCount:
             return None
 
-        messageDataToConsider = self.DataReceived[startOfMessageIndex:startOfMessageIndex+expectedMessageLength]
+        messageDataToConsider = self.DataReceived[0:expectedMessageLength]
         messageDataToConsider[0] = (messageDataToConsider[0] & 0xE0) | messageTypeToTry
         LoraRadioDataHandler.WiRocLogger.debug(
             "LoraRadioDataHandler::_GetAckMessage() MessageDataToConsider: " + Utils.GetDataInHex(messageDataToConsider,
                                                                                                   logging.DEBUG))
-        rssiByteValue = self.DataReceived[startOfMessageIndex+expectedMessageLength] if self.RSSIByteCount == 1 else None
+        rssiByteValue = self.DataReceived[expectedMessageLength] if self.RSSIByteCount == 1 else None
 
         if RSCoderLora.check(messageDataToConsider):
             # everything checks out, message should be correct
             loraAckMsg = LoraRadioMessageCreator.GetAckMessageByFullMessageData(messageDataToConsider, rssiByte=rssiByteValue)
-            self._RemoveMessageFromDataReceived(startOfMessageIndex, loraAckMsg)
+            self._RemoveMessageFromDataReceived(loraAckMsg)
             return loraAckMsg
         else:
             try:
@@ -372,7 +361,7 @@ class LoraRadioDataHandler(object):
                     LoraRadioDataHandler.WiRocLogger.info(
                         "LoraRadioDataHandler::_GetAckMessage() Decoded, corrected data correctly it seems")
                     loraAckMsg = LoraRadioMessageCreator.GetAckMessageByFullMessageData(correctedData, rssiByte=rssiByteValue)
-                    self._RemoveMessageFromDataReceived(startOfMessageIndex, loraAckMsg)
+                    self._RemoveMessageFromDataReceived(loraAckMsg)
                     return loraAckMsg
                 else:
                     LoraRadioDataHandler.WiRocLogger.info(
@@ -387,23 +376,23 @@ class LoraRadioDataHandler(object):
                     "LoraRadioDataHandler::_GetAckMessage() No message could be decoded")
                 return None
 
-    def _GetStatusMessage(self, startOfMessageIndex, erasures=None):
+    def _GetStatusMessage(self, erasures=None):
         messageTypeToTry = LoraRadioMessageRS.MessageTypeStatus
         expectedMessageLength = LoraRadioMessageRS.MessageLengths[messageTypeToTry]
-        if len(self.DataReceived[startOfMessageIndex:]) < expectedMessageLength + self.RSSIByteCount:
+        if len(self.DataReceived) < expectedMessageLength + self.RSSIByteCount:
             return None
 
-        messageDataToConsider = self.DataReceived[startOfMessageIndex:startOfMessageIndex+expectedMessageLength]
+        messageDataToConsider = self.DataReceived[0:expectedMessageLength]
         messageDataToConsider[0] = (messageDataToConsider[0] & 0xE0) | messageTypeToTry
         LoraRadioDataHandler.WiRocLogger.debug(
             "LoraRadioDataHandler::_GetStatusMessage() MessageDataToConsider: " + Utils.GetDataInHex(messageDataToConsider,
                                                                                                   logging.DEBUG))
-        rssiByteValue = self.DataReceived[startOfMessageIndex+expectedMessageLength] if self.RSSIByteCount == 1 else None
+        rssiByteValue = self.DataReceived[expectedMessageLength] if self.RSSIByteCount == 1 else None
 
         if RSCoderLora.check(messageDataToConsider):
             # everything checks out, message should be correct
             loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(messageDataToConsider, rssiByte=rssiByteValue)
-            self._RemoveMessageFromDataReceived(startOfMessageIndex, loraStatusMsg)
+            self._RemoveMessageFromDataReceived()
             return loraStatusMsg
         else:
             try:
@@ -412,7 +401,7 @@ class LoraRadioDataHandler(object):
                     LoraRadioDataHandler.WiRocLogger.info(
                         "LoraRadioDataHandler::_GetStatusMessage() Decoded, corrected data correctly it seems")
                     loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(correctedData, rssiByte=rssiByteValue)
-                    self._RemoveMessageFromDataReceived(startOfMessageIndex, loraStatusMsg)
+                    self._RemoveMessageFromDataReceived()
                     return loraStatusMsg
                 else:
                     LoraRadioDataHandler.WiRocLogger.info(
@@ -427,39 +416,39 @@ class LoraRadioDataHandler(object):
                     "LoraRadioDataHandler::_GetStatusMessage() No message could be decoded")
                 return None
 
-    def _GetMessageTypeByLength(self, startOfMessageIndex):
+    def _GetMessageTypeByLength(self):
         expectedMessageLengths = [LoraRadioMessageRS.MessageLengths[idx] + self.RSSIByteCount for idx in
                                   LoraRadioDataHandler.MessageTypesExpected]
         #print("expectedMessageLengths: " + str(expectedMessageLengths))
         #print("length of datareceived: " + str(len(self.DataReceived)))
-        if len(self.DataReceived[startOfMessageIndex:]) in expectedMessageLengths:
+        if len(self.DataReceived) in expectedMessageLengths:
             indexWithinMessageTypesExpected = expectedMessageLengths.index(
-                len(self.DataReceived[startOfMessageIndex:]))
+                len(self.DataReceived))
             messageTypeByLength = LoraRadioDataHandler.MessageTypesExpected[
                 indexWithinMessageTypesExpected]
             return messageTypeByLength
 
-    def _GetLikelyMessageTypes(self, startOfMessageIndex):
+    def _GetLikelyMessageTypes(self):
         messageTypes = []
-        headerMessageType = LoraRadioDataHandler.GetHeaderMessageType(self.DataReceived[startOfMessageIndex:])
+        headerMessageType = LoraRadioDataHandler.GetHeaderMessageType(self.DataReceived)
         #print(headerMessageType)
         if headerMessageType in LoraRadioDataHandler.MessageTypesExpected:
             expectedMessageLength = LoraRadioMessageRS.MessageLengths[headerMessageType] + self.RSSIByteCount
-            if len(self.DataReceived[startOfMessageIndex:]) == expectedMessageLength:
+            if len(self.DataReceived) == expectedMessageLength:
                 messageTypes.append(headerMessageType)
-            elif len(self.DataReceived[startOfMessageIndex:]) > expectedMessageLength:
+            elif len(self.DataReceived) > expectedMessageLength:
                 messageTypes.append(headerMessageType)
 
-                messageTypeByLength = self._GetMessageTypeByLength(startOfMessageIndex)
+                messageTypeByLength = self._GetMessageTypeByLength()
                 if messageTypeByLength is not None:
                     messageTypes.append(messageTypeByLength)
             else:
                 # shorter than the header message type
-                messageTypeByLength = self._GetMessageTypeByLength(startOfMessageIndex)
+                messageTypeByLength = self._GetMessageTypeByLength()
                 if messageTypeByLength is not None:
                     messageTypes.append(messageTypeByLength)
         else:
-            messageTypeByLength = self._GetMessageTypeByLength(startOfMessageIndex)
+            messageTypeByLength = self._GetMessageTypeByLength()
             if messageTypeByLength is not None:
                 messageTypes.append(messageTypeByLength)
 
@@ -482,73 +471,39 @@ class LoraRadioDataHandler(object):
         ackReq = (messageData[0] & 0x80) > 0
         return ackReq
 
-    def _RemoveLikelyMessage(self):
-        headerMessageType = LoraRadioDataHandler.GetHeaderMessageType(self.DataReceived)
-        expectedMessageLength = LoraRadioMessageRS.MessageLengths[headerMessageType] + self.RSSIByteCount if headerMessageType < len(LoraRadioMessageRS.MessageLengths) else -1
-        if len(self.DataReceived) == expectedMessageLength:
-            LoraRadioDataHandler.WiRocLogger.debug(
-                "LoraRadioDataHandler::_RemoveLikelyMessage() The message length match the header message type, but could not be decoded. Discard it")
-            self.DataReceived = self.DataReceived[expectedMessageLength:]
-            return True
-        else:
-            expectedMessageLengths = [LoraRadioMessageRS.MessageLengths[idx] + self.RSSIByteCount for idx in
-                                      LoraRadioDataHandler.MessageTypesExpected]
-            #print("len datarec:" + str(len(self.DataReceived)))
-            if len(self.DataReceived) > max(expectedMessageLengths):
-                LoraRadioDataHandler.WiRocLogger.debug(
-                    "LoraRadioDataHandler::_RemoveLikelyMessage() Too many bytes for a single message. We should remove one likely message.")
-                if len(self.LikelyStartOfMessageIndex) > 0:
-                    likelyStartOfNextMessage = self.LikelyStartOfMessageIndex.pop(0)
-                    LoraRadioDataHandler.WiRocLogger.debug(
-                        "LoraRadioDataHandler::_RemoveLikelyMessage() Likely start of next message: " + str(likelyStartOfNextMessage))
-                    if likelyStartOfNextMessage < len(self.DataReceived):
-                        self.DataReceived = self.DataReceived[likelyStartOfNextMessage:]
-                        for i in range(len(self.LikelyStartOfMessageIndex)):
-                            self.LikelyStartOfMessageIndex[i] -= likelyStartOfNextMessage
-                    else:
-                        self.DataReceived = bytearray()
-                        self.LikelyStartOfMessageIndex = []
-                else:
-                    LoraRadioDataHandler.WiRocLogger.debug(
-                        "LoraRadioDataHandler::_RemoveLikelyMessage() no likely message starts so reset DataReceived")
-                    self.DataReceived = bytearray()
-                    self.LikelyStartOfMessageIndex = []
-                return True
-        return False
-
-    def _TryGetMessage(self, startOfMessageIndex):
-        if not self._IsLongEnoughToBeMessage(startOfMessageIndex):
+    def _TryGetMessage(self):
+        if not self._IsLongEnoughToBeMessage():
             return None
 
-        self._CheckAndRemoveLoraModuleRXError(startOfMessageIndex)
+        self._CheckAndRemoveLoraModuleRXError()
 
-        if not self._IsLongEnoughToBeMessage(startOfMessageIndex):
+        if not self._IsLongEnoughToBeMessage():
             return None
-        print("After remove RX Error, after check long enough: " + Utils.GetDataInHex(self.DataReceived[startOfMessageIndex:], logging.DEBUG))
+        print("After remove RX Error, after check long enough: " + Utils.GetDataInHex(self.DataReceived, logging.DEBUG))
 
-        messageTypes = self._GetLikelyMessageTypes(startOfMessageIndex)
+        messageTypes = self._GetLikelyMessageTypes()
         print("MessageTypes: " + str(messageTypes))
 
         for messageType in messageTypes:
             print("messagetypetotry: " + str(messageType))
             if messageType == LoraRadioMessageRS.MessageTypeSIPunch:
                 print("SiPunch")
-                loraPunchMessage = self._GetPunchMessage(startOfMessageIndex)
+                loraPunchMessage = self._GetPunchMessage()
                 if loraPunchMessage is not None:
                     return loraPunchMessage
             elif messageType == LoraRadioMessageRS.MessageTypeLoraAck:
                 print("Ack")
-                loraAckMessage = self._GetAckMessage(startOfMessageIndex)
+                loraAckMessage = self._GetAckMessage()
                 if loraAckMessage is not None:
                     return loraAckMessage
             elif messageType == LoraRadioMessageRS.MessageTypeStatus:
                 print("Status")
-                loraStatusMessage = self._GetStatusMessage(startOfMessageIndex)
+                loraStatusMessage = self._GetStatusMessage()
                 if loraStatusMessage is not None:
                     return loraStatusMessage
             elif messageType == LoraRadioMessageRS.MessageTypeSIPunchDouble:
                 print("SiPunchDouble")
-                loraPunchDoubleMessage = self._GetPunchDoubleMessage(startOfMessageIndex)
+                loraPunchDoubleMessage = self._GetPunchDoubleMessage()
                 if loraPunchDoubleMessage is not None:
                     return loraPunchDoubleMessage
             else:
@@ -558,19 +513,10 @@ class LoraRadioDataHandler(object):
 
     # Call GetMessage only when you believe you might have a message
     def GetMessage(self):
-        self.LikelyStartOfMessageIndex.append(len(self.DataReceived))
         LoraRadioDataHandler.WiRocLogger.debug("Data considered: " + Utils.GetDataInHex(self.DataReceived, logging.DEBUG))
+        message = self._TryGetMessage()
+        if message is not None:
+            return message
 
-        startofMessageIndeces = [0] + self.LikelyStartOfMessageIndex
-        for startOfMessageIndex in startofMessageIndeces:
-            firstTimeOrMessageRemoved = True
-            while firstTimeOrMessageRemoved:
-                message = self._TryGetMessage(startOfMessageIndex)
-                if message is not None:
-                    return message
-                firstTimeOrMessageRemoved = self._RemoveLikelyMessage()
-
+        self._RemoveMessageFromDataReceived()
         return None
-
-# Set likely message boundaries (with separate function?)
-# remove data that cannot be decoded

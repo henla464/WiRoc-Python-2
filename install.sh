@@ -2,7 +2,7 @@
 #systemctl disable apt-daily.service # disable run when system boot
 #systemctl disable apt-daily.timer   # disable timer run
 
-WiRocPython2Version="0.206"
+WiRocPython2Version="0.210"
 echo "Which WiRocPython2Version? [$WiRocPython2Version]"
 read wPOption
 if ! [[ -z "$wPOption" ]];
@@ -10,7 +10,7 @@ then
     WiRocPython2Version=$wPOption
 fi
 
-WiRocBLEVersion="0.7"
+WiRocBLEVersion="0.9"
 echo "Which WiRocBLEVersion? [$WiRocBLEVersion]"
 read wBLEOption
 if ! [[ -z "$wBLEOption" ]];
@@ -69,6 +69,7 @@ pip3 install wheel
 pip3 install requests
 pip3 install cachetools
 pip3 install reedsolo
+pip3 install pydbus
 
 echo "flask"
 #read line

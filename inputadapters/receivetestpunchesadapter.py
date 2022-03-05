@@ -52,7 +52,7 @@ class ReceiveTestPunchesAdapter(object):
                 self.LastPunchIdAdded = punchToAdd.id
                 siMessage = SIMessage()
                 siMessage.AddHeader(SIMessage.SIPunch)
-                stationCode = 999
+                stationCode = 511
                 subSecond = punchToAdd.SubSecond
                 payload = bytearray(pack(">HIcHcccc", stationCode,
                                     Utils.EncodeCardNr(punchToAdd.SICardNumber),
