@@ -376,7 +376,7 @@ class Main:
                                         # failed to send
                                         for batchItem in msgSubBatch.MessageSubscriptionBatchItems:
                                             self.wirocLogger.warning(
-                                                "Start::Run() Failed to send message: " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName + " Trans:" + msgSubBatch.TransformName + " id:"+ str(item.id))
+                                                "Start::Run() Failed to send message: " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName + " Trans:" + msgSubBatch.TransformName + " id:"+ str(batchItem.id))
                                             innerRetryDelay = innerSubAdapter.GetRetryDelay(batchItem.NoOfSendTries + 1)
                                             DatabaseHelper.increment_send_tries_and_set_send_failed_date(batchItem.id, innerRetryDelay)
                                             self.wirocLogger.debug(
