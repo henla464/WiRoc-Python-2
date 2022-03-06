@@ -2,6 +2,7 @@ __author__ = 'henla464'
 
 import time
 
+
 class LoraRadioMessageAndMetadata(object):
     def __init__(self, loraRadioMessage):
         self.loraRadioMessage = loraRadioMessage

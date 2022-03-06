@@ -170,7 +170,7 @@ class LoraRadioMessagePunchRS(LoraRadioMessageRS):
         return numberOfSecondsInTenthOfSecs // 10
 
     def GetTwelveHourTimerAsInt(self):
-        return ((self.GetTwelveHourTimer()[0] << 8) + self.GetTwelveHourTimer()[1])
+        return (self.GetTwelveHourTimer()[0] << 8) + self.GetTwelveHourTimer()[1]
 
     def GetSICardNoRawByteArray(self):
         return self.payloadData[1:5]

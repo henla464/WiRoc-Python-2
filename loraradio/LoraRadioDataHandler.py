@@ -100,13 +100,16 @@ class LoraRadioDataHandler(object):
                 #print("theTimeInTheMessage: " + str(loraMsg.GetTwelveHourTimerAsInt()))
                 if loraMsg.GetTwelveHourTimerAsInt() < lowestTimeWeAssumeCanBeCorrect:
                     if loraMsg.GetTwelveHourTimer()[0] != self.LastPunchMessage.GetTwelveHourTimer()[0]:
-                        # TH differs so this must be the reason for time being too low
+                        # TH differs so this must be the reason for time being too low (assume TL is correct)
                         erasures.append(7)
                     else:
                         erasures.append(8)
                 elif loraMsg.GetTwelveHourTimerAsInt() > highestTimeWeAssumeCanBeCorrect:
-                    # only an increase in TL can't make it higher than highestTimeWeAssumeCanBeCorrect
-                    erasures.append(7)
+                    if loraMsg.GetTwelveHourTimer()[0] > ((highestTimeWeAssumeCanBeCorrect & 0xFF00) >> 8):
+                        # TH differs so this must be the reason for time being too high (assume TL is correct)
+                        erasures.append(7)
+                    else:
+                        erasures.append(8)
 
                 # check that TL isn't higher than possible. Only check when TH is highest value and not believed
                 # to be wrong
