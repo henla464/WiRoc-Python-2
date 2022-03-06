@@ -465,6 +465,7 @@ class LoraRadio:
         if self.radioSerial.in_waiting == 0 and len(self.loraRadioDataHandler.DataReceived) == 0:
             return None
         LoraRadio.WiRocLogger.debug("LoraRadio::GetRadioData() data to fetch or data present in loraRadioDataHandler")
+        self.loraRadioDataHandler.ClearDataReceived()
         allReceivedData = bytearray()
         while self.radioSerial.in_waiting > 0:
             bytesRead = self.radioSerial.read(1)
