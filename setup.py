@@ -134,7 +134,7 @@ class Setup:
 
     @staticmethod
     def AddMessageTypes():
-        #add message types to database
+        # add message types to database
         messageTypeName = CreateStatusAdapter.GetTypeName()
         messageSubTypeName = "Status"
         messageTypeData = MessageTypeData(messageTypeName, messageSubTypeName)

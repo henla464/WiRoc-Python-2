@@ -35,7 +35,10 @@ class SendStatusAdapter(object):
 
             webServerUrl = SettingsClass.GetWebServerUrl()
             webServerHost = SettingsClass.GetWebServerHost()
-            connectionOK = SendStatusAdapter.TestConnection(webServerUrl,webServerHost)
+            connectionOK = False
+            if SettingsClass.GetSendStatusMessages():
+                connectionOK = SendStatusAdapter.TestConnection(webServerUrl,webServerHost)
+
             subscriptionShouldBeEnabled = isInitialized and connectionOK
             if SendStatusAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
                 SendStatusAdapter.WiRocLogger.info("SendStatusAdapter::EnableDisableSubscription() subscription set enabled: " + str(subscriptionShouldBeEnabled))

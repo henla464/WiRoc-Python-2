@@ -73,7 +73,10 @@ class Main:
         btAddress = SettingsClass.GetBTAddress()
         apiKey = SettingsClass.GetAPIKey()
         wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
-        self.webServerUp = SettingsClass.GetSendStatusMessages() and SendStatusAdapter.TestConnection(webServerUrl, webServerHost)
+        if SettingsClass.GetSendStatusMessages():
+            self.webServerUp = SendStatusAdapter.TestConnection(webServerUrl, webServerHost)
+        else:
+            self.webServerUp = False
         if self.webServerUp:
             t = threading.Thread(target=self.addDeviceBackground, args=(webServerHost, webServerUrl, btAddress, apiKey, wiRocDeviceName))
             t.daemon = True
@@ -110,8 +113,10 @@ class Main:
                 httpHandler = logging.handlers.HTTPHandler(server, '/', method='POST')
                 self.wirocLogger.getLogger('').addHandler(httpHandler)
 
-        self.webServerUp = SettingsClass.GetSendStatusMessages() and SendStatusAdapter.TestConnection(webServerUrl, webServerHost)
-        Battery.UpdateWifiPowerSaving(sendToSirap)
+        if SettingsClass.GetSendStatusMessages():
+            self.webServerUp = SendStatusAdapter.TestConnection(webServerUrl, webServerHost)
+        else:
+            self.webServerUp = False
         Battery.Tick()
 
     def updateDisplayBackground(self,channel,ackRequested, wirocMode, loraRange, wirocDeviceName, sirapTCPEnabled,
