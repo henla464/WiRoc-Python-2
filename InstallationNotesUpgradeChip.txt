@@ -66,6 +66,8 @@ sudo ln -s /usr/local/bin/python3.8 /usr/bin/python3
 sudo mv /usr/bin/pip3 /usr/bin/pip3.old
 sudo ln -s /usr/local/bin/pip3.8 /usr/bin/pip3
 
+sudo apt install python3-gi
+
 # python modules
 pip3 install wheel
 pip3 install flask

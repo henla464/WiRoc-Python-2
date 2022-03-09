@@ -73,9 +73,11 @@ class Main:
         btAddress = SettingsClass.GetBTAddress()
         apiKey = SettingsClass.GetAPIKey()
         wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
-        t = threading.Thread(target=self.addDeviceBackground, args=(webServerHost, webServerUrl, btAddress, apiKey, wiRocDeviceName))
-        t.daemon = True
-        t.start()
+        self.webServerUp = SendStatusAdapter.TestConnection(webServerUrl, webServerHost)
+        if self.webServerUp:
+            t = threading.Thread(target=self.addDeviceBackground, args=(webServerHost, webServerUrl, btAddress, apiKey, wiRocDeviceName))
+            t.daemon = True
+            t.start()
 
     def addDeviceBackground(self, webServerHost, webServerUrl, btAddress, apiKey, wiRocDeviceName):
         try:

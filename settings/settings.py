@@ -1,5 +1,6 @@
 __author__ = 'henla464'
 
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from datamodel.db_helper import DatabaseHelper
 from datamodel.datamodel import SettingData
 import time
@@ -514,7 +515,7 @@ class SettingsClass(object):
     def GetSendStatusMessages():
         sett = DatabaseHelper.get_setting_by_key('SendStatusMessages')
         if sett is None:
-            SettingsClass.SetSetting("SendStatusMessages", "1")
+            SettingsClass.SetSetting("SendStatusMessages", HardwareAbstraction.Instance.GetDefaultValueForSendStatusMessage())
             return True
         return sett.Value == "1"
 
@@ -528,7 +529,7 @@ class SettingsClass(object):
         return sett.Value == "1"
 
     @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetSendStatusMessage'), lock=rlock)
+    @cached(cache, key=partial(hashkey, 'Force4800BaudRate'), lock=rlock)
     def GetForce4800BaudRateFromSIStation():
         sett = DatabaseHelper.get_setting_by_key('Force4800BaudRate')
         if sett is None:

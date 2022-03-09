@@ -2,7 +2,6 @@ from chipGPIO.chipGPIO import *
 import logging
 import socket
 import subprocess
-import pydbus
 
 
 class HardwareAbstraction(object):
@@ -44,7 +43,7 @@ class HardwareAbstraction(object):
                 pinModeNonXIO(138, INPUT)
                 pinModeNonXIO(139, OUTPUT)
                 digitalWriteNonXIO(139, 1)
-            else: #OLED
+            else:  # OLED
                 pinModeNonXIO(134, INPUT)
                 pinModeNonXIO(135, OUTPUT)
                 digitalWriteNonXIO(135, 1)
@@ -53,6 +52,12 @@ class HardwareAbstraction(object):
         if self.wirocHWVersion == 'v4Rev1':
             return ['/dev/ttyS2']
         return []
+
+    def GetDefaultValueForSendStatusMessage(self):
+        if self.runningOnChip:
+            return "0"
+        else:
+            return "1"
 
     def EnableLora(self):
         # enable radio module 139;
@@ -66,12 +71,11 @@ class HardwareAbstraction(object):
             else:
                 digitalWriteNonXIO(135, 0)
 
-
     def DisableLora(self):
         # disable radio module 139; #with new oled design: 135
         # pin 2 for nanopiair
         if self.runningOnNanoPi:
-            digitalWriteNonXIO(2, 1) #lora enable pin (corresponds to pin 13)
+            digitalWriteNonXIO(2, 1)  # lora enable pin (corresponds to pin 13)
         elif self.runningOnChip:
             if self.typeOfDisplay == '7SEG':
                 digitalWriteNonXIO(139, 1)
@@ -118,70 +122,3 @@ class HardwareAbstraction(object):
             HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearShortKeyPress")
             os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x4a 0x02'")
 
-    def GetAdapterBTAddress(self):
-        bus = pydbus.SystemBus()
-        adapter = bus.get('org.bluez', '/org/bluez/hci0')
-        return adapter.Address
-
-    def ReleaseRFComm(self, portNumber):
-        res = subprocess.run(['rfcomm', 'release', portNumber], stdout=subprocess.PIPE, check=True)
-        releaseResult = res.stdout.decode('utf-8').strip()
-        return releaseResult
-
-    def BindRFComm(self, portNumber, btAddress, channel):
-        res = subprocess.run(['rfcomm', 'bind', portNumber, btAddress, channel], stdout=subprocess.PIPE, check=True)
-        bindResult = res.stdout.decode('utf-8').strip()
-        return bindResult
-
-    def ReleaseRFCommByPortName(self, serialPortName):
-        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ReleaseRFCommByPortName: " + serialPortName)
-        portNumber = serialPortName.replace("/dev/rfcomm", "")
-        self.ReleaseRFComm(portNumber)
-
-    def ReleaseClosedRFCommsAndRebind(self):
-        if self.runningOnNanoPi:
-            boundResult = subprocess.run(['rfcomm'], stdout=subprocess.PIPE, check=True)
-            rfComms = boundResult.stdout.decode('utf-8').strip()
-            if len(rfComms) == 0:
-                return []
-            rfCommsArray = rfComms.split('\n')
-            for rfComm in rfCommsArray:
-                status = rfComm.split(' ')[4]
-                if status == "closed":
-                    portNumber = rfComm.split(' ')[0][6:-1]
-                    btAddress = rfComm.split(' ')[1]
-                    channel = rfComm.split(' ')[3]
-                    releaseResult = self.ReleaseRFComm(portNumber)
-                    HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ReleaseClosedRFComms release portNumber: " + str(portNumber) + " result: " + releaseResult)
-
-                    bindResult = self.BindRFComm(portNumber, btAddress, channel)
-                    HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ReleaseClosedRFComms bind portNumber: " +
-                                                      portNumber + " result: " + bindResult)
-
-    def GetRFCommsSerialPorts(self):
-        if self.runningOnNanoPi:
-            boundResult = subprocess.run(['rfcomm'], stdout=subprocess.PIPE, check=True)
-            rfComms = boundResult.stdout.decode('utf-8').strip()
-            if len(rfComms) == 0:
-                return []
-            rfCommsArray = rfComms.split('\n')
-
-            rfCommsSerialPortArray = ['/dev/' + rfComm.split(' ')[0][:-1] for rfComm in rfCommsArray
-                                      if rfComm.split(' ')[4] == "clean" or
-                                      rfComm.split(' ')[4] == "connected" or
-                                      rfComm.split(' ')[4] == "closed"]
-            return rfCommsSerialPortArray
-        return []
-
-    def GetRFCommStatus(self, serialPort):
-        if self.runningOnNanoPi:
-            boundResult = subprocess.run(['rfcomm'], stdout=subprocess.PIPE, check=True)
-            rfComms = boundResult.stdout.decode('utf-8').strip()
-            if len(rfComms) == 0:
-                return ""
-            rfCommsArray = rfComms.split('\n')
-
-            rfCommStatus = [rfComm.split(' ')[4] for rfComm in rfCommsArray
-                                      if '/dev/' + rfComm.split(' ')[0][:-1] == serialPort][0]
-            return rfCommStatus
-        return ""

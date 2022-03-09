@@ -1,8 +1,7 @@
-from datamodel.datamodel import SIMessage
 from datamodel.db_helper import DatabaseHelper
 from utils.utils import Utils
-from struct import *
 import logging
+
 
 class ReceiveRepeaterMessagesAdapter(object):
     Instances = []
