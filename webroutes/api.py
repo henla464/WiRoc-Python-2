@@ -517,10 +517,6 @@ def getApiKey():
 def getWebServerUrl():
     DatabaseHelper.reInit()
     webServerUrl = SettingsClass.GetWebServerUrl()
-    host = webServerUrl.replace('http://', '').replace('https://', '')
-    addrs = socket.getaddrinfo(host, 80)
-    ipv4_addrs = [addr[4][0] for addr in addrs if addr[0] == socket.AF_INET]
-    webServerUrl = webServerUrl.replace(host, ipv4_addrs[0])
     return webServerUrl
 
 

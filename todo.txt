@@ -1,6 +1,12 @@
 WiRoc
 =====
-Test using python/bluez instead of bleno also for CHIP version
+- Save last messageid sent, when ack arrive and message is corrupted and cant be recovered then compare and still allow it if the message id is correct
+- In lora SendData function, if OK is not returned then read all data and add to LoraRadioDataHandler, look for OK at the end, accept it and remove it. Set a variable to allow GetRadioData to fetch the message (see row 6266 for example: Documents/WiRoc/Competitions/Fänestad20220409/LogArchive_D4\:12\:43\:24\:70\:F5_2022-04-09-14\:39\:49/home/chip/WiRoc-Python-2/WiRoc.log.2)
+- Set autosend automatically if not set when initializing
+- Set ack date in messagesubscriptionarchive so it is possible to see if 5th try was acked or not
+- Make update work for CHIP also
+- Send first test punch directly, dont wait one interval
+- Fix send test punches interval for CHIP (seem to not use the selected interval)
 
 -- Maybe (probably pretty complex, unsure how useful)
 Add option to reconfigure remote wiroc

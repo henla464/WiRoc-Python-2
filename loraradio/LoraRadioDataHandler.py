@@ -10,6 +10,7 @@ from loraradio.RSCoderLora import RSCoderLora
 from utils.utils import Utils
 from collections.abc import Iterable
 
+
 class LoraRadioDataHandler(object):
     WiRocLogger = logging.getLogger('WiRoc')
     MessageTypesExpected = [3, 4, 5, 6]
@@ -190,7 +191,7 @@ class LoraRadioDataHandler(object):
                 loraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(correctedData2,
                                                                                    rssiByte=rssiByteValue)
                 self._CacheMessage(loraMsg)
-                self._RemoveMessageFromDataReceived()
+                self.ClearDataReceived()
                 return loraMsg
             except Exception as err2:
                 LoraRadioDataHandler.WiRocLogger.error(

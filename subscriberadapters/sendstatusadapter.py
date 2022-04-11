@@ -17,9 +17,17 @@ class SendStatusAdapter(object):
         if len(SendStatusAdapter.Instances) == 0:
             SendStatusAdapter.Instances.append(SendStatusAdapter('status1'))
             return True
-        # check if enabled changed => let init/enabledisablesubscription run
+
+        # check if subscription should be enabled or disabled, if so return true sot that init/enabledisablesubscription run
         isInitialized = SendStatusAdapter.Instances[0].GetIsInitialized()
-        subscriptionShouldBeEnabled = isInitialized
+
+        webServerUrl = SettingsClass.GetWebServerUrl()
+        webServerHost = SettingsClass.GetWebServerHost()
+        connectionOK = False
+        if SettingsClass.GetSendStatusMessages():
+            connectionOK = SendStatusAdapter.TestConnection(webServerUrl, webServerHost)
+
+        subscriptionShouldBeEnabled = isInitialized and connectionOK
         if SendStatusAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
             return True
         return False

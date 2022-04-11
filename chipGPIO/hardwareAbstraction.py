@@ -20,15 +20,15 @@ class HardwareAbstraction(object):
 
     def SetupPins(self):
         if self.runningOnNanoPi:
-            if self.wirocHWVersion == 'v4Rev1':
+            if self.wirocHWVersion == 'v4Rev1' or self.wirocHWVersion == 'v5Rev1':
                 pinModeNonXIO(64, INPUT)  # lora aux pin (corresponds to pin 19)
-                pinModeNonXIO(2, OUTPUT) #lora enable pin (corresponds to pin 13)
+                pinModeNonXIO(2, OUTPUT)  # lora enable pin (corresponds to pin 13)
                 digitalWriteNonXIO(2, 1)
                 pinModeNonXIO(17, OUTPUT)  # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
                 digitalWriteNonXIO(17, 0)
             else:
                 pinModeNonXIO(0, INPUT)  # lora aux pin
-                pinModeNonXIO(2, OUTPUT) #lora enable pin
+                pinModeNonXIO(2, OUTPUT) # lora enable pin
                 digitalWriteNonXIO(2, 1)
         elif self.runningOnChip:
             pinMode(0, OUTPUT)
@@ -49,7 +49,7 @@ class HardwareAbstraction(object):
                 digitalWriteNonXIO(135, 1)
 
     def GetSISerialPorts(self):
-        if self.wirocHWVersion == 'v4Rev1':
+        if self.wirocHWVersion == 'v4Rev1' or self.wirocHWVersion == 'v5Rev1':
             return ['/dev/ttyS2']
         return []
 
@@ -91,6 +91,8 @@ class HardwareAbstraction(object):
                 return digitalReadNonXIO(134) == 0
         elif self.runningOnNanoPi:
             if self.wirocHWVersion == 'v4Rev1':
+                return digitalReadNonXIO(64) == 0  # lora aux pin (corresponds to pin 19)
+            elif self.wirocHWVersion == 'v5Rev1':
                 return digitalReadNonXIO(64) == 0  # lora aux pin (corresponds to pin 19)
             else:
                 return digitalReadNonXIO(0) == 0 # lora aux pin (corresponds to pin 11)

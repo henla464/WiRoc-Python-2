@@ -475,7 +475,8 @@ class LoraRadioDRF1268DS_RS:
             return False
         else:
             LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::SendData() Module returned: " + Utils.GetDataInHex(sendReply, logging.ERROR))
-            if (sendReply[0] == 0x02):
+            # todo: read all data, look for OK at the end, accept it and remove it. Set a variable to allow GetRadioData to fetch the message
+            if sendReply[0] == 0x02:
                 # seems to be start of new message. Add it to receivedData so it is not lost
                 self.loraRadioDataHandler.AddData(sendReply[0])
                 self.loraRadioDataHandler.AddData(sendReply[1])

@@ -173,8 +173,10 @@ class ReceiveLoraAdapter(object):
                     ackMsg = LoraRadioMessageCreator.GetAckMessage(messageID)
                     if SettingsClass.GetLoraMode() == "RECEIVER":
                         ackMsg.SetAckRequested(True)  # indicate this is receiver acking
+                        ackMsg.GenerateRSCode()
                     if SettingsClass.GetLoraMode() == "REPEATER":
                         ackMsg.SetRepeater(True)  # indicate this is repeater acking
+                        ackMsg.GenerateRSCode()
                     try:
                         self.TrySendData(ackMsg.GetByteArray())
                     except Exception as ex2:

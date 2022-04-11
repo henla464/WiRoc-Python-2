@@ -84,7 +84,7 @@ class Main:
 
     def addDeviceBackground(self, webServerHost, webServerUrl, btAddress, apiKey, wiRocDeviceName):
         try:
-            headers = {'Authorization': apiKey, 'host': webServerHost}
+            headers = {'X-Authorization': apiKey, 'host': webServerHost}
             device = {"BTAddress": btAddress, "headBTAddress": btAddress, "name": wiRocDeviceName}  # "description": None
             URL = webServerUrl + "/api/v1/Devices"
             resp = requests.post(url=URL, json=device, timeout=1, headers=headers)
@@ -268,7 +268,7 @@ class Main:
                             msgSubscription.MessageBoxId = mbdid
                             msgSubscription.SubscriptionId = subscription.id
                             if messageID is not None:
-                                self.wirocLogger.debug("MessageID: " + Utils.GetDataInHex(messageID, logging.DEBUG))
+                                self.wirocLogger.debug("Start::handleInput() MessageID: " + Utils.GetDataInHex(messageID, logging.DEBUG))
                             # messageid is used for messages from repeater table or test table. Is updated after transform when sent
                             msgSubscription.MessageID = messageID
                             msgSubscription.MessageNumber = MessageSubscriptionData.GetNextMessageNumber()
@@ -382,7 +382,7 @@ class Main:
                                         # failed to send
                                         for batchItem in msgSubBatch.MessageSubscriptionBatchItems:
                                             self.wirocLogger.warning(
-                                                "Start::Run() Failed to send message: " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName + " Trans:" + msgSubBatch.TransformName + " id:"+ str(batchItem.id))
+                                                "Start::Run() Failed to send message: " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName + " Trans:" + msgSubBatch.TransformName + " batchItem.id:"+ str(batchItem.id))
                                             innerRetryDelay = innerSubAdapter.GetRetryDelay(batchItem.NoOfSendTries + 1)
                                             DatabaseHelper.increment_send_tries_and_set_send_failed_date(batchItem.id, innerRetryDelay)
                                             self.wirocLogger.debug(
@@ -393,11 +393,11 @@ class Main:
 
                                 def createNotSentCB():
                                     def notSentCB():
-                                        for item in msgSubBatch.MessageSubscriptionBatchItems:
+                                        for batchItem in msgSubBatch.MessageSubscriptionBatchItems:
                                             # msg not sent
                                             self.wirocLogger.warning(
-                                                "Start::Run() Message was not sent: " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName + " Trans:" + msgSubBatch.TransformName + " id:"+ str(item.id))
-                                            DatabaseHelper.clear_fetched_for_sending(item.id)
+                                                "Start::Run() Message was not sent: " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName + " Trans:" + msgSubBatch.TransformName + " batchItem.id:"+ str(batchItem.id))
+                                            DatabaseHelper.clear_fetched_for_sending(batchItem.id)
                                     return notSentCB
 
                                 t = threading.Thread(target=subAdapter.SendData,
@@ -446,7 +446,7 @@ class Main:
     def updateBatteryIsLowBackground(self, batteryIsLowReceived, webServerUrl, webServerHost, apiKey, btAddress):
         #if deviceId != None:
         try:
-            headers = {'Authorization': apiKey, 'host': webServerHost}
+            headers = {'X-Authorization': apiKey, 'host': webServerHost}
 
             if batteryIsLowReceived and not self.lastBatteryIsLowReceived:
                 URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsLow"
@@ -460,7 +460,7 @@ class Main:
     def sendMessageStatsBackground(self, messageStat, webServerUrl, webServerHost, apiKey):
         if messageStat is not None:
             btAddress = SettingsClass.GetBTAddress()
-            headers = {'Authorization': apiKey, 'host': webServerHost}
+            headers = {'X-Authorization': apiKey, 'host': webServerHost}
 
             if self.webServerUp:
                 URL = webServerUrl + "/api/v1/MessageStats"
@@ -492,7 +492,7 @@ class Main:
 
     def sendSetConnectedToInternetBackground(self, webServerUrl, webServerHost, apiKey):
         btAddress = SettingsClass.GetBTAddress()
-        headers = {'Authorization': apiKey, 'host': webServerHost}
+        headers = {'X-Authorization': apiKey, 'host': webServerHost}
         URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetConnectedToInternetTime"
         #bodyToSend = {}
         #json = messageStatToSend,
