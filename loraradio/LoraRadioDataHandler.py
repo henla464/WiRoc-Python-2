@@ -64,17 +64,22 @@ class LoraRadioDataHandler(object):
                 erasures.append(0)
             elif previousMsg.GetRepeater() != loraMsg.GetRepeater():
                 erasures.append(0)
+        else:
+            # technically it could be CN1 bit 8 that is wrong, but since higher number than 255 is almost never used
+            # it is extremely unlikely. The oldest SI cards don't even support > 255.
+            erasures.append(1)
 
-            cardNoByteArray = loraMsg.GetSICardNoByteArray()[0:4]
-            cardNo = Utils.toInt(cardNoByteArray)
-            if 0x4FFFF < cardNo < 500000: # 500 000 = 0x7A120
-                erasures.append(3) # at least CN2 should be wrong
-            if cardNoByteArray[0] != 0x00: # CN3 not currently used so should always be 0
-                erasures.append(2)
-            if controlNumberToUse != controlNumber:
-                # bit CN1 bit8 of stationcode/controlnumber is almost certainly wrong
-                erasures.append(6)
-            elif self.LastPunchMessage.GetFourWeekCounter() != loraMsg.GetFourWeekCounter():
+        cardNoByteArray = loraMsg.GetSICardNoByteArray()[0:4]
+        cardNo = Utils.toInt(cardNoByteArray)
+        if 0x4FFFF < cardNo < 500000: # 500 000 = 0x7A120
+            erasures.append(3) # at least CN2 should be wrong
+        if cardNoByteArray[0] != 0x00: # CN3 not currently used so should always be 0
+            erasures.append(2)
+        if controlNumberToUse != controlNumber:
+            # bit CN1 bit8 of stationcode/controlnumber is almost certainly wrong
+            erasures.append(6)
+        elif self.LastPunchMessage is not None:
+            if self.LastPunchMessage.GetFourWeekCounter() != loraMsg.GetFourWeekCounter():
                 erasures.append(6)
             elif self.LastPunchMessage.GetDayOfWeek() != loraMsg.GetDayOfWeek():
                 erasures.append(6)
@@ -85,42 +90,39 @@ class LoraRadioDataHandler(object):
                     and loraMsg.GetTwelveHourTimerAsInt() > 20 * 60:
                 erasures.append(6)
 
-            # check that TH isn't higher than possible
-            if loraMsg.GetTwelveHourTimer()[0] > 0xA8:
-                erasures.append(7)
+        # check that TH isn't higher than possible
+        if loraMsg.GetTwelveHourTimer()[0] > 0xA8:
+            erasures.append(7)
 
-            if self.LastPunchMessage.GetTwentyFourHour() == loraMsg.GetTwentyFourHour():
-                noOfSecondsSinceLastMessage = int(time.monotonic() - self.LastPunchMessageTime)
-                # print("noOfSecondsSinceLastMessage: " + str(noOfSecondsSinceLastMessage))
-                lowestTimeWeAssumeCanBeCorrect = self.LastPunchMessage.GetTwelveHourTimerAsInt()
-                # print("lowestTimeWeAssumeCanBeCorrect: " + str(lowestTimeWeAssumeCanBeCorrect))
-                # Assuming a delay of delivery of a message of max 5 minutes
-                highestTimeWeAssumeCanBeCorrect = self.LastPunchMessage.GetTwelveHourTimerAsInt() \
-                    + noOfSecondsSinceLastMessage + 5 * 60
-                #print("highestTimeWeAssumeCanBeCorrect: " + str(highestTimeWeAssumeCanBeCorrect))
-                #print("theTimeInTheMessage: " + str(loraMsg.GetTwelveHourTimerAsInt()))
-                if loraMsg.GetTwelveHourTimerAsInt() < lowestTimeWeAssumeCanBeCorrect:
-                    if loraMsg.GetTwelveHourTimer()[0] != self.LastPunchMessage.GetTwelveHourTimer()[0]:
-                        # TH differs so this must be the reason for time being too low (assume TL is correct)
-                        erasures.append(7)
-                    else:
-                        erasures.append(8)
-                elif loraMsg.GetTwelveHourTimerAsInt() > highestTimeWeAssumeCanBeCorrect:
-                    if loraMsg.GetTwelveHourTimer()[0] > ((highestTimeWeAssumeCanBeCorrect & 0xFF00) >> 8):
-                        # TH differs so this must be the reason for time being too high (assume TL is correct)
-                        erasures.append(7)
-                    else:
-                        erasures.append(8)
-
-                # check that TL isn't higher than possible. Only check when TH is highest value and not believed
-                # to be wrong
-                if loraMsg.GetTwelveHourTimer()[0] == 0xA8 and loraMsg.GetTwelveHourTimer()[1] > 0xC0 \
-                        and 7 not in erasures:
+        if self.LastPunchMessage is not None and self.LastPunchMessage.GetTwentyFourHour() == loraMsg.GetTwentyFourHour():
+            noOfSecondsSinceLastMessage = int(time.monotonic() - self.LastPunchMessageTime)
+            # print("noOfSecondsSinceLastMessage: " + str(noOfSecondsSinceLastMessage))
+            lowestTimeWeAssumeCanBeCorrect = self.LastPunchMessage.GetTwelveHourTimerAsInt()
+            # print("lowestTimeWeAssumeCanBeCorrect: " + str(lowestTimeWeAssumeCanBeCorrect))
+            # Assuming a delay of delivery of a message of max 5 minutes
+            highestTimeWeAssumeCanBeCorrect = self.LastPunchMessage.GetTwelveHourTimerAsInt() \
+                + noOfSecondsSinceLastMessage + 5 * 60
+            #print("highestTimeWeAssumeCanBeCorrect: " + str(highestTimeWeAssumeCanBeCorrect))
+            #print("theTimeInTheMessage: " + str(loraMsg.GetTwelveHourTimerAsInt()))
+            if loraMsg.GetTwelveHourTimerAsInt() < lowestTimeWeAssumeCanBeCorrect:
+                if loraMsg.GetTwelveHourTimer()[0] != self.LastPunchMessage.GetTwelveHourTimer()[0]:
+                    # TH differs so this must be the reason for time being too low (assume TL is correct)
+                    erasures.append(7)
+                else:
                     erasures.append(8)
-        else:
-            # technically it could be CN1 bit 8 that is wrong, but since higher number than 255 is almost never used
-            # it is extremely unlikely. The oldest SI cards don't even support > 255.
-            erasures.append(1)
+            elif loraMsg.GetTwelveHourTimerAsInt() > highestTimeWeAssumeCanBeCorrect:
+                if loraMsg.GetTwelveHourTimer()[0] > ((highestTimeWeAssumeCanBeCorrect & 0xFF00) >> 8):
+                    # TH differs so this must be the reason for time being too high (assume TL is correct)
+                    erasures.append(7)
+                else:
+                    erasures.append(8)
+
+            # check that TL isn't higher than possible. Only check when TH is highest value and not believed
+            # to be wrong
+            if loraMsg.GetTwelveHourTimer()[0] == 0xA8 and loraMsg.GetTwelveHourTimer()[1] > 0xC0 \
+                    and 7 not in erasures:
+                erasures.append(8)
+
 
         LoraRadioDataHandler.WiRocLogger.debug(
             "LoraRadioDataHandler::FindPunchErasures " + str(len(erasures)) + " erasures found. " + str(erasures))
@@ -146,8 +148,14 @@ class LoraRadioDataHandler(object):
         print("erasures 2: " + str(erasures2))
         for i in range(len(erasures2)-1,-1,-1):
             if erasures2[i] == 0:
-                # if the header is wrong it is already added in erasures1.
+                # header is wrong, it was picked up for message 2, but doesnt actually exist twice in the double message
+                # since we change the positions in erasure2 to the real positions in the double message we need to remove
+                # it here. And add it to erasures1 if it isn't already there
                 erasures2.pop(i)
+                if 0 not in erasures1:
+                    # header is wrong and it was not picked up for message 1
+                    erasures1.append(0)
+
         for i in range(len(erasures2)):
             # Add the length of the first part of the double message minus the RSCodes (2) minus the header of the second
             loraMsgLength = LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunch]
@@ -251,7 +259,6 @@ class LoraRadioDataHandler(object):
         erasures.extend(self._FindPunchDoubleErasures(loraMsg))
         if len(erasures) > 0:
             try:
-                # erasures.extend(bytearray(bytes([0x01]))) # todo: remove this, this is just for testing
                 erasuresToUse = list(set(erasures))
                 if len(erasuresToUse) >= 8:
                     erasuresToUse = erasuresToUse[0:8]
