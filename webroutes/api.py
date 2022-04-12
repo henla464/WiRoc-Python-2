@@ -1014,9 +1014,9 @@ def getBTAddress():
     return btAddress
 
 
-def uploadLogArchiveToServer(apiKey, filePath, serverUrl, serverHost):
+def uploadLogArchiveToServer(apiKey, filePath, serverProtocol, serverIP, serverHost):
     parameters = ['curl', '-X', 'POST', '-H', 'host:' + serverHost, '-H',
-                  'accept:application/json', '-H', 'Authorization:' + apiKey, '-F', 'newfile=@' + filePath, serverUrl + '/api/v1/LogArchives']
+                  'accept:application/json', '-H', 'Authorization:' + apiKey, '-F', 'newfile=@' + filePath, serverProtocol + serverIP + '/api/v1/LogArchives']
     print(parameters)
     result = subprocess.run(parameters, capture_output=True)
     if result.returncode != 0:
@@ -1088,10 +1088,11 @@ def uploadLogArchive():
     zipLogArchive(zipFilePath)
 
     apiKey = SettingsClass.GetAPIKey()
-    serverUrl = getWebServerUrl()
+    serverProtocol = getWebServerProtocol()
+    serverIP = getWebServerIP()
     serverHost = getWebServerHost()
 
-    uploadLogArchiveToServer(apiKey, zipFilePath, serverUrl, serverHost)
+    uploadLogArchiveToServer(apiKey, zipFilePath, serverProtocol, serverIP, serverHost)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value='OK'))

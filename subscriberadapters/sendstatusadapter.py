@@ -21,12 +21,7 @@ class SendStatusAdapter(object):
         # check if subscription should be enabled or disabled, if so return true sot that init/enabledisablesubscription run
         isInitialized = SendStatusAdapter.Instances[0].GetIsInitialized()
 
-        webServerUrl = SettingsClass.GetWebServerUrl()
-        webServerHost = SettingsClass.GetWebServerHost()
-        connectionOK = False
-        if SettingsClass.GetSendStatusMessages():
-            connectionOK = SendStatusAdapter.TestConnection(webServerUrl, webServerHost)
-
+        connectionOK = SendStatusAdapter.IsConnectionOK()
         subscriptionShouldBeEnabled = isInitialized and connectionOK
         if SendStatusAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
             return True
@@ -37,16 +32,21 @@ class SendStatusAdapter(object):
         return "STATUS"
 
     @staticmethod
+    def IsConnectionOK():
+        connectionOK = False
+        if SettingsClass.GetSendStatusMessages():
+            webServerProtocol = SettingsClass.GetWebServerProtocol()
+            webServerIP = SettingsClass.GetWebServerIP()
+            webServerHost = SettingsClass.GetWebServerHost()
+            connectionOK = SendStatusAdapter.TestConnection(webServerProtocol, webServerIP, webServerHost)
+        return connectionOK
+
+    @staticmethod
     def EnableDisableSubscription():
         if len(SendStatusAdapter.Instances) > 0:
             isInitialized = SendStatusAdapter.Instances[0].GetIsInitialized()
 
-            webServerUrl = SettingsClass.GetWebServerUrl()
-            webServerHost = SettingsClass.GetWebServerHost()
-            connectionOK = False
-            if SettingsClass.GetSendStatusMessages():
-                connectionOK = SendStatusAdapter.TestConnection(webServerUrl,webServerHost)
-
+            connectionOK = SendStatusAdapter.IsConnectionOK()
             subscriptionShouldBeEnabled = isInitialized and connectionOK
             if SendStatusAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
                 SendStatusAdapter.WiRocLogger.info("SendStatusAdapter::EnableDisableSubscription() subscription set enabled: " + str(subscriptionShouldBeEnabled))
@@ -110,18 +110,18 @@ class SendStatusAdapter(object):
         return True
 
     @staticmethod
-    def TestConnection(webServerUrl, webServerHost):
+    def TestConnection(webServerProtocol, webServerIP, webServerHost):
         try:
-            if webServerUrl is None:
-                SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::TestConnection() No webserverurl available (yet)")
+            if webServerIP is None:
+                SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::TestConnection() No webServerIP available (yet)")
                 return False
-            URL = webServerUrl + "/api/v1/ping"
-            r = requests.get(url=URL,timeout=1, headers={'host': webServerHost})
+            URL = webServerProtocol + webServerIP + "/api/v1/ping"
+            r = requests.get(url=URL, timeout=1, headers={'host': webServerHost})
             data = r.json()
             logging.info(data)
             return data['code'] == 0
         except Exception as ex:
-            SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::TestConnection() " + webServerUrl + " Host: " + webServerHost + " Exception: " + str(ex))
+            SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::TestConnection() " + webServerIP + " Host: " + webServerHost + " Exception: " + str(ex))
             return False
 
     @staticmethod
@@ -134,13 +134,13 @@ class SendStatusAdapter(object):
     # messageData is a tuple of bytearrays
     def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
         try:
-            if settingsDictionary["WebServerUrl"] is None:
-                SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::SendData No webserverurl")
+            if settingsDictionary["WebServerIP"] is None:
+                SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::SendData No webServerIP")
                 callbackQueue.put((failureCB,))
                 return False
 
             host = settingsDictionary["WebServerHost"]
-            headers = {'Authorization': settingsDictionary["ApiKey"], 'host': host}
+            headers = {'X-Authorization': settingsDictionary["ApiKey"], 'host': host}
             thisWiRocBtAddress = SettingsClass.GetBTAddress()
 
             returnSuccess = True
@@ -150,7 +150,7 @@ class SendStatusAdapter(object):
                 relayPathNo = loraStatusMsg.GetRelayPathNo()
                 btAddress = loraStatusMsg.GetBTAddress()
                 device = {"BTAddress": btAddress, "headBTAddress": thisWiRocBtAddress, "relayPathNo": relayPathNo}
-                URL = settingsDictionary["WebServerUrl"] + "/api/v1/Devices"
+                URL = settingsDictionary["WebServerProtocol"] + settingsDictionary["WebServerIP"] + "/api/v1/Devices"
                 resp = requests.post(url=URL, json=device, timeout=1, headers=headers)
                 if resp.status_code == 200:
                     retDevice = resp.json()
@@ -160,7 +160,7 @@ class SendStatusAdapter(object):
                 # Set the device name
                 if thisWiRocBtAddress == btAddress:
                     thisWiRocDeviceName = settingsDictionary["WiRocDeviceName"]
-                    URL2 = settingsDictionary["WebServerUrl"] + "/api/v1/Devices/" + thisWiRocBtAddress + "/UpdateDeviceName/" + thisWiRocDeviceName
+                    URL2 = settingsDictionary["WebServerProtocol"] + settingsDictionary["WebServerIP"] + "/api/v1/Devices/" + thisWiRocBtAddress + "/UpdateDeviceName/" + thisWiRocDeviceName
                     resp = requests.get(url=URL2, timeout=1, headers=headers)
                     if resp.status_code == 200:
                         retDevice = resp.json()
@@ -170,7 +170,7 @@ class SendStatusAdapter(object):
                 # Add new status
                 batteryLevel = loraStatusMsg.GetBatteryPercent()
                 siStationNumber = loraStatusMsg.GetSIStationNumber()
-                URL3 = settingsDictionary["WebServerUrl"] + "/api/v1/DeviceStatuses"
+                URL3 = settingsDictionary["WebServerProtocol"] + settingsDictionary["WebServerIP"] + "/api/v1/DeviceStatuses"
                 deviceStatus = {"BTAddress": btAddress, "batteryLevel": batteryLevel, "siStationNumber": siStationNumber}
                 resp = requests.post(url=URL3, json=deviceStatus, timeout=1, headers=headers)
                 if resp.status_code != 200:

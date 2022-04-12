@@ -208,7 +208,7 @@ class LoraRadioDataHandler(object):
                 return None
         else:
             LoraRadioDataHandler.WiRocLogger.error(
-                "LoraRadioDataHandler::GetPunchMessage() No erasures found so could not decode")
+                "LoraRadioDataHandler::GetPunchMessageWithErasures() No erasures found so could not decode")
             return None
 
     def _GetPunchMessage(self, erasures=None):

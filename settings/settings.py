@@ -138,14 +138,6 @@ class SettingsClass(object):
         else:
             return 'DRF1268DS'
 
-    @staticmethod
-    def GetWebServerIP():
-        return SettingsClass.webServerIP
-
-    @staticmethod
-    def SetWebServerIP(ip):
-        SettingsClass.webServerIP = ip
-
     relayPathNo = 0
 
     @staticmethod
@@ -381,6 +373,27 @@ class SettingsClass(object):
             SettingsClass.SetSetting("WebServerUrl", url)
             return url
         return sett.Value
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWebServerIP'), lock=rlock)
+    def GetWebServerIP():
+        try:
+            host = SettingsClass.GetWebServerHost()
+            import socket
+            port = 443
+            IPs = list(map(lambda x: x[4][0], socket.getaddrinfo('{}.'.format(host), port, type=socket.SOCK_STREAM, family=socket.AF_INET)))
+            return IPs[0]
+        except Exception as ex:
+            return None
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWebServerProtocol'), lock=rlock)
+    def GetWebServerProtocol():
+        url = SettingsClass.GetWebServerUrl()
+        if url.lower().startswith('https://'):
+            return 'https://'
+        else:
+            return 'http://'
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetLoggingServerHost'), lock=rlock)
