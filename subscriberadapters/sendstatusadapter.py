@@ -116,7 +116,7 @@ class SendStatusAdapter(object):
                 SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::TestConnection() No webServerIP available (yet)")
                 return False
             URL = webServerProtocol + webServerIP + "/api/v1/ping"
-            r = requests.get(url=URL, timeout=1, headers={'host': webServerHost})
+            r = requests.get(url=URL, timeout=1, headers={'host': webServerHost}, verify=False)
             data = r.json()
             logging.info(data)
             return data['code'] == 0
@@ -151,7 +151,7 @@ class SendStatusAdapter(object):
                 btAddress = loraStatusMsg.GetBTAddress()
                 device = {"BTAddress": btAddress, "headBTAddress": thisWiRocBtAddress, "relayPathNo": relayPathNo}
                 URL = settingsDictionary["WebServerProtocol"] + settingsDictionary["WebServerIP"] + "/api/v1/Devices"
-                resp = requests.post(url=URL, json=device, timeout=1, headers=headers)
+                resp = requests.post(url=URL, json=device, timeout=1, headers=headers, verify=False)
                 if resp.status_code == 200:
                     retDevice = resp.json()
                 else:
@@ -161,7 +161,7 @@ class SendStatusAdapter(object):
                 if thisWiRocBtAddress == btAddress:
                     thisWiRocDeviceName = settingsDictionary["WiRocDeviceName"]
                     URL2 = settingsDictionary["WebServerProtocol"] + settingsDictionary["WebServerIP"] + "/api/v1/Devices/" + thisWiRocBtAddress + "/UpdateDeviceName/" + thisWiRocDeviceName
-                    resp = requests.get(url=URL2, timeout=1, headers=headers)
+                    resp = requests.get(url=URL2, timeout=1, headers=headers, verify=False)
                     if resp.status_code == 200:
                         retDevice = resp.json()
                     else:
@@ -172,7 +172,7 @@ class SendStatusAdapter(object):
                 siStationNumber = loraStatusMsg.GetSIStationNumber()
                 URL3 = settingsDictionary["WebServerProtocol"] + settingsDictionary["WebServerIP"] + "/api/v1/DeviceStatuses"
                 deviceStatus = {"BTAddress": btAddress, "batteryLevel": batteryLevel, "siStationNumber": siStationNumber}
-                resp = requests.post(url=URL3, json=deviceStatus, timeout=1, headers=headers)
+                resp = requests.post(url=URL3, json=deviceStatus, timeout=1, headers=headers, verify=False)
                 if resp.status_code != 200:
                     returnSuccess = False
 

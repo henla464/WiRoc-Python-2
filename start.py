@@ -88,7 +88,7 @@ class Main:
             headers = {'X-Authorization': apiKey, 'host': webServerHost}
             device = {"BTAddress": btAddress, "headBTAddress": btAddress, "name": wiRocDeviceName}  # "description": None
             URL = webServerProtocol + webServerIP + "/api/v1/Devices"
-            resp = requests.post(url=URL, json=device, timeout=1, headers=headers)
+            resp = requests.post(url=URL, json=device, timeout=1, headers=headers, verify=False)
             self.wirocLogger.warning("Start::Init resp statuscode btaddress " + btAddress + "  " + str(resp.status_code) + " " + resp.text)
             if resp.status_code == 200:
                 retDevice = resp.json()
@@ -452,7 +452,7 @@ class Main:
 
             if batteryIsLowReceived and not self.lastBatteryIsLowReceived:
                 URL = webServerProtocol + webServerIP + "/api/v1/Devices/" + btAddress + "/SetBatteryIsLow"
-                resp = requests.get(url=URL, timeout=1, headers=headers)
+                resp = requests.get(url=URL, timeout=1, headers=headers, verify=False)
                 if resp.status_code == 200:
                     retDevice = resp.json()
                     self.lastBatteryIsLowReceived = retDevice['batteryIsLow']
@@ -471,7 +471,7 @@ class Main:
                                      "noOfMessages": messageStat.NoOfMessages}
 
                 try:
-                    resp = requests.post(url=URL, timeout=1, json=messageStatToSend, allow_redirects=False, headers=headers)
+                    resp = requests.post(url=URL, timeout=1, json=messageStatToSend, allow_redirects=False, headers=headers, verify=False)
                     if resp.status_code == 200 or resp.status_code == 303:
                         self.callbackQueue.put((DatabaseHelper.set_message_stat_uploaded, messageStat.id))
                     else:
@@ -498,7 +498,7 @@ class Main:
         headers = {'X-Authorization': apiKey, 'host': webServerHost}
         URL = webServerProtocol + webServerIP + "/api/v1/Devices/" + btAddress + "/SetConnectedToInternetTime"
         try:
-            resp = requests.post(url=URL, timeout=1, allow_redirects=False, headers=headers)
+            resp = requests.post(url=URL, timeout=1, allow_redirects=False, headers=headers, verify=False)
             if resp.status_code != 200 and resp.status_code != 303:
                 self.webServerUp = False
         except Exception as ex:
