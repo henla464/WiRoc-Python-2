@@ -704,7 +704,7 @@ class DatabaseHelper:
                     continue
 
                 if messageSubscription.NoOfSendTries >= maxRetries:
-                    # Message may have been sent, noOfSendTries icremented, passed the retry time
+                    # Message may have been sent, noOfSendTries incremented, passed the retry time
                     # BUT has not yet been archived. Just skip/should be ignored
                     continue
 

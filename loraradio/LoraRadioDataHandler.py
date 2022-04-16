@@ -94,9 +94,10 @@ class LoraRadioDataHandler(object):
         if loraMsg.GetTwelveHourTimer()[0] > 0xA8:
             erasures.append(7)
 
-        if self.LastPunchMessage is not None and self.LastPunchMessage.GetTwentyFourHour() == loraMsg.GetTwentyFourHour():
+        # If the byte with AM/PM (6) is found to be wrong then assume AM/PM has not changed and compare the TH, TL
+        if 6 in erasures or (self.LastPunchMessage is not None and self.LastPunchMessage.GetTwentyFourHour() == loraMsg.GetTwentyFourHour()):
             noOfSecondsSinceLastMessage = int(time.monotonic() - self.LastPunchMessageTime)
-            # print("noOfSecondsSinceLastMessage: " + str(noOfSecondsSinceLastMessage))
+            print("noOfSecondsSinceLastMessage: " + str(noOfSecondsSinceLastMessage))
             lowestTimeWeAssumeCanBeCorrect = self.LastPunchMessage.GetTwelveHourTimerAsInt()
             # print("lowestTimeWeAssumeCanBeCorrect: " + str(lowestTimeWeAssumeCanBeCorrect))
             # Assuming a delay of delivery of a message of max 5 minutes
@@ -270,7 +271,7 @@ class LoraRadioDataHandler(object):
                     erasuresToUse = erasuresToUse[0:2]
                 else:
                     erasuresToUse = []
-                print("lasdfk laksfdjkla klasjdf "+ str(erasuresToUse))
+                print("erasures to use "+ str(erasuresToUse))
                 print("LoraRadioDataHandler::_GetPunchDoubleMessageWithErasures() ErasuresToUse: " + str(erasuresToUse))
                 correctedData2 = RSCoderLora.decodeLong(messageDataToConsider, erasuresToUse)
                 print("LoraRadioDataHandler::_GetPunchDoubleMessageWithErasures() CorrectedData2: " + Utils.GetDataInHex(correctedData2, logging.DEBUG))
@@ -427,17 +428,17 @@ class LoraRadioDataHandler(object):
                     "LoraRadioDataHandler::_GetStatusMessage() No message could be decoded")
                 return None
 
-    def _GetMessageTypeByLength(self):
+    def _GetMessageTypesByLength(self):
         expectedMessageLengths = [LoraRadioMessageRS.MessageLengths[idx] + self.RSSIByteCount for idx in
                                   LoraRadioDataHandler.MessageTypesExpected]
         #print("expectedMessageLengths: " + str(expectedMessageLengths))
         #print("length of datareceived: " + str(len(self.DataReceived)))
-        if len(self.DataReceived) in expectedMessageLengths:
-            indexWithinMessageTypesExpected = expectedMessageLengths.index(
-                len(self.DataReceived))
-            messageTypeByLength = LoraRadioDataHandler.MessageTypesExpected[
-                indexWithinMessageTypesExpected]
-            return messageTypeByLength
+        messageTypesByLength = []
+        for idx, msgLength in enumerate(expectedMessageLengths):
+            if len(self.DataReceived) == msgLength:
+                messageTypeByLength = LoraRadioDataHandler.MessageTypesExpected[idx]
+                messageTypesByLength.append(messageTypeByLength)
+        return messageTypesByLength
 
     def _GetLikelyMessageTypes(self):
         messageTypes = []
@@ -450,17 +451,9 @@ class LoraRadioDataHandler(object):
             elif len(self.DataReceived) > expectedMessageLength:
                 messageTypes.append(headerMessageType)
 
-                messageTypeByLength = self._GetMessageTypeByLength()
-                if messageTypeByLength is not None:
-                    messageTypes.append(messageTypeByLength)
-            else:
-                # shorter than the header message type
-                messageTypeByLength = self._GetMessageTypeByLength()
-                if messageTypeByLength is not None:
-                    messageTypes.append(messageTypeByLength)
-        else:
-            messageTypeByLength = self._GetMessageTypeByLength()
-            if messageTypeByLength is not None:
+        messageTypesByLength = self._GetMessageTypesByLength()
+        for messageTypeByLength in messageTypesByLength:
+            if messageTypeByLength not in messageTypes:
                 messageTypes.append(messageTypeByLength)
 
         return messageTypes
@@ -524,6 +517,7 @@ class LoraRadioDataHandler(object):
 
     # Call GetMessage only when you believe you might have a message
     def GetMessage(self):
+        print("Data considered: " + Utils.GetDataInHex(self.DataReceived, logging.DEBUG))
         LoraRadioDataHandler.WiRocLogger.debug("Data considered: " + Utils.GetDataInHex(self.DataReceived, logging.DEBUG))
         message = self._TryGetMessage()
         if message is not None:

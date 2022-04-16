@@ -489,6 +489,8 @@ class LoraRadioDRF1268DS_RS:
             return None
         LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::GetRadioData() data to fetch")
         allReceivedData = bytearray()
+        # Let's wait a little so that the full message is available to be read from serial.
+        time.sleep(2 / 100)
         while self.radioSerial.in_waiting > 0:
             bytesRead = self.radioSerial.read(1)
             allReceivedData.append(bytesRead[0])

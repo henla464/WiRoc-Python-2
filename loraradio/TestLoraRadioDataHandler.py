@@ -1,6 +1,7 @@
 __author__ = 'henla464'
 
 import logging
+import time
 import unittest
 
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
@@ -9,11 +10,14 @@ from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from loraradio.RSCoderLora import RSCoderLora
 
 # Run with python3 -m unittest loraradio/TestLoraRadioDataHandler.py
+from utils.utils import Utils
+
+
 class TestLoraRadioDataHandler(unittest.TestCase):
                                         # stx         31                            37800=>10:30
     PunchMsg_Correct_1 =   bytearray(bytes([0x83, 0x1F, 0x00, 0x00, 0x00, 0xFF, 0x00, 0X93, 0xA8, 0x00]))
-    PunchDoubleMsg_Correct_1 = bytearray(bytes([0x86, 0xff, 0x00, 0x00, 0x63, 0x67, 0x00, 0x03, 0x86, 0x12, 0xff, 0x00, 0x00, 0x63, 0x67, 0x00, 0x0c, 0x9d, 0x6e]))
     PunchMsg_Corrupted_1 = bytearray(bytes([0x84, 0x10, 0x00, 0x00, 0x01, 0xFF, 0x01, 0X93, 0xA8, 0x00]))
+    PunchDoubleMsg_Correct_1 = bytearray(bytes([0x86, 0xff, 0x00, 0x00, 0x63, 0x67, 0x00, 0x03, 0x86, 0x12, 0xff, 0x00, 0x00, 0x63, 0x67, 0x00, 0x0c, 0x9d, 0x6e]))
     PunchDoubleMsg_Corrupted_1 = bytearray(bytes([0x86, 0xff, 0x01, 0x01, 0x63, 0x67, 0x01, 0x03, 0x86, 0x12, 0xff, 0x01, 0x01, 0x63, 0x67, 0x01, 0x0c, 0x9d, 0x6e]))
 
     # ---
@@ -23,13 +27,98 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     # ---
 
     # ---
+    Case2_PunchDoubleMsg_Previous_WithRS = bytearray(bytes([0x86, 0x10, 0x00, 0x6a, 0xe3, 0xfc, 0x0c, 0xa2, 0xba, 0xa6, 0x10, 0x00, 0x15, 0x66, 0x05, 0x0c, 0xa2, 0xbf, 0x1d, 0xef, 0x54, 0xd8, 0x10, 0x82, 0xe3, 0x3f, 0x16]))
+    Case2_PunchDoubleMsg_Correct_WithRS = bytearray(bytes([0x86, 0x10, 0x00, 0x73, 0xfb, 0x1e, 0x0c, 0xa2, 0xca, 0x6d, 0x10, 0x00, 0x11, 0x1a, 0xf0, 0x0c, 0xa2, 0xd3, 0x66, 0xa6, 0x77, 0x5c, 0xa7, 0xc9, 0xa1, 0xad, 0x16]))
+    Case2_PunchDoubleMsg_Corrupted_WithRS = bytearray(bytes([0x86, 0xd8, 0x08, 0x3f, 0xfb, 0x1e, 0x1d, 0xa3, 0xdb, 0x7c, 0x10, 0x00, 0x11, 0x1a, 0xf0, 0x0c, 0xa2, 0xd3, 0x66, 0xa6, 0x77, 0x5c, 0xa7, 0x39, 0x33, 0x49, 0x37]))
+    # ---
+
+    # ---
+    Case3_PunchDoubleMsg_Previous_WithRS = bytearray(bytes([0x86, 0x10, 0x00, 0x97, 0xae, 0x8a, 0x0c, 0xa8, 0x5a, 0xdc, 0x10, 0x00, 0x1d, 0xfa, 0xb5, 0x0c, 0xa8, 0x5e, 0xd0, 0x5b, 0x73, 0x05, 0x67, 0xea, 0x3a, 0xb4, 0x41]))
+    Case3_PunchDoubleMsg_Correct_WithRS = bytearray(bytes([0x86, 0x10, 0x00, 0x04, 0xca, 0x8e, 0x0d, 0x02, 0xe5, 0xe0, 0x10, 0x00, 0x10, 0xc9, 0x4a, 0x0d, 0x02, 0xe7, 0x1a, 0xb2, 0xd0, 0x90, 0xdb, 0xb1, 0x73, 0xb7, 0xf1]))
+    Case3_PunchDoubleMsg_Corrupted_WithRS = bytearray(bytes([0x86, 0x10, 0x00, 0x04, 0xca, 0x8e, 0x0d, 0x02, 0xe5, 0xe0, 0x50, 0x44, 0x50, 0xc9, 0x4e, 0x0d, 0x02, 0xe7, 0x1a, 0xb2, 0xd0, 0x90, 0xdb, 0xb1, 0x73, 0xb7, 0xf1]))
+    # ---
+
+    # ---
+    Case4_PunchDoubleMsg_Previous_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x1c, 0x3e, 0x21, 0x0d, 0x05, 0xbe, 0xcd, 0x7f, 0xd8, 0x15, 0x59]))
+    Case4_PunchDoubleMsg_Correct_WithRS = bytearray(bytes([0x86, 0x10, 0x00, 0x1c, 0x3e, 0x21, 0x0d, 0x05, 0xbe, 0xcd, 0x10, 0x00, 0x0f, 0x1a, 0xca, 0x0d, 0x05, 0xc3, 0x23, 0xb3, 0xf4, 0xd5, 0x99, 0xa5, 0x3b, 0x39, 0x65]))
+    Case4_PunchDoubleMsg_Corrupted_WithRS = bytearray(bytes([0x86, 0x10, 0x00, 0x1c, 0x3e, 0x21, 0x0d, 0x05, 0xbe, 0xcd, 0x10, 0x00, 0x0f, 0x1a, 0xca, 0x0d, 0x05, 0xc3, 0x23, 0xb3, 0xf4, 0xd5, 0x99, 0xf5, 0xee, 0xa1, 0x76]))
+    # ---
+
+    # ---
+    Case5_PunchDoubleMsg_Previous_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x1b, 0xe7, 0xdc, 0x0d, 0x06, 0x1d, 0xb4, 0x44, 0x8a, 0x31, 0xee]))
+    Case5_PunchDoubleMsg_Correct_WithRS = bytearray(bytes([0x86, 0x10, 0x00, 0x0e, 0x75, 0x77, 0x0d, 0x06, 0x29, 0x9c, 0x10, 0x00, 0x04, 0xca, 0xda, 0x0d, 0x06, 0x2c, 0xaa, 0x17, 0x68, 0xca, 0x31, 0xd9, 0x34, 0x10, 0xd4]))
+    Case5_PunchDoubleMsg_Corrupted_WithRS = bytearray(bytes([0x86, 0x10, 0x00, 0x0e, 0x75, 0x77, 0x0d, 0x06, 0x29, 0x9c, 0x90, 0x80, 0x84, 0x4a, 0xd2, 0x0d, 0x06, 0x2c, 0xaa, 0x17, 0x68, 0xca, 0x31, 0xd9, 0x34, 0x10, 0xd4]))
+    # ---
+
+    # ---
+    Case6_PunchDoubleMsg_Previous_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x0f, 0xbb, 0x63, 0x0d, 0x0c, 0x67, 0x8c, 0xda, 0xc7, 0x57, 0xe4]))
+    Case6_PunchDoubleMsg_Correct_WithRS = bytearray(bytes([0x86, 0x10, 0x00, 0x80, 0x86, 0x9e, 0x0d, 0x0c, 0xc3, 0xe0, 0x10, 0x00, 0x0f, 0xe0, 0xbf, 0x0d, 0x0c, 0xd1, 0xb0, 0x06, 0x00, 0x83, 0x44, 0x62, 0x52, 0x12, 0xef]))
+    Case6_PunchDoubleMsg_Corrupted_WithRS = bytearray(bytes([0x86, 0x10, 0x00, 0x80, 0x86, 0x9e, 0x0d, 0x0c, 0xc3, 0xe0, 0x10, 0x00, 0x0f, 0xe0, 0xbf, 0x0d, 0x0c, 0xd1, 0xb0, 0x06, 0xa0, 0x81, 0x64, 0x62, 0x52, 0x12, 0xef]))
+    # ---
+
+    # ---
+    Case7_PunchDoubleMsg_Previous_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x00, 0x77, 0x0e, 0x0d, 0x0e, 0x30, 0xef, 0xfa, 0xe9, 0x8d, 0xa8]))
+    Case7_PunchDoubleMsg_Correct_WithRS = bytearray(bytes([0x86, 0x10, 0x00, 0x00, 0x6c, 0x42, 0x0d, 0x0e, 0xa3, 0xe7, 0x10, 0x00, 0x1f, 0x7d, 0x8d, 0x0d, 0x0e, 0xb1, 0xc8, 0x45, 0x9f, 0x0d, 0xde, 0x99, 0x02, 0x65, 0x8d]))
+    Case7_PunchDoubleMsg_Corrupted_WithRS = bytearray(bytes([0x86, 0x01, 0x01, 0x10, 0x7d, 0x43, 0x0d, 0x0e, 0xa3, 0xe7, 0x10, 0x00, 0x1f, 0x7d, 0x8d, 0x0d, 0x0e, 0xb1, 0xc8, 0x45, 0x9f, 0x0d, 0xde, 0x99, 0x02, 0x65, 0x8d]))
+    # ---
+
+    # ---
     Case1_PunchMsg_Previous_WithRS = bytearray(bytes([0x83, 0xe7, 0x00, 0x0f, 0x42, 0x3f, 0x40, 0x91, 0x9e, 0x89, 0x75, 0xa9, 0x83, 0x8f]))
     Case1_PunchMsg_Correct_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x1f, 0x15, 0x8e, 0x0c, 0x91, 0xdf, 0x4f, 0x6c, 0x99, 0x0f, 0xe0]))
     Case1_PunchMsg_Corrupted_WithRS = bytearray(bytes([0x93, 0x11, 0x01, 0x1e, 0x14, 0x8e, 0x0c, 0x91, 0x1f, 0x6f, 0xa8, 0x55, 0xad, 0x1d]))
     # -- wrong in positions 0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 13
 
+    # ---
+    Case2_PunchMsg_Previous_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x1f, 0x15, 0x8e, 0x0c, 0x9b, 0xe1, 0x58, 0x39, 0x2c, 0xad, 0x81]))
+    Case2_PunchMsg_Correct_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x1f, 0x7d, 0x9e, 0x0c, 0x9e, 0xb1, 0x6a, 0x7a, 0xc4, 0xc9, 0x51]))
+    Case2_PunchMsg_Corrupted_WithRS = bytearray(bytes([0x83, 0x36, 0x42, 0x1b, 0x37, 0x60, 0xc0, 0x01, 0x85, 0x9d, 0xfa, 0x44, 0xc9, 0x51]))
+    # -- wrong in positions 1, 2, 3, 4, 5,6,7, 8, 9, 10, 11
+
+    # ---
+    Case3_PunchMsg_Previous_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x04, 0xc8, 0x05, 0x0c, 0xa2, 0x71, 0xe1, 0x1b, 0x67, 0x9e, 0x86]))
+    Case3_PunchMsg_Correct_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x6a, 0xe3, 0xfc, 0x0c, 0xa2, 0xba, 0xa6, 0x6a, 0x7e, 0x95, 0xd5]))
+    Case3_PunchMsg_Corrupted_WithRS = bytearray(bytes([0x93, 0x00, 0x41, 0x3a, 0xf2, 0xfc, 0x2e, 0x80, 0x8b, 0xb5, 0x6a, 0x7e, 0x95, 0xd5]))
+    # -- wrong in positions 1, 2, 3, 4, 6,7, 8, 9
+
+    # ---
+    Case4_PunchMsg_Previous_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x1f, 0xb5, 0x6e, 0x0c, 0xa6, 0x65, 0xbf, 0x53, 0x8e, 0x2c, 0xd6]))
+    Case4_PunchMsg_Correct_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x00, 0xab, 0x13, 0x0c, 0xa6, 0x80, 0xb9, 0xe9, 0xe7, 0xd5, 0x63]))
+    Case4_PunchMsg_Corrupted_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x00, 0xab, 0x13, 0x0c, 0xa6, 0x80, 0xb9, 0x69, 0xef, 0x5d, 0xe3]))
+    # -- wrong in positions 10,11,12,13
+
+    # ---
+    Case5_PunchMsg_Previous_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x1f, 0x6b, 0xa4, 0x0d, 0x05, 0x6f, 0xf1, 0xc8, 0xcb, 0xcb, 0x1d]))
+    Case5_PunchMsg_Correct_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x03, 0xc7, 0x75, 0x0d, 0x05, 0x7c, 0xa1, 0x31, 0x03, 0x16, 0xd3]))
+    Case5_PunchMsg_Corrupted_WithRS = bytearray(bytes([0x83, 0x30, 0x22, 0x01, 0xe7, 0x57, 0x07, 0xcf, 0x12, 0x23, 0x21, 0x03, 0x17, 0xc3]))
+    Case5_PunchMsg_Corrupted_WithRS2 = bytearray(bytes([0x83, 0x29, 0xe8, 0x7c, 0xa9, 0x71, 0x0d, 0x05, 0x7c, 0xa1, 0x31, 0x03, 0x16, 0xd3]))
+    # -- wrong in positions 10,11,12,13
+
+    # ---
+    Case6_PunchMsg_Previous_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x20, 0x88, 0x97, 0x0d, 0x05, 0xa4, 0xb8, 0xfd, 0x05, 0xdc, 0x9c]))
+    Case6_PunchMsg_Correct_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x1c, 0x3e, 0x21, 0x0d, 0x05, 0xbe, 0xcd, 0x7f, 0xd8, 0x15, 0x59]))
+    Case6_PunchMsg_Corrupted_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x1c, 0x3e, 0x31, 0x50, 0xa8, 0x22, 0x56, 0x7f, 0xd8, 0x15, 0x59]))
+    # -- wrong in positions 5,6,7,8,9
+
+    # ---
+    Case7_PunchMsg_Previous_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x1b, 0xe7, 0xdc, 0x0d, 0x06, 0x1d, 0xb4, 0x44, 0x8a, 0x31, 0xee]))
+    Case7_PunchMsg_Correct_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x0e, 0x75, 0x77, 0x0d, 0x06, 0x29, 0x9c, 0x5f, 0x53, 0x13, 0x3e]))
+    Case7_PunchMsg_Corrupted_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x0e, 0x75, 0x77, 0x0d, 0x06, 0x29, 0x9c, 0x1f, 0x57, 0x17, 0x7e]))
+    # -- wrong in positions 10,11,12,13
+
+
+    # ---
+    Case8_PunchMsg_Previous_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x19, 0xf2, 0xf9, 0x0d, 0x08, 0xba, 0x27, 0x64, 0x40, 0xb2, 0x8f]))
+    Case8_PunchMsg_Correct_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x00, 0x3c, 0xe9, 0x0d, 0x08, 0xf4, 0xa6, 0xb5, 0xb0, 0x08, 0x1c]))
+    Case8_PunchMsg_Corrupted_WithRS = bytearray(bytes([0x83, 0x10, 0x00, 0x00, 0x3c, 0xe9, 0x0d, 0x08, 0xf4, 0xa6, 0xb5, 0xf4, 0xc4, 0xd0]))
+    # -- wrong in positions 11,12,13
+    Case8_PunchMsg_Corrupted_WithRS2 = bytearray(bytes([0x83, 0x10, 0x00, 0x00, 0x3c, 0x29, 0x09, 0x08, 0x38, 0xa6, 0xb4, 0xb0, 0x18, 0x1d]))
+    Case8_PunchMsg_Corrupted_WithRS_BestCombination = bytearray(bytes([0x83, 0x10, 0x00, 0x00, 0x3c, 0xe9, 0x0d, 0x08, 0xf4, 0xa6, 0xb5, 0xb0, 0xc4, 0xd0]))
+    # -- wrong in positions 10,12,13
+
+
+
     PunchMsg_Correct_HighestTHTL = bytearray(bytes([0x83, 0x1F, 0x00, 0x00, 0x00, 0xFF, 0x00, 0XA8, 0xC0, 0x00]))
-    StatusMsg_Correct_WithRS = bytearray(bytes([0xa4, 0xe0, 0x58, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xef, 0xa0, 0xe5, 0xb6]))
+    StatusMsg_Correct_WithRS = bytearray(bytes([0x04, 0x60, 0x10, 0x00, 0xd4, 0x12, 0x43, 0x24, 0x6a, 0x01, 0x0c, 0x71, 0x01, 0xc2]))
 
     dataHandler = LoraRadioDataHandler(False)
 
@@ -76,7 +165,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("=== END test_CacheMessage ===")
 
     def test_Case1_FindPunchErasuresDoubleMessage(self):
-        print("=== START test_FindPunchErasuresDoubleMessage ===")
+        print("=== START test_Case1_FindPunchErasuresDoubleMessage ===")
         correctMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(
             TestLoraRadioDataHandler.Case1_PunchDoubleMsg_Previous_WithRS)
         loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchTupleFromPunchDouble(correctMsg)
@@ -92,6 +181,132 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    def test_Case2_FindPunchErasuresDoubleMessage(self):
+        print("=== START test_Case2_FindPunchErasuresDoubleMessage ===")
+        correctMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case2_PunchDoubleMsg_Previous_WithRS)
+        loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchTupleFromPunchDouble(correctMsg)
+        # Cache individual messages but remove the whole double message from data received
+        self.dataHandler._CacheMessage(loraPunchMsg1)
+        self.dataHandler._CacheMessage(loraPunchMsg2)
+
+        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case2_PunchDoubleMsg_Corrupted_WithRS)
+        erasures = self.dataHandler._FindPunchDoubleErasures(corruptedLoraMsg)
+        print("test_Case2_FindPunchErasuresDoubleMessage: " + str(erasures))
+        corruptPositions = [1,  2,  3, 6, 7, 8, 9, 23, 24, 25, 26]
+        for pos in erasures:
+            self.assertIn(pos, corruptPositions)
+
+    def test_Case3_FindPunchErasuresDoubleMessage(self):
+        print("=== START test_Case3_FindPunchErasuresDoubleMessage ===")
+        correctMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case3_PunchDoubleMsg_Previous_WithRS)
+        loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchTupleFromPunchDouble(correctMsg)
+        # Cache individual messages but remove the whole double message from data received
+        self.dataHandler._CacheMessage(loraPunchMsg1)
+        self.dataHandler._CacheMessage(loraPunchMsg2)
+
+        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case3_PunchDoubleMsg_Corrupted_WithRS)
+        erasures = self.dataHandler._FindPunchDoubleErasures(corruptedLoraMsg)
+        print("test_Case3_FindPunchErasuresDoubleMessage: " + str(erasures))
+        corruptPositions = [10, 11, 12]
+        for pos in erasures:
+            self.assertIn(pos, corruptPositions)
+
+    def test_Case4_FindPunchErasuresDoubleMessage(self):
+        print("=== START test_Case4_FindPunchErasuresDoubleMessage ===")
+        correctMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case4_PunchDoubleMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(correctMsg)
+
+        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case4_PunchDoubleMsg_Corrupted_WithRS)
+        erasures = self.dataHandler._FindPunchDoubleErasures(corruptedLoraMsg)
+        print("test_Case4_FindPunchErasuresDoubleMessage: " + str(erasures))
+        corruptPositions = [23, 24, 25, 26]
+        for pos in erasures:
+            self.assertIn(pos, corruptPositions)
+
+    def test_Case5_FindPunchErasuresDoubleMessage(self):
+        print("=== START test_Case5_FindPunchErasuresDoubleMessage ===")
+        correctMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case5_PunchDoubleMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(correctMsg)
+
+        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case5_PunchDoubleMsg_Corrupted_WithRS)
+        erasures = self.dataHandler._FindPunchDoubleErasures(corruptedLoraMsg)
+        print("test_Case5_FindPunchErasuresDoubleMessage: " + str(erasures))
+        corruptPositions = [10, 11, 12, 13, 14]
+        for pos in erasures:
+            self.assertIn(pos, corruptPositions)
+
+    def test_Case5_GetPunchDoubleMessage(self):
+        print("=== START test_Case5_GetPunchDoubleMessage ===")
+        correctMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case5_PunchDoubleMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(correctMsg)
+
+        for i in range(0, len(TestLoraRadioDataHandler.Case5_PunchDoubleMsg_Corrupted_WithRS)):
+            self.dataHandler.AddData(TestLoraRadioDataHandler.Case5_PunchDoubleMsg_Corrupted_WithRS[i:i + 1])
+        punchDoubleMsg = self.dataHandler._GetPunchDoubleMessage()
+        self.assertIsNotNone(punchDoubleMsg)
+        print("=== END test_Case5_GetPunchDoubleMessage ===")
+
+    def test_Case6_FindPunchErasuresDoubleMessage(self):
+        print("=== START test_Case6_FindPunchErasuresDoubleMessage ===")
+        correctMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case6_PunchDoubleMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(correctMsg)
+
+        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case6_PunchDoubleMsg_Corrupted_WithRS)
+        erasures = self.dataHandler._FindPunchDoubleErasures(corruptedLoraMsg)
+        print("test_Case6_FindPunchErasuresDoubleMessage: " + str(erasures))
+        corruptPositions = [20, 21, 22]
+        for pos in erasures:
+            self.assertIn(pos, corruptPositions)
+
+    def test_Case6_GetPunchDoubleMessage(self):
+        print("=== START test_Case6_GetPunchDoubleMessage ===")
+        correctMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case6_PunchDoubleMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(correctMsg)
+
+        for i in range(0, len(TestLoraRadioDataHandler.Case6_PunchDoubleMsg_Corrupted_WithRS)):
+            self.dataHandler.AddData(TestLoraRadioDataHandler.Case6_PunchDoubleMsg_Corrupted_WithRS[i:i + 1])
+        punchDoubleMsg = self.dataHandler._GetPunchDoubleMessage()
+        self.assertIsNotNone(punchDoubleMsg)
+        print("=== END test_Case6_GetPunchDoubleMessage ===")
+
+    def test_Case7_FindPunchErasuresDoubleMessage(self):
+        print("=== START test_Case7_FindPunchErasuresDoubleMessage ===")
+        correctMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case7_PunchDoubleMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(correctMsg)
+
+        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case7_PunchDoubleMsg_Corrupted_WithRS)
+        erasures = self.dataHandler._FindPunchDoubleErasures(corruptedLoraMsg)
+        print("test_Case7_FindPunchErasuresDoubleMessage: " + str(erasures))
+        corruptPositions = [1, 2, 3, 4, 5]
+        for pos in erasures:
+            self.assertIn(pos, corruptPositions)
+
+    def test_Case7_GetPunchDoubleMessage(self):
+        print("=== START test_Case7_GetPunchDoubleMessage ===")
+        correctMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case7_PunchDoubleMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(correctMsg)
+
+        for i in range(0, len(TestLoraRadioDataHandler.Case7_PunchDoubleMsg_Corrupted_WithRS)):
+            self.dataHandler.AddData(TestLoraRadioDataHandler.Case7_PunchDoubleMsg_Corrupted_WithRS[i:i + 1])
+        punchDoubleMsg = self.dataHandler._GetPunchDoubleMessage()
+        self.assertIsNotNone(punchDoubleMsg)
+        print("=== END test_Case7_GetPunchDoubleMessage ===")
+
     def test_Case1_FindPunchErasuresMessage(self):
         print("=== START test_Case1_FindPunchErasuresMessage ===")
         prevMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
@@ -103,8 +318,147 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         erasures = self.dataHandler._FindPunchErasures(corruptedLoraMsg)
         print("test_Case1_FindPunchErasuresMessage: " + str(erasures))
         corruptPositions = [0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 13]
+        corruptPositions.append(6)  # add 6 since we sent incorrect week information
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
+
+    def test_Case2_FindPunchErasuresMessage(self):
+        print("=== START test_Case2_FindPunchErasuresMessage ===")
+        prevMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case2_PunchMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(prevMsg)
+
+        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case2_PunchMsg_Corrupted_WithRS)
+        erasures = self.dataHandler._FindPunchErasures(corruptedLoraMsg)
+        print("test_Case2_FindPunchErasuresMessage: " + str(erasures))
+        corruptPositions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        for pos in erasures:
+            self.assertIn(pos, corruptPositions)
+
+    def test_Case3_FindPunchErasuresMessage(self):
+        print("=== START test_Case3_FindPunchErasuresMessage ===")
+        prevMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case3_PunchMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(prevMsg)
+
+        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case3_PunchMsg_Corrupted_WithRS)
+        erasures = self.dataHandler._FindPunchErasures(corruptedLoraMsg)
+        print("test_Case3_FindPunchErasuresMessage: " + str(erasures))
+        corruptPositions = [1, 2, 3, 4, 6, 7, 8, 9]
+        for pos in erasures:
+            self.assertIn(pos, corruptPositions)
+
+    def test_Case4_FindPunchErasuresMessage(self):
+        print("=== START test_Case4_FindPunchErasuresMessage ===")
+        prevMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case4_PunchMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(prevMsg)
+
+        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case4_PunchMsg_Corrupted_WithRS)
+        erasures = self.dataHandler._FindPunchErasures(corruptedLoraMsg)
+        print("test_Case4_FindPunchErasuresMessage: " + str(erasures))
+        corruptPositions = [10,11,12,13]
+        for pos in erasures:
+            self.assertIn(pos, corruptPositions)
+
+    def test_Case5_FindPunchErasuresMessage(self):
+        print("=== START test_Case5_FindPunchErasuresMessage ===")
+        prevMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case5_PunchMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(prevMsg)
+
+        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case5_PunchMsg_Corrupted_WithRS)
+        erasures = self.dataHandler._FindPunchErasures(corruptedLoraMsg)
+        print("test_Case5_FindPunchErasuresMessage: " + str(erasures))
+        corruptPositions = [1,2,3,4,5,6,7,8,9,10,12,13]
+        for pos in erasures:
+            self.assertIn(pos, corruptPositions)
+
+        #self.dataHandler._CacheMessage(prevMsg)
+
+        corruptedLoraMsg2 = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case5_PunchMsg_Corrupted_WithRS2)
+        erasures = self.dataHandler._FindPunchErasures(corruptedLoraMsg2)
+        print("test_Case5_FindPunchErasuresMessage 2: " + str(erasures))
+        corruptPositions = [1, 2, 3, 4, 5]
+        for pos in erasures:
+            self.assertIn(pos, corruptPositions)
+
+    def test_Case6_FindPunchErasuresMessage(self):
+        print("=== START test_Case6_FindPunchErasuresMessage ===")
+        prevMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case6_PunchMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(prevMsg)
+        # Adjust the LastPunchMessageTime
+        seconds = 7
+        self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
+        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case6_PunchMsg_Corrupted_WithRS)
+        erasures = self.dataHandler._FindPunchErasures(corruptedLoraMsg)
+        print("test_Case6_FindPunchErasuresMessage: " + str(erasures))
+        corruptPositions = [5,6,7,8,9]
+        for pos in erasures:
+            self.assertIn(pos, corruptPositions)
+
+    def test_Case7_FindPunchErasuresMessage(self):
+        print("=== START test_Case7_FindPunchErasuresMessage ===")
+        prevMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case7_PunchMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(prevMsg)
+        # Adjust the LastPunchMessageTime
+        seconds = 7
+        self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
+        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case7_PunchMsg_Corrupted_WithRS)
+        erasures = self.dataHandler._FindPunchErasures(corruptedLoraMsg)
+        print("test_Case7_FindPunchErasuresMessage: " + str(erasures))
+        corruptPositions = [10,11,12,13]
+        for pos in erasures:
+            self.assertIn(pos, corruptPositions)
+
+    def test_Case8_FindPunchErasuresMessage(self):
+        print("=== START test_Case8_FindPunchErasuresMessage ===")
+        prevMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case8_PunchMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(prevMsg)
+        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case8_PunchMsg_Corrupted_WithRS)
+        erasures = self.dataHandler._FindPunchErasures(corruptedLoraMsg)
+        print("test_Case8_FindPunchErasuresMessage: " + str(erasures))
+        corruptPositions = [11,12,13]
+        for pos in erasures:
+            self.assertIn(pos, corruptPositions)
+
+    def test_Case8_FindPunchErasuresMessage2(self):
+        print("=== START test_Case8_FindPunchErasuresMessage2 ===")
+        prevMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case8_PunchMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(prevMsg)
+        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case8_PunchMsg_Corrupted_WithRS2)
+        erasures = self.dataHandler._FindPunchErasures(corruptedLoraMsg)
+        print("test_Case8_FindPunchErasuresMessage2: " + str(erasures))
+        corruptPositions = [5, 6, 8, 10, 12, 13]
+        for pos in erasures:
+            self.assertIn(pos, corruptPositions)
+
+    def test_Case8_GetPunchMessage_BestCombination(self):
+        print("=== START test_Case8_GetPunchMessage_BestCombination ===")
+        prevMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+            TestLoraRadioDataHandler.Case8_PunchMsg_Previous_WithRS)
+        self.dataHandler._CacheMessage(prevMsg)
+
+        for i in range(0, len(TestLoraRadioDataHandler.Case8_PunchMsg_Corrupted_WithRS_BestCombination)):
+            self.dataHandler.AddData(TestLoraRadioDataHandler.Case8_PunchMsg_Corrupted_WithRS_BestCombination[i:i + 1])
+
+        loraMsg = self.dataHandler._GetPunchMessage()
+        self.assertIsNotNone(loraMsg)
+        print(Utils.GetDataInHex(loraMsg.GetByteArray(), logging.DEBUG))
+        print("=== END test_Case8_GetPunchMessage_BestCombination ===")
 
     def test_FindPunchErasures(self):
         print("=== START test_FindPunchErasures ===")
@@ -195,8 +549,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         #print(rsCodes)
         for i in range(0, len(rsCodes)):
             self.dataHandler.AddData(rsCodes[i:i+1])
-        msgType = self.dataHandler._GetMessageTypeByLength()
-        self.assertEqual(msgType, 0x03, "Didn't get the expected message type")
+        msgTypes = self.dataHandler._GetMessageTypesByLength()
+        self.assertEqual(msgTypes, [0x03, 0x04], "Didn't get the expected message type")
         print("=== END test_GetMessageTypeByLength ===")
 
     def test_GetLikelyMessageTypes(self):
@@ -213,14 +567,13 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for i in range(0, len(rsCodes)):
             self.dataHandler.AddData(rsCodes[i:i+1])
         messageTypes = self.dataHandler._GetLikelyMessageTypes()
-        self.assertEqual(messageTypes, [0x03], "Didn't get the expected message type short punch")
+        self.assertEqual(messageTypes, [0x03, 0x04], "Didn't get the expected message type short punch")
 
         self.dataHandler.DataReceived = bytearray()
         print("=== END test_GetLikelyMessageTypes ===")
 
     def test_GetPunchMessage(self):
         print("=== START test_GetPunchMessage ===")
-        #messageTypeToTry, erasures = None):
         rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1)
         for i in range(0, len(TestLoraRadioDataHandler.PunchMsg_Correct_1)):
             self.dataHandler.AddData(TestLoraRadioDataHandler.PunchMsg_Correct_1[i:i + 1])
@@ -228,32 +581,36 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             self.dataHandler.AddData(rsCodes[i:i + 1])
 
         # wrong message type
-        punchMsg = self.dataHandler._GetAckMessage(0)
+        punchMsg = self.dataHandler._GetAckMessage()
         self.assertIsNone(punchMsg)
         # right message type
-        punchMsg = self.dataHandler._GetPunchMessage(0)
+        punchMsg = self.dataHandler._GetPunchMessage()
         self.assertIsNotNone(punchMsg)
         # returned message so buffer should be empty
-        punchMsg = self.dataHandler._GetPunchMessage(0)
-        self.assertIsNone(punchMsg)
-
-        # Add two messages at once before trying to fetch the messages
-        for i in range(0, len(TestLoraRadioDataHandler.PunchMsg_Correct_1)):
-            self.dataHandler.AddData(TestLoraRadioDataHandler.PunchMsg_Correct_1[i:i + 1])
-        for i in range(0, len(rsCodes)):
-            self.dataHandler.AddData(rsCodes[i:i + 1])
-        for i in range(0, len(TestLoraRadioDataHandler.PunchMsg_Correct_1)):
-            self.dataHandler.AddData(TestLoraRadioDataHandler.PunchMsg_Correct_1[i:i + 1])
-        for i in range(0, len(rsCodes)):
-            self.dataHandler.AddData(rsCodes[i:i + 1])
-
-        punchMsg = self.dataHandler._GetPunchMessage()
-        self.assertIsNotNone(punchMsg)
-        punchMsg = self.dataHandler._GetPunchMessage()
-        self.assertIsNotNone(punchMsg)
         punchMsg = self.dataHandler._GetPunchMessage()
         self.assertIsNone(punchMsg)
         print("=== END test_GetPunchMessage ===")
+
+    def test_GetTwoPunchMessages(self):
+        print("=== START test_GetTwoPunchMessages ===")
+        # Add two messages at once before trying to fetch the messages
+        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1)
+        for i in range(0, len(TestLoraRadioDataHandler.PunchMsg_Correct_1)):
+            self.dataHandler.AddData(TestLoraRadioDataHandler.PunchMsg_Correct_1[i:i + 1])
+        for i in range(0, len(rsCodes)):
+            self.dataHandler.AddData(rsCodes[i:i + 1])
+        for i in range(0, len(TestLoraRadioDataHandler.PunchMsg_Correct_1)):
+            self.dataHandler.AddData(TestLoraRadioDataHandler.PunchMsg_Correct_1[i:i + 1])
+        for i in range(0, len(rsCodes)):
+            self.dataHandler.AddData(rsCodes[i:i + 1])
+
+        punchMsg = self.dataHandler._GetPunchMessage()
+        self.assertIsNotNone(punchMsg)
+        punchMsg = self.dataHandler._GetPunchMessage()
+        self.assertIsNotNone(punchMsg, "second message not fetched")
+        punchMsg = self.dataHandler._GetPunchMessage()
+        self.assertIsNone(punchMsg)
+        print("=== END test_GetTwoPunchMessages ===")
 
     def test_GetPunchDoubleMessage(self):
         print("=== START test_GetPunchDoubleMessage ===")
@@ -277,58 +634,32 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNone(punchDoubleMsg)
         self.assertEqual(len(self.dataHandler.DataReceived), 0)
 
-        # Add two messages at once before trying to fetch the messages
-        for i in range(0, len(TestLoraRadioDataHandler.PunchDoubleMsg_Correct_1)):
-            self.dataHandler.AddData(TestLoraRadioDataHandler.PunchDoubleMsg_Correct_1[i:i + 1])
-        for i in range(0, len(rsCodes)):
-            self.dataHandler.AddData(rsCodes[i:i + 1])
-        for i in range(0, len(TestLoraRadioDataHandler.PunchDoubleMsg_Correct_1)):
-            self.dataHandler.AddData(TestLoraRadioDataHandler.PunchDoubleMsg_Correct_1[i:i + 1])
-        for i in range(0, len(rsCodes)):
-            self.dataHandler.AddData(rsCodes[i:i + 1])
-
-        punchDoubleMsg = self.dataHandler._GetPunchDoubleMessage()
-        self.assertIsNotNone(punchDoubleMsg)
-        punchDoubleMsg = self.dataHandler._GetPunchDoubleMessage()
-        self.assertIsNotNone(punchDoubleMsg)
-        punchDoubleMsg = self.dataHandler._GetPunchDoubleMessage()
-        self.assertIsNone(punchDoubleMsg)
         print("=== END test_GetPunchDoubleMessage ===")
 
-    def test_GetMessage_PunchMessage(self):
-        print("=== START test_GetMessage_PunchMessage ===")
-        # messageTypeToTry, erasures = None):
-        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1)
-        for i in range(0, len(TestLoraRadioDataHandler.PunchMsg_Correct_1)):
-            self.dataHandler.AddData(TestLoraRadioDataHandler.PunchMsg_Correct_1[i:i + 1])
+    def test_GetTwoPunchDoubleMessages(self):
+        print("=== START test_GetTwoPunchDoubleMessages ===")
+        # Add two messages at once before trying to fetch the messages
+        rsCodes = RSCoderLora.encodeLong(TestLoraRadioDataHandler.PunchDoubleMsg_Correct_1)
+        for i in range(0, len(TestLoraRadioDataHandler.PunchDoubleMsg_Correct_1)):
+            self.dataHandler.AddData(TestLoraRadioDataHandler.PunchDoubleMsg_Correct_1[i:i + 1])
+        for i in range(0, len(rsCodes)):
+            self.dataHandler.AddData(rsCodes[i:i + 1])
+        for i in range(0, len(TestLoraRadioDataHandler.PunchDoubleMsg_Correct_1)):
+            self.dataHandler.AddData(TestLoraRadioDataHandler.PunchDoubleMsg_Correct_1[i:i + 1])
         for i in range(0, len(rsCodes)):
             self.dataHandler.AddData(rsCodes[i:i + 1])
 
-        msg = self.dataHandler.GetMessage()
-        self.assertIsNotNone(msg, "expected to receive the message back")
-        self.assertEqual(TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes, msg.GetByteArray(), "Didn't receive the same bytes back")
+        punchDoubleMsg = self.dataHandler._GetPunchDoubleMessage()
+        self.assertIsNotNone(punchDoubleMsg)
+        punchDoubleMsg = self.dataHandler._GetPunchDoubleMessage()
+        self.assertIsNotNone(punchDoubleMsg, "could not get second message")
+        punchDoubleMsg = self.dataHandler._GetPunchDoubleMessage()
+        self.assertIsNone(punchDoubleMsg)
+        print("=== END test_GetTwoPunchDoubleMessages ===")
 
-
-        for i in range(0, len(TestLoraRadioDataHandler.PunchMsg_Corrupted_1)):
-            self.dataHandler.AddData(TestLoraRadioDataHandler.PunchMsg_Corrupted_1[i:i + 1])
-        for i in range(0, len(rsCodes)):
-            self.dataHandler.AddData(rsCodes[i:i + 1])
-        #print("before")
-        msg2 = self.dataHandler.GetMessage()
-        #print("after")
-        self.assertIsNone(msg2, "Received a message but it shouldn't be decodable")
-
-        # correct one byte, then it should be decodable
-        self.dataHandler.DataReceived[4] = 0x00
-        print("the correct: " + str(TestLoraRadioDataHandler.PunchMsg_Correct_1) + " len: " + str(len(TestLoraRadioDataHandler.PunchMsg_Correct_1)))
-        print("the corrupted: " + str(self.dataHandler.DataReceived) + " len: " + str(len(self.dataHandler.DataReceived)))
-        msg3 = self.dataHandler.GetMessage()
-        self.assertIsNotNone(msg3, "Didn't receive a message, it should be decodable")
-        print("=== END test_GetMessage_PunchMessage ===")
-
-    def test_GetMessage_PunchMessage_WithPrefixGarbage(self):
-        print("=== START test_GetMessage_PunchMessage_WithPrefixGarbage ===")
-        self.dataHandler.AddData(bytearray([0,0]))
+    def test_GetMessage_PunchMessage_Correct(self):
+        print("=== START test_GetMessage_PunchMessage_Correct ===")
+        self.dataHandler.AddData(bytearray([0, 0]))
         msg = self.dataHandler.GetMessage()
 
         rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1)
@@ -343,24 +674,49 @@ class TestLoraRadioDataHandler(unittest.TestCase):
                          "Didn't receive the same bytes back")
         self.assertEqual(len(self.dataHandler.DataReceived), 0,
                          "DataReceived not empty")
+        print("=== END test_GetMessage_PunchMessage_Correct ===")
+
+    def test_GetMessage_PunchMessage_WithPrefixGarbage(self):
+        print("=== START test_GetMessage_PunchMessage_WithPrefixGarbage ===")
+        self.dataHandler.AddData(bytearray([0,0]))
+        msg = self.dataHandler.GetMessage() # will clear datarecieve
+
+        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1)
+        for i in range(0, len(TestLoraRadioDataHandler.PunchMsg_Correct_1)):
+            self.dataHandler.AddData(TestLoraRadioDataHandler.PunchMsg_Correct_1[i:i + 1])
+        for i in range(0, len(rsCodes)):
+            self.dataHandler.AddData(rsCodes[i:i + 1])
+
+        msg = self.dataHandler.GetMessage()
+        self.assertIsNotNone(msg, "expected to receive the message back")
+        self.assertEqual(TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes, msg.GetByteArray(),
+                         "Didn't receive the same bytes back")
+        self.assertEqual(len(self.dataHandler.DataReceived), 0,
+                         "DataReceived not empty")
+        print("=== END test_GetMessage_PunchMessage_WithPrefixGarbage ===")
+
+    def test_GetMessage_CorruptedPunchMessage(self):
+        print("=== START test_GetMessage_CorruptedPunchMessage ===")
+        rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1)
         for i in range(0, len(TestLoraRadioDataHandler.PunchMsg_Corrupted_1)):
             self.dataHandler.AddData(TestLoraRadioDataHandler.PunchMsg_Corrupted_1[i:i + 1])
         for i in range(0, len(rsCodes)):
             self.dataHandler.AddData(rsCodes[i:i + 1])
-        # print("before")
+
         msg2 = self.dataHandler.GetMessage()
-        # print("after")
         self.assertIsNone(msg2, "Received a message but it shouldn't be decodable")
 
         # correct one byte, then it should be decodable
-        self.dataHandler.DataReceived[4] = 0x00
-        print("the correct: " + str(TestLoraRadioDataHandler.PunchMsg_Correct_1) + " len: " + str(
-            len(TestLoraRadioDataHandler.PunchMsg_Correct_1)))
-        print("the corrupted: " + str(self.dataHandler.DataReceived) + " len: " + str(
-            len(self.dataHandler.DataReceived)))
+        corrupt = TestLoraRadioDataHandler.PunchMsg_Corrupted_1[:]
+        corrupt[4] = 0x00
+        for i in range(0, len(corrupt)):
+            self.dataHandler.AddData(corrupt[i:i + 1])
+        for i in range(0, len(rsCodes)):
+            self.dataHandler.AddData(rsCodes[i:i + 1])
+
         msg3 = self.dataHandler.GetMessage()
         self.assertIsNotNone(msg3, "Didn't receive a message, it should be decodable")
-        print("=== END test_GetMessage_PunchMessage_WithPrefixGarbage ===")
+        print("=== END test_GetMessage_CorruptedPunchMessage ===")
 
     def test_GetMessage_PunchDoubleMessage(self):
         # messageTypeToTry, erasures = None):
@@ -396,8 +752,6 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         #self.assertEqual(TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes, msg2.GetByteArray(), "Didn't receive a corrected message")
 
     def test_GetMessage_Status(self):
-
-        # messageTypeToTry, erasures = None):
         print("=== START test_GetMessage_Status ===")
         for i in range(0, len(TestLoraRadioDataHandler.StatusMsg_Correct_WithRS)):
             self.dataHandler.AddData(TestLoraRadioDataHandler.StatusMsg_Correct_WithRS[i:i + 1])
