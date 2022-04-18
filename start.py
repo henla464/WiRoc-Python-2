@@ -79,11 +79,11 @@ class Main:
         else:
             self.webServerUp = False
         if self.webServerUp:
-            t = threading.Thread(target=self.addDeviceBackground, args=(webServerIP, webServerHost, btAddress, apiKey, wiRocDeviceName))
+            t = threading.Thread(target=self.addDeviceBackground, args=(webServerProtocol, webServerHost, webServerIP, btAddress, apiKey, wiRocDeviceName))
             t.daemon = True
             t.start()
 
-    def addDeviceBackground(self, webServerHost, webServerProtocol, webServerIP, btAddress, apiKey, wiRocDeviceName):
+    def addDeviceBackground(self, webServerProtocol, webServerHost, webServerIP, btAddress, apiKey, wiRocDeviceName):
         try:
             headers = {'X-Authorization': apiKey, 'host': webServerHost}
             device = {"BTAddress": btAddress, "headBTAddress": btAddress, "name": wiRocDeviceName}  # "description": None
