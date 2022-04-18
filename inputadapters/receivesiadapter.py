@@ -124,11 +124,18 @@ class ReceiveSIAdapter(object):
     def getStationSettingSystemValue(self):
         getSystemValueCmd = bytes([0xFF, 0x02, 0x02, 0x83, 0x02, 0x74, 0x01, 0x04, 0x14, 0x03])
         sysValResp = self.sendCommand(getSystemValueCmd)
-        extendedProtocol = sysValResp[6] & 0x01
-        autoSend = sysValResp[6] & 0x02
-        readOut = sysValResp[6] & 0x80
+        configByte = sysValResp[6]
+        #   xxxxxxx1b extended protocol
+        #   xxxxxx1xb auto send out
+        #   xxxxx1xxb handshake (only valid for card readout)
+        #   xxx1xxxxb access with password only
+        #   1xxxxxxxb read out SI-card after punch (only for punch modes;
+        #             depends on bit 2: auto send out or handshake)
+        extendedProtocol = ((configByte & 0x01) > 0)
+        autoSend = ((configByte & 0x02) > 0)
+        readOut = ((configByte & 0x80) > 0)
         stationNumber = (sysValResp[3] << 8) | sysValResp[4]
-        return extendedProtocol, autoSend, readOut, stationNumber
+        return extendedProtocol, autoSend, readOut, stationNumber, configByte
 
     def getSerialNumberSystemValue(self):
         addr = 0x00
@@ -175,6 +182,17 @@ class ReceiveSIAdapter(object):
         siMsgByteArr = siMsg.GetByteArray()
         ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::getBackupPunchAsSIMessageArray SIMsg created from backup punch: " + Utils.GetDataInHex(siMsgByteArr, logging.DEBUG))
         return siMsgByteArr
+
+    def setAutosendAndExtendedProtocol(self):
+        extendedProtocol, autoSend, readOut, stationNumber, configByte = self.getStationSettingSystemValue()
+        if not autoSend or not extendedProtocol:
+            configByte = configByte | 0b00000001
+            configByte = configByte | 0b00000010
+            setSystemValueCmdData = bytes([0x82, 0x02, 0x74, configByte])
+            calculatedCrc = Utils.CalculateCRC(setSystemValueCmdData)
+            setSystemValueCmd = bytes([0xFF, 0x02, 0x02]) + setSystemValueCmdData + bytes([calculatedCrc[0]]) + bytes([calculatedCrc[0]]) + bytes([0x03])
+            response = self.sendCommand(setSystemValueCmd)
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::setAutosendAndExtendedProtocol: response: " + Utils.GetDataInHex(response, logging.DEBUG))
 
     def updateComputerTimeAndSiStationNumber(self):
         theCurrentTimeInSiStation = self.getSIStationTimeAndStationNumber()
@@ -430,6 +448,7 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
                     ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() SI Station 38400 kbit/s works")
 
                 self.updateComputerTimeAndSiStationNumber()
+                self.setAutosendAndExtendedProtocol()
                 self.serialNumber = self.getSerialNumberSystemValue()
                 self.detectMissedPunchesDuringInit()
 
@@ -775,6 +794,7 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
                 return False
 
             self.updateComputerTimeAndSiStationNumber()
+            self.setAutosendAndExtendedProtocol()
             self.serialNumber = self.getSerialNumberSystemValue()
             self.detectMissedPunchesDuringInit()
 
