@@ -189,8 +189,8 @@ class ReceiveSIAdapter(object):
             configByte = configByte | 0b00000001
             configByte = configByte | 0b00000010
             setSystemValueCmdData = bytes([0x82, 0x02, 0x74, configByte])
-            calculatedCrc = Utils.CalculateCRC(setSystemValueCmdData)
-            setSystemValueCmd = bytes([0xFF, 0x02, 0x02]) + setSystemValueCmdData + bytes([calculatedCrc[0]]) + bytes([calculatedCrc[0]]) + bytes([0x03])
+            calculatedCrc = Utils.CalculateCRC(bytearray(setSystemValueCmdData))
+            setSystemValueCmd = bytes([0xFF, 0x02, 0x02]) + setSystemValueCmdData + bytes([calculatedCrc[0]]) + bytes([calculatedCrc[1]]) + bytes([0x03])
             response = self.sendCommand(setSystemValueCmd)
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::setAutosendAndExtendedProtocol: response: " + Utils.GetDataInHex(response, logging.DEBUG))
 
