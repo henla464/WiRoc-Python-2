@@ -1,10 +1,7 @@
 WiRoc
 =====
 - Remove only message fetched from datareceived, clear all only when no message was successfully fetched
-- pass msgSubBatch to the callbacks, set same datetime as sent date for all messages in a batch
 - Save last messageid sent, when ack arrive and message is corrupted and cant be recovered then compare and still allow it if the message id is correct
-- In lora SendData function, if OK is not returned then read all data and add to LoraRadioDataHandler, look for OK at the end, accept it and remove it. Set a variable to allow GetRadioData to fetch the message (see row 6266 for example: Documents/WiRoc/Competitions/Fänestad20220409/LogArchive_D4\:12\:43\:24\:70\:F5_2022-04-09-14\:39\:49/home/chip/WiRoc-Python-2/WiRoc.log.2)
-- Set autosend automatically if not set when initializing
 - Set ack date in messagesubscriptionarchive so it is possible to see if 5th try was acked or not
 
 - Make update work for CHIP also
@@ -50,6 +47,10 @@ x -- https://stackoverflow.com/questions/62652901/how-do-i-broadcast-bluetooth-i
 x Changed to use sockets from Python instead of serial ports and RFCOMM to connect to Bluetooth serial devices
 x Change how RS232 input works to avoid it from trying to init every 10s. Maybe always open read only. And when first message arrive reconfigure/reinit with two-way if that is selected.
 x Make subclasses for receivesiadapter with each type (USB, RS232, Bluetooth)
+x Set autosend automatically if not set when initializing
+x In lora SendData function, if OK is not returned then read all data and add to LoraRadioDataHandler, look for OK at the end, accept it and remove it. Set a variable to allow GetRadioData to fetch the message (see row 6266 for example: Documents/WiRoc/Competitions/Fänestad20220409/LogArchive_D4\:12\:43\:24\:70\:F5_2022-04-09-14\:39\:49/home/chip/WiRoc-Python-2/WiRoc.log.2)
+x pass msgSubBatch to the callbacks, set same datetime as sent date for all messages in a batch
+
 
 possible HW enhancments
 -----------------------

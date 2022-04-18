@@ -358,12 +358,12 @@ class DatabaseHelper:
             cls.archive_message_box(messageSubscriptionView.MessageBoxId)
 
     @classmethod
-    def increment_send_tries_and_set_sent_date(cls, messageSubscriptionId, retryDelay):
+    def increment_send_tries_and_set_sent_date(cls, messageSubscriptionId, retryDelay, sentDate):
         cls.init()
         msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionId)
         if msa is None:
             return None
-        msa.SentDate = datetime.now()
+        msa.SentDate = sentDate
         msa.NoOfSendTries = msa.NoOfSendTries + 1
         msa.FindAdapterTryDate = None
         msa.FindAdapterTries = 0
@@ -383,10 +383,10 @@ class DatabaseHelper:
         cls.db.save_table_object(msa, False)
 
     @classmethod
-    def increment_send_tries_and_set_send_failed_date(cls, messageSubscriptionId, retryDelay):
+    def increment_send_tries_and_set_send_failed_date(cls, messageSubscriptionId, retryDelay, sendFailureDate):
         cls.init()
         msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionId)
-        msa.SendFailedDate = datetime.now()
+        msa.SendFailedDate = sendFailureDate
         msa.NoOfSendTries = msa.NoOfSendTries + 1
         msa.FindAdapterTryDate = None
         msa.FindAdapterTries = 0

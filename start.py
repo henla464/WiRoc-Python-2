@@ -363,47 +363,51 @@ class Main:
                                     settDict["DelayAfterMessageSent"] = subAdapter.GetDelayAfterMessageSent()
                                     settDict["DelayAfterMessageSentWhenAck"] = settDict["DelayAfterMessageSent"]
 
-                                def createSuccessCB(innerSubAdapter):
+                                def createSuccessCB(innerSubAdapter, innerMsgSubBatch):
+                                    sentDate = datetime.now()
+
                                     def successCB():
                                         self.wirocLogger.info(
-                                            "Start::Run() successCB() Message sent to " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName + " Trans:" + msgSubBatch.TransformName)
-                                        if msgSubBatch.DeleteAfterSent:  # move msg subsription to archive
-                                            for batchItem in msgSubBatch.MessageSubscriptionBatchItems:
+                                            "Start::Run() successCB() Message sent to " + innerMsgSubBatch.SubscriberInstanceName + " " + innerMsgSubBatch.SubscriberTypeName + " Trans:" + innerMsgSubBatch.TransformName)
+                                        if innerMsgSubBatch.DeleteAfterSent:  # move msg subsription to archive
+                                            for batchItem in innerMsgSubBatch.MessageSubscriptionBatchItems:
                                                 DatabaseHelper.archive_message_subscription_view_after_sent(batchItem.id)
                                         else:  # set SentDate and increment NoOfSendTries
-                                            for batchItem in msgSubBatch.MessageSubscriptionBatchItems:
+                                            for batchItem in innerMsgSubBatch.MessageSubscriptionBatchItems:
                                                 innerRetryDelay = innerSubAdapter.GetRetryDelay(batchItem.NoOfSendTries + 1)
-                                                DatabaseHelper.increment_send_tries_and_set_sent_date(batchItem.id, innerRetryDelay)
+                                                DatabaseHelper.increment_send_tries_and_set_sent_date(batchItem.id, innerRetryDelay, sentDate)
                                                 self.wirocLogger.debug("Start::Run() successCB() Sub adapter: " +str(type(innerSubAdapter)) +
                                                                        " Increment send tries, NoOfSendTries: " + str(batchItem.NoOfSendTries) +
                                                                        " retryDelay: " + str(innerRetryDelay))
                                     return successCB
 
-                                def createFailureCB(innerSubAdapter):
+                                def createFailureCB(innerSubAdapter, innerMsgSubBatch):
+                                    sendFailureDate = datetime.now()
+
                                     def failureCB():
                                         # failed to send
-                                        for batchItem in msgSubBatch.MessageSubscriptionBatchItems:
+                                        for batchItem in innerMsgSubBatch.MessageSubscriptionBatchItems:
                                             self.wirocLogger.warning(
-                                                "Start::Run() Failed to send message: " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName + " Trans:" + msgSubBatch.TransformName + " batchItem.id:"+ str(batchItem.id))
+                                                "Start::Run() Failed to send message: " + innerMsgSubBatch.SubscriberInstanceName + " " + innerMsgSubBatch.SubscriberTypeName + " Trans:" + innerMsgSubBatch.TransformName + " batchItem.id:"+ str(batchItem.id))
                                             innerRetryDelay = innerSubAdapter.GetRetryDelay(batchItem.NoOfSendTries + 1)
-                                            DatabaseHelper.increment_send_tries_and_set_send_failed_date(batchItem.id, innerRetryDelay)
+                                            DatabaseHelper.increment_send_tries_and_set_send_failed_date(batchItem.id, innerRetryDelay, sendFailureDate)
                                             self.wirocLogger.debug(
                                                 "Start::Run() failureCB() Subadapter: " + str(type(innerSubAdapter)) +
                                                 " Increment send tries, NoOfSendTries: " + str(batchItem.NoOfSendTries) +
                                                 " retryDelay: " + str(innerRetryDelay))
                                     return failureCB
 
-                                def createNotSentCB():
+                                def createNotSentCB(innerMsgSubBatch):
                                     def notSentCB():
-                                        for batchItem in msgSubBatch.MessageSubscriptionBatchItems:
+                                        for batchItem in innerMsgSubBatch.MessageSubscriptionBatchItems:
                                             # msg not sent
                                             self.wirocLogger.warning(
-                                                "Start::Run() Message was not sent: " + msgSubBatch.SubscriberInstanceName + " " + msgSubBatch.SubscriberTypeName + " Trans:" + msgSubBatch.TransformName + " batchItem.id:"+ str(batchItem.id))
+                                                "Start::Run() Message was not sent: " + innerMsgSubBatch.SubscriberInstanceName + " " + innerMsgSubBatch.SubscriberTypeName + " Trans:" + innerMsgSubBatch.TransformName + " batchItem.id:"+ str(batchItem.id))
                                             DatabaseHelper.clear_fetched_for_sending(batchItem.id)
                                     return notSentCB
 
                                 t = threading.Thread(target=subAdapter.SendData,
-                                                     args=(transformedData["Data"], createSuccessCB(subAdapter), createFailureCB(subAdapter), createNotSentCB(), self.callbackQueue, settDict))
+                                                     args=(transformedData["Data"], createSuccessCB(subAdapter, msgSubBatch), createFailureCB(subAdapter, msgSubBatch), createNotSentCB(msgSubBatch), self.callbackQueue, settDict))
                                 self.threadQueue.put(t)
                                 t.start()
                             else:
