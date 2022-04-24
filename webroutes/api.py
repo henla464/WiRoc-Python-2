@@ -945,7 +945,7 @@ def getIP():
 
 
 def zipLogArchive(zipFilePath):
-    result = subprocess.run(['zip', zipFilePath, '/home/chip/WiRoc-Python-2/WiRoc.db', '/home/chip/WiRoc-Python-2/WiRoc.log*'], stdout=subprocess.PIPE)
+    result = subprocess.run(['zip', zipFilePath, '/home/chip/WiRoc-Python-2/WiRoc.db', '/home/chip/WiRoc-Python-2/WiRoc.log', '/home/chip/WiRoc-Python-2/WiRoc.log.1', '/home/chip/WiRoc-Python-2/WiRoc.log.2', '/home/chip/WiRoc-Python-2/WiRoc.log.3'], stdout=subprocess.PIPE)
     if result.returncode != 0:
         errStr = result.stderr.decode('utf-8')
         print('Helper.zipLogArchive: error: ' + errStr)
@@ -1015,8 +1015,8 @@ def getBTAddress():
 
 
 def uploadLogArchiveToServer(apiKey, filePath, serverProtocol, serverIP, serverHost):
-    parameters = ['curl', '-X', 'POST', '-H', 'host:' + serverHost, '-H',
-                  'accept:application/json', '-H', 'Authorization:' + apiKey, '-F', 'newfile=@' + filePath, serverProtocol + serverIP + '/api/v1/LogArchives']
+    parameters = ['curl', '--insecure', '-X', 'POST', '-H', 'host:' + serverHost, '-H',
+                  'accept:application/json', '-H', 'X-Authorization:' + apiKey, '-F', 'newfile=@' + filePath, serverProtocol + serverIP + '/api/v1/LogArchives']
     print(parameters)
     result = subprocess.run(parameters, capture_output=True)
     if result.returncode != 0:
@@ -1077,6 +1077,15 @@ def disconnectWifi():
 
     return jsonpickle.encode(MicroMock(Value='OK'))
 
+def getWebServerProtocol():
+    DatabaseHelper.reInit()
+    proto = SettingsClass.GetWebServerProtocol()
+    return proto
+
+def getWebServerIP():
+    DatabaseHelper.reInit()
+    ip = SettingsClass.GetWebServerIP()
+    return ip
 
 @app.route('/api/uploadlogarchive/', methods=['GET'])
 def uploadLogArchive():
