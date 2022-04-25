@@ -349,9 +349,12 @@ class Main:
                             transformedData = transformClass.Transform(msgSubBatch, subAdapter)
                             if transformedData is not None:
                                 if transformedData["MessageID"] is not None:
+                                    settDict["MessageID"] = transformedData["MessageID"]
                                     for item in msgSubBatch.MessageSubscriptionBatchItems:
                                         self.wirocLogger.debug("Start::handleOutput() Update MessageID: " + Utils.GetDataInHex(transformedData["MessageID"], logging.DEBUG))
                                         DatabaseHelper.update_messageid(item.id, transformedData["MessageID"])
+                                else:
+                                    settDict["MessageID"] = None
 
                                 if msgSubBatch.DeleteAfterSent:
                                     # shouldn't wait for ack. (ie. repeater message ack)

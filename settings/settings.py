@@ -34,6 +34,7 @@ class SettingsClass(object):
     hasReceivedMessageFromRepeater = False
     batteryIsLowReceived = False
     deviceId = None
+    messageIDOfLastLoraMessageSent = None
 
     #####
     # Static/class settings
@@ -61,6 +62,14 @@ class SettingsClass(object):
     @staticmethod
     def GetTimeOfLastMessageSentToLora():
         return SettingsClass.timeOfLastMessageSentToLora
+
+    @staticmethod
+    def SetMessageIDOfLastLoraMessageSent(messageID):
+        SettingsClass.messageIDOfLastLoraMessageSent = messageID
+
+    @staticmethod
+    def GetMessageIDOfLastLoraMessageSent():
+        return SettingsClass.messageIDOfLastLoraMessageSent
 
     @staticmethod
     def SetTimeOfLastMessageAdded():

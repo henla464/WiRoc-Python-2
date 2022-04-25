@@ -7,6 +7,7 @@ from loraradio.LoraRadioMessageAndMetadata import LoraRadioMessageAndMetadata
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from loraradio.RSCoderLora import RSCoderLora
+from settings.settings import SettingsClass
 from utils.utils import Utils
 from collections.abc import Iterable
 
@@ -384,6 +385,12 @@ class LoraRadioDataHandler(object):
             except Exception as err:
                 LoraRadioDataHandler.WiRocLogger.error(
                     "LoraRadioDataHandler::_GetAckMessage() RS decoding failed with exception: " + str(err))
+                scrambledAckMsg = LoraRadioMessageCreator.GetAckMessageByFullMessageData(messageDataToConsider, rssiByte=rssiByteValue)
+                messageIdAcked = scrambledAckMsg.GetMessageIDThatIsAcked()
+                if messageIdAcked == SettingsClass.GetMessageIDOfLastLoraMessageSent():
+                    # ID matches so must be correct ID. Error codes incorrect...
+                    scrambledAckMsg.GenerateRSCode()
+                    return scrambledAckMsg
                 LoraRadioDataHandler.WiRocLogger.error(
                     "LoraRadioDataHandler::_GetAckMessage() No message could be decoded")
                 return None

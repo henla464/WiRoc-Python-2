@@ -1,4 +1,5 @@
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from loraradio.loraradio import LoraRadio
 from loraradio.LoraRadioDRF1268DS_RS import LoraRadioDRF1268DS_RS
@@ -311,6 +312,10 @@ class SendLoraAdapter(object):
             headerMessageType = LoraRadioDataHandler.GetHeaderMessageType(data)
             if headerMessageType != LoraRadioMessageRS.MessageTypeLoraAck:
                 SettingsClass.SetTimeOfLastMessageSentToLora()
+            if headerMessageType == LoraRadioMessageRS.MessageTypeSIPunch or \
+                    headerMessageType == LoraRadioMessageRS.MessageTypeSIPunchDouble:
+                SettingsClass.SetMessageIDOfLastLoraMessageSent(settingsDictionary["MessageID"])
+
             delayS = settingsDictionary["DelayAfterMessageSent"]
             self.BlockSendingUntilMessageSentAndAckReceived(delayS)
             if self.loraRadio.SendData(data):

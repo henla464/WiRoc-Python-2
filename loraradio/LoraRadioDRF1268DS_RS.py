@@ -158,7 +158,6 @@ class LoraRadioDRF1268DS_RS:
         self.acksReceivedSinceLastMessageSent = 0
         self.runningAveragePercentageAcked = 0.5
         self.chip = False
-        self.dataAddedInSendData = False
         self.hardwareAbstraction = hardwareAbstraction
         self.loraRadioDataHandler = LoraRadioDataHandler(True)
 
@@ -490,24 +489,21 @@ class LoraRadioDRF1268DS_RS:
                     "LoraRadioDRF1268DS_RS::SendData() 2 Module returned ok")
                 for dataByte in allReceivedData[:-4]:
                     self.loraRadioDataHandler.AddData(dataByte)
-                self.dataAddedInSendData = True
                 return True
             elif allReceivedData[-6:] == bytearray([0x62, 0x75, 0x73, 0x79, 0x0d, 0x0a]):  # busy
                 LoraRadioDRF1268DS_RS.WiRocLogger.debug(
                     "LoraRadioDRF1268DS_RS::SendData() 2 Module returned busy")
                 for dataByte in allReceivedData[:-6]:
                     self.loraRadioDataHandler.AddData(dataByte)
-                self.dataAddedInSendData = True
                 return False
             else:
                 # could not make sens of data so let's ignore it
                 return False
 
     def GetRadioData(self):
-        if self.radioSerial.in_waiting == 0 and not self.dataAddedInSendData:
+        if self.radioSerial.in_waiting == 0 and len(self.loraRadioDataHandler.DataReceived) == 0:
             return None
-        LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::GetRadioData() data to fetch (dataAddedInSendData: " + str(self.dataAddedInSendData) + ")")
-        self.dataAddedInSendData = False
+        LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::GetRadioData() data to fetch")
         allReceivedData = bytearray()
         # Let's wait a little so that the full message is available to be read from serial.
         time.sleep(2 / 100)
@@ -515,6 +511,7 @@ class LoraRadioDRF1268DS_RS:
             bytesRead = self.radioSerial.read(1)
             allReceivedData.append(bytesRead[0])
             self.loraRadioDataHandler.AddData(bytesRead[0])
+
         LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::GetRadioData() data fetched: " + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
 
         msg = self.loraRadioDataHandler.GetMessage()
