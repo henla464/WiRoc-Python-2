@@ -3,6 +3,7 @@ from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 
+
 class LoraSIMessageToLoraAckTransform(object):
     @staticmethod
     def GetInputMessageType():
@@ -53,7 +54,7 @@ class LoraSIMessageToLoraAckTransform(object):
     def GetDeleteAfterSentChanged():
         return False
 
-    #payloadData is a bytearray
+    # payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch, subscriberAdapter):
         # This transform is only used to send ack message from the receiver

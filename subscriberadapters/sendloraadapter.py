@@ -138,7 +138,6 @@ class SendLoraAdapter(object):
         transforms.append("RepeaterSIMessageDoubleToLoraAckTransform")
         transforms.append("RepeaterSIMessageToLoraTransform")
         transforms.append("RepeaterSIMessageDoubleToLoraTransform")
-        #transforms.append("RepeaterStatusToLoraAckTransform")
         transforms.append("RepeaterStatusToLoraTransform")
         transforms.append("LoraSIMessageToLoraAckTransform")
         return transforms

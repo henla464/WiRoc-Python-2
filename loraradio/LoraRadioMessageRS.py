@@ -10,12 +10,19 @@ from settings.settings import SettingsClass
 
 
 class LoraRadioMessageRS(object):
+    MessageTypeBitMask = 0b00011111
+    RepeaterBitMask = 0b00100000
+    BatLowBitMask = 0b01000000
+    AckBitMask = 0b10000000
     # Six bits for message type
     MessageTypeSIPunch = 3
     MessageTypeStatus = 4
     MessageTypeLoraAck = 5
     MessageTypeSIPunchDouble = 6
     MessageLengths = [24, 16, 7, 14, 14, 7, 27]
+
+    # Positions within the message
+    H = 0
 
     def __init__(self):
         self.messageType = None
@@ -116,6 +123,22 @@ class LoraRadioMessageRS(object):
 
 
 class LoraRadioMessagePunchRS(LoraRadioMessageRS):
+    NoOfECCBytes = 4
+    # Positions within the message
+    CN0 = 1 # Control number - bit 0-7
+    SN3 = 2 # SI Number, highest byte
+    SN2 = 3
+    SN1 = 4
+    SN0 = 5
+    CN1Plus = 6 # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
+    TH = 7 # 12 hour timer, high byte, number of seconds
+    TL = 8  # 12 hour timer, high byte, number of seconds
+    TSS = 9 # sub second values 1/256 sec
+    ECC0 = 10 # Error correcting code
+    ECC1 = 11  # Error correcting code
+    ECC2 = 12  # Error correcting code
+    ECC3 = 13  # Error correcting code
+
     def __init__(self):
         super().__init__()
         self.messageType = LoraRadioMessageRS.MessageTypeSIPunch
@@ -217,6 +240,37 @@ class LoraRadioMessagePunchRS(LoraRadioMessageRS):
 
 
 class LoraRadioMessagePunchDoubleRS(LoraRadioMessageRS):
+    NoOfECCBytes = 8
+
+    # Positions within the message
+    CN0 = 1 # Control number - bit 0-7
+    SN3 = 2 # SI Number, highest byte
+    SN2 = 3
+    SN1 = 4
+    SN0 = 5
+    CN1Plus = 6 # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
+    TH = 7 # 12 hour timer, high byte, number of seconds
+    TL = 8  # 12 hour timer, high byte, number of seconds
+    TSS = 9 # sub second values 1/256 sec
+    # Second punch positions
+    CN0_2 = 10
+    SN3_2 = 11  # SI Number, highest byte
+    SN2_2 = 12
+    SN1_2 = 13
+    SN0_2 = 14
+    CN1Plus_2 = 15  # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
+    TH_2 = 16  # 12 hour timer, high byte, number of seconds
+    TL_2 = 17  # 12 hour timer, high byte, number of seconds
+    TSS_2 = 18  # sub second values 1/256 sec
+    ECC0 = 19 # Error correcting code
+    ECC1 = 20  # Error correcting code
+    ECC2 = 21  # Error correcting code
+    ECC3 = 22  # Error correcting code
+    ECC4 = 23  # Error correcting code
+    ECC5 = 24  # Error correcting code
+    ECC6 = 25  # Error correcting code
+    ECC7 = 26  # Error correcting code
+
     def __init__(self):
         super().__init__()
         self.messageType = LoraRadioMessageRS.MessageTypeSIPunchDouble
@@ -271,6 +325,14 @@ class LoraRadioMessagePunchDoubleRS(LoraRadioMessageRS):
 
 
 class LoraRadioMessageAckRS(LoraRadioMessageRS):
+    # Positions within the message
+    HASH0 = 1
+    HASH1 = 2
+    ECC0 = 3  # Error correcting code
+    ECC1 = 4  # Error correcting code
+    ECC2 = 5  # Error correcting code
+    ECC3 = 6  # Error correcting code
+
     def __init__(self):
         super().__init__()
         self.messageType = LoraRadioMessageRS.MessageTypeLoraAck
@@ -286,6 +348,21 @@ class LoraRadioMessageAckRS(LoraRadioMessageRS):
 
 
 class LoraRadioMessageStatusRS(LoraRadioMessageRS):
+    # Positions within the message
+    BAT = 1
+    CN0 = 2
+    RELAYPATHNO = 3
+    BT0 = 4
+    BT1 = 5
+    BT2 = 6
+    BT3 = 7
+    BT4 = 8
+    BT5 = 9
+    ECC0 = 10  # Error correcting code
+    ECC1 = 11  # Error correcting code
+    ECC2 = 12  # Error correcting code
+    ECC3 = 13  # Error correcting code
+
     def __init__(self):
         super().__init__()
         self.messageType = LoraRadioMessageRS.MessageTypeStatus

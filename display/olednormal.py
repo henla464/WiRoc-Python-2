@@ -8,6 +8,7 @@ from chipGPIO.hardwareAbstraction import HardwareAbstraction
 
 OledDisplayState = display.oleddisplaystate.OledDisplayState
 
+
 class OledNormal(OledDisplayState):
     def __init__(self):
         self.wiRocLogger = logging.getLogger('WiRoc.Display')
@@ -46,7 +47,6 @@ class OledNormal(OledDisplayState):
         self.OledDraw.rectangle((x, top, x + 20, top + 10), outline=255, fill=0)
         self.OledDraw.rectangle((x + 20, top + 3, x + 23, top + 7), outline=255, fill=0)
         # Fill charge percentage
-
         self.OledDraw.rectangle((x + 1, top + 1, x + width, top + 9), outline=255, fill=255)
 
     def DrawIsCharging(self):
@@ -78,32 +78,30 @@ class OledNormal(OledDisplayState):
             self.OledDraw.rectangle((41, 0, 60, 13), outline=0, fill=0)
             self.OledDraw.text((41, 1), loraRange, font=self.OledThinFont2, fill=255)
 
-
     def DrawOledWifi(self):
         percent = HardwareAbstraction.Instance.GetWifiSignalStrength()
 
         # None is returned for devices that doesn't support getting signal strength
-        if percent == None or percent == 0:
+        if percent is None or percent == 0:
             return None
         noOfBars = 0
-        if(percent > 75):
+        if percent > 75:
             noOfBars = 4
-        elif (percent > 55):
+        elif percent > 55:
             noOfBars = 3
-        elif (percent > 35):
+        elif percent > 35:
             noOfBars = 2
-        elif (percent > 15):
+        elif percent > 15:
             noOfBars = 1
 
-        if noOfBars == self.wifiNoOfBars or (noOfBars != self.wifiNoOfBars and self.wifiNoOfBarsPrevious == self.wifiNoOfBars):
+        if noOfBars == self.wifiNoOfBars or (self.wifiNoOfBarsPrevious == self.wifiNoOfBars and self.wifiNoOfBars != noOfBars):
             self.wifiNoOfBarsPrevious = self.wifiNoOfBars
             self.wifiNoOfBars = noOfBars
             return None
-            self.wiRocLogger.debug("OledNormal::DrawOledWifi imagechanged: old: " + str(self.wifiNoOfBars) +  " new: " + str(noOfBars))
+        self.wiRocLogger.debug("OledNormal::DrawOledWifi imagechanged: old: " + str(self.wifiNoOfBarsPrevious) +  " new: " + str(noOfBars))
         self.wifiNoOfBarsPrevious = self.wifiNoOfBars
         self.wifiNoOfBars = noOfBars
         self.imageChanged = True
-
 
         x = 72
         top = 2
@@ -112,13 +110,13 @@ class OledNormal(OledDisplayState):
         self.OledDraw.arc([(x + 3, top + 3), (x + 13, top + 13)], 210, 335, fill=255)
         self.OledDraw.ellipse((x + 7, top + 7, x + 9, top + 9), outline=255, fill=255)
 
-        if (noOfBars >= 1):
+        if noOfBars >= 1:
             self.OledDraw.line((x + 14, top + 9, x + 14, top + 8), fill=255)
-        if (noOfBars >= 2):
+        if noOfBars >= 2:
             self.OledDraw.line((x + 16, top + 9, x + 16, top + 5), fill=255)
-        if (noOfBars >= 3):
+        if noOfBars >= 3:
             self.OledDraw.line((x + 18, top + 9, x + 18, top + 2), fill=255)
-        if (noOfBars >= 4):
+        if noOfBars >= 4:
             self.OledDraw.line((x + 20, top + 9, x + 20, top + -1), fill=255)
 
     def Draw(self, channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
