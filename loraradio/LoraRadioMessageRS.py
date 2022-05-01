@@ -19,7 +19,9 @@ class LoraRadioMessageRS(object):
     MessageTypeStatus = 4
     MessageTypeLoraAck = 5
     MessageTypeSIPunchDouble = 6
-    MessageLengths = [24, 16, 7, 14, 14, 7, 27]
+    MessageTypeSIPunchRedCoS = 7
+    MessageTypeSIPunchDoubleReDCoS = 8
+    MessageLengths = [24, 16, 7, 14, 14, 7, 27, 15, 27]
 
     # Positions within the message
     H = 0
@@ -144,33 +146,33 @@ class LoraRadioMessagePunchRS(LoraRadioMessageRS):
         self.messageType = LoraRadioMessageRS.MessageTypeSIPunch
 
     def GetControlNumber(self):
-        return (self.payloadData[5] & 0x40) << 2 | self.payloadData[0]
+        return (self.payloadData[self.CN1Plus - 1] & 0x40) << 2 | self.payloadData[self.CN0 - 1]
 
     def GetSICardNoByteArray(self):
-        return self.payloadData[1:5]
+        return self.payloadData[self.SN3 - 1:self.SN0]
 
     def GetSICardNo(self):
         return Utils.DecodeCardNr(self.GetSICardNoByteArray())
 
     def GetFourWeekCounter(self):
-        return self.payloadData[5] & 0x30
+        return self.payloadData[self.CN1Plus - 1] & 0x30
 
     def GetDayOfWeek(self):
-        return self.payloadData[5] & 0x0E
+        return self.payloadData[self.CN1Plus - 1] & 0x0E
 
     def GetTwentyFourHour(self):
-        return self.payloadData[5] & 0x01
+        return self.payloadData[self.CN1Plus - 1] & 0x01
 
     def GetTwelveHourTimer(self):
-        return self.payloadData[6:8]
+        return self.payloadData[self.TH - 1:self.TL]
 
     def GetSubSecondRaw(self):
         if len(self.payloadData) > 8:
-            return self.payloadData[8]
+            return self.payloadData[self.TSS-1]
         return 0
 
     def GetSubSecondAsTenthOfSeconds(self):
-        return int(self.payloadData[8] // 25.6)
+        return int(self.payloadData[self.TSS-1] // 25.6)
 
     def GetTimeAsTenthOfSeconds(self):
         time = ((self.GetTwelveHourTimer()[0] << 8) + self.GetTwelveHourTimer()[
@@ -195,15 +197,12 @@ class LoraRadioMessagePunchRS(LoraRadioMessageRS):
     def GetTwelveHourTimerAsInt(self):
         return (self.GetTwelveHourTimer()[0] << 8) + self.GetTwelveHourTimer()[1]
 
-    def GetSICardNoRawByteArray(self):
-        return self.payloadData[1:5]
-
     def GetSIMessageByteArray(self):
         siMsg = SIMessage()
         siMsg.AddHeader(SIMessage.SIPunch)
         siMsg.AddByte((self.GetControlNumber() >> 8) & 0xFF)
         siMsg.AddByte(self.GetControlNumber() & 0xFF)
-        siCardNoByteArray = self.GetSICardNoRawByteArray()
+        siCardNoByteArray = self.GetSICardNoByteArray()
         siMsg.AddByte(siCardNoByteArray[0])
         siMsg.AddByte(siCardNoByteArray[1])
         siMsg.AddByte(siCardNoByteArray[2])
@@ -222,15 +221,15 @@ class LoraRadioMessagePunchRS(LoraRadioMessageRS):
 
     def SetSIMessageByteArray(self, siMessageByteArray):
         self.payloadData = bytearray([0, 0, 0, 0, 0, 0, 0, 0, 0])
-        self.payloadData[0] = siMessageByteArray[4]
-        self.payloadData[1] = siMessageByteArray[5]
-        self.payloadData[2] = siMessageByteArray[6]
-        self.payloadData[3] = siMessageByteArray[7]
-        self.payloadData[4] = siMessageByteArray[8]
-        self.payloadData[5] = siMessageByteArray[9] | ((siMessageByteArray[3] & 0x01) << 6)
-        self.payloadData[6] = siMessageByteArray[10]
-        self.payloadData[7] = siMessageByteArray[11]
-        self.payloadData[8] = siMessageByteArray[12]
+        self.payloadData[self.CN0-1] = siMessageByteArray[4]
+        self.payloadData[self.SN3-1] = siMessageByteArray[5]
+        self.payloadData[self.SN2-1] = siMessageByteArray[6]
+        self.payloadData[self.SN1-1] = siMessageByteArray[7]
+        self.payloadData[self.SN0-1] = siMessageByteArray[8]
+        self.payloadData[self.CN1Plus-1] = siMessageByteArray[9] | ((siMessageByteArray[3] & 0x01) << 6)
+        self.payloadData[self.TH-1] = siMessageByteArray[10]
+        self.payloadData[self.TL-1] = siMessageByteArray[11]
+        self.payloadData[self.TSS-1] = siMessageByteArray[12]
 
     def GetMessageCategory(self):
         return "DATA"
@@ -324,6 +323,251 @@ class LoraRadioMessagePunchDoubleRS(LoraRadioMessageRS):
         return "SIMessageDouble"
 
 
+class LoraRadioMessageReDCoSRS(LoraRadioMessageRS):
+    def __init__(self):
+        super().__init__()
+        self.crcData = bytearray()
+
+    def GenerateCRC(self):
+        # note: header exluded
+        crcMessageData = self.payloadData + self.rsCodeData
+        shake = hashlib.shake_128()
+        shake.update(crcMessageData)
+        theCRCHash = shake.digest(2)
+        self.crcData = bytearray(theCRCHash)
+
+    def AddCRC(self, crcData):
+        self.crcData = crcData
+
+
+class LoraRadioMessagePunchReDCoSRS(LoraRadioMessageReDCoSRS):
+
+    NoOfECCBytes = 4
+    NoOfCRCBytes = 2
+    # Positions within the message, after deinterleaving or before interleaving
+    CN0 = 1 # Control number - bit 0-7
+    SN3 = 2 # SI Number, highest byte
+    SN2 = 3
+    SN1 = 4
+    SN0 = 5
+    CN1Plus = 6 # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
+    TH = 7 # 12 hour timer, high byte, number of seconds
+    TL = 8  # 12 hour timer, high byte, number of seconds
+    ECC0 = 9 # Error correcting code
+    ECC1 = 10  # Error correcting code
+    ECC2 = 11  # Error correcting code
+    ECC3 = 12  # Error correcting code
+    CRC0 = 13 # CRC first byte
+    CRC1 = 14  # CRC second byte
+
+    InterleavingInAirOrder = [CRC1, SN2, super().H, SN1, SN0, CN0, TH, TL, SN3, ECC0, ECC1, CN1Plus, ECC2, ECC3, CRC0]
+
+    def __init__(self):
+        super().__init__()
+        self.messageType = LoraRadioMessageRS.MessageTypeSIPunchRedCoS
+
+    def InterleaveToAirOrder(self, messageData):
+        interleaved = bytearray(len(messageData))
+        for i in range(len(messageData)):
+            interleaved[i] = messageData[self.InterleavingInAirOrder[i]]
+        return interleaved
+
+    def DeInterleaveFromAirOrder(self, interleavedMessageData):
+        messageData = bytearray(len(interleavedMessageData))
+        for i in range(len(interleavedMessageData)):
+            messageData[self.InterleavingInAirOrder[i]] = interleavedMessageData[i]
+        return messageData
+
+    def GetControlNumber(self):
+        return (self.payloadData[self.CN1Plus-1] & 0x40) << 2 | self.payloadData[self.CN0-1]
+
+    def GetSICardNoByteArray(self):
+        return self.payloadData[self.SN3-1:self.SN0]
+
+    def GetSICardNo(self):
+        return Utils.DecodeCardNr(self.GetSICardNoByteArray())
+
+    def GetFourWeekCounter(self):
+        return self.payloadData[self.CN1Plus-1] & 0x30
+
+    def GetDayOfWeek(self):
+        return self.payloadData[self.CN1Plus-1] & 0x0E
+
+    def GetTwentyFourHour(self):
+        return self.payloadData[self.CN1Plus-1] & 0x01
+
+    def GetTwelveHourTimer(self):
+        return self.payloadData[self.TH-1:self.TL]
+
+    def GetSubSecondRaw(self):
+        return 0
+
+    def GetSubSecondAsTenthOfSeconds(self):
+        return 0
+
+    def GetTimeAsTenthOfSeconds(self):
+        time = ((self.GetTwelveHourTimer()[0] << 8) + self.GetTwelveHourTimer()[
+            1]) * 10 + self.GetSubSecondAsTenthOfSeconds()
+        if self.GetTwentyFourHour() == 1:
+            time += 36000 * 12
+        return time
+
+    def GetHour(self):
+        return int(self.GetTimeAsTenthOfSeconds() // 36000)
+
+    def GetMinute(self):
+        tenthOfSecs = self.GetTimeAsTenthOfSeconds()
+        numberOfMinutesInTenthOfSecs = (tenthOfSecs - self.GetHour() * 36000)
+        return numberOfMinutesInTenthOfSecs // 600
+
+    def GetSeconds(self):
+        tenthOfSecs = self.GetTimeAsTenthOfSeconds()
+        numberOfSecondsInTenthOfSecs = (tenthOfSecs - self.GetHour() * 36000 - self.GetMinute() * 600)
+        return numberOfSecondsInTenthOfSecs // 10
+
+    def GetTwelveHourTimerAsInt(self):
+        return (self.GetTwelveHourTimer()[0] << 8) + self.GetTwelveHourTimer()[1]
+
+    def GetSIMessageByteArray(self):
+        siMsg = SIMessage()
+        siMsg.AddHeader(SIMessage.SIPunch)
+        siMsg.AddByte((self.GetControlNumber() >> 8) & 0xFF)
+        siMsg.AddByte(self.GetControlNumber() & 0xFF)
+        siCardNoByteArray = self.GetSICardNoByteArray()
+        siMsg.AddByte(siCardNoByteArray[0])
+        siMsg.AddByte(siCardNoByteArray[1])
+        siMsg.AddByte(siCardNoByteArray[2])
+        siMsg.AddByte(siCardNoByteArray[3])
+        twentyFourHour = self.GetFourWeekCounter() | self.GetDayOfWeek() | self.GetTwentyFourHour()
+        siMsg.AddByte(twentyFourHour)
+        twelveHourTimer = self.GetTwelveHourTimer()
+        siMsg.AddByte(twelveHourTimer[0])
+        siMsg.AddByte(twelveHourTimer[1])
+        siMsg.AddByte(self.GetSubSecondRaw())
+        siMsg.AddByte(0)
+        siMsg.AddByte(0)
+        siMsg.AddByte(0)
+        siMsg.AddFooter()
+        return siMsg.GetByteArray()
+
+    def SetSIMessageByteArray(self, siMessageByteArray):
+        self.payloadData = bytearray([0, 0, 0, 0, 0, 0, 0, 0, 0])
+        self.payloadData[self.CN0-1] = siMessageByteArray[4]
+        self.payloadData[self.SN3-1] = siMessageByteArray[5]
+        self.payloadData[self.SN2-1] = siMessageByteArray[6]
+        self.payloadData[self.SN1-1] = siMessageByteArray[7]
+        self.payloadData[self.SN0-1] = siMessageByteArray[8]
+        self.payloadData[self.CN1Plus-1] = siMessageByteArray[9] | ((siMessageByteArray[3] & 0x01) << 6)
+        self.payloadData[self.TH-1] = siMessageByteArray[10]
+        self.payloadData[self.TL-1] = siMessageByteArray[11]
+
+    def GetMessageCategory(self):
+        return "DATA"
+
+    def GetMessageSubType(self):
+        return "SIMessage"
+
+
+class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
+    NoOfECCBytes = 8
+    NoOfCRCBytes = 2
+
+    # Positions within the message
+    CN0 = 1 # Control number - bit 0-7
+    SN3 = 2 # SI Number, highest byte
+    SN2 = 3
+    SN1 = 4
+    SN0 = 5
+    CN1Plus = 6 # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
+    TH = 7 # 12 hour timer, high byte, number of seconds
+    TL = 8  # 12 hour timer, high byte, number of seconds
+    # Second punch positions
+    CN0_2 = 9
+    SN3_2 = 10  # SI Number, highest byte
+    SN2_2 = 11
+    SN1_2 = 12
+    SN0_2 = 13
+    CN1Plus_2 = 14  # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
+    TH_2 = 15  # 12 hour timer, high byte, number of seconds
+    TL_2 = 16  # 12 hour timer, high byte, number of seconds
+    ECC0 = 17 # Error correcting code
+    ECC1 = 18  # Error correcting code
+    ECC2 = 19  # Error correcting code
+    ECC3 = 20  # Error correcting code
+    ECC4 = 21  # Error correcting code
+    ECC5 = 22  # Error correcting code
+    ECC6 = 23  # Error correcting code
+    ECC7 = 24  # Error correcting code
+    CRC0 = 25  # CRC0 byte
+    CRC1 = 26  # CRC1 byte
+
+    InterleavingInAirOrder = [CRC0, SN2, super().H, SN1, SN0, TH, CN0, TL, SN2_2, SN1_2, SN3, SN0_2, TH_2, TL_2, CN1Plus, ECC0, ECC1, ECC2, CN0_2, ECC3, ECC4, ECC5, SN3_2, ECC6, ECC7, CN1Plus_2, CRC1]
+
+    def __init__(self):
+        super().__init__()
+        self.messageType = LoraRadioMessageRS.MessageTypeSIPunchDouble
+
+    def InterleaveToAirOrder(self, messageData):
+        interleaved = bytearray(len(messageData))
+        for i in range(len(messageData)):
+            interleaved[i] = messageData[self.InterleavingInAirOrder[i]]
+        return interleaved
+
+    def DeInterleaveFromAirOrder(self, interleavedMessageData):
+        messageData = bytearray(len(interleavedMessageData))
+        for i in range(len(interleavedMessageData)):
+            messageData[self.InterleavingInAirOrder[i]] = interleavedMessageData[i]
+        return messageData
+
+    def SetSIMessageByteArrays(self, firstSIMessageByteArray, secondSIMessageByteArray):
+        msg = LoraRadioMessagePunchRS()
+        msg.SetSIMessageByteArray(firstSIMessageByteArray)
+        firstArray = msg.GetPayloadByteArray()
+        msg.SetSIMessageByteArray(secondSIMessageByteArray)
+        secondArray = msg.GetPayloadByteArray()
+        self.payloadData = firstArray + secondArray
+
+    def GetSIMessageByteTuple(self):
+        firstArray = self.payloadData[0:9]
+        secondArray = self.payloadData[9:18]
+        loraPunchMessage1 = LoraRadioMessagePunchRS()
+        header = 0x00
+        if self.ackRequest:
+            header = header | 0x80
+        if self.batteryLow:
+            header = header | 0x40
+        if self.repeater:
+            header = header | 0x20
+        if self.messageType:
+            header = header | self.messageType
+        loraPunchMessage1.SetHeader(bytearray([header]))
+        loraPunchMessage1.AddPayload(firstArray)
+        # loraPunchMessage.AddRSCode()
+        if len(self.rssiByteArray) > 0:
+            loraPunchMessage1.SetRSSIByte(self.rssiByteArray[0])
+        firstSIMessageByteArray = loraPunchMessage1.GetSIMessageByteArray()
+
+        loraPunchMessage2 = LoraRadioMessagePunchRS()
+        loraPunchMessage2.SetHeader(bytearray([header]))
+        loraPunchMessage2.AddPayload(secondArray)
+        # loraPunchMessage.AddRSCode()
+        if len(self.rssiByteArray) > 0:
+            loraPunchMessage2.SetRSSIByte(self.rssiByteArray[0])
+        secondSIMessageByteArray = loraPunchMessage2.GetSIMessageByteArray()
+        return firstSIMessageByteArray, secondSIMessageByteArray
+
+    def GenerateRSCode(self):
+        rsMessageData = self.GetHeaderData() + self.payloadData
+        rsCodeOnly = RSCoderLora.encodeLong(rsMessageData)
+        self.rsCodeData = rsCodeOnly
+
+    def GetMessageCategory(self):
+        return "DATA"
+
+    def GetMessageSubType(self):
+        return "SIMessageDouble"
+
+
 class LoraRadioMessageAckRS(LoraRadioMessageRS):
     # Positions within the message
     HASH0 = 1
@@ -348,6 +592,7 @@ class LoraRadioMessageAckRS(LoraRadioMessageRS):
 
 
 class LoraRadioMessageStatusRS(LoraRadioMessageRS):
+    NoOfECCBytes = 4
     # Positions within the message
     BAT = 1
     CN0 = 2

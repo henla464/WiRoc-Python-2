@@ -14,7 +14,7 @@ from collections.abc import Iterable
 
 class LoraRadioDataHandler(object):
     WiRocLogger = logging.getLogger('WiRoc')
-    MessageTypesExpected = [3, 4, 5, 6]
+    MessageTypesExpected = [LoraRadioMessageRS.MessageTypeSIPunch, LoraRadioMessageRS.MessageTypeStatus, LoraRadioMessageRS.MessageTypeLoraAck, LoraRadioMessageRS.MessageTypeSIPunchDouble]
     RSSIByteCount = 0
 
     def __init__(self, rssiByteExpected):

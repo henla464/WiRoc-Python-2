@@ -4,6 +4,7 @@ from datamodel.db_helper import DatabaseHelper
 from datamodel.datamodel import SIMessage
 import logging
 
+
 class SendToBlenoAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
     Instances = []
