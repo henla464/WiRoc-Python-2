@@ -115,13 +115,16 @@ class LoraRadioMessageRS(object):
     def AddPayload(self, payloadArray):
         self.payloadData.extend(payloadArray)
 
-    def GenerateRSCode(self):
+    def GenerateAndAddRSCode(self):
         rsMessageData = self.GetHeaderData() + self.payloadData
         rsCodeOnly = RSCoderLora.encode(rsMessageData)
         self.rsCodeData = rsCodeOnly
 
     def AddRSCode(self, rsCode):
         self.rsCodeData = rsCode
+
+    def GetRSCode(self):
+        return self.rsCodeData
 
 
 class LoraRadioMessagePunchRS(LoraRadioMessageRS):
@@ -311,7 +314,7 @@ class LoraRadioMessagePunchDoubleRS(LoraRadioMessageRS):
         secondSIMessageByteArray = loraPunchMessage2.GetSIMessageByteArray()
         return firstSIMessageByteArray, secondSIMessageByteArray
 
-    def GenerateRSCode(self):
+    def GenerateAndAddRSCode(self):
         rsMessageData = self.GetHeaderData() + self.payloadData
         rsCodeOnly = RSCoderLora.encodeLong(rsMessageData)
         self.rsCodeData = rsCodeOnly
@@ -328,8 +331,16 @@ class LoraRadioMessageReDCoSRS(LoraRadioMessageRS):
         super().__init__()
         self.crcData = bytearray()
 
-    def GenerateCRC(self):
-        # note: header exluded
+    def GenerateAndGetCRC(self):
+        # note: header excluded
+        crcMessageData = self.payloadData + self.rsCodeData
+        shake = hashlib.shake_128()
+        shake.update(crcMessageData)
+        theCRCHash = shake.digest(2)
+        return bytearray(theCRCHash)
+
+    def GenerateAndAddCRC(self):
+        # note: header excluded
         crcMessageData = self.payloadData + self.rsCodeData
         shake = hashlib.shake_128()
         shake.update(crcMessageData)
@@ -339,28 +350,34 @@ class LoraRadioMessageReDCoSRS(LoraRadioMessageRS):
     def AddCRC(self, crcData):
         self.crcData = crcData
 
+    def GetCRC(self):
+        return self.crcData
+
+    def GetByteArray(self):
+        return self.GetHeaderData() + self.GetPayloadByteArray() + self.GetRSCode() + self.GetCRC()
+
 
 class LoraRadioMessagePunchReDCoSRS(LoraRadioMessageReDCoSRS):
 
     NoOfECCBytes = 4
     NoOfCRCBytes = 2
     # Positions within the message, after deinterleaving or before interleaving
-    CN0 = 1 # Control number - bit 0-7
-    SN3 = 2 # SI Number, highest byte
+    CN0 = 1  # Control number - bit 0-7
+    SN3 = 2  # SI Number, highest byte
     SN2 = 3
     SN1 = 4
     SN0 = 5
     CN1Plus = 6 # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
-    TH = 7 # 12 hour timer, high byte, number of seconds
+    TH = 7  # 12 hour timer, high byte, number of seconds
     TL = 8  # 12 hour timer, high byte, number of seconds
-    ECC0 = 9 # Error correcting code
+    ECC0 = 9  # Error correcting code
     ECC1 = 10  # Error correcting code
     ECC2 = 11  # Error correcting code
     ECC3 = 12  # Error correcting code
-    CRC0 = 13 # CRC first byte
+    CRC0 = 13  # CRC first byte
     CRC1 = 14  # CRC second byte
 
-    InterleavingInAirOrder = [CRC1, SN2, super().H, SN1, SN0, CN0, TH, TL, SN3, ECC0, ECC1, CN1Plus, ECC2, ECC3, CRC0]
+    InterleavingInAirOrder = [CRC1, SN2, LoraRadioMessageReDCoSRS.H, SN1, SN0, CN0, TH, TL, SN3, ECC0, ECC1, CN1Plus, ECC2, ECC3, CRC0]
 
     def __init__(self):
         super().__init__()
@@ -501,7 +518,7 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
     CRC0 = 25  # CRC0 byte
     CRC1 = 26  # CRC1 byte
 
-    InterleavingInAirOrder = [CRC0, SN2, super().H, SN1, SN0, TH, CN0, TL, SN2_2, SN1_2, SN3, SN0_2, TH_2, TL_2, CN1Plus, ECC0, ECC1, ECC2, CN0_2, ECC3, ECC4, ECC5, SN3_2, ECC6, ECC7, CN1Plus_2, CRC1]
+    InterleavingInAirOrder = [CRC0, SN2, LoraRadioMessageReDCoSRS.H, SN1, SN0, TH, CN0, TL, SN2_2, SN1_2, SN3, SN0_2, TH_2, TL_2, CN1Plus, ECC0, ECC1, ECC2, CN0_2, ECC3, ECC4, ECC5, SN3_2, ECC6, ECC7, CN1Plus_2, CRC1]
 
     def __init__(self):
         super().__init__()
@@ -518,6 +535,18 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
         for i in range(len(interleavedMessageData)):
             messageData[self.InterleavingInAirOrder[i]] = interleavedMessageData[i]
         return messageData
+
+    def GetControlNumber(self):
+        return (self.payloadData[self.CN1Plus - 1] & 0x40) << 2 | self.payloadData[self.CN0 - 1]
+
+    def GetControlNumber_2(self):
+        return (self.payloadData[self.CN1Plus_2 - 1] & 0x40) << 2 | self.payloadData[self.CN0_2 - 1]
+
+    def GetTwelveHourTimer(self):
+        return self.payloadData[self.TH-1:self.TL]
+
+    def GetTwelveHourTimer_2(self):
+        return self.payloadData[self.TH_2-1:self.TL_2]
 
     def SetSIMessageByteArrays(self, firstSIMessageByteArray, secondSIMessageByteArray):
         msg = LoraRadioMessagePunchRS()
@@ -556,7 +585,7 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
         secondSIMessageByteArray = loraPunchMessage2.GetSIMessageByteArray()
         return firstSIMessageByteArray, secondSIMessageByteArray
 
-    def GenerateRSCode(self):
+    def GenerateAndAddRSCode(self):
         rsMessageData = self.GetHeaderData() + self.payloadData
         rsCodeOnly = RSCoderLora.encodeLong(rsMessageData)
         self.rsCodeData = rsCodeOnly
@@ -623,7 +652,7 @@ class LoraRadioMessageStatusRS(LoraRadioMessageRS):
                                             (btAddressAsInt & 0x00000000FF00) >> 8,
                                             (btAddressAsInt & 0x0000000000FF),
                                             ]))
-        self.GenerateRSCode()
+        self.GenerateAndAddRSCode()
 
     def GetBatteryPercent(self):
         return self.payloadData[0]

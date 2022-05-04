@@ -15,7 +15,7 @@ class LoraRadioMessageCreator(object):
         loraAckMessage.SetBatteryLow(False)
         loraAckMessage.SetRepeater(False)
         loraAckMessage.AddPayload(theHash)
-        loraAckMessage.GenerateRSCode()
+        loraAckMessage.GenerateAndAddRSCode()
         return loraAckMessage
 
     @staticmethod
@@ -34,7 +34,7 @@ class LoraRadioMessageCreator(object):
         loraPunchMessage.SetAckRequested(ackReq)
         if payload is not None:
             loraPunchMessage.AddPayload(payload)
-            loraPunchMessage.GenerateRSCode()
+            loraPunchMessage.GenerateAndAddRSCode()
         return loraPunchMessage
 
     @staticmethod
@@ -57,7 +57,7 @@ class LoraRadioMessageCreator(object):
         loraPunchDoubleMessage.SetAckRequested(ackReq)
         if payload is not None:
             loraPunchDoubleMessage.AddPayload(payload)
-            loraPunchDoubleMessage.GenerateRSCode()
+            loraPunchDoubleMessage.GenerateAndAddRSCode()
         return loraPunchDoubleMessage
 
     @staticmethod
@@ -76,8 +76,8 @@ class LoraRadioMessageCreator(object):
         loraPunchMessage.SetAckRequested(ackReq)
         if payload is not None:
             loraPunchMessage.AddPayload(payload)
-            loraPunchMessage.GenerateRSCode()
-            loraPunchMessage.GenerateCRC()
+            loraPunchMessage.GenerateAndAddRSCode()
+            loraPunchMessage.GenerateAndAddCRC()
         return loraPunchMessage
 
     @staticmethod
@@ -101,8 +101,8 @@ class LoraRadioMessageCreator(object):
         loraPunchDoubleMessage.SetAckRequested(ackReq)
         if payload is not None:
             loraPunchDoubleMessage.AddPayload(payload)
-            loraPunchDoubleMessage.GenerateRSCode()
-            loraPunchDoubleMessage.GenerateCRC()
+            loraPunchDoubleMessage.GenerateAndAddRSCode()
+            loraPunchDoubleMessage.GenerateAndAddCRC()
 
         return loraPunchDoubleMessage
 
@@ -122,7 +122,7 @@ class LoraRadioMessageCreator(object):
         loraStatusMessage.SetBatteryLow(batteryLow)
         loraStatusMessage.SetAckRequested(False)
         loraStatusMessage.SetRepeater(False)
-        loraStatusMessage.GenerateRSCode()
+        loraStatusMessage.GenerateAndAddRSCode()
         return loraStatusMessage
 
     @staticmethod

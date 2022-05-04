@@ -64,5 +64,5 @@ class RepeaterSIMessageToLoraTransform(object):
         loraPunchMsg.SetAckRequested(ackReq)
         loraPunchMsg.SetBatteryLow(batteryLow)
         loraPunchMsg.SetRepeater(False)
-        loraPunchMsg.GenerateRSCode()
+        loraPunchMsg.GenerateAndAddRSCode()
         return {"Data": (loraPunchMsg.GetByteArray(),), "MessageID": loraPunchMsg.GetHash()}

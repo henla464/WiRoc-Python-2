@@ -60,5 +60,5 @@ class RepeaterStatusToLoraTransform(object):
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
         loraStatusMsg.SetRepeater(False)
-        loraStatusMsg.GenerateRSCode()
+        loraStatusMsg.GenerateAndAddRSCode()
         return {"Data": (loraStatusMsg.GetByteArray(),), "MessageID": loraStatusMsg.GetHash()}

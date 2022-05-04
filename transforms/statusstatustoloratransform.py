@@ -58,5 +58,5 @@ class StatusStatusToLoraTransform(object):
         if SettingsClass.GetLoraMode() == "SENDER":
             reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
         loraStatusMsg.SetRepeater(reqRepeater)
-        loraStatusMsg.GenerateRSCode()
+        loraStatusMsg.GenerateAndAddRSCode()
         return {"Data": (loraStatusMsg.GetByteArray(),), "MessageID": loraStatusMsg.GetHash()}

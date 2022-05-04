@@ -1,13 +1,11 @@
 __author__ = 'henla464'
 
-#import unireedsolomon as rs
 from reedsolo import RSCodec, ReedSolomonError
 
 
 class RSCoderLora(object):
-    #coder = rs.RSCoder(24, 20)
-    coder = RSCodec(4, nsize=63)
-    coderLong = RSCodec(8, nsize=63)
+    coder = RSCodec(4, nsize=31)
+    coderLong = RSCodec(8, nsize=31)
 
     @staticmethod
     def encode(messageData):
