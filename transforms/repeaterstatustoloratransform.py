@@ -5,6 +5,7 @@ from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from settings.settings import SettingsClass
 import logging
 
+
 class RepeaterStatusToLoraTransform(object):
     DeleteAfterSent = False
     WiRocLogger = logging.getLogger('WiRoc.Output')

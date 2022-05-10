@@ -82,7 +82,7 @@ class LoraRadioMessageCreator(object):
 
     @staticmethod
     def GetPunchReDCoSMessageByFullMessageData(fullMessageDataDeinterleaved, rssiByte=None):
-        if len(fullMessageDataDeinterleaved) < LoraRadioMessagePunchRS.MessageLengths[LoraRadioMessagePunchRS.MessageTypeSIPunchRedCoS]:
+        if len(fullMessageDataDeinterleaved) < LoraRadioMessagePunchRS.MessageLengths[LoraRadioMessagePunchRS.MessageTypeSIPunchReDCoS]:
             raise Exception('Message data too short for a LoraRadioMessagePunchRedCoSRS message')
         loraPunchMessage = LoraRadioMessagePunchReDCoSRS()
         loraPunchMessage.SetHeader(fullMessageDataDeinterleaved[0:1])

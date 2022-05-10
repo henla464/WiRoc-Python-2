@@ -19,7 +19,7 @@ class LoraRadioMessageRS(object):
     MessageTypeStatus = 4
     MessageTypeLoraAck = 5
     MessageTypeSIPunchDouble = 6
-    MessageTypeSIPunchRedCoS = 7
+    MessageTypeSIPunchReDCoS = 7
     MessageTypeSIPunchDoubleReDCoS = 8
     MessageLengths = [24, 16, 7, 14, 14, 7, 27, 15, 27]
 
@@ -377,11 +377,11 @@ class LoraRadioMessagePunchReDCoSRS(LoraRadioMessageReDCoSRS):
     CRC0 = 13  # CRC first byte
     CRC1 = 14  # CRC second byte
 
-    InterleavingInAirOrder = [CRC1, SN2, LoraRadioMessageReDCoSRS.H, SN1, SN0, CN0, TH, TL, SN3, ECC0, ECC1, CN1Plus, ECC2, ECC3, CRC0]
+    InterleavingInAirOrder = [LoraRadioMessageReDCoSRS.H, CRC1, SN2, SN1, CN0, SN0, TH, TL, SN3, ECC0, ECC1, CN1Plus, ECC2, ECC3, CRC0]
 
     def __init__(self):
         super().__init__()
-        self.messageType = LoraRadioMessageRS.MessageTypeSIPunchRedCoS
+        self.messageType = LoraRadioMessageRS.MessageTypeSIPunchReDCoS
 
     def InterleaveToAirOrder(self, messageData):
         interleaved = bytearray(len(messageData))
@@ -518,11 +518,11 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
     CRC0 = 25  # CRC0 byte
     CRC1 = 26  # CRC1 byte
 
-    InterleavingInAirOrder = [CRC0, SN2, LoraRadioMessageReDCoSRS.H, SN1, SN0, TH, CN0, TL, SN2_2, SN1_2, SN3, SN0_2, TH_2, TL_2, CN1Plus, ECC0, ECC1, ECC2, CN0_2, ECC3, ECC4, ECC5, SN3_2, ECC6, ECC7, CN1Plus_2, CRC1]
+    InterleavingInAirOrder = [LoraRadioMessageReDCoSRS.H, CRC0, SN2, SN1, SN0, CN0, TH, TL, SN2_2, SN1_2, SN3, SN0_2, TH_2, TL_2, CN1Plus, ECC0, ECC1, ECC2, CN0_2, ECC3, ECC4, ECC5, SN3_2, ECC6, ECC7, CN1Plus_2, CRC1]
 
     def __init__(self):
         super().__init__()
-        self.messageType = LoraRadioMessageRS.MessageTypeSIPunchDouble
+        self.messageType = LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS
 
     def InterleaveToAirOrder(self, messageData):
         interleaved = bytearray(len(messageData))
