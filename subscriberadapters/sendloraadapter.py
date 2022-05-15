@@ -192,7 +192,8 @@ class SendLoraAdapter(object):
         self.blockSendingForSeconds = 0
 
     def BlockSendingToLetRepeaterSendAndReceiveAck(self):
-        timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(23) + SettingsClass.GetLoraMessageTimeSendingTimeS(10) + 0.35  # message 23 + ack 10
+        timeS = LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS) + \
+                LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck) + 0.35
         self.blockSendingForSeconds = timeS
         self.blockSendingFromThisDate = datetime.now()
 
@@ -223,9 +224,9 @@ class SendLoraAdapter(object):
 
     @staticmethod
     def GetDelayAfterMessageSent():
-        timeS = SettingsClass.GetLoraMessageTimeSendingTimeS(23)+0.05 # message + one loop
+        timeS = LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS) + 0.05 # message + one loop
         if SettingsClass.GetAcknowledgementRequested():
-            timeS+= SettingsClass.GetLoraMessageTimeSendingTimeS(10)+0.15 # reply ack + 3 loop
+            timeS+= LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck) + 0.15 # reply ack + 3 loop
         return timeS
 
     def GetRetryDelay(self, tryNo):
