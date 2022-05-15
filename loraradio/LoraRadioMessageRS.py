@@ -526,16 +526,18 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
         super().__init__()
         self.messageType = LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS
 
-    def InterleaveToAirOrder(self, messageData):
+    @staticmethod
+    def InterleaveToAirOrder(messageData):
         interleaved = bytearray(len(messageData))
         for i in range(len(messageData)):
-            interleaved[i] = messageData[self.InterleavingInAirOrder[i]]
+            interleaved[i] = messageData[LoraRadioMessagePunchDoubleReDCoSRS.InterleavingInAirOrder[i]]
         return interleaved
 
-    def DeInterleaveFromAirOrder(self, interleavedMessageData):
+    @staticmethod
+    def DeInterleaveFromAirOrder(interleavedMessageData):
         messageData = bytearray(len(interleavedMessageData))
         for i in range(len(interleavedMessageData)):
-            messageData[self.InterleavingInAirOrder[i]] = interleavedMessageData[i]
+            messageData[LoraRadioMessagePunchDoubleReDCoSRS.InterleavingInAirOrder[i]] = interleavedMessageData[i]
         return messageData
 
     def GetControlNumber(self):

@@ -1,7 +1,8 @@
 from battery import Battery
 from datamodel.datamodel import SIMessage
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
-from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
+from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessagePunchReDCoSRS, \
+    LoraRadioMessagePunchDoubleReDCoSRS
 from settings.settings import SettingsClass
 import logging
 
@@ -60,15 +61,19 @@ class SISIMessageToLoraTransform(object):
             reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
             batteryLow = Battery.GetIsBatteryLow()
             if len(msgSubBatch.MessageSubscriptionBatchItems) == 1:
-                loraPunchMsg = LoraRadioMessageCreator.GetPunchMessage(batteryLow, ackReq, None)
+                loraPunchMsg = LoraRadioMessageCreator.GetPunchReDCoSMessage(batteryLow, ackReq, None)
                 loraPunchMsg.SetSIMessageByteArray(payloadData)
                 loraPunchMsg.SetRepeater(reqRepeater)
                 loraPunchMsg.GenerateAndAddRSCode()
-                return {"Data": (loraPunchMsg.GetByteArray(),), "MessageID": loraPunchMsg.GetHash()}
+                interleavedMessageData = LoraRadioMessagePunchReDCoSRS.InterleaveToAirOrder(
+                    loraPunchMsg.GetByteArray())
+                return {"Data": (interleavedMessageData,), "MessageID": loraPunchMsg.GetHash()}
             elif len(msgSubBatch.MessageSubscriptionBatchItems) == 2:
-                loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleMessage(batteryLow, ackReq, None)
+                loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(batteryLow, ackReq, None)
                 loraPunchDoubleMsg.SetSIMessageByteArrays(payloadData,
                                                           msgSubBatch.MessageSubscriptionBatchItems[1].MessageData)
                 loraPunchDoubleMsg.SetRepeater(reqRepeater)
                 loraPunchDoubleMsg.GenerateAndAddRSCode()
-                return {"Data": (loraPunchDoubleMsg.GetByteArray(),), "MessageID": loraPunchDoubleMsg.GetHash()}
+                interleavedMessageData = LoraRadioMessagePunchDoubleReDCoSRS.InterleaveToAirOrder(
+                    loraPunchDoubleMsg.GetByteArray())
+                return {"Data": (interleavedMessageData,), "MessageID": loraPunchDoubleMsg.GetHash()}
