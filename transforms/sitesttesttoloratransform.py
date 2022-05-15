@@ -61,7 +61,7 @@ class SITestTestToLoraTransform(object):
             reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
             batteryLow = Battery.GetIsBatteryLow()
             if len(msgSubBatch.MessageSubscriptionBatchItems) == 1:
-                loraPunchMsg = LoraRadioMessageCreator.GetPunchMessage(batteryLow, ackReq, None)
+                loraPunchMsg = LoraRadioMessageCreator.GetPunchReDCoSMessage(batteryLow, ackReq, None)
                 loraPunchMsg.SetSIMessageByteArray(payloadData)
                 loraPunchMsg.SetRepeater(reqRepeater)
                 loraPunchMsg.GenerateAndAddRSCode()
@@ -69,7 +69,7 @@ class SITestTestToLoraTransform(object):
                     loraPunchMsg.GetByteArray())
                 return {"Data": (interleavedMessageData,), "MessageID": loraPunchMsg.GetHash()}
             elif len(msgSubBatch.MessageSubscriptionBatchItems) == 2:
-                loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleMessage(batteryLow, ackReq, None)
+                loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(batteryLow, ackReq, None)
                 loraPunchDoubleMsg.SetSIMessageByteArrays(payloadData, msgSubBatch.MessageSubscriptionBatchItems[1].MessageData)
                 loraPunchDoubleMsg.SetRepeater(reqRepeater)
                 loraPunchDoubleMsg.GenerateAndAddRSCode()
