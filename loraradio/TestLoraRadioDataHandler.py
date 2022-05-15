@@ -917,7 +917,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
             return decode
 
-        print(erasuresCombinationList[0:10])
+        print("length of erasurecombinationlist: " + str(len(erasuresCombinationList)))
 
         for startMessageDataComboToTry in alts:
             theDecodeFunction = createDecode(startMessageDataComboToTry[0:-2])
@@ -940,8 +940,6 @@ class TestLoraRadioDataHandler(unittest.TestCase):
                     theCRCHash = shake.digest(2)
                     if theCRCHash in crcDictionary:
                         crcDictionary[theCRCHash] += 1
-                        if crcDictionary[theCRCHash] > 3:
-                            print(">3")
                     else:
                         crcDictionary[theCRCHash] = 1
                     if theCRCHash == msg4Corrupted.GetByteArray()[-2:]:

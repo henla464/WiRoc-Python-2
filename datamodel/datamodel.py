@@ -450,6 +450,33 @@ class BluetoothSerialPortData(object):
         self.Status = "NotConnected"
 
 
+class ReDCosDecodeData(object):
+    columns = [("OrigMessageData", bytearray),  ("SinglePunchOrDoublePunch", str), ("TimeAdded", datetime)]
+
+    def __init__(self):
+        self.id = None
+        self.OrigMessageData = None
+        self.SingleOrDoublePunch = "SinglePunch"
+        self.TimeAdded = None
+
+class ReDCosMessageAlternativesData(object):
+    columns = [("MessageData", bytearray),  ("ReDCosDecodeID", int)]
+
+    def __init__(self):
+        self.id = None
+        self.MessageData = None
+        self.ReDCosDecodeID = None
+        self.TimeAdded = None
+
+class ReDCosErasureCombinationsData(object):
+    columns = [("ErasureCombination", str),  ("ReDCosDecodeID", int)]
+
+    def __init__(self):
+        self.id = None
+        self.ErasureCombination = None
+        self.ReDCosDecodeID = None
+
+
 class SIMessage(object):
     # 0x02 is used for STX
     # 0x03 is used for ETX
