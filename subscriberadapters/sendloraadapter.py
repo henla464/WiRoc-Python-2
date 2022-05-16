@@ -312,8 +312,8 @@ class SendLoraAdapter(object):
             headerMessageType = LoraRadioDataHandler.GetHeaderMessageType(data)
             if headerMessageType != LoraRadioMessageRS.MessageTypeLoraAck:
                 SettingsClass.SetTimeOfLastMessageSentToLora()
-            if headerMessageType == LoraRadioMessageRS.MessageTypeSIPunch or \
-                    headerMessageType == LoraRadioMessageRS.MessageTypeSIPunchDouble:
+            if headerMessageType == LoraRadioMessageRS.MessageTypeSIPunchReDCoS or \
+                    headerMessageType == LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS:
                 SettingsClass.SetMessageIDOfLastLoraMessageSent(settingsDictionary["MessageID"])
 
             delayS = settingsDictionary["DelayAfterMessageSent"]
