@@ -65,6 +65,7 @@ class SITestTestToLoraTransform(object):
                 loraPunchMsg.SetSIMessageByteArray(payloadData)
                 loraPunchMsg.SetRepeater(reqRepeater)
                 loraPunchMsg.GenerateAndAddRSCode()
+                loraPunchMsg.GenerateAndAddCRC()
                 interleavedMessageData = LoraRadioMessagePunchReDCoSRS.InterleaveToAirOrder(
                     loraPunchMsg.GetByteArray())
                 return {"Data": (interleavedMessageData,), "MessageID": loraPunchMsg.GetHash()}
@@ -73,6 +74,7 @@ class SITestTestToLoraTransform(object):
                 loraPunchDoubleMsg.SetSIMessageByteArrays(payloadData, msgSubBatch.MessageSubscriptionBatchItems[1].MessageData)
                 loraPunchDoubleMsg.SetRepeater(reqRepeater)
                 loraPunchDoubleMsg.GenerateAndAddRSCode()
+                loraPunchDoubleMsg.GenerateAndAddCRC()
                 interleavedMessageData = LoraRadioMessagePunchDoubleReDCoSRS.InterleaveToAirOrder(
                     loraPunchDoubleMsg.GetByteArray())
                 return {"Data": (interleavedMessageData,), "MessageID": loraPunchDoubleMsg.GetHash()}

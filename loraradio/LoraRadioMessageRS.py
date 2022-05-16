@@ -470,7 +470,7 @@ class LoraRadioMessagePunchReDCoSRS(LoraRadioMessageReDCoSRS):
         return siMsg.GetByteArray()
 
     def SetSIMessageByteArray(self, siMessageByteArray):
-        self.payloadData = bytearray([0, 0, 0, 0, 0, 0, 0, 0, 0])
+        self.payloadData = bytearray([0, 0, 0, 0, 0, 0, 0, 0])
         self.payloadData[self.CN0-1] = siMessageByteArray[4]
         self.payloadData[self.SN3-1] = siMessageByteArray[5]
         self.payloadData[self.SN2-1] = siMessageByteArray[6]
@@ -553,7 +553,7 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
         return self.payloadData[self.TH_2-1:self.TL_2]
 
     def SetSIMessageByteArrays(self, firstSIMessageByteArray, secondSIMessageByteArray):
-        msg = LoraRadioMessagePunchRS()
+        msg = LoraRadioMessagePunchReDCoSRS()
         msg.SetSIMessageByteArray(firstSIMessageByteArray)
         firstArray = msg.GetPayloadByteArray()
         msg.SetSIMessageByteArray(secondSIMessageByteArray)
