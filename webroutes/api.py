@@ -484,7 +484,7 @@ def getIsCharging():
 def getBatteryLevel():
     hostname = socket.gethostname()
     if hostname == "chip" or hostname == "nanopiair":
-        print("chip or nanopi")
+        #print("chip or nanopi")
         result = subprocess.run(['/usr/sbin/i2cget', '-f', '-y', '0', '0x34', '0xb9'], stdout=subprocess.PIPE)
         if result.returncode != 0:
             print('return code not 0')

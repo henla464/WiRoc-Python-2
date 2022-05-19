@@ -217,6 +217,13 @@ class SettingsClass(object):
         cacheUntilChangedByProcess.clear()
         cache.clear()  # GetWiRocMode uses this value so needs to be invalidated
 
+    @staticmethod
+    def SetReDCoSCombinationThreshold(val):
+        sett = SettingsClass.SetSetting('ReDCoSCombinationThreshold', val)
+        cacheUntilChangedByProcess.clear()
+        cache.clear()
+
+
     #####
     # Changed both locally and via web services
     #####
@@ -224,6 +231,15 @@ class SettingsClass(object):
     #####
     # DB settings changed via web services only
     #####
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetReDCoSCombinationThreshold'), lock=rlock)
+    def GetReDCoSCombinationThreshold():
+        sett = DatabaseHelper.get_setting_by_key('ReDCoSCombinationThreshold')
+        if sett is None:
+            SettingsClass.SetSetting("ReDCoSCombinationThreshold", "5000")
+            return 5000
+        return int(sett.Value)
+
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetShouldAlwaysRequestRepeater'), lock=rlock)
     def GetShouldAlwaysRequestRepeater():

@@ -45,7 +45,7 @@ class LoraRadioMessageCreator(object):
 
         loraPunchMessage.SetHeader(fullMessageData[0:1])
         loraPunchMessage.AddPayload(fullMessageData[1:-LoraRadioMessagePunchRS.NoOfECCBytes])
-        print("punchmessage payload: " + Utils.GetDataInHex(fullMessageData[1:-LoraRadioMessagePunchRS.NoOfECCBytes], logging.DEBUG))
+        #print("punchmessage payload: " + Utils.GetDataInHex(fullMessageData[1:-LoraRadioMessagePunchRS.NoOfECCBytes], logging.DEBUG))
         loraPunchMessage.AddRSCode(fullMessageData[-LoraRadioMessagePunchRS.NoOfECCBytes:])
         loraPunchMessage.SetRSSIByte(rssiByte)
         return loraPunchMessage
@@ -87,8 +87,8 @@ class LoraRadioMessageCreator(object):
         loraPunchMessage = LoraRadioMessagePunchReDCoSRS()
         loraPunchMessage.SetHeader(fullMessageDataDeinterleaved[0:1])
         loraPunchMessage.AddPayload(fullMessageDataDeinterleaved[1:-LoraRadioMessagePunchReDCoSRS.NoOfECCBytes-LoraRadioMessagePunchReDCoSRS.NoOfCRCBytes])
-        print("punchmessage payload: " + Utils.GetDataInHex(fullMessageDataDeinterleaved[1:-LoraRadioMessagePunchReDCoSRS.NoOfECCBytes-LoraRadioMessagePunchReDCoSRS.NoOfCRCBytes],
-                                                            logging.DEBUG))
+        # print("punchmessage payload: " + Utils.GetDataInHex(fullMessageDataDeinterleaved[1:-LoraRadioMessagePunchReDCoSRS.NoOfECCBytes-LoraRadioMessagePunchReDCoSRS.NoOfCRCBytes],
+        #                                                    logging.DEBUG))
         loraPunchMessage.AddRSCode(fullMessageDataDeinterleaved[-LoraRadioMessagePunchReDCoSRS.NoOfECCBytes-LoraRadioMessagePunchReDCoSRS.NoOfCRCBytes:-LoraRadioMessagePunchReDCoSRS.NoOfCRCBytes])
         loraPunchMessage.AddCRC(fullMessageDataDeinterleaved[-LoraRadioMessagePunchReDCoSRS.NoOfCRCBytes:])
         loraPunchMessage.SetRSSIByte(rssiByte)
