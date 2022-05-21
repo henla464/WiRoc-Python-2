@@ -628,8 +628,10 @@ class SettingsClass(object):
     # @cached(cacheForEver, key=partial(hashkey, 'GetBTAddress'), lock=rlock) seems sometimes NoBTAddress is returned, we dont want to cache that...
     def GetBTAddress():
         if SettingsClass.TheBTAddress == "NoBTAddress":
-            hcitoolResp = os.popen("hcitool dev").read()
+            subP = os.popen("hcitool dev")
+            hcitoolResp = subP.read()
             hcitoolResp = hcitoolResp.replace("Devices:", "")
+            subP.close()
             hcitoolResp = hcitoolResp.strip()
             hcitoolRespWords = hcitoolResp.split()
             if len(hcitoolRespWords) > 1 and len(hcitoolRespWords[1]) == 17:
