@@ -821,9 +821,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         # right message type
         punchMsg = self.dataHandler._GetPunchReDCoSMessage()
         self.assertIsNotNone(punchMsg)
-        # returned message so buffer should be empty
-        punchMsg = self.dataHandler._GetPunchReDCoSMessage()
-        self.assertIsNone(punchMsg)
+        # Message is only removed from datareceived in TryGetMessage so it should fetch same again
+        punchMsg2 = self.dataHandler._GetPunchReDCoSMessage()
+        self.assertEqual(punchMsg.GetByteArray(), punchMsg2.GetByteArray())
         print("=== END test_GetPunchMessage ===")
 
     def test_GetTwoPunchMessages(self):
@@ -837,7 +837,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         punchMsg = self.dataHandler._GetPunchReDCoSMessage()
         self.assertIsNotNone(punchMsg)
-        punchMsg = self.dataHandler._GetPunchReDCoSMessage()
+        messageLength = LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchReDCoS]
+        self.dataHandler._removeBytesFromDataReceived(messageLength + self.dataHandler.RSSIByteCount)
+        punchMsg = self.dataHandler.GetMessage()  # Removes the message from data received
         self.assertIsNotNone(punchMsg, "second message not fetched")
         punchMsg = self.dataHandler._GetPunchReDCoSMessage()
         self.assertIsNone(punchMsg)
@@ -860,7 +862,11 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNotNone(punchDoubleMsg)
         # returned message so buffer should be empty
         punchDoubleMsg = self.dataHandler._GetPunchDoubleReDCoSMessage()
-        self.assertIsNone(punchDoubleMsg)
+        self.assertIsNotNone(punchDoubleMsg)
+        self.assertGreater(len(self.dataHandler.DataReceived), 0)
+
+        punchDoubleMsg = self.dataHandler.GetMessage()
+        self.assertIsNotNone(punchDoubleMsg)
         self.assertEqual(len(self.dataHandler.DataReceived), 0)
 
         print("=== END test_GetPunchDoubleMessage ===")
@@ -877,10 +883,13 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         punchDoubleMsg = self.dataHandler._GetPunchDoubleReDCoSMessage()
         self.assertIsNotNone(punchDoubleMsg)
+        # remove first message manually since it is only done in TryGetMessage
+        messageLength = LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS]
+        self.dataHandler._removeBytesFromDataReceived(messageLength + self.dataHandler.RSSIByteCount)
         punchDoubleMsg = self.dataHandler._GetPunchDoubleReDCoSMessage()
         self.assertIsNotNone(punchDoubleMsg, "could not get second message")
         punchDoubleMsg = self.dataHandler._GetPunchDoubleReDCoSMessage()
-        self.assertIsNone(punchDoubleMsg)
+        self.assertIsNotNone(punchDoubleMsg)
         print("=== END test_GetTwoPunchDoubleMessages ===")
 
     def test_GetMessage_PunchMessage_Correct(self):
