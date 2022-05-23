@@ -2,6 +2,7 @@ import logging
 
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 
+
 class LoraSIMessageDoubleToSITransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 

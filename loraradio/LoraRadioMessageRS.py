@@ -552,6 +552,94 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
     def GetTwelveHourTimer_2(self):
         return self.payloadData[self.TH_2-1:self.TL_2]
 
+    def GetSICardNoByteArray(self):
+        return self.payloadData[self.SN3 - 1:self.SN0]
+
+    def GetSICardNoByteArray_2(self):
+        return self.payloadData[self.SN3_2 - 1:self.SN0_2]
+
+    def GetSICardNo(self):
+        return Utils.DecodeCardNr(self.GetSICardNoByteArray())
+
+    def GetSICardNo_2(self):
+        return Utils.DecodeCardNr(self.GetSICardNoByteArray_2())
+
+    def GetFourWeekCounter(self):
+        return self.payloadData[self.CN1Plus - 1] & 0x30
+
+    def GetFourWeekCounter_2(self):
+        return self.payloadData[self.CN1Plus_2 - 1] & 0x30
+
+    def GetDayOfWeek(self):
+        return self.payloadData[self.CN1Plus - 1] & 0x0E
+
+    def GetDayOfWeek_2(self):
+        return self.payloadData[self.CN1Plus_2 - 1] & 0x0E
+
+    def GetTwentyFourHour(self):
+        return self.payloadData[self.CN1Plus - 1] & 0x01
+
+    def GetTwentyFourHour_2(self):
+        return self.payloadData[self.CN1Plus_2 - 1] & 0x01
+
+    def GetSubSecondRaw(self):
+        return 0
+
+    def GetSubSecondRaw_2(self):
+        return 0
+
+    def GetSubSecondAsTenthOfSeconds(self):
+        return 0
+
+    def GetSubSecondAsTenthOfSeconds_2(self):
+        return 0
+
+    def GetTimeAsTenthOfSeconds(self):
+        time = ((self.GetTwelveHourTimer()[0] << 8) + self.GetTwelveHourTimer()[
+            1]) * 10 + self.GetSubSecondAsTenthOfSeconds()
+        if self.GetTwentyFourHour() == 1:
+            time += 36000 * 12
+        return time
+
+    def GetTimeAsTenthOfSeconds_2(self):
+        time = ((self.GetTwelveHourTimer_2()[0] << 8) + self.GetTwelveHourTimer_2()[
+            1]) * 10 + self.GetSubSecondAsTenthOfSeconds_2()
+        if self.GetTwentyFourHour_2() == 1:
+            time += 36000 * 12
+        return time
+
+    def GetHour(self):
+        return int(self.GetTimeAsTenthOfSeconds() // 36000)
+
+    def GetHour_2(self):
+        return int(self.GetTimeAsTenthOfSeconds_2() // 36000)
+
+    def GetMinute(self):
+        tenthOfSecs = self.GetTimeAsTenthOfSeconds()
+        numberOfMinutesInTenthOfSecs = (tenthOfSecs - self.GetHour() * 36000)
+        return numberOfMinutesInTenthOfSecs // 600
+
+    def GetMinute_2(self):
+        tenthOfSecs = self.GetTimeAsTenthOfSeconds_2()
+        numberOfMinutesInTenthOfSecs = (tenthOfSecs - self.GetHour_2() * 36000)
+        return numberOfMinutesInTenthOfSecs // 600
+
+    def GetSeconds(self):
+        tenthOfSecs = self.GetTimeAsTenthOfSeconds()
+        numberOfSecondsInTenthOfSecs = (tenthOfSecs - self.GetHour() * 36000 - self.GetMinute() * 600)
+        return numberOfSecondsInTenthOfSecs // 10
+
+    def GetSeconds_2(self):
+        tenthOfSecs = self.GetTimeAsTenthOfSeconds_2()
+        numberOfSecondsInTenthOfSecs = (tenthOfSecs - self.GetHour_2() * 36000 - self.GetMinute_2() * 600)
+        return numberOfSecondsInTenthOfSecs // 10
+
+    def GetTwelveHourTimerAsInt(self):
+        return (self.GetTwelveHourTimer()[0] << 8) + self.GetTwelveHourTimer()[1]
+
+    def GetTwelveHourTimerAsInt_2(self):
+        return (self.GetTwelveHourTimer_2()[0] << 8) + self.GetTwelveHourTimer_2()[1]
+
     def SetSIMessageByteArrays(self, firstSIMessageByteArray, secondSIMessageByteArray):
         msg = LoraRadioMessagePunchReDCoSRS()
         msg.SetSIMessageByteArray(firstSIMessageByteArray)
