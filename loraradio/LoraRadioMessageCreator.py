@@ -26,48 +26,48 @@ class LoraRadioMessageCreator(object):
         loraAckMessage.AddRSCode(fullMessageData[-4:])
         loraAckMessage.SetRSSIByte(rssiByte)
         return loraAckMessage
+    #
+    # @staticmethod
+    # def GetPunchMessage(batteryLow, ackReq, payload=None):
+    #     loraPunchMessage = LoraRadioMessagePunchRS()
+    #     loraPunchMessage.SetBatteryLow(batteryLow)
+    #     loraPunchMessage.SetAckRequested(ackReq)
+    #     if payload is not None:
+    #         loraPunchMessage.AddPayload(payload)
+    #         loraPunchMessage.GenerateAndAddRSCode()
+    #     return loraPunchMessage
+    #
+    # @staticmethod
+    # def GetPunchMessageByFullMessageData(fullMessageData, rssiByte=None):
+    #     if len(fullMessageData) < LoraRadioMessagePunchRS.MessageLengths[LoraRadioMessagePunchRS.MessageTypeSIPunch]:
+    #         raise Exception('Message data too short for a LoraRadioMessagePunchRS message')
+    #     loraPunchMessage = LoraRadioMessagePunchRS()
+    #
+    #     loraPunchMessage.SetHeader(fullMessageData[0:1])
+    #     loraPunchMessage.AddPayload(fullMessageData[1:-LoraRadioMessagePunchRS.NoOfECCBytes])
+    #     #print("punchmessage payload: " + Utils.GetDataInHex(fullMessageData[1:-LoraRadioMessagePunchRS.NoOfECCBytes], logging.DEBUG))
+    #     loraPunchMessage.AddRSCode(fullMessageData[-LoraRadioMessagePunchRS.NoOfECCBytes:])
+    #     loraPunchMessage.SetRSSIByte(rssiByte)
+    #     return loraPunchMessage
 
-    @staticmethod
-    def GetPunchMessage(batteryLow, ackReq, payload=None):
-        loraPunchMessage = LoraRadioMessagePunchRS()
-        loraPunchMessage.SetBatteryLow(batteryLow)
-        loraPunchMessage.SetAckRequested(ackReq)
-        if payload is not None:
-            loraPunchMessage.AddPayload(payload)
-            loraPunchMessage.GenerateAndAddRSCode()
-        return loraPunchMessage
-
-    @staticmethod
-    def GetPunchMessageByFullMessageData(fullMessageData, rssiByte=None):
-        if len(fullMessageData) < LoraRadioMessagePunchRS.MessageLengths[LoraRadioMessagePunchRS.MessageTypeSIPunch]:
-            raise Exception('Message data too short for a LoraRadioMessagePunchRS message')
-        loraPunchMessage = LoraRadioMessagePunchRS()
-
-        loraPunchMessage.SetHeader(fullMessageData[0:1])
-        loraPunchMessage.AddPayload(fullMessageData[1:-LoraRadioMessagePunchRS.NoOfECCBytes])
-        #print("punchmessage payload: " + Utils.GetDataInHex(fullMessageData[1:-LoraRadioMessagePunchRS.NoOfECCBytes], logging.DEBUG))
-        loraPunchMessage.AddRSCode(fullMessageData[-LoraRadioMessagePunchRS.NoOfECCBytes:])
-        loraPunchMessage.SetRSSIByte(rssiByte)
-        return loraPunchMessage
-
-    @staticmethod
-    def GetPunchDoubleMessage(batteryLow, ackReq, payload=None):
-        loraPunchDoubleMessage = LoraRadioMessagePunchDoubleRS()
-        loraPunchDoubleMessage.SetBatteryLow(batteryLow)
-        loraPunchDoubleMessage.SetAckRequested(ackReq)
-        if payload is not None:
-            loraPunchDoubleMessage.AddPayload(payload)
-            loraPunchDoubleMessage.GenerateAndAddRSCode()
-        return loraPunchDoubleMessage
-
-    @staticmethod
-    def GetPunchDoubleMessageByFullMessageData(fullMessageData, rssiByte=None):
-        loraPunchDoubleMessage = LoraRadioMessagePunchDoubleRS()
-        loraPunchDoubleMessage.SetHeader(fullMessageData[0:1])
-        loraPunchDoubleMessage.AddPayload(fullMessageData[1:-LoraRadioMessagePunchDoubleRS.NoOfECCBytes])
-        loraPunchDoubleMessage.AddRSCode(fullMessageData[-LoraRadioMessagePunchDoubleRS.NoOfECCBytes:])
-        loraPunchDoubleMessage.SetRSSIByte(rssiByte)
-        return loraPunchDoubleMessage
+    # @staticmethod
+    # def GetPunchDoubleMessage(batteryLow, ackReq, payload=None):
+    #     loraPunchDoubleMessage = LoraRadioMessagePunchDoubleRS()
+    #     loraPunchDoubleMessage.SetBatteryLow(batteryLow)
+    #     loraPunchDoubleMessage.SetAckRequested(ackReq)
+    #     if payload is not None:
+    #         loraPunchDoubleMessage.AddPayload(payload)
+    #         loraPunchDoubleMessage.GenerateAndAddRSCode()
+    #     return loraPunchDoubleMessage
+    #
+    # @staticmethod
+    # def GetPunchDoubleMessageByFullMessageData(fullMessageData, rssiByte=None):
+    #     loraPunchDoubleMessage = LoraRadioMessagePunchDoubleRS()
+    #     loraPunchDoubleMessage.SetHeader(fullMessageData[0:1])
+    #     loraPunchDoubleMessage.AddPayload(fullMessageData[1:-LoraRadioMessagePunchDoubleRS.NoOfECCBytes])
+    #     loraPunchDoubleMessage.AddRSCode(fullMessageData[-LoraRadioMessagePunchDoubleRS.NoOfECCBytes:])
+    #     loraPunchDoubleMessage.SetRSSIByte(rssiByte)
+    #     return loraPunchDoubleMessage
 
     @staticmethod
     def GetPunchReDCoSMessage(batteryLow, ackReq, payload=None):

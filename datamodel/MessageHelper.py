@@ -12,25 +12,25 @@ class MessageHelper:
         siPayloadData = None
 
         if messageTypeName == "LORA" and messageSubTypeName == "SIMessage":
-            loraPunchMessage = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(data)
+            loraPunchMessage = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(data)
             lowBattery = loraPunchMessage.GetBatteryLow()
             ackRequested = loraPunchMessage.GetAckRequested()
             repeater = loraPunchMessage.GetRepeater()
             siPayloadData = loraPunchMessage.GetSIMessageByteArray()
         elif messageTypeName == "REPEATER" and messageSubTypeName == "SIMessage":
-            loraPunchMessage = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(data)
+            loraPunchMessage = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(data)
             lowBattery = loraPunchMessage.GetBatteryLow()
             ackRequested = loraPunchMessage.GetAckRequested()
             repeater = loraPunchMessage.GetRepeater()
             siPayloadData = loraPunchMessage.GetSIMessageByteArray()
         elif messageTypeName == "LORA" and messageSubTypeName == "SIMessageDouble":
-            loraPunchMessage = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(data)
+            loraPunchMessage = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(data)
             lowBattery = loraPunchMessage.GetBatteryLow()
             ackRequested = loraPunchMessage.GetAckRequested()
             repeater = loraPunchMessage.GetRepeater()
             siPayloadData = loraPunchMessage.GetSIMessageByteTuple()[0]
         elif messageTypeName == "REPEATER" and messageSubTypeName == "SIMessageDouble":
-            loraPunchMessage = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(data)
+            loraPunchMessage = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(data)
             lowBattery = loraPunchMessage.GetBatteryLow()
             ackRequested = loraPunchMessage.GetAckRequested()
             repeater = loraPunchMessage.GetRepeater()

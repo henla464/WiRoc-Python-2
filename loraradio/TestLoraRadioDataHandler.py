@@ -230,7 +230,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     def test_CacheMessage(self):
         print("============================================================================================== START test_CacheMessage ==============================================================================================")
         rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1)
-        loraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes)
+        loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes)
         self.dataHandler._CacheMessage(loraMsg)
         msgAndMetaData = self.dataHandler.ReceivedPunchMessageDict[loraMsg.GetControlNumber()]
         self.assertEqual(loraMsg, msgAndMetaData.GetLoraRadioMessageRS())
@@ -497,7 +497,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             TestLoraRadioDataHandler.Case1_PunchMsg_Previous_WithRS)
         self.dataHandler._CacheMessage(prevMsg)
 
-        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+        corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case1_PunchMsg_Corrupted_WithRS)
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
         print("test_Case1_FindPunchErasuresMessage: " + str(erasures))
@@ -746,7 +746,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         corruptedMessageTL = TestLoraRadioDataHandler.PunchMsg_Correct_1[:]
         corruptedMessageTL[7] = 0xA8
         corruptedMessageTL[8] = 0xC1
-        corruptedLoraMsgTL = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+        corruptedLoraMsgTL = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             corruptedMessageTL)
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTL)
         self.assertEqual(erasures, [7], "TH, TL erasure not correct")
@@ -795,7 +795,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_GetLikelyMessageTypes(self):
         print("============================================================================================== START test_GetLikelyMessageTypes ==============================================================================================")
-        loraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(
+        loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.PunchMsg_Correct_1)
         self.dataHandler._CacheMessage(loraMsg)
 

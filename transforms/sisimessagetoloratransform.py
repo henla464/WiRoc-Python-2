@@ -6,6 +6,9 @@ from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessagePun
 from settings.settings import SettingsClass
 import logging
 
+from utils.utils import Utils
+
+
 class SISIMessageToLoraTransform(object):
     DeleteAfterSent = False
     WiRocLogger = logging.getLogger('WiRoc.Output')
@@ -65,6 +68,8 @@ class SISIMessageToLoraTransform(object):
                 loraPunchMsg.SetSIMessageByteArray(payloadData)
                 loraPunchMsg.SetRepeater(reqRepeater)
                 loraPunchMsg.GenerateAndAddRSCode()
+                loraPunchMsg.GenerateAndAddCRC()
+                print(Utils.GetDataInHex(loraPunchMsg.GetByteArray(), logging.DEBUG))
                 interleavedMessageData = LoraRadioMessagePunchReDCoSRS.InterleaveToAirOrder(
                     loraPunchMsg.GetByteArray())
                 return {"Data": (interleavedMessageData,), "MessageID": loraPunchMsg.GetHash()}
@@ -74,6 +79,7 @@ class SISIMessageToLoraTransform(object):
                                                           msgSubBatch.MessageSubscriptionBatchItems[1].MessageData)
                 loraPunchDoubleMsg.SetRepeater(reqRepeater)
                 loraPunchDoubleMsg.GenerateAndAddRSCode()
+                loraPunchDoubleMsg.GenerateAndAddCRC()
                 interleavedMessageData = LoraRadioMessagePunchDoubleReDCoSRS.InterleaveToAirOrder(
                     loraPunchDoubleMsg.GetByteArray())
                 return {"Data": (interleavedMessageData,), "MessageID": loraPunchDoubleMsg.GetHash()}
