@@ -649,8 +649,8 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
         self.payloadData = firstArray + secondArray
 
     def GetSIMessageByteTuple(self):
-        firstArray = self.payloadData[0:9]
-        secondArray = self.payloadData[9:18]
+        firstArray = self.payloadData[self.CN0-1: self.TL]
+        secondArray = self.payloadData[self.TL:self.TL_2]
         loraPunchMessage1 = LoraRadioMessagePunchRS()
         header = 0x00
         if self.ackRequest:

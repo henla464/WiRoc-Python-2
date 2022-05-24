@@ -239,7 +239,7 @@ class Main:
                             mbd = DatabaseHelper.create_message_box_data(messageSource, messageTypeName, messageSubTypeName, instanceName, True, powerCycle, SIStationSerialNumber, lowBattery, siPayloadData, messageData, rssiValue)
                         except Exception as ex:
                             self.shouldReconfigure = True
-                            self.wirocLogger.error("Error creating message box data")
+                            self.wirocLogger.error("Start::handleInput() Error creating message box data")
                             self.wirocLogger.error(ex)
                             continue
 
