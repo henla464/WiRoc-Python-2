@@ -210,14 +210,20 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     Case15_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0xc5, 0x5d, 0x40, 0x7e, 0x89, 0x1d, 0x36])
     # --
 
-
     # ---
     Case16_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0x57, 0xb4, 0x5d, 0x6a, 0xc4, 0x95])
     Case16_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0xe5, 0x51, 0x92, 0x59, 0x6e, 0xc4, 0x95])
     # --
 
-    # Ack sent:     8557b45d6ac495
-    # Ack received: e55192596ec495
+    # ---
+    Case17_StatusMsg_Previous_AirOrder_WithRS =               bytearray([0x04, 0x45, 0x00, 0x00, 0xb0, 0x02, 0x47, 0x00, 0xd7, 0x6d, 0x89, 0xbd, 0x6a, 0x50])
+    Case17_StatusMsg_Correct_AirOrder_WithRS =                bytearray([0x04, 0x45, 0x00, 0x00, 0xb0, 0x02, 0x47, 0x00, 0xd7, 0x6d, 0x89, 0xbd, 0x6a, 0x50])
+    Case17_StatusMsg_Corrupted_AirOrder_WithRS =              bytearray([0xc4, 0xcd, 0x40, 0x04, 0xd8, 0x20, 0x17, 0x07, 0xd5, 0x6d, 0x89, 0xbd, 0x6a, 0x50])
+    # --
+
+# Status Prev:   04450000b0024700d76d89bd6a50
+    # Status Sent:   04450000b0024700d76d89bd6a50
+    # Status rec:    c4cd4004d8201707d56d89bd6a50
 
     PunchMsg_Correct_HighestTHTL =                    bytearray(bytes([0x87, 0x1F, 0x00, 0x00, 0x00, 0xFF, 0x00, 0XA8, 0xC0, 0x69, 0xe7, 0x82, 0x03, 0xbf, 0x2b]))
     StatusMsg_Correct_WithRS =                        bytearray(bytes([0x04, 0x60, 0x10, 0x00, 0xd4, 0x12, 0x43, 0x24, 0x6a, 0x0c, 0x47, 0x32, 0x63, 0xa5]))
@@ -829,6 +835,24 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNotNone(ackMsg)
         self.assertEqual(ackMsg.GetByteArray(), TestLoraRadioDataHandler.Case16_AckMsg_Correct_AirOrder_WithRS)
         print("=== END test_Case16_GetAckMessage ===")
+
+
+    def test_Case17_GetStatusMessage(self):
+        print("============================================================================================== START test_Case17_GetStatusMessage ==============================================================================================")
+        prevStatusMsgArr = TestLoraRadioDataHandler.Case17_StatusMsg_Previous_AirOrder_WithRS[:]
+        for i in range(0, len(prevStatusMsgArr)):
+            self.dataHandler.AddData(prevStatusMsgArr[i:i + 1])
+        prevStatusMsg = self.dataHandler.GetMessage()
+
+        recStatusMsg = TestLoraRadioDataHandler.Case17_StatusMsg_Corrupted_AirOrder_WithRS[:]
+        for i in range(0, len(recStatusMsg)):
+            self.dataHandler.AddData(recStatusMsg[i:i + 1])
+        statusMsg = self.dataHandler.GetMessage()
+        print("Corrupted message: " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case17_StatusMsg_Corrupted_AirOrder_WithRS[:], logging.DEBUG))
+        print("Correct message:   " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case17_StatusMsg_Correct_AirOrder_WithRS, logging.DEBUG))
+        self.assertIsNotNone(statusMsg)
+        self.assertEqual(statusMsg.GetByteArray(), TestLoraRadioDataHandler.Case17_StatusMsg_Correct_AirOrder_WithRS)
+        print("=== END test_Case17_GetStatusMessage ===")
 
     def test_FindPunchErasures(self):
         print("============================================================================================== START test_FindPunchErasures ==============================================================================================")
