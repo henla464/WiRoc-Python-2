@@ -2,9 +2,9 @@ __author__ = 'henla464'
 
 import logging
 from utils.utils import Utils
-from loraradio.LoraRadioMessageRS import LoraRadioMessageAckRS, LoraRadioMessagePunchRS, \
-    LoraRadioMessageStatusRS, LoraRadioMessagePunchDoubleRS, LoraRadioMessagePunchReDCoSRS, \
-    LoraRadioMessagePunchDoubleReDCoSRS
+from loraradio.LoraRadioMessageRS import LoraRadioMessageAckRS, \
+    LoraRadioMessageStatusRS, LoraRadioMessagePunchReDCoSRS, \
+    LoraRadioMessagePunchDoubleReDCoSRS, LoraRadioMessageRS
 
 
 class LoraRadioMessageCreator(object):
@@ -82,7 +82,7 @@ class LoraRadioMessageCreator(object):
 
     @staticmethod
     def GetPunchReDCoSMessageByFullMessageData(fullMessageDataDeinterleaved, rssiByte=None):
-        if len(fullMessageDataDeinterleaved) < LoraRadioMessagePunchRS.MessageLengths[LoraRadioMessagePunchRS.MessageTypeSIPunchReDCoS]:
+        if len(fullMessageDataDeinterleaved) < LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchReDCoS]:
             raise Exception('Message data too short for a LoraRadioMessagePunchRedCoSRS message')
         loraPunchMessage = LoraRadioMessagePunchReDCoSRS()
         loraPunchMessage.SetHeader(fullMessageDataDeinterleaved[0:1])

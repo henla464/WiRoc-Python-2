@@ -11,7 +11,7 @@ import reedsolo
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessagePunchDoubleReDCoSRS, \
-    LoraRadioMessagePunchReDCoSRS
+    LoraRadioMessagePunchReDCoSRS, LoraRadioMessageAckRS
 from loraradio.RSCoderLora import RSCoderLora
 
 # Run with python3 -m unittest loraradio/TestLoraRadioDataHandler.py
@@ -110,6 +110,13 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     # --
 
     # ---
+    Case13_PunchDoubleMsg_Previous_AirOrder_WithRS =       bytearray([0x88, 0x96, 0x0f, 0x42, 0x3f, 0xff, 0x8b, 0x14, 0x0f, 0x42, 0x00, 0x3f, 0x8b, 0x15, 0x41, 0x45, 0xea, 0x5e, 0xff, 0xbd, 0xc5, 0x86, 0x00, 0x22, 0xa4, 0x41, 0x28])
+    Case13_PunchDoubleMsg_Correct_AirOrder_WithRS =        bytearray([0x88, 0x96, 0x0f, 0x42, 0x3f, 0xff, 0x8b, 0x14, 0x0f, 0x42, 0x00, 0x3f, 0x8b, 0x15, 0x41, 0x45, 0xea, 0x5e, 0xff, 0xbd, 0xc5, 0x86, 0x00, 0x22, 0xa4, 0x41, 0x28])
+    Case13_PunchDoubleMsg_Corrupted_AirOrder_WithRS =      bytearray([0x98, 0xb7, 0xb6, 0x13, 0x33, 0xfe, 0x8b, 0x15, 0x4f, 0x42, 0x44, 0x3f, 0xdf, 0x51, 0x54, 0x10, 0xef, 0x56, 0xf7, 0x3d, 0xc5, 0x86, 0x00, 0x22, 0xa4, 0x41, 0x28])
+    # --
+
+
+    # ---
     Case1_PunchMsg_Previous_WithRS =      bytearray(bytes([0x87, 0xe7, 0x00, 0x0f, 0x42, 0x3f, 0x40, 0x91, 0x9e, 0x0b, 0x47, 0x92, 0x83, 0xc0, 0x4e]))
     Case1_PunchMsg_Correct_WithRS =       bytearray(bytes([0x87, 0x10, 0x00, 0x1f, 0x15, 0x8e, 0x0c, 0x91, 0xdf, 0x6d, 0x70, 0x2e, 0x62, 0xc9, 0x68]))
     Case1_PunchMsg_Corrupted_WithRS =     bytearray(bytes([0x97, 0x11, 0x01, 0x1e, 0x14, 0x8e, 0x0c, 0x91, 0x1f, 0xa8, 0x55, 0xad, 0x1d, 0xc9, 0x68]))
@@ -187,9 +194,30 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     Case12_PunchMsg_Corrupted_AirOrder_WithRS =              bytearray([0xa7, 0x1b, 0x2f, 0x62, 0xfd, 0x3f, 0x09, 0xab, 0x00, 0x07, 0xb0, 0x41, 0x86, 0xd8, 0x1d])
     # --
 
-    # Prev:    87490f42ff3f0998001b23416684eb
-    # Sent:    87390f42ff3f09ab0007b04186d81d
-    # Rec:     a71b2f62fd3f09ab0007b04186d81d
+    # ---
+    Case13_PunchMsg_Previous_AirOrder_WithRS =               bytearray([0x88, 0x98, 0x0f, 0x42, 0x3f, 0xff, 0x8b, 0x16, 0x0f, 0x42, 0x00, 0x3f, 0x8b, 0x17, 0x41, 0xfb, 0x81, 0x43, 0xff, 0xd6, 0xf2, 0xa5, 0x00, 0x77, 0x46, 0x41, 0x17])
+    Case13_PunchMsg_Correct_AirOrder_WithRS =                bytearray([0x87, 0xe5, 0x0f, 0x42, 0xff, 0x3f, 0x8b, 0xb2, 0x00, 0x91, 0x0a, 0x41, 0x12, 0xfb, 0x61])
+    Case13_PunchMsg_Corrupted_AirOrder_WithRS =              bytearray([0xa7, 0xe5, 0x2d, 0x42, 0xfd, 0x3f, 0x8b, 0xb2, 0x00, 0x91, 0x0a, 0x41, 0x92, 0x73, 0xe1])
+    # --
+
+    # ---
+    Case14_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0xff, 0x39, 0xd1, 0x53, 0x90, 0x51])
+    Case14_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0x05, 0xff, 0x31, 0x59, 0x53, 0x90, 0x51])
+    # --
+
+    # ---
+    Case15_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0x5d, 0x04, 0x7a, 0x8d, 0x1d, 0x36])
+    Case15_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0xc5, 0x5d, 0x40, 0x7e, 0x89, 0x1d, 0x36])
+    # --
+
+
+    # ---
+    Case16_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0x57, 0xb4, 0x5d, 0x6a, 0xc4, 0x95])
+    Case16_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0xe5, 0x51, 0x92, 0x59, 0x6e, 0xc4, 0x95])
+    # --
+
+    # Ack sent:     8557b45d6ac495
+    # Ack received: e55192596ec495
 
     PunchMsg_Correct_HighestTHTL =                    bytearray(bytes([0x87, 0x1F, 0x00, 0x00, 0x00, 0xFF, 0x00, 0XA8, 0xC0, 0x69, 0xe7, 0x82, 0x03, 0xbf, 0x2b]))
     StatusMsg_Correct_WithRS =                        bytearray(bytes([0x04, 0x60, 0x10, 0x00, 0xd4, 0x12, 0x43, 0x24, 0x6a, 0x0c, 0x47, 0x32, 0x63, 0xa5]))
@@ -203,6 +231,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler.ReceivedPunchMessageDict = {}
         self.dataHandler.LastPunchMessageTime = None
         self.dataHandler.LastPunchMessage = None
+        self.dataHandler.LastDoublePunchMessage = None
         self.dataHandler.DataReceived = bytearray()
 
     def test_AddData(self):
@@ -231,7 +260,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_CacheMessage ==============================================================================================")
         rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1)
         loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes)
-        self.dataHandler._CacheMessage(loraMsg)
+        self.dataHandler._CachePunchMessage(loraMsg)
         msgAndMetaData = self.dataHandler.ReceivedPunchMessageDict[loraMsg.GetControlNumber()]
         self.assertEqual(loraMsg, msgAndMetaData.GetLoraRadioMessageRS())
         self.assertIsNotNone(self.dataHandler.LastPunchMessageTime)
@@ -245,8 +274,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             TestLoraRadioDataHandler.Case1_PunchDoubleMsg_Previous_WithRS)
         loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(correctMsg)
         # Cache individual messages but remove the whole double message from data received
-        self.dataHandler._CacheMessage(loraPunchMsg1)
-        self.dataHandler._CacheMessage(loraPunchMsg2)
+        self.dataHandler._CachePunchMessage(loraPunchMsg1)
+        self.dataHandler._CachePunchMessage(loraPunchMsg2)
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case1_PunchDoubleMsg_Corrupted_WithRS)
@@ -269,8 +298,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             TestLoraRadioDataHandler.Case2_PunchDoubleMsg_Previous_WithRS)
         loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(correctMsg)
         # Cache individual messages but remove the whole double message from data received
-        self.dataHandler._CacheMessage(loraPunchMsg1)
-        self.dataHandler._CacheMessage(loraPunchMsg2)
+        self.dataHandler._CachePunchMessage(loraPunchMsg1)
+        self.dataHandler._CachePunchMessage(loraPunchMsg2)
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case2_PunchDoubleMsg_Corrupted_WithRS)
@@ -286,8 +315,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             TestLoraRadioDataHandler.Case3_PunchDoubleMsg_Previous_WithRS)
         loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(correctMsg)
         # Cache individual messages but remove the whole double message from data received
-        self.dataHandler._CacheMessage(loraPunchMsg1)
-        self.dataHandler._CacheMessage(loraPunchMsg2)
+        self.dataHandler._CachePunchMessage(loraPunchMsg1)
+        self.dataHandler._CachePunchMessage(loraPunchMsg2)
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case3_PunchDoubleMsg_Corrupted_WithRS)
@@ -301,7 +330,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case4_FindPunchErasuresDoubleMessage ==============================================================================================")
         correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case4_PunchDoubleMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(correctMsg)
+        self.dataHandler._CachePunchMessage(correctMsg)
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case4_PunchDoubleMsg_Corrupted_WithRS)
@@ -315,7 +344,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case5_FindPunchErasuresDoubleMessage ==============================================================================================")
         correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case5_PunchDoubleMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(correctMsg)
+        self.dataHandler._CachePunchMessage(correctMsg)
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case5_PunchDoubleMsg_Corrupted_WithRS)
@@ -329,7 +358,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case5_GetPunchDoubleMessage ==============================================================================================")
         correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case5_PunchDoubleMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(correctMsg)
+        self.dataHandler._CachePunchMessage(correctMsg)
 
         corruptedInAirOrder = LoraRadioMessagePunchDoubleReDCoSRS.InterleaveToAirOrder(TestLoraRadioDataHandler.Case5_PunchDoubleMsg_Corrupted_WithRS)
         for i in range(0, len(corruptedInAirOrder)):
@@ -346,7 +375,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case6_FindPunchErasuresDoubleMessage ==============================================================================================")
         correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case6_PunchDoubleMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(correctMsg)
+        self.dataHandler._CachePunchMessage(correctMsg)
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case6_PunchDoubleMsg_Corrupted_WithRS)
@@ -360,7 +389,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case6_GetPunchDoubleMessage ==============================================================================================")
         correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case6_PunchDoubleMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(correctMsg)
+        self.dataHandler._CachePunchMessage(correctMsg)
 
         interleaved = LoraRadioMessagePunchDoubleReDCoSRS.InterleaveToAirOrder(TestLoraRadioDataHandler.Case6_PunchDoubleMsg_Corrupted_WithRS)
         for i in range(0, len(interleaved)):
@@ -373,7 +402,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case7_FindPunchErasuresDoubleMessage ==============================================================================================")
         correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case7_PunchDoubleMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(correctMsg)
+        self.dataHandler._CachePunchMessage(correctMsg)
         self.dataHandler.LastPunchMessageTime = time.monotonic() - 9
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
@@ -388,7 +417,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case7_GetPunchDoubleMessage ==============================================================================================")
         correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case7_PunchDoubleMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(correctMsg)
+        self.dataHandler._CachePunchMessage(correctMsg)
 
         interleaved = LoraRadioMessagePunchDoubleReDCoSRS.InterleaveToAirOrder(TestLoraRadioDataHandler.Case7_PunchDoubleMsg_Corrupted_WithRS)
         for i in range(0, len(interleaved)):
@@ -401,7 +430,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case8_GetPunchDoubleMessage ==============================================================================================")
         deinterleaved = LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case8_PunchDoubleMsg_Previous_AirOrder_WithRS[:])
         correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(deinterleaved)
-        self.dataHandler._CacheMessage(correctMsg)
+        self.dataHandler._CachePunchMessage(correctMsg)
         seconds = 3.4
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
 
@@ -418,8 +447,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         deinterleaved = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case9_PunchDoubleMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(deinterleaved)
         loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(prevMsg)
-        self.dataHandler._CacheMessage(loraPunchMsg1)
-        self.dataHandler._CacheMessage(loraPunchMsg2)
+        self.dataHandler._CachePunchMessage(loraPunchMsg1)
+        self.dataHandler._CachePunchMessage(loraPunchMsg2)
         seconds = 2.8
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
 
@@ -437,7 +466,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case10_GetPunchDoubleMessage ==============================================================================================")
         deinterleaved = LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case10_PunchDoubleMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(deinterleaved)
-        self.dataHandler._CacheMessage(prevMsg)
+        self.dataHandler._CachePunchMessage(prevMsg)
         seconds = 2.8
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
 
@@ -456,7 +485,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case11_GetPunchDoubleMessage ==============================================================================================")
         deinterleaved = LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case11_PunchDoubleMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(deinterleaved)
-        self.dataHandler._CacheMessage(prevMsg)
+        self.dataHandler._CachePunchMessage(prevMsg)
         seconds = 16
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
 
@@ -475,8 +504,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         deinterleaved = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case12_PunchDoubleMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(deinterleaved)
         loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(prevMsg)
-        self.dataHandler._CacheMessage(loraPunchMsg1)
-        self.dataHandler._CacheMessage(loraPunchMsg2)
+        self.dataHandler._CachePunchMessage(loraPunchMsg1)
+        self.dataHandler._CachePunchMessage(loraPunchMsg2)
         seconds = 3.2
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
 
@@ -491,11 +520,33 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(punchDoubleMsg.GetByteArray()[:-2], LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case12_PunchDoubleMsg_Correct_AirOrder_WithRS)[:-2])
         print("=== END test_Case12_GetPunchDoubleMessage ===")
 
+    def test_Case13_GetPunchDoubleMessage(self):
+        print("============================================================================================== START test_Case13_GetPunchDoubleMessage ==============================================================================================")
+        interleaved = TestLoraRadioDataHandler.Case13_PunchDoubleMsg_Previous_AirOrder_WithRS[:]
+        for i in range(0, len(interleaved)):
+            self.dataHandler.AddData(interleaved[i:i + 1])
+        prevPunchDoubleMsg = self.dataHandler.GetMessage()
+
+        seconds = 17.5
+        self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
+
+        interleaved = TestLoraRadioDataHandler.Case13_PunchDoubleMsg_Corrupted_AirOrder_WithRS[:]
+        for i in range(0, len(interleaved)):
+            self.dataHandler.AddData(interleaved[i:i + 1])
+        punchDoubleMsg = self.dataHandler.GetMessage()
+        self.assertIsNotNone(punchDoubleMsg)
+        print("Decoded msg: " + Utils.GetDataInHex(punchDoubleMsg.GetByteArray(), logging.DEBUG))
+        print("Correct msg: " + Utils.GetDataInHex(LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case13_PunchDoubleMsg_Correct_AirOrder_WithRS), logging.DEBUG))
+        print("Corrupt msg: " + Utils.GetDataInHex(LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case13_PunchDoubleMsg_Corrupted_AirOrder_WithRS), logging.DEBUG))
+        self.assertEqual(punchDoubleMsg.GetByteArray(), LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case13_PunchDoubleMsg_Correct_AirOrder_WithRS))
+        self.assertEqual(punchDoubleMsg.GetByteArray(), LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case13_PunchDoubleMsg_Previous_AirOrder_WithRS))
+        print("=== END test_Case13_GetPunchDoubleMessage ===")
+
     def test_Case1_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case1_FindPunchErasuresMessage ==============================================================================================")
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case1_PunchMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(prevMsg)
+        self.dataHandler._CachePunchMessage(prevMsg)
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case1_PunchMsg_Corrupted_WithRS)
@@ -510,7 +561,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case2_FindPunchErasuresMessage ==============================================================================================")
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case2_PunchMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(prevMsg)
+        self.dataHandler._CachePunchMessage(prevMsg)
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case2_PunchMsg_Corrupted_WithRS)
@@ -524,7 +575,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case3_FindPunchErasuresMessage ==============================================================================================")
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case3_PunchMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(prevMsg)
+        self.dataHandler._CachePunchMessage(prevMsg)
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case3_PunchMsg_Corrupted_WithRS)
@@ -538,7 +589,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case4_FindPunchErasuresMessage ==============================================================================================")
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case4_PunchMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(prevMsg)
+        self.dataHandler._CachePunchMessage(prevMsg)
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case4_PunchMsg_Corrupted_WithRS)
@@ -552,7 +603,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case5_FindPunchErasuresMessage ==============================================================================================")
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case5_PunchMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(prevMsg)
+        self.dataHandler._CachePunchMessage(prevMsg)
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case5_PunchMsg_Corrupted_WithRS)
@@ -576,7 +627,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case6_FindPunchErasuresMessage ==============================================================================================")
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case6_PunchMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(prevMsg)
+        self.dataHandler._CachePunchMessage(prevMsg)
         # Adjust the LastPunchMessageTime
         seconds = 7
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
@@ -592,7 +643,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case7_FindPunchErasuresMessage ==============================================================================================")
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case7_PunchMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(prevMsg)
+        self.dataHandler._CachePunchMessage(prevMsg)
         # Adjust the LastPunchMessageTime
         seconds = 7
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
@@ -608,7 +659,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case8_FindPunchErasuresMessage ==============================================================================================")
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case8_PunchMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(prevMsg)
+        self.dataHandler._CachePunchMessage(prevMsg)
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case8_PunchMsg_Corrupted_WithRS)
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
@@ -621,7 +672,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case8_FindPunchErasuresMessage2 ==============================================================================================")
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case8_PunchMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(prevMsg)
+        self.dataHandler._CachePunchMessage(prevMsg)
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case8_PunchMsg_Corrupted_WithRS2)
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
@@ -634,7 +685,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case8_GetPunchMessage_BestCombination ==============================================================================================")
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case8_PunchMsg_Previous_WithRS)
-        self.dataHandler._CacheMessage(prevMsg)
+        self.dataHandler._CachePunchMessage(prevMsg)
 
         interleaved = LoraRadioMessagePunchReDCoSRS.InterleaveToAirOrder(TestLoraRadioDataHandler.Case8_PunchMsg_Corrupted_WithRS_BestCombination)
         for i in range(0, len(interleaved)):
@@ -650,8 +701,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         deinterleaved = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case9_PunchMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(deinterleaved)
         loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(prevMsg)
-        self.dataHandler._CacheMessage(loraPunchMsg1)
-        self.dataHandler._CacheMessage(loraPunchMsg2)
+        self.dataHandler._CachePunchMessage(loraPunchMsg1)
+        self.dataHandler._CachePunchMessage(loraPunchMsg2)
         seconds = 2.8
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
 
@@ -669,7 +720,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case10_GetPunchMessage ==============================================================================================")
         deinterleaved = LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case10_PunchMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(deinterleaved)
-        self.dataHandler._CacheMessage(prevMsg)
+        self.dataHandler._CachePunchMessage(prevMsg)
         seconds = 9
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
 
@@ -687,7 +738,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case11_GetPunchMessage ==============================================================================================")
         deinterleaved = LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case11_PunchMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(deinterleaved)
-        self.dataHandler._CacheMessage(prevMsg)
+        self.dataHandler._CachePunchMessage(prevMsg)
         seconds = 5
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
 
@@ -706,7 +757,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_Case12_GetPunchMessage ==============================================================================================")
         deinterleaved = LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case12_PunchMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(deinterleaved)
-        self.dataHandler._CacheMessage(prevMsg)
+        self.dataHandler._CachePunchMessage(prevMsg)
         seconds = 5
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
 
@@ -720,11 +771,70 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(punchMsg.GetByteArray(),LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case12_PunchMsg_Correct_AirOrder_WithRS))
         print("=== END test_Case12_GetPunchMessage ===")
 
+    def test_Case13_GetPunchMessage(self):
+        print("============================================================================================== START test_Case13_GetPunchMessage ==============================================================================================")
+        deinterleaved = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case13_PunchMsg_Previous_AirOrder_WithRS[:])
+        prevMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(deinterleaved)
+        loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(prevMsg)
+        self.dataHandler._CachePunchMessage(loraPunchMsg1)
+        self.dataHandler._CachePunchMessage(loraPunchMsg2)
+        seconds = 9.4
+        self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
+
+        interleaved = TestLoraRadioDataHandler.Case13_PunchMsg_Corrupted_AirOrder_WithRS[:]
+        for i in range(0, len(interleaved)):
+            self.dataHandler.AddData(interleaved[i:i + 1])
+        punchMsg = self.dataHandler.GetMessage()
+        print("Corrupted message: " + Utils.GetDataInHex(LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case13_PunchMsg_Corrupted_AirOrder_WithRS[:]), logging.DEBUG))
+        print("Correct message:   " + Utils.GetDataInHex(LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case13_PunchMsg_Correct_AirOrder_WithRS), logging.DEBUG))
+        self.assertIsNotNone(punchMsg)
+        self.assertEqual(punchMsg.GetByteArray(), LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case13_PunchMsg_Correct_AirOrder_WithRS))
+        print("=== END test_Case13_GetPunchMessage ===")
+
+    def test_Case14_GetAckMessage(self):
+        print("============================================================================================== START test_Case14_GetAckMessage ==============================================================================================")
+        SettingsClass.SetMessageIDOfLastLoraMessageSent(TestLoraRadioDataHandler.Case14_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1+1])
+        recAckMsg = TestLoraRadioDataHandler.Case14_AckMsg_Corrupted_AirOrder_WithRS[:]
+        for i in range(0, len(recAckMsg)):
+            self.dataHandler.AddData(recAckMsg[i:i + 1])
+        ackMsg = self.dataHandler.GetMessage()
+        print("Corrupted message: " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case14_AckMsg_Corrupted_AirOrder_WithRS[:], logging.DEBUG))
+        print("Correct message:   " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case14_AckMsg_Correct_AirOrder_WithRS, logging.DEBUG))
+        self.assertIsNotNone(ackMsg)
+        self.assertEqual(ackMsg.GetByteArray(), TestLoraRadioDataHandler.Case14_AckMsg_Correct_AirOrder_WithRS)
+        print("=== END test_Case14_GetAckMessage ===")
+
+    def test_Case15_GetAckMessage(self):
+        print("============================================================================================== START test_Case15_GetAckMessage ==============================================================================================")
+        SettingsClass.SetMessageIDOfLastLoraMessageSent(TestLoraRadioDataHandler.Case15_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1+1])
+        recAckMsg = TestLoraRadioDataHandler.Case15_AckMsg_Corrupted_AirOrder_WithRS[:]
+        for i in range(0, len(recAckMsg)):
+            self.dataHandler.AddData(recAckMsg[i:i + 1])
+        ackMsg = self.dataHandler.GetMessage()
+        print("Corrupted message: " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case15_AckMsg_Corrupted_AirOrder_WithRS[:], logging.DEBUG))
+        print("Correct message:   " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case15_AckMsg_Correct_AirOrder_WithRS, logging.DEBUG))
+        self.assertIsNotNone(ackMsg)
+        self.assertEqual(ackMsg.GetByteArray(), TestLoraRadioDataHandler.Case15_AckMsg_Correct_AirOrder_WithRS)
+        print("=== END test_Case15_GetAckMessage ===")
+
+    def test_Case16_GetAckMessage(self):
+        print("============================================================================================== START test_Case16_GetAckMessage ==============================================================================================")
+        SettingsClass.SetMessageIDOfLastLoraMessageSent(TestLoraRadioDataHandler.Case16_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1+1])
+        recAckMsg = TestLoraRadioDataHandler.Case16_AckMsg_Corrupted_AirOrder_WithRS[:]
+        for i in range(0, len(recAckMsg)):
+            self.dataHandler.AddData(recAckMsg[i:i + 1])
+        ackMsg = self.dataHandler.GetMessage()
+        print("Corrupted message: " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case16_AckMsg_Corrupted_AirOrder_WithRS[:], logging.DEBUG))
+        print("Correct message:   " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case16_AckMsg_Correct_AirOrder_WithRS, logging.DEBUG))
+        self.assertIsNotNone(ackMsg)
+        self.assertEqual(ackMsg.GetByteArray(), TestLoraRadioDataHandler.Case16_AckMsg_Correct_AirOrder_WithRS)
+        print("=== END test_Case16_GetAckMessage ===")
+
     def test_FindPunchErasures(self):
         print("============================================================================================== START test_FindPunchErasures ==============================================================================================")
         loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.PunchMsg_Correct_1)
-        self.dataHandler._CacheMessage(loraMsg)
+        self.dataHandler._CachePunchMessage(loraMsg)
 
         # TH changed to more than 5 minutes more
         corruptedMessageTH = TestLoraRadioDataHandler.PunchMsg_Correct_1[:]
@@ -754,7 +864,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         # TL changed to higher than possible (TH already highest)
         loraMsg2 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.PunchMsg_Correct_HighestTHTL)
-        self.dataHandler._CacheMessage(loraMsg2)
+        self.dataHandler._CachePunchMessage(loraMsg2)
         corruptedMessageTL2 = TestLoraRadioDataHandler.PunchMsg_Correct_HighestTHTL[:]
         corruptedMessageTL2[8] = 0xC1
         corruptedLoraMsgTL2 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
@@ -763,7 +873,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(erasures, [8], "TL erasure not correct")
 
         # Control number changed
-        self.dataHandler._CacheMessage(loraMsg)
+        self.dataHandler._CachePunchMessage(loraMsg)
         corruptedMessageCN0 = TestLoraRadioDataHandler.PunchMsg_Correct_1[:]
         corruptedMessageCN0[1] = 0x20
         corruptedLoraMsgCN0 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
@@ -797,7 +907,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_GetLikelyMessageTypes ==============================================================================================")
         loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.PunchMsg_Correct_1)
-        self.dataHandler._CacheMessage(loraMsg)
+        self.dataHandler._CachePunchMessage(loraMsg)
 
         # controlnumber bit 8
         messageArr = TestLoraRadioDataHandler.PunchMsg_Correct_1[:]
@@ -939,7 +1049,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.PunchMsg_Correct_1)
-        self.dataHandler._CacheMessage(loraMsg)
+        self.dataHandler._CachePunchMessage(loraMsg)
 
         # correct one byte, then it should be decodable without RedCos
         corrupt = TestLoraRadioDataHandler.PunchMsg_Corrupted_1[:]
@@ -993,7 +1103,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             TestLoraRadioDataHandler.PunchReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask,
             TestLoraRadioDataHandler.PunchReDCoSMsg_Correct_1_WithoutRS_CS[1:])
 
-        self.dataHandler._CacheMessage(msg)
+        self.dataHandler._CachePunchMessage(msg)
 
         msg2 = LoraRadioMessageCreator.GetPunchReDCoSMessage(
             TestLoraRadioDataHandler.PunchReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
@@ -1012,8 +1122,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[1:])
 
         msg1, msg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(msg)
-        self.dataHandler._CacheMessage(msg1)
-        self.dataHandler._CacheMessage(msg2)
+        self.dataHandler._CachePunchMessage(msg1)
+        self.dataHandler._CachePunchMessage(msg2)
 
         msg3 = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
@@ -1036,8 +1146,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[1:])
 
         msg1, msg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(msg)
-        self.dataHandler._CacheMessage(msg1)
-        self.dataHandler._CacheMessage(msg2)
+        self.dataHandler._CachePunchMessage(msg1)
+        self.dataHandler._CachePunchMessage(msg2)
 
         msg3 = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
@@ -1062,8 +1172,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         msg1, msg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(msg)
         # print("tw: "+  str(msg2.GetTwelveHourTimer()))
-        self.dataHandler._CacheMessage(msg1)
-        self.dataHandler._CacheMessage(msg2)
+        self.dataHandler._CachePunchMessage(msg1)
+        self.dataHandler._CachePunchMessage(msg2)
 
         msg3 = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
@@ -1100,8 +1210,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         msg1, msg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(msg)
         # print("tw: "+  str(msg2.GetTwelveHourTimer()))
-        self.dataHandler._CacheMessage(msg1)
-        self.dataHandler._CacheMessage(msg2)
+        self.dataHandler._CachePunchMessage(msg1)
+        self.dataHandler._CachePunchMessage(msg2)
 
         msg3 = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
@@ -1138,8 +1248,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
 
         msg1, msg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(msg)
-        self.dataHandler._CacheMessage(msg1)
-        self.dataHandler._CacheMessage(msg2)
+        self.dataHandler._CachePunchMessage(msg1)
+        self.dataHandler._CachePunchMessage(msg2)
 
         msg3 = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
@@ -1182,8 +1292,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
 
         msg1, msg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(msg)
-        self.dataHandler._CacheMessage(msg1)
-        self.dataHandler._CacheMessage(msg2)
+        self.dataHandler._CachePunchMessage(msg1)
+        self.dataHandler._CachePunchMessage(msg2)
 
         msg3 = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,

@@ -7,7 +7,7 @@ from multiprocessing import Pool
 
 from loraradio.LoraRadioMessageAndMetadata import LoraRadioMessageAndMetadata
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
-from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessagePunchRS, LoraRadioMessagePunchDoubleRS
+from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessageAckRS
 from loraradio.LoraRadioMessageRS import LoraRadioMessagePunchReDCoSRS, LoraRadioMessagePunchDoubleReDCoSRS
 from loraradio.RSCoderLora import RSCoderLora
 from settings.settings import SettingsClass
@@ -26,6 +26,7 @@ class LoraRadioDataHandler(object):
         # Dictionary of correctly received Punch message by control number
         self.ReceivedPunchMessageDict = {}
         self.LastPunchMessage = None
+        self.LastDoublePunchMessage = None
         self.LastPunchMessageTime = None
         self.RxError = False
         if rssiByteExpected:
@@ -42,12 +43,31 @@ class LoraRadioDataHandler(object):
     def _IsLongEnoughToBeMessage(self):
         return len(self.DataReceived) >= (min(LoraRadioMessageRS.MessageLengths) + self.RSSIByteCount)
 
-    def _CacheMessage(self, loraMsg):
+    def _CachePunchMessage(self, loraMsg):
         controlNumber = loraMsg.GetControlNumber()
         msgAndMetadata = LoraRadioMessageAndMetadata(loraMsg)
         self.ReceivedPunchMessageDict[controlNumber] = msgAndMetadata
         self.LastPunchMessageTime = msgAndMetadata.GetTimeCreated()
         self.LastPunchMessage = loraMsg
+        self.RxError = False
+
+    def _CacheDoublePunchMessage(self, loraDoubleMsg):
+        self.LastDoublePunchMessage = loraDoubleMsg
+
+        loraPunchMsg1, loraPunchMsg2 = self._GetPunchReDCoSTupleFromPunchDouble(loraDoubleMsg)
+        # Cache individual messages but remove the whole double message from data received
+        self._CachePunchMessage(loraPunchMsg1)
+        controlNumber = loraPunchMsg1.GetControlNumber()
+        msgAndMetadata = LoraRadioMessageAndMetadata(loraPunchMsg1)
+        self.ReceivedPunchMessageDict[controlNumber] = msgAndMetadata
+
+        self._CachePunchMessage(loraPunchMsg2)
+        controlNumber = loraPunchMsg2.GetControlNumber()
+        msgAndMetadata2 = LoraRadioMessageAndMetadata(loraPunchMsg2)
+        self.ReceivedPunchMessageDict[controlNumber] = msgAndMetadata2
+
+        self.LastPunchMessageTime = msgAndMetadata.GetTimeCreated()
+        self.LastPunchMessage = loraPunchMsg2
         self.RxError = False
 
     def ClearDataReceived(self):
@@ -56,6 +76,68 @@ class LoraRadioDataHandler(object):
     def _removeBytesFromDataReceived(self, noOfBytesToRemove):
         self.DataReceived = self.DataReceived[noOfBytesToRemove:]
 
+    def _IsSameDoublePunchMessage(self, loraMsg1, loraMsg2):
+        if loraMsg1 is None or loraMsg2 is None:
+            return False
+
+        firstPunchConfidencePercentage = 0
+        secondPunchConfidencePercentage = 0
+        msg1ByteArray = loraMsg1.GetByteArray()
+        msg2ByteArray = loraMsg2.GetByteArray()
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.CRC0] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.CRC0]:
+            firstPunchConfidencePercentage += 50
+            secondPunchConfidencePercentage += 50
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.CRC1] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.CRC1]:
+            firstPunchConfidencePercentage += 50
+            secondPunchConfidencePercentage += 50
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.TL] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.TL]:
+            firstPunchConfidencePercentage += 40
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.TL_2] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.TL_2]:
+            secondPunchConfidencePercentage += 40
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.TH] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.TH]:
+            firstPunchConfidencePercentage += 10
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.TH_2] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.TH_2]:
+            secondPunchConfidencePercentage += 10
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.SN0] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.SN0]:
+            firstPunchConfidencePercentage += 20
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.SN1] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.SN1]:
+            firstPunchConfidencePercentage += 20
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.SN2] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.SN2]:
+            firstPunchConfidencePercentage += 20
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.SN0_2] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.SN0_2]:
+            secondPunchConfidencePercentage += 20
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.SN1_2] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.SN1_2]:
+            secondPunchConfidencePercentage += 20
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.SN2_2] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.SN2_2]:
+            secondPunchConfidencePercentage += 20
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC0] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC0]:
+            firstPunchConfidencePercentage += 15
+            secondPunchConfidencePercentage += 15
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC1] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC1]:
+            firstPunchConfidencePercentage += 15
+            secondPunchConfidencePercentage += 15
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC2] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC2]:
+            firstPunchConfidencePercentage += 15
+            secondPunchConfidencePercentage += 15
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC3] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC3]:
+            firstPunchConfidencePercentage += 15
+            secondPunchConfidencePercentage += 15
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC4] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC4]:
+            firstPunchConfidencePercentage += 15
+            secondPunchConfidencePercentage += 15
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC5] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC5]:
+            firstPunchConfidencePercentage += 15
+            secondPunchConfidencePercentage += 15
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC6] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC6]:
+            firstPunchConfidencePercentage += 15
+            secondPunchConfidencePercentage += 15
+        if msg1ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC7] == msg2ByteArray[LoraRadioMessagePunchDoubleReDCoSRS.ECC7]:
+            firstPunchConfidencePercentage += 15
+            secondPunchConfidencePercentage += 15
+        print("percentage1; " + str(firstPunchConfidencePercentage) + " percentage2: " + str(secondPunchConfidencePercentage))
+        return firstPunchConfidencePercentage >= 100 and secondPunchConfidencePercentage >= 100
+
+
     def _GetPunchReDCoSErasures(self, loraMsg):
         lengthOfThePartOfTheMessageToFindErasuresFor = len(loraMsg.GetPayloadByteArray()) + len(loraMsg.GetRSCode())
         # Add one for header
@@ -63,6 +145,21 @@ class LoraRadioDataHandler(object):
         listOfTuplesOfErasurePositions = itertools.combinations(possibleErasureIndices, LoraRadioMessagePunchReDCoSRS.NoOfECCBytes)
         listOfListOfErasurePositions = [list(x) for x in listOfTuplesOfErasurePositions]
         return listOfListOfErasurePositions
+
+    def _GetAckMessageAlternatives(self, loraMsg):
+        headers = [LoraRadioMessageRS.MessageTypeLoraAck, LoraRadioMessageRS.MessageTypeLoraAck | 0x80,
+                   LoraRadioMessageRS.MessageTypeLoraAck | 0x20, LoraRadioMessageRS.MessageTypeLoraAck | 0xa0]
+
+        fixedValues = [LoraRadioMessageRS.H]
+        possibilities = [None]*LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeLoraAck]
+        possibilities[LoraRadioMessageRS.H] = headers
+
+        print("possibilities: " + str(possibilities))
+        messageData = loraMsg.GetByteArray()
+        generatedMessages = self._GenerateMessageAlternatives([], possibilities, messageData)
+
+        fixedErasures = []
+        return generatedMessages, fixedValues, fixedErasures
 
     def _GetPunchDoubleMessageAlternatives(self, loraMsg):
         possibilities = [None] * LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS]
@@ -277,108 +374,32 @@ class LoraRadioDataHandler(object):
                 noOfSecondsSinceLastMessage = int(time.monotonic() - self.LastPunchMessageTime)
                 lowestTimeWeAssumeCanBeCorrect = self.LastPunchMessage.GetTwelveHourTimerAsInt() - 60
                 highestTimeWeAssumeCanBeCorrect = self.LastPunchMessage.GetTwelveHourTimerAsInt() \
-                    + noOfSecondsSinceLastMessage + 2 * 60
+                    + noOfSecondsSinceLastMessage + 160
                 if loraMsg.GetTwelveHourTimerAsInt() < lowestTimeWeAssumeCanBeCorrect:
                     if loraMsg.GetTwelveHourTimer()[0] != self.LastPunchMessage.GetTwelveHourTimer()[0]:
                         # TH differs so this must be the reason for time being too low (assume TL is correct)
                         erasures.append(LoraRadioMessagePunchReDCoSRS.TH)
                     else:
+                        print("TL 1")
                         erasures.append(LoraRadioMessagePunchReDCoSRS.TL)
                 elif loraMsg.GetTwelveHourTimerAsInt() > highestTimeWeAssumeCanBeCorrect:
                     if loraMsg.GetTwelveHourTimer()[0] > ((highestTimeWeAssumeCanBeCorrect & 0xFF00) >> 8):
                         # TH differs so this must be the reason for time being too high (assume TL is correct)
                         erasures.append(LoraRadioMessagePunchReDCoSRS.TH)
                     else:
+                        print("TL 2")
                         erasures.append(LoraRadioMessagePunchReDCoSRS.TL)
 
             # check that TL isn't higher than possible. Only check when TH is the highest value and not believed
             # to be wrong
             if loraMsg.GetTwelveHourTimer()[0] == 0xA8 and loraMsg.GetTwelveHourTimer()[1] > 0xC0 \
                     and LoraRadioMessagePunchReDCoSRS.TH not in erasures:
+                print("TL 3")
                 erasures.append(LoraRadioMessagePunchReDCoSRS.TL)
 
         LoraRadioDataHandler.WiRocLogger.debug(
             "LoraRadioDataHandler::_FindReDCoSPunchErasures " + str(len(erasures)) + " erasures found. " + str(erasures))
         return list(set(erasures))
-
-    # def _FindPunchErasures(self, loraMsg):
-    #     controlNumber = loraMsg.GetControlNumber()
-    #     controlNumber8bit = (controlNumber & 0xFF)
-    #     controlNumberToUse = controlNumber if controlNumber in self.ReceivedPunchMessageDict else controlNumber8bit
-    #     erasures = []
-    #     if controlNumberToUse in self.ReceivedPunchMessageDict:
-    #         # found a previously cached message from same controlnumber => probably correct controlnumber
-    #         previousMsgAndMetadata = self.ReceivedPunchMessageDict[controlNumberToUse]
-    #         previousMsg = previousMsgAndMetadata.GetLoraRadioMessageRS()
-    #
-    #         if previousMsg.GetAckRequested() != loraMsg.GetAckRequested():
-    #             erasures.append(0)
-    #         elif previousMsg.GetBatteryLow() != loraMsg.GetBatteryLow():
-    #             erasures.append(0)
-    #         elif previousMsg.GetRepeater() != loraMsg.GetRepeater():
-    #             erasures.append(0)
-    #     else:
-    #         # technically it could be CN1 bit 8 that is wrong, but since higher number than 255 is almost never used
-    #         # it is extremely unlikely. The oldest SI cards don't even support > 255.
-    #         erasures.append(1)
-    #
-    #     cardNoByteArray = loraMsg.GetSICardNoByteArray()[0:4]
-    #     cardNo = Utils.toInt(cardNoByteArray)
-    #     if 0x4FFFF < cardNo < 500000: # 500 000 = 0x7A120
-    #         erasures.append(LoraRadioMessagePunchRS.SN2) # at least SN2 should be wrong
-    #     if cardNoByteArray[0] != 0x00: # SN3 not currently used so should always be 0
-    #         erasures.append(LoraRadioMessagePunchRS.SN3)
-    #     if controlNumberToUse != controlNumber:
-    #         # bit CN1 bit8 of stationcode/controlnumber is almost certainly wrong
-    #         erasures.append(LoraRadioMessagePunchRS.CN1Plus)
-    #     elif self.LastPunchMessage is not None:
-    #         if self.LastPunchMessage.GetFourWeekCounter() != loraMsg.GetFourWeekCounter():
-    #             erasures.append(LoraRadioMessagePunchRS.CN1Plus)
-    #         elif self.LastPunchMessage.GetDayOfWeek() != loraMsg.GetDayOfWeek():
-    #             erasures.append(LoraRadioMessagePunchRS.CN1Plus)
-    #         elif self.LastPunchMessage.GetTwentyFourHour() == 0 and loraMsg.GetTwentyFourHour() == 1 \
-    #                 and loraMsg.GetTwelveHourTimerAsInt() > 20 * 60:
-    #             erasures.append(LoraRadioMessagePunchRS.CN1Plus)
-    #         elif self.LastPunchMessage.GetTwentyFourHour() == 1 and loraMsg.GetTwentyFourHour() == 0 \
-    #                 and loraMsg.GetTwelveHourTimerAsInt() > 20 * 60:
-    #             erasures.append(LoraRadioMessagePunchRS.CN1Plus)
-    #
-    #     # check that TH isn't higher than possible
-    #     if loraMsg.GetTwelveHourTimer()[0] > 0xA8:
-    #         erasures.append(LoraRadioMessagePunchRS.TH)
-    #
-    #     # If the byte with AM/PM (6) is found to be wrong then assume AM/PM has not changed and compare the TH, TL
-    #     if 6 in erasures or (self.LastPunchMessage is not None and self.LastPunchMessage.GetTwentyFourHour() == loraMsg.GetTwentyFourHour()):
-    #         noOfSecondsSinceLastMessage = int(time.monotonic() - self.LastPunchMessageTime)
-    #         lowestTimeWeAssumeCanBeCorrect = self.LastPunchMessage.GetTwelveHourTimerAsInt()
-    #         # Assuming a delay of delivery of a message of max 5 minutes
-    #         highestTimeWeAssumeCanBeCorrect = self.LastPunchMessage.GetTwelveHourTimerAsInt() \
-    #             + noOfSecondsSinceLastMessage + 5 * 60
-    #
-    #         if loraMsg.GetTwelveHourTimerAsInt() < lowestTimeWeAssumeCanBeCorrect:
-    #             if loraMsg.GetTwelveHourTimer()[0] != self.LastPunchMessage.GetTwelveHourTimer()[0]:
-    #                 # TH differs so this must be the reason for time being too low (assume TL is correct)
-    #                 erasures.append(LoraRadioMessagePunchRS.TH)
-    #             else:
-    #                 erasures.append(LoraRadioMessagePunchRS.TL)
-    #         elif loraMsg.GetTwelveHourTimerAsInt() > highestTimeWeAssumeCanBeCorrect:
-    #             if loraMsg.GetTwelveHourTimer()[0] > ((highestTimeWeAssumeCanBeCorrect & 0xFF00) >> 8):
-    #                 # TH differs so this must be the reason for time being too high (assume TL is correct)
-    #                 erasures.append(LoraRadioMessagePunchRS.TH)
-    #             else:
-    #                 # Unless we change the highestTimeWeAssumeCanBeCorrect to something less than the extra 5 min
-    #                 # it should never reach this
-    #                 erasures.append(LoraRadioMessagePunchRS.TL)
-    #
-    #         # check that TL isn't higher than possible. Only check when TH is the highest value and not believed
-    #         # to be wrong
-    #         if loraMsg.GetTwelveHourTimer()[0] == 0xA8 and loraMsg.GetTwelveHourTimer()[1] > 0xC0 \
-    #                 and LoraRadioMessagePunchRS.TH not in erasures:
-    #             erasures.append(LoraRadioMessagePunchRS.TL)
-    #
-    #     LoraRadioDataHandler.WiRocLogger.debug(
-    #         "LoraRadioDataHandler::FindPunchErasures " + str(len(erasures)) + " erasures found. " + str(erasures))
-    #     return list(set(erasures))
 
     def _GetPunchReDCoSTupleFromPunchDouble(self, loraDoubleMsg):
         payload = loraDoubleMsg.GetByteArray()
@@ -392,42 +413,6 @@ class LoraRadioDataHandler(object):
         loraPMsg1 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(firstMsgByteArray)
         loraPMsg2 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(secondMsgByteArray)
         return loraPMsg1, loraPMsg2
-
-    # def _GetPunchTupleFromPunchDouble(self, loraDoubleMsg):
-    #     payload = loraDoubleMsg.GetByteArray()
-    #     loraMsgLength = LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunch]
-    #     # recreate two message arrays and find the erasures for each
-    #     firstMsgByteArray = payload[0:loraMsgLength - LoraRadioMessagePunchRS.NoOfECCBytes] + bytearray(LoraRadioMessagePunchRS.NoOfECCBytes)
-    #     firstMsgByteArray[LoraRadioMessageRS.H] = (firstMsgByteArray[LoraRadioMessageRS.H] & ~LoraRadioMessageRS.MessageTypeBitMask) | LoraRadioMessageRS.MessageTypeSIPunch
-    #     secondMsgByteArray = bytearray([firstMsgByteArray[LoraRadioMessageRS.H]]) + \
-    #         payload[loraMsgLength - LoraRadioMessagePunchRS.NoOfECCBytes:-LoraRadioMessagePunchDoubleRS.NoOfECCBytes] + \
-    #         bytearray(LoraRadioMessagePunchRS.NoOfECCBytes)
-    #     loraPMsg1 = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(firstMsgByteArray)
-    #     loraPMsg2 = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(secondMsgByteArray)
-    #     return loraPMsg1, loraPMsg2
-
-    # def _FindPunchDoubleErasures(self, loraDoubleMsg):
-    #     loraPMsg1, loraPMsg2 = self._GetPunchTupleFromPunchDouble(loraDoubleMsg)
-    #     erasures1 = self._FindPunchErasures(loraPMsg1)
-    #     erasures2 = self._FindPunchErasures(loraPMsg2)
-    #     for i in range(len(erasures2)-1,-1,-1):
-    #         if erasures2[i] == LoraRadioMessagePunchRS.H:
-    #             # header is wrong, it was picked up for message 2, but doesn't actually exist twice in the double message
-    #             # since we change the positions in erasure2 to the real positions in the double message we need to remove
-    #             # it here. And add it to erasures1 if it isn't already there
-    #             erasures2.pop(i)
-    #             if LoraRadioMessagePunchRS.H not in erasures1:
-    #                 # header is wrong, and it was not picked up for message 1
-    #                 erasures1.append(LoraRadioMessagePunchRS.H)
-    #
-    #     for i in range(len(erasures2)):
-    #         # Add the length of the first part of the double message minus the RSCodes minus the header of the second
-    #         loraMsgLength = LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunch]
-    #         erasures2[i] += loraMsgLength - LoraRadioMessagePunchRS.NoOfECCBytes - 1
-    #     erasures1.extend(erasures2)
-    #     LoraRadioDataHandler.WiRocLogger.debug(
-    #         "LoraRadioDataHandler::_FindPunchDoubleErasures " + str(len(erasures1)) + " erasures found. " + str(erasures1))
-    #     return erasures1
 
     def _FindReDCoSPunchDoubleErasures(self, loraDoubleMsg):
         loraPMsg1, loraPMsg2 = self._GetPunchReDCoSTupleFromPunchDouble(loraDoubleMsg)
@@ -451,45 +436,6 @@ class LoraRadioDataHandler(object):
                     "LoraRadioDataHandler::CheckAndRemoveLoraModuleRXError 'rx error' returned by module")
                 self.RxError = True
                 self.DataReceived = self.DataReceived[10:]
-
-    # def _GetPunchMessageWithErasures(self, messageDataToConsider, rssiByteValue, erasures=None):
-    #     loraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(messageDataToConsider,
-    #                                                                        rssiByte=rssiByteValue)
-    #     erasures.extend(self._FindPunchErasures(loraMsg))
-    #     if len(erasures) > 0:
-    #         try:
-    #             # No point in having more erasures than ECCBytes, and no point in having odd number of erasures
-    #             # when number of ECC bytes is even
-    #             erasuresToUse = list(set(erasures))
-    #             if len(erasuresToUse) >= LoraRadioMessagePunchRS.NoOfECCBytes:
-    #                 erasuresToUse = erasuresToUse[0:LoraRadioMessagePunchRS.NoOfECCBytes]
-    #             elif len(erasuresToUse) % 2 != 0:
-    #                 # Odd number
-    #                 numberOfErasuresToUse = len(erasuresToUse) - 1
-    #                 erasuresToUse = erasuresToUse[0:numberOfErasuresToUse]
-    #
-    #             LoraRadioDataHandler.WiRocLogger.debug(
-    #                 "LoraRadioDataHandler::_GetPunchMessageWithErasures() ErasuresToUse: " + str(erasuresToUse), logging.debug)
-    #             correctedData2 = RSCoderLora.decode(messageDataToConsider, erasuresToUse)
-    #             if not RSCoderLora.check(correctedData2):
-    #                 # for some reason sometimes decode just returns the corrupted message with not change
-    #                 # and no exception thrown. So check the decoded message to make sure we dont return
-    #                 # a message that is clearly wrong
-    #                 return None
-    #             loraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(correctedData2,
-    #                                                                                rssiByte=rssiByteValue)
-    #             self._CacheMessage(loraMsg)
-    #             self._removeBytesFromDataReceived(len(messageDataToConsider) + self.RSSIByteCount)
-    #             return loraMsg
-    #         except Exception as err2:
-    #             LoraRadioDataHandler.WiRocLogger.error(
-    #                 "LoraRadioDataHandler::_GetPunchMessageWithErasures() RS decoding failed also with erasures with exception: " + str(
-    #                     err2))
-    #             return None
-    #     else:
-    #         LoraRadioDataHandler.WiRocLogger.error(
-    #             "LoraRadioDataHandler::GetPunchMessageWithErasures() No erasures found so could not decode")
-    #         return None
 
     def _GetPunchReDCoSMessageWithErasures(self, messageDataToConsider, rssiByteValue, erasures=None):
         loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(messageDataToConsider,
@@ -528,45 +474,48 @@ class LoraRadioDataHandler(object):
             LoraRadioDataHandler.WiRocLogger.error("LoraRadioDataHandler::_GetPunchReDCoSMessageWithErasures() No erasures found so could not decode")
             return None
 
-    # def _GetPunchMessage(self, erasures=None):
-    #     messageTypeToTry = LoraRadioMessageRS.MessageTypeSIPunch
-    #     expectedMessageLength = LoraRadioMessageRS.MessageLengths[messageTypeToTry]
-    #     if len(self.DataReceived) < expectedMessageLength + self.RSSIByteCount:
-    #         return None
-    #     if erasures is None:
-    #         erasures = []
-    #
-    #     messageDataToConsider = self.DataReceived[0:expectedMessageLength]
-    #     messageDataToConsider[LoraRadioMessageRS.H] = (messageDataToConsider[LoraRadioMessageRS.H] & ~LoraRadioMessagePunchRS.MessageTypeBitMask) | messageTypeToTry
-    #     rssiByteValue = self.DataReceived[expectedMessageLength] if self.RSSIByteCount == 1 else None
-    #
-    #     if RSCoderLora.check(messageDataToConsider):
-    #         # everything checks out, message should be correct
-    #         loraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(messageDataToConsider, rssiByte=rssiByteValue)
-    #         self._CacheMessage(loraMsg)
-    #         self._removeBytesFromDataReceived(expectedMessageLength+self.RSSIByteCount)
-    #         return loraMsg
-    #     else:
-    #         try:
-    #             correctedData = RSCoderLora.decode(messageDataToConsider)
-    #
-    #             if RSCoderLora.check(correctedData):
-    #                 LoraRadioDataHandler.WiRocLogger.info(
-    #                     "LoraRadioDataHandler::_GetPunchMessage() Decoded, corrected data correctly it seems")
-    #                 loraPunchMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(correctedData, rssiByte=rssiByteValue)
-    #                 self._CacheMessage(loraPunchMsg)
-    #                 self._removeBytesFromDataReceived(expectedMessageLength + self.RSSIByteCount)
-    #                 return loraPunchMsg
-    #             else:
-    #                 LoraRadioDataHandler.WiRocLogger.info(
-    #                     "LoraRadioDataHandler::_GetPunchMessage() Could not decode correctly, try with erasures next")
-    #                 loraPunchMsg = self._GetPunchMessageWithErasures(messageDataToConsider, rssiByteValue, erasures=erasures)
-    #                 return loraPunchMsg
-    #         except Exception as err:
-    #             LoraRadioDataHandler.WiRocLogger.error(
-    #                 "LoraRadioDataHandler::GetPunchMessage() RS decoding failed with exception: " + str(err))
-    #             loraPunchMsg = self._GetPunchMessageWithErasures(messageDataToConsider, rssiByteValue, erasures=erasures)
-    #             return loraPunchMsg
+    def _GetAckUsingReDCoSDecoding(self, messageDataToConsider, rssiByteValue):
+        loraMsgWithErrors = LoraRadioMessageCreator.GetAckMessageByFullMessageData(messageDataToConsider, rssiByteValue)
+        alts, fixedValues, fixedErasures = self._GetAckMessageAlternatives(loraMsgWithErrors)
+        lengthOfDataThatRSCalculatedOverWithoutRSCode = len(
+            loraMsgWithErrors.GetPayloadByteArray() + loraMsgWithErrors.GetHeaderData()) - len(fixedValues) - len(fixedErasures)
+
+        erasuresCombinationIterator = self._GetReDCoSErasureCombinations(loraMsgWithErrors, fixedValues, fixedErasures, 0)
+        erasuresCombinationList = list(erasuresCombinationIterator)
+
+        global createDecodeAck
+
+        def createDecodeAck(innerCorruptedMessageData):
+            global decodeAck
+
+            def decodeAck(innerErasuresCombination):
+                try:
+                    res2 = RSCoderLora.decode(innerCorruptedMessageData, innerErasuresCombination)
+                except Exception as ex:
+                    res2 = None
+                return res2
+
+            return decodeAck
+
+        for startMessageDataComboToTry in alts:
+            print("alternative: " + str(Utils.GetDataInHex(startMessageDataComboToTry, logging.DEBUG)))
+            theDecodeFunction = createDecodeAck(startMessageDataComboToTry[0:])
+            with Pool(5) as p:
+                print(erasuresCombinationList)
+                res = p.map(theDecodeFunction, erasuresCombinationList)
+                messageIDOfLastMessage = SettingsClass.GetMessageIDOfLastLoraMessageSent()
+                print("Last message id: " + Utils.GetDataInHex(messageIDOfLastMessage if messageIDOfLastMessage is not None else "", logging.DEBUG))
+                for decoded in res:
+                    if decoded is None:
+                        continue
+                    #print(Utils.GetDataInHex(decoded, logging.DEBUG))
+                    print("Decoded: " + Utils.GetDataInHex(decoded, logging.DEBUG))
+                    theMessageIDInTheAckMessage = decoded[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1+1]
+                    print("Ack message id: " + Utils.GetDataInHex(theMessageIDInTheAckMessage, logging.DEBUG))
+                    if theMessageIDInTheAckMessage == messageIDOfLastMessage:
+                        LoraRadioDataHandler.WiRocLogger.info("LoraRadioDataHandler::_GetAckUsingReDCoSDecoding() Ack message id matches last message sent, return message")
+                        return LoraRadioMessageCreator.GetAckMessageByFullMessageData(decoded)
+        return None
 
     def _GetPunchUsingReDCoSDecoding(self, messageDataToConsider, rssiByteValue):
         loraMsgWithErrors = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(messageDataToConsider, rssiByteValue)
@@ -604,7 +553,6 @@ class LoraRadioDataHandler(object):
                     shake = hashlib.shake_128()
                     shake.update(decoded[1:])
                     theCRCHash = shake.digest(2)
-                    print(Utils.GetDataInHex(theCRCHash, logging.DEBUG))
                     if theCRCHash in crcDictionary:
                         crcDictionary[theCRCHash] += 1
                     else:
@@ -751,7 +699,7 @@ class LoraRadioDataHandler(object):
             erasures = []
 
         messageDataToConsider = LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(self.DataReceived[0:expectedMessageLength])
-        messageDataToConsider[LoraRadioMessageRS.H] = (messageDataToConsider[LoraRadioMessageRS.H] & ~LoraRadioMessagePunchRS.MessageTypeBitMask) | messageTypeToTry
+        messageDataToConsider[LoraRadioMessageRS.H] = (messageDataToConsider[LoraRadioMessageRS.H] & ~LoraRadioMessageRS.MessageTypeBitMask) | messageTypeToTry
         rssiByteValue = self.DataReceived[expectedMessageLength] if self.RSSIByteCount == 1 else None
 
         messageDataToConsiderMinusCRC = messageDataToConsider[:-LoraRadioMessagePunchReDCoSRS.NoOfCRCBytes]
@@ -782,44 +730,6 @@ class LoraRadioDataHandler(object):
                     return loraPunchMsg2
                 else:
                     return loraPunchMsg
-
-    # def _GetPunchDoubleMessageWithErasures(self, messageDataToConsider, rssiByteValue, erasures=None):
-    #     loraMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(messageDataToConsider, rssiByte=rssiByteValue)
-    #     erasures.extend(self._FindPunchDoubleErasures(loraMsg))
-    #     if len(erasures) > 0:
-    #         try:
-    #             erasuresToUse = list(set(erasures))
-    #             if len(erasuresToUse) >= LoraRadioMessagePunchDoubleRS.NoOfECCBytes:
-    #                 erasuresToUse = erasuresToUse[0:LoraRadioMessagePunchRS.NoOfECCBytes]
-    #             elif len(erasuresToUse) % 2 != 0:
-    #                 # Odd number
-    #                 numberOfErasuresToUse = len(erasuresToUse) - 1
-    #                 erasuresToUse = erasuresToUse[0:numberOfErasuresToUse]
-    #
-    #             LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetPunchDoubleMessageWithErasures() ErasuresToUse: " + str(erasuresToUse) + " ")
-    #             correctedData2 = RSCoderLora.decodeLong(messageDataToConsider, erasuresToUse)
-    #
-    #             if not RSCoderLora.checkLong(correctedData2):
-    #                 # for some reason sometimes decode just returns the corrupted message with no change
-    #                 # and no exception thrown. So check the decoded message to make sure we don't return
-    #                 # a message that is clearly wrong
-    #                 LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetPunchDoubleMessageWithErasures() Could not decode with erasures")
-    #                 return None
-    #             loraMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(correctedData2,
-    #                                                                                rssiByte=rssiByteValue)
-    #             loraPunchMsg1, loraPunchMsg2 = self._GetPunchTupleFromPunchDouble(loraMsg)
-    #             # Cache individual messages but remove the whole double message from data received
-    #             self._CacheMessage(loraPunchMsg1)
-    #             self._CacheMessage(loraPunchMsg2)
-    #             self._removeBytesFromDataReceived(len(messageDataToConsider) + self.RSSIByteCount)
-    #             return loraMsg
-    #         except Exception as err2:
-    #             LoraRadioDataHandler.WiRocLogger.error("LoraRadioDataHandler::_GetPunchDoubleMessageWithErasures() RS decoding failed also with erasures with exception: " + str(err2))
-    #             return None
-    #     else:
-    #         LoraRadioDataHandler.WiRocLogger.error(
-    #             "LoraRadioDataHandler::_GetPunchDoubleMessageWithErasures() No erasures found so could not decode")
-    #         return None
 
     def _GetPunchDoubleReDCoSMessageWithErasures(self, messageDataToConsider, rssiByteValue, erasures=None):
         loraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(messageDataToConsider, rssiByte=rssiByteValue)
@@ -856,60 +766,12 @@ class LoraRadioDataHandler(object):
                 "LoraRadioDataHandler::_GetPunchDoubleMessageWithErasures() No erasures found so could not decode")
             return None
 
-    # def _GetPunchDoubleMessage(self, erasures=None):
-    #     messageTypeToTry = LoraRadioMessageRS.MessageTypeSIPunchDouble
-    #     expectedMessageLength = LoraRadioMessageRS.MessageLengths[messageTypeToTry]
-    #     if len(self.DataReceived) < expectedMessageLength + self.RSSIByteCount:
-    #         return None
-    #     if erasures is None:
-    #         erasures = []
-    #     messageDataToConsider = self.DataReceived[0:expectedMessageLength]
-    #     messageDataToConsider[LoraRadioMessageRS.H] = (messageDataToConsider[LoraRadioMessageRS.H] & ~LoraRadioMessageRS.MessageTypeBitMask) | messageTypeToTry
-    #     rssiByteValue = self.DataReceived[expectedMessageLength] if self.RSSIByteCount == 1 else None
-    #
-    #     if RSCoderLora.checkLong(messageDataToConsider):
-    #         # everything checks out, message should be correct
-    #         loraDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(messageDataToConsider,
-    #                                                                            rssiByte=rssiByteValue)
-    #         loraPunchMsg1, loraPunchMsg2 = self._GetPunchTupleFromPunchDouble(loraDoubleMsg)
-    #         # Cache individual messages but remove the whole double message from data received
-    #         self._CacheMessage(loraPunchMsg1)
-    #         self._CacheMessage(loraPunchMsg2)
-    #         self._removeBytesFromDataReceived(expectedMessageLength + self.RSSIByteCount)
-    #         return loraDoubleMsg
-    #     else:
-    #         try:
-    #             correctedData = RSCoderLora.decodeLong(messageDataToConsider)
-    #
-    #             if RSCoderLora.checkLong(correctedData):
-    #                 LoraRadioDataHandler.WiRocLogger.info(
-    #                     "LoraRadioDataHandler::_GetPunchDoubleMessage() Decoded, corrected data correctly it seems")
-    #                 loraPunchMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(correctedData,
-    #                                                                                         rssiByte=rssiByteValue)
-    #                 loraPunchMsg1, loraPunchMsg2 = self._GetPunchTupleFromPunchDouble(loraPunchMsg)
-    #                 # Cache individual messages but remove the whole double message from data received
-    #                 self._CacheMessage(loraPunchMsg1)
-    #                 self._CacheMessage(loraPunchMsg2)
-    #                 self._removeBytesFromDataReceived(expectedMessageLength + self.RSSIByteCount)
-    #                 return loraPunchMsg
-    #             else:
-    #                 LoraRadioDataHandler.WiRocLogger.info(
-    #                     "LoraRadioDataHandler::_GetPunchDoubleMessage() Could not decode correctly, try with erasures next")
-    #                 loraPunchMsg = self._GetPunchDoubleMessageWithErasures(messageDataToConsider, rssiByteValue, erasures=erasures)
-    #                 return loraPunchMsg
-    #         except Exception as err:
-    #             LoraRadioDataHandler.WiRocLogger.error(
-    #                 "LoraRadioDataHandler::_GetPunchDoubleMessage() RS decoding failed with exception: " + str(err))
-    #             loraPunchMsg = self._GetPunchDoubleMessageWithErasures(messageDataToConsider, rssiByteValue, erasures=erasures)
-    #             return loraPunchMsg
-
-    def _GetPunchDoubleReDCoSMessage(self, erasures=None):
+    def _GetPunchDoubleReDCoSMessage(self):
         messageTypeToTry = LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS
         expectedMessageLength = LoraRadioMessageRS.MessageLengths[messageTypeToTry]
         if len(self.DataReceived) < expectedMessageLength + self.RSSIByteCount:
             return None
-        if erasures is None:
-            erasures = []
+        erasures = []
 
         messageDataToConsider = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(self.DataReceived[0:expectedMessageLength])
         messageDataToConsider[LoraRadioMessageRS.H] = (messageDataToConsider[LoraRadioMessageRS.H] & ~LoraRadioMessageRS.MessageTypeBitMask) | messageTypeToTry
@@ -961,7 +823,16 @@ class LoraRadioDataHandler(object):
 
                         # The alternatives could not be decoded without ReDCoS so try using ReDCos to decode the message
                         loraPunchMsg2 = self._GetPunchDoubleUsingReDCoSDecoding(messageDataToConsider, rssiByteValue)
-                        return loraPunchMsg2
+
+                        if loraPunchMsg2 is None:
+                            loraDoubleMsgWithErrors = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(messageDataToConsider, rssiByte=rssiByteValue)
+                            if self._IsSameDoublePunchMessage(self.LastDoublePunchMessage, loraDoubleMsgWithErrors):
+                                LoraRadioDataHandler.WiRocLogger.info(
+                                    "LoraRadioDataHandler::_GetPunchDoubleReDCoSMessage() Same message as last received, use last received instead")
+                                print("Same as last message")
+                                return self.LastDoublePunchMessage
+                        else:
+                            return loraPunchMsg2
                     else:
                         LoraRadioDataHandler.WiRocLogger.info(
                             "LoraRadioDataHandler::_GetPunchDoubleReDCoSMessage() DECODED decoded with erasures")
@@ -990,19 +861,7 @@ class LoraRadioDataHandler(object):
             self._removeBytesFromDataReceived(expectedMessageLength + self.RSSIByteCount)
             return loraAckMsg
         else:
-            try:
-                correctedData = RSCoderLora.decode(messageDataToConsider)
-                if RSCoderLora.check(correctedData):
-                    LoraRadioDataHandler.WiRocLogger.info(
-                        "LoraRadioDataHandler::_GetAckMessage() Decoded, corrected data correctly it seems")
-                    loraAckMsg = LoraRadioMessageCreator.GetAckMessageByFullMessageData(correctedData, rssiByte=rssiByteValue)
-                    self._removeBytesFromDataReceived(expectedMessageLength + self.RSSIByteCount)
-                    return loraAckMsg
-                else:
-                    LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetAckMessage() Could not decode correctly")
-            except Exception as err:
-                LoraRadioDataHandler.WiRocLogger.error("LoraRadioDataHandler::_GetAckMessage() RS decoding failed with exception: " + str(err))
-
+            # Check if the ID matches, in that case we assume ECC is wrong
             scrambledAckMsg = LoraRadioMessageCreator.GetAckMessageByFullMessageData(messageDataToConsider, rssiByte=rssiByteValue)
             messageIdAcked = scrambledAckMsg.GetMessageIDThatIsAcked()
             if messageIdAcked == SettingsClass.GetMessageIDOfLastLoraMessageSent():
@@ -1010,6 +869,28 @@ class LoraRadioDataHandler(object):
                 scrambledAckMsg.GenerateAndAddRSCode()
                 LoraRadioDataHandler.WiRocLogger.info("LoraRadioDataHandler::_GetAckMessage() MessageID matches last sent message so must be ECC that is wrong.")
                 return scrambledAckMsg
+
+            # Try normal RS decode
+            correctedData = None
+            try:
+                correctedData = RSCoderLora.decode(messageDataToConsider)
+            except Exception as err:
+                LoraRadioDataHandler.WiRocLogger.error("LoraRadioDataHandler::_GetAckMessage() RS decoding failed with exception: " + str(err))
+
+            if correctedData is not None and RSCoderLora.check(correctedData):
+                LoraRadioDataHandler.WiRocLogger.info(
+                    "LoraRadioDataHandler::_GetAckMessage() Decoded, corrected data correctly it seems")
+                loraAckMsg = LoraRadioMessageCreator.GetAckMessageByFullMessageData(correctedData, rssiByte=rssiByteValue)
+                self._removeBytesFromDataReceived(expectedMessageLength + self.RSSIByteCount)
+                return loraAckMsg
+            else:
+                # Try with REDCOS similar algo
+                loraAckMsg = self._GetAckUsingReDCoSDecoding(messageDataToConsider, rssiByteValue)
+                if loraAckMsg is not None:
+                    LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetAckMessage() Decoded with REDCOS*")
+                    return loraAckMsg
+                else:
+                    LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetAckMessage() Could not decode correctly")
 
             LoraRadioDataHandler.WiRocLogger.error("LoraRadioDataHandler::_GetAckMessage() No message could be decoded")
             return None
@@ -1127,17 +1008,14 @@ class LoraRadioDataHandler(object):
             elif messageType == LoraRadioMessageRS.MessageTypeSIPunchReDCoS:
                 loraPunchMessage = self._GetPunchReDCoSMessage()
                 if loraPunchMessage is not None:
-                    self._CacheMessage(loraPunchMessage)
+                    self._CachePunchMessage(loraPunchMessage)
                     messageLength = LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchReDCoS]
                     self._removeBytesFromDataReceived(messageLength + self.RSSIByteCount)
                     return loraPunchMessage
             elif messageType == LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS:
                 loraPunchDoubleMessage = self._GetPunchDoubleReDCoSMessage()
                 if loraPunchDoubleMessage is not None:
-                    loraPunchMsg1, loraPunchMsg2 = self._GetPunchReDCoSTupleFromPunchDouble(loraPunchDoubleMessage)
-                    # Cache individual messages but remove the whole double message from data received
-                    self._CacheMessage(loraPunchMsg1)
-                    self._CacheMessage(loraPunchMsg2)
+                    self._CacheDoublePunchMessage(loraPunchDoubleMessage)
                     messageLength = LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS]
                     self._removeBytesFromDataReceived(messageLength + self.RSSIByteCount)
                     return loraPunchDoubleMessage

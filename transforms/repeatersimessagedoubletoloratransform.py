@@ -1,8 +1,7 @@
 from battery import Battery
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
-from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessagePunchDoubleRS, \
-    LoraRadioMessagePunchDoubleReDCoSRS
+from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessagePunchDoubleReDCoSRS
 from settings.settings import SettingsClass
 import logging
 
