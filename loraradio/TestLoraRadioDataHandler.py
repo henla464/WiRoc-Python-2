@@ -221,9 +221,18 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     Case17_StatusMsg_Corrupted_AirOrder_WithRS =              bytearray([0xc4, 0xcd, 0x40, 0x04, 0xd8, 0x20, 0x17, 0x07, 0xd5, 0x6d, 0x89, 0xbd, 0x6a, 0x50])
     # --
 
-# Status Prev:   04450000b0024700d76d89bd6a50
-    # Status Sent:   04450000b0024700d76d89bd6a50
-    # Status rec:    c4cd4004d8201707d56d89bd6a50
+    # ---
+    Case18_PunchMsg_Previous_AirOrder_WithRS =               bytearray([0x88, 0xc3, 0x0f, 0x42, 0x3f, 0xff, 0x7d, 0x88, 0x0f, 0x42, 0x00, 0x3f, 0x7d, 0x89, 0x41, 0x14, 0x17, 0x47, 0xff, 0xcb, 0x48, 0x58, 0x00, 0xd1, 0xc7, 0x41, 0xfa])
+    Case18_PunchMsg_Correct_AirOrder_WithRS =                bytearray([0x87, 0x27, 0x0f, 0x42, 0xff, 0x3f, 0x7d, 0x9f, 0x00, 0xc0, 0xaf, 0x41, 0x3c, 0xfa, 0xa1])
+    Case18_PunchMsg_Corrupted_AirOrder_WithRS =              bytearray([0x87, 0x36, 0x0f, 0x42, 0xfe, 0x3f, 0x7d, 0x9f, 0x00, 0xc0, 0xaf, 0x41, 0x7c, 0xba, 0xe5])
+    # --
+
+    # ---
+    Case19_PunchMsg_Previous_AirOrder_WithRS =               bytearray([0x87, 0x7e, 0x0f, 0x42, 0xff, 0x3d, 0xa0, 0x16, 0x02, 0x19, 0x25, 0x41, 0x27, 0xd6, 0xa8])
+    Case19_PunchMsg_Correct_AirOrder_WithRS =                bytearray([0x87, 0x7e, 0x0f, 0x42, 0xff, 0x3f, 0x80, 0x16, 0x00, 0x19, 0x25, 0x41, 0x37, 0xd6, 0xa8])
+    Case19_PunchMsg_Corrupted_AirOrder_WithRS =              bytearray([0xc7, 0x54, 0x63, 0x40, 0xe9, 0x1d, 0xa0, 0x17, 0x03, 0x19, 0x25, 0x41, 0x37, 0xd6, 0xa8])
+    # --
+
 
     PunchMsg_Correct_HighestTHTL =                    bytearray(bytes([0x87, 0x1F, 0x00, 0x00, 0x00, 0xFF, 0x00, 0XA8, 0xC0, 0x69, 0xe7, 0x82, 0x03, 0xbf, 0x2b]))
     StatusMsg_Correct_WithRS =                        bytearray(bytes([0x04, 0x60, 0x10, 0x00, 0xd4, 0x12, 0x43, 0x24, 0x6a, 0x0c, 0x47, 0x32, 0x63, 0xa5]))
@@ -719,7 +728,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("Corrupted message: " + Utils.GetDataInHex(LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case9_PunchMsg_Corrupted_AirOrder_WithRS[:]), logging.DEBUG))
         print("Correct message:   " + Utils.GetDataInHex(LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case9_PunchMsg_Correct_AirOrder_WithRS), logging.DEBUG))
         self.assertIsNotNone(punchMsg)
-        self.assertEqual(punchMsg.GetByteArray(), LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case9_PunchMsg_Correct_AirOrder_WithRS))
+        # Ignore the CRC since they were sent wrong, and are not corrected
+        self.assertEqual(punchMsg.GetByteArray()[:-2], LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case9_PunchMsg_Correct_AirOrder_WithRS)[:-2])
         print("=== END test_Case9_GetPunchMessage ===")
 
     def test_Case10_GetPunchMessage(self):
@@ -774,7 +784,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("Corrupted message: " + Utils.GetDataInHex(LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case12_PunchMsg_Corrupted_AirOrder_WithRS[:]), logging.DEBUG))
         print("Correct message:   " + Utils.GetDataInHex(LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case12_PunchMsg_Correct_AirOrder_WithRS), logging.DEBUG))
         self.assertIsNotNone(punchMsg)
-        self.assertEqual(punchMsg.GetByteArray(),LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case12_PunchMsg_Correct_AirOrder_WithRS))
+        self.assertEqual(punchMsg.GetByteArray()[:-2],LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case12_PunchMsg_Correct_AirOrder_WithRS)[:-2])
         print("=== END test_Case12_GetPunchMessage ===")
 
     def test_Case13_GetPunchMessage(self):
@@ -836,7 +846,6 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(ackMsg.GetByteArray(), TestLoraRadioDataHandler.Case16_AckMsg_Correct_AirOrder_WithRS)
         print("=== END test_Case16_GetAckMessage ===")
 
-
     def test_Case17_GetStatusMessage(self):
         print("============================================================================================== START test_Case17_GetStatusMessage ==============================================================================================")
         prevStatusMsgArr = TestLoraRadioDataHandler.Case17_StatusMsg_Previous_AirOrder_WithRS[:]
@@ -853,6 +862,45 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNotNone(statusMsg)
         self.assertEqual(statusMsg.GetByteArray(), TestLoraRadioDataHandler.Case17_StatusMsg_Correct_AirOrder_WithRS)
         print("=== END test_Case17_GetStatusMessage ===")
+
+    def test_Case18_GetPunchMessage(self):
+        print("============================================================================================== START test_Case18_GetPunchMessage ==============================================================================================")
+        deinterleaved = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case18_PunchMsg_Previous_AirOrder_WithRS[:])
+        prevMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(deinterleaved)
+        loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(prevMsg)
+        self.dataHandler._CachePunchMessage(loraPunchMsg1)
+        self.dataHandler._CachePunchMessage(loraPunchMsg2)
+        seconds = 9.4
+        self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
+
+        interleaved = TestLoraRadioDataHandler.Case18_PunchMsg_Corrupted_AirOrder_WithRS[:]
+        for i in range(0, len(interleaved)):
+            self.dataHandler.AddData(interleaved[i:i + 1])
+        punchMsg = self.dataHandler.GetMessage()
+        print("Corrupted message: " + Utils.GetDataInHex(LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case18_PunchMsg_Corrupted_AirOrder_WithRS[:]), logging.DEBUG))
+        print("Correct message:   " + Utils.GetDataInHex(LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case18_PunchMsg_Correct_AirOrder_WithRS), logging.DEBUG))
+        self.assertIsNotNone(punchMsg)
+        self.assertEqual(punchMsg.GetByteArray()[:-2], LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case18_PunchMsg_Correct_AirOrder_WithRS)[:-2])
+        print("=== END test_Case18_GetPunchMessage ===")
+
+    def test_Case19_GetPunchMessage(self):
+        print("============================================================================================== START test_Case19_GetPunchMessage ==============================================================================================")
+        interleaved1 = TestLoraRadioDataHandler.Case19_PunchMsg_Previous_AirOrder_WithRS[:]
+        for i in range(0, len(interleaved1)):
+            self.dataHandler.AddData(interleaved1[i:i + 1])
+        punchMsg1 = self.dataHandler.GetMessage()
+        self.assertEqual(punchMsg1.GetByteArray(), LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case19_PunchMsg_Correct_AirOrder_WithRS))
+
+        interleaved = TestLoraRadioDataHandler.Case19_PunchMsg_Corrupted_AirOrder_WithRS[:]
+        for i in range(0, len(interleaved)):
+            self.dataHandler.AddData(interleaved[i:i + 1])
+        punchMsg2 = self.dataHandler.GetMessage()
+        print("Corrupted message: " + Utils.GetDataInHex(LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case19_PunchMsg_Corrupted_AirOrder_WithRS[:]), logging.DEBUG))
+        print("Correct message:   " + Utils.GetDataInHex(LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case19_PunchMsg_Correct_AirOrder_WithRS[:]), logging.DEBUG))
+        print("Corrected message: " + Utils.GetDataInHex(punchMsg2.GetByteArray(), logging.DEBUG))
+        self.assertIsNotNone(punchMsg2)
+        self.assertEqual(punchMsg2.GetByteArray(), LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case19_PunchMsg_Correct_AirOrder_WithRS))
+        print("=== END test_Case19_GetPunchMessage ===")
 
     def test_FindPunchErasures(self):
         print("============================================================================================== START test_FindPunchErasures ==============================================================================================")
