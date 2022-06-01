@@ -71,10 +71,9 @@ class LoraSIMessageToLoraAckTransform(object):
                     return None
 
                 loraPunchMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(payloadData, rssiByte=None)
-                md5Hash = loraPunchMsg.GetHash()
-                loraAck = LoraRadioMessageCreator.GetAckMessage(md5Hash)
+                hash = loraPunchMsg.GetHash()
+                loraAck = LoraRadioMessageCreator.GetAckMessage(hash)
                 loraAck.SetAckRequested(msgSubBatch.AckReceivedFromReceiver)  # indicate ack received from receiver
                 loraAck.SetRepeater(False)  # indicate this ack comes from receiver
-                loraAck.GenerateAndAddRSCode()
                 return {"Data": (loraAck.GetByteArray(),), "MessageID": None}
         return None

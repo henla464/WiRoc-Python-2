@@ -201,18 +201,18 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     # --
 
     # ---
-    Case14_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0xff, 0x39, 0xd1, 0x53, 0x90, 0x51])
-    Case14_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0x05, 0xff, 0x31, 0x59, 0x53, 0x90, 0x51])
+    Case14_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0xff, 0x39, 0xff, 0x39, 0xff, 0x39])
+    Case14_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0x05, 0xff, 0x31, 0x77, 0x39, 0xff, 0x39])
     # --
 
     # ---
-    Case15_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0x5d, 0x04, 0x7a, 0x8d, 0x1d, 0x36])
-    Case15_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0xc5, 0x5d, 0x40, 0x7e, 0x89, 0x1d, 0x36])
+    Case15_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0x5d, 0x04, 0x5d, 0x04, 0x5d, 0x04])
+    Case15_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0xc5, 0x5d, 0x40, 0x59, 0x00, 0x5d, 0x04])
     # --
 
     # ---
-    Case16_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0x57, 0xb4, 0x5d, 0x6a, 0xc4, 0x95])
-    Case16_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0xe5, 0x51, 0x92, 0x59, 0x6e, 0xc4, 0x95])
+    Case16_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0x57, 0xb4, 0x57, 0xb4, 0x57, 0xb4])
+    Case16_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0xe5, 0x51, 0x92, 0x53, 0xB0, 0x57, 0xB4])
     # --
 
     # ---
@@ -233,6 +233,76 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     Case19_PunchMsg_Corrupted_AirOrder_WithRS =              bytearray([0xc7, 0x54, 0x63, 0x40, 0xe9, 0x1d, 0xa0, 0x17, 0x03, 0x19, 0x25, 0x41, 0x37, 0xd6, 0xa8])
     # --
 
+    # ---
+    Case20_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0xf4, 0x54, 0xf4, 0x54, 0xf4, 0x54])
+    Case20_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0x85, 0xF6, 0x56, 0xF6, 0xD4, 0x0A, 0x3E])
+    # --
+
+    # ---
+    Case21_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0x8d, 0xa5, 0x8d, 0xa5, 0x8d, 0xa5])
+    Case21_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0xc5, 0x45, 0x67, 0x61, 0x87, 0x7F, 0x2B])
+    # -- many bit error
+
+    # ---
+    Case22_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0x3b, 0xb2, 0x3b, 0xb2, 0x3b, 0xb2])
+    Case22_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0x85, 0xBB, 0x32, 0x3B, 0xF2, 0x7F, 0xF2])
+    # --
+
+    # ---
+    Case23_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0x29, 0xc2, 0x29, 0xc2, 0x29, 0xc2])
+    Case23_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0x85, 0x2F, 0x90, 0x2D, 0x43, 0x29, 0xCA])
+    # --
+
+    # ---
+    Case24_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0xf7, 0x98, 0xf7, 0x98, 0xf7, 0x98])
+    Case24_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0xc5, 0xF7, 0x9C, 0xFB, 0x84, 0xE6, 0x00])
+    # --
+
+#               IN HEX           HEADER   CRC0     CRC1     ECC0     ECC1     ECC2     ECC3
+    # Ack sent:     85f4541ae4974c	10000101 11110100 01010100 00011010 11100100 10010111 01001100
+    # Ack received: 85f65618646926	10000101 11110110 01010110 00011000 01100100 01101001 00100110
+    # Wrong bits       x x xx xxxx                  x        x        x  x        xxxxxxx   xx x x
+    #
+    # Total no of bit errors: 15
+    # Majority voting would give 2 bit error for the two bytes
+    # Best selected bytes: 2 bit error
+    # Best selected 4bit groups: 1 bit error
+    #
+    # Ack sent:     858da51782764e	10000101 10001101 10100101 00010111 10000010 01110110 01001110
+    # Ack received: c54567fba084c1	11000101 01000101 01100111 11111011 10100000 10000100 11000001
+    # Wrong bits:   x xxxxxxxxxxxx    x       xx  x    xx    x  xxx xx     x   x  xxxx  x  x   xxx
+    #                                         33212110 21101130
+    #
+    # Total no of bit errors: 22 (plus 1 in header)
+    # Majority voting would give 6 bit error for the two bytes
+    # Best selected bytes: 5 bit error
+    # Best selected 4-bit: 5 bit error
+    #
+    # Ack sent:     853bb2c84b9916	10000101 00111011 10110010 11001000 01001011 10011001 00010110
+    # Ack received: 85bb32c80bdd56	10000101 10111011 00110010 11001000 00001011 11011101 01010110
+    # Wrong bits:     x x   x xxx             x        x                  x        x   x    x
+    #
+    # Total no of bit errors: 6
+    # Majority voting would give 1 bit error for the two bytes
+    # Best selected bytes: 1 bit error
+    # Best selected 4-bit: 1 bit error
+    #
+    #
+    # Ack sent:     8529c29a348242	10000101 00101001 11000010 10011010 00110100 10000010 01000010
+    # Ack received: 852f909eb5824a	10000101 00101111 10010000 10011110 10110101 10000010 01001010
+    # Wrong bits:      xxx xxx   x                 xx   x x  x       x   x      x              x
+    #
+    # Total no of bit errors: 9
+    # Majority voting would give 1 bit error for the two bytes
+    # Best selected bytes: 1 bit error
+    # Best selected 4-bit: 1 bit error
+    #
+    #
+    # Ack sent:     85f798cf6b5b15	10000101 11110111 10011000 11001111 01101011 01011011 00010101
+    # Ack received: c5f79cc3774a8d	11000101 11110111 10011100 11000011 01110111 01001010 10001101
+    # Wrong bits:   x    x xxxxxxx    x                     x       xx      xxx      x   x x  xx
+    #
+    # Total no of
 
     PunchMsg_Correct_HighestTHTL =                    bytearray(bytes([0x87, 0x1F, 0x00, 0x00, 0x00, 0xFF, 0x00, 0XA8, 0xC0, 0x69, 0xe7, 0x82, 0x03, 0xbf, 0x2b]))
     StatusMsg_Correct_WithRS =                        bytearray(bytes([0x04, 0x60, 0x10, 0x00, 0xd4, 0x12, 0x43, 0x24, 0x6a, 0x0c, 0x47, 0x32, 0x63, 0xa5]))
@@ -817,7 +887,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("Corrupted message: " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case14_AckMsg_Corrupted_AirOrder_WithRS[:], logging.DEBUG))
         print("Correct message:   " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case14_AckMsg_Correct_AirOrder_WithRS, logging.DEBUG))
         self.assertIsNotNone(ackMsg)
-        self.assertEqual(ackMsg.GetByteArray(), TestLoraRadioDataHandler.Case14_AckMsg_Correct_AirOrder_WithRS)
+        # Header is wrong, ignore that
+        self.assertEqual(ackMsg.GetByteArray()[1:], TestLoraRadioDataHandler.Case14_AckMsg_Correct_AirOrder_WithRS[1:])
         print("=== END test_Case14_GetAckMessage ===")
 
     def test_Case15_GetAckMessage(self):
@@ -843,7 +914,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("Corrupted message: " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case16_AckMsg_Corrupted_AirOrder_WithRS[:], logging.DEBUG))
         print("Correct message:   " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case16_AckMsg_Correct_AirOrder_WithRS, logging.DEBUG))
         self.assertIsNotNone(ackMsg)
-        self.assertEqual(ackMsg.GetByteArray(), TestLoraRadioDataHandler.Case16_AckMsg_Correct_AirOrder_WithRS)
+        self.assertEqual(ackMsg.GetByteArray()[1:], TestLoraRadioDataHandler.Case16_AckMsg_Correct_AirOrder_WithRS[1:])
         print("=== END test_Case16_GetAckMessage ===")
 
     def test_Case17_GetStatusMessage(self):
@@ -901,6 +972,76 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNotNone(punchMsg2)
         self.assertEqual(punchMsg2.GetByteArray(), LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case19_PunchMsg_Correct_AirOrder_WithRS))
         print("=== END test_Case19_GetPunchMessage ===")
+
+    def test_Case20_GetAckMessage(self):
+        print("============================================================================================== START test_Case20_GetAckMessage ==============================================================================================")
+        SettingsClass.SetMessageIDOfLastLoraMessageSent(
+            TestLoraRadioDataHandler.Case20_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1 + 1])
+        recAckMsg = TestLoraRadioDataHandler.Case20_AckMsg_Corrupted_AirOrder_WithRS[:]
+        for i in range(0, len(recAckMsg)):
+            self.dataHandler.AddData(recAckMsg[i:i + 1])
+        ackMsg = self.dataHandler.GetMessage()
+        print("Corrupted message: " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case20_AckMsg_Corrupted_AirOrder_WithRS[:], logging.DEBUG))
+        print("Correct message:   " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case20_AckMsg_Correct_AirOrder_WithRS, logging.DEBUG))
+        self.assertIsNotNone(ackMsg)
+        self.assertEqual(ackMsg.GetByteArray(), TestLoraRadioDataHandler.Case20_AckMsg_Correct_AirOrder_WithRS)
+        print("=== END test_Case20_GetAckMessage ===")
+
+    def test_Case21_GetAckMessage(self):
+        print("============================================================================================== START test_Case21_GetAckMessage ==============================================================================================")
+        SettingsClass.SetMessageIDOfLastLoraMessageSent(
+            TestLoraRadioDataHandler.Case21_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1 + 1])
+        recAckMsg = TestLoraRadioDataHandler.Case21_AckMsg_Corrupted_AirOrder_WithRS[:]
+        for i in range(0, len(recAckMsg)):
+            self.dataHandler.AddData(recAckMsg[i:i + 1])
+        ackMsg = self.dataHandler.GetMessage()
+        print("Corrupted message: " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case21_AckMsg_Corrupted_AirOrder_WithRS[:], logging.DEBUG))
+        print("Correct message:   " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case21_AckMsg_Correct_AirOrder_WithRS, logging.DEBUG))
+        # this is too wrong, too many bit errors
+        self.assertIsNone(ackMsg)
+        print("=== END test_Case21_GetAckMessage ===")
+
+    def test_Case22_GetAckMessage(self):
+        print("============================================================================================== START test_Case22_GetAckMessage ==============================================================================================")
+        SettingsClass.SetMessageIDOfLastLoraMessageSent(
+            TestLoraRadioDataHandler.Case22_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1 + 1])
+        recAckMsg = TestLoraRadioDataHandler.Case22_AckMsg_Corrupted_AirOrder_WithRS[:]
+        for i in range(0, len(recAckMsg)):
+            self.dataHandler.AddData(recAckMsg[i:i + 1])
+        ackMsg = self.dataHandler.GetMessage()
+        print("Corrupted message: " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case22_AckMsg_Corrupted_AirOrder_WithRS[:], logging.DEBUG))
+        print("Correct message:   " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case22_AckMsg_Correct_AirOrder_WithRS, logging.DEBUG))
+        self.assertIsNotNone(ackMsg)
+        self.assertEqual(ackMsg.GetByteArray()[1:], TestLoraRadioDataHandler.Case22_AckMsg_Correct_AirOrder_WithRS[1:])
+        print("=== END test_Case22_GetAckMessage ===")
+
+    def test_Case23_GetAckMessage(self):
+        print("============================================================================================== START test_Case23_GetAckMessage ==============================================================================================")
+        SettingsClass.SetMessageIDOfLastLoraMessageSent(
+            TestLoraRadioDataHandler.Case23_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1 + 1])
+        recAckMsg = TestLoraRadioDataHandler.Case23_AckMsg_Corrupted_AirOrder_WithRS[:]
+        for i in range(0, len(recAckMsg)):
+            self.dataHandler.AddData(recAckMsg[i:i + 1])
+        ackMsg = self.dataHandler.GetMessage()
+        print("Corrupted message: " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case23_AckMsg_Corrupted_AirOrder_WithRS[:], logging.DEBUG))
+        print("Correct message:   " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case23_AckMsg_Correct_AirOrder_WithRS, logging.DEBUG))
+        self.assertIsNotNone(ackMsg)
+        self.assertEqual(ackMsg.GetByteArray(), TestLoraRadioDataHandler.Case23_AckMsg_Correct_AirOrder_WithRS)
+        print("=== END test_Case23_GetAckMessage ===")
+
+    def test_Case24_GetAckMessage(self):
+        print("============================================================================================== START test_Case24_GetAckMessage ==============================================================================================")
+        SettingsClass.SetMessageIDOfLastLoraMessageSent(
+            TestLoraRadioDataHandler.Case24_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1 + 1])
+        recAckMsg = TestLoraRadioDataHandler.Case24_AckMsg_Corrupted_AirOrder_WithRS[:]
+        for i in range(0, len(recAckMsg)):
+            self.dataHandler.AddData(recAckMsg[i:i + 1])
+        ackMsg = self.dataHandler.GetMessage()
+        print("Corrupted message: " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case24_AckMsg_Corrupted_AirOrder_WithRS[:], logging.DEBUG))
+        print("Correct message:   " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case24_AckMsg_Correct_AirOrder_WithRS, logging.DEBUG))
+        self.assertIsNotNone(ackMsg)
+        self.assertEqual(ackMsg.GetByteArray(), TestLoraRadioDataHandler.Case24_AckMsg_Correct_AirOrder_WithRS)
+        print("=== END test_Case24_GetAckMessage ===")
 
     def test_FindPunchErasures(self):
         print("============================================================================================== START test_FindPunchErasures ==============================================================================================")

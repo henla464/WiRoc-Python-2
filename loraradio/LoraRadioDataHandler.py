@@ -184,21 +184,6 @@ class LoraRadioDataHandler(object):
         listOfListOfErasurePositions = [list(x) for x in listOfTuplesOfErasurePositions]
         return listOfListOfErasurePositions
 
-    def _GetAckMessageAlternatives(self, loraMsg):
-        headers = [LoraRadioMessageRS.MessageTypeLoraAck, LoraRadioMessageRS.MessageTypeLoraAck | 0x80,
-                   LoraRadioMessageRS.MessageTypeLoraAck | 0x20, LoraRadioMessageRS.MessageTypeLoraAck | 0xa0]
-
-        fixedValues = [LoraRadioMessageRS.H]
-        possibilities = [None]*LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeLoraAck]
-        possibilities[LoraRadioMessageRS.H] = headers
-
-        print("possibilities: " + str(possibilities))
-        messageData = loraMsg.GetByteArray()
-        generatedMessages = self._GenerateMessageAlternatives([], possibilities, messageData)
-
-        fixedErasures = []
-        return generatedMessages, fixedValues, fixedErasures
-
     def _GetStatusMessageAlternatives(self, loraMsg):
             fixedValues = [LoraRadioMessageRS.H, LoraRadioMessageStatusRS.BT0, LoraRadioMessageStatusRS.BT1, LoraRadioMessageStatusRS.BT2,
                            LoraRadioMessageStatusRS.BT3, LoraRadioMessageStatusRS.BT4, LoraRadioMessageStatusRS.BT5,
@@ -552,49 +537,6 @@ class LoraRadioDataHandler(object):
         else:
             LoraRadioDataHandler.WiRocLogger.error("LoraRadioDataHandler::_GetPunchReDCoSMessageWithErasures() No erasures found so could not decode")
             return None
-
-    def _GetAckUsingReDCoSDecoding(self, messageDataToConsider, rssiByteValue):
-        loraMsgWithErrors = LoraRadioMessageCreator.GetAckMessageByFullMessageData(messageDataToConsider, rssiByteValue)
-        alts, fixedValues, fixedErasures = self._GetAckMessageAlternatives(loraMsgWithErrors)
-        lengthOfDataThatRSCalculatedOverWithoutRSCode = len(
-            loraMsgWithErrors.GetPayloadByteArray() + loraMsgWithErrors.GetHeaderData()) - len(fixedValues) - len(fixedErasures)
-
-        erasuresCombinationIterator = self._GetReDCoSErasureCombinations(loraMsgWithErrors, fixedValues, fixedErasures, 0)
-        erasuresCombinationList = list(erasuresCombinationIterator)
-
-        global createDecodeAck
-
-        def createDecodeAck(innerCorruptedMessageData):
-            global decodeAck
-
-            def decodeAck(innerErasuresCombination):
-                try:
-                    res2 = RSCoderLora.decode(innerCorruptedMessageData, innerErasuresCombination)
-                except Exception as ex:
-                    res2 = None
-                return res2
-
-            return decodeAck
-
-        for startMessageDataComboToTry in alts:
-            print("alternative: " + str(Utils.GetDataInHex(startMessageDataComboToTry, logging.DEBUG)))
-            theDecodeFunction = createDecodeAck(startMessageDataComboToTry[0:])
-            with Pool(5) as p:
-                print(erasuresCombinationList)
-                res = p.map(theDecodeFunction, erasuresCombinationList)
-                messageIDOfLastMessage = SettingsClass.GetMessageIDOfLastLoraMessageSent()
-                print("Last message id: " + Utils.GetDataInHex(messageIDOfLastMessage if messageIDOfLastMessage is not None else "", logging.DEBUG))
-                for decoded in res:
-                    if decoded is None:
-                        continue
-                    #print(Utils.GetDataInHex(decoded, logging.DEBUG))
-                    print("Decoded: " + Utils.GetDataInHex(decoded, logging.DEBUG))
-                    theMessageIDInTheAckMessage = decoded[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1+1]
-                    print("Ack message id: " + Utils.GetDataInHex(theMessageIDInTheAckMessage, logging.DEBUG))
-                    if theMessageIDInTheAckMessage == messageIDOfLastMessage:
-                        LoraRadioDataHandler.WiRocLogger.info("LoraRadioDataHandler::_GetAckUsingReDCoSDecoding() Ack message id matches last message sent, return message")
-                        return LoraRadioMessageCreator.GetAckMessageByFullMessageData(decoded)
-        return None
 
     def _GetPunchUsingReDCoSDecoding(self, messageDataToConsider, rssiByteValue):
         loraMsgWithErrors = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(messageDataToConsider, rssiByteValue)
@@ -955,49 +897,75 @@ class LoraRadioDataHandler(object):
             return None
 
         messageDataToConsider = self.DataReceived[0:expectedMessageLength]
-        messageDataToConsider[LoraRadioMessageRS.H] = (messageDataToConsider[LoraRadioMessageRS.H] & ~LoraRadioMessageRS.MessageTypeBitMask) | messageTypeToTry
+        headerByte = (messageDataToConsider[LoraRadioMessageRS.H] & ~LoraRadioMessageRS.MessageTypeBitMask) | messageTypeToTry
+        # Clear battery low, it is always 0 in Ack messages
+        headerByte = headerByte & 0xBF
+        messageDataToConsider[LoraRadioMessageRS.H] = headerByte
         LoraRadioDataHandler.WiRocLogger.debug(
             "LoraRadioDataHandler::_GetAckMessage() MessageDataToConsider: " + Utils.GetDataInHex(messageDataToConsider, logging.DEBUG))
         rssiByteValue = self.DataReceived[expectedMessageLength] if self.RSSIByteCount == 1 else None
 
-        if RSCoderLora.check(messageDataToConsider):
-            # everything checks out, message should be correct
-            loraAckMsg = LoraRadioMessageCreator.GetAckMessageByFullMessageData(messageDataToConsider, rssiByte=rssiByteValue)
-            return loraAckMsg
+        if (messageDataToConsider[LoraRadioMessageAckRS.HASH0] == messageDataToConsider[LoraRadioMessageAckRS.HASH0_2]
+            and messageDataToConsider[LoraRadioMessageAckRS.HASH0_2] == messageDataToConsider[LoraRadioMessageAckRS.HASH0_3]) or \
+            (messageDataToConsider[LoraRadioMessageAckRS.HASH1] == messageDataToConsider[LoraRadioMessageAckRS.HASH1_2]
+             and messageDataToConsider[LoraRadioMessageAckRS.HASH1_2] == messageDataToConsider[LoraRadioMessageAckRS.HASH1_3]):
+            ackMsg = LoraRadioMessageCreator.GetAckMessageByFullMessageData(messageDataToConsider)
+            LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetAckMessage() Ack found, CRC in message all three same")
+            return ackMsg
         else:
-            # Check if the ID matches, in that case we assume ECC is wrong
-            scrambledAckMsg = LoraRadioMessageCreator.GetAckMessageByFullMessageData(messageDataToConsider, rssiByte=rssiByteValue)
-            messageIdAcked = scrambledAckMsg.GetMessageIDThatIsAcked()
-            if messageIdAcked == SettingsClass.GetMessageIDOfLastLoraMessageSent():
-                # ID matches so must be correct ID. Error codes incorrect...
-                scrambledAckMsg.GenerateAndAddRSCode()
-                LoraRadioDataHandler.WiRocLogger.info("LoraRadioDataHandler::_GetAckMessage() MessageID matches last sent message so must be ECC that is wrong.")
-                return scrambledAckMsg
+            expectedMessageID = SettingsClass.GetMessageIDOfLastLoraMessageSent()
+            print("ExpectedMessageID: " + str(expectedMessageID))
+            first4bitDifference1 = (expectedMessageID[0] ^ messageDataToConsider[LoraRadioMessageAckRS.HASH0]) & 0xF0
+            first4bitDifference2 = (expectedMessageID[0] ^ messageDataToConsider[LoraRadioMessageAckRS.HASH0_2]) & 0xF0
+            first4bitDifference3 = (expectedMessageID[0] ^ messageDataToConsider[LoraRadioMessageAckRS.HASH0_3]) & 0xF0
+            print(bin(first4bitDifference1))
+            print(bin(first4bitDifference2))
+            print(bin(first4bitDifference3))
+            second4bitDifference1 = (expectedMessageID[0] ^ messageDataToConsider[LoraRadioMessageAckRS.HASH0]) & 0x0F
+            second4bitDifference2 = (expectedMessageID[0] ^ messageDataToConsider[LoraRadioMessageAckRS.HASH0_2]) & 0x0F
+            second4bitDifference3 = (expectedMessageID[0] ^ messageDataToConsider[LoraRadioMessageAckRS.HASH0_3]) & 0x0F
+            print(bin(second4bitDifference1))
+            print(bin(second4bitDifference2))
+            print(bin(second4bitDifference3))
 
-            # Try normal RS decode
-            correctedData = None
-            try:
-                correctedData = RSCoderLora.decode(messageDataToConsider)
-            except Exception as err:
-                LoraRadioDataHandler.WiRocLogger.error("LoraRadioDataHandler::_GetAckMessage() RS decoding failed with exception: " + str(err))
+            third4bitDifference1 = (expectedMessageID[1] ^ messageDataToConsider[LoraRadioMessageAckRS.HASH1]) & 0xF0
+            third4bitDifference2 = (expectedMessageID[1] ^ messageDataToConsider[LoraRadioMessageAckRS.HASH1_2]) & 0xF0
+            third4bitDifference3 = (expectedMessageID[1] ^ messageDataToConsider[LoraRadioMessageAckRS.HASH1_3]) & 0xF0
+            print(bin(third4bitDifference1))
+            print(bin(third4bitDifference2))
+            print(bin(third4bitDifference3))
 
-            if correctedData is not None and RSCoderLora.check(correctedData):
-                LoraRadioDataHandler.WiRocLogger.info(
-                    "LoraRadioDataHandler::_GetAckMessage() Decoded, corrected data correctly it seems")
-                loraAckMsg = LoraRadioMessageCreator.GetAckMessageByFullMessageData(correctedData, rssiByte=rssiByteValue)
-                return loraAckMsg
+            fourth4bitDifference1 = (expectedMessageID[1] ^ messageDataToConsider[LoraRadioMessageAckRS.HASH1]) & 0x0F
+            fourth4bitDifference2 = (expectedMessageID[1] ^ messageDataToConsider[LoraRadioMessageAckRS.HASH1_2]) & 0x0F
+            fourth4bitDifference3 = (expectedMessageID[1] ^ messageDataToConsider[LoraRadioMessageAckRS.HASH1_3]) & 0x0F
+            print(bin(fourth4bitDifference1))
+            print(bin(fourth4bitDifference2))
+            print(bin(fourth4bitDifference3))
+
+            first4bitNoOfBitErrorsMin = min(bin(first4bitDifference1).count("1"), bin(first4bitDifference2).count("1"), bin(first4bitDifference3).count("1"))
+            print(first4bitNoOfBitErrorsMin)
+            second4bitNoOfBitErrorsMin = min(bin(second4bitDifference1).count("1"), bin(second4bitDifference2).count("1"), bin(second4bitDifference3).count("1"))
+            print(second4bitNoOfBitErrorsMin)
+            third4bitNoOfBitErrorsMin = min(bin(third4bitDifference1).count("1"), bin(third4bitDifference2).count("1"), bin(third4bitDifference3).count("1"))
+            print(third4bitNoOfBitErrorsMin)
+            fourth4bitNoOfBitErrorsMin = min(bin(fourth4bitDifference1).count("1"), bin(fourth4bitDifference2).count("1"), bin(fourth4bitDifference3).count("1"))
+            print(fourth4bitNoOfBitErrorsMin)
+
+            noOfBitErrors = first4bitNoOfBitErrorsMin + second4bitNoOfBitErrorsMin + third4bitNoOfBitErrorsMin + fourth4bitNoOfBitErrorsMin
+
+            if noOfBitErrors <= 1:
+                LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetAckMessage() Selecting best 4bit groups resulted in " + str(noOfBitErrors) + " bit errors compared to expected CRC")
+                loraAckMessage = LoraRadioMessageAckRS()
+                loraAckMessage.SetHeader(messageDataToConsider[0:1])
+                loraAckMessage.AddPayload(expectedMessageID)
+                loraAckMessage.AddPayload(expectedMessageID)
+                loraAckMessage.AddPayload(expectedMessageID)
+                loraAckMessage.SetRSSIByte(rssiByteValue)
+                print(Utils.GetDataInHex(loraAckMessage.GetByteArray(), logging.DEBUG))
+                return loraAckMessage
             else:
-                # Try with REDCOS similar algo
-                loraAckMsg = self._GetAckUsingReDCoSDecoding(messageDataToConsider, rssiByteValue)
-                if loraAckMsg is not None:
-                    LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetAckMessage() Decoded with REDCOS*")
-                    return loraAckMsg
-                else:
-                    LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetAckMessage() Could not decode correctly")
-
-            LoraRadioDataHandler.WiRocLogger.error("LoraRadioDataHandler::_GetAckMessage() No message could be decoded")
-            return None
-
+                LoraRadioDataHandler.WiRocLogger.error("LoraRadioDataHandler::_GetAckMessage() No message could be decoded. Selecting best 4bit groups resulted in " + str(noOfBitErrors) + " bit errors compared to expected CRC")
+                return None
 
     def _GetStatusMessage(self):
         messageTypeToTry = LoraRadioMessageRS.MessageTypeStatus

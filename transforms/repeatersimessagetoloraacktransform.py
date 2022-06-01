@@ -4,6 +4,7 @@ from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from settings.settings import SettingsClass
 import logging
 
+
 class RepeaterSIMessageToLoraAckTransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 
@@ -49,7 +50,7 @@ class RepeaterSIMessageToLoraAckTransform(object):
     def GetDeleteAfterSentChanged():
         return False
 
-    #payloadData is a bytearray
+    # payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch, subscriberAdapter):
         RepeaterSIMessageToLoraAckTransform.WiRocLogger.debug("RepeaterSIMessageToLoraAckTransform::Transform()")
@@ -65,10 +66,9 @@ class RepeaterSIMessageToLoraAckTransform(object):
                 return None
 
             loraPunchMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(payloadData, rssiByte=None)
-            md5Hash = loraPunchMsg.GetHash()
-            loraAck = LoraRadioMessageCreator.GetAckMessage(md5Hash)
+            hash = loraPunchMsg.GetHash()
+            loraAck = LoraRadioMessageCreator.GetAckMessage(hash)
             loraAck.SetAckRequested(msgSubBatch.AckReceivedFromReceiver)  # indicate ack received from receiver
             loraAck.SetRepeater(True)  # indicate this ack comes from repeater
-            loraAck.GenerateAndAddRSCode()
             return {"Data": (loraAck.GetByteArray(),), "MessageID": None}
         return None

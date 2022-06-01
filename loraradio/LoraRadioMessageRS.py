@@ -690,16 +690,16 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
 
 
 class LoraRadioMessageAckRS(LoraRadioMessageRS):
-    NoOfECCBytes = 4
+    NoOfECCBytes = 0
     NoOfCRCBytes = 0
 
     # Positions within the message
     HASH0 = 1
     HASH1 = 2
-    ECC0 = 3  # Error correcting code
-    ECC1 = 4  # Error correcting code
-    ECC2 = 5  # Error correcting code
-    ECC3 = 6  # Error correcting code
+    HASH0_2 = 3
+    HASH1_2 = 4
+    HASH0_3 = 5
+    HASH1_3 = 6
 
     def __init__(self):
         super().__init__()
@@ -713,6 +713,15 @@ class LoraRadioMessageAckRS(LoraRadioMessageRS):
 
     def GetMessageSubType(self):
         return "Ack"
+
+    def GenerateAndAddRSCode(self):
+        raise Exception("Ack does not have RS Code")
+
+    def AddRSCode(self, rsCode):
+        raise Exception("Ack does not have RS Code")
+
+    def GetRSCode(self):
+        raise Exception("Ack does not have RS Code")
 
 
 class LoraRadioMessageStatusRS(LoraRadioMessageRS):

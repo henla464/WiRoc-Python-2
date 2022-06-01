@@ -15,15 +15,15 @@ class LoraRadioMessageCreator(object):
         loraAckMessage.SetBatteryLow(False)
         loraAckMessage.SetRepeater(False)
         loraAckMessage.AddPayload(theHash)
-        loraAckMessage.GenerateAndAddRSCode()
+        loraAckMessage.AddPayload(theHash)
+        loraAckMessage.AddPayload(theHash)
         return loraAckMessage
 
     @staticmethod
     def GetAckMessageByFullMessageData(fullMessageData, rssiByte=None):
         loraAckMessage = LoraRadioMessageAckRS()
         loraAckMessage.SetHeader(fullMessageData[0:1])
-        loraAckMessage.AddPayload(fullMessageData[1:-4])
-        loraAckMessage.AddRSCode(fullMessageData[-4:])
+        loraAckMessage.AddPayload(fullMessageData[1:])
         loraAckMessage.SetRSSIByte(rssiByte)
         return loraAckMessage
     #
