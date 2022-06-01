@@ -905,11 +905,16 @@ class LoraRadioDataHandler(object):
             "LoraRadioDataHandler::_GetAckMessage() MessageDataToConsider: " + Utils.GetDataInHex(messageDataToConsider, logging.DEBUG))
         rssiByteValue = self.DataReceived[expectedMessageLength] if self.RSSIByteCount == 1 else None
 
-        if (messageDataToConsider[LoraRadioMessageAckRS.HASH0] == messageDataToConsider[LoraRadioMessageAckRS.HASH0_2]
-            and messageDataToConsider[LoraRadioMessageAckRS.HASH0_2] == messageDataToConsider[LoraRadioMessageAckRS.HASH0_3]) or \
-            (messageDataToConsider[LoraRadioMessageAckRS.HASH1] == messageDataToConsider[LoraRadioMessageAckRS.HASH1_2]
-             and messageDataToConsider[LoraRadioMessageAckRS.HASH1_2] == messageDataToConsider[LoraRadioMessageAckRS.HASH1_3]):
-            ackMsg = LoraRadioMessageCreator.GetAckMessageByFullMessageData(messageDataToConsider)
+        if (messageDataToConsider[LoraRadioMessageAckRS.HASH0] == messageDataToConsider[LoraRadioMessageAckRS.HASH0_2] or messageDataToConsider[LoraRadioMessageAckRS.HASH0_2] == messageDataToConsider[LoraRadioMessageAckRS.HASH0_3] or messageDataToConsider[LoraRadioMessageAckRS.HASH0] == messageDataToConsider[LoraRadioMessageAckRS.HASH0_3]) and \
+            (messageDataToConsider[LoraRadioMessageAckRS.HASH1] == messageDataToConsider[LoraRadioMessageAckRS.HASH1_2] or messageDataToConsider[LoraRadioMessageAckRS.HASH1_2] == messageDataToConsider[LoraRadioMessageAckRS.HASH1_3] or messageDataToConsider[LoraRadioMessageAckRS.HASH1] == messageDataToConsider[LoraRadioMessageAckRS.HASH1_3]):
+            hash0 = messageDataToConsider[LoraRadioMessageAckRS.HASH0] if messageDataToConsider[LoraRadioMessageAckRS.HASH0] == messageDataToConsider[LoraRadioMessageAckRS.HASH0_2] or messageDataToConsider[LoraRadioMessageAckRS.HASH0] == messageDataToConsider[LoraRadioMessageAckRS.HASH0_3] else messageDataToConsider[LoraRadioMessageAckRS.HASH0_2]
+            hash1 = messageDataToConsider[LoraRadioMessageAckRS.HASH1] if messageDataToConsider[LoraRadioMessageAckRS.HASH1] == messageDataToConsider[LoraRadioMessageAckRS.HASH1_2] or messageDataToConsider[LoraRadioMessageAckRS.HASH1] == messageDataToConsider[LoraRadioMessageAckRS.HASH1_3] else messageDataToConsider[LoraRadioMessageAckRS.HASH1_2]
+            ackMsg = LoraRadioMessageAckRS()
+            ackMsg.SetHeader(messageDataToConsider[0:1])
+            ackMsg.AddPayload(bytearray([hash0, hash1]))
+            ackMsg.AddPayload(bytearray([hash0, hash1]))
+            ackMsg.AddPayload(bytearray([hash0, hash1]))
+            ackMsg.SetRSSIByte(rssiByteValue)
             LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetAckMessage() Ack found, CRC in message all three same")
             return ackMsg
         else:
@@ -961,7 +966,6 @@ class LoraRadioDataHandler(object):
                 loraAckMessage.AddPayload(expectedMessageID)
                 loraAckMessage.AddPayload(expectedMessageID)
                 loraAckMessage.SetRSSIByte(rssiByteValue)
-                print(Utils.GetDataInHex(loraAckMessage.GetByteArray(), logging.DEBUG))
                 return loraAckMessage
             else:
                 LoraRadioDataHandler.WiRocLogger.error("LoraRadioDataHandler::_GetAckMessage() No message could be decoded. Selecting best 4bit groups resulted in " + str(noOfBitErrors) + " bit errors compared to expected CRC")
