@@ -649,17 +649,26 @@ class LoraRadioDataHandler(object):
             nOfErasuresToDecreaseWith = 2
             erasuresCombinationIterator = self._GetReDCoSErasureCombinations(loraMsgWithErrors, fixedValues, fixedErasures, nOfErasuresToDecreaseWith)
             erasuresCombinationList = list(erasuresCombinationIterator)
-            lengthOfDataErasureCombinationsAreCalculatedOver = len(loraMsgWithErrors.GetByteArray()) - loraMsgWithErrors.NoOfCRCBytes - len(fixedValues) - len(fixedErasures)
-            noOfHalfMatchesRequired = self._GetNoOfHalfMatchesRequired(lengthOfDataErasureCombinationsAreCalculatedOver, loraMsgWithErrors.NoOfECCBytes, len(fixedErasures), nOfErasuresToDecreaseWith)
 
             if len(erasuresCombinationList) * len(alts) > SettingsClass.GetReDCoSCombinationThreshold():
                 nOfErasuresToDecreaseWith = 4
                 erasuresCombinationIterator = self._GetReDCoSErasureCombinations(loraMsgWithErrors, fixedValues, fixedErasures, nOfErasuresToDecreaseWith)
                 erasuresCombinationList = list(erasuresCombinationIterator)
-                lengthOfDataErasureCombinationsAreCalculatedOver = len(loraMsgWithErrors.GetByteArray()) - loraMsgWithErrors.NoOfCRCBytes - len(fixedValues) - len(fixedErasures)
-                noOfHalfMatchesRequired = self._GetNoOfHalfMatchesRequired(lengthOfDataErasureCombinationsAreCalculatedOver, loraMsgWithErrors.NoOfECCBytes, len(fixedErasures), nOfErasuresToDecreaseWith)
-                LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetPunchDoubleUsingReDCoSDecoding() No of erasure in each combination reduced by four")
+
+                if len(erasuresCombinationList) * len(alts) > SettingsClass.GetReDCoSCombinationThreshold():
+                   nOfErasuresToDecreaseWith = 6
+                   erasuresCombinationIterator = self._GetReDCoSErasureCombinations(loraMsgWithErrors, fixedValues, fixedErasures, nOfErasuresToDecreaseWith)
+                   erasuresCombinationList = list(erasuresCombinationIterator)
+                   lengthOfDataErasureCombinationsAreCalculatedOver = len(loraMsgWithErrors.GetByteArray()) - loraMsgWithErrors.NoOfCRCBytes - len(fixedValues) - len(fixedErasures)
+                   noOfHalfMatchesRequired = self._GetNoOfHalfMatchesRequired(lengthOfDataErasureCombinationsAreCalculatedOver, loraMsgWithErrors.NoOfECCBytes,len(fixedErasures), nOfErasuresToDecreaseWith)
+                   LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetPunchDoubleUsingReDCoSDecoding() No of erasure in each combination reduced by six")
+                else:
+                    lengthOfDataErasureCombinationsAreCalculatedOver = len(loraMsgWithErrors.GetByteArray()) - loraMsgWithErrors.NoOfCRCBytes - len(fixedValues) - len(fixedErasures)
+                    noOfHalfMatchesRequired = self._GetNoOfHalfMatchesRequired(lengthOfDataErasureCombinationsAreCalculatedOver, loraMsgWithErrors.NoOfECCBytes,len(fixedErasures), nOfErasuresToDecreaseWith)
+                    LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetPunchDoubleUsingReDCoSDecoding() No of erasure in each combination reduced by four")
             else:
+                lengthOfDataErasureCombinationsAreCalculatedOver = len(loraMsgWithErrors.GetByteArray()) - loraMsgWithErrors.NoOfCRCBytes - len(fixedValues) - len(fixedErasures)
+                noOfHalfMatchesRequired = self._GetNoOfHalfMatchesRequired(lengthOfDataErasureCombinationsAreCalculatedOver, loraMsgWithErrors.NoOfECCBytes,len(fixedErasures), nOfErasuresToDecreaseWith)
                 LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetPunchDoubleUsingReDCoSDecoding() No of erasure in each combination reduced by two")
 
         LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetPunchDoubleUsingReDCoSDecoding() No of total combinations: " + str(len(erasuresCombinationList) * len(alts)))
@@ -859,6 +868,8 @@ class LoraRadioDataHandler(object):
                                 loraPunchMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
                                     correctedData + messageDataToConsider[-LoraRadioMessagePunchDoubleReDCoSRS.NoOfCRCBytes:],
                                     rssiByte=rssiByteValue)
+                                LoraRadioDataHandler.WiRocLogger.info(
+                                    "LoraRadioDataHandler::_GetPunchDoubleReDCoSMessage() DECODED one of the message alternatives decoded")
                                 return loraPunchMsg
                             else:
                                 print(messageAlt)
@@ -875,10 +886,12 @@ class LoraRadioDataHandler(object):
                             loraDoubleMsgWithErrors = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(messageDataToConsider, rssiByte=rssiByteValue)
                             if self._IsSameDoublePunchMessage(self.LastDoublePunchMessage, loraDoubleMsgWithErrors):
                                 LoraRadioDataHandler.WiRocLogger.info(
-                                    "LoraRadioDataHandler::_GetPunchDoubleReDCoSMessage() Same message as last received, use last received instead")
+                                    "LoraRadioDataHandler::_GetPunchDoubleReDCoSMessage() DECODED Same message as last received, use last received instead")
                                 print("Same as last message")
                                 return self.LastDoublePunchMessage
                         else:
+                            LoraRadioDataHandler.WiRocLogger.info(
+                                "LoraRadioDataHandler::_GetPunchDoubleReDCoSMessage() DECODED with ReDCoS")
                             return loraPunchMsg2
                     else:
                         LoraRadioDataHandler.WiRocLogger.info(
@@ -915,7 +928,7 @@ class LoraRadioDataHandler(object):
             ackMsg.AddPayload(bytearray([hash0, hash1]))
             ackMsg.AddPayload(bytearray([hash0, hash1]))
             ackMsg.SetRSSIByte(rssiByteValue)
-            LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetAckMessage() Ack found, CRC in message all three same")
+            LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetAckMessage() Ack found, At least two of the three CRC0 are same, and at least two of the three CRC1 are same")
             return ackMsg
         else:
             expectedMessageID = SettingsClass.GetMessageIDOfLastLoraMessageSent()

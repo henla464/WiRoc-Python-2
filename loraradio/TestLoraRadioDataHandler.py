@@ -928,6 +928,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for i in range(0, len(recStatusMsg)):
             self.dataHandler.AddData(recStatusMsg[i:i + 1])
         statusMsg = self.dataHandler.GetMessage()
+
         print("Corrupted message: " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case17_StatusMsg_Corrupted_AirOrder_WithRS[:], logging.DEBUG))
         print("Correct message:   " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case17_StatusMsg_Correct_AirOrder_WithRS, logging.DEBUG))
         self.assertIsNotNone(statusMsg)

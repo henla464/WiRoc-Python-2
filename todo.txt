@@ -1,5 +1,11 @@
 WiRoc
 =====
+
+- Limit ack messages accepted due to matching expected/last message to a timeperiod after the message sent
+- Make GetReDCoSCombinationThreshold adjust to message datarate / coderate
+- When getting alternative punch messages and guessing TH, take datarate/coderate into account.
+- Detect SportIdent SRR usb stick, and open it in one-way mode
+
 -- Maybe (probably pretty complex, unsure how useful)
 Add option to reconfigure remote wiroc
 
