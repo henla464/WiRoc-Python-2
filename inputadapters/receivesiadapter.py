@@ -16,7 +16,7 @@ import select
 class ReceiveSIAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Input')
     AddressOfLastPunch = {}
-    MSDMode = bytes([0xFF, 0xFF, 0x02, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
+    MSDMode = bytes([0xFF, 0xFF, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
 
     @staticmethod
     def CreateInstances():
@@ -101,7 +101,7 @@ class ReceiveSIAdapter(object):
         return time
 
     def getSIStationTimeAndStationNumber(self):
-        getTimeCmd = bytes([0xFF, 0x02, 0x02, 0xF7, 0x00, 0xF7, 0x00, 0x03])
+        getTimeCmd = bytes([0xFF, 0x02, 0xF7, 0x00, 0xF7, 0x00, 0x03])
         timeResp = self.sendCommand(getTimeCmd)
         if timeResp is None:
             ReceiveSIAdapter.WiRocLogger.error(
@@ -129,7 +129,7 @@ class ReceiveSIAdapter(object):
         return year, month, day, hour, minute, second, siStationCode
 
     def getStationSettingSystemValue(self):
-        getSystemValueCmd = bytes([0xFF, 0x02, 0x02, 0x83, 0x02, 0x74, 0x01, 0x04, 0x14, 0x03])
+        getSystemValueCmd = bytes([0xFF, 0x02, 0x83, 0x02, 0x74, 0x01, 0x04, 0x14, 0x03])
         sysValResp = self.sendCommand(getSystemValueCmd)
         if sysValResp is None:
             ReceiveSIAdapter.WiRocLogger.error(
@@ -147,6 +147,17 @@ class ReceiveSIAdapter(object):
         readOut = ((configByte & 0x80) > 0)
         stationNumber = (sysValResp[3] << 8) | sysValResp[4]
         return extendedProtocol, autoSend, readOut, stationNumber, configByte
+
+    def getStationSettingModelValue(self):
+        getSystemValueCmd = bytes([0xFF, 0x02, 0x83, 0x02, 0x0B, 0x02, 0x06, 0x18, 0x03])
+        sysValResp = self.sendCommand(getSystemValueCmd)
+        if sysValResp is None:
+            ReceiveSIAdapter.WiRocLogger.error(
+                "ReceiveSIAdapter::getStationSettingModelValue sendCommand returned None")
+            return None
+        model0 = sysValResp[6]
+        model1 = sysValResp[7]
+        return bytearray([model0, model1])
 
     def getSerialNumberSystemValue(self):
         addr = 0x00
@@ -425,7 +436,7 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
             return True
         return False
 
-    def InitTwoWay(self):
+    def DetectBaudRate(self):
         self.siSerial.baudrate = 38400
         try:
             self.siSerial.open()
@@ -481,6 +492,22 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
                 else:
                     ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() SI Station 38400 kbit/s works")
 
+                return True
+            except Exception as ex2:
+                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() exception:")
+                ReceiveSIAdapter.WiRocLogger.error(ex2)
+                try:
+                    self.siSerial.close()
+                except Exception as ex3:
+                    ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() close serial exception:")
+                    ReceiveSIAdapter.WiRocLogger.error(ex2)
+                return False
+        else:
+            return False
+
+    def InitTwoWay(self):
+        if self.DetectBaudRate():
+            try:
                 self.updateComputerTimeAndSiStationNumber()
                 self.setAutosendAndExtendedProtocol()
                 self.serialNumber = self.getSerialNumberSystemValue()
@@ -601,6 +628,7 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
 
 class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
     Instances = []
+    SRRDongleModel = bytearray([0x6F, 0x21])
 
     @staticmethod
     def CreateInstances():
@@ -674,23 +702,23 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
                     # can only be forced to 4800 when in one-way receive
                     baudrate = 4800
                 success = self.InitOneWay(baudrate)
-                if success:
-                    self.noOfFailedInitializations = 0
-                else:
-                    self.noOfFailedInitializations += 1
                 return success
             else:
-                if self.InitTwoWay():
-                    self.noOfFailedInitializations = 0
-                    return True
-                else:  # better with init one way if two way is not working than aborting
-                    success = self.InitOneWay(baudrate)
-                    if success:
-                        self.oneWayFallback = True
-                        self.noOfFailedInitializations = 0
+                if self.DetectBaudRate():
+                    if self.getStationSettingModelValue() == ReceiveSIUSBSerialPort.SRRDongleModel:
+                        successOneWaySRR = self.InitOneWay(baudrate)
+                        return successOneWaySRR
                     else:
-                        self.noOfFailedInitializations += 1
-                    return success
+                        successTwoWay = self.InitTwoWay()
+                        if successTwoWay:
+                            return True
+                        else: # better with init one way if two way is not working than aborting
+                            successOneWay = self.InitOneWay(baudrate)
+                            if successOneWay:
+                                self.oneWayFallback = True
+                                return True
+                            else:
+                                return False
         except Exception as msg:
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIUSBSerialPort::Init() Exception: " + str(msg))
             return False
