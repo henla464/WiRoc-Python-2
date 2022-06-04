@@ -16,7 +16,7 @@ import select
 class ReceiveSIAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Input')
     AddressOfLastPunch = {}
-    MSDMode = bytes([0xFF, 0xFF, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
+    MSMode = bytes([0xFF, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
 
     @staticmethod
     def CreateInstances():
@@ -32,12 +32,12 @@ class ReceiveSIAdapter(object):
         self.portName = portName
         self.isInitialized = False
         self.oneWay = False
-        self.oneWayFallback = False
+        self.oneWayFallbackTryReInitWhenDataReceived = False
+        self.oneWayFallbackShouldNotTriggerReInit = False
         self.shouldReinitialize = False
         self.siStationNumber = 0
         self.hasTimeBeenSet = False
         self.serialNumber = None
-        self.noOfFailedInitializations = 0
         self.noOfFailedReadsInRow = 0
         self.fetchFromBackup = False
         self.fetchFromBackupAddress = None #exclusive
@@ -378,6 +378,7 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
     def writeData(self, dataToWrite):
         self.siSerial.write(dataToWrite)
         self.siSerial.flush()
+        return True
 
     def readData(self, waitMS, expectedLength):
         if waitMS > 0:
@@ -457,7 +458,7 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
             try:
                 # set master - mode to direct
                 ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitTwoWay() serial port open")
-                response = self.sendCommand(ReceiveSIAdapter.MSDMode)
+                response = self.sendCommand(ReceiveSIAdapter.MSMode)
                 if response is None:
                     ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() msmodedirect command failed")
                     return False
@@ -473,7 +474,7 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
                     self.siSerial.reset_input_buffer()
                     self.siSerial.reset_output_buffer()
 
-                    response = self.sendCommand(ReceiveSIAdapter.MSDMode)
+                    response = self.sendCommand(ReceiveSIAdapter.MSMode)
                     if response is None:
                         ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() msmodedirect command failed")
                         return False
@@ -534,7 +535,7 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
     def GetData(self):
         data = super().GetData()
         if data is not None:
-            if self.oneWayFallback:
+            if self.oneWayFallbackTryReInitWhenDataReceived:
                 self.shouldReinitialize = True
         return data
 
@@ -579,10 +580,10 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
             + " isInitialized: " + str(self.isInitialized)
             + " oneWayConfig: " + str(oneWayConfig)
             + " oneWay: " + str(self.oneWay)
-            + " oneWayFallback: " + str(self.oneWayFallback)
+            + " oneWayFallbackTryReInitWhenDataReceived: " + str(self.oneWayFallbackTryReInitWhenDataReceived)
             + " baudRateConfig: " + str(baudRateConfig) + " baudRate: " + str(self.siSerial.baudrate))
         return self.isInitialized and not self.shouldReinitialize \
-            and (oneWayConfig == self.oneWay or (self.oneWay and self.oneWayFallback)) \
+            and (oneWayConfig == self.oneWay or (self.oneWay and (self.oneWayFallbackTryReInitWhenDataReceived or self.oneWayFallbackShouldNotTriggerReInit))) \
             and baudRateConfig == self.siSerial.baudrate
 
     def Init(self):
@@ -591,7 +592,7 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
                 return True
             self.isInitialized = False
             self.shouldReinitialize = False
-            self.oneWayFallback = False
+            self.oneWayFallbackTryReInitWhenDataReceived = False
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIHWSerialPort::Init() SI Station port name: " + self.portName)
             self.siSerial.close()
             self.siSerial.port = self.portName
@@ -602,23 +603,15 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
                     # can only be forced to 4800 when in one-way receive
                     baudrate = 4800
                 success = self.InitOneWay(baudrate)
-                if success:
-                    self.noOfFailedInitializations = 0
-                else:
-                    self.noOfFailedInitializations +=1
                 return success
             else:
                 if self.InitTwoWay():
-                    self.noOfFailedInitializations = 0
                     return True
                 else:
                     # better with init one way if two way is not working than aborting
                     success = self.InitOneWay(baudrate)
                     if success:
-                        self.oneWayFallback = True
-                        self.noOfFailedInitializations = 0
-                    else:
-                        self.noOfFailedInitializations += 1
+                        self.oneWayFallbackTryReInitWhenDataReceived = True
                     return success
 
         except (Exception) as msg:
@@ -677,10 +670,13 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
         ReceiveSIAdapter.WiRocLogger.debug(
             "ReceiveSIUSBSerialPort::GetIsInitialized() " + self.GetInstanceName() + " isInitialized: " + str(
                 self.isInitialized) + " oneWayConfig: " + str(oneWayConfig) + " oneWay: " + str(self.oneWay)
-                + " oneWayFallback: " + str(self.oneWayFallback)
+                + " oneWayFallbackTryReInitWhenDataReceived: " + str(self.oneWayFallbackTryReInitWhenDataReceived)
+                + " oneWayFallbackShouldNotTriggerReInit: " + str(self.oneWayFallbackShouldNotTriggerReInit)
+                + " shouldReinitialize: " + str(self.shouldReinitialize)
                 + " baudRateConfig: " + str(baudRateConfig) + " baudRate: " + str(self.siSerial.baudrate))
         return self.isInitialized and not self.shouldReinitialize \
-            and (oneWayConfig == self.oneWay or (self.oneWay and self.oneWayFallback)) \
+            and (oneWayConfig == self.oneWay
+                 or (self.oneWay and (self.oneWayFallbackTryReInitWhenDataReceived or self.oneWayFallbackShouldNotTriggerReInit))) \
             and baudRateConfig == self.siSerial.baudrate
 
     def Init(self):
@@ -689,7 +685,8 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
                 return True
             self.isInitialized = False
             self.shouldReinitialize = False
-            self.oneWayFallback = False
+            self.oneWayFallbackTryReInitWhenDataReceived = False
+            self.oneWayFallbackShouldNotTriggerReInit = False
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIUSBSerialPort::Init() SI Station port name: " + self.portName)
             self.siSerial.close()
             self.siSerial.port = self.portName
@@ -706,8 +703,12 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
             else:
                 if self.DetectBaudRate():
                     if self.getStationSettingModelValue() == ReceiveSIUSBSerialPort.SRRDongleModel:
-                        successOneWaySRR = self.InitOneWay(baudrate)
-                        return successOneWaySRR
+                        ReceiveSIAdapter.WiRocLogger.info("ReceiveSIUSBSerialPort::Init() SRR-Dongle found!")
+                        # Serial port is open, with correct baudrate, set it as one-way since we cant ask for backup punches etc.
+                        self.isInitialized = True
+                        self.oneWay = True
+                        self.oneWayFallbackShouldNotTriggerReInit = True
+                        return True
                     else:
                         successTwoWay = self.InitTwoWay()
                         if successTwoWay:
@@ -715,7 +716,7 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
                         else: # better with init one way if two way is not working than aborting
                             successOneWay = self.InitOneWay(baudrate)
                             if successOneWay:
-                                self.oneWayFallback = True
+                                self.oneWayFallbackTryReInitWhenDataReceived = True
                                 return True
                             else:
                                 return False
@@ -766,8 +767,8 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
         ReceiveSIAdapter.WiRocLogger.debug(
             "ReceiveSIBluetoothSP::GetIsInitialized() " + self.GetInstanceName() + " isInitialized: "
             + str(self.isInitialized) + " oneWayConfig: " + str(oneWayConfig) + " oneWay: "
-            + str(self.oneWay) + " oneWayFallback: " + str(self.oneWayFallback))
-        return self.isInitialized and not self.shouldReinitialize and (oneWayConfig == self.oneWay or (self.oneWay and self.oneWayFallback))
+            + str(self.oneWay) + " oneWayFallbackTryReInitWhenDataReceived: " + str(self.oneWayFallbackTryReInitWhenDataReceived))
+        return self.isInitialized and not self.shouldReinitialize and (oneWayConfig == self.oneWay or (self.oneWay and self.oneWayFallbackTryReInitWhenDataReceived))
 
     # implements abstract/virtual method
     def writeData(self, dataToWrite):
@@ -852,7 +853,7 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
         try:
             # set master - mode to direct
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::InitTwoWay()")
-            response = self.sendCommand(ReceiveSIAdapter.MSDMode)
+            response = self.sendCommand(ReceiveSIAdapter.MSMode)
 
             if response is None:
                 ReceiveSIAdapter.WiRocLogger.info("ReceiveSIBluetoothSP::InitTwoWay() msmodedirect command failed")
@@ -881,7 +882,7 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
                 return True
             self.isInitialized = False
             self.shouldReinitialize = False
-            self.oneWayFallback = False
+            self.oneWayFallbackTryReInitWhenDataReceived = False
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::Init() SI Station port name: " + self.portName)
 
             if self.sock is None:
@@ -892,23 +893,15 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
                 self.sock.setblocking(False)
 
             if SettingsClass.GetBTSerialOneWayReceiveFromSIStation():
-                self.oneWayFallback = False
+                self.oneWayFallbackTryReInitWhenDataReceived = False
                 success = self.InitOneWay(None)
-                if success:
-                    self.noOfFailedInitializations = 0
-                else:
-                    self.noOfFailedInitializations += 1
             else:
                 success = self.InitTwoWay()
-                if success:
-                    self.noOfFailedInitializations = 0
-                else:  # better with init one way if two way is not working than aborting
+                if not success:
+                    # better with init one way if two way is not working than aborting
                     success = self.InitOneWay(None)
                     if success:
-                        self.oneWayFallback = True
-                        self.noOfFailedInitializations = 0
-                    else:
-                        self.noOfFailedInitializations += 1
+                        self.oneWayFallbackTryReInitWhenDataReceived = True
 
             btSerialPortDatas = DatabaseHelper.get_bluetooth_serial_port(self.portName.replace('rfcomm', ''))
             if len(btSerialPortDatas) > 0:
@@ -937,6 +930,6 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
     def GetData(self):
         data = super().GetData()
         if data is not None:
-            if self.oneWayFallback:
+            if self.oneWayFallbackTryReInitWhenDataReceived:
                 self.shouldReinitialize = True
         return data
