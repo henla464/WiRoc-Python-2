@@ -69,7 +69,6 @@ class SISIMessageToLoraTransform(object):
                 loraPunchMsg.SetRepeater(reqRepeater)
                 loraPunchMsg.GenerateAndAddRSCode()
                 loraPunchMsg.GenerateAndAddCRC()
-                print(Utils.GetDataInHex(loraPunchMsg.GetByteArray(), logging.DEBUG))
                 interleavedMessageData = LoraRadioMessagePunchReDCoSRS.InterleaveToAirOrder(
                     loraPunchMsg.GetByteArray())
                 return {"Data": (interleavedMessageData,), "MessageID": loraPunchMsg.GetHash()}

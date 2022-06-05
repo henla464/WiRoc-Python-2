@@ -70,7 +70,7 @@ class DisplayStateMachine(object):
                     self.wiRocLogger.debug("DisplayStateMachine::Init() No display 1")
                     self.TypeOfDisplay = 'NO_DISPLAY'
         except Exception as ex:
-            print(ex)
+            #print(ex)
             if self.runningOnChip:
                 self.wiRocLogger.debug("DisplayStateMachine::Init() 7SEG 2")
                 self.TypeOfDisplay = '7SEG'

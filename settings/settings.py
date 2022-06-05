@@ -467,12 +467,29 @@ class SettingsClass(object):
         loraModule = SettingsClass.GetLoraModule()
         codeRate = SettingsClass.GetCodeRate()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
-        messageLengthInBytes = 24  # typical length
+        messageLengthInBytes = 26  # length of double punch message
         SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
         # extra delay for higher error coderates
         SettingsClass.microSecondsToSendAMessage = SettingsClass.microSecondsToSendAMessage * (1+0.2*codeRate)
         microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 2)*SettingsClass.microSecondsToSendAMessage
         return microSecondsDelay
+
+    @staticmethod
+    def GetTotalRetryDelaySeconds():
+        loraRange = SettingsClass.GetLoraRange()
+        channel = SettingsClass.GetChannel()
+        loraModule = SettingsClass.GetLoraModule()
+        codeRate = SettingsClass.GetCodeRate()
+        SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
+        messageLengthInBytes = 26  # length of double punch message
+        SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
+        # extra delay for higher error coderates
+        SettingsClass.microSecondsToSendAMessage = SettingsClass.microSecondsToSendAMessage * (1+0.2*codeRate)
+        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 1) + SettingsClass.microSecondsToSendAMessage
+        microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 2) + SettingsClass.microSecondsToSendAMessage
+        microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 3) + SettingsClass.microSecondsToSendAMessage
+        microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 4) + SettingsClass.microSecondsToSendAMessage
+        return int(microSecondsDelay / 1000000)
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetLoraAckMessageWaitTimeoutS'), lock=rlock)

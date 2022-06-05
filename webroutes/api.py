@@ -487,12 +487,10 @@ def getBatteryLevel():
         #print("chip or nanopi")
         result = subprocess.run(['/usr/sbin/i2cget', '-f', '-y', '0', '0x34', '0xb9'], stdout=subprocess.PIPE)
         if result.returncode != 0:
-            print('return code not 0')
             errStr = result.stderr.decode('utf-8')
             return 'Error: ' + errStr
 
         intPercent = int(result.stdout.decode('utf-8').splitlines()[0], 0)
-        print('Battery level - onReadRequest: value (dec)=' + str(intPercent))
         return str(intPercent)
     else:
         return '1'
@@ -949,7 +947,6 @@ def zipLogArchive(zipFilePath):
     result = subprocess.run(['zip', zipFilePath, '/home/chip/WiRoc-Python-2/WiRoc.db', '/home/chip/WiRoc-Python-2/WiRoc.log', '/home/chip/WiRoc-Python-2/WiRoc.log.1', '/home/chip/WiRoc-Python-2/WiRoc.log.2', '/home/chip/WiRoc-Python-2/WiRoc.log.3'], stdout=subprocess.PIPE)
     if result.returncode != 0:
         errStr = result.stderr.decode('utf-8')
-        print('Helper.zipLogArchive: error: ' + errStr)
         raise Exception("Error: " + errStr)
 
     return 'OK'
@@ -1018,15 +1015,14 @@ def getBTAddress():
 def uploadLogArchiveToServer(apiKey, filePath, serverProtocol, serverIP, serverHost):
     parameters = ['curl', '--insecure', '-X', 'POST', '-H', 'host:' + serverHost, '-H',
                   'accept:application/json', '-H', 'X-Authorization:' + apiKey, '-F', 'newfile=@' + filePath, serverProtocol + serverIP + '/api/v1/LogArchives']
-    print(parameters)
     result = subprocess.run(parameters, capture_output=True)
     if result.returncode != 0:
         errStr = result.stderr.decode('utf-8')
         print('Helper.uploadLogArchive2: error: ' + errStr)
         raise Exception("Error: " + errStr)
     stdout = result.stdout.decode('utf-8')
-    if len(stdout) > 0:
-        print(stdout)
+    #if len(stdout) > 0:
+    #    print(stdout)
     return 'OK'
 
 
@@ -1090,7 +1086,6 @@ def getWebServerIP():
 
 @app.route('/api/uploadlogarchive/', methods=['GET'])
 def uploadLogArchive():
-    print('Helper.uploadLogArchive')
     btAddress = getBTAddress()
     dateNow = datetime.datetime.now()
     zipFilePath = getZipFilePath(btAddress, dateNow)
@@ -1120,18 +1115,18 @@ def startPatchAP6212():
         ['systemctl', 'start', 'ap6212-bluetooth'], stdout=subprocess.PIPE)
     if result.returncode != 0:
         errStr = result.stderr.decode('utf-8')
-        print('Helper.startPatchAP6212: error: ' + errStr)
+        #print('Helper.startPatchAP6212: error: ' + errStr)
 
         result = subprocess.run(
             ['systemctl', 'start', 'ap6212-bluetooth'], stdout=subprocess.PIPE)
         if result.returncode != 0:
             errStr = result.stderr.decode('utf-8')
-            print('Helper.startPatchAP6212: second try error: ' + errStr)
+            #print('Helper.startPatchAP6212: second try error: ' + errStr)
             return jsonpickle.encode(MicroMock(Value='Error: ' + errStr))
 
     stdout = result.stdout.decode('utf-8')
-    if len(stdout) > 0:
-        print(stdout)
+    #if len(stdout) > 0:
+    #    print(stdout)
 
     return jsonpickle.encode(MicroMock(Value='OK'))
 
@@ -1139,7 +1134,7 @@ def startPatchAP6212():
 @app.route('/api/upgradewirocble/<version>/', methods=['GET'])
 def upgradeWiRocBLE(version):
     if HardwareAbstraction.Instance.runningOnChip:
-        print("upgradeWiRocBLEDevice")
+        #print("upgradeWiRocBLEDevice")
         logfile = '../installWiRocBLE.log'
         with open(os.devnull, 'r+b') as DEVNULL:
             with open(logfile, 'a') as out:
@@ -1147,7 +1142,7 @@ def upgradeWiRocBLE(version):
 
         return jsonpickle.encode(MicroMock(Value='OK'))
     else:
-        print("upgradeWiRocBLE")
+        #print("upgradeWiRocBLE")
         logfile = '../installWiRocBLE.log'
         with open(os.devnull, 'r+b') as DEVNULL:
             with open(logfile, 'a') as out:
