@@ -673,6 +673,7 @@ class DatabaseHelper:
                    "MessageSubscriptionData.SentDate asc")
             messageSubscriptions = cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
 
+            now = datetime.now()
             messageSubscriptionBatch = None
             adapterTypesAlreadyHandlingMessages = set()
             for messageSubscription in messageSubscriptions:
@@ -681,7 +682,6 @@ class DatabaseHelper:
                     # skip any following messages to the same adapter
                     continue
 
-                now = datetime.now()
                 if messageSubscription.FetchedForSending is not None and messageSubscription.FetchedForSending < now < messageSubscription.FetchedForSending + timedelta(
                         seconds=12):
                     # recently fetched and is being sent by another thread
