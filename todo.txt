@@ -2,9 +2,7 @@ WiRoc
 =====
 
 - Limit ack messages accepted due to matching expected/last message to a timeperiod after the message sent
-- Make GetReDCoSCombinationThreshold adjust to message datarate / coderate
-- When getting alternative punch messages and guessing TH, take datarate/coderate into account.
-- Detect SportIdent SRR usb stick, and open it in one-way mode
+- Install/upgrade should build reed solomon library with cython
 
 -- Maybe (probably pretty complex, unsure how useful)
 Add option to reconfigure remote wiroc
@@ -53,12 +51,15 @@ x Remove only message fetched from datareceived, clear all only when no message 
 x Send first test punch directly, dont wait one interval
 x Fix send test punches interval for CHIP (seem to not use the selected interval)
 x Make update work for CHIP also
+x When getting alternative punch messages and guessing TH, take datarate/coderate into account.
+x Detect SportIdent SRR usb stick, and open it in one-way mode
+x Make GetReDCoSCombinationThreshold adjust to message datarate / coderate
 
 possible HW enhancments
 -----------------------
 RTC (realtime clock)
 Add RS232 conversion on board
-
+Add SRR receiver module/modules
 
 Done
 x Reroute SDA, SCK to the display
@@ -76,13 +77,5 @@ x -> 31 kOhm fungerar (31+35kohm - 66 fungerar inte)
 x -> 26 kOhm fungerar (26+35kohm - 61 fungerar inte)
 x ===> Seem to only be a problem when the antennaconnector is under water too, so shouldnt be an issue in real life. 
 x      Even though, change the resistor  from 1K to 24Kohm
-
-IDs
-----
-Options for IDs
-Logical MessageID: cardno, time (and stationo) [4 bytes + 4 bytes] (all included in serialmessage)
-other option?: MemoryAddress 2 bytes, WiRoc-serialno 2 bytes (=>could be same memoryaddress from different SI masters)
-other option?: WiRoc-serialno + messageid in database 2+2 bytes (=> adds 3 bytes to message)
-
 
 Ack could include request to resend missed messages. Good idea? Or just a resend adapter fetching from failed messages?

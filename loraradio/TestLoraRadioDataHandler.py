@@ -450,7 +450,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             self.dataHandler.AddData(corruptedInAirOrder[i:i + 1])
 
         # Can be decoded with ReDCos but has many combinations to try
-        SettingsClass.SetReDCoSCombinationThreshold(500000)
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(10000)
         punchDoubleMsg = self.dataHandler._GetPunchDoubleReDCoSMessage()
         self.assertIsNotNone(punchDoubleMsg)
 
@@ -1410,7 +1410,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for i in range(0, len(interleaved2)):
             self.dataHandler.AddData(interleaved2[i:i + 1])
 
-        SettingsClass.SetReDCoSCombinationThreshold(500000)
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(10000)
         msg = self.dataHandler.GetMessage()
         self.assertIsNotNone(msg)
 
@@ -1448,7 +1448,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             self.dataHandler.AddData(interleaved2[i:i + 1])
 
         # We don't expect it to work with this few combinations (this force it to reduce combinations to inlcude only for erasures)
-        SettingsClass.SetReDCoSCombinationThreshold(5000)
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
         msg = self.dataHandler.GetMessage()
         self.assertIsNone(msg)
 
@@ -1487,7 +1487,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             self.dataHandler.AddData(interleaved2[i:i + 1])
 
         # This should reduce the combinations to include 6 erasures. Plus the two extra ECC bytes can correct one error. So should work.
-        SettingsClass.SetReDCoSCombinationThreshold(10000)
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(200)
         msg4 = self.dataHandler.GetMessage()
 
         print("Correct message  : " + Utils.GetDataInHex(correct, logging.DEBUG))
@@ -1531,7 +1531,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             self.dataHandler.AddData(interleaved2[i:i + 1])
 
         # We don't expect it to work with this few combinations
-        SettingsClass.SetReDCoSCombinationThreshold(5000)
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
         msg4 = self.dataHandler.GetMessage()
 
         print("Correct message  : " + Utils.GetDataInHex(correct, logging.DEBUG))

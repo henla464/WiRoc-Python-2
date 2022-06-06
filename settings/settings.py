@@ -218,8 +218,8 @@ class SettingsClass(object):
         cache.clear()  # GetWiRocMode uses this value so needs to be invalidated
 
     @staticmethod
-    def SetReDCoSCombinationThreshold(val):
-        sett = SettingsClass.SetSetting('ReDCoSCombinationThreshold', val)
+    def SetReDCoSCombinationThresholdPerSecondTotalRetryTime(val):
+        sett = SettingsClass.SetSetting('ReDCoSCombinationThresholdPerSecondTotalRetryTime', val)
         cacheUntilChangedByProcess.clear()
         cache.clear()
 
@@ -234,11 +234,18 @@ class SettingsClass(object):
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetReDCoSCombinationThreshold'), lock=rlock)
     def GetReDCoSCombinationThreshold():
-        sett = DatabaseHelper.get_setting_by_key('ReDCoSCombinationThreshold')
+        sett = DatabaseHelper.get_setting_by_key('ReDCoSCombinationThresholdPerSecondTotalRetryTime')
+        thresholdPerSecondTotalRetryTime = 100
         if sett is None:
-            SettingsClass.SetSetting("ReDCoSCombinationThreshold", "5000")
-            return 5000
-        return int(sett.Value)
+            SettingsClass.SetSetting("ReDCoSCombinationThresholdPerSecondTotalRetryTime", "100")
+        else:
+            thresholdPerSecondTotalRetryTime = int(sett.Value)
+
+        totalRetryTime = SettingsClass.GetTotalRetryDelaySeconds()
+        print("combinationthreshold: " + str(thresholdPerSecondTotalRetryTime))
+        print("combinationthreshold: " + str(totalRetryTime))
+        print("combinationthreshold: " + str(totalRetryTime * thresholdPerSecondTotalRetryTime))
+        return totalRetryTime * thresholdPerSecondTotalRetryTime
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetShouldAlwaysRequestRepeater'), lock=rlock)
