@@ -1,7 +1,6 @@
 WiRoc
 =====
 
-- Limit ack messages accepted due to matching expected/last message to a timeperiod after the message sent
 - Install/upgrade should build reed solomon library with cython
 
 -- Maybe (probably pretty complex, unsure how useful)

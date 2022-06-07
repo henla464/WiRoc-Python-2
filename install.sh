@@ -69,6 +69,8 @@ pip3 install wheel
 pip3 install requests
 pip3 install cachetools
 pip3 install reedsolo
+pip3 install cython
+pip3 install git+https://github.com/henla464/reedsolomon.git
 pip3 install pydbus
 
 echo "flask"

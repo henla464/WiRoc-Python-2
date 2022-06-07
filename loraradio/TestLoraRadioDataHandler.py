@@ -6,7 +6,6 @@ import hashlib
 import logging
 import time
 import unittest
-import reedsolo
 
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
