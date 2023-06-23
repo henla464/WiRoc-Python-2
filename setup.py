@@ -17,6 +17,7 @@ from inputadapters.receivesiadapter import ReceiveSIAdapter
 from inputadapters.receivesiadapter import ReceiveSIUSBSerialPort
 from inputadapters.receivesiadapter import ReceiveSIHWSerialPort
 from inputadapters.receivesiadapter import ReceiveSIBluetoothSP
+from inputadapters.receivesrradapter import ReceiveSRRAdapter
 from inputadapters.receivetestpunchesadapter import ReceiveTestPunchesAdapter
 from inputadapters.receiverepeatermessagesadapter import ReceiveRepeaterMessagesAdapter
 #import requests.packages.urllib3.util.connection as urllib3_cn
@@ -52,6 +53,7 @@ class Setup:
         inChange6 = ReceiveSIBluetoothSP.CreateInstances() # uses db, writes to it
         inChange7 = ReceiveTestPunchesAdapter.CreateInstances()
         inChange8 = ReceiveRepeaterMessagesAdapter.CreateInstances()
+        inChange9 = ReceiveSRRAdapter.CreateInstances()
         inputObjects.extend(CreateStatusAdapter.Instances)
         inputObjects.extend(ReceiveLoraAdapter.Instances)
         inputObjects.extend(ReceiveSIUSBSerialPort.Instances)
@@ -59,6 +61,7 @@ class Setup:
         inputObjects.extend(ReceiveSIBluetoothSP.Instances)
         inputObjects.extend(ReceiveTestPunchesAdapter.Instances)
         inputObjects.extend(ReceiveRepeaterMessagesAdapter.Instances)
+        inputObjects.extend(ReceiveSRRAdapter.Instances)
 
         anyShouldBeInitialized = False
         for inst in subscriberObjects:
@@ -72,7 +75,8 @@ class Setup:
         if (not anyShouldBeInitialized and not SettingsClass.GetForceReconfigure()
                 and not change1 and not change3 and not change4 and not change5 and not change2
                 and not inChange1 and not inChange2 and not inChange4
-                and not inChange5 and not inChange6 and not inChange7 and not inChange8):
+                and not inChange5 and not inChange6 and not inChange7
+                and not inChange8 and not inChange9):
             return False
 
         SettingsClass.SetForceReconfigure(False)

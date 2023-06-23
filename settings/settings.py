@@ -35,6 +35,7 @@ class SettingsClass(object):
     batteryIsLowReceived = False
     deviceId = None
     messageIDOfLastLoraMessageSent = None
+    SRRMessageAvailable = False
 
     #####
     # Static/class settings
@@ -223,6 +224,13 @@ class SettingsClass(object):
         cacheUntilChangedByProcess.clear()
         cache.clear()
 
+    @staticmethod
+    def SetSRRMessageAvailable(val):
+        SettingsClass.SRRMessageAvailable = val
+
+    @staticmethod
+    def GetSRRMessageAvailable():
+        return SettingsClass.SRRMessageAvailable
 
     #####
     # Changed both locally and via web services

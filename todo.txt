@@ -14,7 +14,6 @@ App
 
 Done
 ----
-
 X Test max sending frequency without ack:  >~1.5 per second
 X Test max sending frequency with ack > ~1.2 per second
 X Add one-way option for connecting to samlingsboxar, srr dongles [WiRoc Python Done, app remaining]
@@ -56,9 +55,9 @@ x Make GetReDCoSCombinationThreshold adjust to message datarate / coderate
 
 possible HW enhancments
 -----------------------
+x Add RS232 conversion on board
+x Add SRR receiver module/modules
 RTC (realtime clock)
-Add RS232 conversion on board
-Add SRR receiver module/modules
 
 Done
 x Reroute SDA, SCK to the display

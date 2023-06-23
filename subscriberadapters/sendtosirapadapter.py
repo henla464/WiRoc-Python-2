@@ -79,7 +79,9 @@ class SendToSirapAdapter(object):
         self.isDBInitialized = val
 
     def GetTransformNames(self):
-        return ["LoraSIMessageToSirapTransform", "SISIMessageToSirapTransform", "SITestTestToSirapTransform", "LoraSIMessageDoubleToSirapTransform"]
+        return ["LoraSIMessageToSirapTransform", "SISIMessageToSirapTransform",
+                "SITestTestToSirapTransform", "LoraSIMessageDoubleToSirapTransform",
+                "SRRSRRMessageToSirapTransform"]
 
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass

@@ -2,17 +2,26 @@ from chipGPIO.chipGPIO import *
 import logging
 import socket
 import subprocess
-
+import gpiod
+import smbus
 
 class HardwareAbstraction(object):
     WiRocLogger = logging.getLogger('WiRoc')
     Instance = None
+    i2cAddress = 0x34
 
     def __init__(self, typeOfDisplay):
         HardwareAbstraction.WiRocLogger.info("HardwareAbstraction::Init start")
         self.typeOfDisplay = typeOfDisplay
         self.runningOnChip = socket.gethostname() == 'chip'
         self.runningOnNanoPi = socket.gethostname() == 'nanopiair'
+        self.i2cBus = smbus.SMBus(0)  # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
+        self.LORAaux = None
+        self.LORAenable = None
+        self.LORAM0 = None
+        self.SRRirq = None
+        self.SRRnrst = None
+        self.Button = None
         f = open("../WiRocHWVersion.txt", "r")
         wirocHWVersion = f.read()
         self.wirocHWVersion = wirocHWVersion.strip()
@@ -20,16 +29,58 @@ class HardwareAbstraction(object):
 
     def SetupPins(self):
         if self.runningOnNanoPi:
+            # gpioinfo give us gpiochip0 and gpiochip1. But gpiochip0 for the lines (pins) needed
+            chip = gpiod.Chip('gpiochip0')
+            configOutput = gpiod.line_request()
+            configOutput.consumer = "wirocpython"
+            configOutput.request_type = gpiod.line_request.DIRECTION_OUTPUT
+            configInput = gpiod.line_request()
+            configInput.consumer = "wirocpython"
+            configInput.request_type = gpiod.line_request.DIRECTION_INPUT
+
+            configIrq = gpiod.line_request()
+            configIrq.consumer = "wirocpython"
+            configIrq.request_type = gpiod.line_request.EVENT_RISING_EDGE
+
             if self.wirocHWVersion == 'v4Rev1' or self.wirocHWVersion == 'v5Rev1':
-                pinModeNonXIO(64, INPUT)  # lora aux pin (corresponds to pin 19)
-                pinModeNonXIO(2, OUTPUT)  # lora enable pin (corresponds to pin 13)
-                digitalWriteNonXIO(2, 1)
-                pinModeNonXIO(17, OUTPUT)  # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
-                digitalWriteNonXIO(17, 0)
+                self.LORAaux = chip.get_line(64) # lora aux pin (corresponds to pin 19)
+                self.LORAaux.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_IN)
+
+                self.LORAenable = chip.get_line(2) # lora enable pin (corresponds to pin 13)
+                self.LORAenable.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_OUT)
+                self.LORAenable.set_value(1)
+
+                self.LORAM0 = chip.get_line(17)  # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
+                self.LORAM0.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_OUT)
+                self.LORAM0.set_value(0)
+            elif self.wirocHWVersion == 'v6Rev1':
+                self.LORAaux = chip.get_line(64) # lora aux pin (corresponds to pin 19)
+                self.LORAaux.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_IN)
+
+                self.LORAenable = chip.get_line(2) # lora enable pin (corresponds to pin 13)
+                self.LORAenable.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_OUT)
+                self.LORAenable.set_value(1)
+
+                self.LORAM0 = chip.get_line(17)  # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
+                self.LORAM0.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_OUT)
+                self.LORAM0.set_value(0)
+
+                self.SRRirq = chip.get_line(6) # SRR_IRQ input interrupt message available (corresponds to pin 12 GPIOA6)
+                self.SRRirq.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_IN)
+
+                self.SRRnrst = chip.get_line(67) # SRR_NRST reset SRR (corresponds to pin 24 GPIOC3)
+                self.SRRnrst.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_OUT)
+                self.SRRnrst.set_value(1)
+
+                self.Button = chip.get_line(66) # PowerOn pin GPIOC2 Pin 23
+                self.Button.request(consumer="wirocpython", type=gpiod.LINE_REQ_EV_FALLING_EDGE)
             else:
-                pinModeNonXIO(0, INPUT)  # lora aux pin
-                pinModeNonXIO(2, OUTPUT) # lora enable pin
-                digitalWriteNonXIO(2, 1)
+                self.LORAaux = chip.get_line(0)  # lora aux pin
+                self.LORAaux.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_IN)
+
+                self.LORAenable = chip.get_line(2)  # lora enable pin (corresponds to pin 13)
+                self.LORAenable.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_OUT)
+                self.LORAenable.set_value(1)
         elif self.runningOnChip:
             pinMode(0, OUTPUT)
             pinMode(1, OUTPUT)
@@ -49,7 +100,7 @@ class HardwareAbstraction(object):
                 digitalWriteNonXIO(135, 1)
 
     def GetSISerialPorts(self):
-        if self.wirocHWVersion == 'v4Rev1' or self.wirocHWVersion == 'v5Rev1':
+        if self.wirocHWVersion == 'v4Rev1' or self.wirocHWVersion == 'v5Rev1' or self.wirocHWVersion == 'v6Rev1':
             return ['/dev/ttyS2']
         return []
 
@@ -64,7 +115,7 @@ class HardwareAbstraction(object):
         # with new oled design: 135
         # pin 2 for nanopiair
         if self.runningOnNanoPi:
-                digitalWriteNonXIO(2, 0) #lora enable pin (corresponds to pin 13)
+            self.LORAenable.set_value(0)
         elif self.runningOnChip:
             if self.typeOfDisplay == '7SEG':
                 digitalWriteNonXIO(139, 0)
@@ -75,12 +126,36 @@ class HardwareAbstraction(object):
         # disable radio module 139; #with new oled design: 135
         # pin 2 for nanopiair
         if self.runningOnNanoPi:
-            digitalWriteNonXIO(2, 1)  # lora enable pin (corresponds to pin 13)
+            self.LORAenable.set_value(1)
         elif self.runningOnChip:
             if self.typeOfDisplay == '7SEG':
                 digitalWriteNonXIO(139, 1)
             else:
                 digitalWriteNonXIO(135, 1)
+
+    def EnableSRR(self):
+        if self.SRRnrst is not None:
+            self.SRRnrst.set_value(0)
+
+    def DisableSRR(self):
+        if self.SRRirq is not None:
+            self.SRRirq.get_value()
+
+    def GetSRRIRQValue(self):
+        if self.SRRnrst is not None:
+            self.SRRnrst.get_value()
+        else:
+            return 0
+
+    def GetIsButtonPressed(self):
+        if self.Button is not None:
+            if self.Button.event_wait():  # todo: if needed add bounce time
+                ev = self.Button.event_read()
+                return True
+            else:
+                return False
+        else:
+            return False
 
     def GetIsTransmittingReceiving(self):
         # aux 138, with new oled design: 134
@@ -90,12 +165,7 @@ class HardwareAbstraction(object):
             else:
                 return digitalReadNonXIO(134) == 0
         elif self.runningOnNanoPi:
-            if self.wirocHWVersion == 'v4Rev1':
-                return digitalReadNonXIO(64) == 0  # lora aux pin (corresponds to pin 19)
-            elif self.wirocHWVersion == 'v5Rev1':
-                return digitalReadNonXIO(64) == 0  # lora aux pin (corresponds to pin 19)
-            else:
-                return digitalReadNonXIO(0) == 0 # lora aux pin (corresponds to pin 11)
+            return self.LORAaux.get_value() == 0  # lora aux pin (corresponds to pin 19)
         return False
 
     def GetWifiSignalStrength(self):
@@ -114,13 +184,20 @@ class HardwareAbstraction(object):
     def GetIsShortKeyPress(self):
         if self.runningOnChip or self.runningOnNanoPi:
             HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetIsShortKeyPress")
-            statusReg = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x4a").read()
-            shortKeyPress = int(statusReg, 16) & 0x02
+
+            IRQ_STATUS_3_REGADDR = 0x4a
+            statusReg = self.i2cBus.read_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR)
+
+            #statusReg = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x4a").read()
+            #shortKeyPress = int(statusReg, 16) & 0x02
+            shortKeyPress = statusReg & 0x02
             return shortKeyPress > 0
         return False
 
     def ClearShortKeyPress(self):
         if self.runningOnChip or self.runningOnNanoPi:
             HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearShortKeyPress")
-            os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x4a 0x02'")
+            IRQ_STATUS_3_REGADDR = 0x4a
+            self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR, 0x02)
+            #os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x4a 0x02'")
 

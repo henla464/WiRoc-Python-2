@@ -95,7 +95,7 @@ class DisplayStateMachine(object):
 
     def Draw(self, channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
         if self.currentState is not None:
-            if HardwareAbstraction.Instance.GetIsShortKeyPress() or self.currentState == self.OledStartup:
+            if HardwareAbstraction.Instance.GetIsButtonPressed() or self.currentState == self.OledStartup:
                 HardwareAbstraction.Instance.ClearShortKeyPress()
                 self.currentState = self.currentState.Next()
         else:

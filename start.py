@@ -120,7 +120,7 @@ class Main:
             self.webServerUp = False
         Battery.Tick()
 
-    def updateDisplayBackground(self,channel,ackRequested, wirocMode, loraRange, wirocDeviceName, sirapTCPEnabled,
+    def updateDisplayBackground(self, channel, ackRequested, wirocMode, loraRange, wirocDeviceName, sirapTCPEnabled,
                               sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
         self.displayStateMachine.Draw(channel, ackRequested, wirocMode, loraRange, wirocDeviceName, sirapTCPEnabled,
                                       sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
@@ -552,7 +552,13 @@ class Main:
         while True:
             for i in range(1,1004):
                 didTasks = False
-                if i % 149 == 0: # use prime numbers to avoid the tasks happening on the same iteration
+                if i % 11 == 0: # use prime numbers to avoid the tasks happening on the same iteration
+                    # print("frequent maintenance time: " + str(datetime.now()))
+                    if HardwareAbstraction.Instance.GetIsButtonPressed():
+                        didTasks = True
+                        self.doFrequentMaintenanceTasks()
+
+                if i % 149 == 0:
                     # print("frequent maintenance time: " + str(datetime.now()))
                     didTasks = True
                     self.doFrequentMaintenanceTasks()

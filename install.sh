@@ -18,7 +18,7 @@ then
     WiRocBLEVersion=$wBLEOption
 fi
 
-echo "Which hardware is this runnig on: 1: CHIP+7SEG, 2: CHIP+OLED, 3: NanoPi, 4: NanoPi+SerialPort"
+echo "Which hardware is this runnig on: 1: CHIP+7SEG, 2: CHIP+OLED, 3: NanoPi, 4: NanoPi+SerialPort, 5: NanoPi+SerialPort+SRR"
 read hwOption
 WiRocHWVersion="v3Rev2"
 if [[ $hwOption = 1 ]]; then
@@ -32,6 +32,9 @@ if [[ $hwOption = 3 ]]; then
 fi
 if [[ $hwOption = 4 ]]; then
     WiRocHWVersion="v4Rev1"
+fi
+if [[ $hwOption = 5 ]]; then
+    WiRocHWVersion="v6Rev1"
 fi
 
 echo "update"
@@ -64,6 +67,7 @@ apt-get -y install python3
 apt-get -y install python3-pip
 apt-get -y install python3-setuptools
 apt-get -y install python3-dev
+apt-get -Y install gpiod
 pip3 install -U setuptools
 pip3 install wheel
 pip3 install requests
@@ -72,6 +76,8 @@ pip3 install reedsolo
 pip3 install cython
 pip3 install git+https://github.com/henla464/reedsolomon.git
 pip3 install pydbus
+pip3 install smbus
+pip3 install gpiod
 
 echo "flask"
 #read line

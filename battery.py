@@ -4,20 +4,26 @@ import os
 import time
 import logging
 import socket
+import smbus
 
 class Battery(object):
     WiRocLogger = logging.getLogger('WiRoc')
     timeChargingOrMaxCurrentDrawChangedFromNormal = None
+    timeLastChargingConfigure = None
     currentMode = None
     limitCurrentMode = None
     isRunningOnChip = False
     isRunningOnNanoPi = False
     wifiPowerSaving = None
+    i2cAddress = 0x34
+    i2cBus = None
 
     @classmethod
     def Setup(cls):
         cls.isRunningOnChip = (socket.gethostname() == 'chip')
         cls.isRunningOnNanoPi = (socket.gethostname() == 'nanopiair')
+        cls.i2cBus = smbus.SMBus(0)  # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
+
 
     @classmethod
     def LimitCurrentDrawTo100IfBatteryOK(cls):
@@ -61,7 +67,7 @@ class Battery(object):
 
     @classmethod
     def SetSlowCharging(cls):
-        if (cls.isRunningOnChip  or cls.isRunningOnNanoPi) and cls.currentMode != "SLOW":
+        if (cls.isRunningOnChip or cls.isRunningOnNanoPi) and cls.currentMode != "SLOW":
             Battery.WiRocLogger.info("Battery::SetSlowCharging Charging set to slow")
             os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x33 0xC1'")
             cls.currentMode = "SLOW"
@@ -76,18 +82,40 @@ class Battery(object):
         cls.timeChargingOrMaxCurrentDrawChangedFromNormal = None
 
     @classmethod
+    def GetPMUTemperature(cls):
+        TEMPERATURE_MSB_REGADDR = 0x5e
+        TEMPERATURE_LSB_REGADDR = 0x5f
+        temperatureHighByte = cls.i2cBus.read_byte_data(cls.i2cAddress, TEMPERATURE_MSB_REGADDR)
+        temperatureLowByte = cls.i2cBus.read_byte_data(cls.i2cAddress, TEMPERATURE_LSB_REGADDR)
+        # PMU Internal temperature 000 is -144.7C steps of 0.1C, FFF is 264.8C
+        temperatureCelsius = ((temperatureHighByte << 4 | (temperatureLowByte & 0xF)) - 1447) / 10
+        return temperatureCelsius
+
+    @classmethod
     def Tick(cls):
-        if cls.timeChargingOrMaxCurrentDrawChangedFromNormal is not None and \
-                        time.monotonic() > cls.timeChargingOrMaxCurrentDrawChangedFromNormal + 60:
-            cls.SetNormalCharging()
-            cls.LimitCurrentDrawTo900()
+        if cls.timeLastChargingConfigure is None or \
+                time.monotonic() > cls.timeLastChargingConfigure + 120:
+            cls.timeLastChargingConfigure = time.monotonic()
+            temperature = cls.GetPMUTemperature()
+            if temperature > cls.GetPMUTemperature() > 85:
+                if cls.currentMode != "SLOW":
+                    cls.SetSlowCharging()
+            elif temperature > 90:
+                if cls.currentMode != "DISABLED":
+                    cls.DisableChargingIfBatteryOK()
+            else:
+                if cls.currentMode != "NORMAL":
+                    cls.SetNormalCharging()
+
 
     @classmethod
     def IsCharging(cls):
         if cls.isRunningOnChip or cls.isRunningOnNanoPi:
             logging.debug("Battery::IsCharging")
-            strValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x01").read()
-            intValue = int(strValue, 16)
+            #strValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x01").read()
+            POWERMODE_CHARGING_REGADDR = 0x01
+            intValue = cls.i2cBus.read_byte_data(cls.i2cAddress, POWERMODE_CHARGING_REGADDR)
+            #intValue = int(strValue, 16)
             isCharging = (intValue & 0x40) > 0
             return isCharging
         return True
@@ -96,19 +124,19 @@ class Battery(object):
     def IsPowerSupplied(cls):
         if cls.isRunningOnChip or cls.isRunningOnNanoPi:
             Battery.WiRocLogger.debug("Battery::IsPowerSupplied")
-            strValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x00").read()
-            intValue = int(strValue, 16)
+            #strValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x00").read()
+            POWER_STATUS_REGADDR = 0x00
+            intValue = cls.i2cBus.read_byte_data(cls.i2cAddress, POWER_STATUS_REGADDR)
+            #intValue = int(strValue, 16)
             isPowerSupplied = (intValue & 0x10) > 0
             return isPowerSupplied
         return False
 
     @classmethod
     def GetIsBatteryLow(cls):
-        # todo: change to subprocess and cache result
         if cls.isRunningOnChip or cls.isRunningOnNanoPi:
             Battery.WiRocLogger.debug("Battery::GetIsBatteryLow")
-            strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
-            intPercentValue = int(strPercentValue, 16)
+            intPercentValue = cls.GetBatteryPercent()
             isBatteryLow = (intPercentValue < 30)
             return isBatteryLow
         return False
@@ -117,8 +145,10 @@ class Battery(object):
     def GetBatteryPercent(cls):
         if cls.isRunningOnChip or cls.isRunningOnNanoPi:
             Battery.WiRocLogger.debug("Battery::GetBatteryPercent")
-            strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
-            intPercentValue = int(strPercentValue, 16)
+            #strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
+            POWER_MEASUREMENT_RESULT_REGADDR = 0xb9
+            intPercentValue = cls.i2cBus.read_byte_data(cls.i2cAddress, POWER_MEASUREMENT_RESULT_REGADDR)
+            #intPercentValue = int(strPercentValue, 16)
             return intPercentValue
         return 100
 
@@ -127,8 +157,9 @@ class Battery(object):
     def GetBatteryPercent4Bits(cls):
         if cls.isRunningOnChip or cls.isRunningOnNanoPi:
             Battery.WiRocLogger.debug("Battery::GetBatteryPercent4Bits")
-            strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
-            intPercentValue = min(int(strPercentValue, 16), 100)
+            #strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
+            intPercentValue = cls.GetBatteryPercent()
+            intPercentValue = min(intPercentValue, 100)
             batteryPercent4Bit = int(intPercentValue * 15 / 100)
             return batteryPercent4Bit
         return 15

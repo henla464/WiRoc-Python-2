@@ -132,6 +132,7 @@ class SendLoraAdapter(object):
     def GetTransformNames(self):
         transforms = []
         transforms.append("SISIMessageToLoraTransform")
+        transforms.append("SRRSRRMessageToLoraTransform")
         transforms.append("SITestTestToLoraTransform")
         transforms.append("StatusStatusToLoraTransform")
         transforms.append("RepeaterSIMessageToLoraAckTransform")
