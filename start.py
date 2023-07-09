@@ -554,7 +554,7 @@ class Main:
                 didTasks = False
                 if i % 11 == 0: # use prime numbers to avoid the tasks happening on the same iteration
                     # print("frequent maintenance time: " + str(datetime.now()))
-                    if HardwareAbstraction.Instance.GetIsButtonPressed():
+                    if HardwareAbstraction.Instance.GetIsPMUIRQ():
                         didTasks = True
                         self.doFrequentMaintenanceTasks()
 
