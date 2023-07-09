@@ -21,7 +21,7 @@ class HardwareAbstraction(object):
         self.LORAM0 = None
         self.SRRirq = None
         self.SRRnrst = None
-        self.Button = None
+        self.PMUIRQ = None
         f = open("../WiRocHWVersion.txt", "r")
         wirocHWVersion = f.read()
         self.wirocHWVersion = wirocHWVersion.strip()
@@ -72,8 +72,8 @@ class HardwareAbstraction(object):
                 self.SRRnrst.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_OUT)
                 self.SRRnrst.set_value(1)
 
-                self.Button = chip.get_line(66) # PowerOn pin GPIOC2 Pin 23
-                self.Button.request(consumer="wirocpython", type=gpiod.LINE_REQ_EV_FALLING_EDGE)
+                self.PMUIRQ = chip.get_line(3) # IRQ pin GPIOA3 Pin 15
+                self.PMUIRQ.request(consumer="wirocpython", type=gpiod.LINE_REQ_EV_RISING_EDGE)
             else:
                 self.LORAaux = chip.get_line(0)  # lora aux pin
                 self.LORAaux.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_IN)
@@ -147,7 +147,7 @@ class HardwareAbstraction(object):
         else:
             return 0
 
-    def GetIsButtonPressed(self):
+    def GetIsPMUIRQ(self):
         if self.Button is not None:
             if self.Button.event_wait():  # todo: if needed add bounce time
                 ev = self.Button.event_read()
@@ -201,3 +201,20 @@ class HardwareAbstraction(object):
             self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR, 0x02)
             #os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x4a 0x02'")
 
+    def ClearIRQStatus1(self):
+        if self.runningOnChip or self.runningOnNanoPi:
+            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearShortKeyPress")
+            IRQ_STATUS_1_REGADDR = 0x48
+            self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_1_REGADDR, 0xFF)
+
+    def ClearIRQStatus2(self):
+        if self.runningOnChip or self.runningOnNanoPi:
+            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearShortKeyPress")
+            IRQ_STATUS_2_REGADDR = 0x49
+            self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_2_REGADDR, 0xFF)
+
+    def ClearIRQStatus3(self):
+        if self.runningOnChip or self.runningOnNanoPi:
+            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearShortKeyPress")
+            IRQ_STATUS_3_REGADDR = 0x4a
+            self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR, 0xFF)
