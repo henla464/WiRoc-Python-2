@@ -14,18 +14,22 @@ class ReceiveSRRAdapter(object):
                 bus = smbus.SMBus(0)  # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
                 addr = 0x20
 
-                # firmware version
-                firmwareVersion = bus.read_byte_data(addr, 0x00)
+                try:
+                    # firmware version
+                    firmwareVersion = bus.read_byte_data(addr, 0x00)
 
-                # hardware features
-                hardwareFeatures = bus.read_byte_data(addr, 0x01)
+                    # hardware features
+                    hardwareFeatures = bus.read_byte_data(addr, 0x01)
 
-                RED_CHANNEL = 0x01
-                BLUE_CHANNEL = 0x02
-                if hardwareFeatures & RED_CHANNEL or hardwareFeatures & BLUE_CHANNEL:
-                    # Listens for messages on at least one of the two SRR channels.
-                    ReceiveSRRAdapter.Instances.append(ReceiveSRRAdapter("SRR1", bus, addr, firmwareVersion, hardwareFeatures, hardwareAbstraction))
-                return True
+                    RED_CHANNEL = 0x01
+                    BLUE_CHANNEL = 0x02
+                    if hardwareFeatures & RED_CHANNEL or hardwareFeatures & BLUE_CHANNEL:
+                        # Listens for messages on at least one of the two SRR channels.
+                        ReceiveSRRAdapter.Instances.append(ReceiveSRRAdapter("SRR1", bus, addr, firmwareVersion, hardwareFeatures, hardwareAbstraction))
+                    return True
+                except Exception as err:
+                    logging.getLogger('WiRoc.Input').error(
+                        "ReceiveSRRAdapter::CreateInstances() Exception: " + str(err))
         return False
 
     @staticmethod
@@ -84,7 +88,7 @@ class ReceiveSRRAdapter(object):
                     index += noToRead
 
                 self.WiRocLogger.debug("ReceiveSRRAdapter::GetData() Data to fetch")
-                return {"MessageType": "SRR", "MessageSubTypeName": "SRRMessage", "MessageSource": "SRR", "Data": data, "ChecksumOK": True}
+                return {"MessageType": "DATA", "MessageSubTypeName": "SRRMessage", "MessageSource": "SRR", "Data": data, "ChecksumOK": True}
         return None
 
     def AddedToMessageBox(self, mbid):

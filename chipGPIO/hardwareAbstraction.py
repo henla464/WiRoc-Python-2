@@ -4,6 +4,7 @@ import socket
 import subprocess
 import gpiod
 import smbus
+from datetime import timedelta
 
 class HardwareAbstraction(object):
     WiRocLogger = logging.getLogger('WiRoc')
@@ -30,7 +31,7 @@ class HardwareAbstraction(object):
     def SetupPins(self):
         if self.runningOnNanoPi:
             # gpioinfo give us gpiochip0 and gpiochip1. But gpiochip0 for the lines (pins) needed
-            chip = gpiod.Chip('gpiochip0')
+            chip = gpiod.chip('gpiochip0')
             configOutput = gpiod.line_request()
             configOutput.consumer = "wirocpython"
             configOutput.request_type = gpiod.line_request.DIRECTION_OUTPUT
@@ -44,42 +45,42 @@ class HardwareAbstraction(object):
 
             if self.wirocHWVersion == 'v4Rev1' or self.wirocHWVersion == 'v5Rev1':
                 self.LORAaux = chip.get_line(64) # lora aux pin (corresponds to pin 19)
-                self.LORAaux.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_IN)
+                self.LORAaux.request(configInput)
 
                 self.LORAenable = chip.get_line(2) # lora enable pin (corresponds to pin 13)
-                self.LORAenable.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_OUT)
+                self.LORAenable.request(configOutput)
                 self.LORAenable.set_value(1)
 
                 self.LORAM0 = chip.get_line(17)  # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
-                self.LORAM0.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_OUT)
+                self.LORAM0.request(configOutput)
                 self.LORAM0.set_value(0)
             elif self.wirocHWVersion == 'v6Rev1':
                 self.LORAaux = chip.get_line(64) # lora aux pin (corresponds to pin 19)
-                self.LORAaux.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_IN)
+                self.LORAaux.request(configInput)
 
                 self.LORAenable = chip.get_line(2) # lora enable pin (corresponds to pin 13)
-                self.LORAenable.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_OUT)
+                self.LORAenable.request(configOutput)
                 self.LORAenable.set_value(1)
 
                 self.LORAM0 = chip.get_line(17)  # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
-                self.LORAM0.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_OUT)
+                self.LORAM0.request(configOutput)
                 self.LORAM0.set_value(0)
 
                 self.SRRirq = chip.get_line(6) # SRR_IRQ input interrupt message available (corresponds to pin 12 GPIOA6)
-                self.SRRirq.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_IN)
+                self.SRRirq.request(configInput)
 
                 self.SRRnrst = chip.get_line(67) # SRR_NRST reset SRR (corresponds to pin 24 GPIOC3)
-                self.SRRnrst.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_OUT)
+                self.SRRnrst.request(configOutput)
                 self.SRRnrst.set_value(1)
 
                 self.PMUIRQ = chip.get_line(3) # IRQ pin GPIOA3 Pin 15
-                self.PMUIRQ.request(consumer="wirocpython", type=gpiod.LINE_REQ_EV_RISING_EDGE)
+                self.PMUIRQ.request(configIrq)
             else:
                 self.LORAaux = chip.get_line(0)  # lora aux pin
-                self.LORAaux.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_IN)
+                self.LORAaux.request(configInput)
 
                 self.LORAenable = chip.get_line(2)  # lora enable pin (corresponds to pin 13)
-                self.LORAenable.request(consumer="wirocpython", type=gpiod.LINE_REQ_DIR_OUT)
+                self.LORAenable.request(configOutput)
                 self.LORAenable.set_value(1)
         elif self.runningOnChip:
             pinMode(0, OUTPUT)
@@ -135,22 +136,22 @@ class HardwareAbstraction(object):
 
     def EnableSRR(self):
         if self.SRRnrst is not None:
-            self.SRRnrst.set_value(0)
+            self.SRRnrst.set_value(1)
 
     def DisableSRR(self):
-        if self.SRRirq is not None:
-            self.SRRirq.get_value()
+        if self.SRRnrst is not None:
+            self.SRRnrst.set_value(0)
 
     def GetSRRIRQValue(self):
-        if self.SRRnrst is not None:
-            self.SRRnrst.get_value()
+        if self.SRRirq is not None:
+            return self.SRRirq.get_value()
         else:
             return 0
 
     def GetIsPMUIRQ(self):
-        if self.Button is not None:
-            if self.Button.event_wait():  # todo: if needed add bounce time
-                ev = self.Button.event_read()
+        if self.PMUIRQ is not None:
+            if self.PMUIRQ.event_wait(timedelta(microseconds=1)):  # todo: if needed add bounce time
+                ev = self.PMUIRQ.event_read()
                 return True
             else:
                 return False

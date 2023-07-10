@@ -8,11 +8,11 @@ class SRRSRRMessageToSirapTransform(object):
 
     @staticmethod
     def GetInputMessageType():
-        return "SI"
+        return "SRR"
 
     @staticmethod
     def GetInputMessageSubType():
-        return "SIMessage"
+        return "SRRMessage"
 
     @staticmethod
     def GetOutputMessageType():

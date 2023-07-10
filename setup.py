@@ -53,7 +53,7 @@ class Setup:
         inChange6 = ReceiveSIBluetoothSP.CreateInstances() # uses db, writes to it
         inChange7 = ReceiveTestPunchesAdapter.CreateInstances()
         inChange8 = ReceiveRepeaterMessagesAdapter.CreateInstances()
-        inChange9 = ReceiveSRRAdapter.CreateInstances()
+        inChange9 = ReceiveSRRAdapter.CreateInstances(HardwareAbstraction.Instance)
         inputObjects.extend(CreateStatusAdapter.Instances)
         inputObjects.extend(ReceiveLoraAdapter.Instances)
         inputObjects.extend(ReceiveSIUSBSerialPort.Instances)

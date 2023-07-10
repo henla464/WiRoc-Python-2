@@ -12,8 +12,11 @@
     <list default="true" id="22423968-cdc8-408a-8f9a-f776c9e32777" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/chipGPIO/hardwareAbstraction.py" beforeDir="false" afterPath="$PROJECT_DIR$/chipGPIO/hardwareAbstraction.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/display/displaystatemachine.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/displaystatemachine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/start.py" beforeDir="false" afterPath="$PROJECT_DIR$/start.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/databaselib/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/databaselib/db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inputadapters/receivesrradapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/inputadapters/receivesrradapter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/transforms/srrsrrmessagetoloratransform.py" beforeDir="false" afterPath="$PROJECT_DIR$/transforms/srrsrrmessagetoloratransform.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/transforms/srrsrrmessagetosiraptransform.py" beforeDir="false" afterPath="$PROJECT_DIR$/transforms/srrsrrmessagetosiraptransform.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
