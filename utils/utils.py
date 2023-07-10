@@ -27,7 +27,7 @@ class Utils:
         def listOfTwoBytes(slicedByteArr):
             # generates list of elements, each element a bytearray of two bytes
             if len(slicedByteArr) == 0:
-                raise StopIteration
+                return
 
             # add 0 to the string and make it even length
             if len(slicedByteArr) % 2 == 0:

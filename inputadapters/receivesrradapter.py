@@ -76,19 +76,23 @@ class ReceiveSRRAdapter(object):
             # read punch
             SET_DATA_INDEX_REGADDR = 0x05
             PUNCH_REGADDR = 0x40
+            punchMessageData = bytearray()
             index = 0
             if punchLength > 0:  # and (status & 0x01) > 0:
+                print("PunchLength: %s" % punchLength)
+                remaining = punchLength
                 while index < punchLength:
                     self.i2cBus.write_byte_data(self.i2cAddress, SET_DATA_INDEX_REGADDR, index)
-                    remaining = punchLength - index
                     noToRead = remaining
                     if remaining > 31:
                         noToRead = 31
                     data = self.i2cBus.read_i2c_block_data(self.i2cAddress, PUNCH_REGADDR, noToRead)
+                    punchMessageData.extend(data)
+                    remaining -= noToRead
                     index += noToRead
 
                 self.WiRocLogger.debug("ReceiveSRRAdapter::GetData() Data to fetch")
-                return {"MessageType": "DATA", "MessageSubTypeName": "SRRMessage", "MessageSource": "SRR", "Data": bytearray(data), "ChecksumOK": True}
+                return {"MessageType": "DATA", "MessageSubTypeName": "SRRMessage", "MessageSource": "SRR", "Data": punchMessageData, "ChecksumOK": True}
         return None
 
     def AddedToMessageBox(self, mbid):

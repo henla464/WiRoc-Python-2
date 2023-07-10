@@ -62,7 +62,7 @@ class SRRSRRMessageToLoraTransform(object):
         siMsg.AddFooter()
         siMsgPayload = siMsg.GetByteArray()
         if siMsg.GetMessageType() == SIMessage.SIPunch:
-            # all MessageSubscriptionBatchItems will be SIPunch because only SIPunch is sent from SI SIMessage
+            # all MessageSubscriptionBatchItems will be SIPunch because only SIPunch is sent from SRR SRRMessage
             ackReq = SettingsClass.GetAcknowledgementRequested()
             reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
             batteryLow = Battery.GetIsBatteryLow()
