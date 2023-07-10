@@ -224,11 +224,13 @@ class HardwareAbstraction(object):
             HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearPMUIRQStatus3")
             IRQ_STATUS_3_REGADDR = 0x4a
             self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR, 0xFF)
+
     def ClearPMUIRQStatus4(self):
            if self.runningOnChip or self.runningOnNanoPi:
                HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearPMUIRQStatus4")
                IRQ_STATUS_4_REGADDR = 0x4b
                self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_4_REGADDR, 0xFF)
+
     def ClearPMUIRQStatus5(self):
         if self.runningOnChip or self.runningOnNanoPi:
             HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearPMUIRQStatus5")
@@ -245,8 +247,7 @@ class HardwareAbstraction(object):
         if self.runningOnChip or self.runningOnNanoPi:
             HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::DisablePMUIRQ4")
             IRQ_2_REGADDR = 0x41
-            self.i2cB
-            us.write_byte_data(self.i2cAddress, IRQ_2_REGADDR, 0x00)
+            self.i2cBus.write_byte_data(self.i2cAddress, IRQ_2_REGADDR, 0x00)
 
     # IRQ3 Contains PEK short and long. Default is correct so no need to disable.
     def DisablePMUIRQ3(self):
