@@ -88,7 +88,7 @@ class ReceiveSRRAdapter(object):
                     index += noToRead
 
                 self.WiRocLogger.debug("ReceiveSRRAdapter::GetData() Data to fetch")
-                return {"MessageType": "DATA", "MessageSubTypeName": "SRRMessage", "MessageSource": "SRR", "Data": data, "ChecksumOK": True}
+                return {"MessageType": "DATA", "MessageSubTypeName": "SRRMessage", "MessageSource": "SRR", "Data": bytearray(data), "ChecksumOK": True}
         return None
 
     def AddedToMessageBox(self, mbid):
