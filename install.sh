@@ -150,7 +150,8 @@ apt-get -y install python
 echo "Install bluetooth stuff"
 #read line
 #Install bluetooth stuff
-apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev
+# There is a problem with 5.50-1.2~deb10u3 that makes BLE writes and reads give errors. "u2" works. And it seems it is enough to downgrade bluez.
+apt-get -y install bluetooth bluez=5.50-1.2~deb10u2 libbluetooth-dev libudev-dev
 
 echo "WiRoc-Python-2"
 #read line
@@ -284,18 +285,18 @@ if [[ $(hostname -s) = nanopiair ]]; then
         echo "Changed boot.cmd and recompiled it"
     fi
     
-    if [[ $WiRocHWVersion = 'v4Rev1' ]]
+    if [ "$hwVersion" = "v1Rev1" ] || [ "$hwVersion" = "v2Rev1" ] || [ "$hwVersion" = "v3Rev1" ] || [ "$hwVersion" = "v3Rev2" ]
     then
-       if ! grep -Fxq "overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
-       then
-           echo "Change overlays"
-           sed -i -E "s/(overlays=).*/overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0/" /boot/armbianEnv.txt
-       fi
-    else
        if ! grep -Fxq "overlays=uart1 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
        then
            echo "Change overlays"
            sed -i -E "s/(overlays=).*/overlays=uart1 uart3 usbhost1 usbhost2 usbhost3 i2c0/" /boot/armbianEnv.txt
+       fi
+    else
+       if ! grep -Fxq "overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
+       then
+           echo "Change overlays"
+           sed -i -E "s/(overlays=).*/overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0/" /boot/armbianEnv.txt
        fi
     fi
 

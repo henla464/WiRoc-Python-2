@@ -74,7 +74,7 @@ class HardwareAbstraction(object):
                 self.SRRnrst.set_value(1)
 
                 self.PMUIRQ = chip.get_line(3) # IRQ pin GPIOA3 Pin 15
-                self.PMUIRQ.request(configIrq)
+                self.PMUIRQ.request(configInput)
             else:
                 self.LORAaux = chip.get_line(0)  # lora aux pin
                 self.LORAaux.request(configInput)
@@ -144,19 +144,24 @@ class HardwareAbstraction(object):
 
     def GetSRRIRQValue(self):
         if self.SRRirq is not None:
-            return self.SRRirq.get_value()
+            return self.SRRirq.get_value() == 1
         else:
-            return 0
+            return False
 
     def GetIsPMUIRQ(self):
         if self.PMUIRQ is not None:
-            if self.PMUIRQ.event_wait(timedelta(microseconds=1)):  # todo: if needed add bounce time
-                ev = self.PMUIRQ.event_read()
-                return True
-            else:
-                return False
+            return self.PMUIRQ.get_value() == 0
         else:
             return False
+
+       # if self.PMUIRQ is not None:
+       #     if self.PMUIRQ.event_wait(timedelta(microseconds=1)):  # todo: if needed add bounce time
+       #         ev = self.PMUIRQ.event_read()
+       #         return True
+       #     else:
+       #         return False
+       # else:
+       #     return False
 
     def GetIsTransmittingReceiving(self):
         # aux 138, with new oled design: 134
@@ -202,20 +207,56 @@ class HardwareAbstraction(object):
             self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR, 0x02)
             #os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x4a 0x02'")
 
-    def ClearIRQStatus1(self):
+    def ClearPMUIRQStatus1(self):
         if self.runningOnChip or self.runningOnNanoPi:
-            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearShortKeyPress")
+            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearPMUIRQStatus1")
             IRQ_STATUS_1_REGADDR = 0x48
             self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_1_REGADDR, 0xFF)
 
-    def ClearIRQStatus2(self):
+    def ClearPMUIRQStatus2(self):
         if self.runningOnChip or self.runningOnNanoPi:
-            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearShortKeyPress")
+            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearPMUIRQStatus2")
             IRQ_STATUS_2_REGADDR = 0x49
             self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_2_REGADDR, 0xFF)
 
-    def ClearIRQStatus3(self):
+    def ClearPMUIRQStatus3(self):
         if self.runningOnChip or self.runningOnNanoPi:
-            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearShortKeyPress")
+            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearPMUIRQStatus3")
             IRQ_STATUS_3_REGADDR = 0x4a
             self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR, 0xFF)
+    def ClearPMUIRQStatus4(self):
+           if self.runningOnChip or self.runningOnNanoPi:
+               HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearPMUIRQStatus4")
+               IRQ_STATUS_4_REGADDR = 0x4b
+               self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_4_REGADDR, 0xFF)
+    def ClearPMUIRQStatus5(self):
+        if self.runningOnChip or self.runningOnNanoPi:
+            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearPMUIRQStatus5")
+            IRQ_STATUS_5_REGADDR = 0x4c
+            self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_5_REGADDR, 0xFF)
+
+    def DisablePMUIRQ1(self):
+        if self.runningOnChip or self.runningOnNanoPi:
+            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::DisablePMUIRQ4")
+            IRQ_1_REGADDR = 0x40
+            self.i2cBus.write_byte_data(self.i2cAddress, IRQ_1_REGADDR, 0x00)
+
+    def DisablePMUIRQ2(self):
+        if self.runningOnChip or self.runningOnNanoPi:
+            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::DisablePMUIRQ4")
+            IRQ_2_REGADDR = 0x41
+            self.i2cB
+            us.write_byte_data(self.i2cAddress, IRQ_2_REGADDR, 0x00)
+
+    # IRQ3 Contains PEK short and long. Default is correct so no need to disable.
+    def DisablePMUIRQ3(self):
+        if self.runningOnChip or self.runningOnNanoPi:
+            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::DisablePMUIRQ4")
+            IRQ_3_REGADDR = 0x42
+            self.i2cBus.write_byte_data(self.i2cAddress, IRQ_3_REGADDR, 0x00)
+
+    def DisablePMUIRQ4(self):
+        if self.runningOnChip or self.runningOnNanoPi:
+            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::DisablePMUIRQ4")
+            IRQ_4_REGADDR = 0x43
+            self.i2cBus.write_byte_data(self.i2cAddress, IRQ_4_REGADDR, 0x00)

@@ -98,10 +98,6 @@ class DisplayStateMachine(object):
             if HardwareAbstraction.Instance.GetIsShortKeyPress() or self.currentState == self.OledStartup:
                 HardwareAbstraction.Instance.ClearShortKeyPress()
                 self.currentState = self.currentState.Next()
-            # Clear all IRQ status bits in so IRQ line is cleared even if another IRQ event happend (we are only interested in short key press)
-            HardwareAbstraction.Instance.ClearIRQStatus1()
-            HardwareAbstraction.Instance.ClearIRQStatus2()
-            HardwareAbstraction.Instance.ClearIRQStatus3()
         else:
             self.currentState = DisplayStateMachine.OledStartup
         if self.currentState is not None:

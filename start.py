@@ -16,6 +16,7 @@ from utils.utils import Utils
 from display.displaystatemachine import DisplayStateMachine
 import requests, queue, threading
 
+
 class Main:
     def __init__(self):
         self.wirocLogger = logging.getLogger("WiRoc")
@@ -34,6 +35,10 @@ class Main:
         self.displayStateMachine = DisplayStateMachine()
         Battery.Setup()
         HardwareAbstraction.Instance.SetupPins()
+
+        HardwareAbstraction.Instance.DisablePMUIRQ1()
+        HardwareAbstraction.Instance.DisablePMUIRQ2()
+        HardwareAbstraction.Instance.DisablePMUIRQ4()
 
         #DatabaseHelper.drop_all_tables()
         DatabaseHelper.ensure_tables_created()
@@ -558,10 +563,10 @@ class Main:
                         didTasks = True
                         self.doFrequentMaintenanceTasks()
 
-                if i % 149 == 0:
+                #if i % 149 == 0:
                     # print("frequent maintenance time: " + str(datetime.now()))
-                    didTasks = True
-                    self.doFrequentMaintenanceTasks()
+                #    didTasks = True
+                #    self.doFrequentMaintenanceTasks()
 
                 if i % 251 == 0:
                     # print("reconfigure time: " + str(datetime.now()))
