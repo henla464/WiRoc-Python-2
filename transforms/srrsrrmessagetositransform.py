@@ -50,4 +50,4 @@ class SRRSRRMessageToSITransform(object):
         siMsg.AddHeader(SIMessage.SIPunch)
         siMsg.AddPayload(payloadData[18:31])
         siMsg.AddFooter()
-        return {"Data": (payloadData,), "MessageID": None}
+        return {"Data": (siMsg.GetByteArray(),), "MessageID": None}

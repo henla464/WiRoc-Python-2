@@ -76,6 +76,7 @@ class SendLoraAdapter(object):
                 SendLoraAdapter.WiRocMode = SettingsClass.GetLoraMode()
                 enableSendTransforms = (SendLoraAdapter.WiRocMode == "SENDER" or SendLoraAdapter.WiRocMode == "REPEATER")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SISIMessageToLoraTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "SRRSRRMessageToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestTestToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "StatusStatusToLoraTransform")
                 # For receiver: Sends schedules an ack for message received from sender when sender requested repeater

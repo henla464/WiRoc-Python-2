@@ -2,7 +2,7 @@ from datamodel.datamodel import SIMessage
 import logging
 
 
-class SITestTestMessageToSITransform(object):
+class SITestTestToSITransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 
     @staticmethod
@@ -23,7 +23,7 @@ class SITestTestMessageToSITransform(object):
 
     @staticmethod
     def GetName():
-        return "SISIMessageToSITransform"
+        return "SITestTestToSITransform"
 
     @staticmethod
     def GetBatchSize():
@@ -44,8 +44,6 @@ class SITestTestMessageToSITransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch, subscriberAdapter):
-        SITestTestMessageToSITransform.WiRocLogger.debug("SITestTestMessageToSITransform::Transform()")
+        SITestTestToSITransform.WiRocLogger.debug("SITestTestMessageToSITransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-        siMsg = SIMessage()
-        siMsg.AddPayload(payloadData)
         return {"Data": (payloadData,), "MessageID": None}
