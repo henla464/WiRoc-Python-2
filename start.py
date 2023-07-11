@@ -131,7 +131,6 @@ class Main:
                                       sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
 
     def doFrequentMaintenanceTasks(self):
-        SettingsClass.Tick()
         if HardwareAbstraction.Instance.runningOnChip or HardwareAbstraction.Instance.runningOnNanoPi:
             wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
             channel = SettingsClass.GetChannel()
@@ -558,15 +557,16 @@ class Main:
             for i in range(1,1004):
                 didTasks = False
                 if i % 11 == 0: # use prime numbers to avoid the tasks happening on the same iteration
-                    # print("frequent maintenance time: " + str(datetime.now()))
+                    # Check if button was pressed, if so run doFrequentMaintenanceTasks to update OLED
                     if HardwareAbstraction.Instance.GetIsPMUIRQ():
                         didTasks = True
                         self.doFrequentMaintenanceTasks()
 
-                #if i % 149 == 0:
-                    # print("frequent maintenance time: " + str(datetime.now()))
-                #    didTasks = True
-                #    self.doFrequentMaintenanceTasks()
+                if i % 149 == 0:
+                    # We need to call SettingsClass.Tick() to clear settings cache so new configurations take effect
+                    didTasks = True
+                    SettingsClass.Tick()
+                    self.doFrequentMaintenanceTasks()
 
                 if i % 251 == 0:
                     # print("reconfigure time: " + str(datetime.now()))
