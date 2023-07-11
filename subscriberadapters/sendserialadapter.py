@@ -27,7 +27,14 @@ class SendSerialAdapter(object):
                 return True
         else:
             if len(SendSerialAdapter.Instances) > 0:
+                tempInstance = SendSerialAdapter.Instances[0]
                 SendSerialAdapter.Instances = []
+                SendSerialAdapter.EnableDisableSubscription()
+                try:
+                    tempInstance.rs232Serial.close()
+                except Exception as ex:
+                    SendSerialAdapter.WiRocLogger.debug("SendSerialAdapter:CreateInstances() Close serial failed ex: %s" % ex)
+
                 return True
         return False
 
