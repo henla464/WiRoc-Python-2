@@ -73,7 +73,7 @@ class SendToBlenoAdapter(object):
     def GetTransformNames(self):
         return ["SISIMessageToSITransform", "LoraSIMessageToSITransform",
                 "LoraSIMessageDoubleToSITransform", "SRRSRRMessageToSITransform",
-                "SITestTestMessageToSITransform"]
+                "SITestTestToSITransform"]
 
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass

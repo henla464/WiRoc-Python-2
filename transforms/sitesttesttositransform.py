@@ -44,6 +44,6 @@ class SITestTestToSITransform(object):
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch, subscriberAdapter):
-        SITestTestToSITransform.WiRocLogger.debug("SITestTestMessageToSITransform::Transform()")
+        SITestTestToSITransform.WiRocLogger.debug("SITestTestToSITransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         return {"Data": (payloadData,), "MessageID": None}
