@@ -10,9 +10,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="22423968-cdc8-408a-8f9a-f776c9e32777" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/transforms/sitesttesttositransform.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/subscriberadapters/sendserialadapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/subscriberadapters/sendserialadapter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/databaselib/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/databaselib/db.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

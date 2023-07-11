@@ -64,7 +64,6 @@ class DB:
         valuesTuple = tuple(self.data_mapping.get_database_value(getattr(table_object, column_name))
                                 for column_name, column_type in table_object.__class__.columns)
         db_cursor = self.connection.cursor()
-        print(SQL_statement)
         db_cursor.execute(SQL_statement, valuesTuple)
         self.connection.commit()
         if rowid is None:
