@@ -14,7 +14,7 @@ class OledShutdown(OledDisplayState):
         self.imageChanged = True
         self.OledImage = Image.new('1', (OledDisplayState.OledWidth, OledDisplayState.OledHeight))
         self.OledDraw = ImageDraw.Draw(self.OledImage)
-        self.OledDraw.text((3, 8), "Shutdown", font=self.OledThinFont2, fill=255)
+        self.OledDraw.text((3, 12), "Shutting Down...", font=self.OledThinFont2, fill=255)
 
     def Draw(self,channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
         if self.imageChanged:

@@ -10,15 +10,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="22423968-cdc8-408a-8f9a-f776c9e32777" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/display/oledshutdown.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/chipGPIO/hardwareAbstraction.py" beforeDir="false" afterPath="$PROJECT_DIR$/chipGPIO/hardwareAbstraction.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/display/displaystatemachine.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/displaystatemachine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/display/olednormal.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/olednormal.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/display/oledoutput.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/oledoutput.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/display/oledstartup.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/oledstartup.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/display/oledwirocip.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/oledwirocip.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/install.sh" beforeDir="false" afterPath="$PROJECT_DIR$/install.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/display/oledshutdown.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/oledshutdown.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

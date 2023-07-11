@@ -101,7 +101,6 @@ class DisplayStateMachine(object):
                 self.currentState = self.currentState.Next()
             elif HardwareAbstraction.Instance.GetIsLongKeyPress():
                 self.currentState = DisplayStateMachine.OledShutdown
-                HardwareAbstraction.Instance.ClearLongKeyPress()
         else:
             self.currentState = DisplayStateMachine.OledStartup
 
