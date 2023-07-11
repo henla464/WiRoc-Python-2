@@ -111,6 +111,7 @@ class Setup:
                             # add transform to database
                             transformData = TransformData(transformClass.GetName(), inputMessageDataId, outputMessageDataId)
                             transformDataId = DatabaseHelper.save_transform(transformData)
+                            Setup.WiRocLogger.error("Setup::SetupAdapters() Add transform: %s" %transformClass.GetName())
 
                             # add subscription to database
                             deleteAfterSent = transformClass.GetDeleteAfterSent()
@@ -120,14 +121,16 @@ class Setup:
                 adapter.SetIsDBInitialized()
 
         for adapterObj in subscriberObjects:
-            Setup.WiRocLogger.debug("Setup::SetupSubscribers() Before Init() subscriber adapter: " + str(adapterObj.GetInstanceName()))
+
             if not adapterObj.Init():
-                Setup.WiRocLogger.error("Setup::SetupSubscribers() Init adapter failed: " + adapterObj.GetInstanceName())
+                Setup.WiRocLogger.error("Setup::SetupAdapters() Init adapter failed: " + adapterObj.GetInstanceName())
+            else:
+                Setup.WiRocLogger.debug("Setup::SetupAdapters() Initialized subscriber adapter: " + str(adapterObj.GetInstanceName()))
             adapterObj.EnableDisableSubscription()
             adapterObj.EnableDisableTransforms()
 
         for adapterObj in inputObjects:
-            Setup.WiRocLogger.debug("Setup::SetupInputAdapters() Before Init() input adapter: " + str(adapterObj.GetInstanceName()))
+            Setup.WiRocLogger.debug("Setup::SetupAdapters() Before Init() input adapter: " + str(adapterObj.GetInstanceName()))
             adapterObj.Init()
         DatabaseHelper.update_input_adapter_instances(inputObjects)
 

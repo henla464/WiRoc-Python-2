@@ -6,11 +6,10 @@ class Loader(object):
 
     @staticmethod
     def ImportModule(moduleAbsoluteName):
-        Loader.WiRocLogger.debug("Loader::ImportModule() " + moduleAbsoluteName)
         try:
             return importlib.import_module(moduleAbsoluteName)
         except Exception as myex:
-            Loader.WiRocLogger.error("Loader::ImportModule() Import exception")
+            Loader.WiRocLogger.error("Loader::ImportModule() Import exception: %s" %moduleAbsoluteName)
             Loader.WiRocLogger.error(myex)
             pass
 
@@ -45,10 +44,8 @@ class Loader(object):
         for name, moduleObject in inspect.getmembers(module):
             if inspect.isclass(moduleObject):
                 if name.endswith(suffix):
-                    Loader.WiRocLogger.debug("Loader::GetFirstClassFromModule() Class name: "  + name)
+                    #Loader.WiRocLogger.debug("Loader::GetFirstClassFromModule() Class name: "  + name)
                     return moduleObject
-                else:
-                    Loader.WiRocLogger.debug("Loader::GetFirstClassFromModule() Class name: " + name + " doesn't end in " + suffix)
             else:
                 Loader.WiRocLogger.debug("Loader::GetFirstClassFromModule() Class name: " + name + " isn't a class")
         Loader.WiRocLogger.debug("Loader::GetFirstClassFromModule() No class member found")
