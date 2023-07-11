@@ -194,8 +194,6 @@ class HardwareAbstraction(object):
             IRQ_STATUS_3_REGADDR = 0x4a
             statusReg = self.i2cBus.read_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR)
 
-            #statusReg = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x4a").read()
-            #shortKeyPress = int(statusReg, 16) & 0x02
             shortKeyPress = statusReg & 0x02
             return shortKeyPress > 0
         return False
@@ -205,7 +203,23 @@ class HardwareAbstraction(object):
             HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearShortKeyPress")
             IRQ_STATUS_3_REGADDR = 0x4a
             self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR, 0x02)
-            #os.system("sudo sh -c '/usr/sbin/i2cset -f -y 0 0x34 0x4a 0x02'")
+
+    def GetIsLongKeyPress(self):
+        if self.runningOnChip or self.runningOnNanoPi:
+            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetIsLongKeyPress")
+
+            IRQ_STATUS_3_REGADDR = 0x4a
+            statusReg = self.i2cBus.read_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR)
+
+            longKeyPress = statusReg & 0x01
+            return longKeyPress > 0
+        return False
+
+    def ClearLongKeyPress(self):
+        if self.runningOnChip or self.runningOnNanoPi:
+            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearLongKeyPress")
+            IRQ_STATUS_3_REGADDR = 0x4a
+            self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR, 0x01)
 
     def ClearPMUIRQStatus1(self):
         if self.runningOnChip or self.runningOnNanoPi:

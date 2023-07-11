@@ -1,13 +1,13 @@
 import display.displaystatemachine
 import display.displaystate
+from display.oleddisplaystate import OledDisplayState
 from PIL import Image
 from PIL import ImageDraw
 import logging
 from pathlib import Path
 
-OledDisplayState = display.oleddisplaystate.OledDisplayState
 
-class OledStartup(display.oleddisplaystate.OledDisplayState):
+class OledStartup(OledDisplayState):
     def __init__(self):
         self.wiRocLogger = logging.getLogger('WiRoc.Display')
         self.imageChanged = True
@@ -24,11 +24,10 @@ class OledStartup(display.oleddisplaystate.OledDisplayState):
                 self.bleVersion = versionFile.read()
         except:
             pass
-        self.OledImage = Image.new('1', (display.oleddisplaystate.OledDisplayState.OledWidth, display.oleddisplaystate.OledDisplayState.OledHeight))
+        self.OledImage = Image.new('1', (OledDisplayState.OledWidth, OledDisplayState.OledHeight))
         self.OledDraw = ImageDraw.Draw(self.OledImage)
         self.OledDraw.text((3, 1), self.pythonVersion, font=self.OledThinFont2, fill=255)
         self.OledDraw.text((60, 1), 'BLE: ' + self.bleVersion, font=self.OledThinFont2, fill=255)
-
 
     def Draw(self,channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
         if self.deviceName != deviceName:

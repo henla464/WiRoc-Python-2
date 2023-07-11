@@ -1,15 +1,14 @@
 import display.displaystatemachine
 import display.displaystate
+from display.oleddisplaystate import OledDisplayState
 from PIL import Image
 from PIL import ImageDraw
 from battery import Battery
 import logging
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 
-OledDisplayState = display.oleddisplaystate.OledDisplayState
 
-
-class OledOutput(display.oleddisplaystate.OledDisplayState):
+class OledOutput(OledDisplayState):
     def __init__(self):
         self.wiRocLogger = logging.getLogger('WiRoc.Display')
         self.imageChanged = True
@@ -18,11 +17,10 @@ class OledOutput(display.oleddisplaystate.OledDisplayState):
         self.sendSerialActive = None
         self.sirapIPAddress = ""
         self.sirapIPPort = ""
-        self.OledImage = Image.new('1', (display.oleddisplaystate.OledDisplayState.OledWidth, display.oleddisplaystate.OledDisplayState.OledHeight))
+        self.OledImage = Image.new('1', (OledDisplayState.OledWidth, OledDisplayState.OledHeight))
         self.OledDraw = ImageDraw.Draw(self.OledImage)
         self.OledDraw.text((3, 1), "Out:", font=self.OledThinFont2, fill=255)
         self.OledDraw.text((3, 16), "To:" , font=self.OledThinFont2, fill=255)
-
 
     def Draw(self,channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
         if self.sirapTCPEnabled != sirapTCPEnabled:
@@ -67,7 +65,7 @@ class OledOutput(display.oleddisplaystate.OledDisplayState):
 
         if self.imageChanged:
             self.imageChanged = False
-            display.oleddisplaystate.OledDisplayState.OledDisp.image(self.OledImage)
+            OledDisplayState.OledDisp.image(self.OledImage)
             self.OledDisp.display()
 
     def Next(self):

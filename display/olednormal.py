@@ -1,12 +1,11 @@
 import display.displaystatemachine
 import display.displaystate
+from display.oleddisplaystate import OledDisplayState
 from PIL import Image
 from PIL import ImageDraw
 from battery import Battery
 import logging
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
-
-OledDisplayState = display.oleddisplaystate.OledDisplayState
 
 
 class OledNormal(OledDisplayState):

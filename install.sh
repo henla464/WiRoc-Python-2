@@ -150,8 +150,20 @@ apt-get -y install python
 echo "Install bluetooth stuff"
 #read line
 #Install bluetooth stuff
-# There is a problem with 5.50-1.2~deb10u3 that makes BLE writes and reads give errors. "u2" works. And it seems it is enough to downgrade bluez.
-apt-get -y install bluetooth bluez=5.50-1.2~deb10u2 libbluetooth-dev libudev-dev
+if [[ $(hostname -s) = nanopiair ]]; then
+
+cat << EOF > /etc/apt/preferences.d/bluez
+Package: bluez
+Pin: version 5.50-1.2~deb10u2
+Pin-Priority: 999
+EOF
+	# There is a problem with 5.50-1.2~deb10u3 that makes BLE writes and reads give errors. "u2" works. And it seems it is enough to downgrade bluez.
+	# Newer version seem to work too: https://www.makeuseof.com/install-bluez-latest-version-on-ubuntu/ (no need for --experimental) (5.66)
+	apt-get -y install bluetooth bluez=5.50-1.2~deb10u2 libbluetooth-dev libudev-dev
+else
+	apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev
+fi
+
 
 echo "WiRoc-Python-2"
 #read line
