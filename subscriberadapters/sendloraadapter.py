@@ -309,14 +309,23 @@ class SendLoraAdapter(object):
             callbackQueue.put((notSentCB,))
             return False
 
+        statMessageType = ""
         returnSuccess = True
         for data in messageData:
             headerMessageType = LoraRadioDataHandler.GetHeaderMessageType(data)
+
             if headerMessageType != LoraRadioMessageRS.MessageTypeLoraAck:
                 SettingsClass.SetTimeOfLastMessageSentToLora()
+            else:
+                statMessageType = "Ack"
+
             if headerMessageType == LoraRadioMessageRS.MessageTypeSIPunchReDCoS or \
                     headerMessageType == LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS:
+                statMessageType = "Punch"
                 SettingsClass.SetMessageIDOfLastLoraMessageSent(settingsDictionary["MessageID"])
+
+            if headerMessageType == LoraRadioMessageRS.MessageTypeStatus:
+                statMessageType = "Status"
 
             delayS = settingsDictionary["DelayAfterMessageSent"]
             self.BlockSendingUntilMessageSentAndAckReceived(delayS)
@@ -333,6 +342,8 @@ class SendLoraAdapter(object):
                 returnSuccess = False
 
         if returnSuccess:
+            callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), statMessageType, "Sent", 1))
             callbackQueue.put((successCB,))
         else:
+            callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), statMessageType, "NotSent", 0))
             callbackQueue.put((notSentCB,))

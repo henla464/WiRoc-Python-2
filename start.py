@@ -30,6 +30,7 @@ class Main:
         self.activeInputAdapters = None
         self.webServerUp = False
         self.lastBatteryIsLowReceived = False
+        self.lastBatteryIsLow = False
         self.callbackQueue = queue.Queue()
         self.threadQueue = queue.Queue()
         self.displayStateMachine = DisplayStateMachine()
@@ -77,6 +78,7 @@ class Main:
         webServerIP = SettingsClass.GetWebServerIP()
         webServerHost = SettingsClass.GetWebServerHost()
         btAddress = SettingsClass.GetBTAddress()
+        self.wirocLogger.info("start::__init__() btAddress: " + btAddress)
         apiKey = SettingsClass.GetAPIKey()
         wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
         if SettingsClass.GetSendStatusMessages():
@@ -151,6 +153,7 @@ class Main:
     def doInfrequentMaintenanceTasks(self):
         self.archiveFailedMessages()
         DatabaseHelper.archive_old_repeater_message()
+        self.updateBatteryIsLowReceived()
         self.updateBatteryIsLow()
         self.sendSetConnectedToInternet()
 
@@ -449,7 +452,7 @@ class Main:
                 webServerIP = SettingsClass.GetWebServerIP()
                 webServerHost = SettingsClass.GetWebServerHost()
                 apiKey = SettingsClass.GetAPIKey()
-                batteryIsLowReceived = SettingsClass.GetBatteryIsLowReceived()
+                batteryIsLowReceived = Battery.GetIsBatteryLow()
                 btAddress = SettingsClass.GetBTAddress()
                 t = threading.Thread(target=self.updateBatteryIsLowBackground, args=(batteryIsLowReceived, webServerProtocol, webServerIP, webServerHost, apiKey, btAddress))
                 t.daemon = True
@@ -457,18 +460,46 @@ class Main:
             except Exception as ex:
                 self.wirocLogger.error("Start::updateBatteryIsLow() Exception: " + str(ex))
 
-    def updateBatteryIsLowBackground(self, batteryIsLowReceived, webServerProtocol, webServerIP, webServerHost, apiKey, btAddress):
+    def updateBatteryIsLowBackground(self, batteryIsLow, webServerProtocol, webServerIP, webServerHost, apiKey, btAddress):
         try:
             headers = {'X-Authorization': apiKey, 'host': webServerHost}
 
-            if batteryIsLowReceived and not self.lastBatteryIsLowReceived:
+            if batteryIsLow and not self.lastBatteryIsLow:
                 URL = webServerProtocol + webServerIP + "/api/v1/Devices/" + btAddress + "/SetBatteryIsLow"
                 resp = requests.get(url=URL, timeout=1, headers=headers, verify=False)
                 if resp.status_code == 200:
                     retDevice = resp.json()
-                    self.lastBatteryIsLowReceived = retDevice['batteryIsLow']
+                    self.lastBatteryIsLow = retDevice['batteryIsLow']
         except Exception as ex:
             self.wirocLogger.error("Start::updateBatteryIsLowBackground() Exception: " + str(ex))
+
+    def updateBatteryIsLowReceived(self):
+        if self.webServerUp:
+            try:
+                webServerProtocol = SettingsClass.GetWebServerProtocol()
+                webServerIP = SettingsClass.GetWebServerIP()
+                webServerHost = SettingsClass.GetWebServerHost()
+                apiKey = SettingsClass.GetAPIKey()
+                batteryIsLowReceived = SettingsClass.GetBatteryIsLowReceived()
+                btAddress = SettingsClass.GetBTAddress()
+                t = threading.Thread(target=self.updateBatteryIsLowReceivedBackground, args=(batteryIsLowReceived, webServerProtocol, webServerIP, webServerHost, apiKey, btAddress))
+                t.daemon = True
+                t.start()
+            except Exception as ex:
+                self.wirocLogger.error("Start::updateBatteryIsLow() Exception: " + str(ex))
+
+    def updateBatteryIsLowReceivedBackground(self, batteryIsLowReceived, webServerProtocol, webServerIP, webServerHost, apiKey, btAddress):
+        try:
+            headers = {'X-Authorization': apiKey, 'host': webServerHost}
+
+            if batteryIsLowReceived and not self.lastBatteryIsLowReceived:
+                URL = webServerProtocol + webServerIP + "/api/v1/Devices/" + btAddress + "/SetBatteryIsLowReceived"
+                resp = requests.get(url=URL, timeout=1, headers=headers, verify=False)
+                if resp.status_code == 200:
+                    retDevice = resp.json()
+                    self.lastBatteryIsLowReceived = retDevice['batteryIsLowReceived']
+        except Exception as ex:
+            self.wirocLogger.error("Start::updateBatteryIsLowReceivedBackground() Exception: " + str(ex))
 
     def sendMessageStatsBackground(self, messageStat, webServerProtocol, webServerIP, webServerHost, apiKey):
         if messageStat is not None:

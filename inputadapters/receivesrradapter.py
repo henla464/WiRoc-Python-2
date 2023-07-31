@@ -2,7 +2,7 @@ from settings.settings import SettingsClass
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 import logging
 import smbus
-
+from datamodel.db_helper import DatabaseHelper
 
 class ReceiveSRRAdapter(object):
     Instances = []
@@ -92,6 +92,12 @@ class ReceiveSRRAdapter(object):
                     index += noToRead
 
                 self.WiRocLogger.debug("ReceiveSRRAdapter::GetData() Data to fetch")
+
+                try:
+                    DatabaseHelper.add_message_stat(self.GetInstanceName(), "SRRMessage", "Received", 1)
+                except Exception as ex:
+                    self.WiRocLogger.error("ReceiveSRRAdapter::GetData() Error saving statistics: " + str(ex))
+
                 return {"MessageType": "DATA", "MessageSubTypeName": "SRRMessage", "MessageSource": "SRR", "Data": punchMessageData, "ChecksumOK": True}
         return None
 
