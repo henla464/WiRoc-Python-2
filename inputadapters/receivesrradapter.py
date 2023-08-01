@@ -66,11 +66,14 @@ class ReceiveSRRAdapter(object):
 
     def GetData(self):
         if self.hardwareAbstraction.GetSRRIRQValue():
-            # punch length
+            # msg length
             PUNCH_LENGTH_REGADDR = 0x20
-            punchLength = self.i2cBus.read_byte_data(self.i2cAddress, PUNCH_LENGTH_REGADDR)
-
-            if punchLength == 0:
+            msgLength = self.i2cBus.read_byte_data(self.i2cAddress, PUNCH_LENGTH_REGADDR)
+            lengthByteValueOfPunch = 30  # 0x1E
+            lengthByteAndCRCAndRSSIAndChannel = 4
+            totalLengthOfPunchFromSRRBoard = lengthByteValueOfPunch + lengthByteAndCRCAndRSSIAndChannel
+            if msgLength != totalLengthOfPunchFromSRRBoard:
+                self.WiRocLogger.error("ReceiveSRRAdapter::GetData() Message of incorrect length received")
                 return None
 
             # read punch
@@ -78,10 +81,10 @@ class ReceiveSRRAdapter(object):
             PUNCH_REGADDR = 0x40
             punchMessageData = bytearray()
             index = 0
-            if punchLength > 0:  # and (status & 0x01) > 0:
-                print("PunchLength: %s" % punchLength)
-                remaining = punchLength
-                while index < punchLength:
+            if msgLength > 0:  # and (status & 0x01) > 0:
+                print("PunchLength: %s" % msgLength)
+                remaining = msgLength
+                while index < msgLength:
                     self.i2cBus.write_byte_data(self.i2cAddress, SET_DATA_INDEX_REGADDR, index)
                     noToRead = remaining
                     if remaining > 31:
