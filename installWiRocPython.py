@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
-# Import hashlib library (md5 method is part of it)
+# Should be run in the chip home directory
 import hashlib
 import subprocess
 import sys
 import yaml
 import requests
+import time
+import os
 
-releasePackageFolderNameAndRestCollection = "WiRoc2PythonReleasePackages"
+releasePackageFolderName = "WiRocPython2ReleasePackages"
+releaseRestCollection = "WiRocPython2Releases"
 installFolderName = "WiRoc-Python-2"
 serviceName = "WiRocPython"
 serviceName2 = "WiRocPythonWS"
 settingKeyForVersion = "WiRocPythonVersion"
+releaseUpgradeScriptRestCollection = "WiRocPython2ReleaseUpgradeScripts"
+versionTextFileName = "WiRocPythonVersion.txt"
 
 # New software version
 newSoftwareVersion = sys.argv[1]
@@ -18,19 +23,21 @@ newSoftwareVersion = newSoftwareVersion.lstrip('v')
 print("New Software version: " + newSoftwareVersion)
 
 # HW Version
-f = open("../settings.yaml", "r")
+f = open("settings.yaml", "r")
 settings = yaml.load(f, Loader=yaml.BaseLoader)
 f.close()
-hardwareVersionAndRevision = settings["WiRocHWVersion"]
-hardwareVersionAndRevision = hardwareVersionAndRevision.strip()
-print("1 Hardware Version And Revision: " + hardwareVersionAndRevision)
+hardwareVersionAndRevision = ""
+if "WiRocHWVersion" in settings:
+    hardwareVersionAndRevision = settings["WiRocHWVersion"]
+    hardwareVersionAndRevision = hardwareVersionAndRevision.strip()
+    print("1 Hardware Version And Revision: " + hardwareVersionAndRevision)
 
 if hardwareVersionAndRevision == "":
-    f = open("../WiRocHWVersion.txt", "r")
-    hardwareVersionAndRevision = f.read()
+    with open("WiRocHWVersion.txt", "r") as f:
+        hardwareVersionAndRevision = f.read()
     hardwareVersionAndRevision = hardwareVersionAndRevision.strip()
     print("2 Hardware Version And Revision: " + hardwareVersionAndRevision)
-    f.close()
+    settings["WiRocHWVersion"] = hardwareVersionAndRevision
 
 hardwareVersionAndRevisionArr = hardwareVersionAndRevision.split("Rev")
 hardwareVersion = hardwareVersionAndRevisionArr[0].lstrip('v').lstrip('V')
@@ -39,27 +46,29 @@ print("Hardware Version: " + hardwareVersion)
 print("Hardware Revision: " + hardwareRevision)
 
 # Old software version
-oldSoftwareVersion = settings[settingKeyForVersion]
-oldSoftwareVersion = oldSoftwareVersion.strip()
-print("1 Old software version: " + oldSoftwareVersion)
+oldSoftwareVersion = ""
+if settingKeyForVersion in settings:
+    oldSoftwareVersion = settings[settingKeyForVersion]
+    oldSoftwareVersion = oldSoftwareVersion.strip()
+    print("1 Old software version: " + oldSoftwareVersion)
 
 if oldSoftwareVersion == "":
-    f = open("../WiRocPythonVersion.txt", "r")
-    oldSoftwareVersion = f.read()
+    with open(versionTextFileName, "r") as f:
+        oldSoftwareVersion = f.read()
     oldSoftwareVersion = oldSoftwareVersion.strip()
     print("2 Old software version: " + oldSoftwareVersion)
-    f.close()
+    settings[settingKeyForVersion] = oldSoftwareVersion
 
 
-with open('../apikey.txt', 'r') as apikeyfile:
+with open('apikey.txt', 'r') as apikeyfile:
     apiKey = apikeyfile.read()
     apiKey = apiKey.strip()
 
 print("APIKey: " + apiKey)
 
 headers = {'X-Authorization': apiKey}
-URL = "https://monitor.wiroc.se/api/v1/" + releasePackageFolderNameAndRestCollection + "?sort=versionNumber desc&hwVersion=" + hardwareVersion + "&hwRevision=" + hardwareRevision
-resp = requests.get(url=URL, timeout=1, headers=headers, verify=True)
+URL = "https://monitor.wiroc.se/api/v1/" + releaseRestCollection + "?sort=versionNumber desc&hwVersion=" + hardwareVersion + "&hwRevision=" + hardwareRevision
+resp = requests.get(url=URL, timeout=2, headers=headers, verify=True)
 if resp.status_code == 200:
     releases = resp.json()
     print(releases)
@@ -70,9 +79,12 @@ if resp.status_code == 200:
         originalMd5Hash = theRelease['md5HashOfReleaseFile']
         print("original MD5 hash: " + originalMd5Hash)
 
-        # Download the release to WiRocPython2Releases
-        localFilePath = releasePackageFolderNameAndRestCollection + "/v" + theRelease['versionNumber'] + ".tar.gz"
-        wgetRes = subprocess.run(["wget", "-O", localFilePath, "https://monitor.wiroc.se/" + releasePackageFolderNameAndRestCollection + "/v" + theRelease['versionNumber'] + ".tar.gz"])
+        # Download the release
+        if not os.path.exists(releasePackageFolderName):
+            os.makedirs(releasePackageFolderName)
+
+        localFilePath = releasePackageFolderName + "/v" + theRelease['versionNumber'] + ".tar.gz"
+        wgetRes = subprocess.run(["wget", "-O", localFilePath, "https://monitor.wiroc.se/" + releasePackageFolderName + "/v" + theRelease['versionNumber'] + ".tar.gz"])
         print(wgetRes)
 
         # Check MD5 hash
@@ -88,45 +100,82 @@ if resp.status_code == 200:
             # Stop service
             serviceStop1Res = subprocess.run(["systemctl", "stop", serviceName])
             print("serviceStop1 response: " + str(serviceStop1Res.returncode))
+            if serviceStop1Res.returncode != 0:
+                exit(serviceStop1Res.returncode)
 
             if serviceName2 != "":
                 serviceStop2Res = subprocess.run(["systemctl", "stop", serviceName2])
                 print("serviceStop2 response: " + str(serviceStop2Res.returncode))
+                if serviceStop2Res.returncode != 0:
+                    exit(serviceStop2Res.returncode)
 
             rmRes = subprocess.run(["rm", "-rf", installFolderName])
             print("rm response: " + str(rmRes.returncode))
+            if rmRes.returncode != 0:
+                exit(rmRes.rmRes)
 
-            tarRes = subprocess.run(["tar", "xvfz", localFilePath, installFolderName + "-v" + newSoftwareVersion])
+            tarRes = subprocess.run(["tar", "xvfz", localFilePath, installFolderName + '-' + newSoftwareVersion])
             print("tar response: " + str(tarRes.returncode))
+            if tarRes.returncode != 0:
+                exit(tarRes.returncode)
 
-            mvRes = subprocess.run(["mv", installFolderName + "-v" + newSoftwareVersion, localFilePath])
+            mvRes = subprocess.run(["mv", installFolderName + '-' + newSoftwareVersion, installFolderName])
             print("mv response: " + str(mvRes.returncode))
+            if mvRes.returncode != 0:
+                exit(mvRes.returncode)
 
-            # Update settings.yaml with new version
-            settings[settingKeyForVersion] = newSoftwareVersion
-            with open('../settings.yaml', 'w') as f2:
-                yaml.dump(settings, f2)  # Write a YAML representation of data to 'settings.yaml'.
+            # Get and run all required upgrade scripts
+            URLScripts = "https://monitor.wiroc.se/api/v1/" + releaseUpgradeScriptRestCollection + "?sort=versionNumber asc&limitFromVersion=" + oldSoftwareVersion + "&limitToVersion=" + newSoftwareVersion
+            print("URLScripts: " + URLScripts)
+            scriptsResp = requests.get(url=URLScripts, timeout=2, headers=headers, verify=True)
+            if scriptsResp.status_code == 200:
 
-            serviceStart1Res = subprocess.run(["systemctl", "start", serviceName])
-            print("serviceStart1 response: " + str(serviceStart1Res.returncode))
+                timestr = time.strftime("%Y%m%d-%H%M%S")
+                localScriptFolderPath = releasePackageFolderName + "/" + timestr
+                mkdirRes = subprocess.run(["mkdir", localScriptFolderPath])
+                print("mkdir response: " + str(mkdirRes.returncode))
+                if mkdirRes.returncode != 0:
+                    exit(mkdirRes.returncode)
 
-            if serviceName2 != "":
-                serviceStart2Res = subprocess.run(["systemctl", "start", serviceName2])
-                print("serviceStart2 response: " + str(serviceStart2Res.returncode))
+                # Create script files
+                scriptFilePathsInOrder = []
+                scriptsArr = scriptsResp.json()
+                print("script json: " + str(scriptsArr))
+                for scriptObj in scriptsArr:
+                    scriptText = scriptObj['scriptText']
+                    scriptFileName = localScriptFolderPath + '/v' + scriptObj['versionNumber'] + '-' + str(scriptObj['id'])
+                    scriptFilePathsInOrder.append(scriptFileName)
+                    with open(scriptFileName, 'w') as scriptFile:
+                        scriptFile.write(scriptText)
+                    ChModRes = subprocess.run(["chmod", "ugo+x", scriptFileName])
+                    print("chmod response: " + str(ChModRes.returncode))
+                    if ChModRes.returncode != 0:
+                        exit(ChModRes.returncode)
 
+                for scriptFilePath in scriptFilePathsInOrder:
+                    scriptRes = subprocess.run([scriptFilePath])
+                    print("script response: " + str(scriptRes.returncode))
+                    if scriptRes.returncode != 0:
+                        exit(scriptRes.returncode)
+
+                # Update settings.yaml with new version
+                settings[settingKeyForVersion] = newSoftwareVersion
+                with open('settings.yaml', 'w') as f2:
+                    yaml.dump(settings, f2)  # Write a YAML representation of data to 'settings.yaml'.
+
+                serviceStart1Res = subprocess.run(["systemctl", "start", serviceName])
+                print("serviceStart1 response: " + str(serviceStart1Res.returncode))
+                if serviceStart1Res.returncode != 0:
+                    exit(serviceStart1Res.returncode)
+
+                if serviceName2 != "":
+                    serviceStart2Res = subprocess.run(["systemctl", "start", serviceName2])
+                    print("serviceStart2 response: " + str(serviceStart2Res.returncode))
+                    if serviceStart2Res.returncode != 0:
+                        exit(serviceStart2Res.returncode)
 
         else:
             print("MD5 hash is WRONG!")
     else:
         print("New Software Version not found, or not available for this hardware")
 
-
-
-
-
-
-#useless_cat_call = subprocess.run(["cat"],
-##                                  stdout=subprocess.PIPE,
-#                                  text=True,
-#                                  input="Hello from the other side")
-#print(useless_cat_call.stdout)

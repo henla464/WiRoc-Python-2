@@ -10,13 +10,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="22423968-cdc8-408a-8f9a-f776c9e32777" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/installWiRocPython.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/chipGPIO/hardwareAbstraction.py" beforeDir="false" afterPath="$PROJECT_DIR$/chipGPIO/hardwareAbstraction.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/display/oledstartup.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/oledstartup.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/install.sh" beforeDir="false" afterPath="$PROJECT_DIR$/install.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/settings.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webroutes/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/webroutes/api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/installWiRocPython.py" beforeDir="false" afterPath="$PROJECT_DIR$/installWiRocPython.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -348,18 +343,18 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;last_opened_file_path&quot;: &quot;/home/henla464/Documents/WiRoc/WiRoc-Python-2/display&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "last_opened_file_path": "/home/henla464/Documents/WiRoc/WiRoc-BLE-API"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/../WiRoc-BLE-API" />
       <recent name="$PROJECT_DIR$/display" />
       <recent name="$PROJECT_DIR$/transforms" />
       <recent name="$PROJECT_DIR$/inputadapters" />
       <recent name="$PROJECT_DIR$/loraradio" />
-      <recent name="$PROJECT_DIR$/subscriberadapters" />
     </key>
   </component>
   <component name="RunManager">
