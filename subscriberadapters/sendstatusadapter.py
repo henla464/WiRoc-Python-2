@@ -35,10 +35,8 @@ class SendStatusAdapter(object):
     def IsConnectionOK():
         connectionOK = False
         if SettingsClass.GetSendStatusMessages():
-            webServerProtocol = SettingsClass.GetWebServerProtocol()
-            webServerIP = SettingsClass.GetWebServerIP()
-            webServerHost = SettingsClass.GetWebServerHost()
-            connectionOK = SendStatusAdapter.TestConnection(webServerProtocol, webServerIP, webServerHost)
+            webServerUrl = SettingsClass.GetWebServerUrl()
+            connectionOK = SendStatusAdapter.TestConnection(webServerUrl)
         return connectionOK
 
     @staticmethod
@@ -110,18 +108,15 @@ class SendStatusAdapter(object):
         return True
 
     @staticmethod
-    def TestConnection(webServerProtocol, webServerIP, webServerHost):
+    def TestConnection(webServerUrl):
         try:
-            if webServerIP is None:
-                SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::TestConnection() No webServerIP available (yet)")
-                return False
-            URL = webServerProtocol + webServerIP + "/api/v1/ping"
-            r = requests.get(url=URL, timeout=1, headers={'host': webServerHost}, verify=False)
+            URL = webServerUrl + "/api/v1/ping"
+            r = requests.get(url=URL, timeout=1, headers={}, verify=False)
             data = r.json()
             logging.info(data)
             return data['code'] == 0
         except Exception as ex:
-            SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::TestConnection() " + webServerIP + " Host: " + webServerHost + " Exception: " + str(ex))
+            SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::TestConnection() " + webServerUrl + " Exception: " + str(ex))
             return False
 
     @staticmethod
@@ -139,8 +134,7 @@ class SendStatusAdapter(object):
                 callbackQueue.put((failureCB,))
                 return False
 
-            host = settingsDictionary["WebServerHost"]
-            headers = {'X-Authorization': settingsDictionary["ApiKey"], 'host': host}
+            headers = {'X-Authorization': settingsDictionary["ApiKey"]}
             thisWiRocBtAddress = SettingsClass.GetBTAddress()
 
             returnSuccess = True
