@@ -4,7 +4,9 @@ import socket
 import subprocess
 import gpiod
 import smbus
+import yaml
 from datetime import timedelta
+
 
 class HardwareAbstraction(object):
     WiRocLogger = logging.getLogger('WiRoc')
@@ -23,10 +25,14 @@ class HardwareAbstraction(object):
         self.SRRirq = None
         self.SRRnrst = None
         self.PMUIRQ = None
-        f = open("../WiRocHWVersion.txt", "r")
-        wirocHWVersion = f.read()
+        with open("../settings.yaml", "r") as f:
+            settings = yaml.load(f, Loader=yaml.BaseLoader)
+        wirocHWVersion = settings['WiRocHWVersion']
         self.wirocHWVersion = wirocHWVersion.strip()
-        f.close()
+        #f = open("../WiRocHWVersion.txt", "r")
+        #wirocHWVersion = f.read()
+        #self.wirocHWVersion = wirocHWVersion.strip()
+        #f.close()
 
     def SetupPins(self):
         if self.runningOnNanoPi:

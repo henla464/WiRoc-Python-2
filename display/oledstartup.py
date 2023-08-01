@@ -4,6 +4,7 @@ from display.oleddisplaystate import OledDisplayState
 from PIL import Image
 from PIL import ImageDraw
 import logging
+import yaml
 from pathlib import Path
 
 
@@ -15,13 +16,15 @@ class OledStartup(OledDisplayState):
         self.pythonVersion = "err"
         self.bleVersion = "err"
         try:
-            with open('../WiRocPythonVersion.txt', 'r') as versionFile:
-                self.pythonVersion = versionFile.read()
-        except:
-            pass
-        try:
-            with open('../WiRocBLEVersion.txt', 'r') as versionFile:
-                self.bleVersion = versionFile.read()
+            with open("../settings.yaml", "r") as f:
+                settings = yaml.load(f, Loader=yaml.BaseLoader)
+            self.pythonVersion = settings['WiRocPythonVersion']
+            self.bleVersion = settings['WiRocBLEVersion']
+            #with open('../WiRocPythonVersion.txt', 'r') as versionFile:
+            #    self.pythonVersion = versionFile.read()
+            # with open('../WiRocBLEVersion.txt', 'r') as versionFile:
+            #    self.bleVersion = versionFile.read()
+
         except:
             pass
         self.OledImage = Image.new('1', (OledDisplayState.OledWidth, OledDisplayState.OledHeight))

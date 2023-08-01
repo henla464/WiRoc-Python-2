@@ -176,10 +176,10 @@ mv WiRoc-Python-2/installWiRocPython.sh .
 chmod ugo+x installWiRocPython.sh
 
 
-echo "Update WiRocPython version"
-cat << EOF > WiRocPythonVersion.txt
-${WiRocPython2Version}
-EOF
+#echo "Update WiRocPython version"
+#cat << EOF > WiRocPythonVersion.txt
+#${WiRocPython2Version}
+#EOF
 
 if [[ $(hostname -s) = nanopiair ]]; then
     echo "nanopiair"
@@ -193,9 +193,9 @@ if [[ $(hostname -s) = nanopiair ]]; then
     mv WiRoc-BLE-API/installWiRocBLEAPI.sh .
     chmod ugo+x installWiRocBLEAPI.sh
     echo "Update WiRocBLEAPI version"
-cat << EOF > WiRocBLEVersion.txt
-${WiRocBLEVersion}
-EOF
+#cat << EOF > WiRocBLEVersion.txt
+#${WiRocBLEVersion}
+#EOF
 
 else
     echo "chip"
@@ -208,23 +208,25 @@ else
     mv WiRoc-BLE-Device/installWiRocBLE.sh .
     chmod ugo+x installWiRocBLE.sh
     echo "Update WiRocBLE version"
-cat << EOF > WiRocBLEVersion.txt
-${WiRocBLEVersion}
-EOF
+#cat << EOF > WiRocBLEVersion.txt
+#${WiRocBLEVersion}
+#EOF
 
 fi
 
 
 
-echo "Update HW version"
-cat << EOF > WiRocHWVersion.txt
-${WiRocHWVersion}
-EOF
+#echo "Update HW version"
+#cat << EOF > WiRocHWVersion.txt
+#${WiRocHWVersion}
+#EOF
 
 echo "Settings.yaml"
 cat << EOF > settings.yaml
 WiRocDeviceName: WiRoc Device
-
+WiRocPythonVersion: ${WiRocPython2Version}
+WiRocBLEVersion: ${WiRocBLEVersion}
+WiRocHWVersion: ${WiRocHWVersion}
 EOF
 
 

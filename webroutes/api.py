@@ -841,9 +841,14 @@ def setLoggingServerPort(port):
 
 @app.route('/api/wirocpythonversion/', methods=['GET'])
 def getWiRocPythonVersion():
-    f = open("../WiRocPythonVersion.txt", "r")
-    wirocPythonVersion = f.read()
+    with open("../settings.yaml", "r") as f:
+        settings = yaml.load(f, Loader=yaml.BaseLoader)
+    wirocPythonVersion = settings['WiRocPythonVersion']
     wirocPythonVersion = wirocPythonVersion.strip()
+
+    #f = open("../WiRocPythonVersion.txt", "r")
+    #wirocPythonVersion = f.read()
+    #wirocPythonVersion = wirocPythonVersion.strip()
     f.close()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -852,10 +857,15 @@ def getWiRocPythonVersion():
 
 @app.route('/api/wirocbleversion/', methods=['GET'])
 def getWiRocBLEVersion():
-    f = open("../WiRocBLEVersion.txt", "r")
-    wirocBLEVersion = f.read()
+    with open("../settings.yaml", "r") as f:
+        settings = yaml.load(f, Loader=yaml.BaseLoader)
+    wirocBLEVersion = settings['WiRocBLEAPIVersion']
     wirocBLEVersion = wirocBLEVersion.strip()
-    f.close()
+
+    #f = open("../WiRocBLEVersion.txt", "r")
+    #wirocBLEVersion = f.read()
+    #wirocBLEVersion = wirocBLEVersion.strip()
+    #f.close()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=wirocBLEVersion))
@@ -863,10 +873,15 @@ def getWiRocBLEVersion():
 
 @app.route('/api/wirocbleapiversion/', methods=['GET'])
 def getWiRocBLEAPIVersion():
-    f = open("../WiRocBLEAPIVersion.txt", "r")
-    wirocBLEVersion = f.read()
-    wirocBLEVersion = wirocBLEVersion.strip()
-    f.close()
+    with open("../settings.yaml", "r") as f:
+        settings = yaml.load(f, Loader=yaml.BaseLoader)
+    wirocBLEAPIVersion = settings['WiRocBLEAPIVersion']
+    wirocBLEAPIVersion = wirocBLEAPIVersion.strip()
+
+    #f = open("../WiRocBLEAPIVersion.txt", "r")
+    #wirocBLEVersion = f.read()
+    #wirocBLEVersion = wirocBLEVersion.strip()
+    #f.close()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=wirocBLEVersion))
@@ -874,10 +889,15 @@ def getWiRocBLEAPIVersion():
 
 @app.route('/api/wirochwversion/', methods=['GET'])
 def getWiRocHWVersion():
-    f = open("../WiRocHWVersion.txt", "r")
-    wirocHWVersion = f.read()
-    wirocHWVersion = wirocHWVersion.strip()
+    f = open("../settings.yaml", "r")
+    settings = yaml.load(f, Loader=yaml.BaseLoader)
     f.close()
+    wirocHWVersion = settings['WiRocHWVersion']
+
+    #f = open("../WiRocHWVersion.txt", "r")
+    #wirocHWVersion = f.read()
+    #f.close()
+    wirocHWVersion = wirocHWVersion.strip()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=wirocHWVersion))
@@ -1203,20 +1223,23 @@ def getAllMainSettings():
     if loraModule == 'RF1276T' and int(loraPower) > 7:
         loraPower = '7'
 
-    f = open("../WiRocPythonVersion.txt", "r")
-    wirocPythonVersion = f.read()
-    wirocPythonVersion = wirocPythonVersion.replace("\n", "")
-    f.close()
+    wiRocPythonVersion = settings['WiRocPythonVersion']
+    #f = open("../WiRocPythonVersion.txt", "r")
+    #wirocPythonVersion = f.read()
+    #wirocPythonVersion = wirocPythonVersion.replace("\n", "")
+    #f.close()
 
-    f = open("../WiRocBLEVersion.txt", "r")
-    wirocBLEVersion = f.read()
-    wirocBLEVersion = wirocBLEVersion.replace("\n", "")
-    f.close()
+    wirocBLEVersion = settings['WiRocBLEAPIVersion']
+    #f = open("../WiRocBLEVersion.txt", "r")
+    #wirocBLEVersion = f.read()
+    #wirocBLEVersion = wirocBLEVersion.replace("\n", "")
+    #f.close()
 
-    f = open("../WiRocHWVersion.txt", "r")
-    wirocHWVersion = f.read()
-    wirocHWVersion = wirocHWVersion.replace("\n", "")
-    f.close()
+    wirocHWVersion = settings['WiRocHWVersion']
+    #f = open("../WiRocHWVersion.txt", "r")
+    #wirocHWVersion = f.read()
+    #wirocHWVersion = wirocHWVersion.replace("\n", "")
+    #f.close()
 
     sett = DatabaseHelper.get_setting_by_key('OneWayReceive')
     oneWayReceive = '0'
