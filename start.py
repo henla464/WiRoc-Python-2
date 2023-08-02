@@ -465,13 +465,13 @@ class Main:
         try:
             headers = {'X-Authorization': apiKey}
 
-            if batteryIsLow and (self.lastBatteryIsLow is None or not self.lastBatteryIsLow):
+            if batteryIsLow and (self.lastBatteryIsLow is None or not (self.lastBatteryIsLow == '1')):
                 URL =  webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsLow"
                 resp = requests.get(url=URL, timeout=1, headers=headers,  verify=False)
                 if resp.status_code == 200:
                     retDevice = resp.json()
                     self.lastBatteryIsLow = retDevice['batteryIsLow']
-            elif not batteryIsLow and (self.lastBatteryIsLow is None or self.lastBatteryIsLow):
+            elif not (batteryIsLow ) and (self.lastBatteryIsLow is None or (self.lastBatteryIsLow == '1')):
                 URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsNormal"
                 resp = requests.get(url=URL, timeout=1, headers=headers,  verify=False)
                 if resp.status_code == 200:
@@ -497,13 +497,13 @@ class Main:
         try:
             headers = {'X-Authorization': apiKey}
 
-            if batteryIsLowReceived and (self.lastBatteryIsLowReceived is None or not self.lastBatteryIsLowReceived):
+            if batteryIsLowReceived and (self.lastBatteryIsLowReceived is None or not (self.lastBatteryIsLowReceived=='1')):
                 URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsLowReceived"
                 resp = requests.get(url=URL, timeout=1, headers=headers, verify=False)
                 if resp.status_code == 200:
                     retDevice = resp.json()
                     self.lastBatteryIsLowReceived = retDevice['batteryIsLowReceived']
-            elif not batteryIsLowReceived and (self.lastBatteryIsLowReceived is None or self.lastBatteryIsLowReceived):
+            elif not batteryIsLowReceived and (self.lastBatteryIsLowReceived is None or (self.lastBatteryIsLowReceived=='1')):
                 URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsNormalReceived"
                 resp = requests.get(url=URL, timeout=1, headers=headers, verify=False)
                 if resp.status_code == 200:
