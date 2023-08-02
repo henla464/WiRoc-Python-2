@@ -81,8 +81,7 @@ class ReceiveSRRAdapter(object):
             PUNCH_REGADDR = 0x40
             punchMessageData = bytearray()
             index = 0
-            if msgLength > 0:  # and (status & 0x01) > 0:
-                print("PunchLength: %s" % msgLength)
+            if msgLength > 0:
                 remaining = msgLength
                 while index < msgLength:
                     self.i2cBus.write_byte_data(self.i2cAddress, SET_DATA_INDEX_REGADDR, index)

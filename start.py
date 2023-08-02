@@ -497,8 +497,14 @@ class Main:
         try:
             headers = {'X-Authorization': apiKey}
 
-            if batteryIsLowReceived and not self.lastBatteryIsLowReceived:
+            if batteryIsLowReceived and (self.lastBatteryIsLowReceived is None or not self.lastBatteryIsLowReceived):
                 URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsLowReceived"
+                resp = requests.get(url=URL, timeout=1, headers=headers, verify=False)
+                if resp.status_code == 200:
+                    retDevice = resp.json()
+                    self.lastBatteryIsLowReceived = retDevice['batteryIsLowReceived']
+            elif not batteryIsLowReceived and (self.lastBatteryIsLowReceived is None or self.lastBatteryIsLowReceived):
+                URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsNormalReceived"
                 resp = requests.get(url=URL, timeout=1, headers=headers, verify=False)
                 if resp.status_code == 200:
                     retDevice = resp.json()
