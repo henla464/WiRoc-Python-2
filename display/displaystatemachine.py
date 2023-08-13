@@ -4,6 +4,7 @@ import Adafruit_SSD1306
 import socket
 import sys
 import logging
+from display.displaydata import DisplayData
 
 sys.path.append('..')
 
@@ -15,6 +16,7 @@ class DisplayStateMachine(object):
     OledOutput = None
     OledWiRocIP = None
     OledShutdown = None
+    OledErrorCode = None
 
     hardwareAbstraction = None
 
@@ -41,6 +43,7 @@ class DisplayStateMachine(object):
                 import display.oledwirocip
                 import display.sevensegnormal
                 import display.oledshutdown
+                import display.olederrorcodes
                 OledDisplayState = display.oleddisplaystate.OledDisplayState
                 if self.runningOnChip:
                     self.wiRocLogger.debug("DisplayStateMachine::Init() on chip")
@@ -61,6 +64,7 @@ class DisplayStateMachine(object):
                 DisplayStateMachine.OledNormal = display.olednormal.OledNormal()
                 DisplayStateMachine.OledOutput = display.oledoutput.OledOutput()
                 DisplayStateMachine.OledWiRocIP = display.oledwirocip.OledWiRocIP()
+                DisplayStateMachine.OledErrorCode = display.olederrorcodes.OledErrorCodes()
                 DisplayStateMachine.OledShutdown = display.oledshutdown.OledShutdown()
 
                 self.wiRocLogger.info("DisplayStateMachine::Init() initialized the OLED")
@@ -94,7 +98,8 @@ class DisplayStateMachine(object):
     def GetTypeOfDisplay(self):
         return self.TypeOfDisplay
 
-    def Draw(self, channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
+    def Draw(self, displayData: DisplayData):
+        # channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress, errorCodes
         if self.currentState is not None:
             if HardwareAbstraction.Instance.GetIsShortKeyPress() or self.currentState == self.OledStartup:
                 HardwareAbstraction.Instance.ClearShortKeyPress()
@@ -105,5 +110,4 @@ class DisplayStateMachine(object):
             self.currentState = DisplayStateMachine.OledStartup
 
         if self.currentState is not None:
-            self.currentState.Draw(channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort,
-                                   wiRocIPAddress)
+            self.currentState.Draw(displayData)

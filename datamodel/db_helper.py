@@ -160,7 +160,7 @@ class DatabaseHelper:
         return row_list[0]
 
     @classmethod
-    def get_error_codes(cls):
+    def get_error_codes(cls) -> ErrorCodeData:
         cls.init()
         rows = cls.db.get_table_objects(ErrorCodeData)
         return rows

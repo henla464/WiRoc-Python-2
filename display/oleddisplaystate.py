@@ -1,5 +1,6 @@
 from PIL import ImageFont
 from display.displaystate import DisplayState
+from display.displaydata import DisplayData
 
 
 class OledDisplayState(DisplayState):
@@ -11,7 +12,7 @@ class OledDisplayState(DisplayState):
     OledThinFont2 = ImageFont.truetype('display/GeosansLight.ttf', 14)
     OledBoldFont = ImageFont.truetype('display/theboldfont.ttf', 44)
 
-    def Draw(self, channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
+    def Draw(self, displayData: DisplayData):
         assert(0,"Draw not implemented")
 
     def Next(self):

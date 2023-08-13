@@ -1,8 +1,11 @@
+from display.displaydata import DisplayData
+
+
 class DisplayState(object):
     ackRequested = None
     channel = None
 
-    def Draw(self, channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
+    def Draw(self, displayData: DisplayData):
         assert(0,"Draw not implemented")
 
     def Next(self):

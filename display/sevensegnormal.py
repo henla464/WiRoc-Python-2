@@ -1,10 +1,13 @@
 import display.displaystatemachine
 import display.displaystate
 from chipGPIO.chipGPIO import *
+from display.displaydata import DisplayData
+
 
 class SevenSegNormal(display.displaystate.DisplayState):
-    def Draw(self,channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
-        # def displayChannel(self, channel, ackRequested):
+    def Draw(self, displayData: DisplayData):
+        channel = displayData.channel
+        ackRequested = displayData.ackRequested
         if channel != display.displaystate.DisplayState.channel or ackRequested != display.displaystate.DisplayState.ackRequested:
             self.channel = channel
             self.ackRequested = ackRequested

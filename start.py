@@ -14,6 +14,7 @@ from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from battery import Battery
 from utils.utils import Utils
 from display.displaystatemachine import DisplayStateMachine
+from display.displaydata import DisplayData
 import requests, queue, threading
 import urllib3
 
@@ -132,26 +133,25 @@ class Main:
             self.webServerUp = False
         Battery.Tick()
 
-    def updateDisplayBackground(self, channel, ackRequested, wirocMode, loraRange, wirocDeviceName, sirapTCPEnabled,
-                              sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
-        self.displayStateMachine.Draw(channel, ackRequested, wirocMode, loraRange, wirocDeviceName, sirapTCPEnabled,
-                                      sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress)
+    def updateDisplayBackground(self, displayData : DisplayData):
+        self.displayStateMachine.Draw(displayData)
 
     def doFrequentMaintenanceTasks(self):
         if HardwareAbstraction.Instance.runningOnChip or HardwareAbstraction.Instance.runningOnNanoPi:
-            wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
-            channel = SettingsClass.GetChannel()
-            ackRequested = SettingsClass.GetAcknowledgementRequested()
-            wirocMode = SettingsClass.GetLoraMode()
-            loraRange = SettingsClass.GetLoraRange()
-            sirapTCPEnabled = SettingsClass.GetSendToSirapEnabled()
-            sendSerialActive = SettingsClass.GetSendSerialAdapterActive()
-            sirapIPAddress = SettingsClass.GetSendToSirapIP()
-            sirapIPPort = SettingsClass.GetSendToSirapIPPort()
-            wiRocIPAddress = HardwareAbstraction.Instance.GetWiRocIPAddresses()
+            displayData = DisplayData()
+            displayData.wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
+            displayData.channel = SettingsClass.GetChannel()
+            displayData.ackRequested = SettingsClass.GetAcknowledgementRequested()
+            displayData.wirocMode = SettingsClass.GetLoraMode()
+            displayData.loraRange = SettingsClass.GetLoraRange()
+            displayData.sirapTCPEnabled = SettingsClass.GetSendToSirapEnabled()
+            displayData.sendSerialActive = SettingsClass.GetSendSerialAdapterActive()
+            displayData.sirapIPAddress = SettingsClass.GetSendToSirapIP()
+            displayData.sirapIPPort = SettingsClass.GetSendToSirapIPPort()
+            displayData.wiRocIPAddresses = HardwareAbstraction.Instance.GetWiRocIPAddresses()
+            displayData.errorCodes = DatabaseHelper.get_error_codes()
 
-            t = threading.Thread(target=self.updateDisplayBackground, args=(
-                channel, ackRequested, wirocMode, loraRange, wiRocDeviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress))
+            t = threading.Thread(target=self.updateDisplayBackground, args=(displayData,))
             t.daemon = True
             t.start()
 
@@ -466,12 +466,12 @@ class Main:
             headers = {'X-Authorization': apiKey}
 
             if batteryIsLow and (self.lastBatteryIsLow is None or not (self.lastBatteryIsLow == '1')):
-                URL =  webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsLow"
+                URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsLow"
                 resp = requests.get(url=URL, timeout=1, headers=headers,  verify=False)
                 if resp.status_code == 200:
                     retDevice = resp.json()
                     self.lastBatteryIsLow = retDevice['batteryIsLow']
-            elif not (batteryIsLow ) and (self.lastBatteryIsLow is None or (self.lastBatteryIsLow == '1')):
+            elif not batteryIsLow and (self.lastBatteryIsLow is None or (self.lastBatteryIsLow == '1')):
                 URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsNormal"
                 resp = requests.get(url=URL, timeout=1, headers=headers,  verify=False)
                 if resp.status_code == 200:

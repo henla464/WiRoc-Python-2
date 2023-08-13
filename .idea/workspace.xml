@@ -10,8 +10,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="22423968-cdc8-408a-8f9a-f776c9e32777" name="Default" comment="">
+      <change afterPath="$PROJECT_DIR$/display/displaydata.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/display/olederrorcodes.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webroutes/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/webroutes/api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datamodel/db_helper.py" beforeDir="false" afterPath="$PROJECT_DIR$/datamodel/db_helper.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/display/displaystate.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/displaystate.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/display/displaystatemachine.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/displaystatemachine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/display/oleddisplaystate.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/oleddisplaystate.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/display/olednormal.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/olednormal.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/display/oledoutput.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/oledoutput.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/display/oledshutdown.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/oledshutdown.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/display/oledstartup.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/oledstartup.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/display/oledwirocip.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/oledwirocip.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/display/sevensegnormal.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/sevensegnormal.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/start.py" beforeDir="false" afterPath="$PROJECT_DIR$/start.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -343,15 +355,15 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;last_opened_file_path&quot;: &quot;/home/henla464/Documents/WiRoc/WiRoc-BLE-API&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "last_opened_file_path": "/home/henla464/Documents/WiRoc/WiRoc-Python-2/display"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/../WiRoc-BLE-API" />
       <recent name="$PROJECT_DIR$/display" />
+      <recent name="$PROJECT_DIR$/../WiRoc-BLE-API" />
       <recent name="$PROJECT_DIR$/transforms" />
       <recent name="$PROJECT_DIR$/inputadapters" />
       <recent name="$PROJECT_DIR$/loraradio" />
@@ -510,6 +522,10 @@
           <url>file://$PROJECT_DIR$/loraradio/LoraRadioMessageRS.py</url>
           <line>129</line>
           <option name="timeStamp" value="57" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/display/olederrorcodes.py</url>
+          <option name="timeStamp" value="58" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>

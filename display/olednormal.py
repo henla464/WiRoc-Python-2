@@ -6,13 +6,14 @@ from PIL import ImageDraw
 from battery import Battery
 import logging
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
+from display.displaydata import DisplayData
 
 
 class OledNormal(OledDisplayState):
     def __init__(self):
         self.wiRocLogger = logging.getLogger('WiRoc.Display')
         self.batteryPercent = 0
-        self.batteryWidth = 0
+        self.batteryWidth = None
         self.NormalOledImage = None
         self.wifiNoOfBars = 0
         self.wifiNoOfBarsPrevious = 0
@@ -118,29 +119,29 @@ class OledNormal(OledDisplayState):
         if noOfBars >= 4:
             self.OledDraw.line((x + 20, top + 9, x + 20, top + -1), fill=255)
 
-    def Draw(self, channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
-        if self.channel != channel:
-            self.channel = channel
+    def Draw(self, displayData: DisplayData):
+        if self.channel != displayData.channel:
+            self.channel = displayData.channel
             self.imageChanged = True
             self.wiRocLogger.debug("OledNormal::DrawOled channel imagechanged")
             # Draw a black filled box to clear part of the image.
             self.OledDraw.rectangle((14, 0, 39, 31), outline=0, fill=0)
-            self.OledDraw.text((14, 0), str(channel), font=self.OledBoldFont, fill=255)
-        if self.wirocMode != wiRocMode:
-            self.wirocMode = wiRocMode
+            self.OledDraw.text((14, 0), str(displayData.channel), font=self.OledBoldFont, fill=255)
+        if self.wirocMode != displayData.wiRocMode:
+            self.wirocMode = displayData.wiRocMode
             self.imageChanged = True
             self.wiRocLogger.debug("OledNormal::DrawOled wirocMode imagechanged")
             self.OledDraw.rectangle((41, 16, 102, 31), outline=0, fill=0)
-            self.OledDraw.text((41, 16), wiRocMode, font=self.OledThinFont2, fill=255)
-        if self.ackRequested != ackRequested:
-            self.ackRequested = ackRequested
+            self.OledDraw.text((41, 16), displayData.wiRocMode, font=self.OledThinFont2, fill=255)
+        if self.ackRequested != displayData.ackRequested:
+            self.ackRequested = displayData.ackRequested
             self.imageChanged = True
             self.wiRocLogger.debug("OledNormal::DrawOled ackRequested imagechanged")
             self.OledDraw.rectangle((101, 16, 127, 31), outline=0, fill=0)
-            if not ackRequested:
+            if not displayData.ackRequested:
                 self.OledDraw.text((101, 16), 'X', font=self.OledThinFont2, fill=255)
 
-        self.DrawOledLoraRange(loraRange)
+        self.DrawOledLoraRange(displayData.loraRange)
         self.DrawOledWifi()
         self.DrawOledBattery()
         self.DrawIsCharging()

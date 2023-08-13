@@ -6,25 +6,26 @@ from PIL import ImageDraw
 from battery import Battery
 import logging
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
+from display.displaydata import DisplayData
 
 
 class OledWiRocIP(OledDisplayState):
     def __init__(self):
         self.wiRocLogger = logging.getLogger('WiRoc.Display')
         self.imageChanged = True
-        self.wiRocIPAddress = ""
+        self.wiRocIPAddresses = []
         self.OledImage = Image.new('1', (OledDisplayState.OledWidth, OledDisplayState.OledHeight))
         self.OledDraw = ImageDraw.Draw(self.OledImage)
         self.OledDraw.text((3, 1), "WiRoc IP address", font=self.OledThinFont2, fill=255)
 
-    def Draw(self,channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress):
-        if len(set(self.wiRocIPAddress).intersection(wiRocIPAddress)) != len(wiRocIPAddress):
-            self.wiRocIPAddress = wiRocIPAddress
+    def Draw(self, displayData: DisplayData):
+        if len(set(self.wiRocIPAddresses).intersection(displayData.wiRocIPAddresses)) != len(displayData.wiRocIPAddresses):
+            self.wiRocIPAddresses = displayData.wiRocIPAddresses
             self.imageChanged = True
             self.wiRocLogger.debug("OledStartup::Draw wiRocIPAddress changed")
             self.OledDraw.rectangle((1, 16, 128, 31), outline=0, fill=0)
-            if len(self.wiRocIPAddress) > 0:
-                self.OledDraw.text((2, 16), self.wiRocIPAddress[0], font=self.OledThinFont2, fill=255)
+            if len(self.wiRocIPAddresses) > 0:
+                self.OledDraw.text((2, 16), self.wiRocIPAddresses[0], font=self.OledThinFont2, fill=255)
 
         if self.imageChanged:
             self.imageChanged = False
@@ -35,4 +36,4 @@ class OledWiRocIP(OledDisplayState):
         # set imageChanged to true because next time this state is entered we
         # should draw the image
         self.imageChanged = True
-        return display.displaystatemachine.DisplayStateMachine.OledStartup
+        return display.displaystatemachine.DisplayStateMachine.OledErrorCode
