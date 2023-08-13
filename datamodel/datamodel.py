@@ -6,6 +6,7 @@ from constants import *
 from utils.utils import Utils
 import logging
 
+
 class SettingData(object):
     columns = [("Key", str), ("Value", str)]
 
@@ -13,6 +14,17 @@ class SettingData(object):
         self.id = None
         self.Key = None
         self.Value = None
+
+
+class ErrorCodeData(object):
+    columns = [("Code", str), ("Message", str)]
+
+    def __init__(self):
+        self.id = None
+        self.Code = None
+        self.Message = None
+
+        # Codes: ERR_LORA_CONF
 
 
 class ChannelData(object):
@@ -459,6 +471,7 @@ class ReDCosDecodeData(object):
         self.SingleOrDoublePunch = "SinglePunch"
         self.TimeAdded = None
 
+
 class ReDCosMessageAlternativesData(object):
     columns = [("MessageData", bytearray),  ("ReDCosDecodeID", int)]
 
@@ -467,6 +480,7 @@ class ReDCosMessageAlternativesData(object):
         self.MessageData = None
         self.ReDCosDecodeID = None
         self.TimeAdded = None
+
 
 class ReDCosErasureCombinationsData(object):
     columns = [("ErasureCombination", str),  ("ReDCosDecodeID", int)]

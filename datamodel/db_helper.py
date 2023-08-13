@@ -26,6 +26,8 @@ class DatabaseHelper:
         db = cls.db
         table = SettingData()
         db.ensure_table_created(table)
+        table = ErrorCodeData()
+        db.ensure_table_created(table)
         table = ChannelData()
         db.ensure_table_created(table)
         table = MessageBoxData()
@@ -65,6 +67,8 @@ class DatabaseHelper:
         cls.init()
         db = cls.db
         table = SettingData()
+        db.drop_table(table)
+        table = ErrorCodeData()
         db.drop_table(table)
         table = ChannelData()
         db.drop_table(table)
@@ -154,6 +158,23 @@ class DatabaseHelper:
         if len(row_list) == 0:
             return None
         return row_list[0]
+
+    @classmethod
+    def get_error_codes(cls):
+        cls.init()
+        rows = cls.db.get_table_objects(ErrorCodeData)
+        return rows
+
+    @classmethod
+    def save_error_code(cls, errorCodeData):
+        cls.init()
+        rows = cls.db.get_table_objects_by_SQL(SubscriberData, "SELECT * FROM ErrorCodeData WHERE Code = '" +
+                                               errorCodeData.Code + "'")
+        if len(rows) > 0:
+            errorCodeData.id = rows[0].id
+
+        return cls.db.save_table_object(errorCodeData, False)
+
 
     # Subscriber
     @classmethod
