@@ -324,6 +324,20 @@ def setSetting(key, value):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=settingData.Key + '\t' + settingData.Value))
 
+@app.route('/api/errorcodes/', methods=['GET'])
+def getErrorCodes():
+    DatabaseHelper.reInit()
+    errorCodes = DatabaseHelper.get_error_codes()
+    errCodes = []
+    for errorCode in errorCodes:
+        errCode = {'Code': errorCode.Code, 'Message': errorCode.Message}
+        errCodes.append(errCode)
+
+    data = {'errorCodes': errCodes}
+    json_data = json.dumps(data)
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=json_data))
 
 @app.route('/api/wirocdevicename/', methods=['GET'])
 def getWiRocDeviceName():
