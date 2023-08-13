@@ -18,13 +18,12 @@ class SettingData(object):
 
 class ErrorCodeData(object):
     columns = [("Code", str), ("Message", str)]
+    ERR_LORA_CONF = "ERR_LORA_CONF"
 
     def __init__(self):
         self.id = None
         self.Code = None
         self.Message = None
-
-        # Codes: ERR_LORA_CONF
 
 
 class ChannelData(object):

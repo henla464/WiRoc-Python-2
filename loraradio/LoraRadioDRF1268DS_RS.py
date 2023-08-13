@@ -3,7 +3,7 @@ __author__ = 'henla464'
 import serial
 import time
 import logging
-from datamodel.db_helper import DatabaseHelper
+from datamodel.db_helper import DatabaseHelper, ErrorCodeData, ChannelData
 from utils.utils import Utils
 from loraradio.loraparameters import LoraParameters
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
@@ -406,10 +406,18 @@ class LoraRadioDRF1268DS_RS:
                         return True
                     else:
                         LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() Setting parameters failed")
+                        errorCodeData = ErrorCodeData()
+                        errorCodeData.Code = ErrorCodeData.ERR_LORA_CONF
+                        errorCodeData.Code = "Lora config failed"
+                        DatabaseHelper.save_error_code(errorCodeData)
                         self.isInitialized = False
                         return False
             else:
                 LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() enterATMode failed")
+                errorCodeData = ErrorCodeData()
+                errorCodeData.Code = ErrorCodeData.ERR_LORA_CONF
+                errorCodeData.Code = "Lora config failed"
+                DatabaseHelper.save_error_code(errorCodeData)
                 self.isInitialized = False
                 return False
 
