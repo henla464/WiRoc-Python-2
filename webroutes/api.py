@@ -330,8 +330,9 @@ def getErrorCodes():
     errorCodes = DatabaseHelper.get_error_codes()
     errCodes = []
     for errorCode in errorCodes:
-        errCode = {'Code': errorCode.Code, 'Message': errorCode.Message}
-        errCodes.append(errCode)
+        if errorCode.Message != "":
+            errCode = {'Code': errorCode.Code, 'Message': errorCode.Message}
+            errCodes.append(errCode)
 
     data = {'errorCodes': errCodes}
     json_data = json.dumps(data)
