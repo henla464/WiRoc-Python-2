@@ -356,6 +356,16 @@ class LoraRadioDRF1268DS_RS:
                 break
             time.sleep(0.01)
 
+    def SetErrorCode(self, message):
+        errorCodeData = ErrorCodeData()
+        errorCodeData.Code = ErrorCodeData.ERR_LORA_CONF
+        errorCodeData.Code = message
+        DatabaseHelper.save_error_code(errorCodeData)
+
+    def ClearErrorCode(self):
+        # clear any lora config error code
+        self.SetErrorCode("")
+
     def Init(self, channel, loraRange, loraPower, codeRate, rxGain):
         LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() Port name: " + self.portName + " Channel: " +
                                             str(channel) + " LoraRange: " + loraRange + " LoraPower: " +
@@ -383,6 +393,7 @@ class LoraRadioDRF1268DS_RS:
                 LoraRadioDRF1268DS_RS.LoraModuleParameters = self.getParameters()
                 if LoraRadioDRF1268DS_RS.LoraModuleParameters is None:
                     LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() Could not get parameters")
+                    self.SetErrorCode("Lora config failed")
                     return False
                 channelData = DatabaseHelper.get_channel(channel, loraRange, 'DRF1268DS')
                 if channelData.Frequency ==  LoraRadioDRF1268DS_RS.LoraModuleParameters.TransmitFrequency and \
@@ -396,6 +407,7 @@ class LoraRadioDRF1268DS_RS:
                     (not rxGain and 0x01 == LoraRadioDRF1268DS_RS.LoraModuleParameters.IDRxGainEnable)):
                     self.isInitialized = True
                     LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() Already correct parameters")
+                    self.ClearErrorCode()
                     return True
                 else:
                     LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() frequency" + str(channelData.Frequency))
@@ -403,21 +415,16 @@ class LoraRadioDRF1268DS_RS:
                         LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() Parameters set")
                         self.isInitialized = True
                         newSettingsWritten = True
+                        self.ClearErrorCode()
                         return True
                     else:
                         LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() Setting parameters failed")
-                        errorCodeData = ErrorCodeData()
-                        errorCodeData.Code = ErrorCodeData.ERR_LORA_CONF
-                        errorCodeData.Code = "Lora config failed"
-                        DatabaseHelper.save_error_code(errorCodeData)
+                        self.SetErrorCode("Lora config failed")
                         self.isInitialized = False
                         return False
             else:
                 LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() enterATMode failed")
-                errorCodeData = ErrorCodeData()
-                errorCodeData.Code = ErrorCodeData.ERR_LORA_CONF
-                errorCodeData.Code = "Lora config failed"
-                DatabaseHelper.save_error_code(errorCodeData)
+                self.SetErrorCode("Lora config failed")
                 self.isInitialized = False
                 return False
 
