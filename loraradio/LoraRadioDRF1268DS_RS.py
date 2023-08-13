@@ -410,6 +410,7 @@ class LoraRadioDRF1268DS_RS:
                         return False
             else:
                 LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() enterATMode failed")
+                self.isInitialized = False
                 return False
 
         finally:
@@ -419,17 +420,6 @@ class LoraRadioDRF1268DS_RS:
                 self.hardwareAbstraction.DisableLora()
                 time.sleep(0.1)
                 self.hardwareAbstraction.EnableLora()
-
-#    def isSliceInList(self, listSlice, fullList):
-#        len_s = len(listSlice)  # so we don't recompute length of listSlice on every iteration
-#        return any(listSlice == fullList[i:len_s + i] for i in range(len(fullList) - len_s + 1))
-
-#    def removeSliceFromList(self, listSlice, fullList):
-#        len_s = len(listSlice)
-#        for i in range(len(fullList) - len_s + 1):
-#            if listSlice == fullList[i:len_s + i]:
-#                return fullList[0:i]+fullList[i+len_s:]
-#        return fullList
 
     def UpdateSentStats(self):
         self.totalNumberOfMessagesSent += 1
