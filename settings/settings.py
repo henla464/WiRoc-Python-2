@@ -585,7 +585,7 @@ class SettingsClass(object):
     def GetSendStatusMessages():
         sett = DatabaseHelper.get_setting_by_key('SendStatusMessages')
         if sett is None:
-            SettingsClass.SetSetting("SendStatusMessages", HardwareAbstraction.Instance.GetDefaultValueForSendStatusMessage())
+            SettingsClass.SetSetting("SendStatusMessages", "1")
             return True
         return sett.Value == "1"
 

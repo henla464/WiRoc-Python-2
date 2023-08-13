@@ -10,7 +10,6 @@ sys.path.append('..')
 
 
 class DisplayStateMachine(object):
-    SevenSegNormal = None
     OledStartup = None
     OledNormal = None
     OledOutput = None
@@ -23,15 +22,9 @@ class DisplayStateMachine(object):
     def __init__(self):
         self.wiRocLogger = logging.getLogger('WiRoc.Display')
         self.wiRocLogger.info("DisplayStateMachine::Init() start")
-        self.TypeOfDisplay = None
         self.currentState = None
-        self.runningOnChip = socket.gethostname() == 'chip'
-        self.runningOnNanoPi = socket.gethostname() == 'nanopiair'
         try:
-            if self.runningOnChip:
-                self.bus = SMBus(2)
-            elif self.runningOnNanoPi:
-                self.bus = SMBus(0)
+            self.bus = SMBus(0)
             oledAddress = 0x3c
             byteRead = self.bus.read_byte(oledAddress)
             if byteRead > 0:
@@ -41,16 +34,10 @@ class DisplayStateMachine(object):
                 import display.olednormal
                 import display.oledoutput
                 import display.oledwirocip
-                import display.sevensegnormal
                 import display.oledshutdown
                 import display.olederrorcodes
                 OledDisplayState = display.oleddisplaystate.OledDisplayState
-                if self.runningOnChip:
-                    self.wiRocLogger.debug("DisplayStateMachine::Init() on chip")
-                    OledDisplayState.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=2)
-                    self.wiRocLogger.debug("DisplayStateMachine::Init() after oleddisp")
-                elif self.runningOnNanoPi:
-                    OledDisplayState.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=0)
+                OledDisplayState.OledDisp = Adafruit_SSD1306.SSD1306_128_32(rst=None, i2c_bus=0)
                 # Initialize library.
                 OledDisplayState.OledDisp.begin()
 
@@ -59,7 +46,6 @@ class DisplayStateMachine(object):
                 OledDisplayState.OledHeight = OledDisplayState.OledDisp.height
 
                 # Available states
-                DisplayStateMachine.SevenSegNormal = display.sevensegnormal.SevenSegNormal()
                 DisplayStateMachine.OledStartup = display.oledstartup.OledStartup()
                 DisplayStateMachine.OledNormal = display.olednormal.OledNormal()
                 DisplayStateMachine.OledOutput = display.oledoutput.OledOutput()
@@ -69,31 +55,17 @@ class DisplayStateMachine(object):
 
                 self.wiRocLogger.info("DisplayStateMachine::Init() initialized the OLED")
             else:
-                if self.runningOnChip:
-                    self.wiRocLogger.debug("DisplayStateMachine::Init() 7SEG 1")
-                    self.TypeOfDisplay = '7SEG'
-                else:
-                    self.wiRocLogger.debug("DisplayStateMachine::Init() No display 1")
-                    self.TypeOfDisplay = 'NO_DISPLAY'
+                self.wiRocLogger.debug("DisplayStateMachine::Init() No display 1")
+                self.TypeOfDisplay = 'NO_DISPLAY'
         except Exception as ex:
             # print(ex)
-            if self.runningOnChip:
-                self.wiRocLogger.debug("DisplayStateMachine::Init() 7SEG 2")
-                self.TypeOfDisplay = '7SEG'
-            else:
-                self.wiRocLogger.debug("DisplayStateMachine::Init no display")
-                self.TypeOfDisplay = 'NO_DISPLAY'
+            self.wiRocLogger.debug("DisplayStateMachine::Init no display")
+            self.TypeOfDisplay = 'NO_DISPLAY'
 
         if HardwareAbstraction.Instance is None:
-            HardwareAbstraction.Instance = HardwareAbstraction(self.TypeOfDisplay)
+            HardwareAbstraction.Instance = HardwareAbstraction()
 
-        if self.TypeOfDisplay == 'OLED':
-            self.currentState = None
-        elif self.TypeOfDisplay == '7SEG':
-            import display.sevensegnormal
-            # Available states
-            DisplayStateMachine.SevenSegNormal = display.sevensegnormal.SevenSegNormal()
-            self.currentState = DisplayStateMachine.SevenSegNormal
+        self.currentState = None
 
     def GetTypeOfDisplay(self):
         return self.TypeOfDisplay
