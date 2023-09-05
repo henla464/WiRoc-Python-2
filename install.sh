@@ -67,7 +67,7 @@ apt-get -y install python3
 apt-get -y install python3-pip
 apt-get -y install python3-setuptools
 apt-get -y install python3-dev
-apt-get -Y install gpiod
+apt-get -y install gpiod
 pip3 install -U setuptools
 pip3 install wheel
 pip3 install requests
@@ -264,17 +264,19 @@ echo "install wiroc-monitor"
 #read line
 #Install WiRoc-Monitor
 mkdir WiRoc-WatchDog
-wget -O /home/chip/WiRoc-WatchDog/gpio.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/gpio.sh
-wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.sh
-chmod +x /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh
+#wget -O /home/chip/WiRoc-WatchDog/gpio.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/gpio.sh
+#wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.sh
+wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.py https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.py
+#chmod +x /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh
+chmod +x /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.py
 wget -O /etc/systemd/system/WiRocWatchDog.service https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRocWatchDog.service
-if [[ $(hostname -s) = nanopiair ]]; then
-    echo "nanopiair"
-    wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.cfg https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.cfg
-else
-    echo "chip"
-    wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.cfg https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.chip.cfg
-fi
+#if [[ $(hostname -s) = nanopiair ]]; then
+#    echo "nanopiair"
+#    wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.cfg https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.cfg
+#else
+#    echo "chip"
+#    wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.cfg https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.chip.cfg
+#fi
 systemctl enable /etc/systemd/system/WiRocWatchDog.service
 
 echo "add user to dialout"

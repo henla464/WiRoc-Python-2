@@ -2,14 +2,30 @@ WiRoc
 =====
 
 - Install/upgrade should build reed solomon library with cython
+- Option to set SRR as output
+- Enable/disable red/blue channel
+- Send configurations to webbserver
+- Send local ip address to webbserver
+- Add cardno etc to database for SRRMessages
+
+implemented but not tested
+- Send hwversion to webbserver, software versions
+
+SRR code
+========
+- Power optimization
+- measure resend intervals, is it same or does it increase or is it random.
+- Test air+
+
 
 -- Maybe (probably pretty complex, unsure how useful)
 Add option to reconfigure remote wiroc
 
 App
 ===
-- Getting releases from github has a low limit of calls per hour, need to find another solution. Maybe get from monitor.wiroc.se api instead.
-  Maybe have it cache the result and only refresh infrequently or if "forced"
+- Getting releases from wiroc.se
+- Configure input / output for SRR
+- Enable/disable red/blue channel
 
 
 Done

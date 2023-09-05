@@ -841,36 +841,6 @@ class DatabaseHelper:
             else:
                 return
 
-    # MessageBox
-    @classmethod
-    def create_message_box_data(cls, messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK, powerCycle, serialNumber, lowBattery, siPayloadData, data, rssiValue):
-        mbd = MessageBoxData()
-        mbd.MessageData = data
-        mbd.MessageTypeName = messageTypeName
-        mbd.PowerCycleCreated = powerCycle
-        mbd.ChecksumOK = checksumOK
-        mbd.InstanceName = instanceName
-        mbd.MessageSubTypeName = messageSubTypeName
-        mbd.MessageSource = messageSource
-        mbd.SIStationSerialNumber = serialNumber
-        mbd.RSSIValue = rssiValue
-
-        mbd.SIStationNumber = None
-        mbd.SIStationSerialNumber = None
-        mbd.LowBattery = lowBattery
-
-        if siPayloadData is not None:
-            siMsg = SIMessage()
-            siMsg.AddPayload(siPayloadData)
-            mbd.SICardNumber = siMsg.GetSICardNumber()
-            mbd.SportIdentHour = siMsg.GetHour()
-            mbd.SportIdentMinute = siMsg.GetMinute()
-            mbd.SportIdentSecond = siMsg.GetSeconds()
-
-            mbd.MemoryAddress = siMsg.GetBackupMemoryAddressAsInt()
-            mbd.SIStationNumber = siMsg.GetStationNumber()
-        return mbd
-
     @classmethod
     def save_message_box(cls, messageBoxData):
         # todo: test performance with using fixed sql to insert instead

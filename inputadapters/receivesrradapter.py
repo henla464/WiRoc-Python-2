@@ -1,14 +1,16 @@
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from settings.settings import SettingsClass
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 import logging
 import smbus
 from datamodel.db_helper import DatabaseHelper
 
+
 class ReceiveSRRAdapter(object):
     Instances = []
 
     @staticmethod
-    def CreateInstances(hardwareAbstraction):
+    def CreateInstances(hardwareAbstraction: HardwareAbstraction):
         if hardwareAbstraction.wirocHWVersion == "v6Rev1":
             if len(ReceiveSRRAdapter.Instances) == 0:
                 bus = smbus.SMBus(0)  # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
@@ -36,7 +38,7 @@ class ReceiveSRRAdapter(object):
     def GetTypeName():
         return "SRR"
 
-    def __init__(self, instanceName, i2cBus, i2cAddress, firmwareVersion, hardwareFeatures, hardwareAbstraction):
+    def __init__(self, instanceName: str, i2cBus: smbus.SMBus, i2cAddress: int, firmwareVersion: int, hardwareFeatures: int, hardwareAbstraction: HardwareAbstraction):
         self.WiRocLogger = logging.getLogger('WiRoc.Input')
         self.instanceName = instanceName
         self.isInitialized = False

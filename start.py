@@ -17,6 +17,7 @@ from display.displaystatemachine import DisplayStateMachine
 from display.displaydata import DisplayData
 import requests, queue, threading
 import urllib3
+import yaml
 
 
 class Main:
@@ -38,6 +39,7 @@ class Main:
         self.callbackQueue = queue.Queue()
         self.threadQueue = queue.Queue()
         self.displayStateMachine = DisplayStateMachine()
+        self.lastWiRocDeviceNameSentToServer = None
         Battery.Setup()
         HardwareAbstraction.Instance.SetupPins()
 
@@ -77,30 +79,46 @@ class Main:
         # Disable logToServer, must activate manually
         SettingsClass.SetSetting("LogToServer", "0")
 
-        # Add device to web server
-        webServerUrl = SettingsClass.GetWebServerUrl()
-        btAddress = SettingsClass.GetBTAddress()
-        self.wirocLogger.info("start::__init__() btAddress: " + btAddress)
-        if btAddress == "NoBTAddress":
-            time.sleep(2)
-            btAddress = SettingsClass.GetBTAddress()
-            self.wirocLogger.info("start::__init__() btAddress: " + btAddress)
-
-        apiKey = SettingsClass.GetAPIKey()
-        wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
         if SettingsClass.GetSendStatusMessages():
+            webServerUrl = SettingsClass.GetWebServerUrl()
             self.webServerUp = SendStatusAdapter.TestConnection(webServerUrl)
         else:
             self.webServerUp = False
-        if self.webServerUp:
-            t = threading.Thread(target=self.addDeviceBackground, args=(webServerUrl, btAddress, apiKey, wiRocDeviceName))
+
+        self.addDevice()
+
+    def addDevice(self):
+        deviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
+        if self.webServerUp and (self.lastWiRocDeviceNameSentToServer != deviceName):
+            # Add device to web server
+            btAddress = SettingsClass.GetBTAddress()
+
+            if btAddress == "NoBTAddress":
+                return
+                #time.sleep(2)
+                #btAddress = SettingsClass.GetBTAddress()
+                #self.wirocLogger.info("start::addDevice() retry get btAddress: " + btAddress)
+
+            self.wirocLogger.info("start::addDevice() btAddress: " + btAddress)
+            apiKey = SettingsClass.GetAPIKey()
+            webServerUrl = SettingsClass.GetWebServerUrl()
+            self.lastWiRocDeviceNameSentToServer = deviceName
+            with open("../settings.yaml", "r") as f:
+                settings = yaml.load(f, Loader=yaml.BaseLoader)
+            wirocPythonVersion = settings['WiRocPythonVersion']
+            wirocBLEAPIVersion = settings['WiRocBLEVersion']
+            hardwareVersion = settings["WiRocHWVersion"]
+
+            t = threading.Thread(target=self.addDeviceBackground, args=(webServerUrl, btAddress, apiKey, deviceName, wirocPythonVersion, wirocBLEAPIVersion, hardwareVersion))
             t.daemon = True
             t.start()
 
-    def addDeviceBackground(self, webServerUrl, btAddress, apiKey, wiRocDeviceName):
+    def addDeviceBackground(self, webServerUrl, btAddress, apiKey, wiRocDeviceName, wirocPythonVersion, wirocBLEAPIVersion, hardwareVersion):
         try:
             headers = {'X-Authorization': apiKey}
-            device = {"BTAddress": btAddress, "headBTAddress": btAddress, "name": wiRocDeviceName}  # "description": None
+            device = {"BTAddress": btAddress, "headBTAddress": btAddress, "name": wiRocDeviceName,
+                      "wirocPythonVersion":wirocPythonVersion, "wirocBLEAPIVersion": wirocBLEAPIVersion,
+                      "hardwareVersion": hardwareVersion}
             URL = webServerUrl + "/api/v1/Devices"
             resp = requests.post(url=URL, json=device, timeout=1, headers=headers, verify=False)
             self.wirocLogger.warning("Start::Init resp statuscode btaddress " + btAddress + "  " + str(resp.status_code) + " " + resp.text)
@@ -161,6 +179,7 @@ class Main:
         self.updateBatteryIsLowReceived()
         self.updateBatteryIsLow()
         self.sendSetConnectedToInternet()
+        self.addDevice()
 
     def reconfigure(self):
         if Setup.SetupAdapters():
@@ -221,7 +240,6 @@ class Main:
                                                                                messageID, messageData, rssiValue)
                         rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
                     else:
-                        rssiValue = 0
                         if messageTypeName == "LORA":
                             #if not checksumOK:
                             #    self.wirocLogger.error(
@@ -236,7 +254,6 @@ class Main:
                             self.wirocLogger.debug(
                                 "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " WiRocMode: " + SettingsClass.GetLoraMode() + " RepeaterBit: " + str(
                                     loraMessage.GetRepeater()))
-                            rssiValue = loraMessage.GetRSSIValue()
                             if SettingsClass.GetLoraMode() == "RECEIVER":
                                 if not loraMessage.GetRepeater():
                                     # Message received that might come from repeater. Archive any already scheduled ack message
@@ -245,8 +262,7 @@ class Main:
                                     DatabaseHelper.archive_lora_ack_message_subscription(messageID)
 
                         try:
-                            lowBattery, ackRequested, repeater, siPayloadData = MessageHelper.GetLowBatterySIPayload(messageTypeName, messageSubTypeName, messageData)
-                            mbd = DatabaseHelper.create_message_box_data(messageSource, messageTypeName, messageSubTypeName, instanceName, True, powerCycle, SIStationSerialNumber, lowBattery, siPayloadData, messageData, rssiValue)
+                            mbd = MessageHelper.GetMessageBoxData(messageSource, messageTypeName, messageSubTypeName, instanceName, powerCycle, SIStationSerialNumber, loraMessage, messageData)
                         except Exception as ex:
                             self.shouldReconfigure = True
                             self.wirocLogger.error("Start::handleInput() Error creating message box data")
@@ -676,7 +692,6 @@ if __name__ == '__main__':
     rotFileHandler.doRollover()
     rotFileHandler.setFormatter(formatter)
 
-    # define a Handler which writes INFO messages or higher to the sys.stderr
     console = logging.StreamHandler()
     console.setLevel(logging.DEBUG)
     console.setFormatter(formatter)

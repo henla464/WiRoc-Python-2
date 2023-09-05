@@ -835,7 +835,7 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
             self.sock.send(bytearray(bytes([0])))
             self.isInitialized = True
             self.oneWay = True
-            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIBluetoothSP::InitOneWay() Initialized!")
+            ReceiveSIAdapter.WiRocLogger.info("ReceiveSIBluetoothSP::InitOneWay() Initialized!")
             return True
         except socket.timeout as socktimeout:
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIBluetoothSP::InitOneWay() exception:" + str(socktimeout))
