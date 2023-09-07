@@ -2,6 +2,7 @@ __author__ = 'henla464'
 
 import datetime
 
+
 class DataMapping:
     @staticmethod
     def get_database_type(python_type):

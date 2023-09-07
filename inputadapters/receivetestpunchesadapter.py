@@ -67,7 +67,7 @@ class ReceiveTestPunchesAdapter(object):
                 siMessage.AddFooter()
 
                 ReceiveTestPunchesAdapter.WiRocLogger.debug("ReceiveTestPunchesAdapter::GetData() Data to fetch: " + Utils.GetDataInHex(siMessage.GetByteArray(), logging.DEBUG))
-                return {"MessageType": "DATA", "MessageSource": "Test", "MessageSubTypeName": "Test", "Data": siMessage.GetByteArray(), "ChecksumOK": True, "MessageID": siMessage.GetMessageID(0)}
+                return {"MessageType": "DATA", "MessageSource": "Test", "MessageSubTypeName": "Test", "Data": siMessage.GetByteArray(), "ChecksumOK": True}
         return None
 
     def AddedToMessageBox(self, mbid):

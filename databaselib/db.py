@@ -4,17 +4,20 @@ import sqlite3 as lite
 import datetime
 import logging
 
+from databaselib.datamapping import DataMapping
+
+
 class DB:
     WiRocLogger = logging.getLogger('WiRoc')
 
-    def __init__(self, database_file_path, data_mapping):
+    def __init__(self, database_file_path: str, data_mapping: DataMapping):
         self.connection = lite.connect(database_file_path, timeout=100)
         self.connection.row_factory = lite.Row
         self.data_mapping = data_mapping
         self.execute_SQL("PRAGMA journal_mode=WAL")
 
     @staticmethod
-    def _get_python_type(table_object, column_name):
+    def _get_python_type(table_object, column_name: str):
         for column in table_object.columns:
             if column[0] == column_name:
                 return column[1]
@@ -27,13 +30,13 @@ class DB:
             setattr(table_object, column_name, python_value)
         return table_object
 
-    def drop_table(self, table_object):
+    def drop_table(self, table_object) -> None:
         with self.connection:
             table_name = table_object.__class__.__name__
             drop_table_SQL_statement = "DROP TABLE " + table_name
             self.connection.execute(drop_table_SQL_statement)
 
-    def ensure_table_created(self, table_object):
+    def ensure_table_created(self, table_object) -> None:
         with self.connection:
             table_name = table_object.__class__.__name__
             create_table_SQL_statement = "CREATE TABLE IF NOT EXISTS " + table_name \
@@ -45,8 +48,7 @@ class DB:
             DB.WiRocLogger.debug(create_table_SQL_statement)
             self.connection.execute(create_table_SQL_statement)
 
-
-    def save_table_object(self, table_object, returnObj = True):
+    def save_table_object(self, table_object, returnObj: bool = True):
         #with self.connection:
         table_name = table_object.__class__.__name__
         rowid = table_object.id
@@ -72,32 +74,31 @@ class DB:
             return self.get_table_object(table_object.__class__, rowid)
         return rowid
 
-
-    def get_table_object(self, table_class, rowid):
+    def get_table_object(self, table_class, rowid: int):
         #self.connection.row_factory = lite.Row
         db_cursor = self.connection.cursor()
         select_SQL_statement = "SELECT * FROM %s WHERE id = %s" % (table_class.__name__, rowid)
         db_cursor.execute(select_SQL_statement)
         row = db_cursor.fetchone()
-        if row == None:
+        if row is None:
             return None
         table_object = self._get_table_object(table_class, row)
         return table_object
 
-    def get_scalar_by_SQL(self, select_SQL_statement):
+    def get_scalar_by_SQL(self, select_SQL_statement: str):
         #with self.connection:
         #    self.connection.row_factory = lite.Row
         db_cursor = self.connection.cursor()
         db_cursor.execute(select_SQL_statement)
         first = db_cursor.fetchone()
-        if first == None:
+        if first is None:
             return None
         else:
             return first[0]
 
     def get_table_objects_by_SQL(self, table_class, select_SQL_statement, parameters=None):
         db_cursor = self.connection.cursor()
-        if parameters == None:
+        if parameters is None:
             db_cursor.execute(select_SQL_statement)
         else:
             db_cursor.execute(select_SQL_statement, parameters)
@@ -106,7 +107,7 @@ class DB:
         table_objects = [get_table_object_func(table_class, row) for row in rows]
         return table_objects
 
-    def delete_table_object(self, table_class, rowId):
+    def delete_table_object(self, table_class, rowId: int):
         #with self.connection:
         #    self.connection.row_factory = lite.Row
         #    db_cursor = self.connection.cursor()
@@ -115,19 +116,17 @@ class DB:
         self.connection.execute(delete_SQL_statement)
         self.connection.commit()
 
-
-    def execute_SQL(self, SQL_statement, parameters = None):
-        if parameters == None:
+    def execute_SQL(self, SQL_statement: str, parameters = None):
+        if parameters is None:
             self.connection.execute(SQL_statement)
         else:
             self.connection.execute(SQL_statement, parameters)
         self.connection.commit()
 
-    def execute_SQL_no_commit(self, SQL_statement):
+    def execute_SQL_no_commit(self, SQL_statement: str):
         self.connection.execute(SQL_statement)
 
-
-    def execute_many_SQL(self, SQL_statement, listOfValues):
+    def execute_many_SQL(self, SQL_statement: str, listOfValues):
         self.connection.executemany(SQL_statement, listOfValues)
         self.connection.commit()
 

@@ -82,7 +82,6 @@ class Main:
                     msgSubscription.MessageBoxId = msg.id
                     msgSubscription.SubscriptionId = subscription.id
                     #msgSubscription.ScheduledTime = datetime.now()
-                    msgSubscription.MessageNumber = MessageSubscriptionData.GetNextMessageNumber()
                     DatabaseHelper.save_message_subscription(msgSubscription)
 
             # archive the messages that does not have subscriptions
@@ -268,10 +267,11 @@ class Main:
                                     loraMessage.GetRepeater()))
                             if SettingsClass.GetLoraMode() == "RECEIVER":
                                 if not loraMessage.GetRepeater():
-                                    # Message received that might come from repeater. Archive any already scheduled ack message
-                                    # from previously received message (directly from sender)
-                                    # Message number ignored, remove acks for same SI-card-number and SI-Station-number
+                                    # Message received that might come from repeater (repeater (request repeater) is set to false when sent from repeater).
+                                    # Archive any already scheduled ack message from previously received message (directly from sender)
                                     DatabaseHelper.archive_lora_ack_message_subscription(messageID)
+                        else:
+                            loraMessage = None
 
                         try:
                             mbd = MessageHelper.GetMessageBoxData(messageSource, messageTypeName, messageSubTypeName, instanceName, powerCycle, SIStationSerialNumber, loraMessage, messageData)
@@ -311,7 +311,6 @@ class Main:
                                 self.wirocLogger.debug("Start::handleInput() MessageID: " + Utils.GetDataInHex(messageID, logging.DEBUG))
                             # messageid is used for messages from repeater table or test table. Is updated after transform when sent
                             msgSubscription.MessageID = messageID
-                            msgSubscription.MessageNumber = MessageSubscriptionData.GetNextMessageNumber()
                             DatabaseHelper.save_message_subscription(msgSubscription)
                             anySubscription = True
                             self.messagesToSendExists = True

@@ -6,11 +6,12 @@ from datamodel.datamodel import MessageBoxData
 from loraradio.LoraRadioMessageRS import LoraRadioMessagePunchDoubleReDCoSRS, LoraRadioMessagePunchReDCoSRS, LoraRadioMessageAckRS, LoraRadioMessageStatusRS
 from typing import Union
 
+
 class MessageHelper:
     @staticmethod
     def GetMessageBoxData(messageSource: str, messageTypeName: str, messageSubTypeName: str, instanceName: str, powerCycle, SIStationSerialNumber: str,
-                          loraMessage: Union[LoraRadioMessagePunchReDCoSRS, LoraRadioMessagePunchDoubleReDCoSRS, LoraRadioMessageAckRS, LoraRadioMessageStatusRS],
-                          messageData: bytearray):
+                          loraMessage: LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | LoraRadioMessageAckRS | LoraRadioMessageStatusRS,
+                          messageData: bytearray) -> MessageBoxData:
         siPayloadData = None
 
         mbd = MessageBoxData()

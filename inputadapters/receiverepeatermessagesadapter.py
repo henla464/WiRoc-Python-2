@@ -50,6 +50,6 @@ class ReceiveRepeaterMessagesAdapter(object):
             return {"MessageType": "DATA", "MessageSource":"Repeater", "MessageSubTypeName": messageToAdd.MessageSubTypeName, "Data": messageToAdd.MessageData, "MessageID": messageToAdd.MessageID, "ChecksumOK": True}
         return None
 
-    def AddedToMessageBox(self, mbid):
-        DatabaseHelper.archive_repeater_message_after_added_to_message_box(self.lastRepeaterMessageBoxIdAdded, mbid)
+    def AddedToMessageBox(self, mbid: int) -> None:
+        DatabaseHelper.archive_repeater_message_after_added_to_message_box(self.lastRepeaterMessageBoxIdAdded)
         return None

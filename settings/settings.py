@@ -476,7 +476,7 @@ class SettingsClass(object):
     microSecondsToSendAnAckMessage = None
 
     @staticmethod
-    def GetRetryDelay(retryNumber):
+    def GetRetryDelay(retryNumber: int) -> float:
         loraRange = SettingsClass.GetLoraRange()
         channel = SettingsClass.GetChannel()
         loraModule = SettingsClass.GetLoraModule()

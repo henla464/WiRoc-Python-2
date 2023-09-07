@@ -247,7 +247,7 @@ class SubscriptionViewData(object):
 
 
 class MessageSubscriptionData(object):
-    columns = [("MessageID", bytes), ("AckReceivedFromReceiver", bool), ("MessageNumber", int),
+    columns = [("MessageID", bytes), ("AckReceivedFromReceiver", bool),
                ("SentDate", datetime), ("SendFailedDate", datetime),
                ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
                ("NoOfSendTries", int), ("AckReceivedDate", datetime),
@@ -256,9 +256,8 @@ class MessageSubscriptionData(object):
                ("FindAdapterRetryDelay", int),
                ("MessageBoxId", int),
                ("SubscriptionId", int), ("FetchedForSending", datetime)]
-    CurrentMessageNumber = 0
 
-    def __init__(self, MessageID=None, AckReceivedFromReceiver=False, MessageNumber=None, SentDate=None, SendFailedDate=None,
+    def __init__(self, MessageID=None, AckReceivedFromReceiver=False, SentDate=None, SendFailedDate=None,
                  FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
                  NoOfSendTries=0,
                  Delay=0,
@@ -268,7 +267,6 @@ class MessageSubscriptionData(object):
         self.id = None
         self.MessageID = MessageID
         self.AckReceivedFromReceiver = AckReceivedFromReceiver
-        self.MessageNumber = MessageNumber
         self.SentDate = SentDate
         self.SendFailedDate = SendFailedDate
         self.NoOfSendTries = NoOfSendTries
@@ -282,14 +280,9 @@ class MessageSubscriptionData(object):
         self.SubscriptionId = SubscriptionId
         self.FetchedForSending = FetchedForSending
 
-    @staticmethod
-    def GetNextMessageNumber():
-        MessageSubscriptionData.CurrentMessageNumber = (MessageSubscriptionData.CurrentMessageNumber + 1) % 256
-        return MessageSubscriptionData.CurrentMessageNumber
-
 
 class MessageSubscriptionArchiveData(object):
-    columns = [ ("OrigId", int), ("MessageID", bytes), ("MessageNumber", int),
+    columns = [ ("OrigId", int), ("MessageID", bytes),
                 ("SentDate", datetime), ("SendFailedDate", datetime),
                 ("FindAdapterTryDate", datetime),("FindAdapterTries", int),
                 ("NoOfSendTries", int), ("AckReceivedDate", datetime),
@@ -304,7 +297,6 @@ class MessageSubscriptionArchiveData(object):
     def __init__(self):
         self.id = None
         self.MessageID = None
-        self.MessageNumber = None
         self.SentDate = None
         self.SendFailedDate = None
         self.FindAdapterTryDate = None
@@ -323,7 +315,7 @@ class MessageSubscriptionArchiveData(object):
 
 class MessageSubscriptionView(object):
     columns = [("MessageID", bytes),  ("AckReceivedFromReceiver", bool),
-               ("MessageNumber", int), ("SentDate", datetime), ("SendFailedDate", datetime),
+               ("SentDate", datetime), ("SendFailedDate", datetime),
                ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
                ("NoOfSendTries", int), ("AckReceivedDate", datetime),
                ("Delay", int),
@@ -341,7 +333,6 @@ class MessageSubscriptionView(object):
         self.id = None
         self.MessageID = None
         self.AckReceivedFromReceiver = None
-        self.MessageNumber = None
         self.SentDate = None
         self.SendFailedDate = None
         self.FindAdapterTryDate = None
@@ -564,11 +555,6 @@ class SIMessage(object):
         self.MessageData.append(0x03)  # ETX
         self.UpdateLength()
         self.UpdateChecksum()
-
-    def GetMessageID(self, messageNumber):
-        #messageNumber, CN0 SN3 SN2 SN1 SN0
-        return bytearray(bytes([messageNumber, self.MessageData[4], self.MessageData[5],
-                                self.MessageData[6], self.MessageData[7], self.MessageData[8]]))
 
     def GetStationNumber(self):
         return (self.MessageData[3] << 8) + self.MessageData[4]

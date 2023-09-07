@@ -705,7 +705,7 @@ class LoraRadioMessageAckRS(LoraRadioMessageRS):
         super().__init__()
         self.messageType = LoraRadioMessageRS.MessageTypeLoraAck
 
-    def GetMessageIDThatIsAcked(self):
+    def GetMessageIDThatIsAcked(self) -> bytearray:
         return self.payloadData[0:2]
 
     def GetMessageCategory(self):
