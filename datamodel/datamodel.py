@@ -21,9 +21,9 @@ class ErrorCodeData(object):
     ERR_LORA_CONF = "ERR_LORA_CONF"
 
     def __init__(self):
-        self.id = None
-        self.Code = None
-        self.Message = None
+        self.id: int|None = None
+        self.Code: str|None = None
+        self.Message: str|None = None
 
 
 class ChannelData(object):
@@ -31,19 +31,19 @@ class ChannelData(object):
                ("Frequency", int), ("SlopeCoefficient", int),
                ("M", int), ("RfFactor", int), ("RfBw", int), ("LoraModem", str)]
 
-    def __init__(self, Channel=None, DataRate=None, LoraRange=None,
-                 Frequency=None, SlopeCoefficient=None,
-                 M=None, RfFactor=None, RfBw=None, LoraModem=None):
-        self.id = None
-        self.Channel = Channel
-        self.DataRate = DataRate
-        self.LoraRange = LoraRange
-        self.Frequency = Frequency
-        self.SlopeCoefficient = SlopeCoefficient
-        self.M = M
-        self.RfFactor = RfFactor
-        self.RfBw = RfBw
-        self.LoraModem = LoraModem
+    def __init__(self, Channel: int|None = None, DataRate: int|None = None, LoraRange: str|None = None,
+                 Frequency: int|None = None, SlopeCoefficient: int|None = None,
+                 M: int|None = None, RfFactor: int|None = None, RfBw: int|None =None, LoraModem: str|None = None):
+        self.id: int|None = None
+        self.Channel: int|None = Channel
+        self.DataRate: int|None = DataRate
+        self.LoraRange: str|None = LoraRange
+        self.Frequency: int|None = Frequency
+        self.SlopeCoefficient: int|None = SlopeCoefficient
+        self.M: int|None = M
+        self.RfFactor: int|None = RfFactor
+        self.RfBw: int|None = RfBw
+        self.LoraModem: str|None = LoraModem
 
 
 class MessageBoxData(object):

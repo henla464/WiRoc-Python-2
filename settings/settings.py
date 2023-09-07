@@ -142,7 +142,7 @@ class SettingsClass(object):
         return SettingsClass.batteryIsLowReceived
 
     @staticmethod
-    def GetLoraModule():
+    def GetLoraModule() -> str:
         if socket.gethostname() == 'chip':
             return 'RF1276T'
         else:
@@ -294,7 +294,7 @@ class SettingsClass(object):
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetChannel'), lock=rlock)
-    def GetChannel():
+    def GetChannel() -> int:
         sett = DatabaseHelper.get_setting_by_key('Channel')
         if sett is None:
             SettingsClass.SetSetting("Channel", 1)
@@ -330,7 +330,7 @@ class SettingsClass(object):
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetLoraRange'), lock=rlock)
-    def GetLoraRange():
+    def GetLoraRange() -> str:
         sett = DatabaseHelper.get_setting_by_key('LoraRange')
         if sett is None:
             SettingsClass.SetSetting("LoraRange", 'L')
@@ -339,7 +339,7 @@ class SettingsClass(object):
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetLoraPower'), lock=rlock)
-    def GetLoraPower():
+    def GetLoraPower() -> int:
         sett = DatabaseHelper.get_setting_by_key('LoraPower')
         if sett is None:
             SettingsClass.SetSetting("LoraPower", str(0x16))
@@ -353,7 +353,7 @@ class SettingsClass(object):
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetCodeRate'), lock=rlock)
-    def GetCodeRate():
+    def GetCodeRate() -> int:
         sett = DatabaseHelper.get_setting_by_key('CodeRate')
         if sett is None:
             SettingsClass.SetSetting("CodeRate", str(0x00))
@@ -362,7 +362,7 @@ class SettingsClass(object):
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetRxGainEnabled'), lock=rlock)
-    def GetRxGainEnabled():
+    def GetRxGainEnabled() -> bool:
         sett = DatabaseHelper.get_setting_by_key('RxGainEnabled')
         if sett is None:
             SettingsClass.SetSetting("RxGainEnabled", "1")
@@ -538,12 +538,12 @@ class SettingsClass(object):
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetLoraMessageTimeSendingTimeS'), lock=rlock)
-    def GetLoraMessageTimeSendingTimeS(noOfBytes):
+    def GetLoraMessageTimeSendingTimeS(noOfBytes: int) -> float:
         if noOfBytes == 0:
             return 0
-        loraRange = SettingsClass.GetLoraRange()
-        channel = SettingsClass.GetChannel()
-        loraModule = SettingsClass.GetLoraModule()
+        loraRange: str = SettingsClass.GetLoraRange()
+        channel: int = SettingsClass.GetChannel()
+        loraModule: str = SettingsClass.GetLoraModule()
         codeRate = SettingsClass.GetCodeRate()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
         microSecs = SettingsClass.channelData.SlopeCoefficient * (noOfBytes + SettingsClass.channelData.M)

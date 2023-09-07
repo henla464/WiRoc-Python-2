@@ -9,7 +9,7 @@ from loraradio.LoraRadioMessageRS import LoraRadioMessageAckRS, \
 
 class LoraRadioMessageCreator(object):
     @staticmethod
-    def GetAckMessage(theHash):
+    def GetAckMessage(theHash: bytearray) -> LoraRadioMessageAckRS:
         loraAckMessage = LoraRadioMessageAckRS()
         loraAckMessage.SetAckRequested(False)
         loraAckMessage.SetBatteryLow(False)
@@ -20,7 +20,7 @@ class LoraRadioMessageCreator(object):
         return loraAckMessage
 
     @staticmethod
-    def GetAckMessageByFullMessageData(fullMessageData, rssiByte=None):
+    def GetAckMessageByFullMessageData(fullMessageData: bytearray, rssiByte: int = None) -> LoraRadioMessageAckRS:
         loraAckMessage = LoraRadioMessageAckRS()
         loraAckMessage.SetHeader(fullMessageData[0:1])
         loraAckMessage.AddPayload(fullMessageData[1:])
@@ -70,7 +70,7 @@ class LoraRadioMessageCreator(object):
     #     return loraPunchDoubleMessage
 
     @staticmethod
-    def GetPunchReDCoSMessage(batteryLow, ackReq, payload=None):
+    def GetPunchReDCoSMessage(batteryLow: bool, ackReq: bool, payload: bytearray = None) -> LoraRadioMessagePunchReDCoSRS:
         loraPunchMessage = LoraRadioMessagePunchReDCoSRS()
         loraPunchMessage.SetBatteryLow(batteryLow)
         loraPunchMessage.SetAckRequested(ackReq)
@@ -81,7 +81,7 @@ class LoraRadioMessageCreator(object):
         return loraPunchMessage
 
     @staticmethod
-    def GetPunchReDCoSMessageByFullMessageData(fullMessageDataDeinterleaved, rssiByte=None):
+    def GetPunchReDCoSMessageByFullMessageData(fullMessageDataDeinterleaved: bytearray, rssiByte: int = None) -> LoraRadioMessagePunchReDCoSRS:
         if len(fullMessageDataDeinterleaved) < LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchReDCoS]:
             raise Exception('Message data too short for a LoraRadioMessagePunchRedCoSRS message')
         loraPunchMessage = LoraRadioMessagePunchReDCoSRS()
@@ -95,7 +95,7 @@ class LoraRadioMessageCreator(object):
         return loraPunchMessage
 
     @staticmethod
-    def GetPunchDoubleReDCoSMessage(batteryLow, ackReq, payload=None):
+    def GetPunchDoubleReDCoSMessage(batteryLow: bool, ackReq: bool, payload: bytearray = None) -> LoraRadioMessagePunchDoubleReDCoSRS:
         loraPunchDoubleMessage = LoraRadioMessagePunchDoubleReDCoSRS()
         loraPunchDoubleMessage.SetBatteryLow(batteryLow)
         loraPunchDoubleMessage.SetAckRequested(ackReq)
@@ -107,7 +107,7 @@ class LoraRadioMessageCreator(object):
         return loraPunchDoubleMessage
 
     @staticmethod
-    def GetPunchDoubleReDCoSMessageByFullMessageData(fullMessageDataDeinterleaved, rssiByte=None):
+    def GetPunchDoubleReDCoSMessageByFullMessageData(fullMessageDataDeinterleaved: bytearray, rssiByte: int = None) -> LoraRadioMessagePunchDoubleReDCoSRS:
         loraPunchDoubleMessage = LoraRadioMessagePunchDoubleReDCoSRS()
         loraPunchDoubleMessage.SetHeader(fullMessageDataDeinterleaved[0:1])
         loraPunchDoubleMessage.AddPayload(fullMessageDataDeinterleaved[1:-LoraRadioMessagePunchDoubleReDCoSRS.NoOfECCBytes-LoraRadioMessagePunchDoubleReDCoSRS.NoOfCRCBytes])
@@ -117,7 +117,7 @@ class LoraRadioMessageCreator(object):
         return loraPunchDoubleMessage
 
     @staticmethod
-    def GetStatusMessage(batteryLow):
+    def GetStatusMessage(batteryLow: bool) -> LoraRadioMessageStatusRS:
         loraStatusMessage = LoraRadioMessageStatusRS()
         loraStatusMessage.SetBatteryLow(batteryLow)
         loraStatusMessage.SetAckRequested(False)
@@ -126,7 +126,7 @@ class LoraRadioMessageCreator(object):
         return loraStatusMessage
 
     @staticmethod
-    def GetStatusMessageByFullMessageData(fullMessageData, rssiByte=None):
+    def GetStatusMessageByFullMessageData(fullMessageData: bytearray, rssiByte: int = None) -> LoraRadioMessageStatusRS:
         loraStatusMessage = LoraRadioMessageStatusRS()
         loraStatusMessage.SetHeader(fullMessageData[0:1])
         loraStatusMessage.SetPayload(fullMessageData[1:-LoraRadioMessageStatusRS.NoOfECCBytes])

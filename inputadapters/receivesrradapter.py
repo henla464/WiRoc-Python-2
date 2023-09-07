@@ -4,13 +4,14 @@ from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 import logging
 import smbus
 from datamodel.db_helper import DatabaseHelper
+import inputdatadict
 
 
 class ReceiveSRRAdapter(object):
     Instances = []
 
     @staticmethod
-    def CreateInstances(hardwareAbstraction: HardwareAbstraction):
+    def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         if hardwareAbstraction.wirocHWVersion == "v6Rev1":
             if len(ReceiveSRRAdapter.Instances) == 0:
                 bus = smbus.SMBus(0)  # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
@@ -35,7 +36,7 @@ class ReceiveSRRAdapter(object):
         return False
 
     @staticmethod
-    def GetTypeName():
+    def GetTypeName() -> str:
         return "SRR"
 
     def __init__(self, instanceName: str, i2cBus: smbus.SMBus, i2cAddress: int, firmwareVersion: int, hardwareFeatures: int, hardwareAbstraction: HardwareAbstraction):
@@ -48,25 +49,25 @@ class ReceiveSRRAdapter(object):
         self.hardwareFeatures = hardwareFeatures
         self.hardwareAbstraction = hardwareAbstraction
 
-    def GetInstanceName(self):
+    def GetInstanceName(self) -> str:
         return self.instanceName
 
-    def GetIsInitialized(self):
+    def GetIsInitialized(self) -> bool:
         return self.isInitialized
 
-    def ShouldBeInitialized(self):
+    def ShouldBeInitialized(self) -> bool:
         return not self.isInitialized
 
-    def Init(self):
+    def Init(self) -> bool:
         if self.GetIsInitialized():
             return True
         self.isInitialized = True
         return True
 
-    def UpdateInfrequently(self):
+    def UpdateInfrequently(self) -> bool:
         return True
 
-    def GetData(self):
+    def GetData(self) -> inputdatadict:
         if self.hardwareAbstraction.GetSRRIRQValue():
             # msg length
             PUNCH_LENGTH_REGADDR = 0x20
@@ -105,5 +106,5 @@ class ReceiveSRRAdapter(object):
                 return {"MessageType": "DATA", "MessageSubTypeName": "SRRMessage", "MessageSource": "SRR", "Data": punchMessageData, "ChecksumOK": True}
         return None
 
-    def AddedToMessageBox(self, mbid):
+    def AddedToMessageBox(self, mbid: int) -> None:
         return None

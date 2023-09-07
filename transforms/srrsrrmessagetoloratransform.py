@@ -1,5 +1,5 @@
 from battery import Battery
-from datamodel.datamodel import SIMessage
+from datamodel.datamodel import SIMessage, MessageSubscriptionBatch
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessagePunchReDCoSRS, \
     LoraRadioMessagePunchDoubleReDCoSRS
@@ -14,46 +14,46 @@ class SRRSRRMessageToLoraTransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 
     @staticmethod
-    def GetInputMessageType():
+    def GetInputMessageType() -> str:
         return "SRR"
 
     @staticmethod
-    def GetInputMessageSubType():
+    def GetInputMessageSubType() -> str:
         return "SRRMessage"
 
     @staticmethod
-    def GetOutputMessageType():
+    def GetOutputMessageType() -> str:
         return "LORA"
 
     @staticmethod
-    def GetOutputMessageSubType():
+    def GetOutputMessageSubType() -> str:
         return "Punch"
 
     @staticmethod
-    def GetName():
+    def GetName() -> str:
         return "SRRSRRMessageToLoraTransform"
 
     @staticmethod
-    def GetBatchSize():
+    def GetBatchSize() -> int:
         return 2
 
     @staticmethod
-    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter) -> float | None:
         return 0
 
     @staticmethod
-    def GetDeleteAfterSent():
+    def GetDeleteAfterSent() -> bool:
         # check setting for ack
         SRRSRRMessageToLoraTransform.DeleteAfterSent = not SettingsClass.GetAcknowledgementRequested()
         return SRRSRRMessageToLoraTransform.DeleteAfterSent
 
     @staticmethod
-    def GetDeleteAfterSentChanged():
+    def GetDeleteAfterSentChanged() -> bool:
         return SRRSRRMessageToLoraTransform.DeleteAfterSent != (not SettingsClass.GetAcknowledgementRequested())
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSubBatch, subscriberAdapter):
+    def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         SRRSRRMessageToLoraTransform.WiRocLogger.debug("SRRSRRMessageToLoraTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         siMsg = SIMessage()

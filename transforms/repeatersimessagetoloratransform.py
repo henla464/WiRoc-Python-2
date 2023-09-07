@@ -1,4 +1,5 @@
 from battery import Battery
+from datamodel.datamodel import MessageSubscriptionBatch
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessagePunchReDCoSRS
@@ -10,31 +11,31 @@ class RepeaterSIMessageToLoraTransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 
     @staticmethod
-    def GetInputMessageType():
+    def GetInputMessageType() -> str:
         return "REPEATER"
 
     @staticmethod
-    def GetInputMessageSubType():
+    def GetInputMessageSubType() -> str:
         return "SIMessage"
 
     @staticmethod
-    def GetOutputMessageType():
+    def GetOutputMessageType() -> str:
         return "LORA"
 
     @staticmethod
-    def GetOutputMessageSubType():
+    def GetOutputMessageSubType() -> str:
         return "Punch"
 
     @staticmethod
-    def GetName():
+    def GetName() -> str:
         return "RepeaterSIMessageToLoraTransform"
 
     @staticmethod
-    def GetBatchSize():
+    def GetBatchSize() -> int:
         return 1
 
     @staticmethod
-    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter) -> float | None:
         if LoraRadioDataHandler.GetRepeater(messageBoxData.MessageData):
             # no ack expected from receiver, should be sent after repeater sent ack
             return 0
@@ -44,18 +45,18 @@ class RepeaterSIMessageToLoraTransform(object):
             return LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck)*2+0.1
 
     @staticmethod
-    def GetDeleteAfterSent():
+    def GetDeleteAfterSent() -> bool:
         # check setting for ack
         RepeaterSIMessageToLoraTransform.DeleteAfterSent = not SettingsClass.GetAcknowledgementRequested()
         return RepeaterSIMessageToLoraTransform.DeleteAfterSent
 
     @staticmethod
-    def GetDeleteAfterSentChanged():
+    def GetDeleteAfterSentChanged() -> bool:
         return RepeaterSIMessageToLoraTransform.DeleteAfterSent != (not SettingsClass.GetAcknowledgementRequested())
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSubBatch, subscriberAdapter):
+    def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         RepeaterSIMessageToLoraTransform.WiRocLogger.debug("RepeaterSIMessageToLoraTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         loraPunchMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(payloadData)

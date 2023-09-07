@@ -1,4 +1,4 @@
-from datamodel.datamodel import SIMessage
+from datamodel.datamodel import SIMessage, MessageSubscriptionBatch
 from battery import Battery
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessagePunchReDCoSRS, LoraRadioMessagePunchDoubleReDCoSRS
@@ -11,46 +11,46 @@ class SITestTestToLoraTransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 
     @staticmethod
-    def GetInputMessageType():
+    def GetInputMessageType() -> str:
         return "SITEST"
 
     @staticmethod
-    def GetInputMessageSubType():
+    def GetInputMessageSubType() -> str:
         return "Test"
 
     @staticmethod
-    def GetOutputMessageType():
+    def GetOutputMessageType() -> str:
         return "LORA"
 
     @staticmethod
-    def GetName():
+    def GetName() -> str:
         return "SITestTestToLoraTransform"
 
     @staticmethod
-    def GetOutputMessageSubType():
+    def GetOutputMessageSubType() -> str:
         return "Punch"
 
     @staticmethod
-    def GetBatchSize():
+    def GetBatchSize() -> int:
         return 2
 
     @staticmethod
-    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter) -> float | None:
         return 0
 
     @staticmethod
-    def GetDeleteAfterSent():
+    def GetDeleteAfterSent() -> bool:
         # check setting for ack
         SITestTestToLoraTransform.DeleteAfterSent = not SettingsClass.GetAcknowledgementRequested()
         return SITestTestToLoraTransform.DeleteAfterSent
 
     @staticmethod
-    def GetDeleteAfterSentChanged():
+    def GetDeleteAfterSentChanged() -> bool:
         return SITestTestToLoraTransform.DeleteAfterSent != (not SettingsClass.GetAcknowledgementRequested())
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSubBatch, subscriberAdapter):
+    def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         SITestTestToLoraTransform.WiRocLogger.debug("SITestTestToLoraTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         siMsg = SIMessage()

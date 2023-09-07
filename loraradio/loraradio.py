@@ -13,11 +13,12 @@ import binascii
 from datetime import datetime
 import errno
 
+
 class LoraRadio:
     Instances = []
     WiRocLogger = logging.getLogger('WiRoc')
 
-    ReadSettingCmd = bytes([0xAF, 0xAF,  # sync word
+    ReadSettingCmd: bytes = bytes([0xAF, 0xAF,  # sync word
                               0x00, 0x00,  # id code
                               0xAF,  # header
                               0x80,  # command (sending)
@@ -28,7 +29,7 @@ class LoraRadio:
                               0x0D, 0x0A  # end code
                               ])
 
-    DetectAirSignalCmd = bytes([0xAF, 0xAF,  # sync word
+    DetectAirSignalCmd: bytes = bytes([0xAF, 0xAF,  # sync word
                                 0x00, 0x00,  # id code
                                 0xAF,  # start code
                                 0x80,  # command (sending)
@@ -39,7 +40,7 @@ class LoraRadio:
                                 0xB2,  # CRC
                                 0x0D, 0x0A])  # end code
 
-    SignalDetected = bytes([0xAF, 0xAF,  # sync word
+    SignalDetected: bytes = bytes([0xAF, 0xAF,  # sync word
                                 0x00, 0x00,  # id code
                                 0xAF,  # start code
                                 0x00,  # command rec
@@ -50,7 +51,7 @@ class LoraRadio:
                                 0x32,  # CRC
                                 0x0D, 0x0A])  # end code
 
-    SignalNotDetected = bytes([0xAF, 0xAF,  # sync word
+    SignalNotDetected: bytes = bytes([0xAF, 0xAF,  # sync word
                             0x00, 0x00,  # id code
                             0xAF,  # start code
                             0x00,  # command rec
@@ -61,7 +62,7 @@ class LoraRadio:
                             0x33,  # CRC
                             0x0D, 0x0A])  # end code
 
-    WriteSerialBaudRateCmd = bytes([0xAF, 0xAF,  # sync word
+    WriteSerialBaudRateCmd: bytes = bytes([0xAF, 0xAF,  # sync word
                                 0x00, 0x00,  # id code
                                 0xAF,  # start code
                                 0x80,  # command (sending)
@@ -72,7 +73,7 @@ class LoraRadio:
                                 0x9F,  # CRC
                                 0x0D, 0x0A])  # end code
 
-    ReadSerialBaudRateCmd = bytes([0xAF, 0xAF,  # sync word
+    ReadSerialBaudRateCmd: bytes = bytes([0xAF, 0xAF,  # sync word
                                     0x00, 0x00,  # id code
                                     0xAF,  # start code
                                     0x80,  # command (sending)
@@ -83,7 +84,7 @@ class LoraRadio:
                                     0x99,  # CRC
                                     0x0D, 0x0A])  # end code
 
-    RestartModuleCmd = bytes([0xAF, 0xAF,  # sync word
+    RestartModuleCmd: bytes = bytes([0xAF, 0xAF,  # sync word
                                0x00, 0x00,  # id code
                                0xAF,  # start code
                                0x80,  # command (sending)
@@ -94,7 +95,7 @@ class LoraRadio:
                                0xAF,  # CRC
                                0x0D, 0x0A])  # end code
 
-    RestartModuleResp = bytes([0xAF, 0xAF,  # sync word
+    RestartModuleResp: bytes = bytes([0xAF, 0xAF,  # sync word
                               0x00, 0x00,  # id code
                               0xAF,  # start code
                               0x00,  # command (sending)
@@ -106,7 +107,7 @@ class LoraRadio:
                               0x0D, 0x0A])  # end code
 
     @staticmethod
-    def GetInstance(portName,hardwareAbstraction):
+    def GetInstance(portName: str,hardwareAbstraction):
         for loraRadio in LoraRadio.Instances:
             if loraRadio.GetPortName() == portName:
                 return loraRadio
@@ -213,7 +214,7 @@ class LoraRadio:
                 break
             time.sleep(0.01)
 
-    def Init(self, channel, loraRange, loraPower, codeRate, rxGain):
+    def Init(self, channel: str, loraRange: str, loraPower: int, codeRate: int, rxGain) -> bool:
         if loraPower > 0x07:
             loraPower = 0x07
             SettingsClass.SetLoraPower(0x07)

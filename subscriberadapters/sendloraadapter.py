@@ -12,8 +12,6 @@ import collections
 from datetime import datetime, timedelta
 
 
-
-
 class SendLoraAdapter(object):
     WiRocLogger =  logging.getLogger('WiRoc.Output')
     Instances = []
@@ -304,11 +302,6 @@ class SendLoraAdapter(object):
 
     # messageData is a tuple of bytearrays
     def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
-        if self.loraRadio.IsAirSignalDetected():
-            SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::SendData() Air signal detected, skip sending now")
-            callbackQueue.put((notSentCB,))
-            return False
-
         statMessageType = ""
         returnSuccess = True
         for data in messageData:

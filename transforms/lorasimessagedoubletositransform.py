@@ -1,5 +1,6 @@
 import logging
 
+from datamodel.datamodel import MessageSubscriptionBatch
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 
 
@@ -7,44 +8,44 @@ class LoraSIMessageDoubleToSITransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 
     @staticmethod
-    def GetInputMessageType():
+    def GetInputMessageType() -> str:
         return "LORA"
 
     @staticmethod
-    def GetInputMessageSubType():
+    def GetInputMessageSubType() -> str:
         return "SIMessageDouble"
 
     @staticmethod
-    def GetOutputMessageType():
+    def GetOutputMessageType() -> str:
         return "SI"
 
     @staticmethod
-    def GetOutputMessageSubType():
+    def GetOutputMessageSubType() -> str:
         return "Punch"
 
     @staticmethod
-    def GetName():
+    def GetName() -> str:
         return "LoraSIMessageDoubleToSITransform"
 
     @staticmethod
-    def GetBatchSize():
+    def GetBatchSize() -> int:
         return 1
 
     @staticmethod
-    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter) -> float | None:
         return 0
 
     @staticmethod
-    def GetDeleteAfterSent():
+    def GetDeleteAfterSent() -> bool:
         return True
 
     @staticmethod
-    def GetDeleteAfterSentChanged():
+    def GetDeleteAfterSentChanged() -> bool:
         return False
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSubBatch, subscriberAdapter):
+    def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         LoraSIMessageDoubleToSITransform.WiRocLogger.debug("LoraSIMessageToSITransform::Transform() MessageTypeSIPunchDouble")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(payloadData)

@@ -1,6 +1,14 @@
 __author__ = 'henla464'
 
 from datamodel.datamodel import MessageSubscriptionData
+from inputadapters.createstatusadapter import CreateStatusAdapter
+from inputadapters.receiveloraadapter import ReceiveLoraAdapter
+from inputadapters.receiverepeatermessagesadapter import ReceiveRepeaterMessagesAdapter
+from inputadapters.receivesiadapter import ReceiveSIUSBSerialPort, ReceiveSIHWSerialPort, ReceiveSIBluetoothSP
+from inputadapters.receivesrradapter import ReceiveSRRAdapter
+from inputadapters.receivetestpunchesadapter import ReceiveTestPunchesAdapter
+from subscriberadapters.sendloraadapter import SendLoraAdapter
+from subscriberadapters.sendserialadapter import SendSerialAdapter
 from subscriberadapters.sendstatusadapter import SendStatusAdapter
 from setup import Setup
 import time
@@ -12,6 +20,8 @@ from settings.settings import SettingsClass
 import cProfile
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from battery import Battery
+from subscriberadapters.sendtoblenoadapter import SendToBlenoAdapter
+from subscriberadapters.sendtosirapadapter import SendToSirapAdapter
 from utils.utils import Utils
 from display.displaystatemachine import DisplayStateMachine
 from display.displaydata import DisplayData
@@ -24,16 +34,18 @@ class Main:
     def __init__(self):
         urllib3.disable_warnings()
 
-        self.wirocLogger = logging.getLogger("WiRoc")
-        self.shouldReconfigure = False
-        self.forceReconfigure = False
-        self.nextTimeToReconfigure = time.monotonic() + 10
-        self.messagesToSendExists = True
+        self.wirocLogger: logging.Logger = logging.getLogger("WiRoc")
+        self.shouldReconfigure: bool = False
+        self.forceReconfigure: bool = False
+        self.nextTimeToReconfigure: float = time.monotonic() + 10
+        self.messagesToSendExists: bool = True
         self.previousChannel = None
         self.previousAckRequested = None
-        self.wifiPowerSaving = None
-        self.activeInputAdapters = None
-        self.webServerUp = False
+        #self.wifiPowerSaving = None
+        self.activeInputAdapters: None | list[CreateStatusAdapter | ReceiveLoraAdapter | ReceiveSIUSBSerialPort | ReceiveSIHWSerialPort | ReceiveSIBluetoothSP | ReceiveTestPunchesAdapter | ReceiveRepeaterMessagesAdapter | ReceiveSRRAdapter] = None
+        self.subscriberAdapters: None | list[SendLoraAdapter | SendSerialAdapter | SendToBlenoAdapter | SendToSirapAdapter | SendStatusAdapter] = None
+
+        self.webServerUp: bool = False
         self.lastBatteryIsLowReceived = None
         self.lastBatteryIsLow = None
         self.callbackQueue = queue.Queue()

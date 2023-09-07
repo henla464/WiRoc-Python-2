@@ -1,3 +1,4 @@
+from datamodel.datamodel import MessageSubscriptionBatch
 from settings.settings import SettingsClass
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
@@ -6,31 +7,31 @@ from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 
 class LoraSIMessageToLoraAckTransform(object):
     @staticmethod
-    def GetInputMessageType():
+    def GetInputMessageType() -> str:
         return "LORA"
 
     @staticmethod
-    def GetInputMessageSubType():
+    def GetInputMessageSubType() -> str:
         return "SIMessage"
 
     @staticmethod
-    def GetOutputMessageType():
+    def GetOutputMessageType() -> str:
         return "LORA"
 
     @staticmethod
-    def GetOutputMessageSubType():
+    def GetOutputMessageSubType() -> str:
         return "Ack"
 
     @staticmethod
-    def GetName():
+    def GetName() -> str:
         return "LoraSIMessageToLoraAckTransform"
 
     @staticmethod
-    def GetBatchSize():
+    def GetBatchSize() -> int:
         return 1
 
     @staticmethod
-    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter) -> float | None:
         payloadData = messageBoxData.MessageData
         ackReq = LoraRadioDataHandler.GetAckRequested(payloadData)
         repeater = LoraRadioDataHandler.GetRepeater(payloadData)
@@ -47,16 +48,16 @@ class LoraSIMessageToLoraAckTransform(object):
         return None
 
     @staticmethod
-    def GetDeleteAfterSent():
+    def GetDeleteAfterSent() -> bool:
         return True
 
     @staticmethod
-    def GetDeleteAfterSentChanged():
+    def GetDeleteAfterSentChanged() -> bool:
         return False
 
     # payloadData is a bytearray
     @staticmethod
-    def Transform(msgSubBatch, subscriberAdapter):
+    def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         # This transform is only used to send ack message from the receiver
         # when repeater is requested (because then we should delay sending ack)
         if SettingsClass.GetLoraMode() == "RECEIVER":

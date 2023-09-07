@@ -9,6 +9,7 @@ import logging
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from utils.utils import Utils
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 
 
 class ReceiveLoraAdapter(object):
@@ -16,7 +17,7 @@ class ReceiveLoraAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Input')
 
     @staticmethod
-    def CreateInstances(hardwareAbstraction):
+    def CreateInstances(hardwareAbstraction) -> bool:
         # check the number of lora radios and return an instance for each
         serialPorts = []
         if hardwareAbstraction.runningOnChip:
@@ -56,28 +57,25 @@ class ReceiveLoraAdapter(object):
             return False
 
     @staticmethod
-    def GetTypeName():
+    def GetTypeName() -> str:
         return "LORA"
 
-    def __init__(self, instanceNumber, portName, hardwareAbstraction):
+    def __init__(self, instanceNumber: int, portName: str, hardwareAbstraction: HardwareAbstraction):
         self.instanceNumber = instanceNumber
         self.portName = portName
-        if hardwareAbstraction.runningOnNanoPi:
-            self.loraRadio = LoraRadioDRF1268DS_RS.GetInstance(portName, hardwareAbstraction)
-        else:
-            self.loraRadio = LoraRadio.GetInstance(portName, hardwareAbstraction)
+        self.loraRadio: LoraRadioDRF1268DS_RS = LoraRadioDRF1268DS_RS.GetInstance(portName, hardwareAbstraction)
         self.hardwareAbstraction = hardwareAbstraction
 
-    def GetInstanceNumber(self):
+    def GetInstanceNumber(self) -> int:
         return self.instanceNumber
 
-    def GetInstanceName(self):
+    def GetInstanceName(self) -> str:
         return "reclora" + str(self.instanceNumber)
 
-    def GetSerialDevicePath(self):
+    def GetSerialDevicePath(self) -> str:
         return self.portName
 
-    def GetIsInitialized(self):
+    def GetIsInitialized(self) -> bool:
         channel = SettingsClass.GetChannel()
         loraRange = SettingsClass.GetLoraRange()
         loraPower = SettingsClass.GetLoraPower()
@@ -85,7 +83,7 @@ class ReceiveLoraAdapter(object):
         rxGain = SettingsClass.GetRxGainEnabled()
         return self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain)
 
-    def ShouldBeInitialized(self):
+    def ShouldBeInitialized(self) -> bool:
         channel = SettingsClass.GetChannel()
         loraRange= SettingsClass.GetLoraRange()
         loraPower = SettingsClass.GetLoraPower()
@@ -93,15 +91,15 @@ class ReceiveLoraAdapter(object):
         rxGain = SettingsClass.GetRxGainEnabled()
         return not self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain)
 
-    def Init(self):
-        channel = SettingsClass.GetChannel()
-        loraRange = SettingsClass.GetLoraRange()
-        loraPower = SettingsClass.GetLoraPower()
-        codeRate = SettingsClass.GetCodeRate()
+    def Init(self) -> bool:
+        channel: int = SettingsClass.GetChannel()
+        loraRange: str = SettingsClass.GetLoraRange()
+        loraPower: int = SettingsClass.GetLoraPower()
+        codeRate: int = SettingsClass.GetCodeRate()
         rxGain = SettingsClass.GetRxGainEnabled()
         if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain):
             return True
-        self.loraRadio.Init(channel, loraRange, loraPower, codeRate, rxGain)
+        return self.loraRadio.Init(channel, loraRange, loraPower, codeRate, rxGain)
 
     def UpdateInfrequently(self):
         return True

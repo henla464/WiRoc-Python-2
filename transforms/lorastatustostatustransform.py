@@ -1,3 +1,4 @@
+from datamodel.datamodel import MessageSubscriptionBatch
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from settings.settings import SettingsClass
 from battery import Battery
@@ -7,44 +8,44 @@ class LoraStatusToStatusTransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 
     @staticmethod
-    def GetInputMessageType():
+    def GetInputMessageType() -> str:
         return "LORA"
 
     @staticmethod
-    def GetInputMessageSubType():
+    def GetInputMessageSubType() -> str:
         return "Status"
 
     @staticmethod
-    def GetOutputMessageType():
+    def GetOutputMessageType() -> str:
         return "STATUS"
 
     @staticmethod
-    def GetOutputMessageSubType():
+    def GetOutputMessageSubType() -> str:
         return "Status"
 
     @staticmethod
-    def GetName():
+    def GetName() -> str:
         return "LoraStatusToStatusTransform"
 
     @staticmethod
-    def GetBatchSize():
+    def GetBatchSize() -> int:
         return 1
 
     @staticmethod
-    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter) -> float | None:
         return 0
 
     @staticmethod
-    def GetDeleteAfterSent():
+    def GetDeleteAfterSent() -> bool:
         return True
 
     @staticmethod
-    def GetDeleteAfterSentChanged():
+    def GetDeleteAfterSentChanged() -> bool:
         return False
 
     #msgSub.MessageData is a bytearray
     @staticmethod
-    def Transform(msgSubBatch, subscriberAdapter):
+    def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         LoraStatusToStatusTransform.WiRocLogger.debug("LoraStatusToStatusTransform::Transform() Message type status")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         return {"Data": (payloadData,), "MessageID": None}

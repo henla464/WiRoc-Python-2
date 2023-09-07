@@ -7,25 +7,25 @@ class RSCoderLora(object):
     coderLong = RSCodec(8, nsize=31)
 
     @staticmethod
-    def encode(messageData):
+    def encode(messageData: bytearray):
         rsCodes = RSCoderLora.coder.encode(messageData)[-4:]
         return rsCodes
 
     @staticmethod
-    def encodeLong(messageData):
+    def encodeLong(messageData: bytearray):
         rsCodes = RSCoderLora.coderLong.encode(messageData)[-8:]
         return rsCodes
 
     @staticmethod
-    def check(messageDataThatRSCalculatedOverWithRSCode):
+    def check(messageDataThatRSCalculatedOverWithRSCode: bytearray):
         return RSCoderLora.coder.check(messageDataThatRSCalculatedOverWithRSCode)[0]
 
     @staticmethod
-    def checkLong(messageDataThatRSCalculatedOverWithRSCode):
+    def checkLong(messageDataThatRSCalculatedOverWithRSCode: bytearray):
         return RSCoderLora.coderLong.check(messageDataThatRSCalculatedOverWithRSCode)[0]
 
     @staticmethod
-    def decode(messageDataThatRSCalculatedOverWithRSCode, erasures_positions = None):
+    def decode(messageDataThatRSCalculatedOverWithRSCode: bytearray, erasures_positions = None):
         #noOfZerosToPad = 24 - len(messageDataThatRSCalculatedOverWithRSCode)
         #print(noOfZerosToPad)
         #if erasures_positions is not None:
@@ -41,7 +41,7 @@ class RSCoderLora(object):
         return decoded_msgecc
 
     @staticmethod
-    def decodeLong(messageDataThatRSCalculatedOverWithRSCode, erasures_positions=None):
+    def decodeLong(messageDataThatRSCalculatedOverWithRSCode: bytearray, erasures_positions=None):
         # noOfZerosToPad = 24 - len(messageDataThatRSCalculatedOverWithRSCode)
         # print(noOfZerosToPad)
         # if erasures_positions is not None:

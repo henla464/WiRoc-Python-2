@@ -27,12 +27,12 @@ from settings.settings import SettingsClass
 
 
 class Setup:
-    SubscriberAdapters = None
-    InputAdapters = None
+    SubscriberAdapters: list[SendLoraAdapter | SendSerialAdapter | SendToBlenoAdapter | SendToSirapAdapter | SendStatusAdapter] = None
+    InputAdapters: list[CreateStatusAdapter | ReceiveLoraAdapter | ReceiveSIUSBSerialPort | ReceiveSIHWSerialPort | ReceiveSIBluetoothSP | ReceiveTestPunchesAdapter | ReceiveRepeaterMessagesAdapter | ReceiveSRRAdapter] = None
     WiRocLogger = logging.getLogger('WiRoc')
 
     @staticmethod
-    def SetupAdapters():
+    def SetupAdapters() -> bool:
         subscriberObjects = []
         change1 = SendLoraAdapter.CreateInstances(HardwareAbstraction.Instance)
         change2 = SendSerialAdapter.CreateInstances()
@@ -140,7 +140,7 @@ class Setup:
         return True
 
     @staticmethod
-    def AddMessageTypes():
+    def AddMessageTypes() -> None:
         # add message types to database
         messageTypeName = CreateStatusAdapter.GetTypeName()
         messageSubTypeName = "Status"

@@ -1,3 +1,4 @@
+from datamodel.datamodel import MessageSubscriptionBatch
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
@@ -9,31 +10,31 @@ class RepeaterSIMessageDoubleToLoraAckTransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 
     @staticmethod
-    def GetInputMessageType():
+    def GetInputMessageType() -> str:
         return "REPEATER"
 
     @staticmethod
-    def GetInputMessageSubType():
+    def GetInputMessageSubType() -> str:
         return "SIMessageDouble"
 
     @staticmethod
-    def GetOutputMessageType():
+    def GetOutputMessageType() -> str:
         return "LORA"
 
     @staticmethod
-    def GetOutputMessageSubType():
+    def GetOutputMessageSubType() -> str:
         return "Ack"
 
     @staticmethod
-    def GetName():
+    def GetName() -> str:
         return "RepeaterSIMessageDoubleToLoraAckTransform"
 
     @staticmethod
-    def GetBatchSize():
+    def GetBatchSize() -> int:
         return 1
 
     @staticmethod
-    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter):
+    def GetWaitThisNumberOfSeconds(messageBoxData, msgSub, subAdapter) -> float | None:
         payloadData = messageBoxData.MessageData
         ackReq = LoraRadioDataHandler.GetAckRequested(payloadData)
         repeater = LoraRadioDataHandler.GetRepeater(payloadData)
@@ -43,16 +44,16 @@ class RepeaterSIMessageDoubleToLoraAckTransform(object):
         return None
 
     @staticmethod
-    def GetDeleteAfterSent():
+    def GetDeleteAfterSent() -> bool:
         return True
 
     @staticmethod
-    def GetDeleteAfterSentChanged():
+    def GetDeleteAfterSentChanged() -> bool:
         return False
 
     #payloadData is a bytearray
     @staticmethod
-    def Transform(msgSubBatch, subscriberAdapter):
+    def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         RepeaterSIMessageDoubleToLoraAckTransform.WiRocLogger.debug("RepeaterSIMessageDoubleToLoraAckTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         ackReq = LoraRadioDataHandler.GetAckRequested(payloadData)
@@ -66,7 +67,7 @@ class RepeaterSIMessageDoubleToLoraAckTransform(object):
                 return None
 
             loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(payloadData, rssiByte=None)
-            hash = loraPunchDoubleMsg.GetHash()
+            hash: bytearray = loraPunchDoubleMsg.GetHash()
             loraAck = LoraRadioMessageCreator.GetAckMessage(hash)
             loraAck.SetAckRequested(msgSubBatch.AckReceivedFromReceiver)  # indicate ack received from receiver
             loraAck.SetRepeater(True)  # indicate this ack comes from repeater
