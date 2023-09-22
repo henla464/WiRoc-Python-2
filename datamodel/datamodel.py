@@ -5,6 +5,7 @@ from struct import *
 from constants import *
 from utils.utils import Utils
 import logging
+from typing import Protocol
 
 
 class SettingData(object):
@@ -490,18 +491,18 @@ class SIMessage(object):
     def __init__(self):
         self.MessageData = bytearray()
 
-    def AddHeader(self, msgType):
+    def AddHeader(self, msgType: int) -> None:
         if len(self.MessageData) == 0:
             self.MessageData.append(0x02)
             self.MessageData.append(msgType)
             self.MessageData.append(255)  # set max length temporarily
 
     @staticmethod
-    def GetHeaderSize():
+    def GetHeaderSize() -> int:
         return 3
 
     @staticmethod
-    def GetFooterSize():
+    def GetFooterSize() -> int:
         return 3
 
     def GetMessageType(self):
@@ -593,6 +594,197 @@ class SIMessage(object):
     def GetBackupMemoryAddressAsInt(self):
         addr = self.MessageData[13] << 16 | self.MessageData[14] << 8 | self.MessageData[15]
         return addr
+
+
+class SRRMessage(object):
+    SRRBoardPunch: int = 0xB6
+    AirPlusPunch: int = 0xB1
+    AirPlusPunchOneOfMultiple: int = 0xB7
+
+    MessageTypeLengths = { SRRBoardPunch : 34, AirPlusPunch: 29, AirPlusPunchOneOfMultiple: 31
+                           }
+    def __init__(self):
+        self.MessageData: bytearray= bytearray()
+
+    def AddHeader(self, msgType: int, sourceAddress: bytearray, destinationAddress: bytearray, messageSequenceNumber: int, punchSequenceNumber: int) -> None:
+        if len(self.MessageData) == 0:
+            length: int = SRRMessage.MessageTypeLengths[SRRMessage.AirPlusPunchOneOfMultiple]
+            self.MessageData.append(length)
+            self.MessageData.extend(destinationAddress)
+            self.MessageData.extend(sourceAddress)
+            self.MessageData.append(0x3F)  # possibly PORT
+            self.MessageData.append(0x03)  # possibly DEVICE INFO
+            self.MessageData.append(messageSequenceNumber)
+            self.MessageData.append(punchSequenceNumber)
+            self.MessageData.append(0x62)
+            self.MessageData.append(0x6A)
+            self.MessageData.append(msgType)
+
+    @staticmethod
+    def GetHeaderSize() -> int:
+        return 10
+
+    def GetMessageType(self) -> int | None:
+        if len(self.MessageData) >= 10:
+            return self.MessageData[9]
+        return None
+
+    def GetIsChecksumOK(self) -> bool:
+        if self.IsFilled():
+            crcOkAndLinkQuality = self.MessageData[-2]
+            isOK = (crcOkAndLinkQuality & 0x80) > 0
+            return isOK
+        return False
+
+    def GetLinkQuality(self) -> int:
+        if self.IsFilled():
+            return self.MessageData[-2] & 0x7F
+        return 0
+
+    def GetRSSI(self) -> int:
+        if self.IsFilled():
+            return self.MessageData[-3]
+        return 0
+
+    def GetChannel(self) -> int:
+        # REDCHANNEL 146
+        # BLUECHANNEL 186
+        if self.IsFilled():
+            return self.MessageData[-1]
+        return 0
+
+    def IsFilled(self) -> bool:
+        if len(self.MessageData) >= 1:
+            lengthByteAndCRCAndRSSIAndChannel: int = 4
+            if len(self.MessageData) == self.MessageData[0] + lengthByteAndCRCAndRSSIAndChannel:
+                return True
+        return False
+
+    def GetByteArray(self) -> bytearray:
+        return self.MessageData
+
+    def AddByte(self, newByte: int) -> None:
+        if self.IsFilled():
+            logging.error("Error, trying to fill SRRMessage with bytes, but it is already full")
+        else:
+            self.MessageData.append(newByte)
+
+    def AddPayload(self, payloadArray) -> None:
+        self.MessageData.extend(payloadArray)
+
+    def GetStationNumber(self) ->int:
+        raise NotImplementedError()
+
+    def GetSICardNumber(self) -> int:
+        raise NotImplementedError()
+
+    def GetTwentyFourHour(self) -> int:
+        raise NotImplementedError()
+
+    def GetTwelveHourTimer(self) -> bytearray:
+        raise NotImplementedError()
+
+    def GetSubSecondAsTenthOfSeconds(self) -> int:
+        raise NotImplementedError()
+
+    def GetTimeAsTenthOfSeconds(self) -> int:
+        time = ((self.GetTwelveHourTimer()[0] << 8) + self.GetTwelveHourTimer()[1]) * 10 + self.GetSubSecondAsTenthOfSeconds()
+        if self.GetTwentyFourHour() == 1:
+            time += 36000 * 12
+        return time
+
+    def GetBackupMemoryAddressAsInt(self) -> int:
+        raise NotImplementedError()
+
+    def GetHour(self) -> int:
+        return int(self.GetTimeAsTenthOfSeconds() // 36000)
+
+    def GetMinute(self) -> int:
+        tenthOfSecs = self.GetTimeAsTenthOfSeconds()
+        numberOfMinutesInTenthOfSecs = (tenthOfSecs - self.GetHour()*36000)
+        return numberOfMinutesInTenthOfSecs // 600
+
+    def GetSeconds(self) -> int:
+        tenthOfSecs = self.GetTimeAsTenthOfSeconds()
+        numberOfSecondsInTenthOfSecs = (tenthOfSecs - self.GetHour() * 36000 - self.GetMinute()*600)
+        return numberOfSecondsInTenthOfSecs // 10
+
+    def GetSIMessage(self) -> SIMessage:
+        raise NotImplementedError
+
+
+class SRRBoardPunch(SRRMessage):
+
+    def GetStationNumber(self) -> int:
+        return (self.MessageData[18] << 8) + self.MessageData[19]
+
+    def GetSICardNumber(self) -> int:
+        return Utils.DecodeCardNr(self.MessageData[20:24])
+
+    def GetTwentyFourHour(self) -> int:
+        return self.MessageData[24] & 0x01
+
+    def GetTwelveHourTimer(self) -> bytearray:
+        return self.MessageData[25:27]
+
+    def GetSubSecondAsTenthOfSeconds(self) -> int:
+        return int(self.MessageData[27] // 25.6)
+
+    def GetBackupMemoryAddressAsInt(self) -> int:
+        addr = self.MessageData[13] << 16 | self.MessageData[14] << 8 | self.MessageData[15]
+        return addr
+
+    def GetSIMessage(self) -> SIMessage:
+        siMsg = SIMessage()
+        siMsg.AddHeader(SIMessage.SIPunch)
+        siMsg.AddPayload(self.MessageData[18:31])
+        siMsg.AddFooter()
+        return SIMessage
+
+
+class AirPlusPunch(SRRMessage):
+    def GetStationNumber(self) -> int:
+        return ((self.MessageData[21] & 0xC0) >> 6) + self.MessageData[22]
+
+    def GetSICardNumber(self) -> int:
+        siCardNoBytes: bytearray = self.MessageData[16:20]
+        siCardNoBytes[0] = 0x00  # Byte 0 card series, which is not part of the cardno
+        return Utils.DecodeCardNr(siCardNoBytes)
+
+    def GetTwentyFourHour(self) -> int:
+        return self.MessageData[21] & 0x01
+
+    def GetTwelveHourTimer(self) -> bytearray:
+        return self.MessageData[23:25]
+
+    def GetSubSecondAsTenthOfSeconds(self) -> int:
+        return int(self.MessageData[25] // 25.6)
+
+    def GetBackupMemoryAddressAsInt(self) -> int:
+        return 0
+
+    def GetSIMessage(self) -> SIMessage:
+        siMsg = SIMessage()
+        siMsg.AddHeader(SIMessage.SIPunch)
+        stationNumber: int = self.GetStationNumber()
+        siMsg.AddByte((stationNumber & 0xFF00) >> 8)
+        siMsg.AddByte((stationNumber & 0x00FF))
+        siMsg.AddPayload(self.MessageData[16:20])   # SI card no
+        siMsg.AddByte(self.MessageData[21] & 0x3F)  # Weekday, AM/PM
+        siMsg.AddPayload(self.MessageData[23:26])  # TH, TL, TSS
+        siMsg.AddByte(0)                            # mem2
+        siMsg.AddByte(0)                            # mem1
+        siMsg.AddByte(0)                            # mem0
+        siMsg.AddFooter()
+        return siMsg
+
+
+class AirPlusPunchOneOfMultiple(SRRMessage):
+    def GetPunchNumberOnSIAC(self) -> int:
+        return self.MessageData[26]
+
+    def GetNoOfPunchesOnSIAC(self) -> int:
+        return self.MessageData[27]
 
 
 class MessageSubscriptionBatchItem(object):

@@ -7,6 +7,9 @@ WiRoc
 - Send configurations to webbserver
 - Send local ip address to webbserver
 - Add cardno etc to database for SRRMessages
+- measure power consumption of  SRR receiver: arount 51 mA, 3.3V
+    -- Sleep mode: maybe 50mA, very little difference if any
+    -- Stop mode: 47mA so even then little difference...
 
 implemented but not tested
 - Send hwversion to webbserver, software versions

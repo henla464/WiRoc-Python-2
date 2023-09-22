@@ -1,4 +1,5 @@
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
+from datamodel.datamodel import SRRMessage
 from settings.settings import SettingsClass
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 import logging
@@ -72,11 +73,9 @@ class ReceiveSRRAdapter(object):
             # msg length
             PUNCH_LENGTH_REGADDR = 0x20
             msgLength = self.i2cBus.read_byte_data(self.i2cAddress, PUNCH_LENGTH_REGADDR)
-            lengthByteValueOfPunch = 30  # 0x1E
-            lengthByteAndCRCAndRSSIAndChannel = 4
-            totalLengthOfPunchFromSRRBoard = lengthByteValueOfPunch + lengthByteAndCRCAndRSSIAndChannel
-            if msgLength != totalLengthOfPunchFromSRRBoard:
-                self.WiRocLogger.error("ReceiveSRRAdapter::GetData() Message of incorrect length received")
+
+            if msgLength not in SRRMessage.MessageTypeLengths.values():
+                self.WiRocLogger.error(f"ReceiveSRRAdapter::GetData() Message of incorrect length received. Length: {msgLength}")
                 return None
 
             # read punch

@@ -2,7 +2,7 @@
 #systemctl disable apt-daily.service # disable run when system boot
 #systemctl disable apt-daily.timer   # disable timer run
 
-WiRocPython2Version="0.210"
+WiRocPython2Version="0.251"
 echo "Which WiRocPython2Version? [$WiRocPython2Version]"
 read wPOption
 if ! [[ -z "$wPOption" ]];
@@ -10,7 +10,7 @@ then
     WiRocPython2Version=$wPOption
 fi
 
-WiRocBLEVersion="0.9"
+WiRocBLEVersion="0.11"
 echo "Which WiRocBLEVersion? [$WiRocBLEVersion]"
 read wBLEOption
 if ! [[ -z "$wBLEOption" ]];
@@ -18,7 +18,7 @@ then
     WiRocBLEVersion=$wBLEOption
 fi
 
-echo "Which hardware is this runnig on: 1: CHIP+7SEG, 2: CHIP+OLED, 3: NanoPi, 4: NanoPi+SerialPort, 5: NanoPi+SerialPort+SRR"
+echo "Which hardware is this runnig on: 1: CHIP+7SEG, 2: CHIP+OLED, 3: NanoPi, 4: NanoPi+SerialPort, 5: NanoPi+SerialPort+SRR, 6: NanoPi+SerialPort+SRR with pin headers"
 read hwOption
 WiRocHWVersion="v3Rev2"
 if [[ $hwOption = 1 ]]; then
@@ -36,17 +36,16 @@ fi
 if [[ $hwOption = 5 ]]; then
     WiRocHWVersion="v6Rev1"
 fi
+if [[ $hwOption = 6 ]]; then
+    WiRocHWVersion="v7Rev1"
+fi
 
 echo "update"
 #read line
 # update app list
-if [[ $(hostname -s) = nanopiair ]]; then
-   apt-get update
-else
-   apt-key update
-   apt-get -o Acquire::Check-Valid-Until=false update
-fi
+apt-get update
 
+apt-get -y intall net-tools
 apt-get -y install git
 apt-get -y install i2c-tools
 
@@ -108,72 +107,39 @@ pip3 install Adafruit_BBIO==1.0.0 #not actually used but it is loaded by gpio be
 pip3 install Adafruit_SSD1306
 apt-get -y install libtiff5-dev libjpeg62-turbo-dev zlib1g-dev
 apt-get -y install libfreetype6-dev
-# liblcms2-dev libwebp-dev libharfbuzz-dev 
-#apt-get install libfribidi-dev 
-#apt-get install tcl8.6-dev tk8.6-dev
 pip3 install pillow
 # nanopi: apt-get install python3-pillow
 
 
-if [[ $(hostname -s) = nanopiair ]]; then
-    echo "nanopiair"
-else
-    echo "chip"
-    echo "newer nodejs"
-    #read line
-    #Install newer nodejs
-    wget https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-armv7l.tar.xz
-    #wget https://nodejs.org/dist/v8.11.3/node-v8.11.3-linux-armv7l.tar.xz
-    tar -C /usr/local --strip-components 1 -xJf node-v6.9.1-linux-armv7l.tar.xz
-    ln -s /usr/local/bin/node /usr/bin/nodejs
-    ln -s /usr/local/bin/npm /usr/bin/npm
-
-    #npm install -g node-gyp
-    echo "install bluetooth-hci-socket"
-    cd /home/chip/
-    npm --unsafe-perm install bluetooth-hci-socket
-
-    echo "install bleno"
-    #read line
-    #install bleno
-    npm install henla464/bleno
-    npm install sleep
-fi
-
-
-
-echo "Install python 2"
-#read line
-#Install python 2
-apt-get -y install python
-
 echo "Install bluetooth stuff"
 #read line
 #Install bluetooth stuff
-if [[ $(hostname -s) = nanopiair ]]; then
 
 cat << EOF > /etc/apt/preferences.d/bluez
 Package: bluez
 Pin: version 5.50-1.2~deb10u2
 Pin-Priority: 999
 EOF
-	# There is a problem with 5.50-1.2~deb10u3 that makes BLE writes and reads give errors. "u2" works. And it seems it is enough to downgrade bluez.
-	# Newer version seem to work too: https://www.makeuseof.com/install-bluez-latest-version-on-ubuntu/ (no need for --experimental) (5.66)
-	apt-get -y install bluetooth bluez=5.50-1.2~deb10u2 libbluetooth-dev libudev-dev
-else
-	apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev
-fi
+
+# There is a problem with 5.50-1.2~deb10u3 that makes BLE writes and reads give errors. "u2" works. And it seems it is enough to downgrade bluez.
+# Newer version seem to work too: https://www.makeuseof.com/install-bluez-latest-version-on-ubuntu/ (no need for --experimental) (5.66)
+apt-get -y install bluetooth bluez=5.50-1.2~deb10u2 libbluetooth-dev libudev-dev
 
 
 echo "WiRoc-Python-2"
 #read line
 #install Python-2
-wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v$WiRocPython2Version.tar.gz
-rm -rf WiRoc-Python-2
-tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-$WiRocPython2Version
-mv WiRoc-Python-2-$WiRocPython2Version WiRoc-Python-2
-mv WiRoc-Python-2/installWiRocPython.sh .
-chmod ugo+x installWiRocPython.sh
+
+wget https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/installWiRocPython.py
+chmod ugo+x installWiRocPython.py
+./installWiRocPython.py $WiRocPython2Version
+
+#wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v$WiRocPython2Version.tar.gz
+#rm -rf WiRoc-Python-2
+#tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-$WiRocPython2Version
+#mv WiRoc-Python-2-$WiRocPython2Version WiRoc-Python-2
+#mv WiRoc-Python-2/installWiRocPython.sh .
+#chmod ugo+x installWiRocPython.sh
 
 
 #echo "Update WiRocPython version"
@@ -181,45 +147,17 @@ chmod ugo+x installWiRocPython.sh
 #${WiRocPython2Version}
 #EOF
 
-if [[ $(hostname -s) = nanopiair ]]; then
-    echo "nanopiair"
-    echo "WiRoc-BLE"
-    pip3 install dbus
-    #install WiRoc-BLE
-    wget -O WiRoc-BLE-API.tar.gz https://github.com/henla464/WiRoc-BLE-API/archive/v$WiRocBLEVersion.tar.gz
-    rm -rf WiRoc-BLE-API
-    tar xvfz WiRoc-BLE-API.tar.gz WiRoc-BLE-API-$WiRocBLEVersion
-    mv WiRoc-BLE-API-$WiRocBLEVersion WiRoc-BLE-API
-    mv WiRoc-BLE-API/installWiRocBLEAPI.sh .
-    chmod ugo+x installWiRocBLEAPI.sh
-    echo "Update WiRocBLEAPI version"
-#cat << EOF > WiRocBLEVersion.txt
-#${WiRocBLEVersion}
-#EOF
+echo "WiRoc-BLE"
+pip3 install dbus
+#install WiRoc-BLE
+wget -O WiRoc-BLE-API.tar.gz https://github.com/henla464/WiRoc-BLE-API/archive/v$WiRocBLEVersion.tar.gz
+rm -rf WiRoc-BLE-API
+tar xvfz WiRoc-BLE-API.tar.gz WiRoc-BLE-API-$WiRocBLEVersion
+mv WiRoc-BLE-API-$WiRocBLEVersion WiRoc-BLE-API
+mv WiRoc-BLE-API/installWiRocBLEAPI.sh .
+chmod ugo+x installWiRocBLEAPI.sh
+echo "Update WiRocBLEAPI version"
 
-else
-    echo "chip"
-    echo "WiRoc-BLE"
-    #install WiRoc-BLE
-    wget -O WiRoc-BLE-Device.tar.gz https://github.com/henla464/WiRoc-BLE-Device/archive/v$WiRocBLEVersion.tar.gz
-    rm -rf WiRoc-BLE-Device
-    tar xvfz WiRoc-BLE-Device.tar.gz WiRoc-BLE-Device-$WiRocBLEVersion
-    mv WiRoc-BLE-Device-$WiRocBLEVersion WiRoc-BLE-Device
-    mv WiRoc-BLE-Device/installWiRocBLE.sh .
-    chmod ugo+x installWiRocBLE.sh
-    echo "Update WiRocBLE version"
-#cat << EOF > WiRocBLEVersion.txt
-#${WiRocBLEVersion}
-#EOF
-
-fi
-
-
-
-#echo "Update HW version"
-#cat << EOF > WiRocHWVersion.txt
-#${WiRocHWVersion}
-#EOF
 
 echo "Settings.yaml"
 cat << EOF > settings.yaml
@@ -253,8 +191,6 @@ fi
 wget -O /etc/systemd/system/WiRocPython.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPython.service
 wget -O /etc/systemd/system/WiRocPythonWS.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPythonWS.service
 wget -O /etc/systemd/system/WiRocStartup.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocStartup.service
-#wget -O /etc/systemd/system/ifup-wait-all-auto.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/ifup-wait-all-auto.service
-#systemctl enable /etc/systemd/system/ifup-wait-all-auto.service
 systemctl enable /etc/systemd/system/WiRocStartup.service
 systemctl enable /etc/systemd/system/WiRocPython.service
 systemctl enable /etc/systemd/system/WiRocPythonWS.service
@@ -270,13 +206,6 @@ wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.py https://raw.githubuserconten
 #chmod +x /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh
 chmod +x /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.py
 wget -O /etc/systemd/system/WiRocWatchDog.service https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRocWatchDog.service
-#if [[ $(hostname -s) = nanopiair ]]; then
-#    echo "nanopiair"
-#    wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.cfg https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.cfg
-#else
-#    echo "chip"
-#    wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.cfg https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.chip.cfg
-#fi
 systemctl enable /etc/systemd/system/WiRocWatchDog.service
 
 echo "add user to dialout"
@@ -291,7 +220,6 @@ EOF
 
 
 
-if [[ $(hostname -s) = nanopiair ]]; then
     echo "nanopiair"
     if ! grep -Fxq "setenv video-mode sunxi:1920x1080,monitor=none,hpd=0,edid=1" /boot/boot.cmd
     then
@@ -356,21 +284,5 @@ if [[ $(hostname -s) = nanopiair ]]; then
         echo "SP profile already exist"
     fi
 
-    #wget -O /home/chip/bluez_5.43-2%2Bdeb9u1_armhf-fix.deb https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/bluez_5.43-2%2Bdeb9u1_armhf-fix.deb
-    #dpkg -i /home/chip/bluez_5.43-2%2Bdeb9u1_armhf-fix.deb
 
-else
-    mkdir /lib/modules/4.4.13-ntc-mlc/kernel/drivers/usb/class
-    wget -O /lib/modules/4.4.13-ntc-mlc/kernel/drivers/usb/class/cdc-acm.ko https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/cdc-acm.ko
-    depmod
-    modprobe cdc-acm
 
-    wget -O /etc/udev/rules.d/99-ttyexcludemm.rules https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/99-ttyexcludemm.rules
-    udevadm control --reload-rules
-
-    echo "install new dtb"
-    #read line
-    #Install the new dtb on chip
-    rm /boot/sun5i-r8-chip.dtb
-    wget -O /boot/sun5i-r8-chip.dtb https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/sun5i-r8-chip.dtb
-fi

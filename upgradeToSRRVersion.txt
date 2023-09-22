@@ -1,0 +1,11 @@
+wget https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/installWiRocPython.py
+sudo chmod ugo+x installWiRocPython.py
+sudo ./installWiRocPython.py v0.251
+
+
+apt-get install pkg-config
+wget https://www.python.org/ftp/python/3.11.5/Python-3.11.5.tgz
+tar xvf Python-3.11.5.tgz
+cd Python-3.11.5/
+./configure --enable-optimizations
+make install
