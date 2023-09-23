@@ -7,6 +7,7 @@ import yaml
 import requests
 import time
 import os
+import os.path
 
 releasePackageFolderName = "WiRocPython2ReleasePackages"
 releaseRestCollection = "WiRocPython2Releases"

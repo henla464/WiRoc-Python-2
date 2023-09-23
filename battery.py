@@ -4,7 +4,7 @@ import os
 import time
 import logging
 import socket
-import smbus
+from smbus2 import SMBus
 
 
 class Battery(object):
@@ -19,7 +19,7 @@ class Battery(object):
 
     @classmethod
     def Setup(cls):
-        cls.i2cBus = smbus.SMBus(0)  # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
+        cls.i2cBus = SMBus(0)  # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
 
     @classmethod
     def LimitCurrentDrawTo100IfBatteryOK(cls):

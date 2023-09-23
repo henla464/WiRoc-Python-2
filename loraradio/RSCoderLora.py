@@ -2,6 +2,7 @@ __author__ = 'henla464'
 
 from creedsolo import RSCodec, ReedSolomonError
 
+
 class RSCoderLora(object):
     coder = RSCodec(4, nsize=31)
     coderLong = RSCodec(8, nsize=31)

@@ -18,7 +18,7 @@ class OledNormal(OledDisplayState):
         self.wifiNoOfBars = 0
         self.wifiNoOfBarsPrevious = 0
         self.channel = None
-        self.wirocMode = None
+        self.wiRocMode = None
         self.ackRequested = None
         self.loraRange = None
         self.isCharging = None
@@ -30,7 +30,7 @@ class OledNormal(OledDisplayState):
 
     def DrawOledBattery(self):
         percent = Battery.GetBatteryPercent()
-        width = int((percent - 5) / 5)
+        width = max(int((percent - 5) / 5), 1)
         self.wiRocLogger.debug("OledNormal::DrawOledBattery percent: " + str(percent) + " prev battery: " + str(self.batteryPercent) + " batteryWidth: " + str(width) + " prev batteryWidth: " + str(self.batteryWidth))
         if self.batteryWidth is not None and self.batteryWidth == width:
             return None
@@ -127,10 +127,10 @@ class OledNormal(OledDisplayState):
             # Draw a black filled box to clear part of the image.
             self.OledDraw.rectangle((14, 0, 39, 31), outline=0, fill=0)
             self.OledDraw.text((14, 0), str(displayData.channel), font=self.OledBoldFont, fill=255)
-        if self.wirocMode != displayData.wiRocMode:
-            self.wirocMode = displayData.wiRocMode
+        if self.wiRocMode != displayData.wiRocMode:
+            self.wiRocMode = displayData.wiRocMode
             self.imageChanged = True
-            self.wiRocLogger.debug("OledNormal::DrawOled wirocMode imagechanged")
+            self.wiRocLogger.debug("OledNormal::DrawOled wiRocMode imagechanged")
             self.OledDraw.rectangle((41, 16, 102, 31), outline=0, fill=0)
             self.OledDraw.text((41, 16), displayData.wiRocMode, font=self.OledThinFont2, fill=255)
         if self.ackRequested != displayData.ackRequested:
@@ -149,7 +149,7 @@ class OledNormal(OledDisplayState):
         if self.imageChanged:
             self.imageChanged = False
             OledDisplayState.OledDisp.image(self.OledImage)
-            OledDisplayState.OledDisp.display()
+            OledDisplayState.OledDisp.show()
 
     def Next(self):
         # set imageChanged to true because next time this state is entered we

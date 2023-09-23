@@ -20,14 +20,7 @@ class ReceiveLoraAdapter(object):
     def CreateInstances(hardwareAbstraction) -> bool:
         # check the number of lora radios and return an instance for each
         serialPorts = []
-        if hardwareAbstraction.runningOnChip:
-            serialPorts.append('/dev/ttyS2')
-        elif hardwareAbstraction.runningOnNanoPi:
-            serialPorts.append('/dev/ttyS1')
-        else: # TODO: figure out why this else is here...
-            portInfoList = serial.tools.list_ports.grep('10c4:ea60')
-            for portInfo in portInfoList:
-                serialPorts.append(portInfo.device)
+        serialPorts.append('/dev/ttyS1')
 
         newInstancesFoundOrRemoved = False
         highestInstanceNumber = 0

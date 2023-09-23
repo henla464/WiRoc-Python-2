@@ -3,7 +3,7 @@ import logging
 import socket
 import subprocess
 import gpiod
-import smbus
+from smbus2 import SMBus
 import yaml
 from datetime import timedelta
 
@@ -15,7 +15,7 @@ class HardwareAbstraction(object):
 
     def __init__(self):
         HardwareAbstraction.WiRocLogger.info("HardwareAbstraction::Init start")
-        self.i2cBus = smbus.SMBus(0)  # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
+        self.i2cBus = SMBus(0)  # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
         self.LORAaux = None
         self.LORAenable = None
         self.LORAM0 = None

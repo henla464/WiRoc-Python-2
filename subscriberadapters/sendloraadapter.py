@@ -24,14 +24,7 @@ class SendLoraAdapter(object):
         # check the number of lora radios and return an instance for each
         serialPorts = []
 
-        if socket.gethostname() == 'chip':
-            serialPorts.append('/dev/ttyS2')
-        elif socket.gethostname() == 'nanopiair':
-            serialPorts.append('/dev/ttyS1')
-        else:
-            portInfoList = serial.tools.list_ports.grep('10c4:ea60')
-            for portInfo in portInfoList:
-                serialPorts.append(portInfo.device)
+        serialPorts.append('/dev/ttyS1')
 
         if len(serialPorts) > 0:
             if len(SendLoraAdapter.Instances) > 0:
@@ -87,10 +80,7 @@ class SendLoraAdapter(object):
     def __init__(self, instanceNumber, portName, hardwareAbstraction):
         self.instanceNumber = instanceNumber
         self.portName = portName
-        if hardwareAbstraction.runningOnNanoPi:
-            self.loraRadio = LoraRadioDRF1268DS_RS.GetInstance(portName, hardwareAbstraction)
-        else:
-            self.loraRadio = LoraRadio.GetInstance(portName, hardwareAbstraction)
+        self.loraRadio = LoraRadioDRF1268DS_RS.GetInstance(portName, hardwareAbstraction)
         self.transforms = {}
         self.isDBInitialized = False
         self.lastMessageRepeaterBit = False

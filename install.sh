@@ -18,7 +18,7 @@ then
     WiRocBLEVersion=$wBLEOption
 fi
 
-echo "Which hardware is this runnig on: 1: CHIP+7SEG, 2: CHIP+OLED, 3: NanoPi, 4: NanoPi+SerialPort, 5: NanoPi+SerialPort+SRR, 6: NanoPi+SerialPort+SRR with pin headers"
+echo "Which hardware is this runnig on: 3: NanoPi, 4: NanoPi+SerialPort, 5: NanoPi+SerialPort+SRR, 6: NanoPi+SerialPort+SRR with pin headers"
 read hwOption
 WiRocHWVersion="v3Rev2"
 if [[ $hwOption = 1 ]]; then
@@ -43,11 +43,14 @@ fi
 echo "update"
 #read line
 # update app list
+add-apt-repository ppa:deadsnakes/ppa
 apt-get update
 
 apt-get -y intall net-tools
 apt-get -y install git
 apt-get -y install i2c-tools
+apt-get -y install python3.11
+update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
 
 echo "zip"
 apt-get install zip
@@ -62,20 +65,40 @@ apt-get -y install libsqlite3-dev
 echo "python/pip"
 #read line
 #Install python/pip
-apt-get -y install python3
+
+
+#apt-get -y install python3
 apt-get -y install python3-pip
 apt-get -y install python3-setuptools
 apt-get -y install python3-dev
+apt-get -y install python3.11-distutils
 apt-get -y install gpiod
 pip3 install -U setuptools
 pip3 install wheel
 pip3 install requests
 pip3 install cachetools
-pip3 install reedsolo
+#pip3 install reedsolo
 pip3 install cython
-pip3 install git+https://github.com/henla464/reedsolomon.git
+
+
+apt-get install python3.11-dev
+git clone https://github.com/tomerfiliba-org/reedsolomon.git
+cd reedsolomon
+pip3 install virtualenv
+python3 -sBm build --config-setting="--build-option=--cythonize"
+#export SETUPTOOLS_USE_DISTUTILS=stdlib 
+export DEB_PYTHON_INSTALL_LAYOUT=deb_system
+pip3 install dist/reedsolo-2.1.2b1-cp311-cp311-linux_armv7l.whl
+cd ..
+
+
+#pip install reedsolo --pre
+#pip3 install --upgrade reedsolo --no-binary "reedsolo" --no-cache --config-setting="--build-option=--cythonize" --use-pep517 --isolated --verbose
+#pip3 install git+https://github.com/henla464/reedsolomon.git
+
+
 pip3 install pydbus
-pip3 install smbus
+#pip3 install smbus
 pip3 install gpiod
 
 echo "flask"
@@ -103,12 +126,24 @@ pip3 install pyudev
 pip3 install daemonize
 pip3 install smbus2
 
-pip3 install Adafruit_BBIO==1.0.0 #not actually used but it is loaded by gpio because it thinks chip is bb
-pip3 install Adafruit_SSD1306
-apt-get -y install libtiff5-dev libjpeg62-turbo-dev zlib1g-dev
+pip3 install Adafruit-Blinka
+pip3 install adafruit-circuitpython-ssd1306
+#not actually used but it is loaded by gpio because it thinks chip is bb
+#sudo apt-get install build-essential python3-dev python3-pip -y
+#git clone https://github.com/adafruit/adafruit-beaglebone-io-python.git
+#cd adafruit-beaglebone-io-python
+#python3 setup.py install
+#cd ..
+
+#pip3 install Adafruit_SSD1306
+apt-get -y install libtiff5-dev libjpeg-dev zlib1g-dev
+apt-get -y install python3 python3-dev build-essential libssl-dev libffi-dev libxml2-dev libxslt1-dev zlib1g-dev
 apt-get -y install libfreetype6-dev
+#libjpeg62-turbo-dev
+export SETUPTOOLS_USE_DISTUTILS=stdlib
 pip3 install pillow
-# nanopi: apt-get install python3-pillow
+#apt-get install python3-pil
+apt-get install python3-numpy
 
 
 echo "Install bluetooth stuff"
@@ -123,16 +158,11 @@ EOF
 
 # There is a problem with 5.50-1.2~deb10u3 that makes BLE writes and reads give errors. "u2" works. And it seems it is enough to downgrade bluez.
 # Newer version seem to work too: https://www.makeuseof.com/install-bluez-latest-version-on-ubuntu/ (no need for --experimental) (5.66)
-apt-get -y install bluetooth bluez=5.50-1.2~deb10u2 libbluetooth-dev libudev-dev
+# bluez=5.50-1.2~deb10u2
+apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev
 
 
-echo "WiRoc-Python-2"
-#read line
-#install Python-2
 
-wget https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/installWiRocPython.py
-chmod ugo+x installWiRocPython.py
-./installWiRocPython.py $WiRocPython2Version
 
 #wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v$WiRocPython2Version.tar.gz
 #rm -rf WiRoc-Python-2
@@ -158,6 +188,12 @@ mv WiRoc-BLE-API/installWiRocBLEAPI.sh .
 chmod ugo+x installWiRocBLEAPI.sh
 echo "Update WiRocBLEAPI version"
 
+echo "Type the apikey, followed by [ENTER]:"
+read apikey
+cat << EOF > apikey.txt
+${apikey}
+EOF
+
 
 echo "Settings.yaml"
 cat << EOF > settings.yaml
@@ -167,7 +203,13 @@ WiRocBLEVersion: ${WiRocBLEVersion}
 WiRocHWVersion: ${WiRocHWVersion}
 EOF
 
+echo "WiRoc-Python-2"
+#read line
+#install Python-2
 
+wget https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/installWiRocPython.py
+chmod ugo+x installWiRocPython.py
+./installWiRocPython.py $WiRocPython2Version
 
 echo "install startup scripts"
 #read line
@@ -212,11 +254,6 @@ echo "add user to dialout"
 #read line
 sudo usermod -a -G dialout $USER
 
-echo "Type the apikey, followed by [ENTER]:"
-read apikey
-cat << EOF > apikey.txt
-${apikey}
-EOF
 
 
 

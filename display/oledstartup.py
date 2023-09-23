@@ -44,7 +44,7 @@ class OledStartup(OledDisplayState):
         if self.imageChanged:
             self.imageChanged = False
             OledDisplayState.OledDisp.image(self.OledImage)
-            OledDisplayState.OledDisp.display()
+            OledDisplayState.OledDisp.show()
 
     def Next(self):
         # set imageChanged to true because next time this state is entered we

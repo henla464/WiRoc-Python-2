@@ -1,3 +1,5 @@
+__author__ = 'henla464'
+
 from typing import TypedDict
 
 

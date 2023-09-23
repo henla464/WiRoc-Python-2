@@ -3,9 +3,9 @@ from datamodel.datamodel import SRRMessage
 from settings.settings import SettingsClass
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 import logging
-import smbus
+from smbus2 import SMBus
 from datamodel.db_helper import DatabaseHelper
-import inputdatadict
+from .inputdatadict import InputDataDict
 
 
 class ReceiveSRRAdapter(object):
@@ -15,7 +15,7 @@ class ReceiveSRRAdapter(object):
     def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         if hardwareAbstraction.wirocHWVersion == "v6Rev1":
             if len(ReceiveSRRAdapter.Instances) == 0:
-                bus = smbus.SMBus(0)  # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
+                bus = SMBus(0)  # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
                 addr = 0x20
 
                 try:
@@ -40,7 +40,7 @@ class ReceiveSRRAdapter(object):
     def GetTypeName() -> str:
         return "SRR"
 
-    def __init__(self, instanceName: str, i2cBus: smbus.SMBus, i2cAddress: int, firmwareVersion: int, hardwareFeatures: int, hardwareAbstraction: HardwareAbstraction):
+    def __init__(self, instanceName: str, i2cBus: SMBus, i2cAddress: int, firmwareVersion: int, hardwareFeatures: int, hardwareAbstraction: HardwareAbstraction):
         self.WiRocLogger = logging.getLogger('WiRoc.Input')
         self.instanceName = instanceName
         self.isInitialized = False
@@ -68,7 +68,7 @@ class ReceiveSRRAdapter(object):
     def UpdateInfrequently(self) -> bool:
         return True
 
-    def GetData(self) -> inputdatadict:
+    def GetData(self) -> InputDataDict:
         if self.hardwareAbstraction.GetSRRIRQValue():
             # msg length
             PUNCH_LENGTH_REGADDR = 0x20

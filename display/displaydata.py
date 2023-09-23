@@ -6,7 +6,7 @@ from datamodel.datamodel import ErrorCodeData
 class DisplayData(object):
     channel : int = None
     ackRequested : bool = None
-    wirocMode : str = None
+    wiRocMode : str = None
     loraRange : str = None
     wiRocDeviceName : str = None
     sirapTCPEnabled : bool = None

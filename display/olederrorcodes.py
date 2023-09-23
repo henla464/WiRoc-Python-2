@@ -31,7 +31,7 @@ class OledErrorCodes(OledDisplayState):
         if self.imageChanged:
             self.imageChanged = False
             OledDisplayState.OledDisp.image(self.OledImage)
-            self.OledDisp.display()
+            self.OledDisp.show()
 
     def Next(self):
         # set imageChanged to true because next time this state is entered we

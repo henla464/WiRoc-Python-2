@@ -166,23 +166,22 @@ class Main:
         self.displayStateMachine.Draw(displayData)
 
     def doFrequentMaintenanceTasks(self):
-        if HardwareAbstraction.Instance.runningOnChip or HardwareAbstraction.Instance.runningOnNanoPi:
-            displayData = DisplayData()
-            displayData.wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
-            displayData.channel = SettingsClass.GetChannel()
-            displayData.ackRequested = SettingsClass.GetAcknowledgementRequested()
-            displayData.wirocMode = SettingsClass.GetLoraMode()
-            displayData.loraRange = SettingsClass.GetLoraRange()
-            displayData.sirapTCPEnabled = SettingsClass.GetSendToSirapEnabled()
-            displayData.sendSerialActive = SettingsClass.GetSendSerialAdapterActive()
-            displayData.sirapIPAddress = SettingsClass.GetSendToSirapIP()
-            displayData.sirapIPPort = SettingsClass.GetSendToSirapIPPort()
-            displayData.wiRocIPAddresses = HardwareAbstraction.Instance.GetWiRocIPAddresses()
-            displayData.errorCodes = DatabaseHelper.get_error_codes()
+        displayData = DisplayData()
+        displayData.wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
+        displayData.channel = SettingsClass.GetChannel()
+        displayData.ackRequested = SettingsClass.GetAcknowledgementRequested()
+        displayData.wiRocMode = SettingsClass.GetLoraMode()
+        displayData.loraRange = SettingsClass.GetLoraRange()
+        displayData.sirapTCPEnabled = SettingsClass.GetSendToSirapEnabled()
+        displayData.sendSerialActive = SettingsClass.GetSendSerialAdapterActive()
+        displayData.sirapIPAddress = SettingsClass.GetSendToSirapIP()
+        displayData.sirapIPPort = SettingsClass.GetSendToSirapIPPort()
+        displayData.wiRocIPAddresses = HardwareAbstraction.Instance.GetWiRocIPAddresses()
+        displayData.errorCodes = DatabaseHelper.get_error_codes()
 
-            t = threading.Thread(target=self.updateDisplayBackground, args=(displayData,))
-            t.daemon = True
-            t.start()
+        t = threading.Thread(target=self.updateDisplayBackground, args=(displayData,))
+        t.daemon = True
+        t.start()
 
     def doInfrequentMaintenanceTasks(self):
         self.archiveFailedMessages()
@@ -328,10 +327,10 @@ class Main:
                         destinationHasAcked = loraMessage.GetAckRequested()
                         receivedFromRepeater = loraMessage.GetRepeater()
                         rssiValue = loraMessage.GetRSSIValue()
-                        wirocMode = SettingsClass.GetLoraMode()
+                        wiRocMode = SettingsClass.GetLoraMode()
 
                         # block/unblock should be done regardless if this is an ack for message sent from this checkpoint or another
-                        if wirocMode == "SENDER" and receivedFromRepeater:
+                        if wiRocMode == "SENDER" and receivedFromRepeater:
                             if not destinationHasAcked:
                                 # delay an extra message + ack, same as a normal delay after a message is sent
                                 # because the repeater should also send and receive ack
@@ -352,7 +351,7 @@ class Main:
                         else:
                             loraSubAdapter.AddSuccessWithoutRepeaterBit()
 
-                        if wirocMode == "REPEATER":
+                        if wiRocMode == "REPEATER":
                             self.wirocLogger.debug("Start::handleInput() Received ack, for repeater message id: " + Utils.GetDataInHex(messageID, logging.DEBUG))
                             DatabaseHelper.repeater_messages_acked(messageID, rssiValue)  #todo: does this work, is messageID same?
                             DatabaseHelper.archive_repeater_lora_message_subscriptions_after_ack(messageID, rssiValue)
