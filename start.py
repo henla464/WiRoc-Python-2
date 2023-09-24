@@ -117,7 +117,7 @@ class Main:
             with open("../settings.yaml", "r") as f:
                 settings = yaml.load(f, Loader=yaml.BaseLoader)
             wirocPythonVersion = settings['WiRocPythonVersion']
-            wirocBLEAPIVersion = settings['WiRocBLEVersion']
+            wirocBLEAPIVersion = settings['WiRocBLEAPIVersion']
             hardwareVersion = settings["WiRocHWVersion"]
 
             t = threading.Thread(target=self.addDeviceBackground, args=(webServerUrl, btAddress, apiKey, deviceName, wirocPythonVersion, wirocBLEAPIVersion, hardwareVersion))

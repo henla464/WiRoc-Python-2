@@ -1229,10 +1229,6 @@ def getAllMainSettings():
         loraPower = '7'
 
     wiRocPythonVersion = settings['WiRocPythonVersion']
-    #f = open("../WiRocPythonVersion.txt", "r")
-    #wirocPythonVersion = f.read()
-    #wirocPythonVersion = wirocPythonVersion.replace("\n", "")
-    #f.close()
 
     wirocBLEVersion = settings['WiRocBLEAPIVersion']
     #f = open("../WiRocBLEVersion.txt", "r")
@@ -1301,7 +1297,7 @@ def getAllMainSettings():
 
     allStr = ('1' if isCharging else '0') + '¤' + deviceName + '¤' + sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \
         acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + batteryPercent + '¤' + \
-        ipAddress + '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wirocPythonVersion + '¤' + \
+        ipAddress + '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wiRocPythonVersion + '¤' + \
         wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive + '¤' + force4800BaudRate + '¤' + loramode + '¤' + \
         rxGain + '¤' + codeRate + '¤' + rs232Mode + '¤' + RS232OneWayReceive + '¤' + forceRS2324800BaudRate + '¤' + \
         BTSerialOneWayReceive + '¤' + forceBTSerial4800BaudRate

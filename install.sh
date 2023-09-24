@@ -2,6 +2,19 @@
 #systemctl disable apt-daily.service # disable run when system boot
 #systemctl disable apt-daily.timer   # disable timer run
 
+
+
+echo "This script is tested on OS release:"
+echo "Distributor ID:	Ubuntu"
+echo "Description:	Ubuntu 22.04.3 LTS"
+echo "Release:	22.04"
+echo "Codename:	jammy"
+
+# Current OS
+echo ""
+echo "Current release:"
+lsb_release --all
+
 WiRocPython2Version="0.251"
 echo "Which WiRocPython2Version? [$WiRocPython2Version]"
 read wPOption
@@ -96,9 +109,22 @@ cd ..
 #pip3 install --upgrade reedsolo --no-binary "reedsolo" --no-cache --config-setting="--build-option=--cythonize" --use-pep517 --isolated --verbose
 #pip3 install git+https://github.com/henla464/reedsolomon.git
 
+# Dbus stuff required for BLE
+#apt install libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-4.0
+#pip3 install pycairo
+#pip3 install PyGObject
+#pip3 install pgi
+#pip3 install dasbus
 
-pip3 install pydbus
-#pip3 install smbus
+#
+pip3 install dbus-python
+#pip3 install pydbus
+
+apt-get -y install python-dbus
+cp _dbus_bindings.cpython-310-arm-linux-gnueabihf.so _dbus_bindings.cpython-311-arm-linux-gnueabihf.so
+cp _dbus_glib_bindings.cpython-310-arm-linux-gnueabihf.so _dbus_glib_bindings.cpython-311-arm-linux-gnueabihf.so
+
+
 pip3 install gpiod
 
 echo "flask"
@@ -178,7 +204,8 @@ apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev
 #EOF
 
 echo "WiRoc-BLE"
-pip3 install dbus
+#pip3 install dbus
+
 #install WiRoc-BLE
 wget -O WiRoc-BLE-API.tar.gz https://github.com/henla464/WiRoc-BLE-API/archive/v$WiRocBLEVersion.tar.gz
 rm -rf WiRoc-BLE-API
@@ -199,7 +226,7 @@ echo "Settings.yaml"
 cat << EOF > settings.yaml
 WiRocDeviceName: WiRoc Device
 WiRocPythonVersion: ${WiRocPython2Version}
-WiRocBLEVersion: ${WiRocBLEVersion}
+WiRocBLEAPIVersion: ${WiRocBLEVersion}
 WiRocHWVersion: ${WiRocHWVersion}
 EOF
 
