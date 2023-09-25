@@ -51,6 +51,7 @@ class Main:
         self.callbackQueue = queue.Queue()
         self.threadQueue = queue.Queue()
         self.displayStateMachine = DisplayStateMachine()
+        self.doFrequentMaintenanceTasks()
         self.lastWiRocDeviceNameSentToServer = None
         Battery.Setup()
         HardwareAbstraction.Instance.SetupPins()

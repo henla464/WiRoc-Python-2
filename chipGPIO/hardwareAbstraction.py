@@ -6,7 +6,7 @@ import gpiod
 from smbus2 import SMBus
 import yaml
 from datetime import timedelta
-
+from pathlib import Path
 
 class HardwareAbstraction(object):
     WiRocLogger = logging.getLogger('WiRoc')
@@ -33,7 +33,7 @@ class HardwareAbstraction(object):
 
     def SetupPins(self):
         # gpioinfo give us gpiochip0 and gpiochip1. But gpiochip0 for the lines (pins) needed
-        chip = gpiod.chip('gpiochip0')
+        chip: gpiod.chip = gpiod.chip('gpiochip0')
         configOutput = gpiod.line_request()
         configOutput.consumer = "wirocpython"
         configOutput.request_type = gpiod.line_request.DIRECTION_OUTPUT
@@ -44,6 +44,9 @@ class HardwareAbstraction(object):
         configIrq = gpiod.line_request()
         configIrq.consumer = "wirocpython"
         configIrq.request_type = gpiod.line_request.EVENT_RISING_EDGE
+
+        self.PMUIRQ = chip.get_line(3)  # IRQ pin GPIOA3 Pin 15
+        self.PMUIRQ.request(configInput)
 
         if self.wirocHWVersion == 'v4Rev1' or self.wirocHWVersion == 'v5Rev1':
             self.LORAaux = chip.get_line(64) # lora aux pin (corresponds to pin 19)
@@ -74,9 +77,6 @@ class HardwareAbstraction(object):
             self.SRRnrst = chip.get_line(67) # SRR_NRST reset SRR (corresponds to pin 24 GPIOC3)
             self.SRRnrst.request(configOutput)
             self.SRRnrst.set_value(1)
-
-            self.PMUIRQ = chip.get_line(3) # IRQ pin GPIOA3 Pin 15
-            self.PMUIRQ.request(configInput)
         else:
             self.LORAaux = chip.get_line(0)  # lora aux pin
             self.LORAaux.request(configInput)
@@ -112,6 +112,9 @@ class HardwareAbstraction(object):
 
     def GetIsPMUIRQ(self):
         if self.PMUIRQ is not None:
+            irqValue = self.PMUIRQ.get_value()
+            if irqValue == 0:
+                Path('/home/chip/PMUIRQ.txt').touch()
             return self.PMUIRQ.get_value() == 0
         else:
             return False
