@@ -51,7 +51,6 @@ class Main:
         self.callbackQueue = queue.Queue()
         self.threadQueue = queue.Queue()
         self.displayStateMachine = DisplayStateMachine()
-        self.doFrequentMaintenanceTasks()
         self.lastWiRocDeviceNameSentToServer = None
         Battery.Setup()
         HardwareAbstraction.Instance.SetupPins()
@@ -69,6 +68,7 @@ class Main:
         SettingsClass.IncrementPowerCycle()
         SettingsClass.SetReceiveSIAdapterActive(False)
         Setup.AddMessageTypes()
+        self.doFrequentMaintenanceTasks()
 
         if Setup.SetupAdapters():
             self.subscriberAdapters = Setup.SubscriberAdapters

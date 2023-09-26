@@ -6,6 +6,7 @@ import hashlib
 import logging
 import time
 import unittest
+from battery import Battery
 
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
@@ -197,7 +198,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     Case13_PunchMsg_Previous_AirOrder_WithRS =               bytearray([0x88, 0x98, 0x0f, 0x42, 0x3f, 0xff, 0x8b, 0x16, 0x0f, 0x42, 0x00, 0x3f, 0x8b, 0x17, 0x41, 0xfb, 0x81, 0x43, 0xff, 0xd6, 0xf2, 0xa5, 0x00, 0x77, 0x46, 0x41, 0x17])
     Case13_PunchMsg_Correct_AirOrder_WithRS =                bytearray([0x87, 0xe5, 0x0f, 0x42, 0xff, 0x3f, 0x8b, 0xb2, 0x00, 0x91, 0x0a, 0x41, 0x12, 0xfb, 0x61])
     Case13_PunchMsg_Corrupted_AirOrder_WithRS =              bytearray([0xa7, 0xe5, 0x2d, 0x42, 0xfd, 0x3f, 0x8b, 0xb2, 0x00, 0x91, 0x0a, 0x41, 0x92, 0x73, 0xe1])
-    # --
+    # --                                                               HEAD   CRC1  SN2   SN1    CN0  SN0    TH    TL   SN3   ECC0  ECC1   W    ECC2  ECC3  CRC0
 
     # ---
     Case14_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0xff, 0x39, 0xff, 0x39, 0xff, 0x39])
@@ -309,7 +310,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     dataHandler = LoraRadioDataHandler(False)
 
     def setUp(self):
-        LoraRadioDataHandler.WiRocLogger.setLevel(logging.DEBUG)
+        #LoraRadioDataHandler.WiRocLogger.setLevel(logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+        Battery.Setup()
 
     def tearDown(self):
         self.dataHandler.ReceivedPunchMessageDict = {}
@@ -1055,7 +1058,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         corruptedLoraMsgTH = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             corruptedMessageTH)
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTH)
-        self.assertEqual(erasures, [7], "TH erasure not correct")
+        self.assertEqual(erasures, bytearray([7]), "TH erasure not correct")
 
         # TH changed to higher than possible
         corruptedMessageTH2 = TestLoraRadioDataHandler.PunchMsg_Correct_1[:]
@@ -1063,7 +1066,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         corruptedLoraMsgTH2 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             corruptedMessageTH2)
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTH2)
-        self.assertEqual(erasures, [7], "TH erasure not correct")
+        self.assertEqual(erasures, bytearray([7]), "TH erasure not correct")
 
         # TH changed to more than 5 minutes more and the combination TH TL too high
         corruptedMessageTL = TestLoraRadioDataHandler.PunchMsg_Correct_1[:]
@@ -1072,7 +1075,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         corruptedLoraMsgTL = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             corruptedMessageTL)
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTL)
-        self.assertEqual(erasures, [7], "TH, TL erasure not correct")
+        self.assertEqual(erasures, bytearray([7]), "TH, TL erasure not correct")
 
         # TL changed to higher than possible (TH already highest)
         loraMsg2 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
@@ -1083,7 +1086,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         corruptedLoraMsgTL2 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             corruptedMessageTL2)
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTL2)
-        self.assertEqual(erasures, [8], "TL erasure not correct")
+        self.assertEqual(erasures, bytearray([8]), "TL erasure not correct")
 
         # Control number changed
         self.dataHandler._CachePunchMessage(loraMsg)
@@ -1092,7 +1095,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         corruptedLoraMsgCN0 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             corruptedMessageCN0)
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgCN0)
-        self.assertEqual(erasures, [1], "CN0 erasure not correct")
+        self.assertEqual(erasures, bytearray([1]), "CN0 erasure not correct")
         print("=== END test_FindPunchErasures ===")
 
     def test_CheckAndRemoveLoraModuleRXError(self):
@@ -1312,15 +1315,15 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     def test_GetAlternatives(self):
         print("============================================================================================== START test_GetAlternatives ==============================================================================================")
         msg = LoraRadioMessageCreator.GetPunchReDCoSMessage(
-            TestLoraRadioDataHandler.PunchReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
-            TestLoraRadioDataHandler.PunchReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask,
+            (TestLoraRadioDataHandler.PunchReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
+            (TestLoraRadioDataHandler.PunchReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchReDCoSMsg_Correct_1_WithoutRS_CS[1:])
 
         self.dataHandler._CachePunchMessage(msg)
 
         msg2 = LoraRadioMessageCreator.GetPunchReDCoSMessage(
-            TestLoraRadioDataHandler.PunchReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
-            TestLoraRadioDataHandler.PunchReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask,
+            (TestLoraRadioDataHandler.PunchReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
+             (TestLoraRadioDataHandler.PunchReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchReDCoSMsg_Correct_2_WithoutRS_CS[1:])
 
         alts, fixedValues, fixedErasures = self.dataHandler._GetPunchMessageAlternatives(msg2)
@@ -1330,8 +1333,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     def test_GetAlternativesDouble(self):
         print("============================================================================================== START test_GetAlternativesDouble ==============================================================================================")
         msg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
+             (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[1:])
 
         msg1, msg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(msg)
@@ -1339,8 +1342,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler._CachePunchMessage(msg2)
 
         msg3 = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
+             (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[1:])
 
         alts, fixedValues, fixedErasures = self.dataHandler._GetPunchDoubleMessageAlternatives(msg3)
@@ -1354,8 +1357,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_GetReDCoSErasures ==============================================================================================")
 
         msg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
+             (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[1:])
 
         msg1, msg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(msg)
@@ -1363,8 +1366,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler._CachePunchMessage(msg2)
 
         msg3 = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[1:])
 
         alts, fixedValues, fixedErasures = self.dataHandler._GetPunchDoubleMessageAlternatives(msg3)
@@ -1372,15 +1375,15 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         self.assertEqual(len(alts), 8, "No of alternatives wrong")
         self.assertEqual(fixedValues, [0, 1, 2, 6, 7, 9, 10, 14, 15], "fixedValues unexpected")
-        self.assertEqual(fixedErasures, [], "fixedErasures unexpected")
+        self.assertEqual(fixedErasures, bytearray(), "fixedErasures unexpected")
         self.assertEqual(len(list(erasuresCombinations)), 12870, "No of erasure combinations unexpected")
 
     def test_SevenPlusOneCRCWrong_DecodeReDCos(self):
         print("============================================================================================== START test_SevenPlusOneCRCWrong_DecodeReDCos ==============================================================================================")
 
         msg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[1:])
 
         msg1, msg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(msg)
@@ -1389,8 +1392,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler._CachePunchMessage(msg2)
 
         msg3 = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[1:])
 
         corruptedMessageData = msg3.GetByteArray()[:]
@@ -1417,8 +1420,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_SevenPlusOneCRCWrong_FewerCombinations_DecodeReDCos ==============================================================================================")
 
         msg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[1:])
 
         msg1, msg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(msg)
@@ -1427,8 +1430,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler._CachePunchMessage(msg2)
 
         msg3 = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
+             (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[1:])
 
         corruptedMessageData = msg3.GetByteArray()[:]
@@ -1455,8 +1458,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_SevenPlusOneCRCWrong_MoreCombinations_DecodeReDCos ==============================================================================================")
 
         msg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[1:])
 
 
@@ -1465,8 +1468,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler._CachePunchMessage(msg2)
 
         msg3 = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[1:])
         correct = msg3.GetByteArray()[:]
 
@@ -1499,8 +1502,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_FivePlusOneCRCWrong_FewerCombinations_DecodeReDCos ==============================================================================================")
 
         msg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
+             (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[1:])
 
 
@@ -1509,8 +1512,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler._CachePunchMessage(msg2)
 
         msg3 = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask,
-            TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask,
+            (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
+             (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[1:])
         correct = msg3.GetByteArray()[:]
 

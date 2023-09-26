@@ -66,7 +66,7 @@ apt-get -y install python3.11
 update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
 
 echo "zip"
-apt-get install zip
+apt-get -y install zip
 cd /home/chip/
 mkdir LogArchive
 
@@ -94,7 +94,8 @@ pip3 install cachetools
 pip3 install cython
 
 
-apt-get install python3.11-dev
+apt-get -y install python3.11-dev
+pip3 install build
 git clone https://github.com/tomerfiliba-org/reedsolomon.git
 cd reedsolomon
 pip3 install virtualenv
@@ -103,6 +104,9 @@ python3 -sBm build --config-setting="--build-option=--cythonize"
 export DEB_PYTHON_INSTALL_LAYOUT=deb_system
 pip3 install dist/reedsolo-2.1.2b1-cp311-cp311-linux_armv7l.whl
 cd ..
+
+ERROR: Could not install packages due to an OSError: [Errno 2] 
+No such file or directory: '/home/chip/reedsolomon/dist/reedsolo-2.1.2b1-cp311-cp311-linux_armv7l.whl'
 
 
 #pip install reedsolo --pre
@@ -169,7 +173,7 @@ apt-get -y install libfreetype6-dev
 export SETUPTOOLS_USE_DISTUTILS=stdlib
 pip3 install pillow
 #apt-get install python3-pil
-apt-get install python3-numpy
+apt-get -y install python3-numpy
 
 
 echo "Install bluetooth stuff"

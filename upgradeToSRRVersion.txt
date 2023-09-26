@@ -1,6 +1,32 @@
+Log in with
+user: root
+pw: 1234
+
+Set new root password as: chip
+
+choose 1) bash as default system command shell
+
+Create a useraccount
+username: chip
+password: chip
+
+Set real name as Chip
+
+Select to connect to wireless, network WiRoc, password WiRocWiRoc
+Then select Quit
+
+Select n when asked about language and then select 47 (en_GB.UTF-8)
+Then select 7 Europe
+Then select 46 Sweden
+Approve 'Europe/Berlin' with 1
+
+
+
+
+
 wget https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/installWiRocPython.py
 sudo chmod ugo+x installWiRocPython.py
-sudo ./installWiRocPython.py v0.251
+sudo ./installWiRocPython.py v0.252
 
 
 apt-get install pkg-config
