@@ -53,6 +53,24 @@ if [[ $hwOption = 6 ]]; then
     WiRocHWVersion="v7Rev1"
 fi
 
+
+
+echo "Type the apikey, followed by [ENTER]:"
+read apikey
+cat << EOF > apikey.txt
+${apikey}
+EOF
+
+
+echo "Settings.yaml"
+cat << EOF > settings.yaml
+WiRocDeviceName: WiRoc Device
+WiRocPythonVersion: ${WiRocPython2Version}
+WiRocBLEAPIVersion: ${WiRocBLEVersion}
+WiRocHWVersion: ${WiRocHWVersion}
+EOF
+
+
 echo "update"
 #read line
 # update app list
@@ -218,21 +236,6 @@ mv WiRoc-BLE-API-$WiRocBLEVersion WiRoc-BLE-API
 mv WiRoc-BLE-API/installWiRocBLEAPI.sh .
 chmod ugo+x installWiRocBLEAPI.sh
 echo "Update WiRocBLEAPI version"
-
-echo "Type the apikey, followed by [ENTER]:"
-read apikey
-cat << EOF > apikey.txt
-${apikey}
-EOF
-
-
-echo "Settings.yaml"
-cat << EOF > settings.yaml
-WiRocDeviceName: WiRoc Device
-WiRocPythonVersion: ${WiRocPython2Version}
-WiRocBLEAPIVersion: ${WiRocBLEVersion}
-WiRocHWVersion: ${WiRocHWVersion}
-EOF
 
 echo "WiRoc-Python-2"
 #read line

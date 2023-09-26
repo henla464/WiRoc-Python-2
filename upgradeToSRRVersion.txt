@@ -22,6 +22,10 @@ Approve 'Europe/Berlin' with 1
 
 
 
+wget https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/install.sh
+sudo chmod ugo+x install.sh
+sudo ./install.sh
+
 
 
 wget https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/installWiRocPython.py
