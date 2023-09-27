@@ -123,9 +123,6 @@ export DEB_PYTHON_INSTALL_LAYOUT=deb_system
 pip3 install dist/reedsolo-2.1.2b1-cp311-cp311-linux_armv7l.whl
 cd /home/chip
 
-ERROR: Could not install packages due to an OSError: [Errno 2] 
-No such file or directory: '/home/chip/reedsolomon/dist/reedsolo-2.1.2b1-cp311-cp311-linux_armv7l.whl'
-
 
 #pip install reedsolo --pre
 #pip3 install --upgrade reedsolo --no-binary "reedsolo" --no-cache --config-setting="--build-option=--cythonize" --use-pep517 --isolated --verbose
@@ -158,8 +155,8 @@ pip3 install gpiod
 echo "flask"
 #read line
 #Install flask
-pip3 install flask
-pip3 install flask-swagger-ui
+pip3 install --ignore-installed flask
+pip3 install --ignore-installed flask-swagger-ui
 
 echo "pyserial"
 #read line
@@ -244,9 +241,6 @@ chmod ugo+x installWiRocBLEAPI.sh
 echo "Update WiRocBLEAPI version"
 
 echo "WiRoc-Python-2"
-#read line
-#install Python-2
-
 wget https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/installWiRocPython.py
 chmod ugo+x installWiRocPython.py
 ./installWiRocPython.py $WiRocPython2Version

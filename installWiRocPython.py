@@ -102,7 +102,7 @@ if resp.status_code == 200:
             serviceStop1Res = subprocess.run(["systemctl", "stop", serviceName])
             print("serviceStop1 response: " + str(serviceStop1Res.returncode))
             if serviceStop1Res.returncode != 0:
-                exit(serviceStop1Res.returncode)
+                print("Ignore, service might just not be loaded yet")
 
             if serviceName2 != "":
                 serviceStop2Res = subprocess.run(["systemctl", "stop", serviceName2])
