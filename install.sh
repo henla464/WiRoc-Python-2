@@ -121,7 +121,7 @@ python3 -sBm build --config-setting="--build-option=--cythonize"
 #export SETUPTOOLS_USE_DISTUTILS=stdlib 
 export DEB_PYTHON_INSTALL_LAYOUT=deb_system
 pip3 install dist/reedsolo-2.1.2b1-cp311-cp311-linux_armv7l.whl
-cd ..
+cd /home/chip
 
 ERROR: Could not install packages due to an OSError: [Errno 2] 
 No such file or directory: '/home/chip/reedsolomon/dist/reedsolo-2.1.2b1-cp311-cp311-linux_armv7l.whl'
@@ -134,17 +134,23 @@ No such file or directory: '/home/chip/reedsolomon/dist/reedsolo-2.1.2b1-cp311-c
 # Dbus stuff required for BLE
 #apt install libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-4.0
 #pip3 install pycairo
-#pip3 install PyGObject
 #pip3 install pgi
 #pip3 install dasbus
-
-#
-pip3 install dbus-python
 #pip3 install pydbus
+#
 
-apt-get -y install python-dbus
-cp _dbus_bindings.cpython-310-arm-linux-gnueabihf.so _dbus_bindings.cpython-311-arm-linux-gnueabihf.so
-cp _dbus_glib_bindings.cpython-310-arm-linux-gnueabihf.so _dbus_glib_bindings.cpython-311-arm-linux-gnueabihf.so
+
+apt-get -y install libgirepository1.0-dev
+apt-get -y install libcairo2-dev 
+apt-get -y install pkg-config
+export SETUPTOOLS_USE_DISTUTILS=stdlib 
+pip3 install pycairo
+python3 -m pip install --ignore-installed PyGObject
+pip3 install dbus-python
+
+#apt-get -y install python-dbus
+cp /usr/lib/python3/dist-packages/_dbus_bindings.cpython-310-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/_dbus_bindings.cpython-311-arm-linux-gnueabihf.so
+cp /usr/lib/python3/dist-packages/_dbus_glib_bindings.cpython-310-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/_dbus_glib_bindings.cpython-311-arm-linux-gnueabihf.so
 
 
 pip3 install gpiod
