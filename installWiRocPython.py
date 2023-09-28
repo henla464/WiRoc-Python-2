@@ -108,7 +108,7 @@ if resp.status_code == 200:
                 serviceStop2Res = subprocess.run(["systemctl", "stop", serviceName2])
                 print("serviceStop2 response: " + str(serviceStop2Res.returncode))
                 if serviceStop2Res.returncode != 0:
-                    exit(serviceStop2Res.returncode)
+                    print("Ignore, service might just not be loaded yet")
 
             rmRes = subprocess.run(["rm", "-rf", installFolderName])
             print("rm response: " + str(rmRes.returncode))

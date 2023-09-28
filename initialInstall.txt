@@ -1,0 +1,56 @@
+1) Flash the Armbian Jammy to SD card
+
+2) Attach serial to the serial pins
+
+3) Start WiRoc with the SD card inserted
+
+4) 
+
+Log in with
+user: root
+pw: 1234
+
+5) The armbian first boot config starts...
+
+Set new root password as: chip
+
+choose 1. bash as default system command shell
+
+Create a useraccount
+username: chip
+password: chip
+Set real name as Chip
+
+Select to connect to wireless
+After connecting exit with the wireless configuration (select Quit button with tab)
+
+Select n when asked about language and then select 47 (en_GB.UTF-8)
+Then select 7 Europe
+Then select 46 Sweden
+Approve 'Europe/Berlin' with 1
+
+
+6)
+Connect with SSH and log in with user chip
+
+7) run the commands below to download the install script and make it executable:
+
+
+wget https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/install.sh
+sudo chmod ugo+x install.sh
+
+8) Time to run the install script:
+sudo ./install.sh
+
+It will ask for WiRocPython2Version. The current latest is 0.253 and should be default. Press enter to select it.
+WiRocBLEVersion, latest is currently 0.11, press enter to select it
+
+Then select the correct hardware version/revision. Yours should be option 4.
+
+The API key is the key used to access monitor.wiroc.se. You can find it in the apikey.txt file on the WiRoc, in the chip home directory.
+
+Next you will need to approve adding the "deadsnakes" repository to apt. Press enter...
+
+
+--------------------
+
