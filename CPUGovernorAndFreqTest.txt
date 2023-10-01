@@ -1,0 +1,23 @@
+Normal ondemand on eMMC
+Ran 65 tests in 16.319s
+Ran 65 tests in 16.490s
+Ran 65 tests in 16.387s
+
+Ondemand but max 1Ghz
+Ran 65 tests in 19.550s
+Ran 65 tests in 19.653s
+
+Conservative on eMMC
+Ran 65 tests in 16.064s
+Ran 65 tests in 16.129s
+
+Performance on eMMC
+Ran 65 tests in 16.182s
+Ran 65 tests in 16.073s
+
+schedUtil on eMMC
+Ran 65 tests in 16.606s
+Ran 65 tests in 16.496s
+
+powersave on eMMC
+Ran 65 tests in 37.577s
