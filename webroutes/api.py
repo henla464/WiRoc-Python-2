@@ -392,6 +392,113 @@ def setLoraMode(loramode):
         raise Exception("Error: not a valid Lora/Radio Mode")
 
 
+@app.route('/api/srr/enabled/', methods=['GET'])
+def getSRREnabled():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('SRREnabled')
+    srrEnabled = '1'
+    if sett is not None:
+        srrEnabled = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=srrEnabled))
+
+
+@app.route('/api/srr/enabled/<enabled>/', methods=['GET'])
+def setSRREnabled(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('SRREnabled')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SRREnabled'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
+@app.route('/api/srr/listenonly/', methods=['GET'])
+def getSRRListenOnly():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('SRRListenOnly')
+    SRRListenOnly = '0'
+    if sett is not None:
+        SRRListenOnly = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=SRRListenOnly))
+
+
+@app.route('/api/srr/listenonly/<enabled>/', methods=['GET'])
+def setSRRListenOnly(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('SRRListenOnly')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SRRListenOnly'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/srr/redchannel/', methods=['GET'])
+def getSRRRedChannel():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('SRRRedChannel')
+    SRRRedChannel = '1'
+    if sett is not None:
+        SRRRedChannel = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=SRRRedChannel))
+
+
+@app.route('/api/srr/redchannel/<enabled>/', methods=['GET'])
+def setSRRRedChannel(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('SRRRedChannel')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SRRRedChannel'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
+@app.route('/api/srr/bluechannel/', methods=['GET'])
+def getSRRBlueChannel():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('SRRBlueChannel')
+    SRRBlueChannel = '1'
+    if sett is not None:
+        SRRBlueChannel = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=SRRBlueChannel))
+
+
+@app.route('/api/srr/bluechannel/<enabled>/', methods=['GET'])
+def setSRRBlueChannel(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('SRRBlueChannel')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SRRBlueChannel'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
 @app.route('/api/punches/', methods=['GET'])
 def getPunches():
     DatabaseHelper.reInit()
@@ -495,7 +602,7 @@ def getIsCharging():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=('1' if isCharging else '0')))
 
-
+# TODO: change to use smbus??
 def getBatteryLevel():
     hostname = socket.gethostname()
     if hostname == "chip" or hostname == "nanopiair":
@@ -1046,7 +1153,7 @@ def getBTAddress():
         btAddress = stdoutWords[1]
     return btAddress
 
-
+# TODO: change to use https and service host instead of serverIp
 def uploadLogArchiveToServer(apiKey, filePath, serverProtocol, serverIP, serverHost):
     parameters = ['curl', '--insecure', '-X', 'POST', '-H', 'host:' + serverHost, '-H',
                   'accept:application/json', '-H', 'X-Authorization:' + apiKey, '-F', 'newfile=@' + filePath, serverProtocol + serverIP + '/api/v1/LogArchives']

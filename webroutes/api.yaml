@@ -9,9 +9,9 @@ servers:
   - url: /api
 tags:
   - name: "Radio"
-    description: ""
+    description: "LORA Radio settings"
   - name: "SIRAP"
-    description: ""
+    description: "SIRAP tcp/ip settings"
   - name: "Status"
     description: ""
   - name: "Database"
@@ -23,7 +23,7 @@ tags:
   - name: "Debug"
     description: ""
   - name: "Network"
-    description: ""
+    description: "Connect to Wifi and IP options"
 paths:
   /channel/:
     get:
@@ -93,7 +93,7 @@ paths:
     get:
       tags:
       - "Radio"
-      summary: "Get if acknowledgemnt should be requested when sending message over the lora radio"
+      summary: "Get if acknowledgemnt should be requested when sending message over the LORA radio"
       operationId: "getAcknowledgementRequested"
       responses:
         "200":
@@ -365,6 +365,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
+  /errorcodes/:
+    get:
+      tags:
+      - "Status"
+      summary: "Get the error codes"
+      operationId: "getErrorCodes"
+      responses:
+        "200":
+          description: "The error codes"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /wirocdevicename/:
     get:
       tags:
@@ -429,6 +442,134 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
+  /srr/enabled/:
+    get:
+      tags:
+      - "SRR"
+      summary: "Get if SRR receiver is enabled"
+      operationId: "GetSRREnabled"
+      responses:
+        "200":
+          description: "0/1 depending on if SRR receiver is enabled or not"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /srr/enabled/{enabled}:
+    get:
+      tags:
+      - "SRR"
+      summary: "Enable/Disable the SRR receiver"
+      operationId: "setSRREnabled"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /srr/listenonly/:
+    get:
+      tags:
+      - "SRR"
+      summary: "Get if SRR receiver is only listening without acknowledgeing messages"
+      operationId: "GetSRRListenOnly"
+      responses:
+        "200":
+          description: "0/1 depending on if SRR receiver is only listening or not"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /srr/listenonly/{enabled}:
+    get:
+      tags:
+      - "SRR"
+      summary: "Enable/Disable the SRR receiver listen only mode"
+      operationId: "setSRRListenOnly"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /srr/redchannel/:
+    get:
+      tags:
+      - "SRR"
+      summary: "Get if the red channel of the SRR receiver is enabled"
+      operationId: "GetSRRRedChannel"
+      responses:
+        "200":
+          description: "0/1 depending on if SRR receiver is only listening or not"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /srr/redchannel/{enabled}:
+    get:
+      tags:
+      - "SRR"
+      summary: "Enable/Disable the red channel of the SRR receiver"
+      operationId: "setSRRRedChannel"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /srr/bluechannel/:
+    get:
+      tags:
+      - "SRR"
+      summary: "Get if the blue channel of the SRR receiver is enabled"
+      operationId: "GetSRRBlueChannel"
+      responses:
+        "200":
+          description: "0/1 depending on if SRR receiver is only listening or not"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /srr/bluechannel/{enabled}:
+    get:
+      tags:
+      - "SRR"
+      summary: "Enable/Disable the blue channel of the SRR receiver"
+      operationId: "setSRRBlueChannel"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /punches/:
     get:
       tags:
@@ -586,7 +727,7 @@ paths:
     get:
       tags:
       - "SportIdent"
-      summary: "Get if one-way recieve from SportIdent master station is enabled"
+      summary: "Get if one-way recieve from USB SportIdent master station is enabled"
       operationId: "getOneWayReceive"
       responses:
         "200":
@@ -599,7 +740,7 @@ paths:
     get:
       tags:
       - "SportIdent"
-      summary: "Enable/Disable one-way recieve from SportIdent master station"
+      summary: "Enable/Disable one-way recieve from USB SportIdent master station"
       operationId: "setOneWayReceive"
       parameters:
         - name: onewayenabled
@@ -618,7 +759,7 @@ paths:
     get:
       tags:
       - "SportIdent"
-      summary: "Get if one-way recieve from SportIdent master station is enabled"
+      summary: "Get if baudrate 4800 kbps is enabled on USB port"
       operationId: "getForce4800BaudRate"
       responses:
         "200":
@@ -631,7 +772,7 @@ paths:
     get:
       tags:
       - "SportIdent"
-      summary: "Enable/Disable one-way recieve from SportIdent master station"
+      summary: "Enable/Disable baudrate 4800 kbps on USB port"
       operationId: "setForce4800BaudRate"
       parameters:
         - name: forceenabled
@@ -718,7 +859,7 @@ paths:
       operationId: "getForceRS2324800BaudRate"
       responses:
         "200":
-          description: "0/1 depending on if one-way recieve is enabled"
+          description: "0/1 depending on if baudrate 4800 is set for RS232 serial ports"
           content:
             application/json:
               schema:
@@ -727,10 +868,74 @@ paths:
     get:
       tags:
       - "SportIdent"
-      summary: "Enable/Disable one-way recieve from SportIdent master station"
+      summary: "Enable/Disable baudrate 4800 kbps for RS232 serial ports"
       operationId: "setForceRS2324800BaudRateEnabled"
       parameters:
         - name: forceenabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /btserialonewayreceive/:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Get if one-way recieve from SportIdent master station is enabled for BT serial"
+      operationId: "getBTSerialOneWayReceive"
+      responses:
+        "200":
+          description: "0/1 depending on if one-way recieve is enabled on bt serial"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /btserialonewayreceive/{enabled}:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Enable/Disable one-way recieve from SportIdent master station for BT serial"
+      operationId: "setBTSerialOneWayReceive"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /forcebtserial4800baudrate/:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Get if 4800 baudrate is set for bt serial"
+      operationId: "getForceBTSerial4800BaudRate"
+      responses:
+        "200":
+          description: "0/1 depending on if baudrate 4800 is set for bt serial"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /forcebtserial4800baudrate/{enabled}:
+    get:
+      tags:
+      - "SportIdent"
+      summary: "Enable/Disable baudrate 4800 kbps for bt serial"
+      operationId: "setForceBTSerial4800BaudRateEnabled"
+      parameters:
+        - name: enabled
           in: path
           required: true
           schema:
