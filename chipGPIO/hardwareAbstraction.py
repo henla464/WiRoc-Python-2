@@ -8,6 +8,7 @@ import yaml
 from datetime import timedelta
 from pathlib import Path
 
+
 class HardwareAbstraction(object):
     WiRocLogger = logging.getLogger('WiRoc')
     Instance = None
@@ -24,12 +25,10 @@ class HardwareAbstraction(object):
         self.PMUIRQ = None
         with open("../settings.yaml", "r") as f:
             settings = yaml.load(f, Loader=yaml.BaseLoader)
-        wirocHWVersion = settings['WiRocHWVersion']
-        self.wirocHWVersion = wirocHWVersion.strip()
-        #f = open("../WiRocHWVersion.txt", "r")
-        #wirocHWVersion = f.read()
-        #self.wirocHWVersion = wirocHWVersion.strip()
-        #f.close()
+        wirocHWVersion: str = settings['WiRocHWVersion']
+        self.wirocHWVersion: str = wirocHWVersion.strip()
+        self.wirocHWVersionNumber: int = int(self.wirocHWVersion.split("Rev")[0][1:])
+        self.wirocHWRevisionNumber:int  = int(self.wirocHWVersion.split("Rev")[1])
 
     def SetupPins(self):
         # gpioinfo give us gpiochip0 and gpiochip1. But gpiochip0 for the lines (pins) needed
@@ -59,7 +58,7 @@ class HardwareAbstraction(object):
             self.LORAM0 = chip.get_line(17)  # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
             self.LORAM0.request(configOutput)
             self.LORAM0.set_value(0)
-        elif self.wirocHWVersion == 'v6Rev1':
+        elif self.wirocHWVersionNumber >= 6:
             self.LORAaux = chip.get_line(64) # lora aux pin (corresponds to pin 19)
             self.LORAaux.request(configInput)
 
@@ -86,7 +85,8 @@ class HardwareAbstraction(object):
             self.LORAenable.set_value(1)
 
     def GetSISerialPorts(self):
-        if self.wirocHWVersion == 'v4Rev1' or self.wirocHWVersion == 'v5Rev1' or self.wirocHWVersion == 'v6Rev1':
+        if self.wirocHWVersionNumber >= 4:
+            #== 'v4Rev1' or self.wirocHWVersion == 'v5Rev1' or self.wirocHWVersion == 'v6Rev1':
             return ['/dev/ttyS2']
         return []
 

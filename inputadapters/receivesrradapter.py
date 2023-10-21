@@ -13,7 +13,7 @@ class ReceiveSRRAdapter(object):
 
     @staticmethod
     def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
-        if hardwareAbstraction.wirocHWVersion == "v6Rev1":
+        if hardwareAbstraction.wirocHWVersionNumber >= 6:
             if len(ReceiveSRRAdapter.Instances) == 0:
                 bus = SMBus(0)  # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
                 addr = 0x20
