@@ -1216,6 +1216,50 @@ def disconnectWifi():
 
     return jsonpickle.encode(MicroMock(Value='OK'))
 
+
+
+@app.route('/api/rtc/time', methods=['GET'])
+def getRTCTime():
+    # get from rtc
+    rtcTime = "hh:mm:ss"
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=rtcTime))
+
+
+@app.route('/api/rtc/time/<24hTimeWithSeconds>/', methods=['GET'])
+def setRTCTime(mode):
+    # write time to rtc
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/rtc/wakeup', methods=['GET'])
+def getRTCWakeUp():
+    # get from rtc
+    rtcTime = "hh:mm:ss"
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=rtcTime))
+
+
+@app.route('/api/rtc/wakeup/<24hTime>/', methods=['GET'])
+def setRTCWakeUp(mode):
+    # write time HH:MM:00 to rtc wakeup, but don't enable the irq
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
+@app.route('/api/rtc/clearwakeup/', methods=['GET'])
+def clearRTCWakeUp(mode):
+    # disable alarm irq
+    # write 00:00:01 (1 second indicates it is cleared)
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
 def getWebServerProtocol():
     DatabaseHelper.reInit()
     proto = SettingsClass.GetWebServerProtocol()
