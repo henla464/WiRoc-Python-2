@@ -2,15 +2,16 @@ from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
 import socket
 import logging
+from __future__ import annotations
 
 
 class SendToSirapAdapter(object):
-    WiRocLogger = logging.getLogger('WiRoc.Output')
-    Instances = []
-    SubscriptionsEnabled = False
+    WiRocLogger: logging.Logger = logging.getLogger('WiRoc.Output')
+    Instances: list[SendToSirapAdapter] = []
+    SubscriptionsEnabled: bool = False
 
     @staticmethod
-    def CreateInstances():
+    def CreateInstances() -> bool:
         if len(SendToSirapAdapter.Instances) == 0:
             SendToSirapAdapter.Instances.append(SendToSirapAdapter('sirap1'))
             return True
@@ -23,7 +24,7 @@ class SendToSirapAdapter(object):
         return False
 
     @staticmethod
-    def GetTypeName():
+    def GetTypeName() -> str:
         return "SIRAP"
 
     @staticmethod
@@ -42,43 +43,43 @@ class SendToSirapAdapter(object):
                                                     SendToSirapAdapter.GetTypeName())
 
     @staticmethod
-    def EnableDisableTransforms():
+    def EnableDisableTransforms() -> None:
         return None
 
     def __init__(self, instanceName):
-        self.instanceName = instanceName
-        self.transforms = {}
-        self.sock = None
-        self.isInitialized = False
-        self.isDBInitialized = False
+        self.instanceName: str = instanceName
+        self.transforms: dict[str, any] = {}
+        self.sock: socket.socket | None = None
+        self.isInitialized: bool = False
+        self.isDBInitialized: bool = False
 
-    def GetInstanceName(self):
+    def GetInstanceName(self) -> str:
         return self.instanceName
 
     @staticmethod
-    def GetDeleteAfterSent():
+    def GetDeleteAfterSent() -> bool:
         return True
 
     # when receiving from other WiRoc device, should we wait until the other
     # WiRoc device sent an ack to aviod sending at same time
     @staticmethod
-    def GetWaitUntilAckSent():
+    def GetWaitUntilAckSent() -> bool:
         return False
 
-    def GetIsInitialized(self):
+    def GetIsInitialized(self) -> bool:
         return self.isInitialized
 
-    def ShouldBeInitialized(self):
+    def ShouldBeInitialized(self) -> bool:
         return not self.isInitialized
 
     # has adapter, transforms, subscriptions etc been added to database?
-    def GetIsDBInitialized(self):
+    def GetIsDBInitialized(self) -> bool:
         return self.isDBInitialized
 
-    def SetIsDBInitialized(self, val=True):
+    def SetIsDBInitialized(self, val: bool = True) -> None:
         self.isDBInitialized = val
 
-    def GetTransformNames(self):
+    def GetTransformNames(self) -> list[str]:
         return ["LoraSIMessageToSirapTransform", "SISIMessageToSirapTransform",
                 "SITestTestToSirapTransform", "LoraSIMessageDoubleToSirapTransform",
                 "SRRSRRMessageToSirapTransform"]
@@ -86,26 +87,26 @@ class SendToSirapAdapter(object):
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass
 
-    def GetTransform(self, transformName):
+    def GetTransform(self, transformName: str) -> any:
         return self.transforms[transformName]
 
-    def Init(self):
+    def Init(self) -> bool:
         if self.GetIsInitialized():
             return True
         self.isInitialized = True
         return True
 
-    def IsReadyToSend(self):
+    def IsReadyToSend(self) -> bool:
         return True
 
     @staticmethod
-    def GetDelayAfterMessageSent():
+    def GetDelayAfterMessageSent() -> float:
         return 0
 
-    def GetRetryDelay(self, tryNo):
+    def GetRetryDelay(self, tryNo: int) -> float:
         return 1
 
-    def OpenConnection(self, failureCB, callbackQueue, settingsDictionary):
+    def OpenConnection(self, failureCB, callbackQueue, settingsDictionary: dict[str, any]) -> bool:
         if self.sock is None:
             try:
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -135,17 +136,18 @@ class SendToSirapAdapter(object):
         return True
 
     # messageData is tuple of bytearray
-    def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
-        if not self.OpenConnection(failureCB, callbackQueue, settingsDictionary):
-            self.sock = None
-            return False
-
+    def SendData(self, messageData: tuple[bytearray], successCB, failureCB, notSentCB, callbackQueue, settingsDictionary: dict[str, any]) -> bool:
         try:
             # Send data
             for data in messageData:
+                if not self.OpenConnection(failureCB, callbackQueue, settingsDictionary):
+                    self.sock = None
+                    return False
+
                 self.sock.sendall(data)
-            self.sock.close()
-            self.sock = None
+                self.sock.close()
+                self.sock = None
+
             SendToSirapAdapter.WiRocLogger.debug("SendToSirapAdapter::SendData() Sent to SIRAP")
             callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), "SIMessage", "Sent", 1))
             callbackQueue.put((successCB,))
