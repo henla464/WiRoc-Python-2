@@ -1216,49 +1216,56 @@ def disconnectWifi():
 
     return jsonpickle.encode(MicroMock(Value='OK'))
 
-
-
-@app.route('/api/rtc/time', methods=['GET'])
+@app.route('/api/rtc/time/', methods=['GET'])
 def getRTCTime():
     # get from rtc
-    rtcTime = "hh:mm:ss"
+    rtcTime = HardwareAbstraction.Instance.GetRTCTime()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=rtcTime))
 
-
-@app.route('/api/rtc/time/<24hTimeWithSeconds>/', methods=['GET'])
-def setRTCTime(mode):
+@app.route('/api/rtc/time/<timeWithSeconds>/', methods=['GET'])
+def setRTCTime(timeWithSeconds):
     # write time to rtc
+    HardwareAbstraction.Instance.SetRTCTime(timeWithSeconds)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=sd.Value))
+    return jsonpickle.encode(MicroMock(Value="OK"))
 
-@app.route('/api/rtc/wakeup', methods=['GET'])
+@app.route('/api/rtc/wakeup/', methods=['GET'])
 def getRTCWakeUp():
     # get from rtc
-    rtcTime = "hh:mm:ss"
+    rtcWakeUpTime = HardwareAbstraction.Instance.GetRTCWakeUpTime()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=rtcTime))
-
+    return jsonpickle.encode(MicroMock(Value=rtcWakeUpTime))
 
 @app.route('/api/rtc/wakeup/<24hTime>/', methods=['GET'])
-def setRTCWakeUp(mode):
-    # write time HH:MM:00 to rtc wakeup, but don't enable the irq
+def setRTCWakeUp(time):
+    # write time HH:MM to rtc wakeup, but don't enable the irq
+    HardwareAbstraction.Instance.SetWakeUpTime(time)
+    HardwareAbstraction.Instance.SetWakeUpToBeEnabledAtShutdown()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=sd.Value))
+    return jsonpickle.encode(MicroMock(Value="OK"))
 
 
 @app.route('/api/rtc/clearwakeup/', methods=['GET'])
-def clearRTCWakeUp(mode):
+def clearRTCWakeUp():
     # disable alarm irq
-    # write 00:00:01 (1 second indicates it is cleared)
+    # write 00:00
+    HardwareAbstraction.Instance.SetWakeUpTime("00:00")
+    HardwareAbstraction.Instance.ClearWakeUpToBeEnabledAtShutdown()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=sd.Value))
+    return jsonpickle.encode(MicroMock(Value="OK"))
 
+@app.route('/api/rtc/wakeupenabled/', methods=['GET'])
+def getWakeUpToBeEnabledAtShutdown():
+    isEnabled = HardwareAbstraction.Instance.GetWakeUpToBeEnabledAtShutdown()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=isEnabled))
 
 def getWebServerProtocol():
     DatabaseHelper.reInit()

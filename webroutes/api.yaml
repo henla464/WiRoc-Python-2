@@ -1278,6 +1278,84 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
+  /rtc/time/:
+    get:
+      tags:
+      - "RTC"
+      summary: "Get the current time of the WiRoc device"
+      operationId: "getRTCTime"
+      responses:
+        "200":
+          description: "successful operation"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PropertyObj"
+  /rtc/time/{timeWithSeconds}:
+    get:
+      tags:
+      - "RTC"
+      summary: "Set the current time of the WiRoc device"
+      operationId: "setRTCTime"
+      responses:
+        "200":
+          description: "successful operation"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PropertyObj"
+  /rtc/wakeup/:
+    get:
+      tags:
+      - "RTC"
+      summary: "Gets the current wake up time set in the RTC chip"
+      operationId: "getRTCWakeUp"
+      responses:
+        "200":
+          description: "successful operation"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PropertyObj"
+  /rtc/wakeup/{time}:
+    get:
+      tags:
+      - "RTC"
+      summary: "Set the wake up time and the flag saying Wake Up should be be activated at shutdown"
+      operationId: "setRTCWakeUp"
+      responses:
+        "200":
+          description: "successful operation"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PropertyObj"
+  /rtc/clearwakeup/:
+    get:
+      tags:
+      - "RTC"
+      summary: "Clears the flag saying Wake Up should be be activated at shutdown"
+      operationId: "clearRTCWakeUp"
+      responses:
+        "200":
+          description: "successful operation"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PropertyObj"
+  /rtc/wakeupenabled/:
+    get:
+      tags:
+      - "RTC"
+      summary: "Gets whether Wake up is enabled to be activated at shutdown"
+      operationId: "getWakeUpToBeEnabledAtShutdown"
+      responses:
+        "200":
+          description: "successful operation"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrueFalseObj"
   /uploadlogarchive/:
     get:
       tags:

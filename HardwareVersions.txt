@@ -6,5 +6,6 @@ v3Rev1 NanoPi, RF1276T (only test version created)
 v3Rev2 NanoPi, DRF1268DS, Ipx antenna right, two usb
 v4Rev1 NanoPi, DRF1268DS, Antenna left, two usb + serial, uses NanoPi LED for blinking
 V5Rev1 NanoPi, DRF1268DS, Antenna left, two usb + serial, uses NanoPi LED for blinking neater routing - AXP209 rotated left (not manufactured)
-V6Rev1 NanoPi, DRF1268DS, Antenna left, two usb + serial chip on PCB, uses NanoPi LED for blinking, connection for SRR board
+V6Rev1 NanoPi, DRF1268DS, Antenna left, two usb + serial chip on PCB, uses NanoPi LED for blinking, flexcable connection for SRR board
+V7Rev1 NanoPi, DRF1268DS, Antenna left, two usb + serial chip on PCB, uses NanoPi LED for blinking, 1.27mm pin header connection for SRR board
 

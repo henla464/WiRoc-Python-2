@@ -110,23 +110,23 @@ class SendToSirapAdapter(object):
             try:
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 SendToSirapAdapter.WiRocLogger.debug(
-                    "SendToSirapAdapter::SendData() Address: " + settingsDictionary["SendToSirapIP"] + " Port: " + str(
+                    "SendToSirapAdapter::OpenConnection() Address: " + settingsDictionary["SendToSirapIP"] + " Port: " + str(
                         settingsDictionary["SendToSirapIPPort"]))
                 server_address = (settingsDictionary["SendToSirapIP"], settingsDictionary["SendToSirapIPPort"])
                 self.sock.settimeout(2)
                 self.sock.connect(server_address)
-                SendToSirapAdapter.WiRocLogger.debug("SendToSirapAdapter::SendData() After connect")
+                SendToSirapAdapter.WiRocLogger.debug("SendToSirapAdapter::OpenConnection() After connect")
                 return True
             except socket.gaierror as msg:
                 SendToSirapAdapter.WiRocLogger.error(
-                    "SendToSirapAdapter::SendData() Address-related error connecting to server: " + str(msg))
+                    "SendToSirapAdapter::OpenConnection() Address-related error connecting to server: " + str(msg))
                 if self.sock is not None:
                     self.sock.close()
                 self.sock = None
                 callbackQueue.put((failureCB,))
                 return False
             except socket.error as msg:
-                SendToSirapAdapter.WiRocLogger.error("SendToSirapAdapter::SendData() Connection error: " + str(msg))
+                SendToSirapAdapter.WiRocLogger.error("SendToSirapAdapter::OpenConnection() Connection error: " + str(msg))
                 if self.sock is not None:
                     self.sock.close()
                 self.sock = None

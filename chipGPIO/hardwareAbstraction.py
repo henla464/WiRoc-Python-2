@@ -7,12 +7,14 @@ from smbus2 import SMBus
 import yaml
 from datetime import timedelta
 from pathlib import Path
+from __future__ import annotations
 
 
 class HardwareAbstraction(object):
     WiRocLogger = logging.getLogger('WiRoc')
-    Instance = None
-    i2cAddress = 0x34
+    Instance: HardwareAbstraction = None
+    i2cAddress: int = 0x34
+    rtcAddress: int = 0x51
 
     def __init__(self):
         HardwareAbstraction.WiRocLogger.info("HardwareAbstraction::Init start")
@@ -207,3 +209,86 @@ class HardwareAbstraction(object):
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::DisablePMUIRQ4")
         IRQ_4_REGADDR = 0x43
         self.i2cBus.write_byte_data(self.i2cAddress, IRQ_4_REGADDR, 0x00)
+
+    def GetRTCTime(self) -> str:
+        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetRTCTime")
+        SECOND_REGADDR = 0x02
+        MINUTE_REGADDR = 0x03
+        HOUR_REGADDR = 0x04
+        seconds = self.i2cBus.read_byte_data(self.rtcAddress, SECOND_REGADDR, force=True)
+        minutes = self.i2cBus.read_byte_data(self.rtcAddress, MINUTE_REGADDR, force=True)
+        hours = self.i2cBus.read_byte_data(self.rtcAddress, HOUR_REGADDR, force=True)
+        # Exclude the VL flag, and downshift
+        seconds_HighCharacter = (seconds & 0x70) >> 4
+        seconds_LowCharacter = (seconds & 0x0F)
+        minutes_HighCharacter = (minutes & 0x70) >> 4
+        minutes_LowCharacter = (minutes & 0x0F)
+        hour_HighCharacter = (hours & 0x30) >> 4
+        hour_LowCharacter = (hours & 0x0F)
+
+        return f"{hour_HighCharacter}{hour_LowCharacter}:{minutes_HighCharacter}{minutes_LowCharacter}:{seconds_HighCharacter}{seconds_LowCharacter}"
+
+    def SetRTCTime(self, timeWithSeconds) -> None:
+        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::SetRTCTime")
+        SECOND_REGADDR = 0x02
+        MINUTE_REGADDR = 0x03
+        HOUR_REGADDR = 0x04
+
+        hour_HighCharacter = timeWithSeconds[0]
+        hour_LowCharacter = timeWithSeconds[1]
+        minutes_HighCharacter = timeWithSeconds[3]
+        minutes_LowCharacter = timeWithSeconds[4]
+        seconds_HighCharacter = timeWithSeconds[6]
+        seconds_LowCharacter = timeWithSeconds[7]
+
+        seconds = (seconds_HighCharacter << 4) | seconds_LowCharacter
+        minutes = (minutes_HighCharacter << 4) | minutes_LowCharacter
+        hours = (hour_HighCharacter << 4) | hour_LowCharacter
+        self.i2cBus.write_byte_data(self.rtcAddress, SECOND_REGADDR, seconds, force=True)
+        self.i2cBus.write_byte_data(self.rtcAddress, MINUTE_REGADDR, minutes, force=True)
+        self.i2cBus.write_byte_data(self.rtcAddress, HOUR_REGADDR, hours, force=True)
+
+    def GetRTCWakeUpTime(self) -> str:
+        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetRTCWakeUpTime")
+        MINUTE_ALARM_REGADDR = 0x09
+        HOUR_ALARM_REGADDR = 0x0a
+        minutes = self.i2cBus.read_byte_data(self.rtcAddress, MINUTE_ALARM_REGADDR, force=True)
+        hours = self.i2cBus.read_byte_data(self.rtcAddress, HOUR_ALARM_REGADDR, force=True)
+        # Exclude AE_M minute alarm enable bit
+        minutes_HighCharacter = (minutes & 0x70) >> 4
+        minutes_LowCharacter = (minutes & 0x0F)
+        hour_HighCharacter = (hours & 0x30) >> 4
+        hour_LowCharacter = (hours & 0x0F)
+
+        return f"{hour_HighCharacter}{hour_LowCharacter}:{minutes_HighCharacter}{minutes_LowCharacter}"
+
+    def SetWakeUpTime(self, time) -> None:
+        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::SetWakeUpTime")
+        MINUTE_REGADDR = 0x09
+        HOUR_REGADDR = 0x0a
+
+        hour_HighCharacter = time[0]
+        hour_LowCharacter = time[1]
+        minutes_HighCharacter = time[3]
+        minutes_LowCharacter = time[4]
+
+        minutes = (minutes_HighCharacter << 4) | minutes_LowCharacter
+        hours = (hour_HighCharacter << 4) | hour_LowCharacter
+        self.i2cBus.write_byte_data(self.rtcAddress, MINUTE_REGADDR, minutes, force=True)
+        self.i2cBus.write_byte_data(self.rtcAddress, HOUR_REGADDR, hours, force=True)
+
+    def SetWakeUpToBeEnabledAtShutdown(self) -> None:
+        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::SetWakeUpToBeEnabledAtShutdown")
+        DAY_REGADDR = 0x0b
+        self.i2cBus.write_byte_data(self.rtcAddress, DAY_REGADDR, 0x02, force=True)
+
+    def ClearWakeUpToBeEnabledAtShutdown(self) -> None:
+        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearWakeUpToBeEnabledAtShutdown")
+        DAY_REGADDR = 0x0b
+        self.i2cBus.write_byte_data(self.rtcAddress, DAY_REGADDR, 0x00, force=True)
+
+    def GetWakeUpToBeEnabledAtShutdown(self) -> bool:
+        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearWakeUpToBeEnabledAtShutdown")
+        DAY_REGADDR = 0x0b
+        dayBCD = self.i2cBus.read_byte_data(self.rtcAddress, DAY_REGADDR, force=True)
+        return dayBCD == 0x02

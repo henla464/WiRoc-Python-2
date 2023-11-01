@@ -111,7 +111,7 @@ class Setup:
                             # add transform to database
                             transformData = TransformData(transformClass.GetName(), inputMessageDataId, outputMessageDataId)
                             transformDataId = DatabaseHelper.save_transform(transformData)
-                            Setup.WiRocLogger.error("Setup::SetupAdapters() Add transform: %s" %(transformClass.GetName()))
+                            Setup.WiRocLogger.info("Setup::SetupAdapters() Add transform: %s" %(transformClass.GetName()))
 
                             # add subscription to database
                             deleteAfterSent = transformClass.GetDeleteAfterSent()

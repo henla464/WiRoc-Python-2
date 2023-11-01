@@ -440,7 +440,8 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
     def DetectBaudRate(self):
         self.siSerial.baudrate = 38400
         try:
-            self.siSerial.open()
+            if self.siSerial.is_open():
+                return True
             self.siSerial.reset_input_buffer()
             self.siSerial.reset_output_buffer()
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitTwoWay() opened serial")
