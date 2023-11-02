@@ -163,7 +163,7 @@ class DatabaseHelper:
     def get_error_codes(cls) -> list[ErrorCodeData]:
         cls.init()
         rows = cls.db.get_table_objects(ErrorCodeData)
-        return rows
+        return [row for row in rows if len(row.Message) > 0]
 
     @classmethod
     def save_error_code(cls, errorCodeData: ErrorCodeData) -> int:
