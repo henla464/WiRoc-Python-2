@@ -20,6 +20,7 @@ class SettingData(object):
 class ErrorCodeData(object):
     columns = [("Code", str), ("Message", str)]
     ERR_LORA_CONF = "ERR_LORA_CONF"
+    ERR_SI_USB_CONF = "ERR_SI_USB_CONF"
 
     def __init__(self):
         self.id: int|None = None

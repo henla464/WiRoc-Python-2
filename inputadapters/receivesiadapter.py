@@ -1,11 +1,11 @@
+from __future__ import annotations
 from settings.settings import SettingsClass
 import serial
 import logging
 from constants import *
 from time import sleep
 from utils.utils import Utils
-from battery import Battery
-from datamodel.datamodel import SIMessage
+from datamodel.datamodel import SIMessage, ErrorCodeData
 from datamodel.db_helper import DatabaseHelper
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 import serial.tools.list_ports
@@ -14,9 +14,9 @@ import select
 
 
 class ReceiveSIAdapter(object):
-    WiRocLogger = logging.getLogger('WiRoc.Input')
-    AddressOfLastPunch = {}
-    MSMode = bytes([0xFF, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
+    WiRocLogger: logging.Logger = logging.getLogger('WiRoc.Input')
+    AddressOfLastPunch: dict[int, int] = {}
+    MSMode: bytes = bytes([0xFF, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
 
     @staticmethod
     def CreateInstances():
@@ -26,64 +26,64 @@ class ReceiveSIAdapter(object):
     def GetTypeName():
         return "SI"
 
-    def __init__(self, instanceName, instanceNumber, portName):
-        self.instanceName = instanceName
-        self.instanceNumber = instanceNumber
-        self.portName = portName
-        self.isInitialized = False
-        self.oneWay = False
-        self.oneWayFallbackTryReInitWhenDataReceived = False
-        self.oneWayFallbackShouldNotTriggerReInit = False
-        self.shouldReinitialize = False
-        self.siStationNumber = 0
-        self.hasTimeBeenSet = False
-        self.serialNumber = None
-        self.noOfFailedReadsInRow = 0
-        self.fetchFromBackup = False
-        self.fetchFromBackupAddress = None #exclusive
-        self.fetchToBackupAddress = None #exclusive
+    def __init__(self, instanceName: str, instanceNumber: int, portName: str):
+        self.instanceName: str = instanceName
+        self.instanceNumber: int = instanceNumber
+        self.portName: str = portName
+        self.isInitialized: bool = False
+        self.oneWay: bool = False
+        self.oneWayFallbackTryReInitWhenDataReceived: bool = False
+        self.oneWayFallbackShouldNotTriggerReInit: bool = False
+        self.shouldReinitialize: bool = False
+        self.siStationNumber: int = 0
+        self.hasTimeBeenSet: bool = False
+        self.serialNumber: int | None = None
+        self.noOfFailedReadsInRow: int = 0
+        self.fetchFromBackup: bool = False
+        self.fetchFromBackupAddress: int | None = None #exclusive
+        self.fetchToBackupAddress: int | None = None #exclusive
 
-    def GetInstanceName(self):
+    def GetInstanceName(self) -> str:
         return self.instanceName
 
-    def GetInstanceNumber(self):
+    def GetInstanceNumber(self) -> int:
         return self.instanceNumber
 
-    def GetSerialDevicePath(self):
+    def GetSerialDevicePath(self) -> str:
         return self.portName
 
     # abstract/virtual method
-    def GetIsInitialized(self):
+    def GetIsInitialized(self) -> bool:
         return False
 
     # abstract/virtual method
-    def writeData(self, dataToWrite):
+    def writeData(self, dataToWrite: bytes) -> None:
         return None
 
     # abstract/virtual method
-    def readData(self, waitMS, expectedLength):
+    def readData(self, waitMS: int, expectedLength: int) -> tuple[bytearray, bytearray, int]:
         return bytearray(), bytearray(), 0
 
     # abstract/virtual method
-    def Init(self):
+    def Init(self) -> bool:
         return False
 
     # abstract/virtual method
-    def IsDataAvailable(self):
+    def IsDataAvailable(self) -> bool:
         return False
 
-    def ShouldBeInitialized(self):
+    def ShouldBeInitialized(self) -> bool:
         return not self.GetIsInitialized()
 
-    def IsChecksumOK(self, receivedData):
+    def IsChecksumOK(self, receivedData: bytearray) -> bool:
         calculatedCRC = Utils.CalculateCRC(receivedData[1:-3])
         crcInMessage = receivedData[-3:-1]
         return calculatedCRC == crcInMessage
 
-    def isCorrectMSModeDirectResponse(self, data):
+    def isCorrectMSModeDirectResponse(self, data: bytearray) -> bool:
         return len(data) == 9 and data[0] == STX and data[5] == 0x4D
 
-    def sendCommand(self, command):
+    def sendCommand(self, command: bytes):
         ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::sendCommand() command: " + Utils.GetDataInHex(command, logging.DEBUG))
         writeOK = self.writeData(command)
         ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::sendCommand(): after write. WriteOK: " + str(writeOK))
@@ -94,13 +94,13 @@ class ReceiveSIAdapter(object):
         else:
             return None
 
-    def GetTimeAsTenthOfSeconds(self, twelveHourTime, subSecondsAsTensOfSeconds, twentyFourHour):
+    def GetTimeAsTenthOfSeconds(self, twelveHourTime: bytearray, subSecondsAsTensOfSeconds: int, twentyFourHour: int):
         time = ((twelveHourTime[0] << 8) + twelveHourTime[1]) * 10 + subSecondsAsTensOfSeconds
         if twentyFourHour == 1:
             time += 36000 * 12
         return time
 
-    def getSIStationTimeAndStationNumber(self):
+    def getSIStationTimeAndStationNumber(self) -> tuple[int, int, int, int, int, int ,int] | None:
         getTimeCmd = bytes([0xFF, 0x02, 0xF7, 0x00, 0xF7, 0x00, 0x03])
         timeResp = self.sendCommand(getTimeCmd)
         if timeResp is None:
@@ -128,7 +128,7 @@ class ReceiveSIAdapter(object):
         siStationCode = (timeResp[3] << 8) + timeResp[4]
         return year, month, day, hour, minute, second, siStationCode
 
-    def getStationSettingSystemValue(self):
+    def getStationSettingSystemValue(self) -> tuple[bool | None, bool | None, bool | None, int | None, int | None]:
         getSystemValueCmd = bytes([0xFF, 0x02, 0x83, 0x02, 0x74, 0x01, 0x04, 0x14, 0x03])
         sysValResp = self.sendCommand(getSystemValueCmd)
         if sysValResp is None:
@@ -148,7 +148,7 @@ class ReceiveSIAdapter(object):
         stationNumber = (sysValResp[3] << 8) | sysValResp[4]
         return extendedProtocol, autoSend, readOut, stationNumber, configByte
 
-    def getStationSettingModelValue(self):
+    def getStationSettingModelValue(self) -> bytearray | None:
         getSystemValueCmd = bytes([0xFF, 0x02, 0x83, 0x02, 0x0B, 0x02, 0x06, 0x18, 0x03])
         sysValResp = self.sendCommand(getSystemValueCmd)
         if sysValResp is None:
@@ -159,7 +159,7 @@ class ReceiveSIAdapter(object):
         model1 = sysValResp[7]
         return bytearray([model0, model1])
 
-    def getSerialNumberSystemValue(self):
+    def getSerialNumberSystemValue(self) -> int | None:
         addr = 0x00
         cmdLength = 0x02
         noOfBytesToRead = 0x04
@@ -174,7 +174,7 @@ class ReceiveSIAdapter(object):
         ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::getSerialNumberSystemValue() serialNumber: " + str(serialNumber))
         return serialNumber
 
-    def getBackupPunchAsSIMessageArray(self, address):
+    def getBackupPunchAsSIMessageArray(self, address: int) -> None | bytearray:
         if self.siStationNumber is None:
             self.siStationNumber = self.getStationSettingSystemValue()[3]
         addressArr = [((address >> 16) & 0xFF), ((address >> 8) & 0xFF), (address & 0xFF)]
@@ -213,7 +213,7 @@ class ReceiveSIAdapter(object):
         ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::getBackupPunchAsSIMessageArray SIMsg created from backup punch: " + Utils.GetDataInHex(siMsgByteArr, logging.DEBUG))
         return siMsgByteArr
 
-    def setAutosendAndExtendedProtocol(self):
+    def setAutosendAndExtendedProtocol(self) -> None:
         extendedProtocol, autoSend, readOut, stationNumber, configByte = self.getStationSettingSystemValue()
         if autoSend is not None and extendedProtocol is not None and (not autoSend or not extendedProtocol):
             configByte = configByte | 0b00000001
@@ -227,7 +227,7 @@ class ReceiveSIAdapter(object):
                 return
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::setAutosendAndExtendedProtocol: response: " + Utils.GetDataInHex(response, logging.DEBUG))
 
-    def updateComputerTimeAndSiStationNumber(self):
+    def updateComputerTimeAndSiStationNumber(self) -> None:
         theCurrentTimeInSiStation = self.getSIStationTimeAndStationNumber()
         ReceiveSIAdapter.WiRocLogger.debug(
             "ReceiveSIAdapter::updateComputerTime time to set: " + str(2000+theCurrentTimeInSiStation[0]) + "-" +
@@ -244,14 +244,14 @@ class ReceiveSIAdapter(object):
         DatabaseHelper.change_future_created_dates()
         DatabaseHelper.change_future_sent_dates()
 
-    def UpdateInfrequently(self):
+    def UpdateInfrequently(self) -> bool:
         #SettingsClass.SetSIStationNumber(self.siStationNumber)
         return True
 
-    def detectMissedPunchesDuringInit(self):
+    def detectMissedPunchesDuringInit(self) -> None:
         lastAddr = ReceiveSIAdapter.AddressOfLastPunch.get(self.serialNumber, None)
         if lastAddr is None:
-            return False
+            return None
         getBackupPointerCmd = bytes([0xFF, 0x02, 0x02, 0x83, 0x02, 0x1C, 0x07, 0x74,0x06, 0x03])
         response = self.sendCommand(getBackupPointerCmd)
         if response is None:
@@ -274,7 +274,7 @@ class ReceiveSIAdapter(object):
                 self.fetchToBackupAddress = curAddr
                 self.fetchFromBackup = True
 
-    def detectMissedPunches(self, siMsg):
+    def detectMissedPunches(self, siMsg : SIMessage) -> bool:
         ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::detectMissedPunches enter")
         if self.serialNumber is None:
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::detectMissedPunches serialNumber is None")
@@ -305,7 +305,7 @@ class ReceiveSIAdapter(object):
         ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::detectMissedPunches no missed punches detected")
         return False
 
-    def getBackupPunch(self):
+    def getBackupPunch(self) -> None | dict[str, str|bool|bytearray]:
         if self.fetchFromBackup:
             addrToPunch = self.fetchFromBackupAddress + 8
             if addrToPunch < self.fetchToBackupAddress:
@@ -325,7 +325,7 @@ class ReceiveSIAdapter(object):
         return None
 
     # messageData is a bytearray
-    def GetData(self):
+    def GetData(self) -> None | dict[str, str|bool|bytearray|int]:
         if not self.IsDataAvailable():
             if self.oneWay:
                 return None
@@ -366,21 +366,21 @@ class ReceiveSIAdapter(object):
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::GetData() Unknown SI message received! Data: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
             return None
 
-    def AddedToMessageBox(self, mbid):
+    def AddedToMessageBox(self, mbid: int) -> None:
         return None
 
 
 class ReceiveSISerialPort(ReceiveSIAdapter):
-    def __init__(self, instanceName, instanceNumber, portName):
+    def __init__(self, instanceName: str, instanceNumber: int, portName: str):
         super().__init__(instanceName, instanceNumber, portName)
         self.siSerial = serial.Serial()  # not for SIBTSP
 
-    def writeData(self, dataToWrite):
+    def writeData(self, dataToWrite: bytes) -> bool:
         self.siSerial.write(dataToWrite)
         self.siSerial.flush()
         return True
 
-    def readData(self, waitMS, expectedLength):
+    def readData(self, waitMS: int, expectedLength: int) -> tuple[bytearray, bytearray, int]:
         if waitMS > 0:
             idx = 0
             while self.siSerial.in_waiting == 0 and idx < waitMS:
@@ -413,7 +413,7 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
                     sleep(0.05)
         return response, allBytesReceived, expectedLength
 
-    def InitOneWay(self, baudrate):
+    def InitOneWay(self, baudrate: int) -> bool:
         self.siSerial.baudrate = baudrate
 
         try:
@@ -437,11 +437,13 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
             return True
         return False
 
-    def DetectBaudRate(self):
+    def DetectBaudRate(self) -> bool:
         self.siSerial.baudrate = 38400
         try:
             if self.siSerial.is_open():
                 return True
+            else:
+                self.siSerial.open()
             self.siSerial.reset_input_buffer()
             self.siSerial.reset_output_buffer()
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitTwoWay() opened serial")
@@ -507,7 +509,7 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
         else:
             return False
 
-    def InitTwoWay(self):
+    def InitTwoWay(self) -> bool:
         if self.DetectBaudRate():
             try:
                 self.updateComputerTimeAndSiStationNumber()
@@ -530,10 +532,10 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
         else:
             return False
 
-    def IsDataAvailable(self):
+    def IsDataAvailable(self) -> bool:
         return self.siSerial.in_waiting > 0
 
-    def GetData(self):
+    def GetData(self) -> None | dict[str, str|bool|bytearray|int]:
         data = super().GetData()
         if data is not None:
             if self.oneWayFallbackTryReInitWhenDataReceived:
@@ -542,10 +544,10 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
 
 
 class ReceiveSIHWSerialPort(ReceiveSISerialPort):
-    Instances = []
+    Instances: list[ReceiveSIHWSerialPort] = []
 
     @staticmethod
-    def CreateInstances():
+    def CreateInstances() -> bool:
         serialPorts = []
         # Add any HW serial ports used for SportIdent units
         if SettingsClass.GetRS232Mode() == "RECEIVE":
@@ -569,12 +571,13 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
 
         if newIntancesFound or instancesRemoved:
             ReceiveSIHWSerialPort.Instances = previouslyCreated + newInstances
+            return True
         else:
             return False
 
-    def GetIsInitialized(self):
-        oneWayConfig = SettingsClass.GetRS232OneWayReceiveFromSIStation()
-        baudRateConfig = 4800 if oneWayConfig and SettingsClass.GetForceRS2324800BaudRateFromSIStation() else 38400
+    def GetIsInitialized(self) -> bool:
+        oneWayConfig: bool = SettingsClass.GetRS232OneWayReceiveFromSIStation()
+        baudRateConfig: int = 4800 if oneWayConfig and SettingsClass.GetForceRS2324800BaudRateFromSIStation() else 38400
 
         ReceiveSIAdapter.WiRocLogger.debug(
             "ReceiveSIHWSerialPort::GetIsInitialized() " + self.GetInstanceName()
@@ -587,7 +590,7 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
             and (oneWayConfig == self.oneWay or (self.oneWay and (self.oneWayFallbackTryReInitWhenDataReceived or self.oneWayFallbackShouldNotTriggerReInit))) \
             and baudRateConfig == self.siSerial.baudrate
 
-    def Init(self):
+    def Init(self) -> bool:
         try:
             if self.GetIsInitialized() and self.siSerial.is_open:
                 return True
@@ -609,23 +612,23 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
                 if self.InitTwoWay():
                     return True
                 else:
-                    # better with init one way if two way is not working than aborting
+                    # better with init one way if two-way is not working than aborting
                     success = self.InitOneWay(baudrate)
                     if success:
                         self.oneWayFallbackTryReInitWhenDataReceived = True
                     return success
 
-        except (Exception) as msg:
+        except Exception as msg:
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIHWSerialPort::Init() Exception: " + str(msg))
             return False
 
 
 class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
-    Instances = []
-    SRRDongleModel = bytearray([0x6F, 0x21])
+    Instances: list[ReceiveSIUSBSerialPort] = []
+    SRRDongleModel: bytearray = bytearray([0x6F, 0x21])
 
     @staticmethod
-    def CreateInstances():
+    def CreateInstances() -> bool:
         # Add USB serial ports
         portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa|1a86:7523|067b:2303|0403:6001|0557:2008')
         serialPorts = [portInfo.device for portInfo in portInfoList]
@@ -664,9 +667,15 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
         else:
             return False
 
-    def GetIsInitialized(self):
-        oneWayConfig = SettingsClass.GetOneWayReceiveFromSIStation()
-        baudRateConfig = 4800 if oneWayConfig and SettingsClass.GetForce4800BaudRateFromSIStation() else 38400
+    def SetErrorCode(self, message: str):
+        errorCodeData = ErrorCodeData()
+        errorCodeData.Code = ErrorCodeData.ERR_SI_USB_CONF
+        errorCodeData.Message = message
+        DatabaseHelper.save_error_code(errorCodeData)
+
+    def GetIsInitialized(self) -> bool:
+        oneWayConfig: bool = SettingsClass.GetOneWayReceiveFromSIStation()
+        baudRateConfig: int = 4800 if oneWayConfig and SettingsClass.GetForce4800BaudRateFromSIStation() else 38400
 
         ReceiveSIAdapter.WiRocLogger.debug(
             "ReceiveSIUSBSerialPort::GetIsInitialized() " + self.GetInstanceName() + " isInitialized: " + str(
@@ -675,12 +684,21 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
                 + " oneWayFallbackShouldNotTriggerReInit: " + str(self.oneWayFallbackShouldNotTriggerReInit)
                 + " shouldReinitialize: " + str(self.shouldReinitialize)
                 + " baudRateConfig: " + str(baudRateConfig) + " baudRate: " + str(self.siSerial.baudrate))
+
+        if self.isInitialized and not oneWayConfig and self.oneWay and not self.oneWayFallbackShouldNotTriggerReInit:
+            # We are initialized as one way even though configuration says it shouldn't be one-way.
+            # and is not a device that we know is one-way (SRR dongle)
+            self.SetErrorCode(f"{self.instanceName} two-way init failed")
+        else:
+            # Clear error code
+            self.SetErrorCode("")
+
         return self.isInitialized and not self.shouldReinitialize \
             and (oneWayConfig == self.oneWay
                  or (self.oneWay and (self.oneWayFallbackTryReInitWhenDataReceived or self.oneWayFallbackShouldNotTriggerReInit))) \
             and baudRateConfig == self.siSerial.baudrate
 
-    def Init(self):
+    def Init(self) -> bool:
         try:
             if self.GetIsInitialized() and self.siSerial.is_open:
                 return True
@@ -727,14 +745,14 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
 
 
 class ReceiveSIBluetoothSP(ReceiveSIAdapter):
-    Instances = []
+    Instances: list[ReceiveSIBluetoothSP] = []
 
-    def __init__(self, instanceName, instanceNumber, portName):
+    def __init__(self, instanceName: str, instanceNumber: int, portName: str):
         super().__init__(instanceName, instanceNumber, portName)
         self.sock = None
 
     @staticmethod
-    def CreateInstances():
+    def CreateInstances() -> bool:
         # Get BT Serial ports from database
         btSerialPortData = DatabaseHelper.get_bluetooth_serial_ports()
         serialPorts = ["rfcomm" + btSerialPort.DeviceBTAddress for btSerialPort in btSerialPortData]
@@ -762,7 +780,7 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
         else:
             return False
 
-    def GetIsInitialized(self):
+    def GetIsInitialized(self) -> bool:
         oneWayConfig = SettingsClass.GetBTSerialOneWayReceiveFromSIStation()
 
         ReceiveSIAdapter.WiRocLogger.debug(
@@ -772,7 +790,7 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
         return self.isInitialized and not self.shouldReinitialize and (oneWayConfig == self.oneWay or (self.oneWay and self.oneWayFallbackTryReInitWhenDataReceived))
 
     # implements abstract/virtual method
-    def writeData(self, dataToWrite):
+    def writeData(self, dataToWrite: bytes) -> bool:
         try:
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::writeData enter")
             self.sock.send(dataToWrite)
@@ -796,7 +814,7 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
         return True
 
     # abstract/virtual method
-    def readData(self, waitMS, expectedLength):
+    def readData(self, waitMS: int, expectedLength: int) -> tuple[bytearray, bytearray, int]:
         try:
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::readData(): enter")
             ready = select.select([self.sock], [], [], waitMS/1000)
@@ -830,7 +848,7 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
                 DatabaseHelper.save_bluetooth_serial_port(btSerialPortDatas[0])
             return bytearray(), bytearray(), expectedLength
 
-    def InitOneWay(self, baudrate):
+    def InitOneWay(self, baudrate: int | None) -> bool:
         try:
             # Need to test if oneway is possible, if the bt device is connected at all
             self.sock.send(bytearray(bytes([0])))
@@ -850,7 +868,7 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
                 self.isInitialized = False
                 self.oneWay = False
 
-    def InitTwoWay(self):
+    def InitTwoWay(self) -> bool:
         try:
             # set master - mode to direct
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::InitTwoWay()")
@@ -877,7 +895,7 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
             ReceiveSIAdapter.WiRocLogger.error(ex2)
             return False
 
-    def Init(self):
+    def Init(self) -> bool:
         try:
             if self.GetIsInitialized():
                 return True
@@ -926,9 +944,9 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
     # abstract/virtual method
     def IsDataAvailable(self):
         ready = select.select([self.sock], [], [], 0)
-        return ready[0]
+        return len(ready) > 0
 
-    def GetData(self):
+    def GetData(self) -> dict[str, str | bool | bytearray | int] | None:
         data = super().GetData()
         if data is not None:
             if self.oneWayFallbackTryReInitWhenDataReceived:
