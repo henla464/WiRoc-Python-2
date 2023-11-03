@@ -36,6 +36,7 @@ class SettingsClass(object):
     deviceId = None
     messageIDOfLastLoraMessageSent = None
     SRRMessageAvailable = False
+    NewErrorCode = False
 
     #####
     # Static/class settings
@@ -134,12 +135,24 @@ class SettingsClass(object):
         return SettingsClass.siStationNumber
 
     @staticmethod
-    def SetBatteryIsLowReceived(batteryIsLowReceived):
+    def SetBatteryIsLowReceived(batteryIsLowReceived: bool):
         SettingsClass.batteryIsLowReceived = batteryIsLowReceived
 
     @staticmethod
-    def GetBatteryIsLowReceived():
+    def GetBatteryIsLowReceived() -> bool:
         return SettingsClass.batteryIsLowReceived
+
+    @staticmethod
+    def SetNewErrorCode():
+        SettingsClass.NewErrorCode = True
+
+    @staticmethod
+    def ClearNewErrorCode():
+        SettingsClass.NewErrorCode = False
+
+    @staticmethod
+    def GetNewErrorCode():
+        return SettingsClass.NewErrorCode
 
     @staticmethod
     def GetLoraModule() -> str:

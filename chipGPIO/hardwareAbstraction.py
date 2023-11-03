@@ -1,3 +1,4 @@
+from __future__ import annotations
 from chipGPIO.chipGPIO import *
 import logging
 import socket
@@ -7,7 +8,6 @@ from smbus2 import SMBus
 import yaml
 from datetime import timedelta
 from pathlib import Path
-from __future__ import annotations
 
 
 class HardwareAbstraction(object):
@@ -209,6 +209,9 @@ class HardwareAbstraction(object):
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::DisablePMUIRQ4")
         IRQ_4_REGADDR = 0x43
         self.i2cBus.write_byte_data(self.i2cAddress, IRQ_4_REGADDR, 0x00)
+
+    def HasRTC(self):
+        return self.wirocHWVersionNumber >= 7
 
     def GetRTCTime(self) -> str:
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetRTCTime")

@@ -1,8 +1,8 @@
+from __future__ import annotations
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
 import socket
 import logging
-from __future__ import annotations
 
 
 class SendToSirapAdapter(object):

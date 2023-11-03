@@ -83,13 +83,16 @@ class ReceiveSIAdapter(object):
     def isCorrectMSModeDirectResponse(self, data: bytearray) -> bool:
         return len(data) == 9 and data[0] == STX and data[5] == 0x4D
 
-    def sendCommand(self, command: bytes):
-        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::sendCommand() command: " + Utils.GetDataInHex(command, logging.DEBUG))
+    def sendCommand(self, command: bytes, printLog:bool = True):
+        if printLog:
+            ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::sendCommand: {self.instanceName}: command: " + Utils.GetDataInHex(command, logging.DEBUG))
         writeOK = self.writeData(command)
-        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::sendCommand(): after write. WriteOK: " + str(writeOK))
+        if printLog:
+            ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::sendCommand: {self.instanceName}: after write. WriteOK: {writeOK}")
         if writeOK:
             response, allData, expectedLength = self.readData(300, 3)
-            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::sendCommand() response: " + Utils.GetDataInHex(response, logging.DEBUG))
+            if printLog:
+                ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::sendCommand: {self.instanceName}: response: " + Utils.GetDataInHex(response, logging.DEBUG))
             return response
         else:
             return None
@@ -100,18 +103,18 @@ class ReceiveSIAdapter(object):
             time += 36000 * 12
         return time
 
-    def getSIStationTimeAndStationNumber(self) -> tuple[int, int, int, int, int, int ,int] | None:
+    def getSIStationTimeAndStationNumber(self, printLog:bool = True) -> tuple[int, int, int, int, int, int ,int] | None:
         getTimeCmd = bytes([0xFF, 0x02, 0xF7, 0x00, 0xF7, 0x00, 0x03])
-        timeResp = self.sendCommand(getTimeCmd)
+        timeResp = self.sendCommand(getTimeCmd, printLog=printLog)
         if timeResp is None:
             ReceiveSIAdapter.WiRocLogger.error(
-                "ReceiveSIAdapter::getSIStationTimeAndStationNumber sendCommand returned None")
+                f"ReceiveSIAdapter::getSIStationTimeAndStationNumber: {self.instanceName}: sendCommand returned None")
             return None
         SIMsg = SIMessage()
         SIMsg.AddPayload(timeResp)
         if not SIMsg.GetIsChecksumOK():
             ReceiveSIAdapter.WiRocLogger.error(
-                "ReceiveSIAdapter::getSIStationTimeAndStationNumber getTimeCmd returned invalid checksum")
+                f"ReceiveSIAdapter::getSIStationTimeAndStationNumber: {self.instanceName}: getTimeCmd returned invalid checksum")
             return None
         twelveHourTime = timeResp[9:11]
         subSecondsAsTensOfSeconds = int(timeResp[11] // 25.6)
@@ -130,10 +133,11 @@ class ReceiveSIAdapter(object):
 
     def getStationSettingSystemValue(self) -> tuple[bool | None, bool | None, bool | None, int | None, int | None]:
         getSystemValueCmd = bytes([0xFF, 0x02, 0x83, 0x02, 0x74, 0x01, 0x04, 0x14, 0x03])
-        sysValResp = self.sendCommand(getSystemValueCmd)
+        ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::getStationSettingSystemValue: {self.instanceName}:")
+        sysValResp = self.sendCommand(getSystemValueCmd, printLog=False)
         if sysValResp is None:
             ReceiveSIAdapter.WiRocLogger.error(
-                "ReceiveSIAdapter::getStationSettingSystemValue sendCommand returned None")
+                f"ReceiveSIAdapter::getStationSettingSystemValue: {self.instanceName}: sendCommand returned None")
             return None, None, None, None, None
         configByte = sysValResp[6]
         #   xxxxxxx1b extended protocol
@@ -146,32 +150,37 @@ class ReceiveSIAdapter(object):
         autoSend = ((configByte & 0x02) > 0)
         readOut = ((configByte & 0x80) > 0)
         stationNumber = (sysValResp[3] << 8) | sysValResp[4]
+        ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::getStationSettingSystemValue: {self.instanceName}: response extendedProtocol:{extendedProtocol}, autoSend:{autoSend}, readOut:{readOut}, stationNumber:{stationNumber}, configByte:{configByte}")
         return extendedProtocol, autoSend, readOut, stationNumber, configByte
 
     def getStationSettingModelValue(self) -> bytearray | None:
         getSystemValueCmd = bytes([0xFF, 0x02, 0x83, 0x02, 0x0B, 0x02, 0x06, 0x18, 0x03])
-        sysValResp = self.sendCommand(getSystemValueCmd)
+        ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::getStationSettingModelValue: {self.instanceName}:")
+        sysValResp = self.sendCommand(getSystemValueCmd, printLog=False)
         if sysValResp is None:
             ReceiveSIAdapter.WiRocLogger.error(
-                "ReceiveSIAdapter::getStationSettingModelValue sendCommand returned None")
+                f"ReceiveSIAdapter::getStationSettingModelValue: {self.instanceName}: sendCommand returned None")
             return None
         model0 = sysValResp[6]
         model1 = sysValResp[7]
-        return bytearray([model0, model1])
+        modelNumber = bytearray([model0, model1])
+        ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::getStationSettingModelValue: {self.instanceName}: modelNumber:" + Utils.GetDataInHex(modelNumber, logging.DEBUG))
+        return modelNumber
 
     def getSerialNumberSystemValue(self) -> int | None:
         addr = 0x00
         cmdLength = 0x02
         noOfBytesToRead = 0x04
         getSerialNumberSystemValueCmd = bytes([0xFF, 0x02, 0x02, 0x83, cmdLength, addr, noOfBytesToRead, 0xbc, 0x0f, 0x03])
-        serialNumberArray = self.sendCommand(getSerialNumberSystemValueCmd)
+        ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::getSerialNumberSystemValue: {self.instanceName}:")
+        serialNumberArray = self.sendCommand(getSerialNumberSystemValueCmd, printLog=False)
         if serialNumberArray is None:
             ReceiveSIAdapter.WiRocLogger.error(
                 "ReceiveSIAdapter::getSerialNumberSystemValue sendCommand returned None")
             return None
-        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::getSerialNumberSystemValue() data: " + Utils.GetDataInHex(serialNumberArray, logging.DEBUG))
+        ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::getSerialNumberSystemValue: {self.instanceName}: data: " + Utils.GetDataInHex(serialNumberArray, logging.DEBUG))
         serialNumber = serialNumberArray[6] << 24 | serialNumberArray[7] << 16 | serialNumberArray[8] << 8 | serialNumberArray[9]
-        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::getSerialNumberSystemValue() serialNumber: " + str(serialNumber))
+        ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::getSerialNumberSystemValue: {self.instanceName}: serialNumber: " + str(serialNumber))
         return serialNumber
 
     def getBackupPunchAsSIMessageArray(self, address: int) -> None | bytearray:
@@ -182,7 +191,8 @@ class ReceiveSIAdapter(object):
         crc = Utils.CalculateCRC(bytearray(bytes(getBackupPunchCmdArr[3:-3])))
         getBackupPunchCmdArr[9] = crc[0]
         getBackupPunchCmdArr[10] = crc[1]
-        backupPunchRecord = self.sendCommand(bytes(getBackupPunchCmdArr))
+        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::getBackupPunchAsSIMessageArray")
+        backupPunchRecord = self.sendCommand(bytes(getBackupPunchCmdArr), printLog=False)
         if backupPunchRecord is None:
             ReceiveSIAdapter.WiRocLogger.error(
                 "ReceiveSIAdapter::getBackupPunchAsSIMessageArray could not fetch backup punch record")
@@ -221,14 +231,15 @@ class ReceiveSIAdapter(object):
             setSystemValueCmdData = bytes([0x82, 0x02, 0x74, configByte])
             calculatedCrc = Utils.CalculateCRC(bytearray(setSystemValueCmdData))
             setSystemValueCmd = bytes([0xFF, 0x02, 0x02]) + setSystemValueCmdData + bytes([calculatedCrc[0]]) + bytes([calculatedCrc[1]]) + bytes([0x03])
-            response = self.sendCommand(setSystemValueCmd)
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::setAutosendAndExtendedProtocol()")
+            response = self.sendCommand(setSystemValueCmd, printLog=False)
             if response is None:
-                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::setAutosendAndExtendedProtocol sendCommand returned None")
+                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::setAutosendAndExtendedProtocol() sendCommand returned None")
                 return
-            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::setAutosendAndExtendedProtocol: response: " + Utils.GetDataInHex(response, logging.DEBUG))
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::setAutosendAndExtendedProtocol(): response: " + Utils.GetDataInHex(response, logging.DEBUG))
 
-    def updateComputerTimeAndSiStationNumber(self) -> None:
-        theCurrentTimeInSiStation = self.getSIStationTimeAndStationNumber()
+    def updateComputerTime(self) -> None:
+        theCurrentTimeInSiStation = self.getSIStationTimeAndStationNumber(printLog=False)
         ReceiveSIAdapter.WiRocLogger.debug(
             "ReceiveSIAdapter::updateComputerTime time to set: " + str(2000+theCurrentTimeInSiStation[0]) + "-" +
             str(theCurrentTimeInSiStation[1]) + "-" + str(theCurrentTimeInSiStation[2]) + "  " +
@@ -239,10 +250,15 @@ class ReceiveSIAdapter(object):
             # If month = 0 then battery is probably dead. Can't set
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::updateComputerTime exception: " + str(ex))
         SettingsClass.SetTimeOfLastMessageSentToLora()
-        self.siStationNumber = theCurrentTimeInSiStation[6]
-        SettingsClass.SetSIStationNumber(self.siStationNumber)
         DatabaseHelper.change_future_created_dates()
         DatabaseHelper.change_future_sent_dates()
+
+    def updateSiStationNumber(self) -> None:
+        ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::updateSiStationNumber: {self.instanceName}:")
+        theCurrentTimeInSiStation = self.getSIStationTimeAndStationNumber(printLog=False)
+        ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::updateSiStationNumber: {self.instanceName}: stationNumber: " + str(theCurrentTimeInSiStation[6]))
+        self.siStationNumber = theCurrentTimeInSiStation[6]
+        SettingsClass.SetSIStationNumber(self.siStationNumber)
 
     def UpdateInfrequently(self) -> bool:
         #SettingsClass.SetSIStationNumber(self.siStationNumber)
@@ -253,7 +269,8 @@ class ReceiveSIAdapter(object):
         if lastAddr is None:
             return None
         getBackupPointerCmd = bytes([0xFF, 0x02, 0x02, 0x83, 0x02, 0x1C, 0x07, 0x74,0x06, 0x03])
-        response = self.sendCommand(getBackupPointerCmd)
+        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::detectMissedPunchesDuringInit: sendCommand")
+        response = self.sendCommand(getBackupPointerCmd, printLog=False)
         if response is None:
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::detectMissedPunchesDuringInit sendCommand returned None")
             return None
@@ -387,7 +404,7 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
                 sleep(0.001)
                 idx = idx + 1
 
-        ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::readData(): after waiting for response")
+        #ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::readData(): after waiting for response")
 
         allBytesReceived = bytearray()
         startFound = False
@@ -409,25 +426,26 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
                 if len(response) == expectedLength:
                     break
                 if len(response) < expectedLength and self.siSerial.in_waiting == 0:
-                    logging.debug("ReceiveSIAdapter::sendCommand() sleep and wait for more bytes")
+                    logging.debug("ReceiveSIAdapter::readData() sleep and wait for more bytes")
                     sleep(0.05)
         return response, allBytesReceived, expectedLength
 
     def InitOneWay(self, baudrate: int) -> bool:
-        self.siSerial.baudrate = baudrate
-
         try:
+            if self.siSerial.is_open:
+                self.siSerial.close()
+            self.siSerial.baudrate = baudrate
             self.siSerial.open()
             self.siSerial.reset_input_buffer()
-            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitOneWay() " + self.instanceName + " opened serial")
+            ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::InitOneWay: {self.instanceName}: opened serial, baudRate: {self.siSerial.baudrate}")
         except Exception as ex:
             ReceiveSIAdapter.WiRocLogger.error(
-                "ReceiveSIAdapter::InitOneWay() " + self.instanceName + " opening serial exception:")
+                f"ReceiveSIAdapter::InitOneWay: {self.instanceName}: opening serial exception:")
             ReceiveSIAdapter.WiRocLogger.error(ex)
             try:
                 self.siSerial.close()
             except Exception as ex2:
-                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitOneWay() close serial exception 1:")
+                ReceiveSIAdapter.WiRocLogger.error(f"ReceiveSIAdapter::InitOneWay: {self.instanceName}: close serial exception 1:")
                 ReceiveSIAdapter.WiRocLogger.error(ex2)
             return False
 
@@ -445,33 +463,37 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
                     self.siSerial.close()
                 self.siSerial.baudrate = 38400
                 self.siSerial.open()
+                ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: serial opened, baudRate: 38400")
             else:
                 if not self.siSerial.is_open:
                     self.siSerial.open()
+                    ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: serial opened, baudRate: 38400")
+                else:
+                    ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: serial already open, baudRate: 38400")
             self.siSerial.reset_input_buffer()
             self.siSerial.reset_output_buffer()
-            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitTwoWay() opened serial")
+
         except Exception as ex:
-            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() opening serial exception:")
+            ReceiveSIAdapter.WiRocLogger.error(f"ReceiveSIAdapter::DetectBaudRate() opening serial exception:")
             ReceiveSIAdapter.WiRocLogger.error(ex)
             try:
                 self.siSerial.close()
             except Exception as ex2:
-                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() close serial exception:")
+                ReceiveSIAdapter.WiRocLogger.error(f"ReceiveSIAdapter::DetectBaudRate() close serial exception:")
                 ReceiveSIAdapter.WiRocLogger.error(ex2)
             return False
 
         if self.siSerial.is_open:
             try:
                 # set master - mode to direct
-                ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::InitTwoWay() serial port open")
-                response = self.sendCommand(ReceiveSIAdapter.MSMode)
+                ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: serial port open, set master - mode to direct")
+                response = self.sendCommand(ReceiveSIAdapter.MSMode, printLog=False)
                 if response is None:
-                    ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() msmodedirect command failed")
+                    ReceiveSIAdapter.WiRocLogger.info(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: msmodedirect command failed")
                     return False
 
                 if not self.isCorrectMSModeDirectResponse(response):
-                    ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() not correct msmodedirectresponse: " + str(response))
+                    ReceiveSIAdapter.WiRocLogger.info(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: not correct msmodedirectresponse: " + str(response))
 
                     # something wrong, try other baudrate
                     self.siSerial.close()
@@ -481,42 +503,45 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
                     self.siSerial.reset_input_buffer()
                     self.siSerial.reset_output_buffer()
 
-                    response = self.sendCommand(ReceiveSIAdapter.MSMode)
+                    ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: retry with 4800, serial port open, set master - mode to direct")
+                    response = self.sendCommand(ReceiveSIAdapter.MSMode, printLog=False)
                     if response is None:
-                        ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() msmodedirect command failed")
+                        ReceiveSIAdapter.WiRocLogger.info(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: msmodedirect command failed")
                         return False
 
                     if not self.isCorrectMSModeDirectResponse(response):
-                        ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() not correct msmodedirectresponse: " + str(response))
-                        ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() could not communicate with master station")
+                        ReceiveSIAdapter.WiRocLogger.info(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: not correct msmodedirectresponse: " + str(response))
+                        ReceiveSIAdapter.WiRocLogger.error(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: could not communicate with master station")
                         try:
                             self.siSerial.close()
                         except Exception as ex2:
-                            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() close serial exception (2):")
+                            ReceiveSIAdapter.WiRocLogger.error(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: close serial exception (2):")
                             ReceiveSIAdapter.WiRocLogger.error(ex2)
                         return False
 
-                    ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() SI Station 4800 kbit/s works")
+                    ReceiveSIAdapter.WiRocLogger.info(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: SI Station 4800 kbit/s works")
                 else:
-                    ReceiveSIAdapter.WiRocLogger.info("ReceiveSIAdapter::InitTwoWay() SI Station 38400 kbit/s works")
+                    ReceiveSIAdapter.WiRocLogger.info(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: SI Station 38400 kbit/s works")
 
                 return True
             except Exception as ex2:
-                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() exception:")
+                ReceiveSIAdapter.WiRocLogger.error(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: exception:")
                 ReceiveSIAdapter.WiRocLogger.error(ex2)
                 try:
                     self.siSerial.close()
                 except Exception as ex3:
-                    ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() close serial exception:")
+                    ReceiveSIAdapter.WiRocLogger.error(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: close serial exception:")
                     ReceiveSIAdapter.WiRocLogger.error(ex2)
                 return False
         else:
             return False
 
-    def InitTwoWay(self) -> bool:
-        if self.DetectBaudRate():
+    def InitTwoWay(self, skipDetectBaudRate) -> bool:
+        if skipDetectBaudRate or self.DetectBaudRate():
             try:
-                self.updateComputerTimeAndSiStationNumber()
+                if not HardwareAbstraction.Instance.HasRTC():
+                    self.updateComputerTime()
+                self.updateSiStationNumber()
                 self.setAutosendAndExtendedProtocol()
                 self.serialNumber = self.getSerialNumberSystemValue()
                 self.detectMissedPunchesDuringInit()
@@ -525,12 +550,12 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
                 self.oneWay = False
                 return True
             except Exception as ex2:
-                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() exception:")
+                ReceiveSIAdapter.WiRocLogger.error(f"ReceiveSIAdapter::InitTwoWay: {self.instanceName}: exception:")
                 ReceiveSIAdapter.WiRocLogger.error(ex2)
                 try:
                     self.siSerial.close()
                 except Exception as ex3:
-                    ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::InitTwoWay() close serial exception:")
+                    ReceiveSIAdapter.WiRocLogger.error(f"ReceiveSIAdapter::InitTwoWay: {self.instanceName}: close serial exception:")
                     ReceiveSIAdapter.WiRocLogger.error(ex2)
                 return False
         else:
@@ -613,13 +638,13 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
                 success = self.InitOneWay(baudrate)
                 return success
             else:
-                if self.InitTwoWay():
+                if self.InitTwoWay(skipDetectBaudRate=False):
                     return True
                 else:
                     # better with init one way if two-way is not working than aborting
                     success = self.InitOneWay(baudrate)
                     if success:
-                        self.oneWayFallbackTryReInitWhenDataReceived = True
+                        self.oneWayFallbackTryReInitWhenDataReceived = True    #todo: maybe this is not a good idea since we can loose messages every time we try to reinit as two-way. Or we should limit the number of retries, and/or how often.
                     return success
 
         except Exception as msg:
@@ -660,6 +685,9 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
         newIntancesFound = len(newInstances) > 0
         instancesRemoved = len(previouslyCreated) < len(ReceiveSIUSBSerialPort.Instances)
 
+        if instancesRemoved:
+            ReceiveSIUSBSerialPort.SetErrorCode("")
+
         if newIntancesFound or instancesRemoved:
             ReceiveSIUSBSerialPort.Instances = previouslyCreated + newInstances
 
@@ -671,11 +699,14 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
         else:
             return False
 
-    def SetErrorCode(self, message: str):
+    @staticmethod
+    def SetErrorCode(message: str):
         errorCodeData = ErrorCodeData()
         errorCodeData.Code = ErrorCodeData.ERR_SI_USB_CONF
         errorCodeData.Message = message
         DatabaseHelper.save_error_code(errorCodeData)
+        if len(message)>0:
+            SettingsClass.SetNewErrorCode()
 
     def GetIsInitialized(self) -> bool:
         oneWayConfig: bool = SettingsClass.GetOneWayReceiveFromSIStation()
@@ -710,14 +741,13 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
             self.shouldReinitialize = False
             self.oneWayFallbackTryReInitWhenDataReceived = False
             self.oneWayFallbackShouldNotTriggerReInit = False
-            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIUSBSerialPort::Init() SI Station port name: " + self.portName)
+            ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIUSBSerialPort::Init: {self.instanceName}: SI Station port name: " + self.portName)
             self.siSerial.close()
             self.siSerial.port = self.portName
 
             baudrate = 38400
 
             if SettingsClass.GetOneWayReceiveFromSIStation():
-                baudrate = 38400
                 if SettingsClass.GetForce4800BaudRateFromSIStation():
                     # can only be forced to 4800 when in one-way receive
                     baudrate = 4800
@@ -726,14 +756,14 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
             else:
                 if self.DetectBaudRate():
                     if self.getStationSettingModelValue() == ReceiveSIUSBSerialPort.SRRDongleModel:
-                        ReceiveSIAdapter.WiRocLogger.info("ReceiveSIUSBSerialPort::Init() SRR-Dongle found!")
+                        ReceiveSIAdapter.WiRocLogger.info(f"ReceiveSIUSBSerialPort::Init: {self.instanceName}: SRR-Dongle found!")
                         # Serial port is open, with correct baudrate, set it as one-way since we cant ask for backup punches etc.
                         self.isInitialized = True
                         self.oneWay = True
                         self.oneWayFallbackShouldNotTriggerReInit = True
                         return True
                     else:
-                        successTwoWay = self.InitTwoWay()
+                        successTwoWay = self.InitTwoWay(skipDetectBaudRate=True)
                         if successTwoWay:
                             return True
                         else: # better with init one way if two way is not working than aborting
@@ -875,18 +905,20 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
     def InitTwoWay(self) -> bool:
         try:
             # set master - mode to direct
-            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::InitTwoWay()")
-            response = self.sendCommand(ReceiveSIAdapter.MSMode)
+            ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIBluetoothSP::InitTwoWay: {self.instanceName}: set set master - mode to direct")
+            response = self.sendCommand(ReceiveSIAdapter.MSMode, printLog=False)
 
             if response is None:
-                ReceiveSIAdapter.WiRocLogger.info("ReceiveSIBluetoothSP::InitTwoWay() msmodedirect command failed")
+                ReceiveSIAdapter.WiRocLogger.info(f"ReceiveSIBluetoothSP::InitTwoWay: {self.instanceName}: msmodedirect command failed")
                 return False
 
             if not self.isCorrectMSModeDirectResponse(response):
-                ReceiveSIAdapter.WiRocLogger.info("ReceiveSIBluetoothSP::InitTwoWay() not correct msmodedirectresponse: " + str(response))
+                ReceiveSIAdapter.WiRocLogger.info(f"ReceiveSIBluetoothSP::InitTwoWay: {self.instanceName}: not correct msmodedirectresponse: " + str(response))
                 return False
 
-            self.updateComputerTimeAndSiStationNumber()
+            if not HardwareAbstraction.Instance.HasRTC():
+                self.updateComputerTime()
+            self.updateSiStationNumber()
             self.setAutosendAndExtendedProtocol()
             self.serialNumber = self.getSerialNumberSystemValue()
             self.detectMissedPunchesDuringInit()
@@ -895,7 +927,7 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
             self.oneWay = False
             return True
         except Exception as ex2:
-            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIBluetoothSP::InitTwoWay() exception:")
+            ReceiveSIAdapter.WiRocLogger.error(f"ReceiveSIBluetoothSP::InitTwoWay: {self.instanceName}: exception:")
             ReceiveSIAdapter.WiRocLogger.error(ex2)
             return False
 
