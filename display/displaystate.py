@@ -2,8 +2,6 @@ from display.displaydata import DisplayData
 
 
 class DisplayState(object):
-    ackRequested = None
-    channel = None
 
     def Draw(self, displayData: DisplayData):
         assert(0,"Draw not implemented")

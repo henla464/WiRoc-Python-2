@@ -11,8 +11,8 @@ from pathlib import Path
 
 class OledStartup(OledDisplayState):
     def __init__(self):
+        super().__init__()
         self.wiRocLogger = logging.getLogger('WiRoc.Display')
-        self.imageChanged = True
         self.wiRocDeviceName = None
         self.pythonVersion = "err"
         self.bleVersion = "err"

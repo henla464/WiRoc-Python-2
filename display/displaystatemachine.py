@@ -80,6 +80,12 @@ class DisplayStateMachine(object):
 
     def Draw(self, displayData: DisplayData):
         if self.currentState != DisplayStateMachine.OledErrorCode and SettingsClass.GetNewErrorCode():
+            DisplayStateMachine.OledStartup.SetImagedChanged()
+            DisplayStateMachine.OledNormal.SetImagedChanged()
+            DisplayStateMachine.OledOutput.SetImagedChanged()
+            DisplayStateMachine.OledWiRocIP.SetImagedChanged()
+            DisplayStateMachine.OledErrorCode.SetImagedChanged()
+            DisplayStateMachine.OledShutdown.SetImagedChanged()
             self.currentState = DisplayStateMachine.OledErrorCode
         else:
             # channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress, errorCodes

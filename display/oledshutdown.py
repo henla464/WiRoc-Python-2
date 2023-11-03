@@ -11,8 +11,8 @@ from display.displaydata import DisplayData
 
 class OledShutdown(OledDisplayState):
     def __init__(self):
+        super().__init__()
         self.wiRocLogger = logging.getLogger('WiRoc.Display')
-        self.imageChanged = True
         self.OledImage = Image.new('1', (OledDisplayState.OledWidth, OledDisplayState.OledHeight))
         self.OledDraw = ImageDraw.Draw(self.OledImage)
         self.OledDraw.text((7, 12), "Shutting Down...", font=self.OledThinFont2, fill=255)

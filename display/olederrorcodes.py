@@ -12,8 +12,8 @@ from settings.settings import SettingsClass
 
 class OledErrorCodes(OledDisplayState):
     def __init__(self):
+        super().__init__()
         self.wiRocLogger: logging.Logger = logging.getLogger('WiRoc.Display')
-        self.imageChanged: bool = True
         self.errorCodeMessage: str | None = None
         self.OledImage = Image.new('1', (OledDisplayState.OledWidth, OledDisplayState.OledHeight))
         self.OledDraw = ImageDraw.Draw(self.OledImage)
