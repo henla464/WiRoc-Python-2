@@ -542,7 +542,7 @@ class SettingsClass(object):
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetStatusMessageInterval'), lock=rlock)
-    def GetStatusMessageInterval():
+    def GetStatusMessageInterval() -> int:
         sett = DatabaseHelper.get_setting_by_key('StatusMessageBaseInterval')
         if sett is None:
             SettingsClass.SetSetting('StatusMessageBaseInterval', 300)

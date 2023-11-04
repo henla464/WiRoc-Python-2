@@ -189,6 +189,7 @@ class RepeaterMessageBoxArchiveData(object):
         self.OrigCreatedDate = None
         self.CreatedDate = None
 
+
 class SubscriberData(object):
     columns = [("TypeName", str), ("InstanceName", str)]
 

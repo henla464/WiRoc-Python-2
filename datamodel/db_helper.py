@@ -553,6 +553,29 @@ class DatabaseHelper:
                 cls.archive_message_box(msd.MessageBoxId)
 
     @classmethod
+    def get_no_of_lora_messages_sent_not_acked(cls, startTime: datetime, endTime: datetime) -> int:
+        selectSQL = ("select sum(NoOfSendTries) from "
+                     "(select sum(NoOfSendTries) as NoOfSendTries from MessageSubscriptionArchiveData "
+                     "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
+                     "where MessageSubscriptionArchiveData.SentDate >= ? and MessageSubscriptionArchiveData.SentDate < ?"
+                     "union "
+                     "select sum(NoOfSendTries) as NoOfSendTries from MessageSubscriptionData "
+                     "join MessageBoxData on MessageSubscriptionData.MessageBoxId = MessageBoxData.Id "
+                     "where MessageSubscriptionData.SentDate >= ? and MessageSubscriptionData.SentDate < ?);")
+
+        noOfMessages = cls.db.get_scalar_by_SQL(selectSQL, (startTime,endTime, startTime, endTime))
+        return noOfMessages
+
+    @classmethod
+    def get_if_all_lora_punches_succeeded(cls, startTime: datetime, endTime: datetime) -> bool:
+        # is there any messages that failed all retries?
+        selectSQL = ("select count(*) from MessageSubscriptionArchiveData "
+                     "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
+                     "where MessageSubscriptionArchiveData.SendFailedDate >= ? and MessageSubscriptionArchiveData.SendFailedDate < ?;")
+        noOfMessages = cls.db.get_scalar_by_SQL(selectSQL, (startTime,endTime))
+        return noOfMessages == 0
+
+    @classmethod
     def repeater_messages_acked(cls, messageID: bytearray, ackRSSIValue: int):
         cls.init()
         sql = ("SELECT RepeaterMessageBoxData.* FROM RepeaterMessageBoxData WHERE "

@@ -1,9 +1,7 @@
 WiRoc
 =====
 
-- Status send for remote wiroc units doesnt seem to work, doesn't turn green
-- Battery graph doesn't seem to work now
-- Send status with no of lora messages that hasn't been acked. Percentage since last status message? Or number of failed or total number...
+- Send status with no of lora messages that hasn't been acked. In relay path no byte we can use 6 bits. Battery percent has 1 bit left
 - Should we change to not retry, or limit retries to configure SI-USB as two-way when it fails?
 - Turn off the old red status LED and use the yellow led on the nanopineo air board instead
 - Option to set SRR as output
@@ -43,6 +41,7 @@ App
 
 Done
 ----
+x Status send for remote wiroc units doesnt seem to work, doesn't turn green
 x Install should build reed solomon library with cython
 X Test max sending frequency without ack:  >~1.5 per second
 X Test max sending frequency with ack > ~1.2 per second
