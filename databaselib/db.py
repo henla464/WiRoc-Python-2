@@ -85,11 +85,14 @@ class DB:
         table_object = self._get_table_object(table_class, row)
         return table_object
 
-    def get_scalar_by_SQL(self, select_SQL_statement: str, parameters=None):
+    def get_scalar_by_SQL(self, select_SQL_statement: str, parameters: tuple[any, ...] = None):
         #with self.connection:
         #    self.connection.row_factory = lite.Row
         db_cursor = self.connection.cursor()
-        db_cursor.execute(select_SQL_statement, parameters)
+        if parameters is not None:
+            db_cursor.execute(select_SQL_statement, parameters)
+        else:
+            db_cursor.execute(select_SQL_statement)
         first = db_cursor.fetchone()
         if first is None:
             return None
