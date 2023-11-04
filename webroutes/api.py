@@ -649,21 +649,6 @@ def getWebServerUrl2():
     return jsonpickle.encode(MicroMock(Value=webServerUrl))
 
 
-def getWebServerHost():
-    DatabaseHelper.reInit()
-    webServerUrl = SettingsClass.GetWebServerUrl()
-    webServerHost = webServerUrl.replace('http://', '').replace('https://', '')
-    return webServerHost
-
-
-@app.route('/api/webserverhost/', methods=['GET'])
-def getWebServerHost2():
-    webServerHost = getWebServerHost()
-    jsonpickle.set_preferred_backend('json')
-    jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=webServerHost))
-
-
 @app.route('/api/onewayreceive/', methods=['GET'])
 def getOneWayReceive():
     DatabaseHelper.reInit()
@@ -1154,9 +1139,9 @@ def getBTAddress():
     return btAddress
 
 # TODO: change to use https and service host instead of serverIp
-def uploadLogArchiveToServer(apiKey, filePath, serverProtocol, serverIP, serverHost):
-    parameters = ['curl', '--insecure', '-X', 'POST', '-H', 'host:' + serverHost, '-H',
-                  'accept:application/json', '-H', 'X-Authorization:' + apiKey, '-F', 'newfile=@' + filePath, serverProtocol + serverIP + '/api/v1/LogArchives']
+def uploadLogArchiveToServer(apiKey, filePath, webServerUrl):
+    parameters = ['curl', '--insecure', '-X', 'POST', '-H', '-H',
+                  'accept:application/json', '-H', 'X-Authorization:' + apiKey, '-F', 'newfile=@' + filePath, webServerUrl + '/api/v1/LogArchives']
     result = subprocess.run(parameters, capture_output=True)
     if result.returncode != 0:
         errStr = result.stderr.decode('utf-8')
@@ -1240,7 +1225,7 @@ def getRTCWakeUp():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=rtcWakeUpTime))
 
-@app.route('/api/rtc/wakeup/<24hTime>/', methods=['GET'])
+@app.route('/api/rtc/wakeup/<time>/', methods=['GET'])
 def setRTCWakeUp(time):
     # write time HH:MM to rtc wakeup, but don't enable the irq
     HardwareAbstraction.Instance.SetWakeUpTime(time)
@@ -1267,16 +1252,6 @@ def getWakeUpToBeEnabledAtShutdown():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=isEnabled))
 
-def getWebServerProtocol():
-    DatabaseHelper.reInit()
-    proto = SettingsClass.GetWebServerProtocol()
-    return proto
-
-def getWebServerIP():
-    DatabaseHelper.reInit()
-    ip = SettingsClass.GetWebServerIP()
-    return ip
-
 @app.route('/api/uploadlogarchive/', methods=['GET'])
 def uploadLogArchive():
     btAddress = getBTAddress()
@@ -1286,11 +1261,9 @@ def uploadLogArchive():
     zipLogArchive(zipFilePath)
 
     apiKey = SettingsClass.GetAPIKey()
-    serverProtocol = getWebServerProtocol()
-    serverIP = getWebServerIP()
-    serverHost = getWebServerHost()
+    webServerUrl = getWebServerUrl()
 
-    uploadLogArchiveToServer(apiKey, zipFilePath, serverProtocol, serverIP, serverHost)
+    uploadLogArchiveToServer(apiKey, zipFilePath, webServerUrl)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value='OK'))

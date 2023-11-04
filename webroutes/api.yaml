@@ -710,19 +710,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /webserverhost/:
-    get:
-      tags:
-      - "Public web server"
-      summary: "Get the web server host of the internet server"
-      operationId: "getWebServerHost"
-      responses:
-        "200":
-          description: "The web server host"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PropertyObj"
   /onewayreceive/:
     get:
       tags:

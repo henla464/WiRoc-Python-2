@@ -1,9 +1,12 @@
 WiRoc
 =====
 
-- Install/upgrade should build reed solomon library with cython
+- Status send for remote wiroc units doesnt seem to work, doesn't turn green
+- Battery graph doesn't seem to work now
+- Send status with no of lora messages that hasn't been acked. Percentage since last status message? Or number of failed or total number...
+- Should we change to not retry, or limit retries to configure SI-USB as two-way when it fails?
+- Turn off the old red status LED and use the yellow led on the nanopineo air board instead
 - Option to set SRR as output
-- Enable/disable red/blue channel
 - Send configurations to webbserver
 - Send local ip address to webbserver
 - Add cardno etc to database for SRRMessages
@@ -13,6 +16,13 @@ WiRoc
 
 implemented but not tested
 - Send hwversion to webbserver, software versions
+- Enable/disable red/blue channel
+- Listen only red/blue channel
+
+
+BLE?APP?
+========
+Double test messages sent
 
 SRR code
 ========
@@ -33,6 +43,7 @@ App
 
 Done
 ----
+x Install should build reed solomon library with cython
 X Test max sending frequency without ack:  >~1.5 per second
 X Test max sending frequency with ack > ~1.2 per second
 X Add one-way option for connecting to samlingsboxar, srr dongles [WiRoc Python Done, app remaining]
