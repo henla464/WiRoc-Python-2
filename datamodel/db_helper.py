@@ -564,6 +564,8 @@ class DatabaseHelper:
                      "where MessageSubscriptionData.SentDate >= ? and MessageSubscriptionData.SentDate < ?);")
 
         noOfMessages = cls.db.get_scalar_by_SQL(selectSQL, (startTime,endTime, startTime, endTime))
+        if noOfMessages is None:
+            return 0
         return noOfMessages
 
     @classmethod

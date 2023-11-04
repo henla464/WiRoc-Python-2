@@ -741,16 +741,18 @@ class LoraRadioMessageStatusRS(LoraRadioMessageRS):
     ECC2 = 12  # Error correcting code
     ECC3 = 13  # Error correcting code
 
-    def __init__(self, noOfLoraMsgSentNotAcked: int, allLoraPunchesSucceded: bool):
+    def __init__(self, noOfLoraMsgSentNotAcked: int = None, allLoraPunchesSucceeded: bool = None):
         super().__init__()
         self.messageType = LoraRadioMessageRS.MessageTypeStatus
+        if noOfLoraMsgSentNotAcked is None or allLoraPunchesSucceeded is None:
+            return
         siStationNumber = SettingsClass.GetSIStationNumber()
         batteryPercent = Battery.GetBatteryPercent()
         if siStationNumber > 255:
             batteryPercent |= 0x80
 
         allPunchesOk_NoOfFailedMsg_relayPathNo = ((noOfLoraMsgSentNotAcked & 0x1F) << 2) | SettingsClass.GetRelayPathNumber() & 0x03
-        if allLoraPunchesSucceded:
+        if allLoraPunchesSucceeded:
             allPunchesOk_NoOfFailedMsg_relayPathNo += 0x80
 
         btAddressAsInt = SettingsClass.GetBTAddressAsInt()
