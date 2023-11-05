@@ -291,7 +291,10 @@ class HardwareAbstraction(object):
         self.i2cBus.write_byte_data(self.rtcAddress, DAY_REGADDR, 0x00, force=True)
 
     def GetWakeUpToBeEnabledAtShutdown(self) -> bool:
-        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearWakeUpToBeEnabledAtShutdown")
-        DAY_REGADDR = 0x0b
-        dayBCD = self.i2cBus.read_byte_data(self.rtcAddress, DAY_REGADDR, force=True)
-        return dayBCD == 0x02
+        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetWakeUpToBeEnabledAtShutdown")
+        if self.HasRTC():
+            DAY_REGADDR = 0x0b
+            dayBCD = self.i2cBus.read_byte_data(self.rtcAddress, DAY_REGADDR, force=True)
+            return dayBCD == 0x02
+        else:
+            return False
