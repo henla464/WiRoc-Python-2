@@ -180,8 +180,7 @@ class SendStatusAdapter(object):
                 allLoraPunchesSentOK: bool = loraStatusMsg.GetAllLoraPunchesSentOK()
                 noOfLoraMsgSentNotAcked: int = loraStatusMsg.GetNoOfLoraMsgSentNotAcked()
                 URL3 = settingsDictionary["WebServerUrl"] + "/api/v1/DeviceStatuses"
-                deviceStatus = {"BTAddress": btAddress, "batteryLevel": batteryLevel, "siStationNumber": siStationNumber}
-                #deviceStatus = {"BTAddress": btAddress, "batteryLevel": batteryLevel, "siStationNumber": siStationNumber, "allLoraPunchesSentOK": allLoraPunchesSentOK, "noOfLoraMsgSentNotAcked": noOfLoraMsgSentNotAcked}
+                deviceStatus = {"BTAddress": btAddress, "batteryLevel": batteryLevel, "siStationNumber": siStationNumber, "allLoraPunchesSentOK": allLoraPunchesSentOK, "noOfLoraMsgSentNotAcked": noOfLoraMsgSentNotAcked}
                 resp = requests.post(url=URL3, json=deviceStatus, timeout=1, headers=headers, verify=False)
                 if resp.status_code == 200:
                     retDevice = resp.json()

@@ -359,7 +359,10 @@ class DatabaseHelper:
         msa.OrigId = messageSubscriptionView.id
         msa.MessageID = messageSubscriptionView.MessageID
         msa.SentDate = messageSubscriptionView.SentDate
-        msa.SendFailedDate = messageSubscriptionView.SendFailedDate
+        if messageSubscriptionView.SendFailedDate is None:
+            msa.SendFailedDate = datetime.now()
+        else:
+            msa.SendFailedDate = messageSubscriptionView.SendFailedDate
         msa.FindAdapterTryDate = messageSubscriptionView.FindAdapterTryDate
         msa.FindAdapterTries = messageSubscriptionView.FindAdapterTries
         msa.NoOfSendTries = messageSubscriptionView.NoOfSendTries

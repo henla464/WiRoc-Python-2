@@ -770,7 +770,7 @@ class LoraRadioMessageStatusRS(LoraRadioMessageRS):
         return self.payloadData[0] & 0x8F
 
     def GetSIStationNumber(self) -> int:
-        return (self.payloadData[0] & 0x80) << 8 + self.payloadData[1]
+        return ((self.payloadData[0] & 0x80) << 8) + self.payloadData[1]
 
     def GetRelayPathNo(self) -> int:
         return self.payloadData[2] & 0x03
