@@ -1212,6 +1212,8 @@ def getRTCTime():
 @app.route('/api/rtc/time/<timeWithSeconds>/', methods=['GET'])
 def setRTCTime(timeWithSeconds):
     # write time to rtc
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
     HardwareAbstraction.Instance.SetRTCTime(timeWithSeconds)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -1220,6 +1222,8 @@ def setRTCTime(timeWithSeconds):
 @app.route('/api/rtc/wakeup/', methods=['GET'])
 def getRTCWakeUp():
     # get from rtc
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
     rtcWakeUpTime = HardwareAbstraction.Instance.GetRTCWakeUpTime()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -1227,6 +1231,8 @@ def getRTCWakeUp():
 
 @app.route('/api/rtc/wakeup/<time>/', methods=['GET'])
 def setRTCWakeUp(time):
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
     # write time HH:MM to rtc wakeup, but don't enable the irq
     HardwareAbstraction.Instance.SetWakeUpTime(time)
     HardwareAbstraction.Instance.SetWakeUpToBeEnabledAtShutdown()
@@ -1239,6 +1245,8 @@ def setRTCWakeUp(time):
 def clearRTCWakeUp():
     # disable alarm irq
     # write 00:00
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
     HardwareAbstraction.Instance.SetWakeUpTime("00:00")
     HardwareAbstraction.Instance.ClearWakeUpToBeEnabledAtShutdown()
     jsonpickle.set_preferred_backend('json')
@@ -1247,6 +1255,8 @@ def clearRTCWakeUp():
 
 @app.route('/api/rtc/wakeupenabled/', methods=['GET'])
 def getWakeUpToBeEnabledAtShutdown():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
     isEnabled = HardwareAbstraction.Instance.GetWakeUpToBeEnabledAtShutdown()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)

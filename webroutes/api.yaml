@@ -1284,6 +1284,12 @@ paths:
       - "RTC"
       summary: "Set the current time of the WiRoc device"
       operationId: "setRTCTime"
+      parameters:
+        - name: timeWithSeconds
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Property"
       responses:
         "200":
           description: "successful operation"
@@ -1310,6 +1316,12 @@ paths:
       - "RTC"
       summary: "Set the wake up time and the flag saying Wake Up should be be activated at shutdown"
       operationId: "setRTCWakeUp"
+      parameters:
+        - name: time
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Property"
       responses:
         "200":
           description: "successful operation"

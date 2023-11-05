@@ -231,18 +231,18 @@ class HardwareAbstraction(object):
 
         return f"{hour_HighCharacter}{hour_LowCharacter}:{minutes_HighCharacter}{minutes_LowCharacter}:{seconds_HighCharacter}{seconds_LowCharacter}"
 
-    def SetRTCTime(self, timeWithSeconds) -> None:
+    def SetRTCTime(self, timeWithSeconds: str) -> None:
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::SetRTCTime")
         SECOND_REGADDR = 0x02
         MINUTE_REGADDR = 0x03
         HOUR_REGADDR = 0x04
 
-        hour_HighCharacter = timeWithSeconds[0]
-        hour_LowCharacter = timeWithSeconds[1]
-        minutes_HighCharacter = timeWithSeconds[3]
-        minutes_LowCharacter = timeWithSeconds[4]
-        seconds_HighCharacter = timeWithSeconds[6]
-        seconds_LowCharacter = timeWithSeconds[7]
+        hour_HighCharacter = int(timeWithSeconds[0])
+        hour_LowCharacter = int(timeWithSeconds[1])
+        minutes_HighCharacter = int(timeWithSeconds[3])
+        minutes_LowCharacter = int(timeWithSeconds[4])
+        seconds_HighCharacter = int(timeWithSeconds[6])
+        seconds_LowCharacter = int(timeWithSeconds[7])
 
         seconds = (seconds_HighCharacter << 4) | seconds_LowCharacter
         minutes = (minutes_HighCharacter << 4) | minutes_LowCharacter
@@ -265,15 +265,15 @@ class HardwareAbstraction(object):
 
         return f"{hour_HighCharacter}{hour_LowCharacter}:{minutes_HighCharacter}{minutes_LowCharacter}"
 
-    def SetWakeUpTime(self, time) -> None:
+    def SetWakeUpTime(self, time: str) -> None:
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::SetWakeUpTime")
         MINUTE_REGADDR = 0x09
         HOUR_REGADDR = 0x0a
 
-        hour_HighCharacter = time[0]
-        hour_LowCharacter = time[1]
-        minutes_HighCharacter = time[3]
-        minutes_LowCharacter = time[4]
+        hour_HighCharacter = int(time[0])
+        hour_LowCharacter = int(time[1])
+        minutes_HighCharacter = int(time[3])
+        minutes_LowCharacter = int(time[4])
 
         minutes = (minutes_HighCharacter << 4) | minutes_LowCharacter
         hours = (hour_HighCharacter << 4) | hour_LowCharacter
