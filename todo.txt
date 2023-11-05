@@ -1,12 +1,12 @@
 WiRoc
 =====
 
-- Send status with no of lora messages that hasn't been acked. In relay path no byte we can use 6 bits. Battery percent has 1 bit left
 - Should we change to not retry, or limit retries to configure SI-USB as two-way when it fails?
-- Turn off the old red status LED and use the yellow led on the nanopineo air board instead
+- Variable number of retries of Lora messages? Retry until new message arrive?
+- Resubmit adapter that fetches failed messages from archive. Both Lora and Sirap (others?)
 - Option to set SRR as output
 - Send configurations to webbserver
-- Send local ip address to webbserver
+- Send local ip address to webbserver ( add to devices )
 - Add cardno etc to database for SRRMessages
 - measure power consumption of  SRR receiver: arount 51 mA, 3.3V
     -- Sleep mode: maybe 50mA, very little difference if any
@@ -41,6 +41,8 @@ App
 
 Done
 ----
+x Turn off the old red status LED and use the yellow led on the nanopineo air board instead
+x Send status with no of lora messages that hasn't been acked. In relay path no byte we can use 6 bits. Battery percent has 1 bit left
 x Status send for remote wiroc units doesnt seem to work, doesn't turn green
 x Install should build reed solomon library with cython
 X Test max sending frequency without ack:  >~1.5 per second
