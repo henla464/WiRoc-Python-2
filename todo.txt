@@ -1,6 +1,17 @@
 WiRoc
 =====
 
+ - BT address 6 bytes: REG 04-0FH: Data Cache
+ hciconfig hci0 down
+ sudo btmgmt public-addr B0:02:47:00:D7:6D
+ hciconfig hci0 up
+ In startup script check AXP209 for bt address, then check settings.yaml and actual bt address.
+ If AXP209 has address then use it and put it in settings
+ If AXP209 is empty but settings.yaml has then write it to AXP209 and use it
+ If both AXP209 and settings.yaml is empty then use the actual bt address and write it settings and axp209
+ BUT if ForceBTAddress: true in settings.yaml then use that bt address and write it to AP209
+
+
 - Should we change to not retry, or limit retries to configure SI-USB as two-way when it fails?
 - Variable number of retries of Lora messages? Retry until new message arrive?
 - Resubmit adapter that fetches failed messages from archive. Both Lora and Sirap (others?)
@@ -41,6 +52,7 @@ App
 
 Done
 ----
+x add rtc_pcf8563 line to /etc/modules
 x Turn off the old red status LED and use the yellow led on the nanopineo air board instead
 x Send status with no of lora messages that hasn't been acked. In relay path no byte we can use 6 bits. Battery percent has 1 bit left
 x Status send for remote wiroc units doesnt seem to work, doesn't turn green
@@ -86,11 +98,12 @@ x Make GetReDCoSCombinationThreshold adjust to message datarate / coderate
 
 possible HW enhancments
 -----------------------
-x Add RS232 conversion on board
-x Add SRR receiver module/modules
-RTC (realtime clock)
+
 
 Done
+x Add RS232 conversion on board
+x Add SRR receiver module/modules
+x RTC (realtime clock)
 x Reroute SDA, SCK to the display
 x RS232 Serialport (use TTL->RS232 converter embedded in R232Connector)
 x  -- Need to move GPIOA0-GPIO3 pins to GPIOC0-3 (GPIOA0 = TX, GPIOA1 = RX)

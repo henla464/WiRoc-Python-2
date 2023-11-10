@@ -1265,12 +1265,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /rtc/time/:
+  /rtc/datetime/:
     get:
       tags:
       - "RTC"
       summary: "Get the current time of the WiRoc device"
-      operationId: "getRTCTime"
+      operationId: "getRTCDateTime"
       responses:
         "200":
           description: "successful operation"
@@ -1278,14 +1278,14 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PropertyObj"
-  /rtc/time/{timeWithSeconds}:
+  /rtc/datetime/{dateAndTimeWithSeconds}:
     get:
       tags:
       - "RTC"
-      summary: "Set the current time of the WiRoc device"
-      operationId: "setRTCTime"
+      summary: "Set the current date and time of the WiRoc device"
+      operationId: "setRTCDateTime"
       parameters:
-        - name: timeWithSeconds
+        - name: dateAndTimeWithSeconds
           in: path
           required: true
           schema:

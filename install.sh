@@ -291,69 +291,90 @@ sudo usermod -a -G dialout $USER
 
 
 
-    echo "nanopiair"
-    if ! grep -Fxq "setenv video-mode sunxi:1920x1080,monitor=none,hpd=0,edid=1" /boot/boot.cmd
-    then
-        sed -i '$a setenv video-mode sunxi:1920x1080,monitor=none,hpd=0,edid=1' /boot/boot.cmd
-        sed -i '$a saveenv' /boot/boot.cmd
-        mkimage -C none -A arm -T script -d /boot/boot.cmd /boot/boot.scr
-        echo "Changed boot.cmd and recompiled it"
-    fi
-    
-    if [ "$hwVersion" = "v1Rev1" ] || [ "$hwVersion" = "v2Rev1" ] || [ "$hwVersion" = "v3Rev1" ] || [ "$hwVersion" = "v3Rev2" ]
-    then
-       if ! grep -Fxq "overlays=uart1 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
-       then
-           echo "Change overlays"
-           sed -i -E "s/(overlays=).*/overlays=uart1 uart3 usbhost1 usbhost2 usbhost3 i2c0/" /boot/armbianEnv.txt
-       fi
-    else
-       if ! grep -Fxq "overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
-       then
-           echo "Change overlays"
-           sed -i -E "s/(overlays=).*/overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0/" /boot/armbianEnv.txt
-       fi
-    fi
+echo "nanopiair"
+if ! grep -Fxq "setenv video-mode sunxi:1920x1080,monitor=none,hpd=0,edid=1" /boot/boot.cmd
+then
+    sed -i '$a setenv video-mode sunxi:1920x1080,monitor=none,hpd=0,edid=1' /boot/boot.cmd
+    sed -i '$a saveenv' /boot/boot.cmd
+    mkimage -C none -A arm -T script -d /boot/boot.cmd /boot/boot.scr
+    echo "Changed boot.cmd and recompiled it"
+fi
 
-    if ! grep -Fxq "param_uart3_rtscts=1" /boot/armbianEnv.txt
-    then
-        echo "Change overlays, add uart3 rtscts"
-        sed -i '$a param_uart3_rtscts=1' /boot/armbianEnv.txt
-    fi
+if [ "$hwVersion" = "v1Rev1" ] || [ "$hwVersion" = "v2Rev1" ] || [ "$hwVersion" = "v3Rev1" ] || [ "$hwVersion" = "v3Rev2" ]
+then
+   if ! grep -Fxq "overlays=uart1 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
+   then
+       echo "Change overlays"
+       sed -i -E "s/(overlays=).*/overlays=uart1 uart3 usbhost1 usbhost2 usbhost3 i2c0/" /boot/armbianEnv.txt
+   fi
+else
+   if ! grep -Fxq "overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
+   then
+       echo "Change overlays"
+       sed -i -E "s/(overlays=).*/overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0/" /boot/armbianEnv.txt
+   fi
+fi
 
-    if ! grep -Fxq "PORT=ttyS3" /etc/default/ap6212
-    then
-        echo "Change to use ttyS3 for bluetooth"
-        sed -i 's/PORT=ttyS1/PORT=ttyS3/' /etc/default/ap6212
-    fi
+# Might not be needed anymore... test without?
+if ! grep -Fxq "param_uart3_rtscts=1" /boot/armbianEnv.txt
+then
+    echo "Change overlays, add uart3 rtscts"
+    sed -i '$a param_uart3_rtscts=1' /boot/armbianEnv.txt
+fi
 
-    # with x command echo 205 will never be found since that means it matches the whole line, not sure what we try to look for...
-    if ! grep -Fxq "echo 205" /etc/init.d/ap6212-bluetooth
-    then
-        echo "Replace ap6212-bluetooth"
-        cp /etc/init.d/ap6212-bluetooth ~/ap6212-bluetooth.backup
-        wget -O /etc/init.d/ap6212-bluetooth https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/ap6212-bluetooth
-        chmod ugo+x /etc/init.d/ap6212-bluetooth
-    fi
+# It seems this file does not exist anymore
+#if ! grep -Fxq "PORT=ttyS3" /etc/default/ap6212
+#then
+#    echo "Change to use ttyS3 for bluetooth"
+#    sed -i 's/PORT=ttyS1/PORT=ttyS3/' /etc/default/ap6212
+#fi
 
-    if ! grep -Fq 'compat' /lib/systemd/system/bluetooth.service
-    then
-        echo "change to compat mode"
-        sed -i -E "s@(ExecStart=).*@ExecStart=/usr/lib/bluetooth/bluetoothd --compat --noplugin=sap@" /lib/systemd/system/bluetooth.service
-        systemctl daemon-reload
-    else
-        echo "compat"
-    fi
+# Add the RTC module
+if ! grep -Fxq "rtc_pcf8563" /etc/modules
+then
+    echo "add rtc_pcf8563 to /etc/modules"
+    echo "rtc_pcf8563" >> /etc/modules
+fi
+
+# really not sure what is required anymore for it to work
+# with x command echo 205 will never be found since that means it matches the whole line, not sure what we try to look for...
+#if ! grep -Fxq "echo 205" /etc/init.d/ap6212-bluetooth
+#then
+#    echo "Replace ap6212-bluetooth"
+#    cp /etc/init.d/ap6212-bluetooth ~/ap6212-bluetooth.backup
+#    wget -O /etc/init.d/ap6212-bluetooth https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/ap6212-bluetooth
+#    chmod ugo+x /etc/init.d/ap6212-bluetooth
+#fi
+#
+#
+#
+#
+
+if [ "$hwVersion" = "v1Rev1" ] || [ "$hwVersion" = "v2Rev1" ] || [ "$hwVersion" = "v3Rev1" ] || [ "$hwVersion" = "v3Rev2" || [ "$hwVersion" = "v4Rev1" || [ "$hwVersion" = "v5Rev1" || [ "$hwVersion" = "v6Rev1"]
+then
+   :
+else
+   systemctl disable chrony
+fi
+
+if ! grep -Fq 'compat' /lib/systemd/system/bluetooth.service
+then
+    echo "change to compat mode"
+    sed -i -E "s@(ExecStart=).*@ExecStart=/usr/lib/bluetooth/bluetoothd --compat --noplugin=sap@" /lib/systemd/system/bluetooth.service
+    systemctl daemon-reload
+else
+    echo "compat"
+fi
 
 
-    if ! grep -Fxq 'ExecStartPost=/usr/bin/sdptool add SP' /lib/systemd/system/bluetooth.service
-    then
-        echo "add SP profile"
-        sed -i '/ExecStart=.*/a ExecStartPost=/usr/bin/sdptool add SP' /lib/systemd/system/bluetooth.service
-        systemctl daemon-reload
-    else
-        echo "SP profile already exist"
-    fi
+if ! grep -Fxq 'ExecStartPost=/usr/bin/sdptool add SP' /lib/systemd/system/bluetooth.service
+then
+    echo "add SP profile"
+    sed -i '/ExecStart=.*/a ExecStartPost=/usr/bin/sdptool add SP' /lib/systemd/system/bluetooth.service
+    systemctl daemon-reload
+else
+    echo "SP profile already exist"
+fi
 
 
 

@@ -1201,20 +1201,22 @@ def disconnectWifi():
 
     return jsonpickle.encode(MicroMock(Value='OK'))
 
-@app.route('/api/rtc/time/', methods=['GET'])
-def getRTCTime():
+@app.route('/api/rtc/datetime/', methods=['GET'])
+def getRTCDateTime():
     # get from rtc
-    rtcTime = HardwareAbstraction.Instance.GetRTCTime()
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    rtcDateTime = HardwareAbstraction.Instance.GetRTCDateTime()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=rtcTime))
+    return jsonpickle.encode(MicroMock(Value=rtcDateTime))
 
-@app.route('/api/rtc/time/<timeWithSeconds>/', methods=['GET'])
-def setRTCTime(timeWithSeconds):
+@app.route('/api/rtc/datetime/<dateAndTimeWithSeconds>/', methods=['GET'])
+def setRTCDateTime(dateAndTimeWithSeconds):
     # write time to rtc
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
-    HardwareAbstraction.Instance.SetRTCTime(timeWithSeconds)
+    HardwareAbstraction.Instance.SetRTCDateTime(dateAndTimeWithSeconds)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value="OK"))

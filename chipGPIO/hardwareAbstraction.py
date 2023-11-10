@@ -6,7 +6,7 @@ import subprocess
 import gpiod
 from smbus2 import SMBus
 import yaml
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 from pathlib import Path
 
 
@@ -213,14 +213,22 @@ class HardwareAbstraction(object):
     def HasRTC(self):
         return self.wirocHWVersionNumber >= 7
 
-    def GetRTCTime(self) -> str:
-        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetRTCTime")
+    def GetRTCDateTime(self) -> str:
+        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetRTCDateTime")
         SECOND_REGADDR = 0x02
         MINUTE_REGADDR = 0x03
         HOUR_REGADDR = 0x04
+        DAY_REGADDR = 0x05
+        MONTH_REGADDR = 0x07
+        YEAR_REGADDR = 0x08
+
         seconds = self.i2cBus.read_byte_data(self.rtcAddress, SECOND_REGADDR, force=True)
         minutes = self.i2cBus.read_byte_data(self.rtcAddress, MINUTE_REGADDR, force=True)
         hours = self.i2cBus.read_byte_data(self.rtcAddress, HOUR_REGADDR, force=True)
+        days = self.i2cBus.read_byte_data(self.rtcAddress, DAY_REGADDR, force=True)
+        months = self.i2cBus.read_byte_data(self.rtcAddress, MONTH_REGADDR, force=True)
+        years = self.i2cBus.read_byte_data(self.rtcAddress, YEAR_REGADDR, force=True)
+
         # Exclude the VL flag, and downshift
         seconds_HighCharacter = (seconds & 0x70) >> 4
         seconds_LowCharacter = (seconds & 0x0F)
@@ -228,28 +236,70 @@ class HardwareAbstraction(object):
         minutes_LowCharacter = (minutes & 0x0F)
         hour_HighCharacter = (hours & 0x30) >> 4
         hour_LowCharacter = (hours & 0x0F)
+        days_HighCharacter = (days & 0x30) >> 4
+        days_LowCharacter = (days & 0x0F)
+        months_HighCharacter = (months & 0x10) >> 4
+        months_LowCharacter = (months & 0x0F)
+        years_HighCharacter = (years & 0xF0) >> 4
+        years_LowCharacter = (years & 0x0F)
 
-        return f"{hour_HighCharacter}{hour_LowCharacter}:{minutes_HighCharacter}{minutes_LowCharacter}:{seconds_HighCharacter}{seconds_LowCharacter}"
+        # Convert UTC to local time
+        utcDateTimeStr = f"20{years_HighCharacter}{years_LowCharacter}-{months_HighCharacter}{months_LowCharacter}-{days_HighCharacter}{days_LowCharacter} {hour_HighCharacter}{hour_LowCharacter}:{minutes_HighCharacter}{minutes_LowCharacter}:{seconds_HighCharacter}{seconds_LowCharacter}"
+        utcDateTime = datetime.strptime(utcDateTimeStr, "%Y-%m-%d %H:%M:%S")
+        utcDateTime = utcDateTime.replace(tzinfo=timezone.utc)
+        localDateTime = utcDateTime.astimezone(datetime.now().tzinfo)
+        localDateTimeStr = localDateTime.strftime("%Y-%m-%d %H:%M:%S")
 
-    def SetRTCTime(self, timeWithSeconds: str) -> None:
-        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::SetRTCTime")
+        return localDateTimeStr
+
+    def SetRTCDateTime(self, dateAndTimeWithSeconds: str) -> None:
+        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::SetRTCDateTime")
+
+        years_local = int(dateAndTimeWithSeconds[2:4])
+        months_local = int(dateAndTimeWithSeconds[5:7])
+        days_local = int(dateAndTimeWithSeconds[8:10])
+        hours_local = int(dateAndTimeWithSeconds[11:13])
+        minutes_local = int(dateAndTimeWithSeconds[14:16])
+        seconds_local = int(dateAndTimeWithSeconds[17:19])
+       # raise Exception(str(months_local))
+        # Convert to UTC time
+        localDateTime = datetime(2000 + years_local, months_local, days_local, hours_local, minutes_local, seconds_local)
+        utcDateTime = localDateTime.astimezone(timezone.utc)
+        utcDateTimeStr = utcDateTime.strftime("%Y-%m-%d %H:%M:%S")
+
+        years_HighCharacter = int(utcDateTimeStr[2])
+        years_LowCharacter = int(utcDateTimeStr[3])
+        months_HighCharacter = int(utcDateTimeStr[5])
+        months_LowCharacter = int(utcDateTimeStr[6])
+        days_HighCharacter = int(utcDateTimeStr[8])
+        days_LowCharacter = int(utcDateTimeStr[9])
+        hour_HighCharacter = int(utcDateTimeStr[11])
+        hour_LowCharacter = int(utcDateTimeStr[12])
+        minutes_HighCharacter = int(utcDateTimeStr[14])
+        minutes_LowCharacter = int(utcDateTimeStr[15])
+        seconds_HighCharacter = int(utcDateTimeStr[17])
+        seconds_LowCharacter = int(utcDateTimeStr[18])
+
+        years = (years_HighCharacter << 4) | years_LowCharacter
+        months = (months_HighCharacter << 4) | months_LowCharacter
+        days = (days_HighCharacter << 4) | days_LowCharacter
+        hours = (hour_HighCharacter << 4) | hour_LowCharacter
+        minutes = (minutes_HighCharacter << 4) | minutes_LowCharacter
+        seconds = (seconds_HighCharacter << 4) | seconds_LowCharacter
+
         SECOND_REGADDR = 0x02
         MINUTE_REGADDR = 0x03
         HOUR_REGADDR = 0x04
+        DAY_REGADDR = 0x05
+        MONTH_REGADDR = 0x07
+        YEAR_REGADDR = 0x08
 
-        hour_HighCharacter = int(timeWithSeconds[0])
-        hour_LowCharacter = int(timeWithSeconds[1])
-        minutes_HighCharacter = int(timeWithSeconds[3])
-        minutes_LowCharacter = int(timeWithSeconds[4])
-        seconds_HighCharacter = int(timeWithSeconds[6])
-        seconds_LowCharacter = int(timeWithSeconds[7])
-
-        seconds = (seconds_HighCharacter << 4) | seconds_LowCharacter
-        minutes = (minutes_HighCharacter << 4) | minutes_LowCharacter
-        hours = (hour_HighCharacter << 4) | hour_LowCharacter
-        self.i2cBus.write_byte_data(self.rtcAddress, SECOND_REGADDR, seconds, force=True)
-        self.i2cBus.write_byte_data(self.rtcAddress, MINUTE_REGADDR, minutes, force=True)
+        self.i2cBus.write_byte_data(self.rtcAddress, YEAR_REGADDR, years, force=True)
+        self.i2cBus.write_byte_data(self.rtcAddress, MONTH_REGADDR, months, force=True)
+        self.i2cBus.write_byte_data(self.rtcAddress, DAY_REGADDR, days, force=True)
         self.i2cBus.write_byte_data(self.rtcAddress, HOUR_REGADDR, hours, force=True)
+        self.i2cBus.write_byte_data(self.rtcAddress, MINUTE_REGADDR, minutes, force=True)
+        self.i2cBus.write_byte_data(self.rtcAddress, SECOND_REGADDR, seconds, force=True)
 
     def GetRTCWakeUpTime(self) -> str:
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetRTCWakeUpTime")
@@ -263,17 +313,44 @@ class HardwareAbstraction(object):
         hour_HighCharacter = (hours & 0x30) >> 4
         hour_LowCharacter = (hours & 0x0F)
 
-        return f"{hour_HighCharacter}{hour_LowCharacter}:{minutes_HighCharacter}{minutes_LowCharacter}"
+        utcnow = datetime.utcnow()
+        noOfSecondsSinceMidnightAlarm = (hour_HighCharacter*10 + hour_LowCharacter) * 3600 +  (minutes_HighCharacter*10 +minutes_LowCharacter) * 60
+        noOfSecondsSinceMidnightCurrentTime = utcnow.hour * 3600 + utcnow.minute*60 + utcnow.second
+        dateOfAlarm = utcnow
+        if noOfSecondsSinceMidnightAlarm < noOfSecondsSinceMidnightCurrentTime:
+            dateOfAlarm = datetime.utcnow() + timedelta(days=1)
+
+        dateofAlarmStr = dateOfAlarm.strftime("%Y-%m-%d")
+
+        utcDateTimeAlarmStr = f"{dateofAlarmStr} {hour_HighCharacter}{hour_LowCharacter}:{minutes_HighCharacter}{minutes_LowCharacter}:00"
+        utcDateTimeAlarm = datetime.strptime(utcDateTimeAlarmStr, "%Y-%m-%d %H:%M:%S")
+        utcDateTimeAlarm = utcDateTimeAlarm.replace(tzinfo=timezone.utc)
+        localDateTimeAlarm = utcDateTimeAlarm.astimezone(datetime.now().tzinfo)
+        localDateTimeAlarmStr = localDateTimeAlarm.strftime("%H:%M")
+
+        return localDateTimeAlarmStr
 
     def SetWakeUpTime(self, time: str) -> None:
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::SetWakeUpTime")
+
+        now = datetime.now()
+        noOfSecondsSinceMidnightAlarm = int(time[0:2]) * 3600 + int(time[3:5]) * 60
+        noOfSecondsSinceMidnightCurrentTime = now.hour * 3600 + now.minute * 60 + now.second
+        dateOfAlarm = now
+        if noOfSecondsSinceMidnightAlarm < noOfSecondsSinceMidnightCurrentTime:
+            dateOfAlarm = now + timedelta(days=1)
+
+        localDateTime = datetime(dateOfAlarm.year, dateOfAlarm.month, dateOfAlarm.day, int(time[0:2]), int(time[3:5]), 0)
+        utcDateTime = localDateTime.astimezone(timezone.utc)
+        alarmTimeUtcStr = utcDateTime.strftime("%H:%M")
+
         MINUTE_REGADDR = 0x09
         HOUR_REGADDR = 0x0a
 
-        hour_HighCharacter = int(time[0])
-        hour_LowCharacter = int(time[1])
-        minutes_HighCharacter = int(time[3])
-        minutes_LowCharacter = int(time[4])
+        hour_HighCharacter = int(alarmTimeUtcStr[0])
+        hour_LowCharacter = int(alarmTimeUtcStr[1])
+        minutes_HighCharacter = int(alarmTimeUtcStr[3])
+        minutes_LowCharacter = int(alarmTimeUtcStr[4])
 
         minutes = (minutes_HighCharacter << 4) | minutes_LowCharacter
         hours = (hour_HighCharacter << 4) | hour_LowCharacter
@@ -295,6 +372,6 @@ class HardwareAbstraction(object):
         if self.HasRTC():
             DAY_REGADDR = 0x0b
             dayBCD = self.i2cBus.read_byte_data(self.rtcAddress, DAY_REGADDR, force=True)
-            return dayBCD == 0x02
+            return (dayBCD & 0x3F) == 0x02
         else:
             return False
