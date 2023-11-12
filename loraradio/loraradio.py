@@ -127,6 +127,7 @@ class LoraRadio:
         self.acksReceivedSinceLastMessageSent = 0
         self.runningAveragePercentageAcked = 0.5
         self.chip = False
+        self.firmwareVersion = None
         self.hardwareAbstraction = hardwareAbstraction
         self.loraRadioDataHandler = LoraRadioDataHandler(False)
 

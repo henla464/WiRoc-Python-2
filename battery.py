@@ -3,7 +3,6 @@ __author__ = 'henla464'
 import os
 import time
 import logging
-import socket
 from smbus2 import SMBus
 
 
@@ -104,20 +103,20 @@ class Battery(object):
     @classmethod
     def IsCharging(cls):
         logging.debug("Battery::IsCharging")
-        #strValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x01").read()
+        # strValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x01").read()
         POWERMODE_CHARGING_REGADDR = 0x01
         intValue = cls.i2cBus.read_byte_data(cls.i2cAddress, POWERMODE_CHARGING_REGADDR)
-        #intValue = int(strValue, 16)
+        # intValue = int(strValue, 16)
         isCharging = (intValue & 0x40) > 0
         return isCharging
 
     @classmethod
     def IsPowerSupplied(cls):
         Battery.WiRocLogger.debug("Battery::IsPowerSupplied")
-        #strValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x00").read()
+        # strValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0x00").read()
         POWER_STATUS_REGADDR = 0x00
         intValue = cls.i2cBus.read_byte_data(cls.i2cAddress, POWER_STATUS_REGADDR)
-        #intValue = int(strValue, 16)
+        # intValue = int(strValue, 16)
         isPowerSupplied = (intValue & 0x10) > 0
         return isPowerSupplied
 
@@ -131,16 +130,16 @@ class Battery(object):
     @classmethod
     def GetBatteryPercent(cls):
         Battery.WiRocLogger.debug("Battery::GetBatteryPercent")
-        #strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
+        # strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
         POWER_MEASUREMENT_RESULT_REGADDR = 0xb9
         intPercentValue = cls.i2cBus.read_byte_data(cls.i2cAddress, POWER_MEASUREMENT_RESULT_REGADDR)
-        #intPercentValue = int(strPercentValue, 16)
+        # intPercentValue = int(strPercentValue, 16)
         return intPercentValue
 
     @classmethod
     def GetBatteryPercent4Bits(cls):
         Battery.WiRocLogger.debug("Battery::GetBatteryPercent4Bits")
-        #strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
+        # strPercentValue = os.popen("/usr/sbin/i2cget -f -y 0 0x34 0xb9").read()
         intPercentValue = cls.GetBatteryPercent()
         intPercentValue = min(intPercentValue, 100)
         batteryPercent4Bit = int(intPercentValue * 15 / 100)

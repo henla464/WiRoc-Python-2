@@ -614,7 +614,7 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
                         self.oneWayFallbackTryReInitWhenDataReceived = True
                     return success
 
-        except (Exception) as msg:
+        except Exception as msg:
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIHWSerialPort::Init() Exception: " + str(msg))
             return False
 

@@ -899,7 +899,7 @@ def getWiRocBLEAPIVersion():
     #f.close()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=wirocBLEVersion))
+    return jsonpickle.encode(MicroMock(Value=wirocBLEAPIVersion))
 
 
 @app.route('/api/wirochwversion/', methods=['GET'])

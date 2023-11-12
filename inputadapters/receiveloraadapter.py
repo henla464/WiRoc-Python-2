@@ -19,8 +19,7 @@ class ReceiveLoraAdapter(object):
     @staticmethod
     def CreateInstances(hardwareAbstraction) -> bool:
         # check the number of lora radios and return an instance for each
-        serialPorts = []
-        serialPorts.append('/dev/ttyS1')
+        serialPorts = ['/dev/ttyS1']
 
         newInstancesFoundOrRemoved = False
         highestInstanceNumber = 0

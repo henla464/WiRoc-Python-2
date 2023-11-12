@@ -68,7 +68,7 @@ class ReceiveSRRAdapter(object):
     def UpdateInfrequently(self) -> bool:
         return True
 
-    def GetData(self) -> InputDataDict:
+    def GetData(self) -> InputDataDict | None:
         if self.hardwareAbstraction.GetSRRIRQValue():
             # msg length
             PUNCH_LENGTH_REGADDR = 0x20
@@ -102,7 +102,10 @@ class ReceiveSRRAdapter(object):
                 except Exception as ex:
                     self.WiRocLogger.error("ReceiveSRRAdapter::GetData() Error saving statistics: " + str(ex))
 
-                return {"MessageType": "DATA", "MessageSubTypeName": "SRRMessage", "MessageSource": "SRR", "Data": punchMessageData, "ChecksumOK": True}
+                return {"MessageType": "DATA", "MessageSubTypeName": "SRRMessage",
+                        "MessageSource": "SRR", "Data": punchMessageData,
+                        "ChecksumOK": True, "MessageID": None,
+                        "SIStationSerialNumber": None, "LoraRadioMessage": None }
         return None
 
     def AddedToMessageBox(self, mbid: int) -> None:

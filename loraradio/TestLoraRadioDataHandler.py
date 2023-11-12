@@ -639,8 +639,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             TestLoraRadioDataHandler.Case1_PunchMsg_Corrupted_WithRS)
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
         print("test_Case1_FindPunchErasuresMessage: " + str(erasures))
-        corruptPositions = [0, 1, 2, 3, 4, 8, 9, 10, 11, 12]
-        corruptPositions.append(6)  # add 6 since we sent incorrect week information
+        corruptPositions: list[int] = [0, 1, 2, 3, 4, 8, 9, 10, 11, 12]
+        # add 6 since we sent incorrect week information
+        corruptPositions.append(6)
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 

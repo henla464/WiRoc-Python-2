@@ -492,8 +492,8 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
     NoOfCRCBytes:int  = 2
 
     # Positions within the message
-    CN0 = 1 # Control number - bit 0-7
-    SN3 = 2 # SI Number, highest byte
+    CN0 = 1  # Control number - bit 0-7
+    SN3 = 2  # SI Number, highest byte
     SN2 = 3
     SN1 = 4
     SN0 = 5
@@ -640,7 +640,7 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
     def GetTwelveHourTimerAsInt_2(self) -> int:
         return (self.GetTwelveHourTimer_2()[0] << 8) + self.GetTwelveHourTimer_2()[1]
 
-    def SetSIMessageByteArrays(self, firstSIMessageByteArray: bytearray, secondSIMessageByteArray: bytearray) -> bytearray:
+    def SetSIMessageByteArrays(self, firstSIMessageByteArray: bytearray, secondSIMessageByteArray: bytearray) -> None:
         msg = LoraRadioMessagePunchReDCoSRS()
         msg.SetSIMessageByteArray(firstSIMessageByteArray)
         firstArray = msg.GetPayloadByteArray()

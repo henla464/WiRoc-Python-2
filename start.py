@@ -220,7 +220,7 @@ class Main:
             if inputData is not None:
                 if inputData["MessageType"] == "DATA":
                     self.wirocLogger.info("Start::handleInput() Received data from " + inputAdapter.GetInstanceName())
-                    messageID = inputData.get("MessageID", None)
+                    messageID: bytearray | None = inputData.get("MessageID", None)
                     messageTypeName = inputAdapter.GetTypeName()
                     messageSource = inputData["MessageSource"]
                     #checksumOK = inputData["ChecksumOK"]
@@ -607,15 +607,15 @@ class Main:
             self.wirocLogger.error("Start::handleCallbacks() Exception: " + str(ex))
 
     def Run(self):
-        settDict = {}
-        settDict["WebServerProtocol"] = SettingsClass.GetWebServerProtocol()
-        settDict["WebServerIP"] = SettingsClass.GetWebServerIP()
-        settDict["WebServerHost"] = SettingsClass.GetWebServerHost()
-        settDict["WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
-        settDict["SendToSirapIP"] = SettingsClass.GetSendToSirapIP()
-        settDict["SendToSirapIPPort"] = SettingsClass.GetSendToSirapIPPort()
-        settDict["WebServerUrl"] = SettingsClass.GetWebServerUrl()
-        settDict["ApiKey"] = SettingsClass.GetAPIKey()
+        settDict:  dict[str, str | int | None] = \
+            {"WebServerProtocol": SettingsClass.GetWebServerProtocol(),
+             "WebServerIP": SettingsClass.GetWebServerIP(),
+             "WebServerHost": SettingsClass.GetWebServerHost(),
+             "WiRocDeviceName": SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device",
+             "SendToSirapIP": SettingsClass.GetSendToSirapIP(),
+             "SendToSirapIPPort": SettingsClass.GetSendToSirapIPPort(),
+             "WebServerUrl": SettingsClass.GetWebServerUrl(),
+             "ApiKey": SettingsClass.GetAPIKey()}
 
         self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
                                     if inputAdapter.UpdateInfrequently() and inputAdapter.GetIsInitialized()]

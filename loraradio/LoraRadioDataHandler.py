@@ -216,7 +216,7 @@ class LoraRadioDataHandler(object):
             return alternatives, fixedValues, fixedErasures
 
     def _GetPunchDoubleMessageAlternatives(self, loraMsg) -> Tuple[List[bytearray], list, bytearray]:
-        possibilities = [None] * LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS]
+        possibilities: list[int | None] = [None] * LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS]
 
         headers = None
         if self.LastPunchMessage is not None:
@@ -357,7 +357,7 @@ class LoraRadioDataHandler(object):
         if TH is not None:
             possibilities[LoraRadioMessagePunchReDCoSRS.TH] = TH
             fixedValues += [LoraRadioMessagePunchReDCoSRS.TH]
-        #print("possibilities: " + str(possibilities))
+        # print("possibilities: " + str(possibilities))
         messageData = loraMsg.GetByteArray()
         generatedMessages = self._GenerateMessageAlternatives(bytearray(), possibilities, messageData)
 

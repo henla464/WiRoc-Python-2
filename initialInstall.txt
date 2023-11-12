@@ -6,7 +6,7 @@
 
 4) 
 
-Log in with
+Log in (if required) with
 user: root
 pw: 1234
 
@@ -54,3 +54,13 @@ Next you will need to approve adding the "deadsnakes" repository to apt. Press e
 
 --------------------
 
+9) After install script finished restart the device
+
+--------------------
+10) Log in again as user chip and run sudo armbian-config
+	- Change timezone to stockholm (under Personal)
+	- Install the SD card to eMMC (select System/Install)
+		select "Boot from eMMC - system on eMMC"
+		select ext4 filesystem
+		
+	

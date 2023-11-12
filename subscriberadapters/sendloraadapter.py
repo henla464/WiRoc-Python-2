@@ -22,9 +22,7 @@ class SendLoraAdapter(object):
     @staticmethod
     def CreateInstances(hardwareAbstraction):
         # check the number of lora radios and return an instance for each
-        serialPorts = []
-
-        serialPorts.append('/dev/ttyS1')
+        serialPorts = ['/dev/ttyS1']
 
         if len(serialPorts) > 0:
             if len(SendLoraAdapter.Instances) > 0:
@@ -118,18 +116,12 @@ class SendLoraAdapter(object):
 
     # return both receive and send transforms, they will be enabled/disabled automatically depending
     # on lora mode
-    def GetTransformNames(self):
-        transforms = []
-        transforms.append("SISIMessageToLoraTransform")
-        transforms.append("SRRSRRMessageToLoraTransform")
-        transforms.append("SITestTestToLoraTransform")
-        transforms.append("StatusStatusToLoraTransform")
-        transforms.append("RepeaterSIMessageToLoraAckTransform")
-        transforms.append("RepeaterSIMessageDoubleToLoraAckTransform")
-        transforms.append("RepeaterSIMessageToLoraTransform")
-        transforms.append("RepeaterSIMessageDoubleToLoraTransform")
-        transforms.append("RepeaterStatusToLoraTransform")
-        transforms.append("LoraSIMessageToLoraAckTransform")
+    def GetTransformNames(self) -> list[str]:
+        transforms = ["SISIMessageToLoraTransform", "SRRSRRMessageToLoraTransform", "SITestTestToLoraTransform",
+                      "StatusStatusToLoraTransform", "RepeaterSIMessageToLoraAckTransform",
+                      "RepeaterSIMessageDoubleToLoraAckTransform", "RepeaterSIMessageToLoraTransform",
+                      "RepeaterSIMessageDoubleToLoraTransform", "RepeaterStatusToLoraTransform",
+                      "LoraSIMessageToLoraAckTransform"]
         return transforms
 
     def SetTransform(self, transformClass):

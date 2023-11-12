@@ -22,9 +22,9 @@ class ErrorCodeData(object):
     ERR_LORA_CONF = "ERR_LORA_CONF"
 
     def __init__(self):
-        self.id: int|None = None
-        self.Code: str|None = None
-        self.Message: str|None = None
+        self.id: int | None = None
+        self.Code: str | None = None
+        self.Message: str | None = None
 
 
 class ChannelData(object):
@@ -32,29 +32,29 @@ class ChannelData(object):
                ("Frequency", int), ("SlopeCoefficient", int),
                ("M", int), ("RfFactor", int), ("RfBw", int), ("LoraModem", str)]
 
-    def __init__(self, Channel: int|None = None, DataRate: int|None = None, LoraRange: str|None = None,
-                 Frequency: int|None = None, SlopeCoefficient: int|None = None,
-                 M: int|None = None, RfFactor: int|None = None, RfBw: int|None =None, LoraModem: str|None = None):
-        self.id: int|None = None
-        self.Channel: int|None = Channel
-        self.DataRate: int|None = DataRate
-        self.LoraRange: str|None = LoraRange
-        self.Frequency: int|None = Frequency
-        self.SlopeCoefficient: int|None = SlopeCoefficient
-        self.M: int|None = M
-        self.RfFactor: int|None = RfFactor
-        self.RfBw: int|None = RfBw
-        self.LoraModem: str|None = LoraModem
+    def __init__(self, Channel: int | None = None, DataRate: int | None = None, LoraRange: str | None = None,
+                 Frequency: int | None = None, SlopeCoefficient: int | None = None,
+                 M: int | None = None, RfFactor: int | None = None, RfBw: int | None = None, LoraModem: str | None = None):
+        self.id: int | None = None
+        self.Channel: int | None = Channel
+        self.DataRate: int | None = DataRate
+        self.LoraRange: str | None = LoraRange
+        self.Frequency: int | None = Frequency
+        self.SlopeCoefficient: int | None = SlopeCoefficient
+        self.M: int | None = M
+        self.RfFactor: int | None = RfFactor
+        self.RfBw: int | None = RfBw
+        self.LoraModem: str | None = LoraModem
 
 
 class MessageBoxData(object):
     columns = [("MessageData", bytearray), ("PowerCycleCreated", int),
                ("MessageTypeName", str), ("InstanceName", str),
-               ("MessageSubTypeName", str),("MemoryAddress", int),
+               ("MessageSubTypeName", str), ("MemoryAddress", int),
                ("SICardNumber", str),
                ("SIStationSerialNumber", str), ("SportIdentHour", str),
                ("SportIdentMinute", str), ("SportIdentSecond", str),
-               ("SIStationNumber", str),("LowBattery", str),("RSSIValue", int),
+               ("SIStationNumber", str), ("LowBattery", str), ("RSSIValue", int),
                ("ChecksumOK", bool), ("CreatedDate", datetime)]
 
     def __init__(self):
@@ -80,11 +80,11 @@ class MessageBoxData(object):
 class MessageBoxArchiveData(object):
     columns = [("OrigId", int), ("MessageData", bytes), ("PowerCycleCreated", int),
                ("MessageTypeName", str), ("InstanceName", str),
-               ("MessageSubTypeName", str),("MemoryAddress", int),
+               ("MessageSubTypeName", str), ("MemoryAddress", int),
                ("SICardNumber", str),
                ("SIStationSerialNumber", str), ("SportIdentHour", str),
                ("SportIdentMinute", str), ("SportIdentSecond", str),
-               ("SIStationNumber", str),("LowBattery", str),("RSSIValue", int),
+               ("SIStationNumber", str), ("LowBattery", str), ("RSSIValue", int),
                ("ChecksumOK", bool), ("CreatedDate", datetime)]
 
     def __init__(self):
@@ -113,9 +113,9 @@ class RepeaterMessageBoxData(object):
                ("InstanceName", str), ("MessageSubTypeName", str), ("ChecksumOK", bool),
                ("MessageSource", str), ("SICardNumber", int), ("SportIdentHour", int),
                ("SportIdentMinute", int), ("SportIdentSecond", int), ("MessageID", bytes),
-               ("AckRequested", bool),("MemoryAddress", int), ("SIStationNumber", int),
+               ("AckRequested", bool), ("MemoryAddress", int), ("SIStationNumber", int),
                ("RepeaterRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", int),
-               ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int),("RSSIValue", int),("AckRSSIValue", int),
+               ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int), ("RSSIValue", int), ("AckRSSIValue", int),
                ("LastSeenTime", datetime), ("CreatedDate", datetime)]
 
     def __init__(self):
@@ -149,7 +149,7 @@ class RepeaterMessageBoxData(object):
 
 
 class RepeaterMessageBoxArchiveData(object):
-    columns = [("OrigId", int) ,("MessageData", bytes), ("MessageTypeName", str), ("PowerCycleCreated", int),
+    columns = [("OrigId", int), ("MessageData", bytes), ("MessageTypeName", str), ("PowerCycleCreated", int),
                ("InstanceName", str), ("MessageSubTypeName", str), ("ChecksumOK", bool),
                ("MessageSource", str), ("SICardNumber", int), ("SportIdentHour", int),
                ("SportIdentMinute", int), ("SportIdentSecond", int), ("MessageID", bytes),
@@ -187,6 +187,7 @@ class RepeaterMessageBoxArchiveData(object):
         self.LastSeenTime = None
         self.OrigCreatedDate = None
         self.CreatedDate = None
+
 
 class SubscriberData(object):
     columns = [("TypeName", str), ("InstanceName", str)]
@@ -259,7 +260,7 @@ class MessageSubscriptionData(object):
                ("SubscriptionId", int), ("FetchedForSending", datetime)]
 
     def __init__(self, MessageID=None, AckReceivedFromReceiver=False, SentDate=None, SendFailedDate=None,
-                 FindAdapterTryDate=None,FindAdapterTries=0, AckReceivedDate=None,
+                 FindAdapterTryDate=None, FindAdapterTries=0, AckReceivedDate=None,
                  NoOfSendTries=0,
                  Delay=0,
                  RetryDelay=0,
@@ -283,17 +284,17 @@ class MessageSubscriptionData(object):
 
 
 class MessageSubscriptionArchiveData(object):
-    columns = [ ("OrigId", int), ("MessageID", bytes),
-                ("SentDate", datetime), ("SendFailedDate", datetime),
-                ("FindAdapterTryDate", datetime),("FindAdapterTries", int),
-                ("NoOfSendTries", int), ("AckReceivedDate", datetime),
-                ("Delay", int),
-                ("RetryDelay", int),
-                ("FindAdapterRetryDelay", int),
-                ("MessageBoxId", int),
-                ("SubscriptionId", int),
-                ("AckRSSIValue", int),
-                ("SubscriberTypeName", str), ("TransformName", str),]
+    columns = [("OrigId", int), ("MessageID", bytes),
+               ("SentDate", datetime), ("SendFailedDate", datetime),
+               ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
+               ("NoOfSendTries", int), ("AckReceivedDate", datetime),
+               ("Delay", int),
+               ("RetryDelay", int),
+               ("FindAdapterRetryDelay", int),
+               ("MessageBoxId", int),
+               ("SubscriptionId", int),
+               ("AckRSSIValue", int),
+               ("SubscriberTypeName", str), ("TransformName", str),]
 
     def __init__(self):
         self.id = None
@@ -428,19 +429,19 @@ class TestPunchView(object):
 
 
 class MessageStatsData(object):
-        columns = [("AdapterInstanceName", str), ("MessageSubTypeName", str), ("Status", str),
-                   ("NoOfMessages", int), ("Uploaded", bool),("FetchedForUpload", datetime),
-                   ("CreatedDate", datetime)]
+    columns = [("AdapterInstanceName", str), ("MessageSubTypeName", str), ("Status", str),
+               ("NoOfMessages", int), ("Uploaded", bool), ("FetchedForUpload", datetime),
+               ("CreatedDate", datetime)]
 
-        def __init__(self):
-            self.id = None
-            self.AdapterInstanceName = None
-            self.MessageSubTypeName = None
-            self.Status = None
-            self.NoOfMessages = None
-            self.Uploaded = False
-            self.FetchedForUpload = None
-            self.CreatedDate = None
+    def __init__(self):
+        self.id = None
+        self.AdapterInstanceName = None
+        self.MessageSubTypeName = None
+        self.Status = None
+        self.NoOfMessages = None
+        self.Uploaded = False
+        self.FetchedForUpload = None
+        self.CreatedDate = None
 
 
 class BluetoothSerialPortData(object):
@@ -485,7 +486,7 @@ class ReDCosErasureCombinationsData(object):
 class SIMessage(object):
     # 0x02 is used for STX
     # 0x03 is used for ETX
-    Status = 0x04 # own/custom message type
+    Status = 0x04  # own/custom message type
     SIPunch = 0xD3
 
     def __init__(self):
@@ -601,10 +602,10 @@ class SRRMessage(object):
     AirPlusPunch: int = 0xB1
     AirPlusPunchOneOfMultiple: int = 0xB7
 
-    MessageTypeLengths = { SRRBoardPunch : 34, AirPlusPunch: 29, AirPlusPunchOneOfMultiple: 31
-                           }
+    MessageTypeLengths = {SRRBoardPunch: 34, AirPlusPunch: 29, AirPlusPunchOneOfMultiple: 31}
+
     def __init__(self):
-        self.MessageData: bytearray= bytearray()
+        self.MessageData: bytearray = bytearray()
 
     def AddHeader(self, msgType: int, sourceAddress: bytearray, destinationAddress: bytearray, messageSequenceNumber: int, punchSequenceNumber: int) -> None:
         if len(self.MessageData) == 0:
@@ -672,7 +673,7 @@ class SRRMessage(object):
     def AddPayload(self, payloadArray) -> None:
         self.MessageData.extend(payloadArray)
 
-    def GetStationNumber(self) ->int:
+    def GetStationNumber(self) -> int:
         raise NotImplementedError()
 
     def GetSICardNumber(self) -> int:
@@ -739,7 +740,7 @@ class SRRBoardPunch(SRRMessage):
         siMsg.AddHeader(SIMessage.SIPunch)
         siMsg.AddPayload(self.MessageData[18:31])
         siMsg.AddFooter()
-        return SIMessage
+        return siMsg
 
 
 class AirPlusPunch(SRRMessage):
@@ -802,4 +803,3 @@ class MessageSubscriptionBatch(object):
         self.SubscriberInstanceName = None
         self.TransformName = None
         self.MessageSubscriptionBatchItems = []
-
