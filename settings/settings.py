@@ -26,7 +26,6 @@ class SettingsClass(object):
     receiveSIAdapterActive = None
     sendSerialAdapterActive = None
     forceReconfigure = False
-    webServerIP = None
     connectedComputerIsWiRocDevice = False
     timeConnectedComputerIsWiRocDeviceChanged = None
     siStationNumber = 0
@@ -36,6 +35,7 @@ class SettingsClass(object):
     deviceId = None
     messageIDOfLastLoraMessageSent = None
     SRRMessageAvailable = False
+    NewErrorCode = False
 
     #####
     # Static/class settings
@@ -134,12 +134,24 @@ class SettingsClass(object):
         return SettingsClass.siStationNumber
 
     @staticmethod
-    def SetBatteryIsLowReceived(batteryIsLowReceived):
+    def SetBatteryIsLowReceived(batteryIsLowReceived: bool):
         SettingsClass.batteryIsLowReceived = batteryIsLowReceived
 
     @staticmethod
-    def GetBatteryIsLowReceived():
+    def GetBatteryIsLowReceived() -> bool:
         return SettingsClass.batteryIsLowReceived
+
+    @staticmethod
+    def SetNewErrorCode():
+        SettingsClass.NewErrorCode = True
+
+    @staticmethod
+    def ClearNewErrorCode():
+        SettingsClass.NewErrorCode = False
+
+    @staticmethod
+    def GetNewErrorCode():
+        return SettingsClass.NewErrorCode
 
     @staticmethod
     def GetLoraModule() -> str:
@@ -159,9 +171,6 @@ class SettingsClass(object):
     def GetRelayPathNumber():
         return SettingsClass.relayPathNo
 
-    @staticmethod
-    def GetWebServerHostBackground(wsUrl):
-        return wsUrl.replace('http://', '').replace('https://', '')
 
     #####
     # Set DB values
@@ -414,26 +423,6 @@ class SettingsClass(object):
             return url
         return sett.Value
 
-    @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetWebServerIP'), lock=rlock)
-    def GetWebServerIP():
-        try:
-            host = SettingsClass.GetWebServerHost()
-            import socket
-            port = 443
-            IPs = list(map(lambda x: x[4][0], socket.getaddrinfo('{}.'.format(host), port, type=socket.SOCK_STREAM, family=socket.AF_INET)))
-            return IPs[0]
-        except Exception as ex:
-            return None
-
-    @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetWebServerProtocol'), lock=rlock)
-    def GetWebServerProtocol():
-        url = SettingsClass.GetWebServerUrl()
-        if url.lower().startswith('https://'):
-            return 'https://'
-        else:
-            return 'http://'
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetLoggingServerHost'), lock=rlock)
@@ -553,7 +542,7 @@ class SettingsClass(object):
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetStatusMessageInterval'), lock=rlock)
-    def GetStatusMessageInterval():
+    def GetStatusMessageInterval() -> int:
         sett = DatabaseHelper.get_setting_by_key('StatusMessageBaseInterval')
         if sett is None:
             SettingsClass.SetSetting('StatusMessageBaseInterval', 300)
@@ -574,11 +563,6 @@ class SettingsClass(object):
         f.close()
         return settings['WiRocDeviceName']
 
-    @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetWebServerHost'), lock=rlock)
-    def GetWebServerHost():
-        wsUrl = SettingsClass.GetWebServerUrl()
-        return wsUrl.replace('http://', '').replace('https://', '')
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetSendStatusMessage'), lock=rlock)

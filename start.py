@@ -551,7 +551,7 @@ class Main:
                                      "noOfMessages": messageStat.NoOfMessages}
 
                 try:
-                    resp = requests.post(url=URL, timeout=1, json=messageStatToSend, allow_redirects=False, headers=headers, verify=False)
+                    resp = requests.post(url=URL, json=messageStatToSend, timeout=1, allow_redirects=False, headers=headers, verify=False)
                     if resp.status_code == 200 or resp.status_code == 303:
                         self.callbackQueue.put((DatabaseHelper.set_message_stat_uploaded, messageStat.id))
                     else:
@@ -576,7 +576,7 @@ class Main:
         headers = {'X-Authorization': apiKey}
         URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetConnectedToInternetTime"
         try:
-            resp = requests.post(url=URL, timeout=1, allow_redirects=False, headers=headers, verify=False)
+            resp = requests.post(url=URL, timeout=1, headers=headers, verify=False)
             if resp.status_code != 200 and resp.status_code != 303:
                 self.webServerUp = False
         except Exception as ex:
@@ -607,15 +607,11 @@ class Main:
             self.wirocLogger.error("Start::handleCallbacks() Exception: " + str(ex))
 
     def Run(self):
-        settDict:  dict[str, str | int | None] = \
-            {"WebServerProtocol": SettingsClass.GetWebServerProtocol(),
-             "WebServerIP": SettingsClass.GetWebServerIP(),
-             "WebServerHost": SettingsClass.GetWebServerHost(),
-             "WiRocDeviceName": SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device",
-             "SendToSirapIP": SettingsClass.GetSendToSirapIP(),
-             "SendToSirapIPPort": SettingsClass.GetSendToSirapIPPort(),
-             "WebServerUrl": SettingsClass.GetWebServerUrl(),
-             "ApiKey": SettingsClass.GetAPIKey()}
+        settDict: dict[str, str | int | None] = {
+            "WiRocDeviceName": SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device",
+            "SendToSirapIP": SettingsClass.GetSendToSirapIP(),
+            "SendToSirapIPPort": SettingsClass.GetSendToSirapIPPort(), "WebServerUrl": SettingsClass.GetWebServerUrl(),
+            "ApiKey": SettingsClass.GetAPIKey()}
 
         self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
                                     if inputAdapter.UpdateInfrequently() and inputAdapter.GetIsInitialized()]
@@ -638,9 +634,6 @@ class Main:
                     # print("reconfigure time: " + str(datetime.now()))
                     didTasks = True
                     self.shouldReconfigure = False
-                    settDict["WebServerProtocol"] = SettingsClass.GetWebServerProtocol()
-                    settDict["WebServerIP"] = SettingsClass.GetWebServerIP()
-                    settDict["WebServerHost"] = SettingsClass.GetWebServerHost()
                     settDict[
                         "WiRocDeviceName"] = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
                     settDict["SendToSirapIP"] = SettingsClass.GetSendToSirapIP()

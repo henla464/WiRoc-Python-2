@@ -11,6 +11,7 @@ from display.displaydata import DisplayData
 
 class OledNormal(OledDisplayState):
     def __init__(self):
+        super().__init__()
         self.wiRocLogger = logging.getLogger('WiRoc.Display')
         self.batteryPercent = 0
         self.batteryWidth = None
@@ -22,7 +23,6 @@ class OledNormal(OledDisplayState):
         self.ackRequested = None
         self.loraRange = None
         self.isCharging = None
-        self.imageChanged = False
         self.OledImage = Image.new('1', (OledDisplayState.OledWidth, OledDisplayState.OledHeight))
         self.OledDraw = ImageDraw.Draw(self.OledImage)
         # self.OledDraw.rectangle((0, 0, self.OledWidth, self.OledHeight), outline=0, fill=0)

@@ -117,8 +117,8 @@ class LoraRadioMessageCreator(object):
         return loraPunchDoubleMessage
 
     @staticmethod
-    def GetStatusMessage(batteryLow: bool) -> LoraRadioMessageStatusRS:
-        loraStatusMessage = LoraRadioMessageStatusRS()
+    def GetStatusMessage(batteryLow: bool, noOfLoraMsgSentNotAcked: int, allLoraPunchesSucceded: bool) -> LoraRadioMessageStatusRS:
+        loraStatusMessage = LoraRadioMessageStatusRS(noOfLoraMsgSentNotAcked, allLoraPunchesSucceded)
         loraStatusMessage.SetBatteryLow(batteryLow)
         loraStatusMessage.SetAckRequested(False)
         loraStatusMessage.SetRepeater(False)

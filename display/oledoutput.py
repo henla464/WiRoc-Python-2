@@ -11,8 +11,8 @@ from display.displaydata import DisplayData
 
 class OledOutput(OledDisplayState):
     def __init__(self):
+        super().__init__()
         self.wiRocLogger = logging.getLogger('WiRoc.Display')
-        self.imageChanged = True
         self.showPort = False
         self.sirapTCPEnabled = None
         self.sendSerialActive = None

@@ -9,6 +9,7 @@ import socket
 import sys
 import logging
 from display.displaydata import DisplayData
+from settings.settings import SettingsClass
 
 sys.path.append('..')
 
@@ -22,6 +23,7 @@ class DisplayStateMachine(object):
     OledErrorCode = None
 
     hardwareAbstraction = None
+    startUp = True
 
     def __init__(self):
         self.wiRocLogger = logging.getLogger('WiRoc.Display')
@@ -77,15 +79,29 @@ class DisplayStateMachine(object):
         return self.TypeOfDisplay
 
     def Draw(self, displayData: DisplayData):
-        # channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress, errorCodes
-        if self.currentState is not None:
-            if HardwareAbstraction.Instance.GetIsShortKeyPress() or self.currentState == self.OledStartup:
-                HardwareAbstraction.Instance.ClearShortKeyPress()
-                self.currentState = self.currentState.Next()
-            elif HardwareAbstraction.Instance.GetIsLongKeyPress():
-                self.currentState = DisplayStateMachine.OledShutdown
+        if self.currentState != DisplayStateMachine.OledErrorCode and SettingsClass.GetNewErrorCode():
+            DisplayStateMachine.OledStartup.SetImagedChanged()
+            DisplayStateMachine.OledNormal.SetImagedChanged()
+            DisplayStateMachine.OledOutput.SetImagedChanged()
+            DisplayStateMachine.OledWiRocIP.SetImagedChanged()
+            DisplayStateMachine.OledErrorCode.SetImagedChanged()
+            DisplayStateMachine.OledShutdown.SetImagedChanged()
+            self.currentState = DisplayStateMachine.OledErrorCode
         else:
-            self.currentState = DisplayStateMachine.OledStartup
+            # channel, ackRequested, wiRocMode, loraRange, deviceName, sirapTCPEnabled, sendSerialActive, sirapIPAddress, sirapIPPort, wiRocIPAddress, errorCodes
+            if self.currentState is None:
+                self.currentState = DisplayStateMachine.OledStartup
+            else:
+                if self.startUp:
+                    self.currentState = self.currentState.Next()
+                    self.startUp = False
+                    HardwareAbstraction.Instance.ClearShortKeyPress()
+                elif HardwareAbstraction.Instance.GetIsShortKeyPress():
+                    self.startUp = False
+                    HardwareAbstraction.Instance.ClearShortKeyPress()
+                    self.currentState = self.currentState.Next()
+                elif HardwareAbstraction.Instance.GetIsLongKeyPress():
+                    self.currentState = DisplayStateMachine.OledShutdown
 
         if self.currentState is not None:
             self.currentState.Draw(displayData)

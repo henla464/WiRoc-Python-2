@@ -392,6 +392,113 @@ def setLoraMode(loramode):
         raise Exception("Error: not a valid Lora/Radio Mode")
 
 
+@app.route('/api/srr/enabled/', methods=['GET'])
+def getSRREnabled():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('SRREnabled')
+    srrEnabled = '1'
+    if sett is not None:
+        srrEnabled = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=srrEnabled))
+
+
+@app.route('/api/srr/enabled/<enabled>/', methods=['GET'])
+def setSRREnabled(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('SRREnabled')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SRREnabled'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
+@app.route('/api/srr/listenonly/', methods=['GET'])
+def getSRRListenOnly():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('SRRListenOnly')
+    SRRListenOnly = '0'
+    if sett is not None:
+        SRRListenOnly = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=SRRListenOnly))
+
+
+@app.route('/api/srr/listenonly/<enabled>/', methods=['GET'])
+def setSRRListenOnly(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('SRRListenOnly')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SRRListenOnly'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/srr/redchannel/', methods=['GET'])
+def getSRRRedChannel():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('SRRRedChannel')
+    SRRRedChannel = '1'
+    if sett is not None:
+        SRRRedChannel = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=SRRRedChannel))
+
+
+@app.route('/api/srr/redchannel/<enabled>/', methods=['GET'])
+def setSRRRedChannel(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('SRRRedChannel')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SRRRedChannel'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
+@app.route('/api/srr/bluechannel/', methods=['GET'])
+def getSRRBlueChannel():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('SRRBlueChannel')
+    SRRBlueChannel = '1'
+    if sett is not None:
+        SRRBlueChannel = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=SRRBlueChannel))
+
+
+@app.route('/api/srr/bluechannel/<enabled>/', methods=['GET'])
+def setSRRBlueChannel(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('SRRBlueChannel')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SRRBlueChannel'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
 @app.route('/api/punches/', methods=['GET'])
 def getPunches():
     DatabaseHelper.reInit()
@@ -495,7 +602,7 @@ def getIsCharging():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=('1' if isCharging else '0')))
 
-
+# TODO: change to use smbus??
 def getBatteryLevel():
     hostname = socket.gethostname()
     if hostname == "chip" or hostname == "nanopiair":
@@ -540,21 +647,6 @@ def getWebServerUrl2():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=webServerUrl))
-
-
-def getWebServerHost():
-    DatabaseHelper.reInit()
-    webServerUrl = SettingsClass.GetWebServerUrl()
-    webServerHost = webServerUrl.replace('http://', '').replace('https://', '')
-    return webServerHost
-
-
-@app.route('/api/webserverhost/', methods=['GET'])
-def getWebServerHost2():
-    webServerHost = getWebServerHost()
-    jsonpickle.set_preferred_backend('json')
-    jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=webServerHost))
 
 
 @app.route('/api/onewayreceive/', methods=['GET'])
@@ -1046,10 +1138,10 @@ def getBTAddress():
         btAddress = stdoutWords[1]
     return btAddress
 
-
-def uploadLogArchiveToServer(apiKey, filePath, serverProtocol, serverIP, serverHost):
-    parameters = ['curl', '--insecure', '-X', 'POST', '-H', 'host:' + serverHost, '-H',
-                  'accept:application/json', '-H', 'X-Authorization:' + apiKey, '-F', 'newfile=@' + filePath, serverProtocol + serverIP + '/api/v1/LogArchives']
+# TODO: change to use https and service host instead of serverIp
+def uploadLogArchiveToServer(apiKey, filePath, webServerUrl):
+    parameters = ['curl', '--insecure', '-X', 'POST', '-H', '-H',
+                  'accept:application/json', '-H', 'X-Authorization:' + apiKey, '-F', 'newfile=@' + filePath, webServerUrl + '/api/v1/LogArchives']
     result = subprocess.run(parameters, capture_output=True)
     if result.returncode != 0:
         errStr = result.stderr.decode('utf-8')
@@ -1109,15 +1201,68 @@ def disconnectWifi():
 
     return jsonpickle.encode(MicroMock(Value='OK'))
 
-def getWebServerProtocol():
-    DatabaseHelper.reInit()
-    proto = SettingsClass.GetWebServerProtocol()
-    return proto
+@app.route('/api/rtc/datetime/', methods=['GET'])
+def getRTCDateTime():
+    # get from rtc
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    rtcDateTime = HardwareAbstraction.Instance.GetRTCDateTime()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=rtcDateTime))
 
-def getWebServerIP():
-    DatabaseHelper.reInit()
-    ip = SettingsClass.GetWebServerIP()
-    return ip
+@app.route('/api/rtc/datetime/<dateAndTimeWithSeconds>/', methods=['GET'])
+def setRTCDateTime(dateAndTimeWithSeconds):
+    # write time to rtc
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    HardwareAbstraction.Instance.SetRTCDateTime(dateAndTimeWithSeconds)
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value="OK"))
+
+@app.route('/api/rtc/wakeup/', methods=['GET'])
+def getRTCWakeUp():
+    # get from rtc
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    rtcWakeUpTime = HardwareAbstraction.Instance.GetRTCWakeUpTime()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=rtcWakeUpTime))
+
+@app.route('/api/rtc/wakeup/<time>/', methods=['GET'])
+def setRTCWakeUp(time):
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    # write time HH:MM to rtc wakeup, but don't enable the irq
+    HardwareAbstraction.Instance.SetWakeUpTime(time)
+    HardwareAbstraction.Instance.SetWakeUpToBeEnabledAtShutdown()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value="OK"))
+
+
+@app.route('/api/rtc/clearwakeup/', methods=['GET'])
+def clearRTCWakeUp():
+    # disable alarm irq
+    # write 00:00
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    HardwareAbstraction.Instance.SetWakeUpTime("00:00")
+    HardwareAbstraction.Instance.ClearWakeUpToBeEnabledAtShutdown()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value="OK"))
+
+@app.route('/api/rtc/wakeupenabled/', methods=['GET'])
+def getWakeUpToBeEnabledAtShutdown():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    isEnabled = HardwareAbstraction.Instance.GetWakeUpToBeEnabledAtShutdown()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=isEnabled))
 
 @app.route('/api/uploadlogarchive/', methods=['GET'])
 def uploadLogArchive():
@@ -1128,11 +1273,9 @@ def uploadLogArchive():
     zipLogArchive(zipFilePath)
 
     apiKey = SettingsClass.GetAPIKey()
-    serverProtocol = getWebServerProtocol()
-    serverIP = getWebServerIP()
-    serverHost = getWebServerHost()
+    webServerUrl = getWebServerUrl()
 
-    uploadLogArchiveToServer(apiKey, zipFilePath, serverProtocol, serverIP, serverHost)
+    uploadLogArchiveToServer(apiKey, zipFilePath, webServerUrl)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value='OK'))

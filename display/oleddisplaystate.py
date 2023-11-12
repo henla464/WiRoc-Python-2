@@ -12,8 +12,15 @@ class OledDisplayState(DisplayState):
     OledThinFont2 = ImageFont.truetype('display/GeosansLight.ttf', 14)
     OledBoldFont = ImageFont.truetype('display/theboldfont.ttf', 44)
 
+    def __init__(self):
+        self.imageChanged: bool = True
+
     def Draw(self, displayData: DisplayData):
         assert(0,"Draw not implemented")
 
     def Next(self):
         assert(0,"Next not implemented")
+
+    def SetImagedChanged(self):
+        self.imageChanged = True
+

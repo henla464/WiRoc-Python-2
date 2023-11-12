@@ -741,14 +741,22 @@ class LoraRadioMessageStatusRS(LoraRadioMessageRS):
     ECC2 = 12  # Error correcting code
     ECC3 = 13  # Error correcting code
 
-    def __init__(self):
+    def __init__(self, noOfLoraMsgSentNotAcked: int = None, allLoraPunchesSucceeded: bool = None):
         super().__init__()
         self.messageType = LoraRadioMessageRS.MessageTypeStatus
+        if noOfLoraMsgSentNotAcked is None or allLoraPunchesSucceeded is None:
+            return
         siStationNumber = SettingsClass.GetSIStationNumber()
         batteryPercent = Battery.GetBatteryPercent()
-        relayPathNo = SettingsClass.GetRelayPathNumber()
+        if siStationNumber > 255:
+            batteryPercent |= 0x80
+
+        allPunchesOk_NoOfFailedMsg_relayPathNo = ((noOfLoraMsgSentNotAcked & 0x1F) << 2) | SettingsClass.GetRelayPathNumber() & 0x03
+        if allLoraPunchesSucceeded:
+            allPunchesOk_NoOfFailedMsg_relayPathNo += 0x80
+
         btAddressAsInt = SettingsClass.GetBTAddressAsInt()
-        self.payloadData = bytearray(bytes([batteryPercent, siStationNumber, relayPathNo,
+        self.payloadData = bytearray(bytes([batteryPercent, siStationNumber, allPunchesOk_NoOfFailedMsg_relayPathNo,
                                             (btAddressAsInt & 0xFF0000000000) >> 40,
                                             (btAddressAsInt & 0x00FF00000000) >> 32,
                                             (btAddressAsInt & 0x0000FF000000) >> 24,
@@ -758,19 +766,25 @@ class LoraRadioMessageStatusRS(LoraRadioMessageRS):
                                             ]))
         self.GenerateAndAddRSCode()
 
-    def GetBatteryPercent(self):
-        return self.payloadData[0]
+    def GetBatteryPercent(self) -> int:
+        return self.payloadData[0] & 0x8F
 
-    def GetSIStationNumber(self):
-        return self.payloadData[1]
+    def GetSIStationNumber(self) -> int:
+        return ((self.payloadData[0] & 0x80) << 8) + self.payloadData[1]
 
-    def GetRelayPathNo(self):
-        return self.payloadData[2]
+    def GetRelayPathNo(self) -> int:
+        return self.payloadData[2] & 0x03
 
-    def SetPayload(self, payload):
+    def GetAllLoraPunchesSentOK(self) -> bool:
+        return (self.payloadData[2] & 0x80) > 0
+
+    def GetNoOfLoraMsgSentNotAcked(self) -> int:
+        return (self.payloadData[2] & 0x7C) >> 2
+
+    def SetPayload(self, payload: bytearray) -> None:
         self.payloadData = payload
 
-    def GetBTAddressAsInt(self):
+    def GetBTAddressAsInt(self) -> int:
         return (self.payloadData[3] << 40) | \
                (self.payloadData[4] << 32) | \
                (self.payloadData[5] << 24) | \
@@ -778,15 +792,15 @@ class LoraRadioMessageStatusRS(LoraRadioMessageRS):
                (self.payloadData[7] << 8) | \
                self.payloadData[8]
 
-    def GetBTAddress(self):
+    def GetBTAddress(self) -> str:
         btAddrAsInt = self.GetBTAddressAsInt()
         btAddress = '{:x}'.format(btAddrAsInt).upper()
         btAddress = btAddress[0:2] + ':' + btAddress[2:4] + ':' + btAddress[4:6] + \
             ':' + btAddress[6:8] + ':' + btAddress[8:10] + ':' + btAddress[10:12]
         return btAddress
 
-    def GetMessageCategory(self):
+    def GetMessageCategory(self) -> str:
         return "DATA"
 
-    def GetMessageSubType(self):
+    def GetMessageSubType(self) -> str:
         return "Status"
