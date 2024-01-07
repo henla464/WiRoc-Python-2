@@ -191,6 +191,7 @@ def setRxGainEnabled(enabled):
 
 @app.route('/api/sendtosirapenabled/', methods=['GET'])
 def getSendToSirapEnabled():
+    DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
     enabled = '0'
     if setting is not None:
@@ -217,6 +218,7 @@ def setSendToSirapEnabled(enabled):
 
 @app.route('/api/sendtosirapip/', methods=['GET'])
 def getSendToSirapIP():
+    DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('SendToSirapIP')
     ip = ""
     if setting is not None:
@@ -563,7 +565,7 @@ def getHasHWSRR():
 def getHasHWRTC():
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
-    hasRTC = HardwareAbstraction.Instance.hasRTC()
+    hasRTC = HardwareAbstraction.Instance.HasRTC()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value='1' if hasRTC else '0'))
