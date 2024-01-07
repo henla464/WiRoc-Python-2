@@ -474,12 +474,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /srr/listenonly/:
+  /srr/mode:
     get:
       tags:
       - "SRR"
-      summary: "Get if SRR receiver is only listening without acknowledgeing messages"
-      operationId: "GetSRRListenOnly"
+      summary: "Get the mode of the SRR radio"
+      operationId: "getSRRMode"
+      responses:
+        "200":
+          description: "The SRR mode (RECEIVE, SEND)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /srr/mode/{mode}:
+    get:
+      tags:
+      - "SRR"
+      summary: "Set the SRR mode (RECEIVE, SEND)"
+      operationId: "setSRRMode"
+      parameters:
+        - name: srrmode
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Property'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /srr/redchannellistenonly/:
+    get:
+      tags:
+      - "SRR"
+      summary: "Get if SRR receiver is only listening without acknowledgeing messages on red channel"
+      operationId: "getSRRRedChannelListenOnly"
       responses:
         "200":
           description: "0/1 depending on if SRR receiver is only listening or not"
@@ -487,12 +519,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /srr/listenonly/{enabled}:
+  /srr/redchannellistenonly/{enabled}:
     get:
       tags:
       - "SRR"
-      summary: "Enable/Disable the SRR receiver listen only mode"
-      operationId: "setSRRListenOnly"
+      summary: "Enable/Disable the SRR receiver listen only mode on red channel"
+      operationId: "setSRRRedChannelListenOnly"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /srr/bluechannellistenonly/:
+    get:
+      tags:
+      - "SRR"
+      summary: "Get if SRR receiver is only listening without acknowledgeing messages on blue channel"
+      operationId: "getSRRBlueChannelListenOnly"
+      responses:
+        "200":
+          description: "0/1 depending on if SRR receiver is only listening or not"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /srr/bluechannellistenonly/{enabled}:
+    get:
+      tags:
+      - "SRR"
+      summary: "Enable/Disable the SRR receiver listen only mode on blue channel"
+      operationId: "setSRRBlueChannelListenOnly"
       parameters:
         - name: enabled
           in: path

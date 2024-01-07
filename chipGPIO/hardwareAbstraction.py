@@ -213,6 +213,9 @@ class HardwareAbstraction(object):
     def HasRTC(self):
         return self.wirocHWVersionNumber >= 7
 
+    def HasSRR(self):
+        return self.wirocHWVersionNumber >= 6
+
     def GetRTCDateTime(self) -> str:
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetRTCDateTime")
         SECOND_REGADDR = 0x02

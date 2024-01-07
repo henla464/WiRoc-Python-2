@@ -17,7 +17,7 @@ import datetime
 import os
 from subprocess import Popen
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
-
+from utils.utils import Utils
 
 @app.route('/api/openapicontent/', methods=['GET'])
 def getOpenApiContent():
@@ -243,6 +243,7 @@ def setSendToSirapIP(ip):
 
 @app.route('/api/sendtosirapipport/', methods=['GET'])
 def getSendToSirapIPPort():
+    DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('SendToSirapIPPort')
     port = ""
     if setting is not None:
@@ -418,26 +419,77 @@ def setSRREnabled(enabled):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
-
-@app.route('/api/srr/listenonly/', methods=['GET'])
-def getSRRListenOnly():
+@app.route('/api/srr/mode/', methods=['GET'])
+def getSRRMode():
     DatabaseHelper.reInit()
-    sett = DatabaseHelper.get_setting_by_key('SRRListenOnly')
-    SRRListenOnly = '0'
+    sett = DatabaseHelper.get_setting_by_key('SRRMode')
+    SRRMode = "RECEIVE"
     if sett is not None:
-        SRRListenOnly = sett.Value
+        rs232Mode = sett.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=SRRListenOnly))
+    return jsonpickle.encode(MicroMock(Value=SRRMode))
 
 
-@app.route('/api/srr/listenonly/<enabled>/', methods=['GET'])
-def setSRRListenOnly(enabled):
+@app.route('/api/srr/mode/<mode>/', methods=['GET'])
+def setSRRMode(mode):
     DatabaseHelper.reInit()
-    sd = DatabaseHelper.get_setting_by_key('SRRListenOnly')
+    sd = DatabaseHelper.get_setting_by_key('SRRMode')
     if sd is None:
         sd = SettingData()
-        sd.Key = 'SRRListenOnly'
+        sd.Key = 'SRRMode'
+    sd.Value = 'SEND' if mode.lower() == 'send' else 'RECEIVE'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/srr/redchannellistenonly/', methods=['GET'])
+def getSRRRedChannelListenOnly():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('SRRRedChannelListenOnly')
+    SRRRedChannelListenOnly = '0'
+    if sett is not None:
+        SRRRedChannelListenOnly = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=SRRRedChannelListenOnly))
+
+
+@app.route('/api/srr/redchannellistenonly/<enabled>/', methods=['GET'])
+def setSRRRedChannelListenOnly(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('SRRRedChannelListenOnly')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SRRRedChannelListenOnly'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/srr/bluechannellistenonly/', methods=['GET'])
+def getSRRBlueChannelListenOnly():
+    DatabaseHelper.reInit()
+    sett = DatabaseHelper.get_setting_by_key('SRRBlueChannelListenOnly')
+    SRRBlueChannelListenOnly = '0'
+    if sett is not None:
+        SRRBlueChannelListenOnly = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=SRRBlueChannelListenOnly))
+
+
+@app.route('/api/srr/bluechannellistenonly/<enabled>/', methods=['GET'])
+def setSRRBlueChannelListenOnly(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('SRRBlueChannelListenOnly')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SRRBlueChannelListenOnly'
     sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
@@ -497,6 +549,24 @@ def setSRRBlueChannel(enabled):
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/hashw/srr/', methods=['GET'])
+def getHasHWSRR():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    hasSRR = HardwareAbstraction.Instance.hasSRR()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value='1' if hasSRR else '0'))
+
+@app.route('/api/hashw/rtc/', methods=['GET'])
+def getHasHWRTC():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    hasRTC = HardwareAbstraction.Instance.hasRTC()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value='1' if hasRTC else '0'))
 
 
 @app.route('/api/punches/', methods=['GET'])
@@ -1094,7 +1164,7 @@ def renewIP(ifaceNetType):
     if result.returncode != 0:
         errStr = result.stderr.decode('utf-8')
         raise Exception("Error: " + errStr)
-    devices = result.stdout.decode('utf-8').splitlines()[0, -1]  # remove last empty element
+    devices = result.stdout.decode('utf-8').splitlines()[0: -1]  # remove last empty element
     devices = [dev[40:] for dev in devices]
     ifaces = devices[::2]
     ifaceNetworkTypes = devices[1::2]
@@ -1166,7 +1236,7 @@ def getListWifi():
         errStr = result.stderr.decode('utf-8')
         raise Exception("Error: " + errStr)
 
-    wifiNetworks = result.stdout.decode('utf-8').splitlines()[0:-1]  # remove last empty element
+    wifiNetworks = result.stdout.decode('utf-8').splitlines() # doesn't seem to be an empty element anymore [0:-1]  # remove last empty element
     wifiNetworks2 = [netName[40:].strip() for netName in wifiNetworks]
     wifiDataList = '\n'.join(wifiNetworks2)
     jsonpickle.set_preferred_backend('json')
@@ -1206,7 +1276,11 @@ def getRTCDateTime():
     # get from rtc
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
-    rtcDateTime = HardwareAbstraction.Instance.GetRTCDateTime()
+    rtcDateTime: str = ''
+    if HardwareAbstraction.Instance.HasRTC():
+        rtcDateTime = HardwareAbstraction.Instance.GetRTCDateTime()
+    else:
+        rtcDateTime = str(datetime.datetime.now())[0:19]
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=rtcDateTime))
@@ -1216,17 +1290,27 @@ def setRTCDateTime(dateAndTimeWithSeconds):
     # write time to rtc
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
-    HardwareAbstraction.Instance.SetRTCDateTime(dateAndTimeWithSeconds)
-    jsonpickle.set_preferred_backend('json')
-    jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value="OK"))
+    if HardwareAbstraction.Instance.HasRTC():
+        HardwareAbstraction.Instance.SetRTCDateTime(dateAndTimeWithSeconds)
+    else:
+        year: int = int(dateAndTimeWithSeconds[0:4])
+        month: int = int(dateAndTimeWithSeconds[5:7])
+        day: int= int(dateAndTimeWithSeconds[8:10])
+        hour: int= int(dateAndTimeWithSeconds[11:13])
+        minute: int= int(dateAndTimeWithSeconds[14:16])
+        second: int= int(dateAndTimeWithSeconds[17:19])
+        Utils.SetDateTime(year, month, day, hour, minute, second)
+
+    return getRTCDateTime()
 
 @app.route('/api/rtc/wakeup/', methods=['GET'])
 def getRTCWakeUp():
     # get from rtc
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
-    rtcWakeUpTime = HardwareAbstraction.Instance.GetRTCWakeUpTime()
+    rtcWakeUpTime: str = '00:00'
+    if HardwareAbstraction.Instance.HasRTC():
+        rtcWakeUpTime = HardwareAbstraction.Instance.GetRTCWakeUpTime()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=rtcWakeUpTime))
@@ -1262,7 +1346,7 @@ def getWakeUpToBeEnabledAtShutdown():
     isEnabled = HardwareAbstraction.Instance.GetWakeUpToBeEnabledAtShutdown()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=isEnabled))
+    return jsonpickle.encode(MicroMock(Value= '1' if isEnabled else '0'))
 
 @app.route('/api/uploadlogarchive/', methods=['GET'])
 def uploadLogArchive():
