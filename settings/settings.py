@@ -414,6 +414,60 @@ class SettingsClass(object):
         return int(sett.Value)
 
     @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSRREnabled'), lock=rlock)
+    def GetSRREnabled() -> bool:
+        sett = DatabaseHelper.get_setting_by_key('SRREnabled')
+        if sett is None:
+            SettingsClass.SetSetting("SRREnabled", "1")
+            return True
+        return sett.Value == "1"
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSRRMode'), lock=rlock)
+    def GetSRRMode() -> str:
+        sett = DatabaseHelper.get_setting_by_key('SRRMode')
+        if sett is None:
+            SettingsClass.SetSetting("SRRMode", "RECEIVE")
+            return "RECEIVE"
+        return sett.Value
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSRRRedChannelEnabled'), lock=rlock)
+    def GetSRRRedChannelEnabled() -> bool:
+        sett = DatabaseHelper.get_setting_by_key('SRRRedChannel')
+        if sett is None:
+            SettingsClass.SetSetting("SRRRedChannel", "1")
+            return True
+        return sett.Value == "1"
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSRRBlueChannelEnabled'), lock=rlock)
+    def GetSRRBlueChannelEnabled() -> bool:
+        sett = DatabaseHelper.get_setting_by_key('SRRBlueChannel')
+        if sett is None:
+            SettingsClass.SetSetting("SRRBlueChannel", "1")
+            return True
+        return sett.Value == "1"
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSRRRedChannelListenOnly'), lock=rlock)
+    def GetSRRRedChannelListenOnly() -> bool:
+        sett = DatabaseHelper.get_setting_by_key('SRRRedChannelListenOnly')
+        if sett is None:
+            SettingsClass.SetSetting("SRRRedChannelListenOnly", "1")
+            return True
+        return sett.Value == "1"
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSRRBlueChannelListenOnly'), lock=rlock)
+    def GetSRRBlueChannelListenOnly() -> bool:
+        sett = DatabaseHelper.get_setting_by_key('SRRBlueChannelListenOnly')
+        if sett is None:
+            SettingsClass.SetSetting("SRRBlueChannelListenOnly", "1")
+            return True
+        return sett.Value == "1"
+
+    @staticmethod
     @cached(cache, key=partial(hashkey, 'GetWebServerUrl'), lock=rlock)
     def GetWebServerUrl():
         sett = DatabaseHelper.get_setting_by_key('WebServerUrl')

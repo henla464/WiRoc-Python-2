@@ -624,11 +624,11 @@ class SRRMessage(object):
 
     @staticmethod
     def GetHeaderSize() -> int:
-        return 10
+        return 0x10
 
     def GetMessageType(self) -> int | None:
-        if len(self.MessageData) >= 10:
-            return self.MessageData[9]
+        if len(self.MessageData) >= 0x10:
+            return self.MessageData[0x0F]
         return None
 
     def GetIsChecksumOK(self) -> bool:
@@ -781,7 +781,7 @@ class AirPlusPunch(SRRMessage):
         return siMsg
 
 
-class AirPlusPunchOneOfMultiple(SRRMessage):
+class AirPlusPunchOneOfMultiple(AirPlusPunch):
     def GetPunchNumberOnSIAC(self) -> int:
         return self.MessageData[26]
 

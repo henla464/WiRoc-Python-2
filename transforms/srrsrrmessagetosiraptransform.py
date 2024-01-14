@@ -1,5 +1,6 @@
 from utils.utils import Utils
-from datamodel.datamodel import SIMessage, MessageSubscriptionBatch
+from datamodel.datamodel import SIMessage, MessageSubscriptionBatch, SRRMessage, SRRBoardPunch, AirPlusPunch, \
+    AirPlusPunchOneOfMultiple
 import logging
 
 
@@ -42,13 +43,33 @@ class SRRSRRMessageToSirapTransform(object):
     def GetDeleteAfterSentChanged() -> bool:
         return False
 
-    #payloadData is a bytearray
+    @staticmethod
+    def GetSIMsg(srrPayloadData: bytearray) -> SIMessage:
+        siMsg: SIMessage | None = None
+        headerSize: int = SRRMessage.GetHeaderSize()
+
+        if srrPayloadData[0] >= headerSize:
+            srrMessage = SRRMessage()
+            srrMessage.AddPayload(srrPayloadData[0:headerSize])
+            messageType: int = srrMessage.GetMessageType()
+            if messageType == SRRMessage.SRRBoardPunch:
+                srrBoardPunch = SRRBoardPunch()
+                srrBoardPunch.AddPayload(srrPayloadData)
+                siMsg = srrBoardPunch.GetSIMessage()
+            elif messageType == SRRMessage.AirPlusPunch:
+                airPlusPunch = AirPlusPunch()
+                airPlusPunch.AddPayload(srrPayloadData)
+                siMsg = airPlusPunch.GetSIMessage()
+            elif messageType == SRRMessage.AirPlusPunchOneOfMultiple:
+                airPlusPunchOneOfMultiple = AirPlusPunchOneOfMultiple()
+                airPlusPunchOneOfMultiple.AddPayload(srrPayloadData)
+                siMsg = airPlusPunchOneOfMultiple.GetSIMessage()
+
+        return siMsg
+
     @staticmethod
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         SRRSRRMessageToSirapTransform.WiRocLogger.debug("SRRSRRMessageToSirapTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-        siMsg = SIMessage()
-        siMsg.AddHeader(SIMessage.SIPunch)
-        siMsg.AddPayload(payloadData[18:31])
-        siMsg.AddFooter()
+        siMsg: SIMessage = SRRSRRMessageToSirapTransform.GetSIMsg(payloadData)
         return {"Data": (Utils.GetSirapDataFromSIData(siMsg),), "MessageID": None}

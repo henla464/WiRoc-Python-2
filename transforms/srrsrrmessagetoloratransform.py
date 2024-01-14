@@ -1,5 +1,6 @@
 from battery import Battery
-from datamodel.datamodel import SIMessage, MessageSubscriptionBatch
+from datamodel.datamodel import SIMessage, MessageSubscriptionBatch, SRRMessage, SRRBoardPunch, AirPlusPunch, \
+    AirPlusPunchOneOfMultiple
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessagePunchReDCoSRS, \
     LoraRadioMessagePunchDoubleReDCoSRS
@@ -51,42 +52,61 @@ class SRRSRRMessageToLoraTransform(object):
     def GetDeleteAfterSentChanged() -> bool:
         return SRRSRRMessageToLoraTransform.DeleteAfterSent != (not SettingsClass.GetAcknowledgementRequested())
 
-    #payloadData is a bytearray
+    @staticmethod
+    def GetSIMsg(srrPayloadData: bytearray, subscriberAdapter) -> SIMessage:
+        siMsg: SIMessage | None = None
+        headerSize: int = SRRMessage.GetHeaderSize()
+
+        if srrPayloadData[0] >= headerSize:
+            srrMessage = SRRMessage()
+            srrMessage.AddPayload(srrPayloadData[0:headerSize])
+            messageType: int = srrMessage.GetMessageType()
+            if messageType == SRRMessage.SRRBoardPunch:
+                srrBoardPunch = SRRBoardPunch()
+                srrBoardPunch.AddPayload(srrPayloadData)
+                siMsg = srrBoardPunch.GetSIMessage()
+            elif messageType == SRRMessage.AirPlusPunch:
+                airPlusPunch = AirPlusPunch()
+                airPlusPunch.AddPayload(srrPayloadData)
+                siMsg = airPlusPunch.GetSIMessage()
+            elif messageType == SRRMessage.AirPlusPunchOneOfMultiple:
+                airPlusPunchOneOfMultiple = AirPlusPunchOneOfMultiple()
+                airPlusPunchOneOfMultiple.AddPayload(srrPayloadData)
+                siMsg = airPlusPunchOneOfMultiple.GetSIMessage()
+
+        return siMsg
+
     @staticmethod
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         SRRSRRMessageToLoraTransform.WiRocLogger.debug("SRRSRRMessageToLoraTransform::Transform()")
+
+        ackReq = SettingsClass.GetAcknowledgementRequested()
+        reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
+        batteryLow = Battery.GetIsBatteryLow()
+
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-        siMsg = SIMessage()
-        siMsg.AddHeader(SIMessage.SIPunch)
-        siMsg.AddPayload(payloadData[18:31])
-        siMsg.AddFooter()
+        siMsg: SIMessage = SRRSRRMessageToLoraTransform.GetSIMsg(payloadData, subscriberAdapter)
         siMsgPayload = siMsg.GetByteArray()
-        if siMsg.GetMessageType() == SIMessage.SIPunch:
-            # all MessageSubscriptionBatchItems will be SIPunch because only SIPunch is sent from SRR SRRMessage
-            ackReq = SettingsClass.GetAcknowledgementRequested()
-            reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
-            batteryLow = Battery.GetIsBatteryLow()
-            if len(msgSubBatch.MessageSubscriptionBatchItems) == 1:
-                loraPunchMsg = LoraRadioMessageCreator.GetPunchReDCoSMessage(batteryLow, ackReq, None)
-                loraPunchMsg.SetSIMessageByteArray(siMsgPayload)
-                loraPunchMsg.SetRepeater(reqRepeater)
-                loraPunchMsg.GenerateAndAddRSCode()
-                loraPunchMsg.GenerateAndAddCRC()
-                interleavedMessageData = LoraRadioMessagePunchReDCoSRS.InterleaveToAirOrder(
-                    loraPunchMsg.GetByteArray())
-                return {"Data": (interleavedMessageData,), "MessageID": loraPunchMsg.GetHash()}
-            elif len(msgSubBatch.MessageSubscriptionBatchItems) == 2:
-                loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(batteryLow, ackReq, None)
-                payloadData2 = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-                siMsg2 = SIMessage()
-                siMsg2.AddHeader(SIMessage.SIPunch)
-                siMsg2.AddPayload(payloadData2[18:31])
-                siMsg2.AddFooter()
-                siMsgPayload2 = siMsg2.GetByteArray()
-                loraPunchDoubleMsg.SetSIMessageByteArrays(siMsgPayload, siMsgPayload2)
-                loraPunchDoubleMsg.SetRepeater(reqRepeater)
-                loraPunchDoubleMsg.GenerateAndAddRSCode()
-                loraPunchDoubleMsg.GenerateAndAddCRC()
-                interleavedMessageData = LoraRadioMessagePunchDoubleReDCoSRS.InterleaveToAirOrder(
-                    loraPunchDoubleMsg.GetByteArray())
-                return {"Data": (interleavedMessageData,), "MessageID": loraPunchDoubleMsg.GetHash()}
+
+        if len(msgSubBatch.MessageSubscriptionBatchItems) == 1:
+            loraPunchMsg = LoraRadioMessageCreator.GetPunchReDCoSMessage(batteryLow, ackReq, None)
+            loraPunchMsg.SetSIMessageByteArray(siMsgPayload)
+            loraPunchMsg.SetRepeater(reqRepeater)
+            loraPunchMsg.GenerateAndAddRSCode()
+            loraPunchMsg.GenerateAndAddCRC()
+            interleavedMessageData = LoraRadioMessagePunchReDCoSRS.InterleaveToAirOrder(
+                loraPunchMsg.GetByteArray())
+            return {"Data": (interleavedMessageData,), "MessageID": loraPunchMsg.GetHash()}
+        elif len(msgSubBatch.MessageSubscriptionBatchItems) == 2:
+            payloadData2 = msgSubBatch.MessageSubscriptionBatchItems[1].MessageData
+            siMsg2: SIMessage = SRRSRRMessageToLoraTransform.GetSIMsg(payloadData2, subscriberAdapter)
+
+            loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(batteryLow, ackReq, None)
+            siMsgPayload2 = siMsg2.GetByteArray()
+            loraPunchDoubleMsg.SetSIMessageByteArrays(siMsgPayload, siMsgPayload2)
+            loraPunchDoubleMsg.SetRepeater(reqRepeater)
+            loraPunchDoubleMsg.GenerateAndAddRSCode()
+            loraPunchDoubleMsg.GenerateAndAddCRC()
+            interleavedMessageData = LoraRadioMessagePunchDoubleReDCoSRS.InterleaveToAirOrder(
+                loraPunchDoubleMsg.GetByteArray())
+            return {"Data": (interleavedMessageData,), "MessageID": loraPunchDoubleMsg.GetHash()}
