@@ -26,6 +26,30 @@ def getOpenApiContent():
     f.close()
     return swaggercontent
 
+@app.route('/api/lora/enabled/', methods=['GET'])
+def getLoraEnabled():
+    DatabaseHelper.reInit()
+    setting = DatabaseHelper.get_setting_by_key('LoraEnabled')
+    loraEnabled = '1'
+    if setting is not None:
+        loraEnabled = setting.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=loraEnabled))
+
+@app.route('/api/lora/enabled/<enabled>/', methods=['GET'])
+def setLoraEnabled(enabled):
+    DatabaseHelper.reInit()
+    sd = DatabaseHelper.get_setting_by_key('LoraEnabled')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'LoraEnabled'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 @app.route('/api/channel/', methods=['GET'])
 def getChannel():
