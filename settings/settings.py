@@ -720,6 +720,7 @@ class SettingsClass(object):
             btAddressAsInt = int(btAddressAsString, 16)
             return btAddressAsInt
 
+
     @staticmethod
     @cached(cacheForEver, key=partial(hashkey, 'GetAPIKey'), lock=rlock)
     def GetAPIKey():

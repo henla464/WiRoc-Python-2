@@ -1,7 +1,7 @@
 __author__ = 'henla464'
 
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
-from datamodel.datamodel import SIMessage
+from datamodel.datamodel import SIMessage, SRRMessage, SRRBoardPunch, AirPlusPunch, AirPlusPunchOneOfMultiple
 from datamodel.datamodel import MessageBoxData
 from loraradio.LoraRadioMessageRS import LoraRadioMessagePunchDoubleReDCoSRS, LoraRadioMessagePunchReDCoSRS, LoraRadioMessageAckRS, LoraRadioMessageStatusRS
 from typing import Union
@@ -44,13 +44,28 @@ class MessageHelper:
             siPayloadData = messageData
         elif messageSubTypeName == "SRRMessage":
             siMsg = SIMessage()
-            siMsg.AddHeader(SIMessage.SIPunch)
-            siMsg.AddPayload(messageData[18:31])
-            siMsg.AddFooter()
+            srrMessage = SRRMessage()
+            headerSize: int = SRRMessage.GetHeaderSize()
+            srrMessage.AddPayload(messageData[0:headerSize])
+            messageType: int = srrMessage.GetMessageType()
+            if messageType == SRRMessage.SRRBoardPunch:
+                srrBoardPunch = SRRBoardPunch()
+                srrBoardPunch.AddPayload(messageData)
+                siMsg = srrBoardPunch.GetSIMessage()
+            elif messageType == SRRMessage.AirPlusPunch:
+                airPlusPunch = AirPlusPunch()
+                airPlusPunch.AddPayload(messageData)
+                siMsg = airPlusPunch.GetSIMessage()
+            elif messageType == SRRMessage.AirPlusPunchOneOfMultiple:
+                airPlusPunchOneOfMultiple = AirPlusPunchOneOfMultiple()
+                airPlusPunchOneOfMultiple.AddPayload(messageData)
+                siMsg = airPlusPunchOneOfMultiple.GetSIMessage()
+
             siPayloadData = siMsg.GetByteArray()
-            mbd.ChecksumOK = messageData[32] & 0x80
-            mbd.RSSIValue = messageData[31]
-            linkQuality = messageData[32] & 0x7F
+            mbd.RSSIValue = messageData[-3]
+            mbd.ChecksumOK = messageData[-2] & 0x80
+            linkQuality = messageData[-2] & 0x7F
+            channel = messageData[-1]
         elif messageSubTypeName == "Test":
             # source recievetestpunches adapter
             siPayloadData = messageData

@@ -580,7 +580,7 @@ def setSRRBlueChannel(enabled):
 def getHasHWSRR():
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
-    hasSRR = HardwareAbstraction.Instance.hasSRR()
+    hasSRR = HardwareAbstraction.Instance.HasSRR()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value='1' if hasSRR else '0'))

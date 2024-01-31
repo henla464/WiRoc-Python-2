@@ -49,7 +49,7 @@ class SRRSRRMessageToSITransform(object):
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         siMsg: SIMessage | None = None
         headerSize: int = SRRMessage.GetHeaderSize()
-        if payloadData[0] >= headerSize:
+        if len(payloadData) >= headerSize:
             srrMessage = SRRMessage()
             srrMessage.AddPayload(payloadData[0:headerSize])
             messageType: int = srrMessage.GetMessageType()
