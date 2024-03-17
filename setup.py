@@ -77,6 +77,9 @@ class Setup:
                 and not inChange1 and not inChange2 and not inChange4
                 and not inChange5 and not inChange6 and not inChange7
                 and not inChange8 and not inChange9):
+            # acknowledgementRequested might have changed so that the subscription must be updated.
+            for adapterObj in subscriberObjects:
+                adapterObj.EnableDisableSubscription()
             return False
 
         SettingsClass.SetForceReconfigure(False)

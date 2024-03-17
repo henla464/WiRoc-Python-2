@@ -42,6 +42,7 @@ class ReceiveSIAdapter(object):
         self.fetchFromBackup: bool = False
         self.fetchFromBackupAddress: int | None = None #exclusive
         self.fetchToBackupAddress: int | None = None #exclusive
+        self.isSRRDongle: bool = False
 
     def GetInstanceName(self) -> str:
         return self.instanceName
@@ -659,7 +660,7 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
     @staticmethod
     def CreateInstances() -> bool:
         # Add USB serial ports
-        portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa|1a86:7523|067b:2303|0403:6001|0557:2008')
+        portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa|1a86:7523|067b:2303|0403:6001|0557:2008|10c4:ea60')
         serialPorts = [portInfo.device for portInfo in portInfoList]
         # SPORTident USB device                                                                 -- Works
         # Linux-USB CDC Composite Gadge (Ethernet and ACM)      {ie:Chip computer}              -- Works
@@ -667,6 +668,7 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
         # 067b:2303 Prolific Technology, Inc. PL2303 Serial Port                                -- Works
         # 0403:6001 Future Technology Devices International, Ltd FT232 USB-Serial (UART) IC     -- Works
         # 0557:2008 ATEN International Co., Ltd UC-232A Serial Port [pl2303]                    -- Works
+        # 10c4:ea60 Silicon Labs CP210x UART Bridge  Punch Generator
 
         # already existing
         previouslyCreated = [instance for instance in ReceiveSIUSBSerialPort.Instances if
@@ -720,7 +722,7 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
                 + " shouldReinitialize: " + str(self.shouldReinitialize)
                 + " baudRateConfig: " + str(baudRateConfig) + " baudRate: " + str(self.siSerial.baudrate))
 
-        if self.isInitialized and not oneWayConfig and self.oneWay and not self.oneWayFallbackShouldNotTriggerReInit:
+        if self.isInitialized and not oneWayConfig and self.oneWay and not self.isSRRDongle:
             # We are initialized as one way even though configuration says it shouldn't be one-way.
             # and is not a device that we know is one-way (SRR dongle)
             self.SetErrorCode(f"{self.instanceName} two-way init failed")
@@ -741,6 +743,7 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
             self.shouldReinitialize = False
             self.oneWayFallbackTryReInitWhenDataReceived = False
             self.oneWayFallbackShouldNotTriggerReInit = False
+            self.isSRRDongle = False
             ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIUSBSerialPort::Init: {self.instanceName}: SI Station port name: " + self.portName)
             self.siSerial.close()
             self.siSerial.port = self.portName
@@ -761,6 +764,7 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
                         self.isInitialized = True
                         self.oneWay = True
                         self.oneWayFallbackShouldNotTriggerReInit = True
+                        self.isSRRDongle = True
                         return True
                     else:
                         successTwoWay = self.InitTwoWay(skipDetectBaudRate=True)
@@ -769,10 +773,20 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
                         else: # better with init one way if two way is not working than aborting
                             successOneWay = self.InitOneWay(baudrate)
                             if successOneWay:
-                                self.oneWayFallbackTryReInitWhenDataReceived = True
+                                self.oneWayFallbackTryReInitWhenDataReceived = False  # reinitialization risks losing messages that arrive at the same time
+                                self.oneWayFallbackShouldNotTriggerReInit = True # reinitialization risks losing messages that arrive at the same time
                                 return True
                             else:
                                 return False
+                else:
+                    successOneWay = self.InitOneWay(baudrate)
+                    if successOneWay:
+                        self.oneWayFallbackTryReInitWhenDataReceived = False  # reinitialization risks losing messages that arrive at the same time
+                        self.oneWayFallbackShouldNotTriggerReInit = True  # reinitialization risks losing messages that arrive at the same time
+                        return True
+                    else:
+                        return False
+
         except Exception as msg:
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIUSBSerialPort::Init() Exception: " + str(msg))
             return False
