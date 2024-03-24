@@ -79,6 +79,7 @@ class LoraRadioDataHandler(object):
         self.ReceivedStatusMessageDict[btAddrAsInt] = msgAndMetadata
 
     def ClearDataReceived(self):
+        LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::ClearDataReceived Data: " + Utils.GetDataInHex(self.DataReceived, logging.DEBUG))
         self.DataReceived = bytearray([])
 
     def _removeBytesFromDataReceived(self, noOfBytesToRemove):

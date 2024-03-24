@@ -33,7 +33,7 @@ class SettingsClass(object):
     hasReceivedMessageFromRepeater = False
     batteryIsLowReceived = False
     deviceId = None
-    messageIDOfLastLoraMessageSent = None
+    messageIDOfLastLoraMessageSent: bytearray = None
     SRRMessageAvailable = False
     NewErrorCode = False
 
@@ -65,11 +65,11 @@ class SettingsClass(object):
         return SettingsClass.timeOfLastMessageSentToLora
 
     @staticmethod
-    def SetMessageIDOfLastLoraMessageSent(messageID):
+    def SetMessageIDOfLastLoraMessageSent(messageID: bytearray):
         SettingsClass.messageIDOfLastLoraMessageSent = messageID
 
     @staticmethod
-    def GetMessageIDOfLastLoraMessageSent():
+    def GetMessageIDOfLastLoraMessageSent() -> bytearray:
         return SettingsClass.messageIDOfLastLoraMessageSent
 
     @staticmethod
@@ -290,6 +290,18 @@ class SettingsClass(object):
             SettingsClass.SetSetting("SimulatedMessageDropPercentageRepeaterRequested", "0")
             return 0
         return int(sett.Value)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetNoOfSecondsToWaitToGiveOtherWiRocChanceToSendAfterReceiveingAck'), lock=rlock)
+    def GetNoOfSecondsToWaitToGiveOtherWiRocChanceToSendAfterReceiveingAck() -> float:
+        sett = DatabaseHelper.get_setting_by_key('GetNoOfSecondsToWaitToGiveOtherWiRocChanceToSendAfterReceiveingAck')
+        if sett is None:
+            # Default 0.5 is a tradeoff, lower value speeds up single unit sending but higher makes it play nicer with
+            # two senders
+            SettingsClass.SetSetting("GetNoOfSecondsToWaitToGiveOtherWiRocChanceToSendAfterReceiveingAck", "0.5")
+            return 0.5
+        return float(sett.Value)
+
 
     # Also see the code for wirocmode in the api. This is duplicated there.
     @staticmethod

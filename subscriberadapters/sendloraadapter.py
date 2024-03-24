@@ -1,7 +1,6 @@
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
-from loraradio.loraradio import LoraRadio
 from loraradio.LoraRadioDRF1268DS_RS import LoraRadioDRF1268DS_RS
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
@@ -84,6 +83,7 @@ class SendLoraAdapter(object):
         self.lastMessageRepeaterBit = False
         self.blockSendingFromThisDate = None
         self.blockSendingForSeconds = None
+        self.blockSendingReason: str = ""
         self.sentQueueWithoutRepeaterBit = collections.deque()
         self.sentQueueWithRepeaterBit = collections.deque()
         self.successWithoutRepeaterBitQueue = collections.deque()
@@ -170,48 +170,80 @@ class SendLoraAdapter(object):
         SendLoraAdapter.Instances[0].AdapterInitialized = loraInitialized
         return loraInitialized
 
-    def RemoveBlock(self):
-        self.blockSendingForSeconds = 0
+    def BlockAfterReceivingAck(self):
+        if self.loraRadio.GetAckReceivedMatchingLastSentMessage():
+            self.blockSendingForSeconds = SettingsClass.GetNoOfSecondsToWaitToGiveOtherWiRocChanceToSendAfterReceiveingAck()
+            self.blockSendingFromThisDate = datetime.now()
+            self.blockSendingReason = "givingotherwirocchancetosend"
+            SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::BlockAfterReceivingAck give other chance")
+        else:
+            # Last ack received likely was an ack to another WiRoc device. If we are blocking
+            # because lora module returned "busy" then now the air should be free so unblock early.
+            self.RemoveBlockSendingDueToBusy()
+            SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::BlockAfterReceivingAck lets go")
 
     def BlockSendingToLetRepeaterSendAndReceiveAck(self):
         timeS = LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS) + \
                 LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck) + 0.35
         self.blockSendingForSeconds = timeS
         self.blockSendingFromThisDate = datetime.now()
+        self.blockSendingReason = "waitforrepeater"
 
     def BlockSendingUntilMessageSentAndAckReceived(self, delayInS):
         self.blockSendingForSeconds = delayInS
         self.blockSendingFromThisDate = datetime.now()
+        self.blockSendingReason = "untilsentandack"
+
+    def BlockSendingDueToBusy(self, delayInS: int | None):
+        if delayInS is None:
+            # wait time should be chosen so that there is high chance to squeeze in between two messages from
+            # another WiRoc unit. But high enough that the risk to squeeze between another message and its ack is low
+            # The time in BlockAfterReceivingAck is also important.
+            self.blockSendingForSeconds = 0.2
+        else:
+            self.blockSendingForSeconds = delayInS
+        self.blockSendingFromThisDate = datetime.now()
+        self.blockSendingReason = "busy"
+
+    def RemoveBlockSendingDueToBusy(self):
+        if self.blockSendingReason == "busy":
+            SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::RemoveBlockSendingDueToBusy() unblocking busy")
+            self.blockSendingForSeconds = None
+            self.blockSendingFromThisDate = None
+            self.blockSendingReason = ""
 
     def IsReadyToSend(self):
         now = datetime.now()
         if self.blockSendingFromThisDate is None or self.blockSendingForSeconds is None or \
             (self.blockSendingFromThisDate + timedelta(seconds=self.blockSendingForSeconds)) < now:
-            isReadyToSend =  self.loraRadio.IsReadyToSend()
+            isReadyToSend = self.loraRadio.IsReadyToSend()
             if not isReadyToSend:
                 # The radio is sending or receiveing. It could be another WiRoc sending its message.
                 # If this WiRoc tries to send every few ms then there is a chance that we start sending
                 # directly after the other WiRoc finished sending, but before the reciever had time to reply.
                 # To lower the chance of this we should block sending for a bit.
-                self.blockSendingForSeconds = 0.5
-                self.blockSendingFromThisDate = datetime.now()
+                self.BlockSendingDueToBusy(None)
                 SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::IsReadyToSend() blocking due to radio not ready to send, wait until: "
-                                                  + "None" if self.blockSendingFromThisDate is None
-                                                  else str(self.blockSendingFromThisDate + timedelta(seconds=self.blockSendingForSeconds)))
-            return isReadyToSend
+                                                  + ("None" if self.blockSendingFromThisDate is None
+                                                     else str(self.blockSendingFromThisDate + timedelta(seconds=self.blockSendingForSeconds))))
+                return False
+            else:
+                SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::IsReadyToSend() True")
+                return True
         if self.blockSendingFromThisDate > now:
             # computer time must have changed, so reset blockSendingFromThisDate
             self.blockSendingFromThisDate = None
+
         SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::IsReadyToSend() blocked from sending until: "
-                                          + "None" if self.blockSendingFromThisDate is None
-                                            else str(self.blockSendingFromThisDate + timedelta(seconds=self.blockSendingForSeconds)))
+                                          + ("None" if self.blockSendingFromThisDate is None
+                                             else str(self.blockSendingFromThisDate + timedelta(seconds=self.blockSendingForSeconds)) + " " + self.blockSendingReason))
         return False
 
     @staticmethod
     def GetDelayAfterMessageSent():
-        timeS = LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS) + 0.05 # message + one loop
+        timeS = LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS) + 0.05  # message + one loop
         if SettingsClass.GetAcknowledgementRequested():
-            timeS+= LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck) + 0.15 # reply ack + 3 loop
+            timeS+= LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck) + 0.15  # reply ack + 3 loop
         return timeS
 
     def GetRetryDelay(self, tryNo):
@@ -316,7 +348,7 @@ class SendLoraAdapter(object):
             else:
                 # failed to send now, probably because 'busy' was returned, ie. something else was sending on same frequency. Delay a short bit.
                 delayWhenAckS = settingsDictionary["DelayAfterMessageSentWhenAck"]
-                self.BlockSendingUntilMessageSentAndAckReceived(delayWhenAckS/4)
+                self.BlockSendingDueToBusy(None)
                 returnSuccess = False
 
         if returnSuccess:

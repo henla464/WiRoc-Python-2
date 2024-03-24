@@ -1,5 +1,4 @@
 import traceback
-from loraradio.loraradio import LoraRadio
 from loraradio.LoraRadioDRF1268DS_RS import LoraRadioDRF1268DS_RS
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
@@ -98,10 +97,13 @@ class ReceiveLoraAdapter(object):
 
     def TrySendData(self, messageData):
         startTrySendTime = time.monotonic()
-        dataSentOK = self.loraRadio.SendData(messageData)
+        dataSentOK = False
+        if self.loraRadio.IsReadyToSend():
+            dataSentOK = self.loraRadio.SendData(messageData)
         while not dataSentOK:
             time.sleep(0.01)
-            dataSentOK = self.loraRadio.SendData(messageData)
+            if self.loraRadio.IsReadyToSend():
+                dataSentOK = self.loraRadio.SendData(messageData)
             if time.monotonic() - startTrySendTime > (SettingsClass.GetRetryDelay(1) / 2000):
                 # Wait half of a first retrydelay (GetRetryDelay returns in microseconds)
                 ReceiveLoraAdapter.WiRocLogger.error("ReceiveLoraAdapter::TrySendData() Wasn't able to send ack (busy response)")
@@ -143,6 +145,7 @@ class ReceiveLoraAdapter(object):
                     SettingsClass.SetHasReceivedMessageFromRepeater()
                 if SettingsClass.GetLoraMode() == "SENDER" or SettingsClass.GetLoraMode() == "REPEATER":
                     messageIDToReturn = loraMessage.GetMessageIDThatIsAcked()
+                    self.loraRadio.SetAckReceivedMatchingLastSentMessage(SettingsClass.GetMessageIDOfLastLoraMessageSent() == messageIDToReturn)
             elif messageType == LoraRadioMessageRS.MessageTypeStatus:
                 if loraMessage.GetBatteryLow():
                     SettingsClass.SetBatteryIsLowReceived(True)
