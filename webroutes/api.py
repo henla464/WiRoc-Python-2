@@ -1382,6 +1382,7 @@ def uploadLogArchive():
 
     zipLogArchive(zipFilePath)
 
+    DatabaseHelper.reInit()
     apiKey = SettingsClass.GetAPIKey()
     webServerUrl = getWebServerUrl()
 

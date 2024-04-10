@@ -726,42 +726,42 @@ class DatabaseHelper:
                 if messageSubscription.SubscriberTypeName in adapterTypesAlreadyHandlingMessages:
                     # a message has already been sent to this adapter or is waiting to be sent (been delayed)
                     # skip any following messages to the same adapter
-                    DatabaseHelper.WiRocLogger.debug('a message has already been sent to this adapter or is waiting to be sent (been delayed): ' + str(messageSubscription.SubscriberTypeName))
+                    #DatabaseHelper.WiRocLogger.debug('a message has already been sent to this adapter or is waiting to be sent (been delayed): ' + str(messageSubscription.SubscriberTypeName))
                     continue
 
                 if messageSubscription.FetchedForSending is not None and messageSubscription.FetchedForSending < now < messageSubscription.FetchedForSending + timedelta(
                         seconds=12):
                     # recently fetched and is being sent by another thread
-                    DatabaseHelper.WiRocLogger.debug("Recently fetched and is being sent by another thread. Time fetched: " + str(messageSubscription.FetchedForSending))
+                    #DatabaseHelper.WiRocLogger.debug("Recently fetched and is being sent by another thread. Time fetched: " + str(messageSubscription.FetchedForSending))
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
 
                 if messageSubscription.CreatedDate < now < messageSubscription.CreatedDate + timedelta(microseconds=messageSubscription.Delay):
                     # Should have an initial delay that has not passed yet
-                    DatabaseHelper.WiRocLogger.debug(f"Should have an initial delay that has not passed yet: Created: {messageSubscription.CreatedDate} Delay: {messageSubscription.Delay}")
+                    #DatabaseHelper.WiRocLogger.debug(f"Should have an initial delay that has not passed yet: Created: {messageSubscription.CreatedDate} Delay: {messageSubscription.Delay}")
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
 
                 if messageSubscription.SentDate is not None and messageSubscription.SentDate < now < messageSubscription.SentDate + timedelta(microseconds=messageSubscription.RetryDelay):
                     # has been sent, not yet passed the retry delay (may still be waiting for ack)
-                    DatabaseHelper.WiRocLogger.debug(f"has been sent, not yet passed the retry delay (may still be waiting for ack). RetryDelay: {messageSubscription.RetryDelay} Delayed until: {messageSubscription.SentDate + timedelta(microseconds=messageSubscription.RetryDelay)}")
+                    #DatabaseHelper.WiRocLogger.debug(f"has been sent, not yet passed the retry delay (may still be waiting for ack). RetryDelay: {messageSubscription.RetryDelay} Delayed until: {messageSubscription.SentDate + timedelta(microseconds=messageSubscription.RetryDelay)}")
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
 
                 if messageSubscription.FindAdapterTryDate is not None and messageSubscription.FindAdapterTryDate < now < messageSubscription.FindAdapterTryDate + timedelta(microseconds=messageSubscription.FindAdapterRetryDelay):
                     # should wait longer before trying to find adapter again
-                    DatabaseHelper.WiRocLogger.debug(f"Should wait longer before trying to find adapter again. FindAdapterRetryDelay {messageSubscription.FindAdapterRetryDelay}")
+                    #DatabaseHelper.WiRocLogger.debug(f"Should wait longer before trying to find adapter again. FindAdapterRetryDelay {messageSubscription.FindAdapterRetryDelay}")
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
 
                 if messageSubscription.NoOfSendTries >= maxRetries:
                     # Message may have been sent, noOfSendTries incremented, passed the retry time
                     # BUT has not yet been archived. Just skip/should be ignored
-                    DatabaseHelper.WiRocLogger.debug("Message may have been sent, noOfSendTries incremented, passed the retry time BUT has not yet been archived. Just skip/should be ignored")
+                    #DatabaseHelper.WiRocLogger.debug("Message may have been sent, noOfSendTries incremented, passed the retry time BUT has not yet been archived. Just skip/should be ignored")
                     continue
 
                 if messageSubscription.FindAdapterTries >= maxRetries:
-                    DatabaseHelper.WiRocLogger.debug("Ignore messages exceeding find adapter tries. Has not yet been archived.")
+                    #DatabaseHelper.WiRocLogger.debug("Ignore messages exceeding find adapter tries. Has not yet been archived.")
                     # Ignore messages exceeding find adapter tries. Has not yet been archived.
                     continue
 

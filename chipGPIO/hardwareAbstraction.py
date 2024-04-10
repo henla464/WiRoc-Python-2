@@ -214,7 +214,9 @@ class HardwareAbstraction(object):
         return self.wirocHWVersionNumber >= 7
 
     def HasSRR(self):
-        return self.wirocHWVersionNumber >= 6
+        # The version 6 had SRR but with flex cable that seem to only give problems.
+        # So lets only enabled SRR when version >= 7
+        return self.wirocHWVersionNumber >= 7
 
     def GetRTCDateTime(self) -> str:
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetRTCDateTime")

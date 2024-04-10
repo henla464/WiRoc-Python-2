@@ -367,14 +367,14 @@ class Main:
                         DatabaseHelper.archive_message_subscriptions_after_ack(messageID, rssiValue)
 
     def handleOutput(self, settDict):
-        self.wirocLogger.debug("Handle output")
+        #self.wirocLogger.debug("Handle output")
         if self.messagesToSendExists:
             noOfMsgSubWaiting, msgSubBatch = DatabaseHelper.get_message_subscriptions_view_to_send(SettingsClass.GetMaxRetries())
             if noOfMsgSubWaiting == 0:
                 self.messagesToSendExists = False
-            self.wirocLogger.debug("Handle output no of noOfMsgSubWaiting: " + str(noOfMsgSubWaiting))
+            #self.wirocLogger.debug("Handle output no of noOfMsgSubWaiting: " + str(noOfMsgSubWaiting))
             if msgSubBatch is not None:
-                self.wirocLogger.debug("Handle output msgSubBatch is not None")
+                #self.wirocLogger.debug("Handle output msgSubBatch is not None")
                 # self.wirocLogger.info("msgSub count: " + str(len(msgSubscriptions)))
                 # find the right adapter
                 adapterFound = False
@@ -405,6 +405,7 @@ class Main:
                                     self.wirocLogger.debug("In loop: sub adapter: " + str(type(subAdapter)) + " DelayAfterMessageSent: " + str(subAdapter.GetDelayAfterMessageSent()))
                                     settDict["DelayAfterMessageSent"] = subAdapter.GetDelayAfterMessageSent()
                                     settDict["DelayAfterMessageSentWhenAck"] = settDict["DelayAfterMessageSent"]
+
                                 def createSuccessCB(innerSubAdapter, innerMsgSubBatch):
                                     sentDate = datetime.now()
 
@@ -694,7 +695,7 @@ if __name__ == '__main__':
     logging.raiseExceptions = False
     # set a format which is simpler for console use
     formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-    rotFileHandler = logging.handlers.RotatingFileHandler('WiRoc.log', maxBytes=20000000, backupCount=3)
+    rotFileHandler = logging.handlers.RotatingFileHandler('WiRoc.log', maxBytes=20000000, backupCount=5)
     rotFileHandler.doRollover()
     rotFileHandler.setFormatter(formatter)
 
