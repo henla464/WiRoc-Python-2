@@ -48,7 +48,7 @@ class Main:
         self.webServerUp: bool = False
         self.lastBatteryIsLowReceived = None
         self.lastBatteryIsLow = None
-        self.threadQueue = queue.Queue()
+        #self.threadQueue = queue.Queue()
         self.displayStateMachine = DisplayStateMachine()
         self.lastWiRocDeviceNameSentToServer = None
         Battery.Setup()
@@ -450,7 +450,7 @@ class Main:
 
                                 t = threading.Thread(target=subAdapter.SendData,
                                                      args=(transformedData["Data"], createSuccessCB(subAdapter, msgSubBatch), createFailureCB(subAdapter, msgSubBatch), createNotSentCB(msgSubBatch), None, settDict))
-                                self.threadQueue.put(t)
+                                #self.threadQueue.put(t)
                                 t.start()
                             else:
                                 # shouldn't be sent, so just archive the message subscription
@@ -646,12 +646,12 @@ class Main:
                 self.handleInput()
                 self.handleOutput(settDict)
                 self.sendMessageStats()
-                while not self.threadQueue.empty():  # now that we got rid of the callbacks, shouldn't we also be able to remove this?
-                    try:
-                        bgThread = self.threadQueue.get(False)
-                        bgThread.join()
-                    except queue.Empty:
-                        pass
+                #while not self.threadQueue.empty():  # now that we got rid of the callbacks, shouldn't we also be able to remove this?
+                #    try:
+                #        bgThread = self.threadQueue.get(False)
+                #        bgThread.join()
+                #    except queue.Empty:
+                #        pass
 
 
 main = None
