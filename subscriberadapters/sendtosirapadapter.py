@@ -124,14 +124,16 @@ class SendToSirapAdapter(object):
                 if self.sock is not None:
                     self.sock.close()
                 self.sock = None
-                callbackQueue.put((failureCB,))
+                failureCB()
+                #callbackQueue.put((failureCB,))
                 return False
             except socket.error as msg:
                 SendToSirapAdapter.WiRocLogger.error("SendToSirapAdapter::OpenConnection() Connection error: " + str(msg))
                 if self.sock is not None:
                     self.sock.close()
                 self.sock = None
-                callbackQueue.put((failureCB,))
+                failureCB()
+                #callbackQueue.put((failureCB,))
                 return False
         return True
 
@@ -140,7 +142,7 @@ class SendToSirapAdapter(object):
         try:
             # Send data
             for data in messageData:
-                if not self.OpenConnection(failureCB, callbackQueue, settingsDictionary):
+                if not self.OpenConnection(failureCB, None, settingsDictionary):
                     self.sock = None
                     return False
 
@@ -149,20 +151,24 @@ class SendToSirapAdapter(object):
                 self.sock = None
 
             SendToSirapAdapter.WiRocLogger.debug("SendToSirapAdapter::SendData() Sent to SIRAP")
-            callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), "SIMessage", "Sent", 1))
-            callbackQueue.put((successCB,))
+            DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Sent", 1)
+            successCB()
+            #callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), "SIMessage", "Sent", 1))
+            #callbackQueue.put((successCB,))
             return True
         except socket.error as msg:
             logging.error(msg)
             if self.sock is not None:
                 self.sock.close()
             self.sock = None
-            callbackQueue.put((failureCB,))
+            failureCB()
+            #callbackQueue.put((failureCB,))
             return False
         except:
             SendToSirapAdapter.WiRocLogger.error("SendToSirapAdapter::SendData() Exception")
             if self.sock is not None:
                 self.sock.close()
             self.sock = None
-            callbackQueue.put((failureCB,))
+            failureCB()
+            #callbackQueue.put((failureCB,))
             return False

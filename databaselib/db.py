@@ -11,7 +11,13 @@ class DB:
     WiRocLogger = logging.getLogger('WiRoc')
 
     def __init__(self, database_file_path: str, data_mapping: DataMapping):
-        self.connection = lite.connect(database_file_path, timeout=100)
+        if lite.threadsafety == 3:
+            check_same_thread = False
+        else:
+            self.WiRocLogger.error("DB::__init__() SQLite3 database is not threadsafe")
+            check_same_thread = True
+
+        self.connection = lite.connect(database_file_path, timeout=100, check_same_thread=check_same_thread)
         self.connection.row_factory = lite.Row
         self.data_mapping = data_mapping
         self.execute_SQL("PRAGMA journal_mode=WAL")

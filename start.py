@@ -48,7 +48,7 @@ class Main:
         self.webServerUp: bool = False
         self.lastBatteryIsLowReceived = None
         self.lastBatteryIsLow = None
-        self.callbackQueue = queue.Queue()
+        #self.callbackQueue = queue.Queue()
         self.threadQueue = queue.Queue()
         self.displayStateMachine = DisplayStateMachine()
         self.lastWiRocDeviceNameSentToServer = None
@@ -450,7 +450,7 @@ class Main:
                                     return notSentCB
 
                                 t = threading.Thread(target=subAdapter.SendData,
-                                                     args=(transformedData["Data"], createSuccessCB(subAdapter, msgSubBatch), createFailureCB(subAdapter, msgSubBatch), createNotSentCB(msgSubBatch), self.callbackQueue, settDict))
+                                                     args=(transformedData["Data"], createSuccessCB(subAdapter, msgSubBatch), createFailureCB(subAdapter, msgSubBatch), createNotSentCB(msgSubBatch), None, settDict))
                                 self.threadQueue.put(t)
                                 t.start()
                             else:
@@ -556,7 +556,8 @@ class Main:
                 try:
                     resp = requests.post(url=URL, json=messageStatToSend, timeout=1, allow_redirects=False, headers=headers, verify=False)
                     if resp.status_code == 200 or resp.status_code == 303:
-                        self.callbackQueue.put((DatabaseHelper.set_message_stat_uploaded, messageStat.id))
+                        DatabaseHelper.set_message_stat_uploaded(messageStat.id)
+                        #self.callbackQueue.put((DatabaseHelper.set_message_stat_uploaded, messageStat.id))
                     else:
                         self.webServerUp = False
                 except Exception as ex:
@@ -597,17 +598,17 @@ class Main:
             except Exception as ex:
                 self.wirocLogger.error("Start::sendSetConnectedToInternet() Exception: " + str(ex))
 
-    def handleCallbacks(self):
-        try:
-            cbt = self.callbackQueue.get(False)
-            cb = cbt[0]
-            cbargs = cbt[1:]
-            #self.wirocLogger.debug("arg: " + str(cbt[0]))
-            cb(*cbargs)
-        except queue.Empty:
-            pass
-        except Exception as ex:
-            self.wirocLogger.error("Start::handleCallbacks() Exception: " + str(ex))
+    #def handleCallbacks(self):
+    #    try:
+    #        cbt = self.callbackQueue.get(False)
+    #        cb = cbt[0]
+    #        cbargs = cbt[1:]
+    #        #self.wirocLogger.debug("arg: " + str(cbt[0]))
+    #        cb(*cbargs)
+    #    except queue.Empty:
+    #        pass
+    #    except Exception as ex:
+    #        self.wirocLogger.error("Start::handleCallbacks() Exception: " + str(ex))
 
     def Run(self):
         settDict: dict[str, str | int | None] = {
@@ -664,7 +665,7 @@ class Main:
                         bgThread.join()
                     except queue.Empty:
                         pass
-                self.handleCallbacks()
+                #self.handleCallbacks()
 
 
 main = None

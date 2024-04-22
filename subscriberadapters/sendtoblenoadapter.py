@@ -109,5 +109,6 @@ class SendToBlenoAdapter(object):
             blenoPunchData.TwelveHourTimer = (SIMsg.GetTwelveHourTimer()[0] << 8) + SIMsg.GetTwelveHourTimer()[1]
             blenoPunchData.SubSecond = SIMsg.GetSubSecondAsTenthOfSeconds()
             callbackQueue.put((DatabaseHelper.save_bleno_punch_data, blenoPunchData))
-        callbackQueue.put((successCB,))
+        successCB()
+        #callbackQueue.put((successCB,))
         return True

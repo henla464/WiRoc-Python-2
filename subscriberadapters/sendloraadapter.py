@@ -352,8 +352,12 @@ class SendLoraAdapter(object):
                 returnSuccess = False
 
         if returnSuccess:
-            callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), statMessageType, "Sent", 1))
-            callbackQueue.put((successCB,))
+            DatabaseHelper.add_message_stat(self.GetInstanceName(), statMessageType, "Sent", 1)
+            successCB()
+            #callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), statMessageType, "Sent", 1))
+            #callbackQueue.put((successCB,))
         else:
-            callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), statMessageType, "NotSent", 0))
-            callbackQueue.put((notSentCB,))
+            DatabaseHelper.add_message_stat(self.GetInstanceName(), statMessageType, "NotSent", 0)
+            notSentCB()
+            #callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), statMessageType, "NotSent", 0))
+            #callbackQueue.put((notSentCB,))

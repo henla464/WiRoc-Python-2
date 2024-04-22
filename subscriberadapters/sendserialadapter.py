@@ -153,17 +153,21 @@ class SendSerialAdapter(object):
             try:
                 self.rs232Serial.write(data)
                 self.rs232Serial.flush()
-                callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "Sent", 1))
+                DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "Sent", 1)
+                #callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "Sent", 1))
                 SendSerialAdapter.WiRocLogger.error(
                     "SendSerialAdapter::SendData() Sent to RS232 Serial, data: " + Utils.GetDataInHex(data, logging.DEBUG))
             except IOError as ioe:
                 returnSuccess = False
-                callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "NotSent", 0))
+                DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "NotSent", 0)
+                #callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "NotSent", 0))
                 SendSerialAdapter.WiRocLogger.error("SendSerialAdapter::SendData() Could not send to RS232 serial: " + str(ioe))
 
         if returnSuccess:
-            callbackQueue.put((successCB,))
+            successCB()
+            #callbackQueue.put((successCB,))
             return True
         else:
-            callbackQueue.put((failureCB,))
+            failureCB()
+            #callbackQueue.put((failureCB,))
             return False

@@ -132,7 +132,8 @@ class SendStatusAdapter(object):
         try:
             if settingsDictionary["WebServerUrl"] is None:
                 SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::SendData No webserver url")
-                callbackQueue.put((failureCB,))
+                failureCB()
+                #callbackQueue.put((failureCB,))
                 return False
 
             headers = {'X-Authorization': settingsDictionary["ApiKey"]}
@@ -195,10 +196,13 @@ class SendStatusAdapter(object):
                     returnSuccess = False
 
             if returnSuccess:
-                callbackQueue.put((successCB,))
+                successCB()
+                #callbackQueue.put((successCB,))
             else:
-                callbackQueue.put((failureCB,))
+                failureCB()
+                #callbackQueue.put((failureCB,))
         except Exception as ex:
             SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::SendData() Exception: " + str(ex))
-            callbackQueue.put((failureCB, ))
+            failureCB()
+            #callbackQueue.put((failureCB, ))
             return False
