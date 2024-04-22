@@ -110,14 +110,14 @@ class Utils:
             return nr
 
     @staticmethod
-    def EncodeCardNr(number):
-        if number > 200000 and number <= 265000:
+    def EncodeCardNr(number) -> int:
+        if 200000 < number <= 265000:
             return (number - 200000) + 0x20000
-        elif number > 300000 and number <= 365000:
+        elif 300000 < number <= 365000:
             return (number - 300000) + 0x30000
-        elif number > 400000 and number <= 465000:
+        elif 400000 < number <= 465000:
             return (number - 400000) + 0x40000
-        elif number  > 65000 and number < 500000:
+        elif 65000 < number < 500000:
             return 0
         else:
             return number
@@ -211,7 +211,7 @@ class Utils:
     @staticmethod
     def GetDataInHex(data, loggingLevel):
         if logging.getLogger('WiRoc.Input').isEnabledFor(loggingLevel) or \
-            logging.getLogger('WiRoc.Output').isEnabledFor(loggingLevel):
+                logging.getLogger('WiRoc.Output').isEnabledFor(loggingLevel):
             dataInHex = ''.join(format(x, '02x') for x in data)
             return dataInHex
         return "(Not printed in this logging level)"

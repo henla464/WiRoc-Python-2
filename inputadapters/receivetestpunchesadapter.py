@@ -59,9 +59,9 @@ class ReceiveTestPunchesAdapter(object):
                                     bytes([punchToAdd.TwentyFourHour]),
                                     punchToAdd.TwelveHourTimer,
                                     bytes([subSecond]),
-                                    bytes([0x00]), # mem2
-                                    bytes([0x00]), # mem1
-                                    bytes([0x00])  # mem0
+                                    bytes([0x00]),  # mem2
+                                    bytes([0x00]),  # mem1
+                                    bytes([0x00])   # mem0
                                 ))
                 siMessage.AddPayload(payload)
                 siMessage.AddFooter()
