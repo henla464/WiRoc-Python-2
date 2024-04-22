@@ -128,7 +128,7 @@ class SendStatusAdapter(object):
         return 1
 
     # messageData is a tuple of bytearrays
-    def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
+    def SendData(self, messageData, successCB, failureCB, notSentCB, settingsDictionary):
         try:
             if settingsDictionary["WebServerUrl"] is None:
                 SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::SendData No webserver url")
@@ -197,12 +197,9 @@ class SendStatusAdapter(object):
 
             if returnSuccess:
                 successCB()
-                #callbackQueue.put((successCB,))
             else:
                 failureCB()
-                #callbackQueue.put((failureCB,))
         except Exception as ex:
             SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::SendData() Exception: " + str(ex))
             failureCB()
-            #callbackQueue.put((failureCB, ))
             return False

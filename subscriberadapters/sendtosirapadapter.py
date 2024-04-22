@@ -138,7 +138,7 @@ class SendToSirapAdapter(object):
         return True
 
     # messageData is tuple of bytearray
-    def SendData(self, messageData: tuple[bytearray], successCB, failureCB, notSentCB, callbackQueue, settingsDictionary: dict[str, any]) -> bool:
+    def SendData(self, messageData: tuple[bytearray], successCB, failureCB, notSentCB, settingsDictionary: dict[str, any]) -> bool:
         try:
             # Send data
             for data in messageData:
@@ -153,8 +153,6 @@ class SendToSirapAdapter(object):
             SendToSirapAdapter.WiRocLogger.debug("SendToSirapAdapter::SendData() Sent to SIRAP")
             DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Sent", 1)
             successCB()
-            #callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), "SIMessage", "Sent", 1))
-            #callbackQueue.put((successCB,))
             return True
         except socket.error as msg:
             logging.error(msg)
@@ -162,7 +160,6 @@ class SendToSirapAdapter(object):
                 self.sock.close()
             self.sock = None
             failureCB()
-            #callbackQueue.put((failureCB,))
             return False
         except:
             SendToSirapAdapter.WiRocLogger.error("SendToSirapAdapter::SendData() Exception")
@@ -170,5 +167,4 @@ class SendToSirapAdapter(object):
                 self.sock.close()
             self.sock = None
             failureCB()
-            #callbackQueue.put((failureCB,))
             return False

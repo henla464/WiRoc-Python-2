@@ -318,7 +318,7 @@ class SendLoraAdapter(object):
             return reqRepeater
 
     # messageData is a tuple of bytearrays
-    def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
+    def SendData(self, messageData, successCB, failureCB, notSentCB, settingsDictionary):
         statMessageType = ""
         returnSuccess = True
         for data in messageData:
@@ -347,17 +347,12 @@ class SendLoraAdapter(object):
                     self.AddSentWithoutRepeaterBit()
             else:
                 # failed to send now, probably because 'busy' was returned, ie. something else was sending on same frequency. Delay a short bit.
-                delayWhenAckS = settingsDictionary["DelayAfterMessageSentWhenAck"]
                 self.BlockSendingDueToBusy(None)
                 returnSuccess = False
 
         if returnSuccess:
             DatabaseHelper.add_message_stat(self.GetInstanceName(), statMessageType, "Sent", 1)
             successCB()
-            #callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), statMessageType, "Sent", 1))
-            #callbackQueue.put((successCB,))
         else:
             DatabaseHelper.add_message_stat(self.GetInstanceName(), statMessageType, "NotSent", 0)
             notSentCB()
-            #callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), statMessageType, "NotSent", 0))
-            #callbackQueue.put((notSentCB,))

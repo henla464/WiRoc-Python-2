@@ -146,7 +146,7 @@ class SendSerialAdapter(object):
         return 1
 
     # messageData is a tuple of bytearrays
-    def SendData(self, messageData, successCB, failureCB, notSentCB, callbackQueue, settingsDictionary):
+    def SendData(self, messageData, successCB, failureCB, notSentCB, settingsDictionary):
         returnSuccess = True
 
         for data in messageData:
@@ -154,20 +154,16 @@ class SendSerialAdapter(object):
                 self.rs232Serial.write(data)
                 self.rs232Serial.flush()
                 DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "Sent", 1)
-                #callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "Sent", 1))
                 SendSerialAdapter.WiRocLogger.error(
                     "SendSerialAdapter::SendData() Sent to RS232 Serial, data: " + Utils.GetDataInHex(data, logging.DEBUG))
             except IOError as ioe:
                 returnSuccess = False
                 DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "NotSent", 0)
-                #callbackQueue.put((DatabaseHelper.add_message_stat, self.GetInstanceName(), None, "NotSent", 0))
                 SendSerialAdapter.WiRocLogger.error("SendSerialAdapter::SendData() Could not send to RS232 serial: " + str(ioe))
 
         if returnSuccess:
             successCB()
-            #callbackQueue.put((successCB,))
             return True
         else:
             failureCB()
-            #callbackQueue.put((failureCB,))
             return False
