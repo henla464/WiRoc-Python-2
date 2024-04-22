@@ -449,7 +449,7 @@ class Main:
                                     return notSentCB
 
                                 t = threading.Thread(target=subAdapter.SendData,
-                                                     args=(transformedData["Data"], createSuccessCB(subAdapter, msgSubBatch), createFailureCB(subAdapter, msgSubBatch), createNotSentCB(msgSubBatch), None, settDict))
+                                                     args=(transformedData["Data"], createSuccessCB(subAdapter, msgSubBatch), createFailureCB(subAdapter, msgSubBatch), createNotSentCB(msgSubBatch), settDict))
                                 #self.threadQueue.put(t)
                                 t.start()
                             else:
