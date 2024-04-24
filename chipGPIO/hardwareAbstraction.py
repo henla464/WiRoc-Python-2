@@ -137,7 +137,7 @@ class HardwareAbstraction(object):
         return ipAddressesArray
 
     def GetIsShortKeyPress(self):
-        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetIsShortKeyPress")
+        # HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetIsShortKeyPress")
 
         IRQ_STATUS_3_REGADDR = 0x4a
         statusReg = self.i2cBus.read_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR)
@@ -151,7 +151,7 @@ class HardwareAbstraction(object):
         self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR, 0x02)
 
     def GetIsLongKeyPress(self):
-        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetIsLongKeyPress")
+        # HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetIsLongKeyPress")
 
         IRQ_STATUS_3_REGADDR = 0x4a
         statusReg = self.i2cBus.read_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR)
