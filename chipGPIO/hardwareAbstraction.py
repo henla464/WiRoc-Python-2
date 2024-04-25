@@ -25,12 +25,13 @@ class HardwareAbstraction(object):
         self.SRRirq = None
         self.SRRnrst = None
         self.PMUIRQ = None
+        self.StatusLed = None
         with open("../settings.yaml", "r") as f:
             settings = yaml.load(f, Loader=yaml.BaseLoader)
         wirocHWVersion: str = settings['WiRocHWVersion']
         self.wirocHWVersion: str = wirocHWVersion.strip()
         self.wirocHWVersionNumber: int = int(self.wirocHWVersion.split("Rev")[0][1:])
-        self.wirocHWRevisionNumber:int  = int(self.wirocHWVersion.split("Rev")[1])
+        self.wirocHWRevisionNumber: int = int(self.wirocHWVersion.split("Rev")[1])
 
     def SetupPins(self):
         # gpioinfo give us gpiochip0 and gpiochip1. But gpiochip0 for the lines (pins) needed
@@ -53,7 +54,7 @@ class HardwareAbstraction(object):
             self.LORAaux = chip.get_line(64) # lora aux pin (corresponds to pin 19)
             self.LORAaux.request(configInput)
 
-            self.LORAenable = chip.get_line(2) # lora enable pin (corresponds to pin 13)
+            self.LORAenable = chip.get_line(2)  # lora enable pin (corresponds to pin 13)
             self.LORAenable.request(configOutput)
             self.LORAenable.set_value(1)
 
@@ -61,7 +62,7 @@ class HardwareAbstraction(object):
             self.LORAM0.request(configOutput)
             self.LORAM0.set_value(0)
         elif self.wirocHWVersionNumber >= 6:
-            self.LORAaux = chip.get_line(64) # lora aux pin (corresponds to pin 19)
+            self.LORAaux = chip.get_line(64)  # lora aux pin (corresponds to pin 19)
             self.LORAaux.request(configInput)
 
             self.LORAenable = chip.get_line(2) # lora enable pin (corresponds to pin 13)
@@ -85,6 +86,10 @@ class HardwareAbstraction(object):
             self.LORAenable = chip.get_line(2)  # lora enable pin (corresponds to pin 13)
             self.LORAenable.request(configOutput)
             self.LORAenable.set_value(1)
+
+            self.StatusLed = chip.get_line(6)  # status led pin GPIOA6 Pin 12, linux gpio 6
+            self.StatusLed.request(configOutput)
+            self.StatusLed.set_value(1)
 
     def GetSISerialPorts(self):
         if self.wirocHWVersionNumber >= 4:
