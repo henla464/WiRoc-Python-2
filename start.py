@@ -42,15 +42,10 @@ class Main:
         self.messagesToSendExists: bool = True
         self.previousChannel = None
         self.previousAckRequested = None
-        #self.wifiPowerSaving = None
         self.activeInputAdapters: None | list[CreateStatusAdapter | ReceiveLoraAdapter | ReceiveSIUSBSerialPort | ReceiveSIHWSerialPort | ReceiveSIBluetoothSP | ReceiveTestPunchesAdapter | ReceiveRepeaterMessagesAdapter | ReceiveSRRAdapter] = None
         self.subscriberAdapters: None | list[SendLoraAdapter | SendSerialAdapter | SendToBlenoAdapter | SendToSirapAdapter | SendStatusAdapter] = None
 
         self.backgroundTasks: BackgroundTasks = BackgroundTasks()
-        self.webServerUp: bool = False
-        self.lastBatteryIsLowReceived = None
-        self.lastBatteryIsLow = None
-        #self.threadQueue = queue.Queue()
         self.displayStateMachine = DisplayStateMachine()
         self.lastWiRocDeviceNameSentToServer = None
         Battery.Setup()
@@ -95,78 +90,6 @@ class Main:
         self.backgroundTasks.updateWebServerUp()
         self.backgroundTasks.doInfrequentHTTPTasks() # adds device etc
 
-        if SettingsClass.GetSendStatusMessages():
-            webServerUrl = SettingsClass.GetWebServerUrl()
-            self.webServerUp = SendStatusAdapter.TestConnection(webServerUrl)
-        else:
-            self.webServerUp = False
-
-        #self.addDevice()
-
-    #def addDevice(self):
-    #    deviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
-    #    if self.webServerUp and (self.lastWiRocDeviceNameSentToServer != deviceName):
-    #        # Add device to web server
-    #        btAddress = SettingsClass.GetBTAddress()
-
-    #        if btAddress == "NoBTAddress":
-    #            return
-                #time.sleep(2)
-                #btAddress = SettingsClass.GetBTAddress()
-                #self.wirocLogger.info("start::addDevice() retry get btAddress: " + btAddress)
-
-    #        self.wirocLogger.info("start::addDevice() btAddress: " + btAddress)
-    #        apiKey = SettingsClass.GetAPIKey()
-    #        webServerUrl = SettingsClass.GetWebServerUrl()
-    #        self.lastWiRocDeviceNameSentToServer = deviceName
-    #        with open("../settings.yaml", "r") as f:
-    #            settings = yaml.load(f, Loader=yaml.BaseLoader)
-    #        wirocPythonVersion = settings['WiRocPythonVersion']
-    #        wirocBLEAPIVersion = settings['WiRocBLEAPIVersion']
-    #        hardwareVersion = settings["WiRocHWVersion"]
-
-    #        t = threading.Thread(target=self.addDeviceBackground, args=(webServerUrl, btAddress, apiKey, deviceName, wirocPythonVersion, wirocBLEAPIVersion, hardwareVersion))
-    #        t.daemon = True
-    #        t.start()
-
-    #def addDeviceBackground(self, webServerUrl, btAddress, apiKey, wiRocDeviceName, wirocPythonVersion, wirocBLEAPIVersion, hardwareVersion):
-    #    try:
-    #        headers = {'X-Authorization': apiKey}
-    #        device = {"BTAddress": btAddress, "headBTAddress": btAddress, "name": wiRocDeviceName,
-    #                  "wirocPythonVersion":wirocPythonVersion, "wirocBLEAPIVersion": wirocBLEAPIVersion,
-    #                  "hardwareVersion": hardwareVersion}
-    #        URL = webServerUrl + "/api/v1/Devices"
-    #        resp = requests.post(url=URL, json=device, timeout=1, headers=headers, verify=False)
-    #        self.wirocLogger.warning("Start::Init resp statuscode btaddress " + btAddress + "  " + str(resp.status_code) + " " + resp.text)
-    #        if resp.status_code == 200:
-    #            retDevice = resp.json()
-    #    except Exception as ex:
-    #        self.wirocLogger.warning("Start::Init error creating device on webserver")
-    #        self.wirocLogger.warning("Start::Init " + str(ex))
-
-    #def archiveFailedMessages(self):
-    #    msgSubscriptions = DatabaseHelper.get_message_subscriptions_view_to_archive(SettingsClass.GetMaxRetries(), 100)
-    #    for msgSub in msgSubscriptions:
-    #        self.wirocLogger.info("Start::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(msgSub.id))
-    #        DatabaseHelper.archive_message_subscription_view_not_sent(msgSub.id)
-
-    def reconfigureBackground(self, webServerUrl, loggingServerHost, loggingServerPort, logToServer):
-        if any(isinstance(h, logging.handlers.HTTPHandler) for h in logging.getLogger('').handlers):
-            if not logToServer:
-                logging.getLogger('').handlers = [h for h in logging.getLogger('').handlers if
-                                                  not isinstance(h, logging.handlers.HTTPHandler)]
-        else:
-            if logToServer:
-                server = loggingServerHost + ':' + loggingServerPort
-                httpHandler = logging.handlers.HTTPHandler(server, '/', method='POST')
-                self.wirocLogger.getLogger('').addHandler(httpHandler)
-
-        if SettingsClass.GetSendStatusMessages():
-            self.webServerUp = SendStatusAdapter.TestConnection(webServerUrl)
-        else:
-            self.webServerUp = False
-        Battery.Tick()
-
     def updateDisplayBackground(self, displayData : DisplayData):
         self.displayStateMachine.Draw(displayData)
 
@@ -189,28 +112,31 @@ class Main:
         t.start()
 
     def doInfrequentMaintenanceTasks(self):
-        #self.archiveFailedMessages()
-        #DatabaseHelper.archive_old_repeater_message()
         self.backgroundTasks.doInfrequentDatabaseTasks()
         self.backgroundTasks.doInfrequentHTTPTasks()
-        #self.sendSetConnectedToInternet()
-        # self.updateBatteryIsLowReceived()
-        # self.updateBatteryIsLow()
-        #self.addDevice()
 
     def reconfigure(self):
         if Setup.SetupAdapters():
             self.subscriberAdapters = Setup.SubscriberAdapters
             self.inputAdapters = Setup.InputAdapters
 
-        webServerUrl = SettingsClass.GetWebServerUrl()
+        self.backgroundTasks.updateWebServerUp()
+
         loggingServerHost = SettingsClass.GetLoggingServerHost()
         loggingServerPort = SettingsClass.GetLoggingServerPort()
         logToServer = SettingsClass.GetLogToServer()
 
-        t = threading.Thread(target=self.reconfigureBackground, args=(webServerUrl, loggingServerHost, loggingServerPort, logToServer))
-        t.daemon = True
-        t.start()
+        if any(isinstance(h, logging.handlers.HTTPHandler) for h in logging.getLogger('').handlers):
+            if not logToServer:
+                logging.getLogger('').handlers = [h for h in logging.getLogger('').handlers if
+                                                  not isinstance(h, logging.handlers.HTTPHandler)]
+        else:
+            if logToServer:
+                server = loggingServerHost + ':' + loggingServerPort
+                httpHandler = logging.handlers.HTTPHandler(server, '/', method='POST')
+                self.wirocLogger.getLogger('').addHandler(httpHandler)
+
+        Battery.Tick()
 
     def handleInput(self):
         for inputAdapter in self.activeInputAdapters:
@@ -483,124 +409,6 @@ class Main:
                     for item in msgSubBatch.MessageSubscriptionBatchItems:
                         DatabaseHelper.increment_find_adapter_tries_and_set_find_adapter_try_date(item.id, retryDelay)
 
-    # def updateBatteryIsLow(self):
-    #     if self.webServerUp:
-    #         try:
-    #             apiKey = SettingsClass.GetAPIKey()
-    #             batteryIsLow = Battery.GetIsBatteryLow()
-    #             btAddress = SettingsClass.GetBTAddress()
-    #             webServerURL = SettingsClass.GetWebServerUrl()
-    #             t = threading.Thread(target=self.updateBatteryIsLowBackground, args=(batteryIsLow, webServerURL, apiKey, btAddress))
-    #             t.daemon = True
-    #             t.start()
-    #         except Exception as ex:
-    #             self.wirocLogger.error("Start::updateBatteryIsLow() Exception: " + str(ex))
-    #
-    # def updateBatteryIsLowBackground(self, batteryIsLow, webServerUrl, apiKey, btAddress):
-    #     try:
-    #         headers = {'X-Authorization': apiKey}
-    #
-    #         if batteryIsLow and (self.lastBatteryIsLow is None or not (self.lastBatteryIsLow == '1')):
-    #             URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsLow"
-    #             resp = requests.get(url=URL, timeout=1, headers=headers,  verify=False)
-    #             if resp.status_code == 200:
-    #                 retDevice = resp.json()
-    #                 self.lastBatteryIsLow = retDevice['batteryIsLow']
-    #         elif not batteryIsLow and (self.lastBatteryIsLow is None or (self.lastBatteryIsLow == '1')):
-    #             URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsNormal"
-    #             resp = requests.get(url=URL, timeout=1, headers=headers,  verify=False)
-    #             if resp.status_code == 200:
-    #                 retDevice = resp.json()
-    #                 self.lastBatteryIsLow = retDevice['batteryIsLow']
-    #     except Exception as ex:
-    #         self.wirocLogger.error("Start::updateBatteryIsLowBackground() Exception: " + str(ex))
-    #
-    # def updateBatteryIsLowReceived(self):
-    #     if self.webServerUp:
-    #         try:
-    #             webServerUrl = SettingsClass.GetWebServerUrl()
-    #             apiKey = SettingsClass.GetAPIKey()
-    #             batteryIsLowReceived = SettingsClass.GetBatteryIsLowReceived()
-    #             btAddress = SettingsClass.GetBTAddress()
-    #             t = threading.Thread(target=self.updateBatteryIsLowReceivedBackground, args=(batteryIsLowReceived, webServerUrl, apiKey, btAddress))
-    #             t.daemon = True
-    #             t.start()
-    #         except Exception as ex:
-    #             self.wirocLogger.error("Start::updateBatteryIsLow() Exception: " + str(ex))
-    #
-    # def updateBatteryIsLowReceivedBackground(self, batteryIsLowReceived, webServerUrl, apiKey, btAddress):
-    #     try:
-    #         headers = {'X-Authorization': apiKey}
-    #
-    #         if batteryIsLowReceived and (self.lastBatteryIsLowReceived is None or not (self.lastBatteryIsLowReceived=='1')):
-    #             URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsLowReceived"
-    #             resp = requests.get(url=URL, timeout=1, headers=headers, verify=False)
-    #             if resp.status_code == 200:
-    #                 retDevice = resp.json()
-    #                 self.lastBatteryIsLowReceived = retDevice['batteryIsLowReceived']
-    #         elif not batteryIsLowReceived and (self.lastBatteryIsLowReceived is None or (self.lastBatteryIsLowReceived=='1')):
-    #             URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsNormalReceived"
-    #             resp = requests.get(url=URL, timeout=1, headers=headers, verify=False)
-    #             if resp.status_code == 200:
-    #                 retDevice = resp.json()
-    #                 self.lastBatteryIsLowReceived = retDevice['batteryIsLowReceived']
-    #     except Exception as ex:
-    #         self.wirocLogger.error("Start::updateBatteryIsLowReceivedBackground() Exception: " + str(ex))
-
-    # def sendMessageStatsBackground(self, messageStat, webServerUrl, apiKey):
-    #     if messageStat is not None:
-    #         btAddress = SettingsClass.GetBTAddress()
-    #         headers = {'X-Authorization': apiKey}
-    #
-    #         if self.webServerUp:
-    #             URL = webServerUrl + "/api/v1/MessageStats"
-    #             messageStatToSend = {"adapterInstance": messageStat.AdapterInstanceName, "BTAddress": btAddress,
-    #                                  "messageType": messageStat.MessageSubTypeName, "status": messageStat.Status,
-    #                                  "noOfMessages": messageStat.NoOfMessages}
-    #
-    #             try:
-    #                 resp = requests.post(url=URL, json=messageStatToSend, timeout=1, allow_redirects=False, headers=headers, verify=False)
-    #                 if resp.status_code == 200 or resp.status_code == 303:
-    #                     DatabaseHelper.set_message_stat_uploaded(messageStat.id)
-    #                 else:
-    #                     self.webServerUp = False
-    #             except Exception as ex:
-    #                 self.wirocLogger.error("Start::sendMessageStatsBackground() Exception: " + str(ex))
-    #
-    # def sendMessageStats(self):
-    #     if self.webServerUp:
-    #         try:
-    #             messageStat = DatabaseHelper.get_message_stat_to_upload()
-    #             webServerUrl = SettingsClass.GetWebServerUrl()
-    #             apiKey = SettingsClass.GetAPIKey()
-    #             t = threading.Thread(target=self.sendMessageStatsBackground, args=(messageStat, webServerUrl, apiKey))
-    #             t.daemon = True
-    #             t.start()
-    #         except Exception as ex:
-    #             self.wirocLogger.error("Start::sendMessageStats() Exception: " + str(ex))
-
-    # def sendSetConnectedToInternetBackground(self, webServerUrl, apiKey):
-    #     btAddress = SettingsClass.GetBTAddress()
-    #     headers = {'X-Authorization': apiKey}
-    #     URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetConnectedToInternetTime"
-    #     try:
-    #         resp = requests.post(url=URL, timeout=1, headers=headers, verify=False)
-    #         if resp.status_code != 200 and resp.status_code != 303:
-    #             self.webServerUp = False
-    #     except Exception as ex:
-    #         self.wirocLogger.error("Start::sendSetConnectedToInternetBackground() Exception: " + str(ex))
-    #
-    # def sendSetConnectedToInternet(self):
-    #     if self.webServerUp:
-    #         try:
-    #             webServerUrl = SettingsClass.GetWebServerUrl()
-    #             apiKey = SettingsClass.GetAPIKey()
-    #             t = threading.Thread(target=self.sendSetConnectedToInternetBackground,
-    #                                  args=(webServerUrl, apiKey))
-    #             t.daemon = True
-    #             t.start()
-    #         except Exception as ex:
-    #             self.wirocLogger.error("Start::sendSetConnectedToInternet() Exception: " + str(ex))
 
     def Run(self):
         settDict: dict[str, str | int | None] = {
@@ -651,13 +459,6 @@ class Main:
                 self.handleInput()
                 self.handleOutput(settDict)
                 self.backgroundTasks.sendMessageStats()
-                #self.sendMessageStats()
-                #while not self.threadQueue.empty():  # now that we got rid of the callbacks, shouldn't we also be able to remove this?
-                #    try:
-                #        bgThread = self.threadQueue.get(False)
-                #        bgThread.join()
-                #    except queue.Empty:
-                #        pass
 
 
 main = None

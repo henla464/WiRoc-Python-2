@@ -168,12 +168,20 @@ class BackgroundTasks(object):
                       "hardwareVersion": hardwareVersion}
             URL = webServerUrl + "/api/v1/Devices"
             resp = requests.post(url=URL, json=device, timeout=1, headers=headers, verify=False)
-            BackgroundTasks.WiRocLogger.warning("BackgroundTasks::Init resp statuscode btaddress " + btAddress + "  " + str(resp.status_code) + " " + resp.text)
+            BackgroundTasks.WiRocLogger.warning("BackgroundTasks::AddDeviceBackground resp statuscode btaddress " + btAddress + "  " + str(resp.status_code) + " " + resp.text)
             if resp.status_code == 200:
+                BackgroundTasks.WiRocLogger.info(
+                    f"BackgroundTasks::AddDeviceBackground resp statuscode: {resp.status_code} btaddress: {btAddress} {resp.text}")
                 retDevice = resp.json()
+                BackgroundTasks.WiRocLogger.info(
+                    f"BackgroundTasks::AddDeviceBackground returned json: {retDevice}")
+            else:
+                BackgroundTasks.WiRocLogger.warning(
+                    f"BackgroundTasks::AddDeviceBackground resp statuscode: {resp.status_code} btaddress: {btAddress} {resp.text}")
+
         except Exception as ex:
-            BackgroundTasks.WiRocLogger.warning("BackgroundTasks::Init error creating device on webserver")
-            BackgroundTasks.WiRocLogger.warning("BackgroundTasks::Init " + str(ex))
+            BackgroundTasks.WiRocLogger.warning("BackgroundTasks::AddDeviceBackground error creating device on webserver")
+            BackgroundTasks.WiRocLogger.warning("BackgroundTasks::AddDeviceBackground " + str(ex))
 
     def updateWebServerUp(self):
         self.processQueues()
