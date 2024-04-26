@@ -36,8 +36,7 @@ class SendStatusAdapter(object):
     def IsConnectionOK():
         connectionOK = False
         if SettingsClass.GetSendStatusMessages():
-            webServerUrl = SettingsClass.GetWebServerUrl()
-            connectionOK = SendStatusAdapter.TestConnection(webServerUrl)
+            connectionOK = SettingsClass.GetWebServerUp()
         return connectionOK
 
     @staticmethod
@@ -107,20 +106,6 @@ class SendStatusAdapter(object):
 
     def IsReadyToSend(self):
         return True
-
-    @staticmethod
-    def TestConnection(webServerUrl):
-        try:
-
-            URL = webServerUrl + "/api/v1/ping"
-            SendStatusAdapter.WiRocLogger.debug("SendStatusAdapter::TestConnection() " + URL)
-            r = requests.get(url=URL, timeout=1, headers={}, verify=False)
-            data = r.json()
-            logging.info(data)
-            return data['code'] == 0
-        except Exception as ex:
-            SendStatusAdapter.WiRocLogger.error("SendStatusAdapter::TestConnection() " + webServerUrl + " Exception: " + str(ex))
-            return False
 
     @staticmethod
     def GetDelayAfterMessageSent():

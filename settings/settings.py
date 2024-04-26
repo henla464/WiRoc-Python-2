@@ -36,6 +36,7 @@ class SettingsClass(object):
     messageIDOfLastLoraMessageSent: bytearray = None
     SRRMessageAvailable = False
     NewErrorCode = False
+    webServerUp = False
 
     #####
     # Static/class settings
@@ -152,6 +153,14 @@ class SettingsClass(object):
     @staticmethod
     def GetNewErrorCode():
         return SettingsClass.NewErrorCode
+
+    @staticmethod
+    def SetWebServerUp(webServerUp: bool) -> None:
+        SettingsClass.webServerUp = webServerUp
+
+    @staticmethod
+    def GetWebServerUp() -> bool:
+        return SettingsClass.webServerUp
 
     @staticmethod
     def GetLoraModule() -> str:
