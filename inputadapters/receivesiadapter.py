@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+from multiprocessing import Queue, Process
+
 from settings.settings import SettingsClass
 import serial
 import logging
@@ -798,6 +801,9 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
     def __init__(self, instanceName: str, instanceNumber: int, portName: str):
         super().__init__(instanceName, instanceNumber, portName)
         self.sock = None
+        self.sockQueue: Queue = Queue()
+        self.exitQueue: Queue = Queue()
+        self.connectBackgroundProcess = None
 
     @staticmethod
     def CreateInstances() -> bool:
@@ -945,22 +951,22 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
             ReceiveSIAdapter.WiRocLogger.error(ex2)
             return False
 
-    def Init(self) -> bool:
-        try:
-            if self.GetIsInitialized():
-                return True
+    def processSockQueue(self):
+        if self.sockQueue.empty():
+            return True
+
+        theReturnedSock = None
+        while not self.sockQueue.empty():
+            theReturnedSock = self.sockQueue.get()
+            self.exitQueue.put("Exit!")
+
+        if theReturnedSock is None:
+            self.sock = None
             self.isInitialized = False
-            self.shouldReinitialize = False
-            self.oneWayFallbackTryReInitWhenDataReceived = False
-            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::Init() SI Station port name: " + self.portName)
-
-            if self.sock is None:
-                self.sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
-                deviceBTAddress = self.portName.replace('rfcomm', '') # get only the BTAddress from the portName
-                port = 1
-                self.sock.connect((deviceBTAddress, port))
-                self.sock.setblocking(False)
-
+            self.oneWay = False
+            return False
+        else:
+            self.sock = theReturnedSock
             if SettingsClass.GetBTSerialOneWayReceiveFromSIStation():
                 self.oneWayFallbackTryReInitWhenDataReceived = False
                 success = self.InitOneWay(None)
@@ -984,6 +990,68 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
             else:
                 raise Exception("Could not find the BluetoothSerialPortData row in database")
             return success
+
+    @staticmethod
+    def ConnectBackground(sockQueue: Queue, exitQueue: Queue, sock: socket, deviceBTAddress: str, port: int):
+        try:
+            sock.connect((deviceBTAddress, port))
+            sock.setblocking(False)
+            sockQueue.put(sock)
+            exitQueue.get() # Will block until something is put in the queue
+        except Exception as msg:
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIBluetoothSP::connectBackground() Exception: " + str(msg))
+            sockQueue.put(None)
+
+    def Init(self) -> bool:
+        try:
+            self.processSockQueue()
+            if self.connectBackgroundProcess is not None:
+                self.connectBackgroundProcess.join()
+                self.connectBackgroundProcess = None
+            if self.GetIsInitialized():
+                return True
+            self.isInitialized = False
+            self.shouldReinitialize = False
+            self.oneWayFallbackTryReInitWhenDataReceived = False
+            ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::Init() SI Station port name: " + self.portName)
+
+            if self.sock is None:
+                self.sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+                deviceBTAddress = self.portName.replace('rfcomm', '')  # get only the BTAddress from the portName
+                port = 1
+
+                self.connectBackgroundProcess = Process(
+                    target=ReceiveSIBluetoothSP.ConnectBackground,
+                    args=(self.sockQueue, self.exitQueue, self.sock, deviceBTAddress, port))
+                self.connectBackgroundProcess.start()
+
+            return False
+                #self.sock.connect((deviceBTAddress, port))
+                #self.sock.setblocking(False)
+
+            #if SettingsClass.GetBTSerialOneWayReceiveFromSIStation():
+            #    self.oneWayFallbackTryReInitWhenDataReceived = False
+            #    success = self.InitOneWay(None)
+            #else:
+            #    success = self.InitTwoWay()
+            #    if not success:
+            #        # better with init one way if two way is not working than aborting
+            #        success = self.InitOneWay(None)
+            #        if success:
+            #            self.oneWayFallbackTryReInitWhenDataReceived = True
+
+            #btSerialPortDatas = DatabaseHelper.get_bluetooth_serial_port(self.portName.replace('rfcomm', ''))
+            #if len(btSerialPortDatas) > 0:
+            #    btSerialPortData = btSerialPortDatas[0]
+            #    if success:
+            #        btSerialPortData.Status = "Connected"
+            #        DatabaseHelper.save_bluetooth_serial_port(btSerialPortData)
+            #    else:
+            #        btSerialPortData.Status = "NotConnected"
+            #        DatabaseHelper.save_bluetooth_serial_port(btSerialPortData)
+            #else:
+            #    raise Exception("Could not find the BluetoothSerialPortData row in database")
+            #return success
         except Exception as msg:
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIBluetoothSP::Init() Exception: " + str(msg))
             self.sock = None
@@ -993,8 +1061,8 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
 
     # abstract/virtual method
     def IsDataAvailable(self):
-        ready = select.select([self.sock], [], [], 0)
-        return len(ready) > 0
+        readable, writable, exceptional = select.select([self.sock], [], [], 0)
+        return len(readable) > 0
 
     def GetData(self) -> dict[str, str | bool | bytearray | int] | None:
         data = super().GetData()

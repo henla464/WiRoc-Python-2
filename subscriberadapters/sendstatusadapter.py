@@ -111,7 +111,9 @@ class SendStatusAdapter(object):
     @staticmethod
     def TestConnection(webServerUrl):
         try:
+
             URL = webServerUrl + "/api/v1/ping"
+            SendStatusAdapter.WiRocLogger.debug("SendStatusAdapter::TestConnection() " + URL)
             r = requests.get(url=URL, timeout=1, headers={}, verify=False)
             data = r.json()
             logging.info(data)
