@@ -957,7 +957,7 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
 
         theReturnedSock = None
         while not self.sockQueue.empty():
-            theReturnedSock = self.sockQueue.get()
+            theReturnedSock = self.sockQueue.get(False)
             self.exitQueue.put("Exit!")
 
         if theReturnedSock is None:
@@ -1008,6 +1008,8 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
             if self.connectBackgroundProcess is not None:
                 self.connectBackgroundProcess.join()
                 self.connectBackgroundProcess = None
+                while not self.exitQueue.empty():
+                    self.exitQueue.get(False)
             if self.GetIsInitialized():
                 return True
             self.isInitialized = False
@@ -1015,15 +1017,15 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
             self.oneWayFallbackTryReInitWhenDataReceived = False
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIBluetoothSP::Init() SI Station port name: " + self.portName)
 
-            if self.sock is None:
-                self.sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
-                deviceBTAddress = self.portName.replace('rfcomm', '')  # get only the BTAddress from the portName
-                port = 1
+           # if self.sock is None:
+            self.sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+            deviceBTAddress = self.portName.replace('rfcomm', '')  # get only the BTAddress from the portName
+            port = 1
 
-                self.connectBackgroundProcess = Process(
-                    target=ReceiveSIBluetoothSP.ConnectBackground,
-                    args=(self.sockQueue, self.exitQueue, self.sock, deviceBTAddress, port))
-                self.connectBackgroundProcess.start()
+            self.connectBackgroundProcess = Process(
+                target=ReceiveSIBluetoothSP.ConnectBackground,
+                args=(self.sockQueue, self.exitQueue, self.sock, deviceBTAddress, port))
+            self.connectBackgroundProcess.start()
 
             return False
                 #self.sock.connect((deviceBTAddress, port))

@@ -568,7 +568,7 @@ class LoraRadioMessageStatusRS(LoraRadioMessageRS):
         self.GenerateAndAddRSCode()
 
     def GetBatteryPercent(self) -> int:
-        return self.payloadData[0] & 0x8F
+        return self.payloadData[0] & 0x7F
 
     def GetSIStationNumber(self) -> int:
         return ((self.payloadData[0] & 0x80) << 8) + self.payloadData[1]
