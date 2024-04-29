@@ -1024,7 +1024,8 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
 
             self.connectBackgroundProcess = Process(
                 target=ReceiveSIBluetoothSP.ConnectBackground,
-                args=(self.sockQueue, self.exitQueue, self.sock, deviceBTAddress, port))
+                args=(self.sockQueue, self.exitQueue, self.sock, deviceBTAddress, port),
+                daemon=True)
             self.connectBackgroundProcess.start()
 
             return False

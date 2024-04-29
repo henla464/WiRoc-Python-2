@@ -60,7 +60,7 @@ class MessageBoxData(object):
 
     def __init__(self):
         self.id = None
-        self.MessageData = None
+        self.MessageData: bytearray | None = None
         self.PowerCycleCreated = None
         self.MessageTypeName = None
         self.InstanceName = None
@@ -86,12 +86,13 @@ class MessageBoxArchiveData(object):
                ("SIStationSerialNumber", str), ("SportIdentHour", str),
                ("SportIdentMinute", str), ("SportIdentSecond", str),
                ("SIStationNumber", str), ("LowBattery", str), ("RSSIValue", int),
-               ("ChecksumOK", bool), ("CreatedDate", datetime)]
+               ("ChecksumOK", bool), ("CreatedDate", datetime),
+               ("Resubmitted", bool)]
 
     def __init__(self):
         self.id = None
         self.OrigId = None
-        self.MessageData = None
+        self.MessageData: bytearray | None = None
         self.PowerCycleCreated = None
         self.MessageTypeName = None
         self.InstanceName = None
@@ -107,6 +108,7 @@ class MessageBoxArchiveData(object):
         self.RSSIValue = None
         self.ChecksumOK = None
         self.CreatedDate = None
+        self.Resubmitted: bool = False
 
 
 class RepeaterMessageBoxData(object):
@@ -121,7 +123,7 @@ class RepeaterMessageBoxData(object):
 
     def __init__(self):
         self.id = None
-        self.MessageData = None
+        self.MessageData: bytearray | None = None
         self.MessageTypeName = None
         self.PowerCycleCreated = None
         self.InstanceName = None
@@ -163,7 +165,7 @@ class RepeaterMessageBoxArchiveData(object):
     def __init__(self):
         self.id = None
         self.OrigId = None
-        self.MessageData = None
+        self.MessageData: bytearray | None = None
         self.MessageTypeName = None
         self.PowerCycleCreated = None
         self.InstanceName = None
@@ -260,7 +262,7 @@ class MessageSubscriptionData(object):
                ("MessageBoxId", int),
                ("SubscriptionId", int), ("FetchedForSending", datetime)]
 
-    def __init__(self, MessageID=None, AckReceivedFromReceiver=False, SentDate=None, SendFailedDate=None,
+    def __init__(self, MessageID=None, AckReceivedFromReceiver: bool = False, SentDate=None, SendFailedDate=None,
                  FindAdapterTryDate=None, FindAdapterTries=0, AckReceivedDate=None,
                  NoOfSendTries=0,
                  Delay=0,
@@ -285,7 +287,7 @@ class MessageSubscriptionData(object):
 
 
 class MessageSubscriptionArchiveData(object):
-    columns = [("OrigId", int), ("MessageID", bytes),
+    columns = [("OrigId", int), ("MessageID", bytes), ("AckReceivedFromReceiver", bool),
                ("SentDate", datetime), ("SendFailedDate", datetime),
                ("FindAdapterTryDate", datetime), ("FindAdapterTries", int),
                ("NoOfSendTries", int), ("AckReceivedDate", datetime),
@@ -295,21 +297,23 @@ class MessageSubscriptionArchiveData(object):
                ("MessageBoxId", int),
                ("SubscriptionId", int),
                ("AckRSSIValue", int),
-               ("SubscriberTypeName", str), ("TransformName", str),]
+               ("SubscriberTypeName", str),
+               ("TransformName", str),]
 
     def __init__(self):
         self.id = None
         self.MessageID = None
+        self.AckReceivedFromReceiver: bool | None = None
         self.SentDate = None
         self.SendFailedDate = None
+        self.NoOfSendTries = 0
         self.FindAdapterTryDate = None
         self.FindAdapterTries = 0
-        self.NoOfSendTries = 0
         self.AckReceivedDate = None
-        self.MessageBoxId = None
         self.Delay = 0
         self.RetryDelay = 0
         self.FindAdapterRetryDelay = 0
+        self.MessageBoxId = None
         self.SubscriptionId = None
         self.AckRSSIValue = 0
         self.SubscriberTypeName = None
@@ -355,7 +359,7 @@ class MessageSubscriptionView(object):
         self.SubscriberTypeName = None
         self.SubscriberInstanceName = None
         self.TransformName = None
-        self.MessageData = None
+        self.MessageData: bytearray | None = None
         self.CreatedDate = None
 
 
@@ -455,33 +459,33 @@ class BluetoothSerialPortData(object):
         self.Status = "NotConnected"
 
 
-class ReDCosDecodeData(object):
-    columns = [("OrigMessageData", bytearray),  ("SinglePunchOrDoublePunch", str), ("TimeAdded", datetime)]
+#class ReDCosDecodeData(object):
+#    columns = [("OrigMessageData", bytearray),  ("SinglePunchOrDoublePunch", str), ("TimeAdded", datetime)]
 
-    def __init__(self):
-        self.id = None
-        self.OrigMessageData = None
-        self.SingleOrDoublePunch = "SinglePunch"
-        self.TimeAdded = None
-
-
-class ReDCosMessageAlternativesData(object):
-    columns = [("MessageData", bytearray),  ("ReDCosDecodeID", int)]
-
-    def __init__(self):
-        self.id = None
-        self.MessageData = None
-        self.ReDCosDecodeID = None
-        self.TimeAdded = None
+#    def __init__(self):
+#        self.id = None
+#        self.OrigMessageData = None
+#        self.SingleOrDoublePunch = "SinglePunch"
+#        self.TimeAdded = None
 
 
-class ReDCosErasureCombinationsData(object):
-    columns = [("ErasureCombination", str),  ("ReDCosDecodeID", int)]
+#class ReDCosMessageAlternativesData(object):
+#    columns = [("MessageData", bytearray),  ("ReDCosDecodeID", int)]
 
-    def __init__(self):
-        self.id = None
-        self.ErasureCombination = None
-        self.ReDCosDecodeID = None
+#    def __init__(self):
+#        self.id = None
+#        self.MessageData: bytearray | None = None
+#        self.ReDCosDecodeID = None
+#        self.TimeAdded = None
+
+
+#class ReDCosErasureCombinationsData(object):
+#    columns = [("ErasureCombination", str),  ("ReDCosDecodeID", int)]
+
+#    def __init__(self):
+#        self.id = None
+#        self.ErasureCombination = None
+#        self.ReDCosDecodeID = None
 
 
 class SIMessage(object):

@@ -7,17 +7,18 @@ from datetime import timedelta, datetime
 
 
 class DatabaseHelper:
-    db = None
+    db = DB("WiRoc.db", DataMapping())
     WiRocLogger = logging.getLogger('WiRoc')
 
     @classmethod
     def init(cls) -> None:
-        if cls.db is None:
-            cls.db = DB("WiRoc.db", DataMapping())
+        pass
+        #if cls.db is None:
+        #    cls.db = DB("WiRoc.db", DataMapping())
 
-    @classmethod
-    def reInit(cls) -> None:
-        cls.db = DB("WiRoc.db", DataMapping())
+    #@classmethod
+    #def reInit(cls) -> None:
+    #    cls.db = DB("WiRoc.db", DataMapping())
 
     @classmethod
     def ensure_tables_created(cls) -> None:
@@ -332,6 +333,7 @@ class DatabaseHelper:
         msa = MessageSubscriptionArchiveData()
         msa.OrigId = messageSubscriptionView.id
         msa.MessageID = messageSubscriptionView.MessageID
+        msa.AckReceivedFromReceiver = messageSubscriptionView.AckReceivedFromReceiver
         msa.SentDate = datetime.now()
         msa.NoOfSendTries = messageSubscriptionView.NoOfSendTries + 1
         msa.FindAdapterTryDate = messageSubscriptionView.FindAdapterTryDate
@@ -358,6 +360,7 @@ class DatabaseHelper:
         msa = MessageSubscriptionArchiveData()
         msa.OrigId = messageSubscriptionView.id
         msa.MessageID = messageSubscriptionView.MessageID
+        msa.AckReceivedFromReceiver = messageSubscriptionView.AckReceivedFromReceiver
         msa.SentDate = messageSubscriptionView.SentDate
         if messageSubscriptionView.SendFailedDate is None:
             msa.SendFailedDate = datetime.now()
@@ -458,6 +461,7 @@ class DatabaseHelper:
             msa = MessageSubscriptionArchiveData()
             msa.OrigId = msd.id
             msa.MessageID = msd.MessageID
+            msa.AckReceivedFromReceiver = msd.AckReceivedFromReceiver
             msa.SentDate = msd.SentDate
             msa.SendFailedDate = msd.SendFailedDate
             msa.FindAdapterTryDate = msd.FindAdapterTryDate
@@ -496,6 +500,7 @@ class DatabaseHelper:
             msa = MessageSubscriptionArchiveData()
             msa.OrigId = msd.id
             msa.MessageID = msd.MessageID
+            msa.AckReceivedFromReceiver = msd.AckReceivedFromReceiver
             msa.SentDate = msd.SentDate
             msa.SendFailedDate = msd.SendFailedDate
             msa.FindAdapterTryDate = msd.FindAdapterTryDate
@@ -532,6 +537,7 @@ class DatabaseHelper:
             msa = MessageSubscriptionArchiveData()
             msa.OrigId = msd.id
             msa.MessageID = msd.MessageID
+            msa.AckReceivedFromReceiver = msd.AckReceivedFromReceiver
             msa.SentDate = msd.SentDate
             msa.SendFailedDate = msd.SendFailedDate
             msa.FindAdapterTryDate = msd.FindAdapterTryDate
@@ -579,6 +585,38 @@ class DatabaseHelper:
                      "where MessageSubscriptionArchiveData.SendFailedDate >= ? and MessageSubscriptionArchiveData.SendFailedDate < ?;")
         noOfMessages = cls.db.get_scalar_by_SQL(selectSQL, (startTime,endTime))
         return noOfMessages == 0
+
+    @classmethod
+    def get_failed_lora_messages(cls, startTime: datetime, endTime: datetime) -> list[MessageBoxArchiveData]:
+        selectSQL = ("select MessageBoxArchiveData.* from MessageSubscriptionArchiveData "
+                     "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
+                     "where MessageSubscriptionArchiveData.SendFailedDate >= ? and MessageSubscriptionArchiveData.SendFailedDate < ? "
+                     "and MessageSubscriptionArchiveData.AckReceivedDate IS NULL and MessageSubscriptionArchiveData.SubscriberTypeName = 'LORA' "
+                     "and MessageBoxArchiveData.Resubmitted = 0 "
+                     "order by MessageSubscriptionArchiveData.SendFailedDate desc LIMIT 1;")
+        messageBoxDatas = cls.db.get_table_objects_by_SQL(MessageBoxArchiveData, selectSQL, (startTime,endTime))
+        return messageBoxDatas
+
+    @classmethod
+    def get_no_of_times_message_data_submitted_since_last_acked_message(cls, messageData: bytearray) -> int:
+        selectLastAckReceivedDateSQL = ("select MessageSubscriptionArchiveData.AckReceivedDate from MessageSubscriptionArchiveData "
+                                        "where MessageSubscriptionArchiveData.SubscriberTypeName = 'LORA' "
+                                        "order by MessageSubscriptionArchiveData.AckReceivedDate desc LIMIT 1;")
+        lastAckReceivedDate = cls.db.get_scalar_by_SQL(selectLastAckReceivedDateSQL)
+        selectCountSQL = ("select count(MessageBoxArchiveData.OrigId) from MessageSubscriptionArchiveData "
+                          "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
+                          "where MessageSubscriptionArchiveData.SubscriberTypeName = 'LORA' "
+                          "and MessageBoxArchiveData.MessageData = ? "
+                          "and SendFailedDate > ?;")
+
+        noOfSubmits = cls.db.get_scalar_by_SQL(selectCountSQL, (messageData,lastAckReceivedDate))
+        return noOfSubmits
+
+
+    @classmethod
+    def set_message_resubmitted(cls, messageBoxArchiveId: int):
+        updateSQL = "update MessageBoxArchiveData set Resubmitted = 1 where MessageBoxArchiveData.id = ?"
+        cls.db.execute_SQL(updateSQL, (messageBoxArchiveId,))
 
     @classmethod
     def repeater_messages_acked(cls, messageID: bytearray, ackRSSIValue: int):
@@ -1008,7 +1046,7 @@ class DatabaseHelper:
     def update_input_adapter_instances(cls, inputAdapterObjects):
         cls.init()
         sql = "UPDATE InputAdapterInstances SET ToBeDeleted = 1"
-        cls.db.execute_SQL_no_commit(sql)
+        cls.db.execute_SQL(sql)
         for inputAdapter in inputAdapterObjects:
             sql = ("WITH new (TypeName, InstanceName, ToBeDeleted) AS "
                    "( VALUES('%s', '%s', 0) ) "
@@ -1017,7 +1055,7 @@ class DatabaseHelper:
                    "SELECT old.id, new.TypeName, new.InstanceName, new.ToBeDeleted "
                    "FROM new LEFT JOIN InputAdapterInstances AS old "
                    "ON new.InstanceName = old.InstanceName") % (inputAdapter.GetTypeName(), inputAdapter.GetInstanceName())
-            cls.db.execute_SQL_no_commit(sql)
+            cls.db.execute_SQL(sql)
         sql = "DELETE FROM InputAdapterInstances WHERE ToBeDeleted = 1"
         cls.db.execute_SQL(sql)
 
@@ -1151,7 +1189,9 @@ class DatabaseHelper:
     def set_message_stat_uploaded(cls, messageStatId):
         cls.init()
         sql = "UPDATE MessageStatsData SET Uploaded = 1 WHERE Id = " + str(messageStatId)
+        DatabaseHelper.WiRocLogger.debug("DatabaseHelper::set_message_stat_uploaded() 1")
         cls.db.execute_SQL(sql)
+        DatabaseHelper.WiRocLogger.debug("DatabaseHelper::set_message_stat_uploaded() 2")
 
     # Channels
     @classmethod

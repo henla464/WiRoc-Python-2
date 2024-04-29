@@ -28,7 +28,6 @@ def getOpenApiContent():
 
 @app.route('/api/lora/enabled/', methods=['GET'])
 def getLoraEnabled():
-    DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('LoraEnabled')
     loraEnabled = '1'
     if setting is not None:
@@ -39,7 +38,6 @@ def getLoraEnabled():
 
 @app.route('/api/lora/enabled/<enabled>/', methods=['GET'])
 def setLoraEnabled(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('LoraEnabled')
     if sd is None:
         sd = SettingData()
@@ -53,7 +51,6 @@ def setLoraEnabled(enabled):
 
 @app.route('/api/channel/', methods=['GET'])
 def getChannel():
-    DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('Channel')
     channel = 1
     if setting is not None:
@@ -65,7 +62,6 @@ def getChannel():
 
 @app.route('/api/channel/<int:channel>/', methods=['GET'])
 def setChannel(channel):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('Channel')
     if sd is None:
         sd = SettingData()
@@ -80,7 +76,6 @@ def setChannel(channel):
 
 @app.route('/api/lorarange/', methods=['GET'])
 def getLoraRange():
-    DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('LoraRange')
     loraRange = 'L'
     if setting is not None:
@@ -92,7 +87,6 @@ def getLoraRange():
 
 @app.route('/api/lorarange/<lorarange>/', methods=['GET'])
 def setLoraRange(lorarange):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('LoraRange')
     if sd is None:
         sd = SettingData()
@@ -107,7 +101,6 @@ def setLoraRange(lorarange):
 
 @app.route('/api/acknowledgementrequested/', methods=['GET'])
 def getAcknowledgementRequested():
-    DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
     acksRequested = '0'
     if setting is not None:
@@ -119,7 +112,6 @@ def getAcknowledgementRequested():
 
 @app.route('/api/acknowledgementrequested/<ack>/', methods=['GET'])
 def setAcknowledgementRequested(ack):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
     if sd is None:
         sd = SettingData()
@@ -134,7 +126,6 @@ def setAcknowledgementRequested(ack):
 
 @app.route('/api/power/', methods=['GET'])
 def getPower():
-    DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('LoraPower')
     power = 0x07
     if setting is not None:
@@ -146,7 +137,6 @@ def getPower():
 
 @app.route('/api/power/<int:power>/', methods=['GET'])
 def setPower(power):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('LoraPower')
     if sd is None:
         sd = SettingData()
@@ -161,7 +151,6 @@ def setPower(power):
 
 @app.route('/api/coderate/', methods=['GET'])
 def getCodeRate():
-    DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('CodeRate')
     # 0x00->4/5, 0x01->4/6, 0x02->4/7, 0x03->4/8
     codeRate = 0x00
@@ -174,7 +163,6 @@ def getCodeRate():
 
 @app.route('/api/coderate/<int:coderate>/', methods=['GET'])
 def setCodeRate(coderate):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('CodeRate')
     if sd is None:
         sd = SettingData()
@@ -200,7 +188,6 @@ def getRxGainEnabled():
 
 @app.route('/api/rxgainenabled/<enabled>/', methods=['GET'])
 def setRxGainEnabled(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('RxGainEnabled')
     if sd is None:
         sd = SettingData()
@@ -215,7 +202,6 @@ def setRxGainEnabled(enabled):
 
 @app.route('/api/sendtosirapenabled/', methods=['GET'])
 def getSendToSirapEnabled():
-    DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
     enabled = '0'
     if setting is not None:
@@ -227,7 +213,6 @@ def getSendToSirapEnabled():
 
 @app.route('/api/sendtosirapenabled/<enabled>/', methods=['GET'])
 def setSendToSirapEnabled(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
     if sd is None:
         sd = SettingData()
@@ -242,7 +227,6 @@ def setSendToSirapEnabled(enabled):
 
 @app.route('/api/sendtosirapip/', methods=['GET'])
 def getSendToSirapIP():
-    DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('SendToSirapIP')
     ip = ""
     if setting is not None:
@@ -254,7 +238,6 @@ def getSendToSirapIP():
 
 @app.route('/api/sendtosirapip/<ip>/', methods=['GET'])
 def setSendToSirapIP(ip):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SendToSirapIP')
     if sd is None:
         sd = SettingData()
@@ -269,7 +252,6 @@ def setSendToSirapIP(ip):
 
 @app.route('/api/sendtosirapipport/', methods=['GET'])
 def getSendToSirapIPPort():
-    DatabaseHelper.reInit()
     setting = DatabaseHelper.get_setting_by_key('SendToSirapIPPort')
     port = ""
     if setting is not None:
@@ -281,7 +263,6 @@ def getSendToSirapIPPort():
 
 @app.route('/api/sendtosirapipport/<port>/', methods=['GET'])
 def setSendToSirapIPPort(port):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SendToSirapIPPort')
     if sd is None:
         sd = SettingData()
@@ -296,7 +277,6 @@ def setSendToSirapIPPort(port):
 
 @app.route('/api/status/', methods=['GET'])
 def getStatus():
-    DatabaseHelper.reInit()
     subscribersView = DatabaseHelper.get_subscribers()
     subAdpts = []
     for sub in subscribersView:
@@ -321,7 +301,6 @@ def getStatus():
 
 @app.route('/api/settings/', methods=['GET'])
 def getSettings():
-    DatabaseHelper.reInit()
     settings = DatabaseHelper.get_settings()
     setts = []
     for setting in settings:
@@ -336,7 +315,6 @@ def getSettings():
 
 @app.route('/api/setting/<key>/<value>/', methods=['GET'])
 def setSetting(key, value):
-    DatabaseHelper.reInit()
     settingData = None
     settingData = SettingData()
     settingData.Key = key
@@ -353,7 +331,6 @@ def setSetting(key, value):
 
 @app.route('/api/errorcodes/', methods=['GET'])
 def getErrorCodes():
-    DatabaseHelper.reInit()
     errorCodes = DatabaseHelper.get_error_codes()
     errCodes = []
     for errorCode in errorCodes:
@@ -404,7 +381,6 @@ def getLoraMode():
 @app.route('/api/loramode/<loramode>/', methods=['GET'])
 def setLoraMode(loramode):
     if loramode == "RECEIVER" or loramode == "REPEATER" or loramode == "SENDER":
-        DatabaseHelper.reInit()
         sd = DatabaseHelper.get_setting_by_key('LoraMode')
         if sd is None:
             sd = SettingData()
@@ -421,7 +397,6 @@ def setLoraMode(loramode):
 
 @app.route('/api/srr/enabled/', methods=['GET'])
 def getSRREnabled():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('SRREnabled')
     srrEnabled = '1'
     if sett is not None:
@@ -433,7 +408,6 @@ def getSRREnabled():
 
 @app.route('/api/srr/enabled/<enabled>/', methods=['GET'])
 def setSRREnabled(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SRREnabled')
     if sd is None:
         sd = SettingData()
@@ -447,7 +421,6 @@ def setSRREnabled(enabled):
 
 @app.route('/api/srr/mode/', methods=['GET'])
 def getSRRMode():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('SRRMode')
     SRRMode = "RECEIVE"
     if sett is not None:
@@ -459,7 +432,6 @@ def getSRRMode():
 
 @app.route('/api/srr/mode/<mode>/', methods=['GET'])
 def setSRRMode(mode):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SRRMode')
     if sd is None:
         sd = SettingData()
@@ -473,7 +445,6 @@ def setSRRMode(mode):
 
 @app.route('/api/srr/redchannellistenonly/', methods=['GET'])
 def getSRRRedChannelListenOnly():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('SRRRedChannelListenOnly')
     SRRRedChannelListenOnly = '0'
     if sett is not None:
@@ -485,7 +456,6 @@ def getSRRRedChannelListenOnly():
 
 @app.route('/api/srr/redchannellistenonly/<enabled>/', methods=['GET'])
 def setSRRRedChannelListenOnly(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SRRRedChannelListenOnly')
     if sd is None:
         sd = SettingData()
@@ -499,7 +469,6 @@ def setSRRRedChannelListenOnly(enabled):
 
 @app.route('/api/srr/bluechannellistenonly/', methods=['GET'])
 def getSRRBlueChannelListenOnly():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('SRRBlueChannelListenOnly')
     SRRBlueChannelListenOnly = '0'
     if sett is not None:
@@ -511,7 +480,6 @@ def getSRRBlueChannelListenOnly():
 
 @app.route('/api/srr/bluechannellistenonly/<enabled>/', methods=['GET'])
 def setSRRBlueChannelListenOnly(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SRRBlueChannelListenOnly')
     if sd is None:
         sd = SettingData()
@@ -525,7 +493,6 @@ def setSRRBlueChannelListenOnly(enabled):
 
 @app.route('/api/srr/redchannel/', methods=['GET'])
 def getSRRRedChannel():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('SRRRedChannel')
     SRRRedChannel = '1'
     if sett is not None:
@@ -537,7 +504,6 @@ def getSRRRedChannel():
 
 @app.route('/api/srr/redchannel/<enabled>/', methods=['GET'])
 def setSRRRedChannel(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SRRRedChannel')
     if sd is None:
         sd = SettingData()
@@ -552,7 +518,6 @@ def setSRRRedChannel(enabled):
 
 @app.route('/api/srr/bluechannel/', methods=['GET'])
 def getSRRBlueChannel():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('SRRBlueChannel')
     SRRBlueChannel = '1'
     if sett is not None:
@@ -564,7 +529,6 @@ def getSRRBlueChannel():
 
 @app.route('/api/srr/bluechannel/<enabled>/', methods=['GET'])
 def setSRRBlueChannel(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SRRBlueChannel')
     if sd is None:
         sd = SettingData()
@@ -597,7 +561,6 @@ def getHasHWRTC():
 
 @app.route('/api/punches/', methods=['GET'])
 def getPunches():
-    DatabaseHelper.reInit()
     blenoPunches = DatabaseHelper.get_bleno_punches()
     punches = []
     for blenoPunch in blenoPunches:
@@ -625,7 +588,6 @@ def getPunches():
 
 @app.route('/api/deletepunches/', methods=['GET'])
 def deletePunches():
-    DatabaseHelper.reInit()
     DatabaseHelper.delete_punches()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -634,7 +596,6 @@ def deletePunches():
 
 @app.route('/api/dropalltables/', methods=['GET'])
 def dropAllTables():
-    DatabaseHelper.reInit()
     DatabaseHelper.drop_all_tables()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -643,7 +604,6 @@ def dropAllTables():
 
 @app.route('/api/testpunches/gettestpunches/<testBatchGuid>/<includeAll>/', methods=['GET'])
 def getTestPunches(testBatchGuid, includeAll):
-    DatabaseHelper.reInit()
     testPunches = None
     if includeAll == "true":
         testPunches = DatabaseHelper.get_test_punches(testBatchGuid)
@@ -671,7 +631,6 @@ def getTestPunches(testBatchGuid, includeAll):
 
 @app.route('/api/testpunches/addtestpunch/<testBatchGuid>/<SINo>/', methods=['GET'])
 def addTestPunch(testBatchGuid, SINo):
-    DatabaseHelper.reInit()
     theTimeInSecondsFloat = time.time()
     localtime = time.localtime(theTimeInSecondsFloat)
     twelveHourTimer = 0
@@ -724,7 +683,6 @@ def getBatteryLevel2():
 
 @app.route('/api/apikey/', methods=['GET'])
 def getApiKey():
-    DatabaseHelper.reInit()
     apiKey = SettingsClass.GetAPIKey()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -732,7 +690,6 @@ def getApiKey():
 
 
 def getWebServerUrl():
-    DatabaseHelper.reInit()
     webServerUrl = SettingsClass.GetWebServerUrl()
     return webServerUrl
 
@@ -747,7 +704,6 @@ def getWebServerUrl2():
 
 @app.route('/api/onewayreceive/', methods=['GET'])
 def getOneWayReceive():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('OneWayReceive')
     oneWayReceive = '0'
     if sett is not None:
@@ -759,7 +715,6 @@ def getOneWayReceive():
 
 @app.route('/api/onewayreceive/<enabled>/', methods=['GET'])
 def setOneWayReceive(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('OneWayReceive')
     if sd is None:
         sd = SettingData()
@@ -774,7 +729,6 @@ def setOneWayReceive(enabled):
 
 @app.route('/api/force4800baudrate/', methods=['GET'])
 def getForce4800BaudRate():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('Force4800BaudRate')
     force4800BaudRate = '0'
     if sett is not None:
@@ -786,7 +740,6 @@ def getForce4800BaudRate():
 
 @app.route('/api/force4800baudrate/<enabled>/', methods=['GET'])
 def SetForce4800BaudRateEnabled(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('Force4800BaudRate')
     if sd is None:
         sd = SettingData()
@@ -801,7 +754,6 @@ def SetForce4800BaudRateEnabled(enabled):
 
 @app.route('/api/rs232mode/', methods=['GET'])
 def getRS232Mode():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('RS232Mode')
     rs232Mode = "RECEIVE"
     if sett is not None:
@@ -813,7 +765,6 @@ def getRS232Mode():
 
 @app.route('/api/rs232mode/<mode>/', methods=['GET'])
 def setRS232Mode(mode):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('RS232Mode')
     if sd is None:
         sd = SettingData()
@@ -828,7 +779,6 @@ def setRS232Mode(mode):
 
 @app.route('/api/rs232onewayreceive/', methods=['GET'])
 def getRS232OneWayReceive():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('RS232OneWayReceive')
     oneWayReceive = '0'
     if sett is not None:
@@ -840,7 +790,6 @@ def getRS232OneWayReceive():
 
 @app.route('/api/rs232onewayreceive/<enabled>/', methods=['GET'])
 def setRS232OneWayReceive(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('RS232OneWayReceive')
     if sd is None:
         sd = SettingData()
@@ -855,7 +804,6 @@ def setRS232OneWayReceive(enabled):
 
 @app.route('/api/forcers2324800baudrate/', methods=['GET'])
 def getForceRS2324800BaudRate():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('ForceRS2324800BaudRate')
     force4800BaudRate = '0'
     if sett is not None:
@@ -867,7 +815,6 @@ def getForceRS2324800BaudRate():
 
 @app.route('/api/forcers2324800baudrate/<enabled>/', methods=['GET'])
 def setForceRS2324800BaudRateEnabled(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('ForceRS2324800BaudRate')
     if sd is None:
         sd = SettingData()
@@ -882,7 +829,6 @@ def setForceRS2324800BaudRateEnabled(enabled):
 
 @app.route('/api/btserialonewayreceive/', methods=['GET'])
 def getBTSerialOneWayReceive():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('BTSerialOneWayReceive')
     oneWayReceive = '0'
     if sett is not None:
@@ -894,7 +840,6 @@ def getBTSerialOneWayReceive():
 
 @app.route('/api/btserialonewayreceive/<enabled>/', methods=['GET'])
 def setBTSerialOneWayReceive(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('BTSerialOneWayReceive')
     if sd is None:
         sd = SettingData()
@@ -909,7 +854,6 @@ def setBTSerialOneWayReceive(enabled):
 
 @app.route('/api/forcebtserial4800baudrate/', methods=['GET'])
 def getForceBTSerial4800BaudRate():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('ForceBTSerial4800BaudRate')
     force4800BaudRate = '0'
     if sett is not None:
@@ -921,7 +865,6 @@ def getForceBTSerial4800BaudRate():
 
 @app.route('/api/forcebtserial4800baudrate/<enabled>/', methods=['GET'])
 def setForceBTSerial4800BaudRateEnabled(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('ForceBTSerial4800BaudRate')
     if sd is None:
         sd = SettingData()
@@ -936,7 +879,6 @@ def setForceBTSerial4800BaudRateEnabled(enabled):
 
 @app.route('/api/sendtoblenoenabled/', methods=['GET'])
 def getSendToBlenoEnabled():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('SendToBlenoEnabled')
     sendToBlenoEnabled = '0'
     if sett is not None:
@@ -948,7 +890,6 @@ def getSendToBlenoEnabled():
 
 @app.route('/api/sendtoblenoenabled/<enabled>/', methods=['GET'])
 def setSendToBlenoEnabled(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('SendToBlenoEnabled')
     if sd is None:
         sd = SettingData()
@@ -963,7 +904,6 @@ def setSendToBlenoEnabled(enabled):
 
 @app.route('/api/logtoserver/', methods=['GET'])
 def getLogToServer():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('LogToServer')
     logToServer = '0'
     if sett is not None:
@@ -975,7 +915,6 @@ def getLogToServer():
 
 @app.route('/api/logtoserver/<enabled>/', methods=['GET'])
 def setLogToServerEnabled(enabled):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('LogToServer')
     if sd is None:
         sd = SettingData()
@@ -990,7 +929,6 @@ def setLogToServerEnabled(enabled):
 
 @app.route('/api/loggingserverhost/', methods=['GET'])
 def getLoggingServerHost():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('LoggingServerHost')
     loggingServerHost = ""
     if sett is not None:
@@ -1002,7 +940,6 @@ def getLoggingServerHost():
 
 @app.route('/api/loggingserverhost/<host>/', methods=['GET'])
 def SetLoggingServerHost(host):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('LoggingServerHost')
     if sd is None:
         sd = SettingData()
@@ -1017,7 +954,6 @@ def SetLoggingServerHost(host):
 
 @app.route('/api/loggingserverport/', methods=['GET'])
 def getLoggingServerPort():
-    DatabaseHelper.reInit()
     sett = DatabaseHelper.get_setting_by_key('LoggingServerPort')
     loggingServerPort = ""
     if sett is not None:
@@ -1029,7 +965,6 @@ def getLoggingServerPort():
 
 @app.route('/api/loggingserverport/<port>/', methods=['GET'])
 def setLoggingServerPort(port):
-    DatabaseHelper.reInit()
     sd = DatabaseHelper.get_setting_by_key('LoggingServerPort')
     if sd is None:
         sd = SettingData()
@@ -1117,7 +1052,6 @@ def getBTAddresses():
                                             Found='True',
                                             Status='NotConnected')
                                   for btAddrAndName in btAddressAndNameArray]
-    DatabaseHelper.reInit()
     btSerialPortDatas = DatabaseHelper.get_bluetooth_serial_ports()
     for btSerialPortData in btSerialPortDatas:
         found = False
@@ -1382,7 +1316,6 @@ def uploadLogArchive():
 
     zipLogArchive(zipFilePath)
 
-    DatabaseHelper.reInit()
     apiKey = SettingsClass.GetAPIKey()
     webServerUrl = getWebServerUrl()
 
@@ -1433,7 +1366,6 @@ def upgradeWiRocBLE(version):
 
 @app.route('/api/all/', methods=['GET'])
 def getAllMainSettings():
-    DatabaseHelper.reInit()
     isCharging = Battery.IsCharging()
 
     f = open("../settings.yaml", "r")

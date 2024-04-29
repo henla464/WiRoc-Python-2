@@ -6,6 +6,7 @@ from datamodel.datamodel import TransformData
 from datamodel.datamodel import MessageSubscriptionData
 from datamodel.db_helper import DatabaseHelper
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
+from inputadapters.resubmitloraadapter import ResubmitLoraAdapter
 from subscriberadapters.sendloraadapter import SendLoraAdapter
 from subscriberadapters.sendserialadapter import SendSerialAdapter
 from subscriberadapters.sendtoblenoadapter import SendToBlenoAdapter
@@ -49,11 +50,12 @@ class Setup:
         inChange1 = CreateStatusAdapter.CreateInstances()
         inChange2 = ReceiveLoraAdapter.CreateInstances(HardwareAbstraction.Instance)
         inChange4 = ReceiveSIUSBSerialPort.CreateInstances()  # uses db, writes to it
-        inChange5 = ReceiveSIHWSerialPort.CreateInstances() # uses db, writes to it
-        inChange6 = ReceiveSIBluetoothSP.CreateInstances() # uses db, writes to it
+        inChange5 = ReceiveSIHWSerialPort.CreateInstances()  # uses db, writes to it
+        inChange6 = ReceiveSIBluetoothSP.CreateInstances()  # uses db, writes to it
         inChange7 = ReceiveTestPunchesAdapter.CreateInstances()
         inChange8 = ReceiveRepeaterMessagesAdapter.CreateInstances()
         inChange9 = ReceiveSRRAdapter.CreateInstances(HardwareAbstraction.Instance)
+        inChange10 = ResubmitLoraAdapter.CreateInstances()
         inputObjects.extend(CreateStatusAdapter.Instances)
         inputObjects.extend(ReceiveLoraAdapter.Instances)
         inputObjects.extend(ReceiveSIUSBSerialPort.Instances)
@@ -62,6 +64,7 @@ class Setup:
         inputObjects.extend(ReceiveTestPunchesAdapter.Instances)
         inputObjects.extend(ReceiveRepeaterMessagesAdapter.Instances)
         inputObjects.extend(ReceiveSRRAdapter.Instances)
+        inputObjects.extend(ResubmitLoraAdapter.Instances)
 
         anyShouldBeInitialized = False
         for inst in subscriberObjects:
@@ -76,7 +79,7 @@ class Setup:
                 and not change1 and not change3 and not change4 and not change5 and not change2
                 and not inChange1 and not inChange2 and not inChange4
                 and not inChange5 and not inChange6 and not inChange7
-                and not inChange8 and not inChange9):
+                and not inChange8 and not inChange9 and not inChange10):
             # acknowledgementRequested might have changed so that the subscription must be updated.
             for adapterObj in subscriberObjects:
                 adapterObj.EnableDisableSubscription()

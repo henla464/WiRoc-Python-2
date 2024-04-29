@@ -1,3 +1,6 @@
+import os
+import threading
+
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
@@ -326,11 +329,13 @@ class SendLoraAdapter(object):
 
             if headerMessageType != LoraRadioMessageRS.MessageTypeLoraAck:
                 SettingsClass.SetTimeOfLastMessageSentToLora()
-            else:
+
+            if headerMessageType == LoraRadioMessageRS.MessageTypeLoraAck:
                 statMessageType = "Ack"
 
             if headerMessageType == LoraRadioMessageRS.MessageTypeSIPunchReDCoS or \
                     headerMessageType == LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS:
+                SettingsClass.SetTimeOfLastPunchMessageSentToLora()
                 statMessageType = "Punch"
                 SettingsClass.SetMessageIDOfLastLoraMessageSent(settingsDictionary["MessageID"])
 
@@ -351,7 +356,9 @@ class SendLoraAdapter(object):
                 returnSuccess = False
 
         if returnSuccess:
+            SendLoraAdapter.WiRocLogger.debug(f"SendLoraAdapter::SendData() before add message stat {os.getpid()} {threading.get_ident()}")
             DatabaseHelper.add_message_stat(self.GetInstanceName(), statMessageType, "Sent", 1)
+            SendLoraAdapter.WiRocLogger.debug(f"SendLoraAdapter::SendData() after add message stat {os.getpid()} {threading.get_ident()}")
             successCB()
         else:
             DatabaseHelper.add_message_stat(self.GetInstanceName(), statMessageType, "NotSent", 0)

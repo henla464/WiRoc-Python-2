@@ -23,6 +23,7 @@ rlock = RLock()
 class SettingsClass(object):
     timeOfLastMessageAdded = time.monotonic()
     timeOfLastMessageSentToLora = time.monotonic()
+    timeOfLastPunchMessageSentToLora = time.monotonic()
     receiveSIAdapterActive = None
     sendSerialAdapterActive = None
     forceReconfigure = False
@@ -64,6 +65,15 @@ class SettingsClass(object):
     @staticmethod
     def GetTimeOfLastMessageSentToLora():
         return SettingsClass.timeOfLastMessageSentToLora
+
+    @staticmethod
+    def SetTimeOfLastPunchMessageSentToLora():
+        SettingsClass.timeOfLastPunchMessageSentToLora = time.monotonic()
+
+    @staticmethod
+    def GetTimeOfLastPunchMessageSentToLora():
+        return SettingsClass.timeOfLastPunchMessageSentToLora
+
 
     @staticmethod
     def SetMessageIDOfLastLoraMessageSent(messageID: bytearray):
@@ -621,6 +631,21 @@ class SettingsClass(object):
         sett = DatabaseHelper.get_setting_by_key('StatusMessageBaseInterval')
         if sett is None:
             SettingsClass.SetSetting('StatusMessageBaseInterval', 300)
+            statusMessageBaseInterval = 300
+        else:
+            try:
+                statusMessageBaseInterval = int(sett.Value)
+            except ValueError:
+                statusMessageBaseInterval = 300
+
+        return statusMessageBaseInterval + (7 * SettingsClass.GetRelayPathNumber()) + random.randint(0, 9)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetResubmitMessageInterval'), lock=rlock)
+    def GetResubmitMessageInterval() -> int:
+        sett = DatabaseHelper.get_setting_by_key('ResubmitMessageInterval')
+        if sett is None:
+            SettingsClass.SetSetting('ResubmitMessageInterval', 300)
             statusMessageBaseInterval = 300
         else:
             try:

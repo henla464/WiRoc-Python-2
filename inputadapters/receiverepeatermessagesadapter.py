@@ -1,4 +1,5 @@
 from datamodel.db_helper import DatabaseHelper
+from settings.settings import SettingsClass
 from utils.utils import Utils
 import logging
 
@@ -9,9 +10,14 @@ class ReceiveRepeaterMessagesAdapter(object):
 
     @staticmethod
     def CreateInstances():
-        if len(ReceiveRepeaterMessagesAdapter.Instances) == 0:
-            ReceiveRepeaterMessagesAdapter.Instances.append(ReceiveRepeaterMessagesAdapter("rcvRepeater1"))
-            return True
+        if SettingsClass.GetLoraMode() == "REPEATER":
+            if len(ReceiveRepeaterMessagesAdapter.Instances) == 0:
+                ReceiveRepeaterMessagesAdapter.Instances.append(ReceiveRepeaterMessagesAdapter("rcvRepeater1"))
+                return True
+        else:
+            if len(ReceiveRepeaterMessagesAdapter.Instances) > 0:
+                ReceiveRepeaterMessagesAdapter.Instances.clear()
+                return True
         return False
 
     @staticmethod

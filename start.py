@@ -87,8 +87,8 @@ class Main:
         # Disable logToServer, must activate manually
         SettingsClass.SetSetting("LogToServer", "0")
 
-        self.backgroundTasks.updateWebServerUp()
-        self.backgroundTasks.doInfrequentHTTPTasks() # adds device etc
+        #self.backgroundTasks.UpdateWebServerUp()
+        #self.backgroundTasks.doInfrequentHTTPTasks() # adds device etc
 
     def updateDisplayBackground(self, displayData : DisplayData):
         self.displayStateMachine.Draw(displayData)
@@ -111,16 +111,16 @@ class Main:
         t.daemon = True
         t.start()
 
-    def doInfrequentMaintenanceTasks(self):
-        self.backgroundTasks.doInfrequentDatabaseTasks()
-        self.backgroundTasks.doInfrequentHTTPTasks()
+    #def doInfrequentMaintenanceTasks(self):
+    #    self.backgroundTasks.doInfrequentDatabaseTasks()
+    #    self.backgroundTasks.doInfrequentHTTPTasks()
 
     def reconfigure(self):
         if Setup.SetupAdapters():
             self.subscriberAdapters = Setup.SubscriberAdapters
             self.inputAdapters = Setup.InputAdapters
 
-        self.backgroundTasks.updateWebServerUp()
+        #self.backgroundTasks.UpdateWebServerUp()
 
         loggingServerHost = SettingsClass.GetLoggingServerHost()
         loggingServerPort = SettingsClass.GetLoggingServerPort()
@@ -152,9 +152,11 @@ class Main:
                 if inputData["MessageType"] == "DATA":
                     self.wirocLogger.info("Start::handleInput() Received data from " + inputAdapter.GetInstanceName())
                     messageID: bytearray | None = inputData.get("MessageID", None)
-                    messageTypeName = inputAdapter.GetTypeName()
+                    messageTypeName: str | None = inputData.get("TypeName", None)
+                    if messageTypeName is None:
+                        messageTypeName = inputAdapter.GetTypeName()
                     messageSource = inputData["MessageSource"]
-                    #checksumOK = inputData["ChecksumOK"]
+                    # checksumOK = inputData["ChecksumOK"]
                     instanceName = inputAdapter.GetInstanceName()
                     powerCycle = SettingsClass.GetPowerCycle()
                     messageData = inputData["Data"]
@@ -414,8 +416,14 @@ class Main:
         settDict: dict[str, str | int | None] = {
             "WiRocDeviceName": SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device",
             "SendToSirapIP": SettingsClass.GetSendToSirapIP(),
-            "SendToSirapIPPort": SettingsClass.GetSendToSirapIPPort(), "WebServerUrl": SettingsClass.GetWebServerUrl(),
+            "SendToSirapIPPort": SettingsClass.GetSendToSirapIPPort(),
+            "WebServerUrl": SettingsClass.GetWebServerUrl(),
             "ApiKey": SettingsClass.GetAPIKey()}
+
+        self.backgroundTasks.StartMessageStats()
+        self.backgroundTasks.StartUpdateWebServerUp()
+        self.backgroundTasks.StartInfrequentHTTPTasks()
+        self.backgroundTasks.StartInfrequentDatabaseTasks()
 
         self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
                                     if inputAdapter.UpdateInfrequently() and inputAdapter.GetIsInitialized()]
@@ -432,6 +440,7 @@ class Main:
                     # We need to call SettingsClass.Tick() to clear settings cache so new configurations take effect
                     didTasks = True
                     SettingsClass.Tick()
+                    self.backgroundTasks.GetDataFromSubProcesses()
                     self.doFrequentMaintenanceTasks()
 
                 if i % 251 == 0:
@@ -451,14 +460,14 @@ class Main:
                 if i % 997 == 0:
                     # print("infrequent maintenance time: " + str(datetime.now()))
                     didTasks = True
-                    self.doInfrequentMaintenanceTasks()
+                    self.backgroundTasks.SendDataToInfrequentHTTPTaskProcess()
+                    #self.doInfrequentMaintenanceTasks()
 
                 if not didTasks:
                     time.sleep(0.04)
                 # print("time: " + str(datetime.now()))
                 self.handleInput()
                 self.handleOutput(settDict)
-                self.backgroundTasks.sendMessageStats()
 
 
 main = None

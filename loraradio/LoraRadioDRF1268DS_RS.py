@@ -1,4 +1,6 @@
 __author__ = 'henla464'
+
+import threading
 from typing import Self
 import serial
 import time
@@ -163,6 +165,7 @@ class LoraRadioDRF1268DS_RS:
         self.hardwareAbstraction: HardwareAbstraction = hardwareAbstraction
         self.loraRadioDataHandler: LoraRadioDataHandler = LoraRadioDataHandler(True)
         self.ackReceivedMatchingLastSentMessage: bool = True
+        self.serialLock: threading.Lock = threading.Lock()
 
     def GetIsInitialized(self, channel: int, loraRange: str, loraPower: int, codeRate: int, rxGain: bool) -> bool:
         return self.isInitialized and \
@@ -370,74 +373,78 @@ class LoraRadioDRF1268DS_RS:
         self.SetErrorCode("")
 
     def Init(self, channel: int, loraRange: str, loraPower: int, codeRate: int, rxGain: bool):
-        LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() Port name: " + self.portName + " Channel: " +
-                                               str(channel) + " LoraRange: " + loraRange + " LoraPower: " +
-                                               str(loraPower) + " CodeRate: " + str(codeRate) + " RxGain: " + str(rxGain))
-        self.hardwareAbstraction.EnableLora()
-        time.sleep(0.1)
-
-        self.channel = channel
-        self.loraPower = loraPower
-        self.loraRange = loraRange
-        self.codeRate = codeRate
-        self.rxGain = rxGain
-
-        self.radioSerial.baudrate = 9600
-        self.radioSerial.port = self.portName
-        if not self.radioSerial.is_open:
-            self.radioSerial.open()
-        if not self.radioSerial.is_open:
-            LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() Serial port not open")
-            return False
-
-        newSettingsWritten = False
+        self.serialLock.acquire()
         try:
-            if self.enterATMode():
-                LoraRadioDRF1268DS_RS.LoraModuleParameters = self.getParameters()
-                if LoraRadioDRF1268DS_RS.LoraModuleParameters is None:
-                    LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() Could not get parameters")
-                    self.SetErrorCode("Lora config failed")
-                    return False
-                channelData = DatabaseHelper.get_channel(channel, loraRange, 'DRF1268DS')
-                if channelData.Frequency ==  LoraRadioDRF1268DS_RS.LoraModuleParameters.TransmitFrequency and \
-                    channelData.Frequency == LoraRadioDRF1268DS_RS.LoraModuleParameters.ReceiveFrequency and \
-                    channelData.RfFactor == LoraRadioDRF1268DS_RS.LoraModuleParameters.SpreadingFactor and \
-                    loraPower == LoraRadioDRF1268DS_RS.LoraModuleParameters.TransmitPower and \
-                    channelData.RfBw == LoraRadioDRF1268DS_RS.LoraModuleParameters.Bandwidth and \
-                    channel == LoraRadioDRF1268DS_RS.LoraModuleParameters.NetID and \
-                    codeRate == LoraRadioDRF1268DS_RS.LoraModuleParameters.CodeRate and \
-                    ((rxGain and 0x81 == LoraRadioDRF1268DS_RS.LoraModuleParameters.IDRxGainEnable) or
-                    (not rxGain and 0x01 == LoraRadioDRF1268DS_RS.LoraModuleParameters.IDRxGainEnable)):
-                    self.isInitialized = True
-                    LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() Already correct parameters")
-                    self.ClearErrorCode()
-                    return True
-                else:
-                    LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() frequency" + str(channelData.Frequency))
-                    if self.setParameters(channelData, channel, loraPower, codeRate, rxGain):
-                        LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() Parameters set")
+            LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() Port name: " + self.portName + " Channel: " +
+                                                   str(channel) + " LoraRange: " + loraRange + " LoraPower: " +
+                                                   str(loraPower) + " CodeRate: " + str(codeRate) + " RxGain: " + str(rxGain))
+            self.hardwareAbstraction.EnableLora()
+            time.sleep(0.1)
+
+            self.channel = channel
+            self.loraPower = loraPower
+            self.loraRange = loraRange
+            self.codeRate = codeRate
+            self.rxGain = rxGain
+
+            self.radioSerial.baudrate = 9600
+            self.radioSerial.port = self.portName
+            if not self.radioSerial.is_open:
+                self.radioSerial.open()
+            if not self.radioSerial.is_open:
+                LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() Serial port not open")
+                return False
+
+            newSettingsWritten = False
+            try:
+                if self.enterATMode():
+                    LoraRadioDRF1268DS_RS.LoraModuleParameters = self.getParameters()
+                    if LoraRadioDRF1268DS_RS.LoraModuleParameters is None:
+                        LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() Could not get parameters")
+                        self.SetErrorCode("Lora config failed")
+                        return False
+                    channelData = DatabaseHelper.get_channel(channel, loraRange, 'DRF1268DS')
+                    if channelData.Frequency ==  LoraRadioDRF1268DS_RS.LoraModuleParameters.TransmitFrequency and \
+                        channelData.Frequency == LoraRadioDRF1268DS_RS.LoraModuleParameters.ReceiveFrequency and \
+                        channelData.RfFactor == LoraRadioDRF1268DS_RS.LoraModuleParameters.SpreadingFactor and \
+                        loraPower == LoraRadioDRF1268DS_RS.LoraModuleParameters.TransmitPower and \
+                        channelData.RfBw == LoraRadioDRF1268DS_RS.LoraModuleParameters.Bandwidth and \
+                        channel == LoraRadioDRF1268DS_RS.LoraModuleParameters.NetID and \
+                        codeRate == LoraRadioDRF1268DS_RS.LoraModuleParameters.CodeRate and \
+                        ((rxGain and 0x81 == LoraRadioDRF1268DS_RS.LoraModuleParameters.IDRxGainEnable) or
+                        (not rxGain and 0x01 == LoraRadioDRF1268DS_RS.LoraModuleParameters.IDRxGainEnable)):
                         self.isInitialized = True
-                        newSettingsWritten = True
+                        LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() Already correct parameters")
                         self.ClearErrorCode()
                         return True
                     else:
-                        LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() Setting parameters failed")
-                        self.SetErrorCode("Lora config failed")
-                        self.isInitialized = False
-                        return False
-            else:
-                LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() enterATMode failed")
-                self.SetErrorCode("Lora config failed")
-                self.isInitialized = False
-                return False
+                        LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() frequency" + str(channelData.Frequency))
+                        if self.setParameters(channelData, channel, loraPower, codeRate, rxGain):
+                            LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() Parameters set")
+                            self.isInitialized = True
+                            newSettingsWritten = True
+                            self.ClearErrorCode()
+                            return True
+                        else:
+                            LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() Setting parameters failed")
+                            self.SetErrorCode("Lora config failed")
+                            self.isInitialized = False
+                            return False
+                else:
+                    LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() enterATMode failed")
+                    self.SetErrorCode("Lora config failed")
+                    self.isInitialized = False
+                    return False
 
+            finally:
+                if not newSettingsWritten: # when new settings is written then a reset/restart is done automatically
+                    if not self.exitATMode():
+                        LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() Could not exit ATMode")
+                    self.hardwareAbstraction.DisableLora()
+                    time.sleep(0.1)
+                    self.hardwareAbstraction.EnableLora()
         finally:
-            if not newSettingsWritten: # when new settings is written then a reset/restart is done automatically
-                if not self.exitATMode():
-                    LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() Could not exit ATMode")
-                self.hardwareAbstraction.DisableLora()
-                time.sleep(0.1)
-                self.hardwareAbstraction.EnableLora()
+            self.serialLock.release()
 
     def SetAckReceivedMatchingLastSentMessage(self, ackReceivedMatchingLastSentMsg :bool) -> None:
         # Keep track if received ack matched last sent message. If it didn't then it is likely another WiRoc
@@ -464,92 +471,100 @@ class LoraRadioDRF1268DS_RS:
         return True
 
     def SendData(self, messageData: bytearray) -> bool:
-        LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::SendData() send data: " + Utils.GetDataInHex(messageData, logging.DEBUG))
-        while True:
-            try:
+        self.serialLock.acquire()
+        try:
+            LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::SendData() send data: " + Utils.GetDataInHex(messageData, logging.DEBUG))
+            while True:
+                try:
+                    allReceivedData = bytearray()
+                    while self.radioSerial.in_waiting > 0:
+                        bytesRead = self.radioSerial.read(1)
+                        allReceivedData.append(bytesRead[0])
+                        self.loraRadioDataHandler.AddData(bytesRead[0])
+                    if len(allReceivedData) > 0:
+                        LoraRadioDRF1268DS_RS.WiRocLogger.info(
+                            "LoraRadioDRF1268DS_RS::SendData() read this data before send: " + Utils.GetDataInHex(
+                                allReceivedData,
+                                logging.INFO))
+
+                    self.radioSerial.write(messageData)
+                    self.radioSerial.flush()
+                except IOError as ioe:
+                    LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::SendData() " + str(ioe))
+                    if ioe.errno != errno.EINTR:
+                        raise
+                    continue
+                break
+
+            self.WaitForSerialUpToTimeMS(1500)
+            sendReply = self.getRadioReply(4)
+            if sendReply == bytearray([0x6F, 0x6B, 0x0D, 0x0A]):  # ok
+                LoraRadioDRF1268DS_RS.WiRocLogger.debug(
+                    "LoraRadioDRF1268DS_RS::SendData() Module returned ok")
+                return True
+            elif sendReply == bytearray([0x62, 0x75, 0x73, 0x79]):  # busy
+                LoraRadioDRF1268DS_RS.WiRocLogger.debug(
+                    "LoraRadioDRF1268DS_RS::SendData() Module returned busy")
+                self.radioSerial.read(2)  # remove also 'CR LF'
+                return False
+            else:
+                LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::SendData() Module returned: " + Utils.GetDataInHex(sendReply, logging.ERROR))
+                # Module didn't return OK / Busy, or maybe it did and another message was received first
                 allReceivedData = bytearray()
+                for dataByte in sendReply:
+                    allReceivedData.append(dataByte)
+
                 while self.radioSerial.in_waiting > 0:
                     bytesRead = self.radioSerial.read(1)
                     allReceivedData.append(bytesRead[0])
-                    self.loraRadioDataHandler.AddData(bytesRead[0])
-                if len(allReceivedData) > 0:
-                    LoraRadioDRF1268DS_RS.WiRocLogger.info(
-                        "LoraRadioDRF1268DS_RS::SendData() read this data before send: " + Utils.GetDataInHex(
-                            allReceivedData,
-                            logging.INFO))
+                # if another message was received above then we may need to wait a bit for the ok/busy to be received. (noticed in logs)
+                self.WaitForSerialUpToTimeMS(10)
+                while self.radioSerial.in_waiting > 0:
+                    bytesRead = self.radioSerial.read(1)
+                    allReceivedData.append(bytesRead[0])
 
-                self.radioSerial.write(messageData)
-                self.radioSerial.flush()
-            except IOError as ioe:
-                LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::SendData() " + str(ioe))
-                if ioe.errno != errno.EINTR:
-                    raise
-                continue
-            break
-
-        self.WaitForSerialUpToTimeMS(1500)
-        sendReply = self.getRadioReply(4)
-        if sendReply == bytearray([0x6F, 0x6B, 0x0D, 0x0A]):  # ok
-            LoraRadioDRF1268DS_RS.WiRocLogger.debug(
-                "LoraRadioDRF1268DS_RS::SendData() Module returned ok")
-            return True
-        elif sendReply == bytearray([0x62, 0x75, 0x73, 0x79]):  # busy
-            LoraRadioDRF1268DS_RS.WiRocLogger.debug(
-                "LoraRadioDRF1268DS_RS::SendData() Module returned busy")
-            self.radioSerial.read(2)  # remove also 'CR LF'
-            return False
-        else:
-            LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::SendData() Module returned: " + Utils.GetDataInHex(sendReply, logging.ERROR))
-            # Module didn't return OK / Busy, or maybe it did and another message was received first
-            allReceivedData = bytearray()
-            for dataByte in sendReply:
-                allReceivedData.append(dataByte)
-
-            while self.radioSerial.in_waiting > 0:
-                bytesRead = self.radioSerial.read(1)
-                allReceivedData.append(bytesRead[0])
-            # if another message was received above then we may need to wait a bit for the ok/busy to be received. (noticed in logs)
-            self.WaitForSerialUpToTimeMS(10)
-            while self.radioSerial.in_waiting > 0:
-                bytesRead = self.radioSerial.read(1)
-                allReceivedData.append(bytesRead[0])
-
-            if allReceivedData[-4:] == bytearray([0x6F, 0x6B, 0x0D, 0x0A]): # ok
-                LoraRadioDRF1268DS_RS.WiRocLogger.debug(
-                    "LoraRadioDRF1268DS_RS::SendData() 2 Module returned ok")
-                for dataByte in allReceivedData[:-4]:
-                    self.loraRadioDataHandler.AddData(dataByte)
-                return True
-            elif allReceivedData[-6:] == bytearray([0x62, 0x75, 0x73, 0x79, 0x0d, 0x0a]):  # busy
-                LoraRadioDRF1268DS_RS.WiRocLogger.debug(
-                    "LoraRadioDRF1268DS_RS::SendData() 2 Module returned busy")
-                for dataByte in allReceivedData[:-6]:
-                    self.loraRadioDataHandler.AddData(dataByte)
-                return False
-            else:
-                # could not make sens of data so let's ignore it
-                LoraRadioDRF1268DS_RS.WiRocLogger.error(
-                    "LoraRadioDRF1268DS_RS::SendData() Module returned allReceivedData: " + Utils.GetDataInHex(allReceivedData,
-                                                                                               logging.ERROR))
-                return False
+                if allReceivedData[-4:] == bytearray([0x6F, 0x6B, 0x0D, 0x0A]): # ok
+                    LoraRadioDRF1268DS_RS.WiRocLogger.debug(
+                        "LoraRadioDRF1268DS_RS::SendData() 2 Module returned ok")
+                    for dataByte in allReceivedData[:-4]:
+                        self.loraRadioDataHandler.AddData(dataByte)
+                    return True
+                elif allReceivedData[-6:] == bytearray([0x62, 0x75, 0x73, 0x79, 0x0d, 0x0a]):  # busy
+                    LoraRadioDRF1268DS_RS.WiRocLogger.debug(
+                        "LoraRadioDRF1268DS_RS::SendData() 2 Module returned busy")
+                    for dataByte in allReceivedData[:-6]:
+                        self.loraRadioDataHandler.AddData(dataByte)
+                    return False
+                else:
+                    # could not make sens of data so let's ignore it
+                    LoraRadioDRF1268DS_RS.WiRocLogger.error(
+                        "LoraRadioDRF1268DS_RS::SendData() Module returned allReceivedData: " + Utils.GetDataInHex(allReceivedData,
+                                                                                                                   logging.ERROR))
+                    return False
+        finally:
+            self.serialLock.release()
 
     def GetRadioData(self) -> LoraRadioMessageAckRS | LoraRadioMessageStatusRS | LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | None:
-        if self.radioSerial.in_waiting == 0 and len(self.loraRadioDataHandler.DataReceived) == 0:
-            return None
-        LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::GetRadioData() data to fetch")
-        allReceivedData = bytearray()
-        # Let's wait a little so that the full message is available to be read from serial.
-        time.sleep(2 / 100)
-        while self.radioSerial.in_waiting > 0:
-            bytesRead = self.radioSerial.read(1)
-            allReceivedData.append(bytesRead[0])
-            self.loraRadioDataHandler.AddData(bytesRead[0])
+        self.serialLock.acquire()
+        try:
+            if self.radioSerial.in_waiting == 0 and len(self.loraRadioDataHandler.DataReceived) == 0:
+                return None
+            LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::GetRadioData() data to fetch")
+            allReceivedData = bytearray()
+            # Let's wait a little so that the full message is available to be read from serial.
+            time.sleep(2 / 100)
+            while self.radioSerial.in_waiting > 0:
+                bytesRead = self.radioSerial.read(1)
+                allReceivedData.append(bytesRead[0])
+                self.loraRadioDataHandler.AddData(bytesRead[0])
 
-        LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::GetRadioData() data fetched: " + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
+            LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::GetRadioData() data fetched: " + Utils.GetDataInHex(allReceivedData, logging.DEBUG))
 
-        msg = self.loraRadioDataHandler.GetMessage()
+            msg = self.loraRadioDataHandler.GetMessage()
 
-        if msg is None:
-            LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::GetRadioData() No message found")
+            if msg is None:
+                LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::GetRadioData() No message found")
 
-        return msg
+            return msg
+        finally:
+            self.serialLock.release()
