@@ -69,10 +69,12 @@ class Setup:
         anyShouldBeInitialized = False
         for inst in subscriberObjects:
             if inst.ShouldBeInitialized():
+                print("should be initialized: " + inst.GetInstanceName())
                 anyShouldBeInitialized = True
 
         for inst in inputObjects:
             if inst.ShouldBeInitialized():
+                print("should be initialized: " + inst.GetInstanceName())
                 anyShouldBeInitialized = True
 
         if (not anyShouldBeInitialized and not SettingsClass.GetForceReconfigure()

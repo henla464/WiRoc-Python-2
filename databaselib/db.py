@@ -114,7 +114,6 @@ class DB:
                                     for column_name, column_type in table_object.__class__.columns)
             db_cursor = conn.cursor()
             try:
-                #db_cursor.execute(SQL_statement, valuesTuple)
                 newRowid = self._execute_cursor_SQL_lastrowid_retry(db_cursor, SQL_statement, valuesTuple)
                 conn.commit()
                 if rowid is None:
@@ -135,8 +134,6 @@ class DB:
             try:
                 select_SQL_statement = "SELECT * FROM %s WHERE id = %s" % (table_class.__name__, rowid)
                 row = self._execute_cursor_SQL_fetchone_retry(db_cursor, select_SQL_statement)
-                #db_cursor.execute(select_SQL_statement)
-                #row = db_cursor.fetchone()
                 if row is None:
                     return None
                 table_object = self._get_table_object(table_class, row)
@@ -152,11 +149,6 @@ class DB:
             db_cursor = conn.cursor()
             try:
                 first = self._execute_cursor_SQL_fetchone_retry(db_cursor, select_SQL_statement, parameters)
-                #if parameters is not None:
-                #    db_cursor.execute(select_SQL_statement, parameters)
-                #else:
-                #    db_cursor.execute(select_SQL_statement)
-                #first = db_cursor.fetchone()
                 if first is None:
                     return None
                 else:
@@ -172,11 +164,6 @@ class DB:
             db_cursor = conn.cursor()
             try:
                 rows = self._execute_cursor_SQL_fetchall_retry(db_cursor, select_SQL_statement, parameters)
-                #if parameters is None:
-                #    db_cursor.execute(select_SQL_statement)
-                #else:
-                #    db_cursor.execute(select_SQL_statement, parameters)
-                #rows = db_cursor.fetchall()
                 get_table_object_func = self._get_table_object
                 table_objects = [get_table_object_func(table_class, row) for row in rows]
                 return table_objects
@@ -194,87 +181,81 @@ class DB:
             self.closeConnection(conn)
 
     def _execute_cursor_SQL_fetchone_retry(self, cursor: Cursor, SQL_statement: str, parameters=None) -> any:
-        timeout = 50
-        result = None
+        timeout = 10
         for x in range(0, timeout):
             try:
-                DB.WiRocLogger.debug(
-                    f"DB::_execute_cursor_SQL_fetchone_retry() 1 {SQL_statement} PID: {os.getpid()} {threading.get_ident()}")
+                #DB.WiRocLogger.debug(
+                #    f"DB::_execute_cursor_SQL_fetchone_retry() 1 {SQL_statement} PID: {os.getpid()} {threading.get_ident()}")
                 if parameters is None:
                     cursor.execute(SQL_statement)
                     result = cursor.fetchone()
                 else:
                     cursor.execute(SQL_statement, parameters)
                     result = cursor.fetchone()
+                return result
             except OperationalError as ex:
                 DB.WiRocLogger.debug(f"DB::_execute_cursor_SQL_fetchone_retry() Exception {ex} {SQL_statement}")
                 time.sleep(0.01)
                 continue
-            finally:
-                break
-        else:
-            if parameters is None:
-                cursor.execute(SQL_statement)
-                result = cursor.fetchone()
-            else:
-                cursor.execute(SQL_statement, parameters)
-                result = cursor.fetchone()
-        return result
+        DB.WiRocLogger.error(f"DB::_execute_cursor_SQL_fetchone_retry() ALL RETRIES FAILED {SQL_statement}")
 
     def _execute_cursor_SQL_fetchall_retry(self, cursor: Cursor, SQL_statement: str, parameters=None) -> any:
-        timeout = 50
+        timeout = 10
         result = None
         for x in range(0, timeout):
             try:
-                DB.WiRocLogger.debug(
-                    f"DB::_execute_cursor_SQL_fetchall_retry() 1 {SQL_statement} PID: {os.getpid()} {threading.get_ident()}")
+                #DB.WiRocLogger.debug(
+                #    f"DB::_execute_cursor_SQL_fetchall_retry() 1 {SQL_statement} PID: {os.getpid()} {threading.get_ident()}")
                 if parameters is None:
                     cursor.execute(SQL_statement)
                     result = cursor.fetchall()
                 else:
                     cursor.execute(SQL_statement, parameters)
                     result = cursor.fetchall()
-                break
+                return result
             except OperationalError as ex:
                 DB.WiRocLogger.debug(f"DB::_execute_cursor_SQL_fetchall_retry() Exception {ex} {SQL_statement}")
                 time.sleep(0.01)
                 continue
-        return result
+        DB.WiRocLogger.error(f"DB::_execute_cursor_SQL_fetchall_retry() ALL RETRIES FAILED {SQL_statement}")
 
     def _execute_cursor_SQL_lastrowid_retry(self, cursor: Cursor, SQL_statement: str, parameters=None) -> int | None:
-        timeout = 50
+        timeout = 10
         result = None
         for x in range(0, timeout):
             try:
-                DB.WiRocLogger.debug(
-                    f"DB::_execute_cursor_SQL_lastrowid_retry() 1 {SQL_statement} PID: {os.getpid()} {threading.get_ident()}")
+                #DB.WiRocLogger.debug(
+                #    f"DB::_execute_cursor_SQL_lastrowid_retry() 1 {SQL_statement} PID: {os.getpid()} {threading.get_ident()}")
                 if parameters is None:
                     cursor.execute(SQL_statement)
                     result = cursor.lastrowid
                 else:
                     cursor.execute(SQL_statement, parameters)
                     result = cursor.lastrowid
-                break
+                return result
             except OperationalError as ex:
                 DB.WiRocLogger.debug(f"DB::_execute_cursor_SQL_fetchall_retry() Exception {ex} {SQL_statement}")
                 time.sleep(0.01)
                 continue
-        return result
+        DB.WiRocLogger.error(
+            f"DB::_execute_cursor_SQL_lastrowid_retry() ALL RETRIES FAILED {SQL_statement} PID: {os.getpid()} {threading.get_ident()}")
 
     def _execute_SQL_retry(self, conn: Connection, SQL_statement: str, parameters=None):
-        timeout = 50
+        timeout = 10
         for x in range(0, timeout):
             try:
-                DB.WiRocLogger.debug(f"DB::_execute_SQL_retry() 1 {SQL_statement} PID: {os.getpid()} {threading.get_ident()}")
+                #DB.WiRocLogger.debug(f"DB::_execute_SQL_retry() 1 {SQL_statement} PID: {os.getpid()} {threading.get_ident()}")
                 if parameters is None:
                     conn.execute(SQL_statement)
                 else:
                     conn.execute(SQL_statement, parameters)
-                break
+                return
             except OperationalError as ex:
-                DB.WiRocLogger.debug(f"DB::_execute_SQL_retry() Exception {ex} {SQL_statement} PID: {os.getpid()} {threading.get_ident()}")
+                #DB.WiRocLogger.debug(f"DB::_execute_SQL_retry() Exception {ex} {SQL_statement} PID: {os.getpid()} {threading.get_ident()}")
                 time.sleep(0.01)
                 continue
+        DB.WiRocLogger.error(
+            f"DB::_execute_SQL_retry() ALL RETRIES FAILED {SQL_statement} PID: {os.getpid()} {threading.get_ident()}")
 
     def execute_SQL(self, SQL_statement: str, parameters=None):
         #DB.WiRocLogger.debug(f"DB::execute_SQL() 1 {SQL_statement}")

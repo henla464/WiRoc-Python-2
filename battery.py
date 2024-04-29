@@ -122,7 +122,7 @@ class Battery(object):
 
     @classmethod
     def GetIsBatteryLow(cls):
-        Battery.WiRocLogger.debug("Battery::GetIsBatteryLow")
+        #Battery.WiRocLogger.debug("Battery::GetIsBatteryLow")
         intPercentValue = cls.GetBatteryPercent()
         isBatteryLow = (intPercentValue < 30)
         return isBatteryLow

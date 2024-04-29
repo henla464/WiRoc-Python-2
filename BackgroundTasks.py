@@ -92,13 +92,6 @@ class BackgroundTasks(object):
             BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::GetDataFromSubProcesses() exception: {ex}")
 
     def StartInfrequentHTTPTasks(self):
-        #self.processInfrequentHTTPTaskQueues()
-
-        # join any old doInfrequentTasksBackgroundProcess
-        #if self.doInfrequentHTTPTasksBackgroundProcess is not None:
-        #    self.doInfrequentHTTPTasksBackgroundProcess.join()
-        #    self.doInfrequentHTTPTasksBackgroundProcess = None
-
         try:
             if self.doInfrequentHTTPTasksBackgroundProcess is None:
                 batteryIsLow = Battery.GetIsBatteryLow()
@@ -106,19 +99,8 @@ class BackgroundTasks(object):
                 self.doInfrequentHTTPTasksBackgroundProcess = Process(
                     target=BackgroundTasks.DoInfrequentHTTPTasksBackground,
                     args=(self.doInfrequentHTTPTasksQueueCommands,
-                          # self.exitHTTPQueue,
-                          # self.infrequentHTTPTaskBatteryIsLowQueue,
-                          # self.infrequentHTTPTaskBatteryIsLowReceivedQueue,
-                          # self.infrequentHTTPTaskWebServerUpQueue,
-                          # btAddress,
-                          # webServerUrl,
-                          # apiKey,
                           batteryIsLow,
-                          # self.lastBatteryIsLow,
                           batteryIsLowReceived,
-                          # self.lastBatteryIsLowReceived,
-                          # wiRocDeviceName,
-                          # updateWiRocDevice
                           ),
                     daemon=True)
                 self.doInfrequentHTTPTasksBackgroundProcess.start()
@@ -131,52 +113,10 @@ class BackgroundTasks(object):
             tb = traceback.format_exc()
             BackgroundTasks.WiRocLogger.error(f"BackgroundTasks::StartInfrequentHTTPTasks() Exception: {ex} StackTrace: {tb}")
 
-
-
-        #if SettingsClass.GetWebServerUp():
-            #btAddress = SettingsClass.GetBTAddress()
-            #webServerUrl = SettingsClass.GetWebServerUrl()
-            #apiKey = SettingsClass.GetAPIKey()
-        #    batteryIsLow = Battery.GetIsBatteryLow()
-        #    batteryIsLowReceived = SettingsClass.GetBatteryIsLowReceived()
-            #wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
-            #updateWiRocDevice = SettingsClass.GetWebServerUp() and btAddress != "NoBTAddress" and (self.lastWiRocDeviceNameSentToServer != wiRocDeviceName)
-            #if updateWiRocDevice:
-            #    self.lastWiRocDeviceNameSentToServer = wiRocDeviceName
-
-        #    self.doInfrequentHTTPTasksBackgroundProcess = Process(target=BackgroundTasks.DoInfrequentHTTPTasksBackground,
-        #                                                          args=(self.exitHTTPQueue,
-        #                                                                self.infrequentHTTPTaskBatteryIsLowQueue,
-        #                                                                self.infrequentHTTPTaskBatteryIsLowReceivedQueue,
-        #                                                                self.infrequentHTTPTaskWebServerUpQueue,
-        #                                                                #btAddress,
-        #                                                                #webServerUrl,
-        #                                                                #apiKey,
-        #                                                                batteryIsLow,
-        #                                                                self.lastBatteryIsLow,
-        #                                                                batteryIsLowReceived,
-        #                                                                self.lastBatteryIsLowReceived,
-                                                                        #wiRocDeviceName,
-                                                                        #updateWiRocDevice
-        #                                                                ),
-        #                                                          daemon=True)
-        #    self.doInfrequentHTTPTasksBackgroundProcess.start()
-
-
     @staticmethod
     def DoInfrequentHTTPTasksBackground(doInfrequentHTTPTasksQueueCommands: Queue,
-                                        #batteryIsLowQueue: Queue,
-                                        #batteryIsLowReceivedQueue: Queue,
-                                        #infrequentWebServerUpQueue: Queue,
-                                        #btAddress: str,
-                                        #webServerUrl: str,
-                                        #apiKey: str,
                                         batteryIsLow: bool,
-                                        #lastBatteryIsLow: bool,
                                         batteryIsLowReceived: bool,
-                                        #lastBatteryIsLowReceived: bool,
-                                        #wiRocDeviceName: str,
-                                        #updateWiRocDevice: bool
                                         ):
         BackgroundTasks.WiRocLogger.debug("BackgroundTasks::DoInfrequentDatabaseTasksBackground()")
         lastWiRocDeviceNameSentToServer: str | None = None
@@ -234,18 +174,6 @@ class BackgroundTasks(object):
             except Exception as ex:
                 BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::DoInfrequentDatabaseTasksBackground() exception: {ex}")
                 time.sleep(40)
-
-        #BackgroundTasks.WiRocLogger.debug("BackgroundTasks::doInfrequentHTTPTasksBackground()")
-        #BackgroundTasks.UpdateBatteryIsLowReceivedBackground(batteryIsLowReceivedQueue, webServerUrl, apiKey, batteryIsLowReceived, btAddress, lastBatteryIsLowReceived)
-        #BackgroundTasks.UpdateBatteryIsLowBackground(batteryIsLowQueue, batteryIsLow, webServerUrl, apiKey, btAddress, lastBatteryIsLow)
-        #BackgroundTasks.SendSetConnectedToInternetBackground(infrequentWebServerUpQueue, webServerUrl, apiKey, btAddress)
-
-        #if updateWiRocDevice:
-        #    BackgroundTasks.AddDeviceBackground(wiRocDeviceName, btAddress, apiKey, webServerUrl)
-
-        #BackgroundTasks.WiRocLogger.debug("BackgroundTasks::doInfrequentHTTPTasksBackground() wait for exit")
-        #exitHTTPQueue.get()
-        #BackgroundTasks.WiRocLogger.debug("BackgroundTasks::doInfrequentHTTPTasksBackground() exit")
 
     @staticmethod
     def UpdateBatteryIsLowBackground(batteryIsLow, webServerURL, apiKey, btAddress, lastBatteryIsLow):
@@ -477,7 +405,6 @@ class BackgroundTasks(object):
             BackgroundTasks.WiRocLogger.debug("BackgroundTasks::TestConnection() " + URL)
             r = requests.get(url=URL, timeout=2, headers={}, verify=False)
             data = r.json()
-            BackgroundTasks.WiRocLogger.debug(data)
             return data['code'] == 0
         except Exception as ex:
             SendStatusAdapter.WiRocLogger.error("BackgroundTasks::TestConnection() " + webServerUrl + " Exception: " + str(ex))

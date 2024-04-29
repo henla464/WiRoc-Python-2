@@ -26,7 +26,7 @@ class ResubmitLoraAdapter(object):
             ResubmitLoraAdapter.Instances.append(ResubmitLoraAdapter("resubmit1"))
             return True
         else:
-            if len(ResubmitLoraAdapter.Instances) > 0:
+            if len(ResubmitLoraAdapter.Instances) > 0 and (SettingsClass.GetLoraMode() == "RECEIVER"):
                 ResubmitLoraAdapter.Instances.clear()
                 return True
         return False
