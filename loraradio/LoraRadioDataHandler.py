@@ -763,6 +763,7 @@ class LoraRadioDataHandler(object):
                 loraMsgWithErrors: LoraRadioMessagePunchReDCoSRS = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(messageDataToConsider, rssiByte=rssiByteValue)
                 alts, fixedValues, fixedErasures = self._GetPunchMessageAlternatives(loraMsgWithErrors)
                 print("alternatives: " + str(alts))
+                # todo - run each alternative in own process?
                 for messageAlt in alts:
                     print("messageAlt: " + str(messageAlt))
                     try:
