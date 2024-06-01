@@ -4,6 +4,8 @@ from datamodel.db_helper import DatabaseHelper
 import socket
 import logging
 
+from utils.utils import Utils
+
 
 class SendToSirapAdapter(object):
     WiRocLogger: logging.Logger = logging.getLogger('WiRoc.Output')
@@ -149,8 +151,9 @@ class SendToSirapAdapter(object):
                 self.sock.sendall(data)
                 self.sock.close()
                 self.sock = None
+                SendToSirapAdapter.WiRocLogger.debug(
+                    "SendToSirapAdapter::SendData() Sent to SIRAP: " + Utils.GetDataInHex(data, logging.DEBUG))
 
-            SendToSirapAdapter.WiRocLogger.debug("SendToSirapAdapter::SendData() Sent to SIRAP")
             DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Sent", 1)
             successCB()
             return True

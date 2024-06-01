@@ -411,7 +411,6 @@ class Main:
                     for item in msgSubBatch.MessageSubscriptionBatchItems:
                         DatabaseHelper.increment_find_adapter_tries_and_set_find_adapter_try_date(item.id, retryDelay)
 
-
     def Run(self):
         settDict: dict[str, str | int | None] = {
             "WiRocDeviceName": SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device",

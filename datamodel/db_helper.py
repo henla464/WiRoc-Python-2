@@ -810,6 +810,7 @@ class DatabaseHelper:
                     messageSubscriptionBatch.SubscriberTypeName = messageSubscription.SubscriberTypeName
                     messageSubscriptionBatch.SubscriberInstanceName = messageSubscription.SubscriberInstanceName
                     messageSubscriptionBatch.TransformName = messageSubscription.TransformName
+                    messageSubscriptionBatch.FindAdapterTries = messageSubscription.FindAdapterTries
                     item = MessageSubscriptionBatchItem()
                     item.id = messageSubscription.id
                     item.MessageData = messageSubscription.MessageData
@@ -825,6 +826,7 @@ class DatabaseHelper:
                         item.id = messageSubscription.id
                         item.MessageData = messageSubscription.MessageData
                         item.NoOfSendTries = messageSubscription.NoOfSendTries
+
                         messageSubscriptionBatch.MessageSubscriptionBatchItems.append(item)
 
                 if messageSubscriptionBatch is not None and \

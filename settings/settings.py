@@ -322,10 +322,19 @@ class SettingsClass(object):
         return float(sett.Value)
 
 
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetLoraEnabled'), lock=rlock)
+    def GetLoraEnabled() -> bool:
+        sett = DatabaseHelper.get_setting_by_key('LoraEnabled')
+        if sett is None:
+            SettingsClass.SetSetting("LoraEnabled", '1')
+            return True
+        return sett.Value == "1"
+
     # Also see the code for wirocmode in the api. This is duplicated there.
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetLoraMode'), lock=rlock)
-    def GetLoraMode():
+    def GetLoraMode() -> str:
         sett = DatabaseHelper.get_setting_by_key('LoraMode')
         if sett is None:
             SettingsClass.SetSetting("LoraMode", 'RECEIVER')
@@ -342,7 +351,7 @@ class SettingsClass(object):
         return int(sett.Value)
 
     @staticmethod
-    def GetDataRate(loraRange):
+    def GetDataRate(loraRange) -> int:
         loraDataRate = 244
         if SettingsClass.GetLoraModule() == 'RF1276T':
             if loraRange == 'L':

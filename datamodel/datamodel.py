@@ -807,4 +807,5 @@ class MessageSubscriptionBatch(object):
         self.SubscriberTypeName = None
         self.SubscriberInstanceName = None
         self.TransformName = None
+        self.FindAdapterTries = None
         self.MessageSubscriptionBatchItems = []

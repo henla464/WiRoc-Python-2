@@ -53,7 +53,7 @@ class SRRSRRMessageToLoraTransform(object):
         return SRRSRRMessageToLoraTransform.DeleteAfterSent != (not SettingsClass.GetAcknowledgementRequested())
 
     @staticmethod
-    def GetSIMsg(srrPayloadData: bytearray, subscriberAdapter) -> SIMessage:
+    def GetSIMsg(srrPayloadData: bytearray) -> SIMessage:
         siMsg: SIMessage | None = None
         headerSize: int = SRRMessage.GetHeaderSize()
 
@@ -85,7 +85,7 @@ class SRRSRRMessageToLoraTransform(object):
         batteryLow = Battery.GetIsBatteryLow()
 
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-        siMsg: SIMessage = SRRSRRMessageToLoraTransform.GetSIMsg(payloadData, subscriberAdapter)
+        siMsg: SIMessage = SRRSRRMessageToLoraTransform.GetSIMsg(payloadData)
         siMsgPayload = siMsg.GetByteArray()
 
         if len(msgSubBatch.MessageSubscriptionBatchItems) == 1:

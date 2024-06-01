@@ -346,7 +346,7 @@ class ReceiveSIAdapter(object):
         return None
 
     # messageData is a bytearray
-    def GetData(self) -> None | dict[str, str|bool|bytearray|int]:
+    def GetData(self) -> None | bool | dict[str, str|bool|bytearray|int]:
         if not self.IsDataAvailable():
             if self.oneWay:
                 return None
@@ -360,7 +360,7 @@ class ReceiveSIAdapter(object):
         if len(receivedData) != expectedLength:
             # throw away the data, isn't correct
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::GetData() data not of expected length (thrown away), expected: " + str(expectedLength) + " got: " + str(len(receivedData)) + " data: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
-            return None
+            return False
 
         SIMsg = SIMessage()
         SIMsg.AddPayload(receivedData)
@@ -385,7 +385,7 @@ class ReceiveSIAdapter(object):
                     "Data": receivedData, "ChecksumOK": self.IsChecksumOK(receivedData)}
         else:
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::GetData() Unknown SI message received! Data: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
-            return None
+            return False
 
     def AddedToMessageBox(self, mbid: int) -> None:
         return None
@@ -395,6 +395,7 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
     def __init__(self, instanceName: str, instanceNumber: int, portName: str):
         super().__init__(instanceName, instanceNumber, portName)
         self.siSerial = serial.Serial()  # not for SIBTSP
+        self.siSerial.baudrate = 38400
 
     def writeData(self, dataToWrite: bytes) -> bool:
         self.siSerial.write(dataToWrite)
@@ -570,9 +571,13 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
 
     def GetData(self) -> None | dict[str, str|bool|bytearray|int]:
         data = super().GetData()
-        if data is not None:
-            if self.oneWayFallbackTryReInitWhenDataReceived:
+        if data is None:
+            return None
+        if not data:
+            # received some data but it was not correct
+            if self.oneWayFallbackTryReInitWhenDataReceived and not self.oneWayFallbackShouldNotTriggerReInit:
                 self.shouldReinitialize = True
+            return None
         return data
 
 
@@ -612,16 +617,31 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
         oneWayConfig: bool = SettingsClass.GetRS232OneWayReceiveFromSIStation()
         baudRateConfig: int = 4800 if oneWayConfig and SettingsClass.GetForceRS2324800BaudRateFromSIStation() else 38400
 
+        # We ignore baudrate when we want two-way and managed to initialize two-way
+        isInitializedTheWayWeWant: bool = (self.isInitialized
+                and not self.shouldReinitialize
+                and (
+                    (not self.oneWay and oneWayConfig and self.siSerial.baudrate == baudRateConfig)
+                    or (not self.oneWay and not oneWayConfig)
+                     or (self.oneWay and oneWayConfig and self.siSerial.baudrate == baudRateConfig)
+                     or (self.oneWay and not oneWayConfig and (self.siSerial.baudrate == baudRateConfig or self.oneWayFallbackTryReInitWhenDataReceived))
+                     )
+                                           )
+
         ReceiveSIAdapter.WiRocLogger.debug(
             "ReceiveSIHWSerialPort::GetIsInitialized() " + self.GetInstanceName()
             + " isInitialized: " + str(self.isInitialized)
+            + " shouldReinitialize: " + str(self.shouldReinitialize)
             + " oneWayConfig: " + str(oneWayConfig)
             + " oneWay: " + str(self.oneWay)
             + " oneWayFallbackTryReInitWhenDataReceived: " + str(self.oneWayFallbackTryReInitWhenDataReceived)
-            + " baudRateConfig: " + str(baudRateConfig) + " baudRate: " + str(self.siSerial.baudrate))
-        return self.isInitialized and not self.shouldReinitialize \
-            and (oneWayConfig == self.oneWay or (self.oneWay and (self.oneWayFallbackTryReInitWhenDataReceived or self.oneWayFallbackShouldNotTriggerReInit))) \
-            and baudRateConfig == self.siSerial.baudrate
+            + " oneWayFallbackShouldNotTriggerReInit: " + str(self.oneWayFallbackShouldNotTriggerReInit)
+            + " baudRateConfig: " + str(baudRateConfig) + " baudRate: " + str(self.siSerial.baudrate)
+            + " isInitializedTheWayWeWant: " + str(isInitializedTheWayWeWant))
+
+
+        return isInitializedTheWayWeWant
+
 
     def Init(self) -> bool:
         try:
@@ -648,7 +668,10 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
                     # better with init one way if two-way is not working than aborting
                     success = self.InitOneWay(baudrate)
                     if success:
-                        self.oneWayFallbackTryReInitWhenDataReceived = True    #todo: maybe this is not a good idea since we can loose messages every time we try to reinit as two-way. Or we should limit the number of retries, and/or how often.
+                        self.oneWayFallbackTryReInitWhenDataReceived = True  # reinitialization risks losing messages that arrive at the same time
+                        self.oneWayFallbackShouldNotTriggerReInit = False
+                        # not blocking reinit, if we are configured for two way but initialized for one-way we want to retry when we receive data.
+                        # The only time we know we are connected is when we get a message (for RS232). So when else should we reinitialize?
                     return success
 
         except Exception as msg:
@@ -733,10 +756,11 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
             # Clear error code
             self.SetErrorCode("")
 
-        return self.isInitialized and not self.shouldReinitialize \
-            and (oneWayConfig == self.oneWay
-                 or (self.oneWay and (self.oneWayFallbackTryReInitWhenDataReceived or self.oneWayFallbackShouldNotTriggerReInit))) \
-            and baudRateConfig == self.siSerial.baudrate
+        return (self.isInitialized
+                and not self.shouldReinitialize
+                and (oneWayConfig == self.oneWay
+                 or (self.oneWay and (self.oneWayFallbackTryReInitWhenDataReceived or self.oneWayFallbackShouldNotTriggerReInit)))
+                and baudRateConfig == self.siSerial.baudrate)
 
     def Init(self) -> bool:
         try:
@@ -1069,7 +1093,11 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
 
     def GetData(self) -> dict[str, str | bool | bytearray | int] | None:
         data = super().GetData()
-        if data is not None:
-            if self.oneWayFallbackTryReInitWhenDataReceived:
+        if data is None:
+            return None
+        if not data:
+            # received some data but it was not correct
+            if self.oneWayFallbackTryReInitWhenDataReceived and not self.oneWayFallbackShouldNotTriggerReInit:
                 self.shouldReinitialize = True
+            return None
         return data

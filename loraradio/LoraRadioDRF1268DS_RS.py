@@ -153,6 +153,7 @@ class LoraRadioDRF1268DS_RS:
         self.radioSerial = serial.Serial()
         self.portName = portName
         self.isInitialized = False
+        self.enabled: bool | None = None
         self.channel: int|None = None
         self.loraRange: str|None = None
         self.loraPower: int|None = None
@@ -167,13 +168,14 @@ class LoraRadioDRF1268DS_RS:
         self.ackReceivedMatchingLastSentMessage: bool = True
         self.serialLock: threading.Lock = threading.Lock()
 
-    def GetIsInitialized(self, channel: int, loraRange: str, loraPower: int, codeRate: int, rxGain: bool) -> bool:
+    def GetIsInitialized(self, channel: int, loraRange: str, loraPower: int, codeRate: int, rxGain: bool, enabled: bool) -> bool:
         return self.isInitialized and \
                 channel == self.channel and \
                 loraPower == self.loraPower and \
                 loraRange == self.loraRange and \
                 codeRate == self.codeRate and \
-                rxGain == self.rxGain
+                rxGain == self.rxGain and \
+                enabled == self.enabled
 
     def GetPortName(self) -> str:
         return self.portName
@@ -347,10 +349,13 @@ class LoraRadioDRF1268DS_RS:
         LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::getParameters() return None")
         return None
 
-    def Disable(self) -> None:
-        self.isInitialized = False
-        self.radioSerial.close()
-        self.hardwareAbstraction.DisableLora()
+    #def Disable(self) -> None:
+    #    self.isInitialized = False
+    #    self.radioSerial.close()
+    #    self.hardwareAbstraction.DisableLora()
+
+    def GetIsEnabled(self) -> bool:
+        return self.enabled
 
     def GetChannel(self) -> int:
         return self.channel
@@ -372,12 +377,21 @@ class LoraRadioDRF1268DS_RS:
         # clear any lora config error code
         self.SetErrorCode("")
 
-    def Init(self, channel: int, loraRange: str, loraPower: int, codeRate: int, rxGain: bool):
+    def Init(self, channel: int, loraRange: str, loraPower: int, codeRate: int, rxGain: bool, enabled: bool):
+        LoraRadioDRF1268DS_RS.WiRocLogger.info(
+            f"LoraRadioDRF1268DS_RS::Init() Port name: {self.portName} Channel: {channel} "
+            f"LoraRange {loraRange} LoraPower: {loraPower} CodeRate: {codeRate} "
+            f"RxGain: {rxGain} Enabled: {enabled}")
+
+        if enabled:
+            self.hardwareAbstraction.EnableLora()
+        else:
+            self.hardwareAbstraction.DisableLora()
+            return True
+        self.enabled = enabled
         self.serialLock.acquire()
         try:
-            LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() Port name: " + self.portName + " Channel: " +
-                                                   str(channel) + " LoraRange: " + loraRange + " LoraPower: " +
-                                                   str(loraPower) + " CodeRate: " + str(codeRate) + " RxGain: " + str(rxGain))
+
             self.hardwareAbstraction.EnableLora()
             time.sleep(0.1)
 

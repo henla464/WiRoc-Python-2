@@ -49,7 +49,7 @@ class SendLoraAdapter(object):
     @staticmethod
     def EnableDisableSubscription():
         if len(SendLoraAdapter.Instances) > 0:
-            shouldSubscriptionBeEnabled = SendLoraAdapter.Instances[0].GetIsInitialized()
+            shouldSubscriptionBeEnabled = SendLoraAdapter.Instances[0].GetIsInitialized() and SendLoraAdapter.Instances[0].GetIsEnabled()
             for name, transf in SendLoraAdapter.Instances[0].transforms.items():
                 if (SendLoraAdapter.SubscriptionsEnabled != shouldSubscriptionBeEnabled or
                             transf.GetDeleteAfterSentChanged()):
@@ -133,21 +133,26 @@ class SendLoraAdapter(object):
     def GetTransform(self, transformName):
         return self.transforms[transformName]
 
+    def GetIsEnabled(self) -> bool:
+        return self.loraRadio.GetIsEnabled()
+
     def GetIsInitialized(self):
+        enabled: bool = SettingsClass.GetLoraEnabled()
         channel = SettingsClass.GetChannel()
         loraRange = SettingsClass.GetLoraRange()
         loraPower = SettingsClass.GetLoraPower()
         codeRate = SettingsClass.GetCodeRate()
         rxGain = SettingsClass.GetRxGainEnabled()
-        return self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain)
+        return self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, enabled)
 
     def ShouldBeInitialized(self):
+        enabled: bool = SettingsClass.GetLoraEnabled()
         channel = SettingsClass.GetChannel()
         loraRange = SettingsClass.GetLoraRange()
         loraPower = SettingsClass.GetLoraPower()
         codeRate = SettingsClass.GetCodeRate()
         rxGain = SettingsClass.GetRxGainEnabled()
-        loraRadioInitialized = self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain)
+        loraRadioInitialized = self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, enabled)
         # initialize if loraRadio isn't initialized yet, or if the loraradio initialization status changed
         return not loraRadioInitialized or SendLoraAdapter.Instances[0].AdapterInitialized != loraRadioInitialized
 
@@ -159,6 +164,7 @@ class SendLoraAdapter(object):
         self.isDBInitialized = val
 
     def Init(self):
+        enabled: bool = SettingsClass.GetLoraEnabled()
         channel = SettingsClass.GetChannel()
         loraRange = SettingsClass.GetLoraRange()
         loraPower = SettingsClass.GetLoraPower()
@@ -166,10 +172,10 @@ class SendLoraAdapter(object):
         rxGain = SettingsClass.GetRxGainEnabled()
         # set the AdapterInitialized to same value as loraRadios initialized
         # if loraRadio changes initialize value later we can detect this.
-        if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain):
+        if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, enabled):
             SendLoraAdapter.Instances[0].AdapterInitialized = True
             return True
-        loraInitialized = self.loraRadio.Init(channel, loraRange, loraPower, codeRate, rxGain)
+        loraInitialized = self.loraRadio.Init(channel, loraRange, loraPower, codeRate, rxGain, enabled)
         SendLoraAdapter.Instances[0].AdapterInitialized = loraInitialized
         return loraInitialized
 
