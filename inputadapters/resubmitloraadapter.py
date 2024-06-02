@@ -65,19 +65,23 @@ class ResubmitLoraAdapter(object):
     def UpdateInfrequently(self):
         currentTime = time.monotonic()
         self.TimeToFetch = (currentTime - self.LastTimeFetched > self.GetResubmitRetryInterval())
+        self.WiRocLogger.debug(f"ResubmitLoraAdapter::UpdateInfrequently() time to fetch: {self.TimeToFetch} currentTime: {currentTime} lastTimeFetched: {self.LastTimeFetched} resubmitRetryInterval: {self.GetResubmitRetryInterval()}")
         return self.TimeToFetch
 
     def GetData(self):
         if self.TimeToFetch:
             currentTime = time.monotonic()
-            self.LastTimeFetched = currentTime
+            self.WiRocLogger.debug(f"ResubmitLoraAdapter::GetData() time to fetch!, currentTime: {currentTime} timeOfLastPunchMessageSentToLora: {SettingsClass.GetTimeOfLastPunchMessageSentToLora()} 2*resubmitRetryInterval: {2*self.GetResubmitRetryInterval()}")
             self.TimeToFetch = False
             if currentTime - SettingsClass.GetTimeOfLastPunchMessageSentToLora() > 2*self.GetResubmitRetryInterval():
                 # Only resubmit it if it has gone 2*resubmitretryintervals since last lora punch message was sent
+                self.LastTimeFetched = currentTime
                 endTime: datetime = datetime.now()
                 startTime: datetime = endTime - timedelta(seconds=1800)  # 30 minutes ago
 
+                self.WiRocLogger.debug(f"ResubmitLoraAdapter::GetData() startTime: {startTime} endTime: {endTime}")
                 messageBoxArchiveDatas: list[MessageBoxArchiveData] = DatabaseHelper.get_failed_lora_messages(startTime, endTime)
+                self.WiRocLogger.debug(f"ResubmitLoraAdapter::GetData() len(messageBoxArchiveDatas): {len(messageBoxArchiveDatas)}")
                 if len(messageBoxArchiveDatas) == 0:
                     return None
                 messageBoxArchiveData = messageBoxArchiveDatas[0]
