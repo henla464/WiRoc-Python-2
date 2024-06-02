@@ -385,10 +385,12 @@ class LoraRadioDRF1268DS_RS:
 
         if enabled:
             self.hardwareAbstraction.EnableLora()
+            self.enabled = enabled
         else:
             self.hardwareAbstraction.DisableLora()
+            self.enabled = enabled
             return True
-        self.enabled = enabled
+
         self.serialLock.acquire()
         try:
 
