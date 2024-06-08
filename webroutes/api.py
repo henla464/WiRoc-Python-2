@@ -2,7 +2,7 @@ __author__ = 'henla464'
 
 from datamodel.db_helper import DatabaseHelper
 from settings.settings import SettingsClass
-from datamodel.datamodel import SettingData, BluetoothSerialPortData
+from datamodel.datamodel import SettingData, BluetoothSerialPortData, TestPunchView
 from battery import Battery
 from init import *
 from flask import request
@@ -602,18 +602,26 @@ def dropAllTables():
     return jsonpickle.encode(MicroMock(Value="OK"))
 
 
+testBatchGuidAndLowestMsgBoxId: dict[str, int] = {}
 @app.route('/api/testpunches/gettestpunches/<testBatchGuid>/<includeAll>/', methods=['GET'])
-def getTestPunches(testBatchGuid, includeAll):
-    testPunches = None
+def getTestPunches(testBatchGuid: str, includeAll):
+    print("test batchguid: " + testBatchGuid)
+    if not testBatchGuid in testBatchGuidAndLowestMsgBoxId:
+        testBatchGuidAndLowestMsgBoxId[testBatchGuid] = DatabaseHelper.get_lowest_messageboxdata_id()
+        print("save lowest messagebox id: " + testBatchGuidAndLowestMsgBoxId[testBatchGuid])
+
+    msgBoxId = testBatchGuidAndLowestMsgBoxId[testBatchGuid]
+    print("msgBOxId: " + msgBoxId)
+    testPunches: list[TestPunchView] = None
     if includeAll == "true":
-        testPunches = DatabaseHelper.get_test_punches(testBatchGuid)
+        testPunches = DatabaseHelper.get_test_punches(testBatchGuid, msgBoxId)
     else:
-        testPunches = DatabaseHelper.get_test_punches_not_fetched(testBatchGuid)
+        testPunches = DatabaseHelper.get_test_punches_not_fetched(testBatchGuid, msgBoxId)
     punches = []
     for testPunch in testPunches:
         punch = {'Id': testPunch.id, 'MsgId': testPunch.MessageBoxId, 'Status': testPunch.Status,
                  'SINo': testPunch.SICardNumber, 'NoOfSendTries': testPunch.NoOfSendTries,
-                 'SubscrId': testPunch.SubscriptionId, 'RSSI': testPunch.AckRSSIValue}
+                 'Type': testPunch.Type, 'RSSI': testPunch.AckRSSIValue, 'TypeName': testPunch.TypeName}
         timeInSeconds = testPunch.TwelveHourTimer
         if testPunch.TwentyFourHour == 1:
             timeInSeconds += 3600 * 12
@@ -1284,7 +1292,7 @@ def setRTCWakeUp(time):
     HardwareAbstraction.Instance.SetWakeUpToBeEnabledAtShutdown()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value="OK"))
+    return jsonpickle.encode(MicroMock(Value=time))
 
 
 @app.route('/api/rtc/clearwakeup/', methods=['GET'])

@@ -430,7 +430,9 @@ class TestPunchView(object):
         self.Fetched = 0
         self.NoOfSendTries = 0
         self.Status = None
+        self.Type: str | None = None
         self.AckRSSIValue = 0
+        self.TypeName: str | None = None
 
 
 class MessageStatsData(object):

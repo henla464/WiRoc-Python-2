@@ -255,6 +255,7 @@ class HardwareAbstraction(object):
 
         # Convert UTC to local time
         utcDateTimeStr = f"20{years_HighCharacter}{years_LowCharacter}-{months_HighCharacter}{months_LowCharacter}-{days_HighCharacter}{days_LowCharacter} {hour_HighCharacter}{hour_LowCharacter}:{minutes_HighCharacter}{minutes_LowCharacter}:{seconds_HighCharacter}{seconds_LowCharacter}"
+        HardwareAbstraction.WiRocLogger.debug(f"HardwareAbstraction::GetRTCDateTime {utcDateTimeStr}")
         utcDateTime = datetime.strptime(utcDateTimeStr, "%Y-%m-%d %H:%M:%S")
         utcDateTime = utcDateTime.replace(tzinfo=timezone.utc)
         localDateTime = utcDateTime.astimezone(datetime.now().tzinfo)

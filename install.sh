@@ -330,10 +330,18 @@ fi
 #fi
 
 # Add the RTC module
-if ! grep -Fxq "rtc_pcf8563" /etc/modules
+if [ "$hwVersion" = "v7Rev1" ]
 then
+  if ! grep -Fxq "rtc_pcf8563" /etc/modules
+  then
     echo "add rtc_pcf8563 to /etc/modules"
     echo "rtc_pcf8563" >> /etc/modules
+  fi
+
+  if [ ! -f /usr/lib/udev/rules.d/51-udev-rtc.rules ]; then
+    echo "Make symlink to rtc1 which probably is the pcf8563"
+    echo 'SUBSYSTEM=="rtc", KERNEL=="rtc1", SYMLINK+="rtc", OPTIONS+="link_priority=-100"' >> /usr/lib/udev/rules.d/51-udev-rtc.rules
+  fi
 fi
 
 # really not sure what is required anymore for it to work
