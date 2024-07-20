@@ -3,8 +3,6 @@ WiRoc
 
 
 - Should we change to not retry, or limit retries to configure SI-USB as two-way when it fails?
-- Variable number of retries of Lora messages? Retry until new message arrive?
-- Resubmit adapter that fetches failed messages from archive. Both Lora and Sirap (others?)
 - Option to set SRR as output
 - Send configurations to webbserver
 - Send local ip address to webbserver ( add to devices )
@@ -15,8 +13,6 @@ WiRoc
 
 implemented but not tested
 - Send hwversion to webbserver, software versions
-- Enable/disable red/blue channel
-- Listen only red/blue channel
 
 
 BLE?APP?
@@ -35,13 +31,14 @@ Add option to reconfigure remote wiroc
 
 App
 ===
-- Getting releases from wiroc.se
+x Getting releases from wiroc.se
 - Configure input / output for SRR
 - Enable/disable red/blue channel
 
 
 Done
 ----
+x - Resubmit adapter that fetches failed messages from archive. Both Lora and Sirap (others?)
 x set unique btaddress if required / save it in file system and in axp209 to keep it persistent
 x add rtc_pcf8563 line to /etc/modules
 x Turn off the old red status LED and use the yellow led on the nanopineo air board instead

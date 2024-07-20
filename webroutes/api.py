@@ -608,8 +608,7 @@ def getTestPunches(testBatchGuid: str, includeAll):
     print("test batchguid: " + testBatchGuid)
     if not testBatchGuid in testBatchGuidAndLowestMsgBoxId:
         testBatchGuidAndLowestMsgBoxId[testBatchGuid] = DatabaseHelper.get_lowest_messageboxdata_id()
-        print("save lowest messagebox id: " + testBatchGuidAndLowestMsgBoxId[testBatchGuid])
-
+      
     msgBoxId = testBatchGuidAndLowestMsgBoxId[testBatchGuid]
     print("msgBOxId: " + msgBoxId)
     testPunches: list[TestPunchView] = None
