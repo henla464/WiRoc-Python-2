@@ -175,16 +175,13 @@ class Main:
                             self.wirocLogger.error(
                                 "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " No LoraRadioMessage property found")
                             continue
-                        rssiValue = loraMessage.GetRSSIValue()
 
-                        lowBattery, ackRequested, repeater, siPayloadData = MessageHelper.GetLowBatterySIPayload(messageTypeName, messageSubTypeName, messageData)
-                        rmbd = DatabaseHelper.create_repeater_message_box_data(messageSource, messageTypeName, messageSubTypeName,
-                                                                               instanceName, True, powerCycle, SIStationSerialNumber,
-                                                                               lowBattery, ackRequested, repeater, siPayloadData,
-                                                                               messageID, messageData, rssiValue)
+                        rmbd = MessageHelper.GetRepeaterMessageBoxData(messageSource, messageTypeName, messageSubTypeName, instanceName,
+                            True, powerCycle, SIStationSerialNumber, loraMessage, messageData, messageID)
+
                         rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
                     else:
-                        if messageTypeName == "LORA":
+                        if messageTypeName == "LORA" or messageTypeName == "REPEATER":
                             #if not checksumOK:
                             #    self.wirocLogger.error(
                             #        "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " Checksum WRONG")
@@ -384,7 +381,6 @@ class Main:
 
                                 t = threading.Thread(target=subAdapter.SendData,
                                                      args=(transformedData["Data"], createSuccessCB(subAdapter, msgSubBatch), createFailureCB(subAdapter, msgSubBatch), createNotSentCB(msgSubBatch), settDict))
-                                #self.threadQueue.put(t)
                                 t.start()
                             else:
                                 # shouldn't be sent, so just archive the message subscription

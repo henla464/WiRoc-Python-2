@@ -313,11 +313,11 @@ class SettingsClass(object):
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetNoOfSecondsToWaitToGiveOtherWiRocChanceToSendAfterReceiveingAck'), lock=rlock)
     def GetNoOfSecondsToWaitToGiveOtherWiRocChanceToSendAfterReceiveingAck() -> float:
-        sett = DatabaseHelper.get_setting_by_key('GetNoOfSecondsToWaitToGiveOtherWiRocChanceToSendAfterReceiveingAck')
+        sett = DatabaseHelper.get_setting_by_key('NoOfSecondsToWaitToGiveOtherWiRocChanceToSendAfterReceiveingAck')
         if sett is None:
             # Default 0.5 is a tradeoff, lower value speeds up single unit sending but higher makes it play nicer with
             # two senders
-            SettingsClass.SetSetting("GetNoOfSecondsToWaitToGiveOtherWiRocChanceToSendAfterReceiveingAck", "0.5")
+            SettingsClass.SetSetting("NoOfSecondsToWaitToGiveOtherWiRocChanceToSendAfterReceiveingAck", "0.5")
             return 0.5
         return float(sett.Value)
 

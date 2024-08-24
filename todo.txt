@@ -1,7 +1,14 @@
 WiRoc
 =====
 
-
+- Add HAM frequencies, Probably should keep to fully within 433.7125 - 433,9625 to stay in the recommended Lora freqency band
+	HAM1 - 433,7375
+	HAM2 - 433,7875
+	HAM3 - 433,8375
+	HAM4 - 433,8875
+	HAM5 - 433,9375
+	
+	
 - Should we change to not retry, or limit retries to configure SI-USB as two-way when it fails?
 - Option to set SRR as output
 - Send configurations to webbserver
@@ -23,6 +30,7 @@ SRR code
 ========
 - Power optimization
 - measure resend intervals, is it same or does it increase or is it random.
+- "Software flow control" setting for dongle (expert mode in SI Config), what does it do
 - Test air+
 
 
@@ -31,13 +39,15 @@ Add option to reconfigure remote wiroc
 
 App
 ===
-x Getting releases from wiroc.se
+
 - Configure input / output for SRR
-- Enable/disable red/blue channel
+
 
 
 Done
 ----
+x Getting releases from wiroc.se
+x Enable/disable red/blue channel
 x - Resubmit adapter that fetches failed messages from archive. Both Lora and Sirap (others?)
 x set unique btaddress if required / save it in file system and in axp209 to keep it persistent
 x add rtc_pcf8563 line to /etc/modules

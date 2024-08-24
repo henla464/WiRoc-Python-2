@@ -2,7 +2,7 @@ __author__ = 'henla464'
 
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from datamodel.datamodel import SIMessage, SRRMessage, SRRBoardPunch, AirPlusPunch, AirPlusPunchOneOfMultiple
-from datamodel.datamodel import MessageBoxData
+from datamodel.datamodel import MessageBoxData, RepeaterMessageBoxData
 from loraradio.LoraRadioMessageRS import LoraRadioMessagePunchDoubleReDCoSRS, LoraRadioMessagePunchReDCoSRS, LoraRadioMessageAckRS, LoraRadioMessageStatusRS
 from typing import Union
 
@@ -84,3 +84,63 @@ class MessageHelper:
             mbd.ChecksumOK = True
 
         return mbd
+
+    @staticmethod
+    def GetRepeaterMessageBoxData(messageSource: str, messageTypeName: str, messageSubTypeName: str, instanceName: str,
+                                         checksumOK: bool,
+                                         powerCycle: int, serialNumber: str,
+                                         loraMessage: LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | LoraRadioMessageAckRS | LoraRadioMessageStatusRS | None,
+                                         messageData: bytearray,
+                                         messageID: bytearray | None):
+
+        siPayloadData = None
+        siPayloadData2 = None
+
+        if messageTypeName == "LORA" and messageSubTypeName == "SIMessage":
+            siPayloadData = loraMessage.GetSIMessageByteArray()
+        elif messageTypeName == "LORA" and messageSubTypeName == "SIMessageDouble":
+            siPayloadData = loraMessage.GetSIMessageByteTuple()[0]
+            siPayloadData2 = loraMessage.GetSIMessageByteTuple()[1]
+            # todo: expand table to store second message punch too
+
+        rmbd = RepeaterMessageBoxData()
+        rmbd.MessageData = messageData
+        rmbd.MessageTypeName = messageTypeName
+        rmbd.PowerCycleCreated = powerCycle
+        rmbd.ChecksumOK = checksumOK
+        rmbd.InstanceName = instanceName
+        rmbd.MessageSubTypeName = messageSubTypeName
+        rmbd.MessageSource = messageSource
+        rmbd.SIStationSerialNumber = serialNumber
+        rmbd.NoOfTimesSeen = 1
+        rmbd.NoOfTimesAckSeen = 0
+        rmbd.SIStationNumber = None
+        rmbd.SIStationSerialNumber = None
+        rmbd.MessageID = messageID
+        if loraMessage is not None:
+            rmbd.RSSIValue = loraMessage.GetRSSIValue()
+            rmbd.LowBattery = loraMessage.GetBatteryLow()
+            rmbd.AckRequested = loraMessage.GetAckRequested()
+            rmbd.RepeaterRequested = loraMessage.GetRepeater()
+
+        if siPayloadData is not None:
+            siMsg = SIMessage()
+            siMsg.AddPayload(siPayloadData)
+            rmbd.SICardNumber = siMsg.GetSICardNumber()
+            rmbd.SportIdentHour = siMsg.GetHour()
+            rmbd.SportIdentMinute = siMsg.GetMinute()
+            rmbd.SportIdentSecond = siMsg.GetSeconds()
+            rmbd.MemoryAddress = siMsg.GetBackupMemoryAddressAsInt()
+            rmbd.SIStationNumber = siMsg.GetStationNumber()
+
+        #if siPayloadData2 is not None:
+        #    siMsg = SIMessage()
+        #    siMsg.AddPayload(siPayloadData2)
+        #    rmbd.SICardNumber2 = siMsg.GetSICardNumber()
+        #    rmbd.SportIdentHour2 = siMsg.GetHour()
+        #    rmbd.SportIdentMinute2 = siMsg.GetMinute()
+        #    rmbd.SportIdentSecond2 = siMsg.GetSeconds()
+        #    rmbd.MemoryAddress2 = siMsg.GetBackupMemoryAddressAsInt()
+        #    rmbd.SIStationNumber2 = siMsg.GetStationNumber()
+
+        return rmbd

@@ -1033,7 +1033,7 @@ class DatabaseHelper:
         cls.db.execute_SQL(sql, (fiveMinutesAgo,))
 
     @classmethod
-    def get_repeater_message_to_add(cls):
+    def get_repeater_message_to_add(cls) -> RepeaterMessageBoxData | None:
         cls.init()
         repeaterMessages = cls.db.get_table_objects_by_SQL(RepeaterMessageBoxData,
                                                            "SELECT * FROM RepeaterMessageBoxData WHERE "

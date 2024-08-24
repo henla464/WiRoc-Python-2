@@ -1,4 +1,5 @@
 from datamodel.db_helper import DatabaseHelper
+from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from settings.settings import SettingsClass
 from utils.utils import Utils
 import logging
@@ -53,7 +54,14 @@ class ReceiveRepeaterMessagesAdapter(object):
             self.lastRepeaterMessageBoxIdAdded = messageToAdd.id
 
             ReceiveRepeaterMessagesAdapter.WiRocLogger.debug("ReceiveRepeaterMessagesAdapter::GetData() Data to fetch: " + Utils.GetDataInHex(messageToAdd.MessageData, logging.DEBUG))
-            return {"MessageType": "DATA", "MessageSource":"Repeater", "MessageSubTypeName": messageToAdd.MessageSubTypeName, "Data": messageToAdd.MessageData, "MessageID": messageToAdd.MessageID, "ChecksumOK": True}
+            loraMessage = None
+            if messageToAdd.MessageSubTypeName == "SIMessage":
+                loraMessage = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(messageToAdd.MessageData, messageToAdd.RSSIValue)
+            elif messageToAdd.MessageSubTypeName == "SIMessageDouble":
+                loraMessage = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(messageToAdd.MessageData, messageToAdd.RSSIValue)
+            elif messageToAdd.MessageSubTypeName == "Status":
+                loraMessage = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(messageToAdd.MessageData, messageToAdd.RSSIValue)
+            return {"MessageType": "DATA", "MessageSource":"Repeater", "MessageSubTypeName": messageToAdd.MessageSubTypeName, "Data": messageToAdd.MessageData, "MessageID": messageToAdd.MessageID, "LoraRadioMessage": loraMessage, "ChecksumOK": True}
         return None
 
     def AddedToMessageBox(self, mbid: int) -> None:
