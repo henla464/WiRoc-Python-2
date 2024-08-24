@@ -13,6 +13,7 @@ class MessageHelper:
                           loraMessage: LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | LoraRadioMessageAckRS | LoraRadioMessageStatusRS | None,
                           messageData: bytearray) -> MessageBoxData:
         siPayloadData = None
+        siPayloadData2 = None
 
         mbd = MessageBoxData()
         mbd.MessageData = messageData
@@ -35,10 +36,10 @@ class MessageHelper:
             siPayloadData = loraMessage.GetSIMessageByteArray()
         elif messageTypeName == "LORA" and messageSubTypeName == "SIMessageDouble":
             siPayloadData = loraMessage.GetSIMessageByteTuple()[0]
-            # todo: expand table to store second message punch too
+            siPayloadData2 = loraMessage.GetSIMessageByteTuple()[1]
         elif messageTypeName == "REPEATER" and messageSubTypeName == "SIMessageDouble":
             siPayloadData = loraMessage.GetSIMessageByteTuple()[0]
-            # todo: expand table to store second message punch too
+            siPayloadData2 = loraMessage.GetSIMessageByteTuple()[1]
         elif messageSubTypeName == "SIMessage":
             # source WiRoc, SIStation
             siPayloadData = messageData
@@ -79,6 +80,14 @@ class MessageHelper:
             mbd.SportIdentSecond = siMsg.GetSeconds()
             mbd.MemoryAddress = siMsg.GetBackupMemoryAddressAsInt()
             mbd.SIStationNumber = siMsg.GetStationNumber()
+        if siPayloadData2 is not None:
+            siMsg = SIMessage()
+            siMsg.AddPayload(siPayloadData)
+            mbd.SICardNumber2 = siMsg.GetSICardNumber()
+            mbd.SportIdentHour2 = siMsg.GetHour()
+            mbd.SportIdentMinute2 = siMsg.GetMinute()
+            mbd.SportIdentSecond2 = siMsg.GetSeconds()
+            mbd.SIStationNumber2 = siMsg.GetStationNumber()
 
         if mbd.ChecksumOK is None:
             mbd.ChecksumOK = True
@@ -101,7 +110,6 @@ class MessageHelper:
         elif messageTypeName == "LORA" and messageSubTypeName == "SIMessageDouble":
             siPayloadData = loraMessage.GetSIMessageByteTuple()[0]
             siPayloadData2 = loraMessage.GetSIMessageByteTuple()[1]
-            # todo: expand table to store second message punch too
 
         rmbd = RepeaterMessageBoxData()
         rmbd.MessageData = messageData
@@ -130,17 +138,15 @@ class MessageHelper:
             rmbd.SportIdentHour = siMsg.GetHour()
             rmbd.SportIdentMinute = siMsg.GetMinute()
             rmbd.SportIdentSecond = siMsg.GetSeconds()
-            rmbd.MemoryAddress = siMsg.GetBackupMemoryAddressAsInt()
             rmbd.SIStationNumber = siMsg.GetStationNumber()
 
-        #if siPayloadData2 is not None:
-        #    siMsg = SIMessage()
-        #    siMsg.AddPayload(siPayloadData2)
-        #    rmbd.SICardNumber2 = siMsg.GetSICardNumber()
-        #    rmbd.SportIdentHour2 = siMsg.GetHour()
-        #    rmbd.SportIdentMinute2 = siMsg.GetMinute()
-        #    rmbd.SportIdentSecond2 = siMsg.GetSeconds()
-        #    rmbd.MemoryAddress2 = siMsg.GetBackupMemoryAddressAsInt()
-        #    rmbd.SIStationNumber2 = siMsg.GetStationNumber()
+        if siPayloadData2 is not None:
+            siMsg = SIMessage()
+            siMsg.AddPayload(siPayloadData2)
+            rmbd.SICardNumber2 = siMsg.GetSICardNumber()
+            rmbd.SportIdentHour2 = siMsg.GetHour()
+            rmbd.SportIdentMinute2 = siMsg.GetMinute()
+            rmbd.SportIdentSecond2 = siMsg.GetSeconds()
+            rmbd.SIStationNumber2 = siMsg.GetStationNumber()
 
         return rmbd

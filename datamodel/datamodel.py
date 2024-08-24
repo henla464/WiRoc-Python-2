@@ -55,7 +55,14 @@ class MessageBoxData(object):
                ("SICardNumber", str),
                ("SIStationSerialNumber", str), ("SportIdentHour", str),
                ("SportIdentMinute", str), ("SportIdentSecond", str),
-               ("SIStationNumber", str), ("LowBattery", str), ("RSSIValue", int),
+               ("SIStationNumber", str),
+
+               ("SICardNumber2", str),
+               ("SportIdentHour2", str),
+               ("SportIdentMinute2", str),
+               ("SportIdentSecond2", str),
+               ("SIStationNumber2", str),
+               ("LowBattery", str), ("RSSIValue", int),
                ("ChecksumOK", bool), ("CreatedDate", datetime)]
 
     def __init__(self):
@@ -72,6 +79,13 @@ class MessageBoxData(object):
         self.SportIdentMinute = None
         self.SportIdentSecond = None
         self.SIStationNumber = None
+
+        self.SICardNumber2 = None
+        self.SportIdentHour2 = None
+        self.SportIdentMinute2 = None
+        self.SportIdentSecond2 = None
+        self.SIStationNumber2 = None
+
         self.LowBattery = None
         self.RSSIValue = None
         self.ChecksumOK = None
@@ -85,7 +99,13 @@ class MessageBoxArchiveData(object):
                ("SICardNumber", str),
                ("SIStationSerialNumber", str), ("SportIdentHour", str),
                ("SportIdentMinute", str), ("SportIdentSecond", str),
-               ("SIStationNumber", str), ("LowBattery", str), ("RSSIValue", int),
+               ("SIStationNumber", str),
+               ("SICardNumber2", str),
+               ("SportIdentHour2", str),
+               ("SportIdentMinute2", str),
+               ("SportIdentSecond2", str),
+               ("SIStationNumber2", str),
+               ("LowBattery", str), ("RSSIValue", int),
                ("ChecksumOK", bool), ("CreatedDate", datetime),
                ("Resubmitted", bool)]
 
@@ -104,19 +124,28 @@ class MessageBoxArchiveData(object):
         self.SportIdentMinute = None
         self.SportIdentSecond = None
         self.SIStationNumber = None
+
+        self.SICardNumber2 = None
+        self.SportIdentHour2 = None
+        self.SportIdentMinute2 = None
+        self.SportIdentSecond2 = None
+        self.SIStationNumber2 = None
+
         self.LowBattery = None
         self.RSSIValue = None
         self.ChecksumOK = None
         self.CreatedDate = None
         self.Resubmitted: bool = False
 
-
+#("MemoryAddress", int)
 class RepeaterMessageBoxData(object):
     columns = [("MessageData", bytes), ("MessageTypeName", str), ("PowerCycleCreated", int),
                ("InstanceName", str), ("MessageSubTypeName", str), ("ChecksumOK", bool),
                ("MessageSource", str), ("SICardNumber", int), ("SportIdentHour", int),
                ("SportIdentMinute", int), ("SportIdentSecond", int), ("MessageID", bytes),
-               ("AckRequested", bool), ("MemoryAddress", int), ("SIStationNumber", int),
+               ("AckRequested", bool), ("SIStationNumber", int),
+               ("SICardNumber2", int), ("SportIdentHour2", int),
+               ("SportIdentMinute2", int), ("SportIdentSecond2", int), ("SIStationNumber2", int),
                ("RepeaterRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", int),
                ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int), ("RSSIValue", int), ("AckRSSIValue", int),
                ("LastSeenTime", datetime), ("CreatedDate", datetime)]
@@ -136,8 +165,14 @@ class RepeaterMessageBoxData(object):
         self.SportIdentSecond = None
         self.MessageID = None
         self.AckRequested = None
-        self.MemoryAddress = None
         self.SIStationNumber = None
+
+        self.SICardNumber2 = None
+        self.SportIdentHour2 = None
+        self.SportIdentMinute2 = None
+        self.SportIdentSecond2 = None
+        self.SIStationNumber2 = None
+
         self.RepeaterRequested = None
         self.NoOfTimesSeen = None
         self.NoOfTimesAckSeen = None

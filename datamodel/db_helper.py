@@ -929,10 +929,14 @@ class DatabaseHelper:
         sql = "INSERT INTO MessageBoxArchiveData (OrigId, MessageData," \
               "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
               "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
-              "SportIdentSecond, SIStationNumber, LowBattery, ChecksumOK, CreatedDate) SELECT id, MessageData," \
+              "SportIdentSecond, SIStationNumber," \
+              "SICardNumber2, SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2," \
+              "LowBattery, ChecksumOK, CreatedDate) SELECT id, MessageData," \
               "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
               "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
-              "SportIdentSecond, SIStationNumber, LowBattery, ChecksumOK, CreatedDate FROM " \
+              "SportIdentSecond, SIStationNumber, " \
+              "SICardNumber2, SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2," \
+              "LowBattery, ChecksumOK, CreatedDate FROM " \
               "MessageBoxData WHERE Id = %s" % msgBoxId
 
         cls.db.execute_SQL(sql)
@@ -944,10 +948,14 @@ class DatabaseHelper:
         sql = "INSERT INTO MessageBoxArchiveData (OrigId, MessageData," \
               "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
               "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
-              "SportIdentSecond, SIStationNumber, LowBattery, ChecksumOK, CreatedDate) SELECT MessageBoxData.id, MessageData," \
+              "SportIdentSecond, SIStationNumber, " \
+              "SICardNumber2, SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2," \
+              "LowBattery, ChecksumOK, CreatedDate) SELECT MessageBoxData.id, MessageData," \
               "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
               "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
-              "SportIdentSecond, SIStationNumber, LowBattery, ChecksumOK, CreatedDate FROM " \
+              "SportIdentSecond, SIStationNumber, " \
+              "SICardNumber2, SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2," \
+              "LowBattery, ChecksumOK, CreatedDate FROM " \
               "MessageBoxData LEFT JOIN MessageSubscriptionData ON MessageBoxData.id = " \
               "MessageSubscriptionData.MessageboxId WHERE MessageSubscriptionData.id is null"
         cls.db.execute_SQL(sql)
@@ -957,40 +965,40 @@ class DatabaseHelper:
         cls.db.execute_SQL(sql)
 
     # RepeaterMessageBox
-    @classmethod
-    def create_repeater_message_box_data(cls, messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK,
-                                         powerCycle, serialNumber, lowBattery, ackRequested, repeater, siPayloadData,
-                                         messageID, data, rssiValue):
-        rmbd = RepeaterMessageBoxData()
-        rmbd.MessageData = data
-        rmbd.MessageTypeName = messageTypeName
-        rmbd.PowerCycleCreated = powerCycle
-        rmbd.ChecksumOK = checksumOK
-        rmbd.InstanceName = instanceName
-        rmbd.MessageSubTypeName = messageSubTypeName
-        rmbd.MessageSource = messageSource
-        rmbd.SIStationSerialNumber = serialNumber
-        rmbd.RSSIValue = rssiValue
-        rmbd.NoOfTimesSeen = 1
-        rmbd.NoOfTimesAckSeen = 0
-        rmbd.SIStationNumber = None
-        rmbd.SIStationSerialNumber = None
-        rmbd.MessageID = messageID
-        rmbd.LowBattery = lowBattery
-        rmbd.AckRequested = ackRequested
-        rmbd.RepeaterRequested = repeater
+    #@classmethod
+    #def create_repeater_message_box_data(cls, messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK,
+    #                                     powerCycle, serialNumber, lowBattery, ackRequested, repeater, siPayloadData,
+    #                                     messageID, data, rssiValue):
+    #    rmbd = RepeaterMessageBoxData()
+    #    rmbd.MessageData = data
+    #    rmbd.MessageTypeName = messageTypeName
+    #    rmbd.PowerCycleCreated = powerCycle
+    #    rmbd.ChecksumOK = checksumOK
+    #    rmbd.InstanceName = instanceName
+    #    rmbd.MessageSubTypeName = messageSubTypeName
+    #    rmbd.MessageSource = messageSource
+    #    rmbd.SIStationSerialNumber = serialNumber
+    #    rmbd.RSSIValue = rssiValue
+    #    rmbd.NoOfTimesSeen = 1
+    #    rmbd.NoOfTimesAckSeen = 0
+    #    rmbd.SIStationNumber = None
+    #    rmbd.SIStationSerialNumber = None
+    #    rmbd.MessageID = messageID
+    #    rmbd.LowBattery = lowBattery
+    #    rmbd.AckRequested = ackRequested
+    #    rmbd.RepeaterRequested = repeater
 
-        if siPayloadData is not None:
-            siMsg = SIMessage()
-            siMsg.AddPayload(siPayloadData)
-            rmbd.SICardNumber = siMsg.GetSICardNumber()
-            rmbd.SportIdentHour = siMsg.GetHour()
-            rmbd.SportIdentMinute = siMsg.GetMinute()
-            rmbd.SportIdentSecond = siMsg.GetSeconds()
-            rmbd.MemoryAddress = siMsg.GetBackupMemoryAddressAsInt()
-            rmbd.SIStationNumber = siMsg.GetStationNumber()
+    #    if siPayloadData is not None:
+    #        siMsg = SIMessage()
+    #        siMsg.AddPayload(siPayloadData)
+    #        rmbd.SICardNumber = siMsg.GetSICardNumber()
+    #        rmbd.SportIdentHour = siMsg.GetHour()
+    #        rmbd.SportIdentMinute = siMsg.GetMinute()
+    #        rmbd.SportIdentSecond = siMsg.GetSeconds()
+    #        rmbd.MemoryAddress = siMsg.GetBackupMemoryAddressAsInt()
+    #        rmbd.SIStationNumber = siMsg.GetStationNumber()
 
-        return rmbd
+    #    return rmbd
 
     @classmethod
     def save_repeater_message_box(cls, repeaterMessageBoxData):
@@ -1012,17 +1020,20 @@ class DatabaseHelper:
     def archive_old_repeater_message(cls):
         cls.init()
         fiveMinutesAgo = datetime.now() - timedelta(seconds=300)
+
         sql = ("INSERT INTO RepeaterMessageBoxArchiveData (id, "
                "OrigId, MessageData, MessageTypeName, PowerCycleCreated, "
                "InstanceName, MessageSubTypeName, ChecksumOK, MessageSource, "
-               "SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, "
+               "SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, SIStationNumber, "
+               "SICardNumber2,SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2, "
                "MessageID, AckRequested, RepeaterRequested, NoOfTimesSeen, "
                "NoOfTimesAckSeen, Acked, AckedTime, MessageBoxId, RSSIValue, "
                "AckRSSIValue, AddedToMessageBoxTime, LastSeenTime, OrigCreatedDate, "
                "CreatedDate) SELECT NULL, "
                "id as OrigId, MessageData, MessageTypeName, PowerCycleCreated, "
                "InstanceName, MessageSubTypeName, ChecksumOK, MessageSource, "
-               "SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, "
+               "SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, SIStationNumber, "
+               "SICardNumber2,SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2, "
                "MessageID, AckRequested, RepeaterRequested, NoOfTimesSeen, "
                "NoOfTimesAckSeen, Acked, AckedTime, MessageBoxId, RSSIValue, "
                "AckRSSIValue, ? as AddedToMessageBoxTime, LastSeenTime, CreatedDate as OrigCreatedDate, "
