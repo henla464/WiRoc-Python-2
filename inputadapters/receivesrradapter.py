@@ -52,10 +52,20 @@ class ReceiveSRRAdapter(object):
                         ReceiveSRRAdapter.Instances.append(
                             ReceiveSRRAdapter("SRR1", bus, addr, firmwareVersion, hardwareFeatures,
                                               hardwareAbstraction))
-                    return True
+                        return True
+                    else:
+                        return False
                 except Exception as err:
                     logging.getLogger('WiRoc.Input').error(
                         "ReceiveSRRAdapter::CreateInstances() Exception: " + str(err))
+            else:
+                if SettingsClass.GetSRRRedChannelEnabled() or SettingsClass.GetSRRBlueChannelEnabled():
+                    # Instance already exists
+                    return False
+                else:
+                    # Shouldn't have a instance
+                    ReceiveSRRAdapter.Instances = []
+                    return True
         return False
 
     @staticmethod

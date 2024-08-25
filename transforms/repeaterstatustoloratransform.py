@@ -47,8 +47,7 @@ class RepeaterStatusToLoraTransform(object):
 
     @staticmethod
     def GetDeleteAfterSent() -> bool:
-        # check setting for ack
-        RepeaterStatusToLoraTransform.DeleteAfterSent = not SettingsClass.GetAcknowledgementRequested()
+        RepeaterStatusToLoraTransform.DeleteAfterSent = not SettingsClass.GetStatusAcknowledgementRequested()
         return RepeaterStatusToLoraTransform.DeleteAfterSent
 
     @staticmethod
@@ -61,6 +60,7 @@ class RepeaterStatusToLoraTransform(object):
         RepeaterStatusToLoraTransform.WiRocLogger.debug("RepeaterStatusToLoraTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
+        loraStatusMsg.SetAckRequested(SettingsClass.GetStatusAcknowledgementRequested())
         loraStatusMsg.SetRepeater(False)
         loraStatusMsg.GenerateAndAddRSCode()
         return {"Data": (loraStatusMsg.GetByteArray(),), "MessageID": loraStatusMsg.GetHash()}

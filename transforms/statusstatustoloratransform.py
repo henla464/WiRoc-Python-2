@@ -54,6 +54,7 @@ class StatusStatusToLoraTransform(object):
         loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
         StatusStatusToLoraTransform.WiRocLogger.debug(
             "StatusStatusToLoraTransform::Transform() Before generate RSCode: " + Utils.GetDataInHex(loraStatusMsg.GetByteArray(), logging.DEBUG))
+        loraStatusMsg.SetAckRequested(SettingsClass.GetStatusAcknowledgementRequested())
         reqRepeater = False
         if SettingsClass.GetLoraMode() == "SENDER":
             reqRepeater = subscriberAdapter.GetShouldRequestRepeater()

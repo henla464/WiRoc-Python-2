@@ -52,6 +52,7 @@ class SettingsClass(object):
 
     @staticmethod
     def GetStatusAcknowledgementRequested():
+        # Never wait for ack for status messages. Never reqeust Ack.
         return False
 
     @staticmethod

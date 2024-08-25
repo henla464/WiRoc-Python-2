@@ -36,10 +36,20 @@ class Setup:
     def SetupAdapters() -> bool:
         subscriberObjects = []
         change1 = SendLoraAdapter.CreateInstances(HardwareAbstraction.Instance)
+        if change1:
+            Setup.WiRocLogger.debug("Setup::SetupAdapters() SendLoraAdapter changed")
         change2 = SendSerialAdapter.CreateInstances()
+        if change2:
+            Setup.WiRocLogger.debug("Setup::SetupAdapters() SendSerialAdapter changed")
         change3 = SendToBlenoAdapter.CreateInstances()
+        if change3:
+            Setup.WiRocLogger.debug("Setup::SetupAdapters() SendToBlenoAdapter changed")
         change4 = SendToSirapAdapter.CreateInstances()
+        if change4:
+            Setup.WiRocLogger.debug("Setup::SetupAdapters() SendToSirapAdapter changed")
         change5 = SendStatusAdapter.CreateInstances()
+        if change5:
+            Setup.WiRocLogger.debug("Setup::SetupAdapters() SendStatusAdapter changed")
         subscriberObjects.extend(SendLoraAdapter.Instances)
         subscriberObjects.extend(SendSerialAdapter.Instances)
         subscriberObjects.extend(SendToBlenoAdapter.Instances)
@@ -48,14 +58,32 @@ class Setup:
 
         inputObjects = []
         inChange1 = CreateStatusAdapter.CreateInstances()
+        if inChange1:
+            Setup.WiRocLogger.debug("Setup::SetupAdapters() CreateStatusAdapter changed")
         inChange2 = ReceiveLoraAdapter.CreateInstances(HardwareAbstraction.Instance)
+        if inChange2:
+            Setup.WiRocLogger.debug("Setup::SetupAdapters() ReceiveLoraAdapter changed")
         inChange4 = ReceiveSIUSBSerialPort.CreateInstances()  # uses db, writes to it
+        if inChange4:
+            Setup.WiRocLogger.debug("Setup::SetupAdapters() ReceiveSIUSBSerialPort changed")
         inChange5 = ReceiveSIHWSerialPort.CreateInstances()  # uses db, writes to it
+        if inChange5:
+            Setup.WiRocLogger.debug("Setup::SetupAdapters() ReceiveSIHWSerialPort changed")
         inChange6 = ReceiveSIBluetoothSP.CreateInstances()  # uses db, writes to it
+        if inChange6:
+            Setup.WiRocLogger.debug("Setup::SetupAdapters() ReceiveSIBluetoothSP changed")
         inChange7 = ReceiveTestPunchesAdapter.CreateInstances()
+        if inChange7:
+            Setup.WiRocLogger.debug("Setup::SetupAdapters() ReceiveTestPunchesAdapter changed")
         inChange8 = ReceiveRepeaterMessagesAdapter.CreateInstances()
+        if inChange8:
+            Setup.WiRocLogger.debug("Setup::SetupAdapters() ReceiveRepeaterMessagesAdapter changed")
         inChange9 = ReceiveSRRAdapter.CreateInstances(HardwareAbstraction.Instance)
+        if inChange9:
+            Setup.WiRocLogger.debug("Setup::SetupAdapters() ReceiveSRRAdapter changed")
         inChange10 = ResubmitLoraAdapter.CreateInstances()
+        if inChange10:
+            Setup.WiRocLogger.debug("Setup::SetupAdapters() ResubmitLoraAdapter changed")
         inputObjects.extend(CreateStatusAdapter.Instances)
         inputObjects.extend(ReceiveLoraAdapter.Instances)
         inputObjects.extend(ReceiveSIUSBSerialPort.Instances)
