@@ -4,7 +4,7 @@ WiRoc
 - Add HAM frequencies, Probably should keep to fully within 433.7125 - 433,9625 to stay in the recommended Lora freqency band
 	HAM1 - 433,7375
 	HAM2 - 433,7875
-	HAM3 - 433,8375
+	HAM3 - 433,8375 
 	HAM4 - 433,8875
 	HAM5 - 433,9375
 	

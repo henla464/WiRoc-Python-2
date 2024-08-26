@@ -77,20 +77,20 @@ class ReceiveLoraAdapter(object):
 
     def ShouldBeInitialized(self) -> bool:
         enabled: bool = SettingsClass.GetLoraEnabled()
-        channel = SettingsClass.GetChannel()
-        loraRange= SettingsClass.GetLoraRange()
-        loraPower = SettingsClass.GetLoraPower()
-        codeRate = SettingsClass.GetCodeRate()
-        rxGain = SettingsClass.GetRxGainEnabled()
+        channel: str = SettingsClass.GetChannel()
+        loraRange: str = SettingsClass.GetLoraRange()
+        loraPower: int = SettingsClass.GetLoraPower()
+        codeRate: int = SettingsClass.GetCodeRate()
+        rxGain: bool = SettingsClass.GetRxGainEnabled()
         return not self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, enabled)
 
     def Init(self) -> bool:
         enabled: bool = SettingsClass.GetLoraEnabled()
-        channel: int = SettingsClass.GetChannel()
+        channel: str = SettingsClass.GetChannel()
         loraRange: str = SettingsClass.GetLoraRange()
         loraPower: int = SettingsClass.GetLoraPower()
         codeRate: int = SettingsClass.GetCodeRate()
-        rxGain = SettingsClass.GetRxGainEnabled()
+        rxGain: bool = SettingsClass.GetRxGainEnabled()
         if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, enabled):
             return True
         return self.loraRadio.Init(channel, loraRange, loraPower, codeRate, rxGain, enabled)

@@ -52,15 +52,15 @@ def setLoraEnabled(enabled):
 @app.route('/api/channel/', methods=['GET'])
 def getChannel():
     setting = DatabaseHelper.get_setting_by_key('Channel')
-    channel = 1
+    channel = '1'
     if setting is not None:
-        channel = int(setting.Value)
+        channel = setting.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=channel))
 
 
-@app.route('/api/channel/<int:channel>/', methods=['GET'])
+@app.route('/api/channel/<channel>/', methods=['GET'])
 def setChannel(channel):
     sd = DatabaseHelper.get_setting_by_key('Channel')
     if sd is None:

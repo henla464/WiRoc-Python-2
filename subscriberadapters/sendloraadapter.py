@@ -160,7 +160,7 @@ class SendLoraAdapter(object):
     def GetIsDBInitialized(self):
         return self.isDBInitialized
 
-    def SetIsDBInitialized(self, val = True):
+    def SetIsDBInitialized(self, val=True):
         self.isDBInitialized = val
 
     def Init(self):

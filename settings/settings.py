@@ -344,12 +344,12 @@ class SettingsClass(object):
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetChannel'), lock=rlock)
-    def GetChannel() -> int:
+    def GetChannel() -> str:
         sett = DatabaseHelper.get_setting_by_key('Channel')
         if sett is None:
-            SettingsClass.SetSetting("Channel", 1)
-            return 1
-        return int(sett.Value)
+            SettingsClass.SetSetting("Channel", "1")
+            return "1"
+        return sett.Value
 
     @staticmethod
     def GetDataRate(loraRange) -> int:
@@ -626,7 +626,7 @@ class SettingsClass(object):
         if noOfBytes == 0:
             return 0
         loraRange: str = SettingsClass.GetLoraRange()
-        channel: int = SettingsClass.GetChannel()
+        channel: str = SettingsClass.GetChannel()
         loraModule: str = SettingsClass.GetLoraModule()
         codeRate = SettingsClass.GetCodeRate()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)

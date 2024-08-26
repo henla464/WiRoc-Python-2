@@ -40,7 +40,7 @@ class Main:
         self.forceReconfigure: bool = False
         self.nextTimeToReconfigure: float = time.monotonic() + 10
         self.messagesToSendExists: bool = True
-        self.previousChannel = None
+        self.previousChannel: str | None = None
         self.previousAckRequested = None
         self.activeInputAdapters: None | list[CreateStatusAdapter | ReceiveLoraAdapter | ReceiveSIUSBSerialPort | ReceiveSIHWSerialPort | ReceiveSIBluetoothSP | ReceiveTestPunchesAdapter | ReceiveRepeaterMessagesAdapter | ReceiveSRRAdapter] = None
         self.subscriberAdapters: None | list[SendLoraAdapter | SendSerialAdapter | SendToBlenoAdapter | SendToSirapAdapter | SendStatusAdapter] = None

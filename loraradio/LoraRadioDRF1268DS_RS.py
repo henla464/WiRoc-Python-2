@@ -154,11 +154,11 @@ class LoraRadioDRF1268DS_RS:
         self.portName = portName
         self.isInitialized = False
         self.enabled: bool | None = None
-        self.channel: int|None = None
-        self.loraRange: str|None = None
-        self.loraPower: int|None = None
-        self.codeRate: int|None = None
-        self.rxGain: bool|None = None
+        self.channel: str | None = None
+        self.loraRange: str | None = None
+        self.loraPower: int | None = None
+        self.codeRate: int | None = None
+        self.rxGain: bool | None = None
         self.totalNumberOfMessagesSent: int = 0
         self.totalNumberOfAcksReceived: int = 0
         self.acksReceivedSinceLastMessageSent: int = 0
@@ -168,7 +168,7 @@ class LoraRadioDRF1268DS_RS:
         self.ackReceivedMatchingLastSentMessage: bool = True
         self.serialLock: threading.Lock = threading.Lock()
 
-    def GetIsInitialized(self, channel: int, loraRange: str, loraPower: int, codeRate: int, rxGain: bool, enabled: bool) -> bool:
+    def GetIsInitialized(self, channel: str, loraRange: str, loraPower: int, codeRate: int, rxGain: bool, enabled: bool) -> bool:
         return self.isInitialized and \
                 channel == self.channel and \
                 loraPower == self.loraPower and \
@@ -377,7 +377,7 @@ class LoraRadioDRF1268DS_RS:
         # clear any lora config error code
         self.SetErrorCode("")
 
-    def Init(self, channel: int, loraRange: str, loraPower: int, codeRate: int, rxGain: bool, enabled: bool):
+    def Init(self, channel: str, loraRange: str, loraPower: int, codeRate: int, rxGain: bool, enabled: bool):
         LoraRadioDRF1268DS_RS.WiRocLogger.info(
             f"LoraRadioDRF1268DS_RS::Init() Port name: {self.portName} Channel: {channel} "
             f"LoraRange {loraRange} LoraPower: {loraPower} CodeRate: {codeRate} "

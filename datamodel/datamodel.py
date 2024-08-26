@@ -29,15 +29,15 @@ class ErrorCodeData(object):
 
 
 class ChannelData(object):
-    columns = [("Channel", int), ("DataRate", int),  ("LoraRange", str),
+    columns = [("Channel", str), ("DataRate", int),  ("LoraRange", str),
                ("Frequency", int), ("SlopeCoefficient", int),
                ("M", int), ("RfFactor", int), ("RfBw", int), ("LoraModem", str)]
 
-    def __init__(self, Channel: int | None = None, DataRate: int | None = None, LoraRange: str | None = None,
+    def __init__(self, Channel: str | None = None, DataRate: int | None = None, LoraRange: str | None = None,
                  Frequency: int | None = None, SlopeCoefficient: int | None = None,
                  M: int | None = None, RfFactor: int | None = None, RfBw: int | None = None, LoraModem: str | None = None):
         self.id: int | None = None
-        self.Channel: int | None = Channel
+        self.Channel: str | None = Channel
         self.DataRate: int | None = DataRate
         self.LoraRange: str | None = LoraRange
         self.Frequency: int | None = Frequency

@@ -18,15 +18,13 @@ class OledNormal(OledDisplayState):
         self.NormalOledImage = None
         self.wifiNoOfBars = 0
         self.wifiNoOfBarsPrevious = 0
-        self.channel = None
+        self.channel: str | None = None
         self.wiRocMode = None
         self.ackRequested = None
         self.loraRange = None
         self.isCharging = None
         self.OledImage = Image.new('1', (OledDisplayState.OledWidth, OledDisplayState.OledHeight))
         self.OledDraw = ImageDraw.Draw(self.OledImage)
-        # self.OledDraw.rectangle((0, 0, self.OledWidth, self.OledHeight), outline=0, fill=0)
-        self.OledDraw.text((0, 0), 'CH', font=self.OledThinFont, fill=255)
 
     def DrawOledBattery(self):
         percent = Battery.GetBatteryPercent()
@@ -125,8 +123,17 @@ class OledNormal(OledDisplayState):
             self.imageChanged = True
             self.wiRocLogger.debug("OledNormal::DrawOled channel imagechanged")
             # Draw a black filled box to clear part of the image.
-            self.OledDraw.rectangle((14, 0, 39, 31), outline=0, fill=0)
-            self.OledDraw.text((14, 0), str(displayData.channel), font=self.OledBoldFont, fill=255)
+            if self.channel.startswith('HAM'):
+                self.OledDraw.rectangle((0, 0, 39, 31), outline=0, fill=0)
+                self.OledDraw.text((14, 0), displayData.channel[3:], font=self.OledBoldFont, fill=255)
+                self.OledDraw.text((2, 0), 'H', font=self.OledThinFont, fill=255)
+                self.OledDraw.text((2, 10), 'A', font=self.OledThinFont, fill=255)
+                self.OledDraw.text((1, 20), 'M', font=self.OledThinFont, fill=255)
+            else:
+                self.OledDraw.rectangle((0, 0, 39, 31), outline=0, fill=0)
+                self.OledDraw.text((14, 0), displayData.channel, font=self.OledBoldFont, fill=255)
+                self.OledDraw.text((0, 0), 'CH', font=self.OledThinFont, fill=255)
+
         if self.wiRocMode != displayData.wiRocMode:
             self.wiRocMode = displayData.wiRocMode
             self.imageChanged = True
