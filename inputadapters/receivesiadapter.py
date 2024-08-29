@@ -22,7 +22,7 @@ class ReceiveSIAdapter(object):
     MSMode: bytes = bytes([0xFF, 0x02, 0xF0, 0x01, 0x4D, 0x6D, 0x0A, 0x03])
 
     @staticmethod
-    def CreateInstances():
+    def CreateInstances(hardwareAbstraction: HardwareAbstraction):
         return False
 
     @staticmethod
@@ -585,7 +585,7 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
     Instances: list[ReceiveSIHWSerialPort] = []
 
     @staticmethod
-    def CreateInstances() -> bool:
+    def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         serialPorts = []
         # Add any HW serial ports used for SportIdent units
         if SettingsClass.GetRS232Mode() == "RECEIVE":
@@ -684,7 +684,7 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
     SRRDongleModel: bytearray = bytearray([0x6F, 0x21])
 
     @staticmethod
-    def CreateInstances() -> bool:
+    def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         # Add USB serial ports
         portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa|1a86:7523|067b:2303|0403:6001|0557:2008|10c4:ea60')
         serialPorts = [portInfo.device for portInfo in portInfoList]
@@ -830,7 +830,7 @@ class ReceiveSIBluetoothSP(ReceiveSIAdapter):
         self.connectBackgroundProcess = None
 
     @staticmethod
-    def CreateInstances() -> bool:
+    def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         # Get BT Serial ports from database
         btSerialPortData = DatabaseHelper.get_bluetooth_serial_ports()
         serialPorts = ["rfcomm" + btSerialPort.DeviceBTAddress for btSerialPort in btSerialPortData]

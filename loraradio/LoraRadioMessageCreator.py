@@ -4,7 +4,7 @@ import logging
 from utils.utils import Utils
 from loraradio.LoraRadioMessageRS import LoraRadioMessageAckRS, \
     LoraRadioMessageStatusRS, LoraRadioMessagePunchReDCoSRS, \
-    LoraRadioMessagePunchDoubleReDCoSRS, LoraRadioMessageRS
+    LoraRadioMessagePunchDoubleReDCoSRS, LoraRadioMessageRS, LoraRadioMessageHAMCallSignRS
 
 
 class LoraRadioMessageCreator(object):
@@ -133,3 +133,9 @@ class LoraRadioMessageCreator(object):
         loraStatusMessage.AddRSCode(fullMessageData[-LoraRadioMessageStatusRS.NoOfECCBytes:])
         loraStatusMessage.SetRSSIByte(rssiByte)
         return loraStatusMessage
+
+    @staticmethod
+    def GetHAMCallSignMessage(HAMCallSign: str) -> LoraRadioMessageHAMCallSignRS:
+        loraHamMessage = LoraRadioMessageHAMCallSignRS(HAMCallSign)
+        return loraHamMessage
+

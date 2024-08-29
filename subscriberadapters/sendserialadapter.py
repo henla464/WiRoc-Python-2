@@ -12,7 +12,7 @@ class SendSerialAdapter(object):
     SendSerialAdapterActive = None
 
     @staticmethod
-    def CreateInstances():
+    def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         serialPorts = []
 
         if SettingsClass.GetRS232Mode() == "SEND":

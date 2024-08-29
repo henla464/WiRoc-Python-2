@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
 import socket
@@ -13,7 +15,7 @@ class SendToSirapAdapter(object):
     SubscriptionsEnabled: bool = False
 
     @staticmethod
-    def CreateInstances() -> bool:
+    def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         if len(SendToSirapAdapter.Instances) == 0:
             SendToSirapAdapter.Instances.append(SendToSirapAdapter('sirap1'))
             return True

@@ -1,5 +1,6 @@
 from functools import partial
 
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from datamodel.datamodel import MessageBoxArchiveData
 from datamodel.db_helper import DatabaseHelper
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
@@ -21,7 +22,7 @@ class ResubmitLoraAdapter(object):
     Instances = []
 
     @staticmethod
-    def CreateInstances():
+    def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         if len(ResubmitLoraAdapter.Instances) == 0 and (SettingsClass.GetLoraMode() == "SENDER" or SettingsClass.GetLoraMode() == "REPEATER"):
             ResubmitLoraAdapter.Instances.append(ResubmitLoraAdapter("resubmit1"))
             return True

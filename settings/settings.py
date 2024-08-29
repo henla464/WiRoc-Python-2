@@ -648,7 +648,23 @@ class SettingsClass(object):
             except ValueError:
                 statusMessageBaseInterval = 300
 
-        return statusMessageBaseInterval + (7 * SettingsClass.GetRelayPathNumber()) + random.randint(0, 9)
+        return statusMessageBaseInterval
+        # + (7 * SettingsClass.GetRelayPathNumber()) + random.randint(0, 9)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetHAMCallSignMessageInterval'), lock=rlock)
+    def GetHAMCallSignMessageInterval() -> int:
+        sett = DatabaseHelper.get_setting_by_key('HAMCallSignMessageInterval')
+        if sett is None:
+            SettingsClass.SetSetting('HAMCallSignMessageInterval', 180)
+            HAMCallsignMessageInterval = 180
+        else:
+            try:
+                HAMCallsignMessageInterval = int(sett.Value)
+            except ValueError:
+                HAMCallsignMessageInterval = 180
+
+        return HAMCallsignMessageInterval
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetResubmitMessageInterval'), lock=rlock)
@@ -664,6 +680,14 @@ class SettingsClass(object):
                 statusMessageBaseInterval = 300
 
         return statusMessageBaseInterval + (7 * SettingsClass.GetRelayPathNumber()) + random.randint(0, 9)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetHAMCallSign'), lock=rlock)
+    def GetHAMCallSign():
+        sett = DatabaseHelper.get_setting_by_key('HAMCallSign')
+        if sett is None:
+            return ""
+        return sett.Value
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetWiRocDeviceName'), lock=rlock)

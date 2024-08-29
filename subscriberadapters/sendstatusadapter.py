@@ -1,3 +1,4 @@
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessageStatusRS
 from settings.settings import SettingsClass
@@ -14,7 +15,7 @@ class SendStatusAdapter(object):
     SubscriptionsEnabled = False
 
     @staticmethod
-    def CreateInstances():
+    def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         if len(SendStatusAdapter.Instances) == 0:
             SendStatusAdapter.Instances.append(SendStatusAdapter('status1'))
             return True

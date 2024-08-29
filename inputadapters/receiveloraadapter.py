@@ -16,7 +16,7 @@ class ReceiveLoraAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Input')
 
     @staticmethod
-    def CreateInstances(hardwareAbstraction) -> bool:
+    def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         # check the number of lora radios and return an instance for each
         serialPorts = ['/dev/ttyS1']
 

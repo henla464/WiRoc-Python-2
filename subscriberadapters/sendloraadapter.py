@@ -1,6 +1,7 @@
 import os
 import threading
 
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
@@ -15,14 +16,14 @@ from datetime import datetime, timedelta
 
 
 class SendLoraAdapter(object):
-    WiRocLogger =  logging.getLogger('WiRoc.Output')
+    WiRocLogger = logging.getLogger('WiRoc.Output')
     Instances = []
     WiRocMode = None
     SubscriptionsEnabled = None
     AdapterInitialized = None
 
     @staticmethod
-    def CreateInstances(hardwareAbstraction):
+    def CreateInstances(hardwareAbstraction: HardwareAbstraction):
         # check the number of lora radios and return an instance for each
         serialPorts = ['/dev/ttyS1']
 
@@ -49,15 +50,17 @@ class SendLoraAdapter(object):
     @staticmethod
     def EnableDisableSubscription():
         if len(SendLoraAdapter.Instances) > 0:
-            shouldSubscriptionBeEnabled = SendLoraAdapter.Instances[0].GetIsInitialized() and SendLoraAdapter.Instances[0].GetIsEnabled()
+            shouldSubscriptionBeEnabled = SendLoraAdapter.Instances[0].GetIsInitialized() and SendLoraAdapter.Instances[
+                0].GetIsEnabled()
             for name, transf in SendLoraAdapter.Instances[0].transforms.items():
                 if (SendLoraAdapter.SubscriptionsEnabled != shouldSubscriptionBeEnabled or
-                            transf.GetDeleteAfterSentChanged()):
+                        transf.GetDeleteAfterSentChanged()):
                     deleteAfterSent = transf.GetDeleteAfterSent()
-                    SendLoraAdapter.WiRocLogger.info("SendLoraAdapter::EnableDisableSubscription() subscription set enabled: " + str(
-                        shouldSubscriptionBeEnabled))
+                    SendLoraAdapter.WiRocLogger.info(
+                        "SendLoraAdapter::EnableDisableSubscription() subscription set enabled: " + str(
+                            shouldSubscriptionBeEnabled))
                     DatabaseHelper.update_subscription(shouldSubscriptionBeEnabled, deleteAfterSent,
-                                                        SendLoraAdapter.GetTypeName(), name)
+                                                       SendLoraAdapter.GetTypeName(), name)
             SendLoraAdapter.SubscriptionsEnabled = shouldSubscriptionBeEnabled
 
     @staticmethod
@@ -65,13 +68,15 @@ class SendLoraAdapter(object):
         if len(SendLoraAdapter.Instances) > 0:
             if SendLoraAdapter.WiRocMode is None or SendLoraAdapter.WiRocMode != SettingsClass.GetLoraMode():
                 SendLoraAdapter.WiRocMode = SettingsClass.GetLoraMode()
-                enableSendTransforms = (SendLoraAdapter.WiRocMode == "SENDER" or SendLoraAdapter.WiRocMode == "REPEATER")
+                enableSendTransforms = (
+                            SendLoraAdapter.WiRocMode == "SENDER" or SendLoraAdapter.WiRocMode == "REPEATER")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SISIMessageToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SRRSRRMessageToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestTestToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "StatusStatusToLoraTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "HAMCSHamcsToLoraTransform")
                 # For receiver: Sends schedules an ack for message received from sender when sender requested repeater
-                # (we don't send ack directly because repeater is expected reply with ack directly)
+                # (we don't send ack directly because repeater is expected to reply with ack directly)
                 DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraSIMessageToLoraAckTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraAckTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraTransform")
@@ -124,7 +129,7 @@ class SendLoraAdapter(object):
                       "StatusStatusToLoraTransform", "RepeaterSIMessageToLoraAckTransform",
                       "RepeaterSIMessageDoubleToLoraAckTransform", "RepeaterSIMessageToLoraTransform",
                       "RepeaterSIMessageDoubleToLoraTransform", "RepeaterStatusToLoraTransform",
-                      "LoraSIMessageToLoraAckTransform"]
+                      "LoraSIMessageToLoraAckTransform", "HAMCSHamcsToLoraTransform"]
         return transforms
 
     def SetTransform(self, transformClass):
@@ -192,8 +197,10 @@ class SendLoraAdapter(object):
             SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::BlockAfterReceivingAck lets go")
 
     def BlockSendingToLetRepeaterSendAndReceiveAck(self):
-        timeS = LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS) + \
-                LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck) + 0.35
+        timeS = LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(
+            LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS) + \
+                LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(
+                    LoraRadioMessageRS.MessageTypeLoraAck) + 0.35
         self.blockSendingForSeconds = timeS
         self.blockSendingFromThisDate = datetime.now()
         self.blockSendingReason = "waitforrepeater"
@@ -224,7 +231,7 @@ class SendLoraAdapter(object):
     def IsReadyToSend(self):
         now = datetime.now()
         if self.blockSendingFromThisDate is None or self.blockSendingForSeconds is None or \
-            (self.blockSendingFromThisDate + timedelta(seconds=self.blockSendingForSeconds)) < now:
+                (self.blockSendingFromThisDate + timedelta(seconds=self.blockSendingForSeconds)) < now:
             isReadyToSend = self.loraRadio.IsReadyToSend()
             if not isReadyToSend:
                 # The radio is sending or receiveing. It could be another WiRoc sending its message.
@@ -232,9 +239,10 @@ class SendLoraAdapter(object):
                 # directly after the other WiRoc finished sending, but before the reciever had time to reply.
                 # To lower the chance of this we should block sending for a bit.
                 self.BlockSendingDueToBusy(None)
-                SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::IsReadyToSend() blocking due to radio not ready to send, wait until: "
-                                                  + ("None" if self.blockSendingFromThisDate is None
-                                                     else str(self.blockSendingFromThisDate + timedelta(seconds=self.blockSendingForSeconds))))
+                SendLoraAdapter.WiRocLogger.debug(
+                    "SendLoraAdapter::IsReadyToSend() blocking due to radio not ready to send, wait until: "
+                    + ("None" if self.blockSendingFromThisDate is None
+                       else str(self.blockSendingFromThisDate + timedelta(seconds=self.blockSendingForSeconds))))
                 return False
             else:
                 SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::IsReadyToSend() True")
@@ -245,14 +253,17 @@ class SendLoraAdapter(object):
 
         SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::IsReadyToSend() blocked from sending until: "
                                           + ("None" if self.blockSendingFromThisDate is None
-                                             else str(self.blockSendingFromThisDate + timedelta(seconds=self.blockSendingForSeconds)) + " " + self.blockSendingReason))
+                                             else str(self.blockSendingFromThisDate + timedelta(
+            seconds=self.blockSendingForSeconds)) + " " + self.blockSendingReason))
         return False
 
     @staticmethod
     def GetDelayAfterMessageSent():
-        timeS = LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS) + 0.05  # message + one loop
+        timeS = LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(
+            LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS) + 0.05  # message + one loop
         if SettingsClass.GetAcknowledgementRequested():
-            timeS+= LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck) + 0.15  # reply ack + 3 loop
+            timeS += LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(
+                LoraRadioMessageRS.MessageTypeLoraAck) + 0.15  # reply ack + 3 loop
         return timeS
 
     def GetRetryDelay(self, tryNo):
@@ -262,7 +273,9 @@ class SendLoraAdapter(object):
         self.successWithoutRepeaterBitQueue.appendleft(datetime.now())
         if len(self.successWithoutRepeaterBitQueue) > 20:
             self.successWithoutRepeaterBitQueue.pop()
-        SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::AddSuccessWithoutRepeaterBit() Add success without repeater bit, queue length: " + str(len(self.successWithoutRepeaterBitQueue)))
+        SendLoraAdapter.WiRocLogger.debug(
+            "SendLoraAdapter::AddSuccessWithoutRepeaterBit() Add success without repeater bit, queue length: " + str(
+                len(self.successWithoutRepeaterBitQueue)))
 
     def AddSuccessWithRepeaterBit(self):
         # we received and ack from the repeater, only
@@ -271,31 +284,39 @@ class SendLoraAdapter(object):
             self.successWithRepeaterBitQueue.appendleft(datetime.now())
             if len(self.successWithRepeaterBitQueue) > 20:
                 self.successWithRepeaterBitQueue.pop()
-            SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::AddSuccessWithRepeaterBit() Add success with repeater bit, queue length: " + str(len(self.successWithRepeaterBitQueue)))
+            SendLoraAdapter.WiRocLogger.debug(
+                "SendLoraAdapter::AddSuccessWithRepeaterBit() Add success with repeater bit, queue length: " + str(
+                    len(self.successWithRepeaterBitQueue)))
 
     def AddSentWithoutRepeaterBit(self):
         self.lastMessageRepeaterBit = False
         self.sentQueueWithoutRepeaterBit.appendleft(datetime.now())
         if len(self.sentQueueWithoutRepeaterBit) > 20:
             self.sentQueueWithoutRepeaterBit.pop()
-        SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::AddSentWithoutRepeaterBit() Add sent without repeater bit, queue length: " + str(len(self.sentQueueWithoutRepeaterBit)))
+        SendLoraAdapter.WiRocLogger.debug(
+            "SendLoraAdapter::AddSentWithoutRepeaterBit() Add sent without repeater bit, queue length: " + str(
+                len(self.sentQueueWithoutRepeaterBit)))
 
     def AddSentWithRepeaterBit(self):
         self.lastMessageRepeaterBit = True
         self.sentQueueWithRepeaterBit.appendleft(datetime.now())
         if len(self.sentQueueWithRepeaterBit) > 20:
             self.sentQueueWithRepeaterBit.pop()
-        SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::AddSentWithRepeaterBit() Add sent with repeater bit, queue length: " + str(len(self.sentQueueWithRepeaterBit)))
+        SendLoraAdapter.WiRocLogger.debug(
+            "SendLoraAdapter::AddSentWithRepeaterBit() Add sent with repeater bit, queue length: " + str(
+                len(self.sentQueueWithRepeaterBit)))
 
     def GetSuccessRateToDestination(self):
         #dateTimeToUse = max(min(self.successWithoutRepeaterBitQueue[-1], self.sentQueueWithoutRepeaterBit[-1]), datetime.now() - timedelta(minutes=30))
-        dateTimeToUse = max(self.sentQueueWithoutRepeaterBit[-1],datetime.now() - timedelta(minutes=30))
+        dateTimeToUse = max(self.sentQueueWithoutRepeaterBit[-1], datetime.now() - timedelta(minutes=30))
         successCount = sum(1 for successDate in self.successWithoutRepeaterBitQueue if successDate >= dateTimeToUse)
         sentCount = sum(1 for sentDate in self.sentQueueWithoutRepeaterBit if sentDate >= dateTimeToUse)
-        SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::GetSuccessRateToDestination() successCount: " + str(successCount) + " sentCount: " + str(sentCount))
+        SendLoraAdapter.WiRocLogger.debug(
+            "SendLoraAdapter::GetSuccessRateToDestination() successCount: " + str(successCount) + " sentCount: " + str(
+                sentCount))
         if sentCount == 0:
             return 100
-        return int((successCount / sentCount)*100)
+        return int((successCount / sentCount) * 100)
 
     def GetSuccessRateToRepeater(self):
         #dateTimeToUse = max(min(self.successWithRepeaterBitQueue[-1], self.sentQueueWithRepeaterBit[-1]),
@@ -304,7 +325,9 @@ class SendLoraAdapter(object):
 
         successCount = sum(1 for successDate in self.successWithRepeaterBitQueue if successDate >= dateTimeToUse)
         sentCount = sum(1 for sentDate in self.sentQueueWithRepeaterBit if sentDate >= dateTimeToUse)
-        SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::GetSuccessRateToRepeater() successCount: " + str(successCount) + " sentCount: " + str(sentCount))
+        SendLoraAdapter.WiRocLogger.debug(
+            "SendLoraAdapter::GetSuccessRateToRepeater() successCount: " + str(successCount) + " sentCount: " + str(
+                sentCount))
         if sentCount == 0:
             return 100
         return int((successCount / sentCount) * 100)
@@ -317,10 +340,11 @@ class SendLoraAdapter(object):
             successDestination = self.GetSuccessRateToDestination()
             successRepeater = self.GetSuccessRateToRepeater()
             if SettingsClass.GetHasReceivedMessageFromRepeater() and \
-                        successDestination < 85 \
-                and successRepeater > successDestination:
+                    successDestination < 85 \
+                    and successRepeater > successDestination:
                 reqRepeater = True
-            SendLoraAdapter.WiRocLogger.debug("Request repeater: " + str(reqRepeater) + " success destination: " + str(successDestination) + " success repeater: " + str(successRepeater))
+            SendLoraAdapter.WiRocLogger.debug("Request repeater: " + str(reqRepeater) + " success destination: " + str(
+                successDestination) + " success repeater: " + str(successRepeater))
             return reqRepeater
         else:
             SendLoraAdapter.WiRocLogger.debug("Request repeater: " + str(reqRepeater))
@@ -362,9 +386,11 @@ class SendLoraAdapter(object):
                 returnSuccess = False
 
         if returnSuccess:
-            SendLoraAdapter.WiRocLogger.debug(f"SendLoraAdapter::SendData() before add message stat {os.getpid()} {threading.get_ident()}")
+            SendLoraAdapter.WiRocLogger.debug(
+                f"SendLoraAdapter::SendData() before add message stat {os.getpid()} {threading.get_ident()}")
             DatabaseHelper.add_message_stat(self.GetInstanceName(), statMessageType, "Sent", 1)
-            SendLoraAdapter.WiRocLogger.debug(f"SendLoraAdapter::SendData() after add message stat {os.getpid()} {threading.get_ident()}")
+            SendLoraAdapter.WiRocLogger.debug(
+                f"SendLoraAdapter::SendData() after add message stat {os.getpid()} {threading.get_ident()}")
             successCB()
         else:
             DatabaseHelper.add_message_stat(self.GetInstanceName(), statMessageType, "NotSent", 0)

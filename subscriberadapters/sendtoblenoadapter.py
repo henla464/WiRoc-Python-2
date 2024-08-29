@@ -1,3 +1,4 @@
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from settings.settings import SettingsClass
 from datamodel.datamodel import BlenoPunchData
 from datamodel.db_helper import DatabaseHelper
@@ -11,7 +12,7 @@ class SendToBlenoAdapter(object):
     SubscriptionsEnabled = False
 
     @staticmethod
-    def CreateInstances():
+    def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         if len(SendToBlenoAdapter.Instances) == 0:
             SendToBlenoAdapter.Instances.append(SendToBlenoAdapter('bleno1'))
             return True

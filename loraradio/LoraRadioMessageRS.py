@@ -21,7 +21,8 @@ class LoraRadioMessageRS(object):
     MessageTypeSIPunchDouble: int = 6
     MessageTypeSIPunchReDCoS: int = 7
     MessageTypeSIPunchDoubleReDCoS: int = 8
-    MessageLengths: list[int]= [24, 16, 7, 14, 14, 7, 27, 15, 27]
+    MessageTypeHAMCallSign: int = 9
+    MessageLengths: list[int]= [24, 16, 7, 14, 14, 7, 27, 15, 27, 11]
 
     # Positions within the message
     H = 0
@@ -605,3 +606,45 @@ class LoraRadioMessageStatusRS(LoraRadioMessageRS):
 
     def GetMessageSubType(self) -> str:
         return "Status"
+
+
+class LoraRadioMessageHAMCallSignRS(LoraRadioMessageRS):
+    NoOfECCBytes = 0
+    NoOfCRCBytes = 0
+
+    # Positions within the message
+    HAMCALLSIGN1 = 1
+    HAMCALLSIGN2 = 2
+    HAMCALLSIGN3 = 3
+    HAMCALLSIGN4 = 4
+    HAMCALLSIGN5 = 5
+    HAMCALLSIGN6 = 6
+    HAMCALLSIGN7 = 7
+    HAMCALLSIGN8 = 8
+    HAMCALLSIGN9 = 9
+    HAMCALLSIGN10 = 10
+
+    def __init__(self, HAMCallSign: str = ""):
+        super().__init__()
+        self.messageType = LoraRadioMessageRS.MessageTypeLoraAck
+        self.SetRepeater(False)
+        self.SetBatteryLow(False)
+        self.SetAckRequested(False)
+        self.payloadData = bytearray()
+        self.payloadData.extend(HAMCallSign.encode())
+        self.payloadData.ljust(11, " ".encode())
+
+    def GetMessageCategory(self):
+        return "DATA"
+
+    def GetMessageSubType(self):
+        return "Hamcs"
+
+    def GenerateAndAddRSCode(self):
+        raise Exception("Hamcs does not have RS Code")
+
+    def AddRSCode(self, rsCode):
+        raise Exception("Hamcs does not have RS Code")
+
+    def GetRSCode(self):
+        raise Exception("Hamcs does not have RS Code")

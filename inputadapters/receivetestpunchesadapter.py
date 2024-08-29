@@ -1,3 +1,4 @@
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from datamodel.datamodel import SIMessage
 from datamodel.db_helper import DatabaseHelper
 from utils.utils import Utils
@@ -9,7 +10,7 @@ class ReceiveTestPunchesAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Input')
     Instances = []
     @staticmethod
-    def CreateInstances():
+    def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         if len(ReceiveTestPunchesAdapter.Instances) == 0:
             ReceiveTestPunchesAdapter.Instances.append(ReceiveTestPunchesAdapter("test1"))
             return True
