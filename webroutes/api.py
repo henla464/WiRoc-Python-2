@@ -990,9 +990,6 @@ def getWiRocPythonVersion():
     wirocPythonVersion = settings['WiRocPythonVersion']
     wirocPythonVersion = wirocPythonVersion.strip()
 
-    #f = open("../WiRocPythonVersion.txt", "r")
-    #wirocPythonVersion = f.read()
-    #wirocPythonVersion = wirocPythonVersion.strip()
     f.close()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -1006,10 +1003,6 @@ def getWiRocBLEVersion():
     wirocBLEVersion = settings['WiRocBLEAPIVersion']
     wirocBLEVersion = wirocBLEVersion.strip()
 
-    #f = open("../WiRocBLEVersion.txt", "r")
-    #wirocBLEVersion = f.read()
-    #wirocBLEVersion = wirocBLEVersion.strip()
-    #f.close()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=wirocBLEVersion))
@@ -1022,10 +1015,6 @@ def getWiRocBLEAPIVersion():
     wirocBLEAPIVersion = settings['WiRocBLEAPIVersion']
     wirocBLEAPIVersion = wirocBLEAPIVersion.strip()
 
-    #f = open("../WiRocBLEAPIVersion.txt", "r")
-    #wirocBLEVersion = f.read()
-    #wirocBLEVersion = wirocBLEVersion.strip()
-    #f.close()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=wirocBLEAPIVersion))
@@ -1313,6 +1302,52 @@ def getWakeUpToBeEnabledAtShutdown():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value= '1' if isEnabled else '0'))
+
+@app.route('/api/ham/callsign/<callsign>/', methods=['GET'])
+def SetHAMCallSign(callsign):
+    sd = DatabaseHelper.get_setting_by_key('HAMCallSign')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'HAMCallSign'
+    sd.Value = callsign
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/ham/callsign/', methods=['GET'])
+def getHAMCallSign():
+    sett = DatabaseHelper.get_setting_by_key('HAMCallSign')
+    callsign = ""
+    if sett is not None:
+        callsign = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=callsign))
+
+@app.route('/api/ham/enabled/', methods=['GET'])
+def getHAMEnabled():
+    setting = DatabaseHelper.get_setting_by_key('HAMEnabled')
+    hamEnabled = '0'
+    if setting is not None:
+        hamEnabled = setting.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=hamEnabled))
+
+@app.route('/api/ham/enabled/<enabled>/', methods=['GET'])
+def setHAMEnabled(enabled):
+    sd = DatabaseHelper.get_setting_by_key('HAMEnabled')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'HAMEnabled'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 @app.route('/api/uploadlogarchive/', methods=['GET'])
 def uploadLogArchive():

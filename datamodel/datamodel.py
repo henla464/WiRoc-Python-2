@@ -12,9 +12,9 @@ class SettingData(object):
     columns = [("Key", str), ("Value", str)]
 
     def __init__(self):
-        self.id = None
-        self.Key = None
-        self.Value = None
+        self.id: int | None = None
+        self.Key: str | None  = None
+        self.Value: str | None = None
 
 
 class ErrorCodeData(object):

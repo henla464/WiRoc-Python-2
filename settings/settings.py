@@ -349,6 +349,10 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("Channel", "1")
             return "1"
+        if sett.Value.startswith("HAM") and not SettingsClass.GetHAMEnabled():
+            # illegal combination, reset Channel to 1
+            SettingsClass.SetSetting("Channel", "1")
+            return "1"
         return sett.Value
 
     @staticmethod
@@ -683,11 +687,20 @@ class SettingsClass(object):
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetHAMCallSign'), lock=rlock)
-    def GetHAMCallSign():
+    def GetHAMCallSign() -> str:
         sett = DatabaseHelper.get_setting_by_key('HAMCallSign')
         if sett is None:
             return ""
         return sett.Value
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetHAMEnabled'), lock=rlock)
+    def GetHAMEnabled() -> bool:
+        sett = DatabaseHelper.get_setting_by_key('HAMEnabled')
+        if sett is None:
+            SettingsClass.SetSetting("HAMEnabled", "0")
+            return False
+        return sett.Value == "1"
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetWiRocDeviceName'), lock=rlock)
@@ -700,7 +713,7 @@ class SettingsClass(object):
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetSendStatusMessage'), lock=rlock)
-    def GetSendStatusMessages():
+    def GetSendStatusMessages() -> bool:
         sett = DatabaseHelper.get_setting_by_key('SendStatusMessages')
         if sett is None:
             SettingsClass.SetSetting("SendStatusMessages", "1")

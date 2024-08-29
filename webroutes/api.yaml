@@ -1419,6 +1419,70 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/TrueFalseObj"
+  /ham/callsign/:
+    get:
+      tags:
+      - "HAM"
+      summary: "Get the amateur radio / HAM callsign"
+      operationId: "getHAMCallSign"
+      responses:
+        "200":
+          description: "The callsign"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /ham/callsign/{callsign}:
+    get:
+      tags:
+      - "HAM"
+      summary: "Set the amateur radio / HAM callsign"
+      operationId: "setHAMCallSign"
+      parameters:
+        - name: callsign
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Property'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /ham/enabled/:
+    get:
+      tags:
+      - "HAM"
+      summary: "Gets whether HAM is enabled or not"
+      operationId: "getHAMEnabled"
+      responses:
+        "200":
+          description: "successful operation"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrueFalseObj"
+  /ham/enabled/{hamenabled}:
+    get:
+      tags:
+      - "HAM"
+      summary: "Enable/Disable HAM"
+      operationId: "setHAMEnabled"
+      parameters:
+        - name: hamenabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /uploadlogarchive/:
     get:
       tags:
