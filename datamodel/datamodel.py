@@ -137,7 +137,7 @@ class MessageBoxArchiveData(object):
         self.CreatedDate = None
         self.Resubmitted: bool = False
 
-#("MemoryAddress", int)
+
 class RepeaterMessageBoxData(object):
     columns = [("MessageData", bytes), ("MessageTypeName", str), ("PowerCycleCreated", int),
                ("InstanceName", str), ("MessageSubTypeName", str), ("ChecksumOK", bool),
@@ -191,7 +191,9 @@ class RepeaterMessageBoxArchiveData(object):
                ("InstanceName", str), ("MessageSubTypeName", str), ("ChecksumOK", bool),
                ("MessageSource", str), ("SICardNumber", int), ("SportIdentHour", int),
                ("SportIdentMinute", int), ("SportIdentSecond", int), ("MessageID", bytes),
-               ("AckRequested", bool),
+               ("AckRequested", bool), ("SIStationNumber", int),
+               ("SICardNumber2", int), ("SportIdentHour2", int),
+               ("SportIdentMinute2", int), ("SportIdentSecond2", int), ("SIStationNumber2", int),
                ("RepeaterRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", int),
                ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int), ("RSSIValue", int), ("AckRSSIValue", int),
                ("AddedToMessageBoxTime", datetime), ("LastSeenTime", datetime), ("OrigCreatedDate", datetime),
@@ -213,6 +215,14 @@ class RepeaterMessageBoxArchiveData(object):
         self.SportIdentSecond = None
         self.MessageID = None
         self.AckRequested = None
+        self.SIStationNumber2 = None
+
+        self.SICardNumber2 = None
+        self.SportIdentHour2 = None
+        self.SportIdentMinute2 = None
+        self.SportIdentSecond2 = None
+        self.SIStationNumber2 = None
+
         self.RepeaterRequested = None
         self.NoOfTimesSeen = None
         self.NoOfTimesAckSeen = None
