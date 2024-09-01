@@ -1,3 +1,4 @@
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from datamodel.db_helper import DatabaseHelper
 from settings.settings import SettingsClass
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
@@ -11,7 +12,7 @@ class CreateStatusAdapter(object):
     Instances = []
 
     @staticmethod
-    def CreateInstances():
+    def CreateInstances(hardwareAbstraction: HardwareAbstraction):
         if SettingsClass.GetSendStatusMessages():
             if len(CreateStatusAdapter.Instances) == 0:
                 CreateStatusAdapter.Instances.append(CreateStatusAdapter("status1"))

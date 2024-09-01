@@ -71,7 +71,7 @@ def setChannel(channel):
     SettingsClass.SetSettingUpdatedByWebService()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=int(sd.Value)))
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 
 @app.route('/api/lorarange/', methods=['GET'])

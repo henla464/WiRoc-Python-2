@@ -282,7 +282,7 @@ class LoraRadioDRF1268DS_RS:
             self.radioSerial.baudrate = 57600
             return False
 
-    def setParameters(self, channelData: ChannelData, channel: int, loraPower: int, codeRate: int, rxGain: bool) -> bool:
+    def setParameters(self, channelData: ChannelData, channelNumber: int, loraPower: int, codeRate: int, rxGain: bool) -> bool:
         LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::setParameters(): Enter, read parameters")
         self.radioSerial.write(LoraRadioDRF1268DS_RS.ReadParameter)
         self.radioSerial.flush()
@@ -290,7 +290,7 @@ class LoraRadioDRF1268DS_RS:
         expectedLength = 0x26
         readParameterResp = self.getRadioSettingsReply(expectedLength)
         readParameterResp[3] = 0x03  # write
-        readParameterResp[6] = channel
+        readParameterResp[6] = channelNumber
         readParameterResp[11] = channelData.RfFactor
         readParameterResp[12] = 0x05  # Bandwidth 31,25kHz
         readParameterResp[13] = codeRate
@@ -357,7 +357,7 @@ class LoraRadioDRF1268DS_RS:
     def GetIsEnabled(self) -> bool:
         return self.enabled
 
-    def GetChannel(self) -> int:
+    def GetChannel(self) -> str:
         return self.channel
 
     def WaitForSerialUpToTimeMS(self, ms) -> None:
@@ -435,7 +435,8 @@ class LoraRadioDRF1268DS_RS:
                         return True
                     else:
                         LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() frequency" + str(channelData.Frequency))
-                        if self.setParameters(channelData, channel, loraPower, codeRate, rxGain):
+                        channelNumber = int(channel.lstrip("HAM"))
+                        if self.setParameters(channelData, channelNumber, loraPower, codeRate, rxGain):
                             LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() Parameters set")
                             self.isInitialized = True
                             newSettingsWritten = True

@@ -632,7 +632,7 @@ class LoraRadioMessageHAMCallSignRS(LoraRadioMessageRS):
         self.SetAckRequested(False)
         self.payloadData = bytearray()
         self.payloadData.extend(HAMCallSign.encode())
-        self.payloadData.ljust(11, " ".encode())
+        self.payloadData = self.payloadData.ljust(10, " ".encode())
 
     def GetMessageCategory(self):
         return "DATA"
