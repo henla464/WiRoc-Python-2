@@ -1444,9 +1444,9 @@ def getAllMainSettings():
     dataRate = SettingsClass.GetDataRate(loraRange)
 
     setting = DatabaseHelper.get_setting_by_key('Channel')
-    channel = 1
+    channel = '1'
     if setting is not None:
-        channel = int(setting.Value)
+        channel = setting.Value
 
     setting = DatabaseHelper.get_setting_by_key('LoraPower')
     loraPower = '7'
@@ -1456,18 +1456,8 @@ def getAllMainSettings():
         loraPower = '7'
 
     wiRocPythonVersion = settings['WiRocPythonVersion']
-
     wirocBLEVersion = settings['WiRocBLEAPIVersion']
-    #f = open("../WiRocBLEVersion.txt", "r")
-    #wirocBLEVersion = f.read()
-    #wirocBLEVersion = wirocBLEVersion.replace("\n", "")
-    #f.close()
-
     wirocHWVersion = settings['WiRocHWVersion']
-    #f = open("../WiRocHWVersion.txt", "r")
-    #wirocHWVersion = f.read()
-    #wirocHWVersion = wirocHWVersion.replace("\n", "")
-    #f.close()
 
     sett = DatabaseHelper.get_setting_by_key('OneWayReceive')
     oneWayReceive = '0'
@@ -1522,12 +1512,17 @@ def getAllMainSettings():
     if sett is not None:
         forceBTSerial4800BaudRate = sett.Value
 
+    sett = DatabaseHelper.get_setting_by_key('HAMEnabled')
+    hamEnabled = '0'
+    if sett is not None:
+        hamEnabled = sett.Value
+
     allStr = ('1' if isCharging else '0') + '¤' + deviceName + '¤' + sirapPort + '¤' + sirapIP + '¤' + sirapEnabled + '¤' + \
         acksRequested + '¤' + str(dataRate) + '¤' + str(channel) + '¤' + batteryPercent + '¤' + \
         ipAddress + '¤' + str(loraPower) + '¤' + loraModule + '¤' + loraRange + '¤' + wiRocPythonVersion + '¤' + \
         wirocBLEVersion + '¤' + wirocHWVersion + '¤' + oneWayReceive + '¤' + force4800BaudRate + '¤' + loramode + '¤' + \
         rxGain + '¤' + codeRate + '¤' + rs232Mode + '¤' + RS232OneWayReceive + '¤' + forceRS2324800BaudRate + '¤' + \
-        BTSerialOneWayReceive + '¤' + forceBTSerial4800BaudRate
+        BTSerialOneWayReceive + '¤' + forceBTSerial4800BaudRate + '¤' + hamEnabled
 
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
