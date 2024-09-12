@@ -1096,9 +1096,11 @@ class DatabaseHelper:
 
 
     @classmethod
-    def get_lowest_messageboxdata_id(cls):
+    def get_lowest_messageboxdata_id(cls) -> int:
         cls.init()
         msgBoxId = cls.db.get_scalar_by_SQL("SELECT min(id) FROM MessageBoxData")
+        if msgBoxId is None:
+            return 18446744073709551615 # sqlite max
         return msgBoxId
 
     # TestPunchData
@@ -1238,7 +1240,7 @@ class DatabaseHelper:
          JOIN SubscriptionData ON SubscriptionData.Id = MessageSubscriptionArchiveData.SubscriptionId \
          JOIN SubscriberData ON SubscriberData.Id = SubscriptionData.SubscriberId \
          WHERE tp.id is null and MessageBoxArchiveData.MessageTypeName != 'STATUS' and (SubscriberData.TypeName = 'LORA' or SubscriberData.TypeName = 'SIRAP') {f'and MessageBoxArchiveData.OrigId >= {msgBoxId}' if msgBoxId is not None else ''}) \
-         ORDER BY MessageBoxId;")
+         ORDER BY (cast(TwelveHourTimer as integer) * 3600 + cast(TwentyFourHour as integer) * 43200), MessageBoxId;")
 
         testPunchesView = cls.db.get_table_objects_by_SQL(TestPunchView, sql)
         # "SELECT TestPunchData.id, TestPunchData.SICardNumber, TestPunchData.TwentyFourHour, "
