@@ -82,8 +82,10 @@ class BackgroundTasks(object):
                 try:
                     if webServerUp:
                         self.messageStatQueueCommands.put("WEBSERVERUP", False)
+                        self.doInfrequentHTTPTasksQueueCommands.put("WEBSERVERUP", False)
                     else:
                         self.messageStatQueueCommands.put("WEBSERVERDOWN", False)
+                        self.doInfrequentHTTPTasksQueueCommands.put("WEBSERVERDOWN", False)
                 except Full as fex:
                     BackgroundTasks.WiRocLogger.error(
                         f"BackgroundTasks::GetDataFromSubProcesses() : messageStatQueueCommands FULL")
@@ -120,8 +122,8 @@ class BackgroundTasks(object):
                                         ):
         BackgroundTasks.WiRocLogger.debug("BackgroundTasks::DoInfrequentDatabaseTasksBackground()")
         lastWiRocDeviceNameSentToServer: str | None = None
-        lastBatteryIsLow: bool = not batteryIsLow  # so it saves the new value
-        lastBatteryIsLowReceived: bool = not batteryIsLowReceived  # so it saves the new value
+        lastBatteryIsLow: bool | None = None
+        lastBatteryIsLowReceived: bool | None = None
         webServerUp = True
         while True:
             try:
@@ -144,11 +146,15 @@ class BackgroundTasks(object):
                         updateWiRocDevice = (SettingsClass.GetWebServerUp() and btAddress != "NoBTAddress"
                                              and (lastWiRocDeviceNameSentToServer != wiRocDeviceName))
 
+                        if lastBatteryIsLowReceived is None:
+                            lastBatteryIsLowReceived = not batteryIsLowReceived # so it saves the new value
                         lastBatteryIsLowReceived = BackgroundTasks.UpdateBatteryIsLowReceivedBackground(webServerUrl,
                                                                                                         apiKey,
                                                                                                         batteryIsLowReceived,
                                                                                                         btAddress,
                                                                                                         lastBatteryIsLowReceived)
+                        if lastBatteryIsLow is None:
+                            lastBatteryIsLow = not batteryIsLow # so it saves the new value
                         lastBatteryIsLow = BackgroundTasks.UpdateBatteryIsLowBackground(batteryIsLow, webServerUrl, apiKey,
                                                                                         btAddress, lastBatteryIsLow)
                         BackgroundTasks.SendSetConnectedToInternetBackground(webServerUrl, apiKey, btAddress)
@@ -176,22 +182,22 @@ class BackgroundTasks(object):
                 time.sleep(40)
 
     @staticmethod
-    def UpdateBatteryIsLowBackground(batteryIsLow, webServerURL, apiKey, btAddress, lastBatteryIsLow):
+    def UpdateBatteryIsLowBackground(batteryIsLow, webServerURL, apiKey, btAddress, lastBatteryIsLow) -> bool:
         try:
             headers = {'X-Authorization': apiKey}
 
-            if batteryIsLow and (lastBatteryIsLow is None or not (lastBatteryIsLow == '1')):
+            if batteryIsLow and (lastBatteryIsLow is None or not lastBatteryIsLow):
                 URL = webServerURL + "/api/v1/Devices/" + btAddress + "/SetBatteryIsLow"
                 resp = requests.get(url=URL, timeout=1, headers=headers, verify=False)
                 if resp.status_code == 200:
                     retDevice = resp.json()
-                    batteryIsLow = retDevice['batteryIsLow']
-            elif not batteryIsLow and (lastBatteryIsLow is None or (lastBatteryIsLow == '1')):
+                    batteryIsLow = retDevice['batteryIsLow'] == '1'
+            elif not batteryIsLow and (lastBatteryIsLow is None or lastBatteryIsLow):
                 URL = webServerURL + "/api/v1/Devices/" + btAddress + "/SetBatteryIsNormal"
                 resp = requests.get(url=URL, timeout=1, headers=headers, verify=False)
                 if resp.status_code == 200:
                     retDevice = resp.json()
-                    batteryIsLow = retDevice['batteryIsLow']
+                    batteryIsLow = retDevice['batteryIsLow'] == '1'
             return batteryIsLow
         except Exception as ex:
             BackgroundTasks.WiRocLogger.error("BackgroundTasks::UpdateBatteryIsLowBackground() Exception: " + str(ex))
@@ -202,18 +208,18 @@ class BackgroundTasks(object):
         try:
             headers = {'X-Authorization': apiKey}
 
-            if batteryIsLowReceived and (lastBatteryIsLowReceived is None or not (lastBatteryIsLowReceived == '1')):
+            if batteryIsLowReceived and (lastBatteryIsLowReceived is None or not lastBatteryIsLowReceived):
                 URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsLowReceived"
                 resp = requests.get(url=URL, timeout=1, headers=headers, verify=False)
                 if resp.status_code == 200:
                     retDevice = resp.json()
-                    batteryIsLowReceived = retDevice['batteryIsLowReceived']
-            elif not batteryIsLowReceived and (lastBatteryIsLowReceived is None or (lastBatteryIsLowReceived == '1')):
+                    batteryIsLowReceived = retDevice['batteryIsLowReceived'] == '1'
+            elif not batteryIsLowReceived and (lastBatteryIsLowReceived is None or lastBatteryIsLowReceived):
                 URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetBatteryIsNormalReceived"
                 resp = requests.get(url=URL, timeout=1, headers=headers, verify=False)
                 if resp.status_code == 200:
                     retDevice = resp.json()
-                    batteryIsLowReceived = retDevice['batteryIsLowReceived']
+                    batteryIsLowReceived = retDevice['batteryIsLowReceived'] == '1'
             return batteryIsLowReceived
         except Exception as ex:
             BackgroundTasks.WiRocLogger.error(
@@ -340,7 +346,7 @@ class BackgroundTasks(object):
         BackgroundTasks.WiRocLogger.debug("BackgroundTasks::SendMessageStatsBackground() begin")
         while True:
             try:
-                cmd = None
+                cmd = "START"
                 while not messageStatQueueCommands.empty():
                     try:
                         cmd = messageStatQueueCommands.get(False)
@@ -375,13 +381,14 @@ class BackgroundTasks(object):
                                 tb = traceback.format_exc()
                                 BackgroundTasks.WiRocLogger.error(
                                     f"BackgroundTasks::SendMessageStatsBackground() Exception: {ex} StackTrace: {tb}")
+                            time.sleep(10)
                 elif cmd == "WEBSERVERUP":
                     webServerUp = True
                 elif cmd == "WEBSERVERDOWN":
                     webServerUp = False
                 elif cmd == "EXIT":
                     return
-                time.sleep(1)
+                time.sleep(5)
             except Exception as ex:
                 BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::SendMessageStatsBackground() exception: {ex}")
                 time.sleep(1)
