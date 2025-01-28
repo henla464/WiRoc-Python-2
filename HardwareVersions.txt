@@ -8,4 +8,4 @@ v4Rev1 NanoPi, DRF1268DS, Antenna left, two usb + serial, uses NanoPi LED for bl
 V5Rev1 NanoPi, DRF1268DS, Antenna left, two usb + serial, uses NanoPi LED for blinking neater routing - AXP209 rotated left (not manufactured)
 V6Rev1 NanoPi, DRF1268DS, Antenna left, two usb + serial chip on PCB, uses NanoPi LED for blinking, flexcable connection for SRR board
 V7Rev1 NanoPi, DRF1268DS, Antenna left, two usb + serial chip on PCB, uses NanoPi LED for blinking, 1.27mm pin header connection for SRR board, RTC chip
-
+V7Rev2 NanoPi, DRF1268DS, Antenna left, two usb + serial chip on PCB, uses NanoPi LED for blinking, 1.27mm pin header connection for SRR board, RTC chip (connection for programming SRRReceiver, better connection to connector board)

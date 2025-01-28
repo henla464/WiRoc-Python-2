@@ -1,37 +1,17 @@
-1) Flash the Armbian Jammy to SD card
+1) Flash the Armbian (ubuntu version) to SD card
 
-2) Attach serial to the serial pins
+2) Copy the .not_logged_in_yet to /root/.not_logged_in_yet on the flashed SD card
 
 3) Start WiRoc with the SD card inserted
 
-4) 
+4) WiRoc should connect to Wifi, ssid WiRoc with password WiRocWiRoc
 
-Log in (if required) with
-user: root
-pw: 1234
+5) Connect with SSH, user chip, password chip
 
-5) The armbian first boot config starts...
+6) Rn sudo armbian-config
+	- Disable kernel updates
+	- Change timezone to stockholm (under Personal)
 
-Set new root password as: chip
-
-choose 1. bash as default system command shell
-
-Create a useraccount
-username: chip
-password: chip
-Set real name as Chip
-
-Select to connect to wireless
-After connecting exit with the wireless configuration (select Quit button with tab)
-
-Select n when asked about language and then select 47 (en_GB.UTF-8)
-Then select 7 Europe
-Then select 46 Sweden
-Approve 'Europe/Berlin' with 1
-
-
-6)
-Connect with SSH and log in with user chip
 
 7) run the commands below to download the install script and make it executable:
 
@@ -45,12 +25,11 @@ sudo ./install.sh
 It will ask for WiRocPython2Version. The current latest is 0.253 and should be default. Press enter to select it.
 WiRocBLEVersion, latest is currently 0.11, press enter to select it
 
-Then select the correct hardware version/revision. Yours should be option 4.
+Then select the correct hardware version/revision. Yours should be option 7.
 
 The API key is the key used to access monitor.wiroc.se. You can find it in the apikey.txt file on the WiRoc, in the chip home directory.
 
 Next you will need to approve adding the "deadsnakes" repository to apt. Press enter...
-
 
 --------------------
 
@@ -58,6 +37,8 @@ Next you will need to approve adding the "deadsnakes" repository to apt. Press e
 
 --------------------
 10) Log in again as user chip and run sudo armbian-config
+	- Disable kernel updates
+	- Change to stable package repositories
 	- Change timezone to stockholm (under Personal)
 	- Install the SD card to eMMC (select System/Install)
 		select "Boot from eMMC - system on eMMC"

@@ -8,6 +8,8 @@ from smbus2 import SMBus
 import yaml
 from datetime import timedelta, datetime, timezone
 from pathlib import Path
+import inspect
+from gpiod.line import Direction, Value
 
 
 class HardwareAbstraction(object):
@@ -26,6 +28,17 @@ class HardwareAbstraction(object):
         self.SRRnrst = None
         self.PMUIRQ = None
         self.StatusLed = None
+
+        self.line_request = None
+        self.PMUIRQLine = None
+        self.LORAenableLine = None
+        self.LORAM0Line = None
+        self.LORAauxLine = None
+        self.SRRirqLine = None
+        self.SRRnrstLine = None
+        self.StatusLedLine = None
+        self.isNewGpiod = None
+
         with open("../settings.yaml", "r") as f:
             settings = yaml.load(f, Loader=yaml.BaseLoader)
         wirocHWVersion: str = settings['WiRocHWVersion']
@@ -35,61 +48,111 @@ class HardwareAbstraction(object):
 
     def SetupPins(self):
         # gpioinfo give us gpiochip0 and gpiochip1. But gpiochip0 for the lines (pins) needed
-        chip: gpiod.chip = gpiod.chip('gpiochip0')
-        configOutput = gpiod.line_request()
-        configOutput.consumer = "wirocpython"
-        configOutput.request_type = gpiod.line_request.DIRECTION_OUTPUT
-        configInput = gpiod.line_request()
-        configInput.consumer = "wirocpython"
-        configInput.request_type = gpiod.line_request.DIRECTION_INPUT
+        chip: gpiod.chip = None
 
-        configIrq = gpiod.line_request()
-        configIrq.consumer = "wirocpython"
-        configIrq.request_type = gpiod.line_request.EVENT_RISING_EDGE
+        if inspect.ismodule(gpiod.chip):
+            self.isNewGpiod = True
+            chipPath = "/dev/gpiochip0"
 
-        self.PMUIRQ = chip.get_line(3)  # IRQ pin GPIOA3 Pin 15
-        self.PMUIRQ.request(configInput)
+            self.PMUIRQLine = 3
+            self.LORAenableLine = 2
 
-        if self.wirocHWVersion == 'v4Rev1' or self.wirocHWVersion == 'v5Rev1':
-            self.LORAaux = chip.get_line(64) # lora aux pin (corresponds to pin 19)
-            self.LORAaux.request(configInput)
+            if self.wirocHWVersion == 'v4Rev1' or self.wirocHWVersion == 'v5Rev1':
+                self.LORAM0Line = 17
+                self.LORAauxLine = 64
 
-            self.LORAenable = chip.get_line(2)  # lora enable pin (corresponds to pin 13)
-            self.LORAenable.request(configOutput)
-            self.LORAenable.set_value(1)
+                self.line_request = gpiod.request_lines(chipPath, consumer="wirocpython", config={
+                    self.LORAenableLine: gpiod.LineSettings(direction=Direction.OUTPUT),   # lora enable pin (corresponds to pin 13)
+                    self.PMUIRQLine: gpiod.LineSettings(direction=Direction.INPUT), # IRQ pin GPIOA3 Pin 15
+                    self.LORAM0Line: gpiod.LineSettings(direction=Direction.OUTPUT),  # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
+                    self.LORAauxLine: gpiod.LineSettings(direction=Direction.INPUT)    # lora aux pin (corresponds to pin 19)
+                })
+                self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
+                self.line_request.set_value(self.LORAM0Line, Value.INACTIVE)
 
-            self.LORAM0 = chip.get_line(17)  # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
-            self.LORAM0.request(configOutput)
-            self.LORAM0.set_value(0)
-        elif self.wirocHWVersionNumber >= 6:
-            self.LORAaux = chip.get_line(64)  # lora aux pin (corresponds to pin 19)
-            self.LORAaux.request(configInput)
+            elif self.wirocHWVersionNumber >= 6:
+                self.SRRirqLine = 6
+                self.LORAM0Line = 17
+                self.LORAauxLine = 64
+                self.SRRnrstLine = 67
+                self.line_request = gpiod.request_lines(chipPath, consumer="wirocpython", config={
+                    self.LORAenableLine: gpiod.LineSettings(direction=Direction.OUTPUT),  # lora enable pin (corresponds to pin 13)
+                    self.PMUIRQLine: gpiod.LineSettings(direction=Direction.INPUT),  # IRQ pin GPIOA3 Pin 15
+                    self.SRRirqLine : gpiod.LineSettings(direction=Direction.INPUT),  # SRR_IRQ input interrupt message available (corresponds to pin 12 GPIOA6)
+                    self.LORAM0Line: gpiod.LineSettings(direction=Direction.OUTPUT),      # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
+                    self.LORAauxLine: gpiod.LineSettings(direction=Direction.INPUT),       # lora aux pin (corresponds to pin 19)
+                    self.SRRnrstLine: gpiod.LineSettings(direction=Direction.OUTPUT)  # SRR_NRST reset SRR (corresponds to pin 24 GPIOC3)
+                })
+                self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
+                self.line_request.set_value(self.LORAM0Line, Value.INACTIVE)
+                self.line_request.set_value(self.SRRnrstLine, Value.ACTIVE)
 
-            self.LORAenable = chip.get_line(2) # lora enable pin (corresponds to pin 13)
-            self.LORAenable.request(configOutput)
-            self.LORAenable.set_value(1)
+            else:
+                self.LORAauxLine = 0
+                self.StatusLedLine = 6
+                self.line_request = gpiod.request_lines(chipPath, consumer="wirocpython", config={
+                    self.LORAenableLine: gpiod.LineSettings(direction=Direction.OUTPUT),  # lora enable pin (corresponds to pin 13)
+                    self.PMUIRQLine: gpiod.LineSettings(direction=Direction.INPUT),  # IRQ pin GPIOA3 Pin 15
+                    self.LORAauxLine: gpiod.LineSettings(direction=Direction.INPUT),      # lora aux pin
+                    self.StatusLedLine: gpiod.LineSettings(direction=Direction.OUTPUT)    # status led pin GPIOA6 Pin 12, linux gpio 6
+                })
+                self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
 
-            self.LORAM0 = chip.get_line(17)  # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
-            self.LORAM0.request(configOutput)
-            self.LORAM0.set_value(0)
-
-            self.SRRirq = chip.get_line(6) # SRR_IRQ input interrupt message available (corresponds to pin 12 GPIOA6)
-            self.SRRirq.request(configInput)
-
-            self.SRRnrst = chip.get_line(67) # SRR_NRST reset SRR (corresponds to pin 24 GPIOC3)
-            self.SRRnrst.request(configOutput)
-            self.SRRnrst.set_value(1)
         else:
-            self.LORAaux = chip.get_line(0)  # lora aux pin
-            self.LORAaux.request(configInput)
+            self.isNewGpiod = False
+            chip = gpiod.chip('gpiochip0')
 
-            self.LORAenable = chip.get_line(2)  # lora enable pin (corresponds to pin 13)
-            self.LORAenable.request(configOutput)
-            self.LORAenable.set_value(1)
+            configOutput = gpiod.line_request()
+            configOutput.consumer = "wirocpython"
+            configOutput.request_type = gpiod.line_request.DIRECTION_OUTPUT
+            configInput = gpiod.line_request()
+            configInput.consumer = "wirocpython"
+            configInput.request_type = gpiod.line_request.DIRECTION_INPUT
 
-            self.StatusLed = chip.get_line(6)  # status led pin GPIOA6 Pin 12, linux gpio 6
-            self.StatusLed.request(configOutput)
-            self.StatusLed.set_value(1)
+
+            self.PMUIRQ = chip.get_line(3)  # IRQ pin GPIOA3 Pin 15
+            self.PMUIRQ.request(configInput)
+
+            if self.wirocHWVersion == 'v4Rev1' or self.wirocHWVersion == 'v5Rev1':
+                self.LORAaux = chip.get_line(64) # lora aux pin (corresponds to pin 19)
+                self.LORAaux.request(configInput)
+
+                self.LORAenable = chip.get_line(2)  # lora enable pin (corresponds to pin 13)
+                self.LORAenable.request(configOutput)
+                self.LORAenable.set_value(1)
+
+                self.LORAM0 = chip.get_line(17)  # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
+                self.LORAM0.request(configOutput)
+                self.LORAM0.set_value(0)
+            elif self.wirocHWVersionNumber >= 6:
+                self.LORAaux = chip.get_line(64)  # lora aux pin (corresponds to pin 19)
+                self.LORAaux.request(configInput)
+
+                self.LORAenable = chip.get_line(2) # lora enable pin (corresponds to pin 13)
+                self.LORAenable.request(configOutput)
+                self.LORAenable.set_value(1)
+
+                self.LORAM0 = chip.get_line(17)  # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
+                self.LORAM0.request(configOutput)
+                self.LORAM0.set_value(0)
+
+                self.SRRirq = chip.get_line(6) # SRR_IRQ input interrupt message available (corresponds to pin 12 GPIOA6)
+                self.SRRirq.request(configInput)
+
+                self.SRRnrst = chip.get_line(67) # SRR_NRST reset SRR (corresponds to pin 24 GPIOC3)
+                self.SRRnrst.request(configOutput)
+                self.SRRnrst.set_value(1)
+            else:
+                self.LORAaux = chip.get_line(0)  # lora aux pin
+                self.LORAaux.request(configInput)
+
+                self.LORAenable = chip.get_line(2)  # lora enable pin (corresponds to pin 13)
+                self.LORAenable.request(configOutput)
+                self.LORAenable.set_value(1)
+
+                self.StatusLed = chip.get_line(6)  # status led pin GPIOA6 Pin 12, linux gpio 6
+                self.StatusLed.request(configOutput)
+                self.StatusLed.set_value(1)
 
     def GetSISerialPorts(self):
         if self.wirocHWVersionNumber >= 4:
@@ -98,36 +161,64 @@ class HardwareAbstraction(object):
         return []
 
     def EnableLora(self):
-        self.LORAenable.set_value(0)
+        if self.isNewGpiod:
+            self.line_request.set_value(self.LORAenableLine, Value.INACTIVE)
+        else:
+            self.LORAenable.set_value(0)
 
     def DisableLora(self):
-        self.LORAenable.set_value(1)
+        if self.isNewGpiod:
+            self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
+        else:
+            self.LORAenable.set_value(1)
 
     def EnableSRR(self):
-        if self.SRRnrst is not None:
-            self.SRRnrst.set_value(1)
+        if self.isNewGpiod:
+            if self.SRRnrstLine is not None:
+                self.line_request.set_value(self.SRRnrstLine, Value.ACTIVE)
+        else:
+            if self.SRRnrst is not None:
+                self.SRRnrst.set_value(1)
 
     def DisableSRR(self):
-        if self.SRRnrst is not None:
-            self.SRRnrst.set_value(0)
+        if self.isNewGpiod:
+            if self.SRRnrstLine is not None:
+                self.line_request.set_value(self.SRRnrstLine, Value.INACTIVE)
+        else:
+            if self.SRRnrst is not None:
+                self.SRRnrst.set_value(0)
 
     def GetSRRIRQValue(self):
-        if self.SRRirq is not None:
-            return self.SRRirq.get_value() == 1
+        if self.isNewGpiod:
+            if self.SRRirqLine is not None:
+                return self.line_request.get_value(self.SRRirqLine) == Value.ACTIVE
         else:
-            return False
+            if self.SRRirq is not None:
+                return self.SRRirq.get_value() == 1
+            else:
+                return False
 
     def GetIsPMUIRQ(self):
-        if self.PMUIRQ is not None:
-            irqValue = self.PMUIRQ.get_value()
-            if irqValue == 0:
-                Path('/home/chip/PMUIRQ.txt').touch()
-            return self.PMUIRQ.get_value() == 0
+        if self.isNewGpiod:
+            if self.PMUIRQLine is not None:
+                irqValue = (self.line_request.get_value(self.PMUIRQLine) == Value.INACTIVE)
+                if irqValue:
+                    Path('/home/chip/PMUIRQ.txt').touch()
+                return irqValue
         else:
-            return False
+            if self.PMUIRQ is not None:
+                irqValue = self.PMUIRQ.get_value()
+                if irqValue == 0:
+                    Path('/home/chip/PMUIRQ.txt').touch()
+                return self.PMUIRQ.get_value() == 0
+            else:
+                return False
 
     def GetIsTransmittingReceiving(self):
-        return self.LORAaux.get_value() == 0  # lora aux pin (corresponds to pin 19)
+        if self.isNewGpiod:
+            return self.line_request.get_value(self.LORAauxLine) == Value.INACTIVE
+        else:
+            return self.LORAaux.get_value() == 0  # lora aux pin (corresponds to pin 19)
 
     def GetWifiSignalStrength(self):
         wifiInUseSSIDSignal = str(subprocess.check_output(["nmcli", "-t", "-f", "in-use,ssid,signal", "device", "wifi"]))

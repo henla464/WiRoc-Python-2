@@ -5,17 +5,17 @@
 
 
 echo "This script is tested on OS release:"
-echo "Distributor ID:	Ubuntu"
-echo "Description:	Ubuntu 22.04.3 LTS"
-echo "Release:	22.04"
-echo "Codename:	jammy"
+echo "Armbian Linux 6.6.72-current-sunxi"
+echo "Description:	Armbian_community 25.2.0-trunk.377 noble"
+echo "Release:	24.04"
+echo "Codename:	noble"
 
 # Current OS
 echo ""
 echo "Current release:"
 lsb_release --all
 
-WiRocPython2Version="0.256"
+WiRocPython2Version="0.278"
 echo "Which WiRocPython2Version? [$WiRocPython2Version]"
 read wPOption
 if ! [[ -z "$wPOption" ]];
@@ -23,7 +23,7 @@ then
     WiRocPython2Version=$wPOption
 fi
 
-WiRocBLEVersion="0.11"
+WiRocBLEVersion="0.14"
 echo "Which WiRocBLEVersion? [$WiRocBLEVersion]"
 read wBLEOption
 if ! [[ -z "$wBLEOption" ]];
@@ -31,7 +31,8 @@ then
     WiRocBLEVersion=$wBLEOption
 fi
 
-echo "Which hardware is this runnig on: 3: NanoPi, 4: NanoPi+SerialPort, 5: NanoPi+SerialPort+SRR, 6: NanoPi+SerialPort+SRR with pin headers"
+echo "Which hardware is this runnig on: 3: NanoPi, 4: NanoPi+SerialPort, 5: NanoPi+SerialPort+SRR, 6: NanoPi+SerialPort+SRR with pin headers, 7: NanoPi+SerialPort+SRR with pin headers (programming pins for SRR)"
+
 read hwOption
 WiRocHWVersion="v3Rev2"
 if [[ $hwOption = 1 ]]; then
@@ -51,6 +52,9 @@ if [[ $hwOption = 5 ]]; then
 fi
 if [[ $hwOption = 6 ]]; then
     WiRocHWVersion="v7Rev1"
+fi
+if [[ $hwOption = 7 ]]; then
+    WiRocHWVersion="v7Rev2"
 fi
 
 
@@ -74,8 +78,8 @@ EOF
 echo "update"
 #read line
 # update app list
-add-apt-repository ppa:deadsnakes/ppa
-apt-get update
+#add-apt-repository ppa:deadsnakes/ppa
+#apt-get update
 
 apt-get -y intall net-tools
 apt-get -y install git
@@ -146,8 +150,10 @@ python3 -m pip install --ignore-installed PyGObject
 pip3 install dbus-python
 
 #apt-get -y install python-dbus
-cp /usr/lib/python3/dist-packages/_dbus_bindings.cpython-310-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/_dbus_bindings.cpython-311-arm-linux-gnueabihf.so
-cp /usr/lib/python3/dist-packages/_dbus_glib_bindings.cpython-310-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/_dbus_glib_bindings.cpython-311-arm-linux-gnueabihf.so
+#cp /usr/lib/python3/dist-packages/_dbus_bindings.cpython-310-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/_dbus_bindings.cpython-311-arm-linux-gnueabihf.so
+#cp /usr/lib/python3/dist-packages/_dbus_glib_bindings.cpython-310-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/_dbus_glib_bindings.cpython-311-arm-linux-gnueabihf.so
+ln -s /usr/lib/python3/dist-packages/_dbus_bindings.cpython-312-arm-linux-gnueabihf.so _dbus_bindings.so
+ln -s _dbus_glib_bindings.cpython-312-arm-linux-gnueabihf.so _dbus_glib_bindings.so
 
 
 pip3 install gpiod
@@ -198,14 +204,13 @@ apt-get -y install python3-numpy
 
 
 echo "Install bluetooth stuff"
-#read line
-#Install bluetooth stuff
 
-cat << EOF > /etc/apt/preferences.d/bluez
-Package: bluez
-Pin: version 5.50-1.2~deb10u2
-Pin-Priority: 999
-EOF
+# this old version no longer available on newer armbian
+#cat << EOF > /etc/apt/preferences.d/bluez
+#Package: bluez
+#Pin: version 5.50-1.2~deb10u2
+#Pin-Priority: 999
+#EOF
 
 # There is a problem with 5.50-1.2~deb10u3 that makes BLE writes and reads give errors. "u2" works. And it seems it is enough to downgrade bluez.
 # Newer version seem to work too: https://www.makeuseof.com/install-bluez-latest-version-on-ubuntu/ (no need for --experimental) (5.66)
@@ -229,7 +234,6 @@ apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev
 #EOF
 
 echo "WiRoc-BLE"
-#pip3 install dbus
 
 #install WiRoc-BLE
 wget -O WiRoc-BLE-API.tar.gz https://github.com/henla464/WiRoc-BLE-API/archive/v$WiRocBLEVersion.tar.gz
@@ -272,20 +276,14 @@ systemctl enable /etc/systemd/system/WiRocPython.service
 systemctl enable /etc/systemd/system/WiRocPythonWS.service
 
 
-echo "install wiroc-monitor"
-#read line
-#Install WiRoc-Monitor
+echo "install wiroc-watchdog"
 mkdir WiRoc-WatchDog
-#wget -O /home/chip/WiRoc-WatchDog/gpio.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/gpio.sh
-#wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.sh
 wget -O /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.py https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRoc-WatchDog.py
-#chmod +x /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.sh
 chmod +x /home/chip/WiRoc-WatchDog/WiRoc-WatchDog.py
 wget -O /etc/systemd/system/WiRocWatchDog.service https://raw.githubusercontent.com/henla464/WiRoc-WatchDog/master/WiRocWatchDog.service
 systemctl enable /etc/systemd/system/WiRocWatchDog.service
 
 echo "add user to dialout"
-#read line
 sudo usermod -a -G dialout $USER
 
 
@@ -322,15 +320,8 @@ then
     sed -i '$a param_uart3_rtscts=1' /boot/armbianEnv.txt
 fi
 
-# It seems this file does not exist anymore
-#if ! grep -Fxq "PORT=ttyS3" /etc/default/ap6212
-#then
-#    echo "Change to use ttyS3 for bluetooth"
-#    sed -i 's/PORT=ttyS1/PORT=ttyS3/' /etc/default/ap6212
-#fi
-
 # Add the RTC module
-if [ "$hwVersion" = "v7Rev1" ]
+if [ "$hwVersion" = "v7Rev1" ] || [ "$hwVersion" = "v7Rev2" ]
 then
   if ! grep -Fxq "rtc_pcf8563" /etc/modules
   then
@@ -358,27 +349,28 @@ fi
 #
 #
 
-if [ "$hwVersion" = "v1Rev1" ] || [ "$hwVersion" = "v2Rev1" ] || [ "$hwVersion" = "v3Rev1" ] || [ "$hwVersion" = "v3Rev2" || [ "$hwVersion" = "v4Rev1" || [ "$hwVersion" = "v5Rev1" || [ "$hwVersion" = "v6Rev1"]
+if [ "$hwVersion" = "v1Rev1" ] || [ "$hwVersion" = "v2Rev1" ] || [ "$hwVersion" = "v3Rev1" ] || [ "$hwVersion" = "v3Rev2" ] || [ "$hwVersion" = "v4Rev1" ] || [ "$hwVersion" = "v5Rev1" ] || [ "$hwVersion" = "v6Rev1" ]
 then
    :
 else
    systemctl disable chrony
 fi
 
-if ! grep -Fq 'compat' /lib/systemd/system/bluetooth.service
-then
-    echo "change to compat mode"
-    sed -i -E "s@(ExecStart=).*@ExecStart=/usr/lib/bluetooth/bluetoothd --compat --noplugin=sap@" /lib/systemd/system/bluetooth.service
-    systemctl daemon-reload
-else
-    echo "compat"
-fi
+# 
+#if ! grep -Fq 'compat' /lib/systemd/system/bluetooth.service
+#then
+#    echo "change to compat mode"
+#    sed -i -E "s@(ExecStart=).*@ExecStart=/usr/lib/bluetooth/bluetoothd --compat --noplugin=sap@" /lib/systemd/system/bluetooth.service
+#    systemctl daemon-reload
+#else
+#    echo "compat"
+#fi
 
-
-if ! grep -Fxq 'ExecStartPost=/usr/bin/sdptool add SP' /lib/systemd/system/bluetooth.service
+# changed to new location for bluetooth.service
+if ! grep -Fxq 'ExecStartPost=/usr/bin/sdptool add SP' /usr/lib/systemd/system/bluetooth.service
 then
     echo "add SP profile"
-    sed -i '/ExecStart=.*/a ExecStartPost=/usr/bin/sdptool add SP' /lib/systemd/system/bluetooth.service
+    sed -i '/ExecStart=.*/a ExecStartPost=/usr/bin/sdptool add SP' /usr/lib/systemd/system/bluetooth.service
     systemctl daemon-reload
 else
     echo "SP profile already exist"
