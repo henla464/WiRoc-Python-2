@@ -15,7 +15,7 @@ echo ""
 echo "Current release:"
 lsb_release --all
 
-WiRocPython2Version="0.278"
+WiRocPython2Version="0.279"
 echo "Which WiRocPython2Version? [$WiRocPython2Version]"
 read wPOption
 if ! [[ -z "$wPOption" ]];
