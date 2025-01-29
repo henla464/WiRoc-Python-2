@@ -326,15 +326,15 @@ else
    systemctl disable chrony
 fi
 
-# 
-#if ! grep -Fq 'compat' /lib/systemd/system/bluetooth.service
-#then
-#    echo "change to compat mode"
-#    sed -i -E "s@(ExecStart=).*@ExecStart=/usr/lib/bluetooth/bluetoothd --compat --noplugin=sap@" /lib/systemd/system/bluetooth.service
-#    systemctl daemon-reload
-#else
-#    echo "compat"
-#fi
+if ! grep -Fq 'compat' /lib/systemd/system/bluetooth.service
+then
+    echo "change to compat mode"
+    # previous exec path: /usr/lib/bluetooth/bluetoothd
+    sed -i -E "s@(ExecStart=).*@ExecStart=/usr/libexec/bluetooth/bluetoothd --compat --noplugin=sap@" /lib/systemd/system/bluetooth.service
+    systemctl daemon-reload
+else
+    echo "compat"
+fi
 
 # changed to new location for bluetooth.service
 if ! grep -Fxq 'ExecStartPost=/usr/bin/sdptool add SP' /usr/lib/systemd/system/bluetooth.service

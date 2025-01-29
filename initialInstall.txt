@@ -7,6 +7,7 @@
 4) WiRoc should connect to Wifi, ssid WiRoc with password WiRocWiRoc
 
 5) Connect with SSH, user root, password 1234
+	- Wait for it to create the chip user etc
 
 6) Run sudo armbian-config
 	- Disable kernel updates
