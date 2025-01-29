@@ -81,11 +81,11 @@ echo "update"
 #add-apt-repository ppa:deadsnakes/ppa
 #apt-get update
 
-apt-get -y intall net-tools
+apt-get -y install net-tools
 apt-get -y install git
 apt-get -y install i2c-tools
-apt-get -y install python3.11
-update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+#apt-get -y install python3.11
+#update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
 
 echo "zip"
 apt-get -y install zip
@@ -98,91 +98,27 @@ echo "sqlite3"
 apt-get -y install libsqlite3-dev
 
 echo "python/pip"
-#read line
-#Install python/pip
-
 
 #apt-get -y install python3
 apt-get -y install python3-pip
 apt-get -y install python3-setuptools
 apt-get -y install python3-dev
-apt-get -y install python3.11-distutils
+#apt-get -y install python3.11-distutils
 apt-get -y install gpiod
-pip3 install -U setuptools
-pip3 install wheel
-pip3 install requests
-pip3 install cachetools
-#pip3 install reedsolo
-pip3 install cython
 
+# This allows pip to do system wide installs. Probably should change to use virtual environments
+python3 -m pip config set global.break-system-packages true
 
-apt-get -y install python3.11-dev
-pip3 install build
-git clone https://github.com/tomerfiliba-org/reedsolomon.git
-cd reedsolomon
-pip3 install virtualenv
-python3 -sBm build --config-setting="--build-option=--cythonize"
-#export SETUPTOOLS_USE_DISTUTILS=stdlib 
-export DEB_PYTHON_INSTALL_LAYOUT=deb_system
-pip3 install dist/reedsolo-2.1.2b1-cp311-cp311-linux_armv7l.whl
-cd /home/chip
-
-
-#pip install reedsolo --pre
-#pip3 install --upgrade reedsolo --no-binary "reedsolo" --no-cache --config-setting="--build-option=--cythonize" --use-pep517 --isolated --verbose
-#pip3 install git+https://github.com/henla464/reedsolomon.git
-
-# Dbus stuff required for BLE
-#apt install libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-4.0
-#pip3 install pycairo
-#pip3 install pgi
-#pip3 install dasbus
-#pip3 install pydbus
-#
-
-
-apt-get -y install libgirepository1.0-dev
-apt-get -y install libcairo2-dev 
-apt-get -y install pkg-config
-export SETUPTOOLS_USE_DISTUTILS=stdlib 
-pip3 install pycairo
-python3 -m pip install --ignore-installed PyGObject
-pip3 install dbus-python
-
-#apt-get -y install python-dbus
-#cp /usr/lib/python3/dist-packages/_dbus_bindings.cpython-310-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/_dbus_bindings.cpython-311-arm-linux-gnueabihf.so
-#cp /usr/lib/python3/dist-packages/_dbus_glib_bindings.cpython-310-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/_dbus_glib_bindings.cpython-311-arm-linux-gnueabihf.so
-ln -s /usr/lib/python3/dist-packages/_dbus_bindings.cpython-312-arm-linux-gnueabihf.so _dbus_bindings.so
-ln -s _dbus_glib_bindings.cpython-312-arm-linux-gnueabihf.so _dbus_glib_bindings.so
-
-
+# WiRoc-Python
 pip3 install gpiod
-
-echo "flask"
-#read line
-#Install flask
 pip3 install --ignore-installed flask
 pip3 install --ignore-installed flask-swagger-ui
-
-echo "pyserial"
-#read line
-#Install serial
 pip3 install pyserial
-
-echo "jsonpickle"
-#read line
-#Install jsonpickle
 pip3 install jsonpickle
-
 pip3 install pyyaml
-
-echo "pyudev"
-#read line
-#Install pyudev
 pip3 install pyudev
 pip3 install daemonize
 pip3 install smbus2
-
 pip3 install Adafruit-Blinka
 pip3 install adafruit-circuitpython-ssd1306
 #not actually used but it is loaded by gpio because it thinks chip is bb
@@ -192,12 +128,46 @@ pip3 install adafruit-circuitpython-ssd1306
 #python3 setup.py install
 #cd ..
 
+
+pip3 install -U setuptools
+pip3 install wheel
+pip3 install requests
+pip3 install cachetools
+pip3 install cython
+
+
+pip3 install build
+git clone https://github.com/tomerfiliba-org/reedsolomon.git
+cd reedsolomon
+pip3 install virtualenv
+python3 -sBm build --config-setting="--build-option=--cythonize"
+export DEB_PYTHON_INSTALL_LAYOUT=deb_system
+# below filename changes with python version
+pip3 install dist/reedsolo-2.1.2b1-cp312-cp312-linux_armv7l.whl
+cd /home/chip
+
+
+#pip install reedsolo --pre
+#pip3 install --upgrade reedsolo --no-binary "reedsolo" --no-cache --config-setting="--build-option=--cythonize" --use-pep517 --isolated --verbose
+#pip3 install git+https://github.com/henla464/reedsolomon.git
+
+apt-get -y install libgirepository1.0-dev
+apt-get -y install libcairo2-dev 
+apt-get -y install pkg-config
+pip3 install pycairo
+python3 -m pip install --ignore-installed PyGObject
+
+
+# WiRoc-BLE-API
+pip3 install dbus-python
+ln -s /usr/lib/python3/dist-packages/_dbus_bindings.cpython-312-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/_dbus_bindings.so
+ln -s /usr/lib/python3/dist-packages/_dbus_glib_bindings.cpython-312-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/_dbus_glib_bindings.so
+
+
 #pip3 install Adafruit_SSD1306
 apt-get -y install libtiff5-dev libjpeg-dev zlib1g-dev
 apt-get -y install python3 python3-dev build-essential libssl-dev libffi-dev libxml2-dev libxslt1-dev zlib1g-dev
 apt-get -y install libfreetype6-dev
-#libjpeg62-turbo-dev
-export SETUPTOOLS_USE_DISTUTILS=stdlib
 pip3 install pillow
 #apt-get install python3-pil
 apt-get -y install python3-numpy
@@ -245,7 +215,7 @@ chmod ugo+x installWiRocBLEAPI.sh
 echo "Update WiRocBLEAPI version"
 
 echo "WiRoc-Python-2"
-wget https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/installWiRocPython.py
+wget -O installWiRocPython.py https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/installWiRocPython.py
 chmod ugo+x installWiRocPython.py
 ./installWiRocPython.py $WiRocPython2Version
 

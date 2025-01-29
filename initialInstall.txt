@@ -6,14 +6,15 @@
 
 4) WiRoc should connect to Wifi, ssid WiRoc with password WiRocWiRoc
 
-5) Connect with SSH, user chip, password chip
+5) Connect with SSH, user root, password 1234
 
-6) Rn sudo armbian-config
+6) Run sudo armbian-config
 	- Disable kernel updates
-	- Change timezone to stockholm (under Personal)
 
+7a) Log out and then log in again as user: chip password: chip
 
-7) run the commands below to download the install script and make it executable:
+7b)
+run the commands below to download the install script and make it executable:
 
 
 wget https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/install.sh
@@ -22,14 +23,12 @@ sudo chmod ugo+x install.sh
 8) Time to run the install script:
 sudo ./install.sh
 
-It will ask for WiRocPython2Version. Press enter to select it the default.
-WiRocBLEVersion, press enter to select default
+It will ask for WiRocPython2Version. The current latest is 0.253 and should be default. Press enter to select it.
+WiRocBLEVersion, latest is currently 0.11, press enter to select it
 
 Then select the correct hardware version/revision. Yours should be option 7.
 
 The API key is the key used to access monitor.wiroc.se. You can find it in the apikey.txt file on the WiRoc, in the chip home directory.
-
-Next you will need to approve adding the "deadsnakes" repository to apt. Press enter...
 
 --------------------
 
@@ -37,9 +36,7 @@ Next you will need to approve adding the "deadsnakes" repository to apt. Press e
 
 --------------------
 10) Log in again as user chip and run sudo armbian-config
-	- Disable kernel updates
 	- Change to stable package repositories
-	- Change timezone to stockholm (under Personal)
 	- Install the SD card to eMMC (select System/Install)
 		select "Boot from eMMC - system on eMMC"
 		select ext4 filesystem
