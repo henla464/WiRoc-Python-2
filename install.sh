@@ -2,6 +2,27 @@
 #systemctl disable apt-daily.service # disable run when system boot
 #systemctl disable apt-daily.timer   # disable timer run
 
+# This parses yaml files and outputs rows on the format
+# variable="value"
+# group_varname="value2"
+#
+# use it with "eval $(parse_yaml sample.yml)"
+function parse_yaml {
+   local prefix=$2
+   local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+   sed -ne "s|^\($s\):|\1|" \
+        -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
+   awk -F$fs '{
+      indent = length($1)/2;
+      vname[indent] = $2;
+      for (i in vname) {if (i > indent) {delete vname[i]}}
+      if (length($3) > 0) {
+         vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+         printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
+      }
+   }'
+}
 
 
 echo "This script is tested on OS release:"
@@ -15,77 +36,87 @@ echo ""
 echo "Current release:"
 lsb_release --all
 
-WiRocPython2Version="0.279"
-echo "Which WiRocPython2Version? [$WiRocPython2Version]"
-read wPOption
-if ! [[ -z "$wPOption" ]];
-then
-    WiRocPython2Version=$wPOption
-fi
+# Get the variables from the root settings yaml if it exists
+SETTINGSFILE=/root/settings.yaml
+if test -f "$SETTINGSFILE"; then
+  eval $(parse_yaml "$SETTINGSFILE")
+else
+  WiRocPythonVersion="0.279"
+  echo "Which WiRocPython2Version? [$WiRocPythonVersion]"
+  read wPOption
+  if ! [[ -z "$wPOption" ]];
+  then
+    WiRocPythonVersion=$wPOption
+  fi
 
-WiRocBLEVersion="0.14"
-echo "Which WiRocBLEVersion? [$WiRocBLEVersion]"
-read wBLEOption
-if ! [[ -z "$wBLEOption" ]];
-then
+  WiRocBLEVersion="0.14"
+  echo "Which WiRocBLEVersion? [$WiRocBLEVersion]"
+  read wBLEOption
+  if ! [[ -z "$wBLEOption" ]];
+  then
     WiRocBLEVersion=$wBLEOption
-fi
+  fi
 
-echo "Which hardware is this runnig on: 3: NanoPi, 4: NanoPi+SerialPort, 5: NanoPi+SerialPort+SRR, 6: NanoPi+SerialPort+SRR with pin headers, 7: NanoPi+SerialPort+SRR with pin headers (programming pins for SRR)"
+  echo "Which hardware is this runnig on:"
+  echo "3: NanoPi"
+  echo "4: NanoPi+SerialPort"
+  echo "5: NanoPi+SerialPort+SRR"
+  echo "6: NanoPi+SerialPort+SRR with pin headers"
+  echo "7: NanoPi+SerialPort+SRR with pin headers (programming pins for SRR)"
 
-read hwOption
-WiRocHWVersion="v3Rev2"
-if [[ $hwOption = 1 ]]; then
+  read hwOption
+  WiRocHWVersion="v3Rev2"
+  if [[ $hwOption = 1 ]]; then
     WiRocHWVersion="v2Rev1"
-fi
-if [[ $hwOption = 2 ]]; then
+  fi
+  if [[ $hwOption = 2 ]]; then
     WiRocHWVersion="v2Rev2"
-fi
-if [[ $hwOption = 3 ]]; then
+  fi
+  if [[ $hwOption = 3 ]]; then
     WiRocHWVersion="v3Rev2"
-fi
-if [[ $hwOption = 4 ]]; then
+  fi
+  if [[ $hwOption = 4 ]]; then
     WiRocHWVersion="v4Rev1"
-fi
-if [[ $hwOption = 5 ]]; then
+  fi
+  if [[ $hwOption = 5 ]]; then
     WiRocHWVersion="v6Rev1"
-fi
-if [[ $hwOption = 6 ]]; then
+  fi
+  if [[ $hwOption = 6 ]]; then
     WiRocHWVersion="v7Rev1"
-fi
-if [[ $hwOption = 7 ]]; then
+  fi
+  if [[ $hwOption = 7 ]]; then
     WiRocHWVersion="v7Rev2"
+  fi
 fi
 
-
-
-echo "Type the apikey, followed by [ENTER]:"
-read apikey
+# if apikey is available in root folder then use it
+APIKEYFILE=/root/apikey.txt
+if test -f "$APIKEYFILE"; then
+  echo "$APIKEYFILE exists."
+  cp /root/apikey.txt .
+else
+  echo "Type the apikey, followed by [ENTER]:"
+  read apikey
 cat << EOF > apikey.txt
 ${apikey}
 EOF
+fi
+
+
 
 
 echo "Settings.yaml"
 cat << EOF > settings.yaml
 WiRocDeviceName: WiRoc Device
-WiRocPythonVersion: ${WiRocPython2Version}
+WiRocPythonVersion: ${WiRocPythonVersion}
 WiRocBLEAPIVersion: ${WiRocBLEVersion}
 WiRocHWVersion: ${WiRocHWVersion}
 EOF
 
-
-echo "update"
-#read line
-# update app list
-#add-apt-repository ppa:deadsnakes/ppa
-#apt-get update
-
 apt-get -y install net-tools
 apt-get -y install git
 apt-get -y install i2c-tools
-#apt-get -y install python3.11
-#update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+
 
 echo "zip"
 apt-get -y install zip
@@ -93,20 +124,15 @@ cd /home/chip/
 mkdir LogArchive
 
 echo "sqlite3"
-#read line
-#Install sqlite3
 apt-get -y install libsqlite3-dev
 
 echo "python/pip"
-
-#apt-get -y install python3
 apt-get -y install python3-pip
 apt-get -y install python3-setuptools
 apt-get -y install python3-dev
-#apt-get -y install python3.11-distutils
 apt-get -y install gpiod
 
-# This allows pip to do system wide installs. Probably should change to use virtual environments
+# This allows pip to do system wide installs. Probably should change to use virtual environments though
 python3 -m pip config set global.break-system-packages true
 
 # WiRoc-Python
@@ -128,6 +154,17 @@ pip3 install adafruit-circuitpython-ssd1306
 #python3 setup.py install
 #cd ..
 
+apt-get -y install libgirepository1.0-dev
+apt-get -y install libcairo2-dev 
+apt-get -y install pkg-config
+pip3 install pycairo
+python3 -m pip install --ignore-installed PyGObject
+
+apt-get -y install libtiff5-dev libjpeg-dev zlib1g-dev
+apt-get -y install python3-dev build-essential libssl-dev libffi-dev libxml2-dev libxslt1-dev zlib1g-dev
+apt-get -y install libfreetype6-dev
+apt-get -y install python3-numpy
+pip3 install pillow
 
 pip3 install -U setuptools
 pip3 install wheel
@@ -151,12 +188,6 @@ cd /home/chip
 #pip3 install --upgrade reedsolo --no-binary "reedsolo" --no-cache --config-setting="--build-option=--cythonize" --use-pep517 --isolated --verbose
 #pip3 install git+https://github.com/henla464/reedsolomon.git
 
-apt-get -y install libgirepository1.0-dev
-apt-get -y install libcairo2-dev 
-apt-get -y install pkg-config
-pip3 install pycairo
-python3 -m pip install --ignore-installed PyGObject
-
 
 # WiRoc-BLE-API
 pip3 install dbus-python
@@ -164,44 +195,14 @@ ln -s /usr/lib/python3/dist-packages/_dbus_bindings.cpython-312-arm-linux-gnueab
 ln -s /usr/lib/python3/dist-packages/_dbus_glib_bindings.cpython-312-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/_dbus_glib_bindings.so
 
 
-#pip3 install Adafruit_SSD1306
-apt-get -y install libtiff5-dev libjpeg-dev zlib1g-dev
-apt-get -y install python3 python3-dev build-essential libssl-dev libffi-dev libxml2-dev libxslt1-dev zlib1g-dev
-apt-get -y install libfreetype6-dev
-pip3 install pillow
-#apt-get install python3-pil
-apt-get -y install python3-numpy
 
 
 echo "Install bluetooth stuff"
-
-# this old version no longer available on newer armbian
-#cat << EOF > /etc/apt/preferences.d/bluez
-#Package: bluez
-#Pin: version 5.50-1.2~deb10u2
-#Pin-Priority: 999
-#EOF
 
 # There is a problem with 5.50-1.2~deb10u3 that makes BLE writes and reads give errors. "u2" works. And it seems it is enough to downgrade bluez.
 # Newer version seem to work too: https://www.makeuseof.com/install-bluez-latest-version-on-ubuntu/ (no need for --experimental) (5.66)
 # bluez=5.50-1.2~deb10u2
 apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev
-
-
-
-
-#wget -O WiRoc-Python-2.tar.gz https://github.com/henla464/WiRoc-Python-2/archive/v$WiRocPython2Version.tar.gz
-#rm -rf WiRoc-Python-2
-#tar xvfz WiRoc-Python-2.tar.gz WiRoc-Python-2-$WiRocPython2Version
-#mv WiRoc-Python-2-$WiRocPython2Version WiRoc-Python-2
-#mv WiRoc-Python-2/installWiRocPython.sh .
-#chmod ugo+x installWiRocPython.sh
-
-
-#echo "Update WiRocPython version"
-#cat << EOF > WiRocPythonVersion.txt
-#${WiRocPython2Version}
-#EOF
 
 echo "WiRoc-BLE"
 
@@ -217,26 +218,25 @@ echo "Update WiRocBLEAPI version"
 echo "WiRoc-Python-2"
 wget -O installWiRocPython.py https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/installWiRocPython.py
 chmod ugo+x installWiRocPython.py
-./installWiRocPython.py $WiRocPython2Version
+./installWiRocPython.py $WiRocPythonVersion
+
 
 echo "install startup scripts"
-#read line
-#Startup scripts:
 mkdir WiRoc-StartupScripts
 wget -O /home/chip/WiRoc-StartupScripts/Startup.sh https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/Startup.sh
 chmod +x /home/chip/WiRoc-StartupScripts/Startup.sh
-if [[ $(hostname -s) = nanopiair ]]; then
-    echo "nanopiair"
-    wget -O /usr/bin/devmem2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/devmem2
-    chmod ugo+x /usr/bin/devmem2
-    wget -O /etc/systemd/system/WiRocBLEAPI.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocBLEAPI.service
-    systemctl enable /etc/systemd/system/WiRocBLEAPI.service
-else
-    wget -O /home/chip/WiRoc-StartupScripts/setGPIOuart2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/setGPIOuart2
-    chmod +x /home/chip/WiRoc-StartupScripts/setGPIOuart2
-    wget -O /etc/systemd/system/WiRocBLE.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocBLE.service
-    systemctl enable /etc/systemd/system/WiRocBLE.service
-fi
+#if [[ $(hostname -s) = nanopiair ]]; then
+echo "nanopiair"
+wget -O /usr/bin/devmem2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/devmem2
+chmod ugo+x /usr/bin/devmem2
+wget -O /etc/systemd/system/WiRocBLEAPI.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocBLEAPI.service
+systemctl enable /etc/systemd/system/WiRocBLEAPI.service
+#else
+#    wget -O /home/chip/WiRoc-StartupScripts/setGPIOuart2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/setGPIOuart2
+#    chmod +x /home/chip/WiRoc-StartupScripts/setGPIOuart2
+#    wget -O /etc/systemd/system/WiRocBLE.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocBLE.service
+#    systemctl enable /etc/systemd/system/WiRocBLE.service
+#fi
 
 wget -O /etc/systemd/system/WiRocPython.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPython.service
 wget -O /etc/systemd/system/WiRocPythonWS.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPythonWS.service
@@ -291,8 +291,26 @@ then
 fi
 
 # Add the RTC module
-if [ "$hwVersion" = "v7Rev1" ] || [ "$hwVersion" = "v7Rev2" ]
+#if [ "$hwVersion" = "v7Rev1" ] || [ "$hwVersion" = "v7Rev2" ]
+#then
+#  if ! grep -Fxq "rtc_pcf8563" /etc/modules
+#  then
+#    echo "add rtc_pcf8563 to /etc/modules"
+#    echo "rtc_pcf8563" >> /etc/modules
+#  fi
+
+#  if [ ! -f /usr/lib/udev/rules.d/51-udev-rtc.rules ]; then
+#    echo "Make symlink to rtc1 which probably is the pcf8563"
+#    echo 'SUBSYSTEM=="rtc", KERNEL=="rtc1", SYMLINK+="rtc", OPTIONS+="link_priority=-100"' >> /usr/lib/udev/rules.d/51-udev-rtc.rules
+#  fi
+#fi
+
+
+if [ "$hwVersion" = "v1Rev1" ] || [ "$hwVersion" = "v2Rev1" ] || [ "$hwVersion" = "v3Rev1" ] || [ "$hwVersion" = "v3Rev2" ] || [ "$hwVersion" = "v4Rev1" ] || [ "$hwVersion" = "v5Rev1" ] || [ "$hwVersion" = "v6Rev1" ]
 then
+   :
+else
+  # Add the RTC module
   if ! grep -Fxq "rtc_pcf8563" /etc/modules
   then
     echo "add rtc_pcf8563 to /etc/modules"
@@ -303,27 +321,7 @@ then
     echo "Make symlink to rtc1 which probably is the pcf8563"
     echo 'SUBSYSTEM=="rtc", KERNEL=="rtc1", SYMLINK+="rtc", OPTIONS+="link_priority=-100"' >> /usr/lib/udev/rules.d/51-udev-rtc.rules
   fi
-fi
-
-# really not sure what is required anymore for it to work
-# with x command echo 205 will never be found since that means it matches the whole line, not sure what we try to look for...
-#if ! grep -Fxq "echo 205" /etc/init.d/ap6212-bluetooth
-#then
-#    echo "Replace ap6212-bluetooth"
-#    cp /etc/init.d/ap6212-bluetooth ~/ap6212-bluetooth.backup
-#    wget -O /etc/init.d/ap6212-bluetooth https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/ap6212-bluetooth
-#    chmod ugo+x /etc/init.d/ap6212-bluetooth
-#fi
-#
-#
-#
-#
-
-if [ "$hwVersion" = "v1Rev1" ] || [ "$hwVersion" = "v2Rev1" ] || [ "$hwVersion" = "v3Rev1" ] || [ "$hwVersion" = "v3Rev2" ] || [ "$hwVersion" = "v4Rev1" ] || [ "$hwVersion" = "v5Rev1" ] || [ "$hwVersion" = "v6Rev1" ]
-then
-   :
-else
-   systemctl disable chrony
+  systemctl disable chrony
 fi
 
 if ! grep -Fq 'compat' /lib/systemd/system/bluetooth.service
