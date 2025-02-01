@@ -128,7 +128,7 @@ class Setup:
                 anyShouldBeInitialized = True
 
         if (not anyShouldBeInitialized and not SettingsClass.GetForceReconfigure()
-                and not subscriberAdapterChanged and not subscriberAdapterChanged):
+                and not inputAdapterChanged and not subscriberAdapterChanged):
             # acknowledgementRequested might have changed so that the subscription must be updated.
             for adapterObj in subscriberObjects:
                 adapterObj.EnableDisableSubscription()

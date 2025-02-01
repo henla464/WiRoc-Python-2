@@ -1,53 +1,56 @@
 1) Download the Armbian ubuntu cli version image
 
-2) Mount the image read/write to be able to change/add some files
+2) Extract the .xz to a .img file with file roller
 
-gnome-disk-image-mounter --writable Armbian_community_25.2.0-trunk.377_Nanopiair_noble_current_6.6.72.img
+3) Rename the image file, prefix with WiRoc_
 
-3) Copy Boot settings
+mv Armbian_community_25.2.0-trunk.410_Nanopiair_noble_current_6.6.72.img WiRoc_Armbian_community_25.2.0-trunk.410_Nanopiair_noble_current_6.6.72.img
+
+4) Mount the image read/write to be able to change/add some files
+
+gnome-disk-image-mounter --writable Armbian_community_25.2.0-trunk.410_Nanopiair_noble_current_6.6.72.img
+			    
+
+5) Copy Boot settings
 Copy/overwrite the .not_logged_in_yet (from WiRoc-Python-2) to /root/.not_logged_in_yet
 Copy the apikey.txt to /root/
 Copy the settings.yaml to /root/  (edit it to have the versions that should be installed)
 
-4) Compress the image with
-xz -v Armbian_community_25.2.0-trunk.377_Nanopiair_noble_current_6.6.72.img
+6) Compress the image with
+xz -v WiRoc_Armbian_community_25.2.0-trunk.410_Nanopiair_noble_current_6.6.72.img
 
-5) Flash the compressed image to SD card
+7) Flash the compressed image to SD card
 
-6) Start WiRoc with the SD card inserted
+8) Start WiRoc with the SD card inserted
 
-7) WiRoc should connect to Wifi automatically, ssid WiRoc with password WiRocWiRoc
+9) WiRoc should connect to Wifi automatically, ssid WiRoc with password WiRocWiRoc
 	- wait for the first boot script to finish creating the user "chip"
 
-8) Connect with SSH, user chip, password chip
+10) Connect with SSH, user chip, password chip
+	- If it says wrong password then try to log in with user root and password 1234 (if that doesn't work try with password chip)
+	- After the first boot script finished log out and log in with user chip
 
-9) Run sudo armbian-config
+11) Run sudo armbian-config
 	- Disable kernel updates
 	- Disable rolling packages repository / change to frozen
 
-10)
+12)
 run the commands below to download the install script and make it executable:
 
 
 wget https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/install.sh
 sudo chmod ugo+x install.sh
 
-11) Time to run the install script:
+13) Time to run the install script:
 sudo ./install.sh
 
-#It will ask for WiRocPython2Version. The current latest is 0.253 and should be default. Press enter to select it.
-#WiRocBLEVersion, latest is currently 0.11, press enter to select it
-
-#Then select the correct hardware version/revision. Yours should be option 7.
-
-#The API key is the key used to access monitor.wiroc.se. You can find it in the apikey.txt file on the WiRoc, in the chip #home directory.
-
 --------------------
 
-12) After install script finished restart the device
+14) After install script finished restart the device
+sudo shutdown -r 0
 
 --------------------
-10) Log in again as user chip and run sudo armbian-config
+15) Log in again as user chip and run sudo armbian-config
 	- Install the SD card to eMMC (select System/Storage/Install to internal storage)
 		select "Boot from eMMC - system on eMMC"
 		select ext4 filesystem
