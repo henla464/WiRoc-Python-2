@@ -304,6 +304,8 @@ if [ "$hwVersion" = "v1Rev1" ] || [ "$hwVersion" = "v2Rev1" ] || [ "$hwVersion" 
 then
    :
 else
+  # Install hwclock
+  apt-get install util-linux-extra
   # Add the RTC module
   if ! grep -Fxq "rtc_pcf8563" /etc/modules
   then

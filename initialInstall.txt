@@ -32,9 +32,9 @@ xz -v WiRoc_Armbian(tab)
 
 11) Run sudo armbian-config
 	- Disable kernel updates
-		armbian-config --cmd SY203
+		sudo armbian-config --cmd SY203
 	- Switch system to stable packages repository
-		armbian-config --cmd SY207
+		sudo armbian-config --cmd SY207
 
 12)
 run the commands below to download the install script and make it executable:
