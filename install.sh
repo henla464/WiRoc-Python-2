@@ -223,20 +223,14 @@ chmod ugo+x installWiRocPython.py
 
 echo "install startup scripts"
 mkdir WiRoc-StartupScripts
-wget -O /home/chip/WiRoc-StartupScripts/Startup.sh https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/Startup.sh
-chmod +x /home/chip/WiRoc-StartupScripts/Startup.sh
-#if [[ $(hostname -s) = nanopiair ]]; then
+wget -O /home/chip/WiRoc-StartupScripts/Startup.py https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/Startup.py
+chmod +x /home/chip/WiRoc-StartupScripts/Startup.py
+
 echo "nanopiair"
 wget -O /usr/bin/devmem2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/devmem2
 chmod ugo+x /usr/bin/devmem2
 wget -O /etc/systemd/system/WiRocBLEAPI.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocBLEAPI.service
 systemctl enable /etc/systemd/system/WiRocBLEAPI.service
-#else
-#    wget -O /home/chip/WiRoc-StartupScripts/setGPIOuart2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/setGPIOuart2
-#    chmod +x /home/chip/WiRoc-StartupScripts/setGPIOuart2
-#    wget -O /etc/systemd/system/WiRocBLE.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocBLE.service
-#    systemctl enable /etc/systemd/system/WiRocBLE.service
-#fi
 
 wget -O /etc/systemd/system/WiRocPython.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPython.service
 wget -O /etc/systemd/system/WiRocPythonWS.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocPythonWS.service

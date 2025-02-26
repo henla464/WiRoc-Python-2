@@ -8,7 +8,7 @@ mv Armbian_community_25.2.0-trunk.410_Nanopiair_noble_current_6.6.72.img WiRoc_A
 
 4) Mount the image read/write to be able to change/add some files
 
-gnome-disk-image-mounter --writable Armbian_community_25.2.0-trunk.410_Nanopiair_noble_current_6.6.72.img
+gnome-disk-image-mounter --writable WiRoc_Armbian(tab)
 			    
 
 5) Copy Boot settings
@@ -17,7 +17,7 @@ Copy the apikey.txt to /root/
 Copy the settings.yaml to /root/  (edit it to have the versions that should be installed)
 
 6) Compress the image with
-xz -v WiRoc_Armbian_community_25.2.0-trunk.410_Nanopiair_noble_current_6.6.72.img
+xz -v WiRoc_Armbian(tab)
 
 7) Flash the compressed image to SD card
 
@@ -32,7 +32,9 @@ xz -v WiRoc_Armbian_community_25.2.0-trunk.410_Nanopiair_noble_current_6.6.72.im
 
 11) Run sudo armbian-config
 	- Disable kernel updates
-	- Disable rolling packages repository / change to frozen
+		armbian-config --cmd SY203
+	- Switch system to stable packages repository
+		armbian-config --cmd SY207
 
 12)
 run the commands below to download the install script and make it executable:
