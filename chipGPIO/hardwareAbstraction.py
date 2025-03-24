@@ -9,7 +9,10 @@ import yaml
 from datetime import timedelta, datetime, timezone
 from pathlib import Path
 import inspect
-from gpiod.line import Direction, Value
+try:
+    from gpiod.line import Direction, Value
+except ImportError:
+    pass
 
 
 class HardwareAbstraction(object):
