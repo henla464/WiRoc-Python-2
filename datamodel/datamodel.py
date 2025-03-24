@@ -611,7 +611,7 @@ class SIMessage(object):
         self.UpdateChecksum()
 
     def GetStationNumber(self):
-        return (self.MessageData[3] << 8) + self.MessageData[4]
+        return Utils.DecodeStationNumber(self.MessageData[3:5])
 
     def GetSICardNumber(self):
         return Utils.DecodeCardNr(self.MessageData[5:9])
@@ -769,7 +769,7 @@ class SRRMessage(object):
 class SRRBoardPunch(SRRMessage):
 
     def GetStationNumber(self) -> int:
-        return (self.MessageData[18] << 8) + self.MessageData[19]
+        return Utils.DecodeStationNumber(self.MessageData[18:20])
 
     def GetSICardNumber(self) -> int:
         return Utils.DecodeCardNr(self.MessageData[20:24])

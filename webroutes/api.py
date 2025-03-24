@@ -1374,6 +1374,7 @@ def startPatchAP6212():
     if hostname != "nanopiair":
         return jsonpickle.encode(MicroMock(Value='OK'))  # only nanopiair needs patching
 
+    #todo: check if ap6212-bluetooth exists and only run if it does
     result = subprocess.run(
         ['systemctl', 'start', 'ap6212-bluetooth'], stdout=subprocess.PIPE)
     if result.returncode != 0:

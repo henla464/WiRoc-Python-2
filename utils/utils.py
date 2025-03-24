@@ -122,6 +122,11 @@ class Utils:
         else:
             return number
 
+    @staticmethod
+    def DecodeStationNumber(stationNumberBytes: bytearray) -> int:
+        # Two lowest bits are part of
+        stationNumber:int = ((stationNumberBytes[0] & 0x03) << 8) + stationNumberBytes[1]
+        return stationNumber
 
     @staticmethod
     def GetSirapDataFromSIData(siMessage):
