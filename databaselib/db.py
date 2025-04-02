@@ -52,7 +52,7 @@ class DB:
             DB.closed = DB.closed + 1
             #self.WiRocLogger.debug(f"DB::closeConnection() 3 PID: {os.getpid()} {threading.get_ident()} Opened {DB.opened} Closed {DB.closed}")
             if DB.closed != DB.opened:
-                self.WiRocLogger.error(f"DB::closeConnection() !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                self.WiRocLogger.error(f"DB::closeConnection() DB opned {DB.opened} and DB closed {DB.closed} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         else:
             self.WiRocLogger.error(f"DB::closeConnection() connection null PID: {os.getpid()}")
 
