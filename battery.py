@@ -128,7 +128,7 @@ class Battery(object):
         return isBatteryLow
 
     @classmethod
-    def GetBatteryPercent(cls):
+    def GetBatteryPercent(cls) -> int:
         # Battery.WiRocLogger.debug("Battery::GetBatteryPercent")
         POWER_MEASUREMENT_RESULT_REGADDR = 0xb9
         intPercentValue = cls.i2cBus.read_byte_data(cls.i2cAddress, POWER_MEASUREMENT_RESULT_REGADDR)
