@@ -18,7 +18,12 @@ class ReceiveLoraAdapter(object):
     @staticmethod
     def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         # check the number of lora radios and return an instance for each
-        serialPorts = ['/dev/ttyS1']
+
+        serialPorts: list[str] = []
+        # when lora radio is disabled we shouldn't poll lora radio, it still returns data, but sending ryp doesn't work
+        enabled: bool = SettingsClass.GetLoraEnabled()
+        if enabled:
+            serialPorts = ['/dev/ttyS1']
 
         newInstancesFoundOrRemoved = False
         highestInstanceNumber = 0
@@ -66,6 +71,9 @@ class ReceiveLoraAdapter(object):
     def GetSerialDevicePath(self) -> str:
         return self.portName
 
+    def GetIsEnabled(self) -> bool:
+        return self.loraRadio.GetIsEnabled()
+
     def GetIsInitialized(self) -> bool:
         enabled: bool = SettingsClass.GetLoraEnabled()
         channel = SettingsClass.GetChannel()
@@ -107,7 +115,7 @@ class ReceiveLoraAdapter(object):
             time.sleep(0.01)
             if self.loraRadio.IsReadyToSend():
                 dataSentOK = self.loraRadio.SendData(messageData)
-            if time.monotonic() - startTrySendTime > (SettingsClass.GetRetryDelay(1) / 2000):
+            if time.monotonic() - startTrySendTime > (SettingsClass.GetRetryDelay(1) / 2000000):
                 # Wait half of a first retrydelay (GetRetryDelay returns in microseconds)
                 ReceiveLoraAdapter.WiRocLogger.error("ReceiveLoraAdapter::TrySendData() Wasn't able to send ack (busy response)")
                 return False
