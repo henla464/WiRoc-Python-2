@@ -663,20 +663,20 @@ def getIsCharging():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=('1' if isCharging else '0')))
 
-# TODO: change to use smbus??
-def getBatteryLevel():
-    hostname = socket.gethostname()
-    if hostname == "chip" or hostname == "nanopiair":
-        #print("chip or nanopi")
-        result = subprocess.run(['/usr/sbin/i2cget', '-f', '-y', '0', '0x34', '0xb9'], stdout=subprocess.PIPE)
-        if result.returncode != 0:
-            errStr = result.stderr.decode('utf-8')
-            return 'Error: ' + errStr
 
-        intPercent = int(result.stdout.decode('utf-8').splitlines()[0], 0)
-        return str(intPercent)
-    else:
-        return '1'
+def getBatteryLevel():
+    intPercent: int = Battery.GetBatteryPercent()
+    return str(intPercent);
+    #hostname = socket.gethostname()
+    #if hostname == "chip" or hostname == "nanopiair":
+    #    result = subprocess.run(['/usr/sbin/i2cget', '-f', '-y', '0', '0x34', '0xb9'], stdout=subprocess.PIPE)
+    #    if result.returncode != 0:
+    #        errStr = result.stderr.decode('utf-8')
+    #        return 'Error: ' + errStr
+    #   intPercent = int(result.stdout.decode('utf-8').splitlines()[0], 0)
+    #    return str(intPercent)
+    #else:
+    #    return '1'
 
 
 @app.route('/api/batterylevel/', methods=['GET'])
@@ -1096,7 +1096,7 @@ def getIP():
 
 
 def zipLogArchive(zipFilePath):
-    result = subprocess.run(['zip', zipFilePath, '/home/chip/WiRoc-Python-2/WiRoc.db', '/home/chip/WiRoc-Python-2/WiRoc.db-shm', '/home/chip/WiRoc-Python-2/WiRoc.db-wal', '/home/chip/WiRoc-Python-2/WiRoc.log', '/home/chip/WiRoc-Python-2/WiRoc.log.1', '/home/chip/WiRoc-Python-2/WiRoc.log.2', '/home/chip/WiRoc-Python-2/WiRoc.log.3'], stdout=subprocess.PIPE)
+    result = subprocess.run(['zip', '--junk-paths', zipFilePath, '/home/chip/WiRoc-Python-2/WiRoc.db', '/home/chip/WiRoc-Python-2/WiRoc.db-shm', '/home/chip/WiRoc-Python-2/WiRoc.db-wal', '/home/chip/WiRoc-Python-2/WiRoc.log', '/home/chip/WiRoc-Python-2/WiRoc.log.1', '/home/chip/WiRoc-Python-2/WiRoc.log.2', '/home/chip/WiRoc-Python-2/WiRoc.log.3'], stdout=subprocess.PIPE)
     if result.returncode != 0:
         errStr = result.stderr.decode('utf-8')
         raise Exception("Error: " + errStr)
@@ -1163,7 +1163,7 @@ def getBTAddress():
         btAddress = stdoutWords[1]
     return btAddress
 
-# TODO: change to use https and service host instead of serverIp
+
 def uploadLogArchiveToServer(apiKey, filePath, webServerUrl):
     parameters = ['curl', '--insecure', '-X', 'POST', '-H', '-H',
                   'accept:application/json', '-H', 'X-Authorization:' + apiKey, '-F', 'newfile=@' + filePath, webServerUrl + '/api/v1/LogArchives']
@@ -1363,35 +1363,6 @@ def uploadLogArchive():
     uploadLogArchiveToServer(apiKey, zipFilePath, webServerUrl)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value='OK'))
-
-
-@app.route('/api/startpatchap6212/', methods=['GET'])
-def startPatchAP6212():
-    jsonpickle.set_preferred_backend('json')
-    jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    hostname = socket.gethostname()
-    if hostname != "nanopiair":
-        return jsonpickle.encode(MicroMock(Value='OK'))  # only nanopiair needs patching
-
-    #todo: check if ap6212-bluetooth exists and only run if it does
-    result = subprocess.run(
-        ['systemctl', 'start', 'ap6212-bluetooth'], stdout=subprocess.PIPE)
-    if result.returncode != 0:
-        errStr = result.stderr.decode('utf-8')
-        #print('Helper.startPatchAP6212: error: ' + errStr)
-
-        result = subprocess.run(
-            ['systemctl', 'start', 'ap6212-bluetooth'], stdout=subprocess.PIPE)
-        if result.returncode != 0:
-            errStr = result.stderr.decode('utf-8')
-            #print('Helper.startPatchAP6212: second try error: ' + errStr)
-            return jsonpickle.encode(MicroMock(Value='Error: ' + errStr))
-
-    stdout = result.stdout.decode('utf-8')
-    #if len(stdout) > 0:
-    #    print(stdout)
-
     return jsonpickle.encode(MicroMock(Value='OK'))
 
 
