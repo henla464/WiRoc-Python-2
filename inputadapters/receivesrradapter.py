@@ -247,6 +247,7 @@ class ReceiveSRRAdapter(object):
             if msgLength not in SRRMessage.MessageTypeLengths.values():
                 self.WiRocLogger.error(
                     f"ReceiveSRRAdapter::GetData() Message of incorrect length received. Length: {msgLength}")
+                # todo: reset, read or clear the data?
                 return None
 
             # read punch

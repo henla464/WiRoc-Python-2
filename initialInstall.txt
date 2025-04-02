@@ -54,7 +54,7 @@ sudo shutdown -r 0
 --------------------
 15) Log in again as user chip and run sudo armbian-config
 	- Install the SD card to eMMC (select System/Storage/Install to internal storage)
-	or run sudo armbian-config --cmd SY001
+	or run: sudo armbian-config --cmd SY001
 		select "Boot from eMMC - system on eMMC"
 		select ext4 filesystem
 		
