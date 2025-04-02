@@ -278,7 +278,7 @@ class LoraRadioMessagePunchReDCoSRS(LoraRadioMessageReDCoSRS):
         self.payloadData[self.SN2-1] = siMessageByteArray[6]
         self.payloadData[self.SN1-1] = siMessageByteArray[7]
         self.payloadData[self.SN0-1] = siMessageByteArray[8]
-        self.payloadData[self.CN1Plus-1] = siMessageByteArray[9] | ((siMessageByteArray[3] & 0x01) << 6)
+        self.payloadData[self.CN1Plus-1] = (siMessageByteArray[9] & 0x3f) | ((siMessageByteArray[3] & 0x01) << 6)
         self.payloadData[self.TH-1] = siMessageByteArray[10]
         self.payloadData[self.TL-1] = siMessageByteArray[11]
 
