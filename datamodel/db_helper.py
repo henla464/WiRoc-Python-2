@@ -847,7 +847,9 @@ class DatabaseHelper:
         cls.init()
         cnt = cls.db.get_scalar_by_SQL(sql)
         if cnt > 0:
-
+            # only archive messages that it is longer than 15 seconds ago they were sent
+            # assume 15 seconds is long enough for all datarate settings
+            fifteenSecondsAgo: datetime = datetime.now() - timedelta(seconds=15)
             sql = ("SELECT MessageSubscriptionData.id, "
                    "MessageSubscriptionData.MessageID, "
                    "MessageSubscriptionData.AckReceivedFromReceiver, "
@@ -878,10 +880,10 @@ class DatabaseHelper:
                    "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
                    "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
                    "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
-                   "(MessageSubscriptionData.NoOfSendTries >= %s or MessageSubscriptionData.FindAdapterTries >= %s) "
+                   "((MessageSubscriptionData.NoOfSendTries >= %s AND MessageSubscriptionData.SentDate < ?) or MessageSubscriptionData.FindAdapterTries >= %s) "
                    "ORDER BY MessageBoxData.CreatedDate desc "
                    "LIMIT %s") % (maxRetries, maxRetries, limit)
-            return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql)
+            return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql, (fifteenSecondsAgo))
         return []
 
     @classmethod
