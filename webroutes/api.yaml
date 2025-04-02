@@ -1496,19 +1496,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /startpatchap6212/:
-    get:
-      tags:
-      - "Debug"
-      summary: "Start patching the AP6212 chip"
-      operationId: "startPatchAP6212"
-      responses:
-        "200":
-          description: "successful operation"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PropertyObj"
   /upgradewirocble/{version}:
     get:
       tags:
