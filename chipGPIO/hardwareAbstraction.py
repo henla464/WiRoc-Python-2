@@ -1,5 +1,4 @@
 from __future__ import annotations
-from chipGPIO.chipGPIO import *
 import logging
 import socket
 import subprocess
@@ -100,6 +99,7 @@ class HardwareAbstraction(object):
                     self.StatusLedLine: gpiod.LineSettings(direction=Direction.OUTPUT)    # status led pin GPIOA6 Pin 12, linux gpio 6
                 })
                 self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
+                self.line_request.set_value(self.StatusLedLine, Value.ACTIVE)
 
         else:
             self.isNewGpiod = False
