@@ -247,7 +247,22 @@ class ReceiveSRRAdapter(object):
             if msgLength not in SRRMessage.MessageTypeLengths.values():
                 self.WiRocLogger.error(
                     f"ReceiveSRRAdapter::GetData() Message of incorrect length received. Length: {msgLength}")
-                # todo: reset, read or clear the data?
+                # read the message so that it is popped from the queue on the SRR receiver board
+                if msgLength > 0:
+                    dataToDiscard = bytearray()
+                    remainingDataToDiscard:int = msgLength
+                    indexIntoDataToDiscard:int = 0
+                    while indexIntoDataToDiscard < msgLength:
+                        self.i2cBus.write_byte_data(self.i2cAddress, ReceiveSRRAdapter.SETDATAINDEXREGADDR, indexIntoDataToDiscard)
+                        noToReadOfDataToDiscard = remainingDataToDiscard
+                        if remainingDataToDiscard > 31:
+                            noToReadOfDataToDiscard = 31
+                        data: list[int] = self.i2cBus.read_i2c_block_data(self.i2cAddress, ReceiveSRRAdapter.PUNCHREGADDR,
+                                                               noToReadOfDataToDiscard)
+                        dataToDiscard.extend(data)
+                        remainingDataToDiscard -= noToReadOfDataToDiscard
+                        indexIntoDataToDiscard += noToReadOfDataToDiscard
+                    self.WiRocLogger.error(f"ReceiveSRRAdapter::GetData() The SRR Message of incorrect length received: " + Utils.GetDataInHex(dataToDiscard, logging.ERROR))
                 return None
 
             # read punch
