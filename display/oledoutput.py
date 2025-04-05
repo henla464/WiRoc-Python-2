@@ -45,7 +45,7 @@ class OledOutput(OledDisplayState):
                 self.imageChanged = True
                 self.wiRocLogger.debug("OledStartup::Draw sirapIPPort changed")
                 self.OledDraw.rectangle((22, 16, 128, 31), outline=0, fill=0)
-                self.OledDraw.text((22, 16), "Port: " + str(sirapIPPort), font=self.OledThinFont2, fill=255)
+                self.OledDraw.text((22, 16), "Port: " + str(self.sirapIPPort), font=self.OledThinFont2, fill=255)
             self.showPort = not self.showPort
 
         if self.sendSerialActive != displayData.sendSerialActive:
