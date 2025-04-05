@@ -428,12 +428,16 @@ class HardwareAbstraction(object):
         dateofAlarmStr = dateOfAlarm.strftime("%Y-%m-%d")
 
         utcDateTimeAlarmStr = f"{dateofAlarmStr} {hour_HighCharacter}{hour_LowCharacter}:{minutes_HighCharacter}{minutes_LowCharacter}:00"
-        utcDateTimeAlarm = datetime.strptime(utcDateTimeAlarmStr, "%Y-%m-%d %H:%M:%S")
-        utcDateTimeAlarm = utcDateTimeAlarm.replace(tzinfo=timezone.utc)
-        localDateTimeAlarm = utcDateTimeAlarm.astimezone(datetime.now().tzinfo)
-        localDateTimeAlarmStr = localDateTimeAlarm.strftime("%H:%M")
+        try:
+            utcDateTimeAlarm = datetime.strptime(utcDateTimeAlarmStr, "%Y-%m-%d %H:%M:%S")
+            utcDateTimeAlarm = utcDateTimeAlarm.replace(tzinfo=timezone.utc)
+            localDateTimeAlarm = utcDateTimeAlarm.astimezone(datetime.now().tzinfo)
+            localDateTimeAlarmStr = localDateTimeAlarm.strftime("%H:%M")
 
-        return localDateTimeAlarmStr
+            return localDateTimeAlarmStr
+        except:
+            # rtc wakeup time not valid, set default value
+            return "00:00"
 
     def SetWakeUpTime(self, time: str) -> None:
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::SetWakeUpTime")
