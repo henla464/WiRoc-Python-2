@@ -552,8 +552,6 @@ class LoraRadioDRF1268DS_RS:
                     for dataByte in allReceivedData[:-6]:
                         self.loraRadioDataHandler.AddData(dataByte)
                     return False
-                # todo: check if the message matches a message type, a punch or ack
-                # an real example: 857fc37fc37fc3
                 else:
                     # could not make sens of data so let's ignore it
                     LoraRadioDRF1268DS_RS.WiRocLogger.error(
