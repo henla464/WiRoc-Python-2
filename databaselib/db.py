@@ -6,6 +6,7 @@ import datetime
 import logging
 import threading
 import time
+import traceback
 from sqlite3 import Connection, OperationalError, Cursor
 
 from databaselib.datamapping import DataMapping
@@ -13,8 +14,8 @@ from databaselib.datamapping import DataMapping
 
 class DB:
     WiRocLogger = logging.getLogger('WiRoc')
-    opened: int = 0
-    closed: int = 0
+    #opened: int = 0
+    #closed: int = 0
 
     def __init__(self, database_file_path: str, data_mapping: DataMapping):
         if lite.threadsafety == 3:
@@ -29,30 +30,27 @@ class DB:
         #self.WiRocLogger.debug(f"DB::openConnection() PID: {os.getpid()} {threading.get_ident()}")
         connection = lite.connect(self.dbFilePath, timeout=10, check_same_thread=self.check_same_thread, isolation_level=None)
         try:
-            DB.opened = DB.opened + 1
-            #self.WiRocLogger.debug(f"DB::openConnection() 2 PID: {os.getpid()} {threading.get_ident()}")
+            #DB.opened = DB.opened + 1
             connection.row_factory = lite.Row
-            #self.WiRocLogger.debug(f"DB::openConnection() 3 PID: {os.getpid()} {threading.get_ident()}")
             connection.execute("PRAGMA journal_mode=WAL")
-            #self.WiRocLogger.debug(f"DB::openConnection() 4 PID: {os.getpid()} {threading.get_ident()}")
             connection.commit()
-            #self.WiRocLogger.debug(f"DB::openConnection() Exit PID: {os.getpid()} {threading.get_ident()}")
             return connection
         except Exception as ex:
             self.WiRocLogger.error(f"DB::openConnection() exception: {ex} {threading.get_ident()}")
             connection.close()
+            #DB.closed = DB.closed + 1
             return None
 
     def closeConnection(self, connection: Connection):
         if connection is not None:
-            #self.WiRocLogger.debug(f"DB::closeConnection() 1 PID: {os.getpid()} {threading.get_ident()}")
             connection.commit()
-            #self.WiRocLogger.debug(f"DB::closeConnection() 2 PID: {os.getpid()} {threading.get_ident()}")
             connection.close()
-            DB.closed = DB.closed + 1
-            #self.WiRocLogger.debug(f"DB::closeConnection() 3 PID: {os.getpid()} {threading.get_ident()} Opened {DB.opened} Closed {DB.closed}")
-            if DB.closed != DB.opened:
-                self.WiRocLogger.error(f"DB::closeConnection() DB opned {DB.opened} and DB closed {DB.closed} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            # we could open multiple connections so number of open and close is not always same, only most of the time.
+            # So opened != closed temporarily now and then is ok.
+            #DB.closed = DB.closed + 1
+            #if DB.closed != DB.opened:
+            #    stackTraceString: str = ''.join(traceback.format_stack())
+            #    self.WiRocLogger.error(f"DB::closeConnection() DB opned {DB.opened} and DB closed {DB.closed} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! {stackTraceString}")
         else:
             self.WiRocLogger.error(f"DB::closeConnection() connection null PID: {os.getpid()}")
 
