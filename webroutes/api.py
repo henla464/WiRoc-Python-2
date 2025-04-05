@@ -1247,6 +1247,7 @@ def setRTCDateTime(dateAndTimeWithSeconds):
         HardwareAbstraction.Instance = HardwareAbstraction()
     if HardwareAbstraction.Instance.HasRTC():
         HardwareAbstraction.Instance.SetRTCDateTime(dateAndTimeWithSeconds)
+        status = subprocess.check_output("hwclock -f /dev/rtc1 --hctosys", shell=True)
     else:
         year: int = int(dateAndTimeWithSeconds[0:4])
         month: int = int(dateAndTimeWithSeconds[5:7])
