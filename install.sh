@@ -217,13 +217,10 @@ apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev
 echo "WiRoc-BLE"
 ###################################
 
-wget -O WiRoc-BLE-API.tar.gz https://github.com/henla464/WiRoc-BLE-API/archive/v$WiRocBLEAPIVersion.tar.gz
-rm -rf WiRoc-BLE-API
-tar xvfz WiRoc-BLE-API.tar.gz WiRoc-BLE-API-$WiRocBLEAPIVersion
-mv WiRoc-BLE-API-$WiRocBLEAPIVersion WiRoc-BLE-API
-mv WiRoc-BLE-API/installWiRocBLEAPI.sh .
-chmod ugo+x installWiRocBLEAPI.sh
-echo "Update WiRocBLEAPI version"
+cd /home/chip
+wget -O installWiRocBLEAPI.py https://raw.githubusercontent.com/henla464/WiRoc-BLE-API/master/installWiRocBLEAPI.py
+chmod ugo+x installWiRocBLEAPI.py
+./installWiRocBLEAPI.py $WiRocBLEAPIVersion
 
 apt-get -y install libdbus-1-dev
 cd WiRoc-BLE-API
