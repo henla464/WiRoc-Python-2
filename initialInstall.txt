@@ -30,13 +30,19 @@ xz -v WiRoc_Armbian(tab)
 	- If it says wrong password then try to log in with user root and password 1234 (if that doesn't work try with password chip)
 	- After the first boot script finished log out and log in with user chip
 
+10.1)
+	sudo apt update
+10.2)
+	sudo apt install armbian-config
+	
 11) Run sudo armbian-config
 	- Disable kernel updates
 		sudo armbian-config --cmd SY203
-	- Switch system to stable packages repository
-		sudo armbian-config --cmd SY207
 	- Disable unattended updates
 		sudo armbian-config --cmd UNAT03
+	- Switch system to stable packages repository
+		sudo armbian-config --cmd SY207
+
 
 12)
 run the commands below to download the install script and make it executable:
