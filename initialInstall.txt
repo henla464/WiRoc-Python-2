@@ -35,6 +35,8 @@ xz -v WiRoc_Armbian(tab)
 		sudo armbian-config --cmd SY203
 	- Switch system to stable packages repository
 		sudo armbian-config --cmd SY207
+	- Disable unattended updates
+		sudo armbian-config --cmd UNAT03
 
 12)
 run the commands below to download the install script and make it executable:

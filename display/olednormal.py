@@ -16,8 +16,8 @@ class OledNormal(OledDisplayState):
         self.batteryPercent = 0
         self.batteryWidth = None
         self.NormalOledImage = None
-        self.wifiNoOfBars = 0
-        self.wifiNoOfBarsPrevious = 0
+        self.wifiNoOfBars = -2
+        self.wifiNoOfBarsPrevious = -2
         self.channel: str | None = None
         self.wiRocMode = None
         self.ackRequested = None
@@ -79,43 +79,47 @@ class OledNormal(OledDisplayState):
     def DrawOledWifi(self):
         percent = HardwareAbstraction.Instance.GetWifiSignalStrength()
 
+        noOfBars = None
         # None is returned for devices that doesn't support getting signal strength
         if percent is None or percent == 0:
-            return None
-        noOfBars = 0
-        if percent > 75:
-            noOfBars = 4
-        elif percent > 55:
-            noOfBars = 3
-        elif percent > 35:
-            noOfBars = 2
-        elif percent > 15:
-            noOfBars = 1
+            noOfBars = -1
+        else:
+            noOfBars = 0
+            if percent > 75:
+                noOfBars = 4
+            elif percent > 55:
+                noOfBars = 3
+            elif percent > 35:
+                noOfBars = 2
+            elif percent > 15:
+                noOfBars = 1
 
-        if noOfBars == self.wifiNoOfBars or (self.wifiNoOfBarsPrevious == self.wifiNoOfBars and self.wifiNoOfBars != noOfBars):
-            self.wifiNoOfBarsPrevious = self.wifiNoOfBars
-            self.wifiNoOfBars = noOfBars
-            return None
-        self.wiRocLogger.debug("OledNormal::DrawOledWifi imagechanged: old: " + str(self.wifiNoOfBarsPrevious) +  " new: " + str(noOfBars))
+        # Same value two times in row, or this is the first time
+        if (noOfBars == self.wifiNoOfBars and noOfBars != self.wifiNoOfBarsPrevious) or self.wifiNoOfBarsPrevious == -1:
+            self.wiRocLogger.debug(
+                "OledNormal::DrawOledWifi imagechanged: old: " + str(self.wifiNoOfBarsPrevious) + " new: " + str(
+                    noOfBars))
+
+            self.imageChanged = True
+
+            x = 72
+            top = 2
+            self.OledDraw.rectangle((x, top - 1, x + 21, top + 9), outline=0, fill=0)
+            if noOfBars >= 0:
+                self.OledDraw.arc([(x, top), (x + 16, top + 16)], 210, 330, fill=255)
+                self.OledDraw.arc([(x + 3, top + 3), (x + 13, top + 13)], 210, 335, fill=255)
+                self.OledDraw.ellipse((x + 7, top + 7, x + 9, top + 9), outline=255, fill=255)
+            if noOfBars >= 1:
+                self.OledDraw.line((x + 14, top + 9, x + 14, top + 8), fill=255)
+            if noOfBars >= 2:
+                self.OledDraw.line((x + 16, top + 9, x + 16, top + 5), fill=255)
+            if noOfBars >= 3:
+                self.OledDraw.line((x + 18, top + 9, x + 18, top + 2), fill=255)
+            if noOfBars >= 4:
+                self.OledDraw.line((x + 20, top + 9, x + 20, top + -1), fill=255)
         self.wifiNoOfBarsPrevious = self.wifiNoOfBars
         self.wifiNoOfBars = noOfBars
-        self.imageChanged = True
-
-        x = 72
-        top = 2
-        self.OledDraw.rectangle((x, top-1, x+21, top+9), outline=0, fill=0)
-        self.OledDraw.arc([(x, top), (x + 16, top + 16)], 210, 330, fill=255)
-        self.OledDraw.arc([(x + 3, top + 3), (x + 13, top + 13)], 210, 335, fill=255)
-        self.OledDraw.ellipse((x + 7, top + 7, x + 9, top + 9), outline=255, fill=255)
-
-        if noOfBars >= 1:
-            self.OledDraw.line((x + 14, top + 9, x + 14, top + 8), fill=255)
-        if noOfBars >= 2:
-            self.OledDraw.line((x + 16, top + 9, x + 16, top + 5), fill=255)
-        if noOfBars >= 3:
-            self.OledDraw.line((x + 18, top + 9, x + 18, top + 2), fill=255)
-        if noOfBars >= 4:
-            self.OledDraw.line((x + 20, top + 9, x + 20, top + -1), fill=255)
+        return None
 
     def Draw(self, displayData: DisplayData):
         if self.channel != displayData.channel:

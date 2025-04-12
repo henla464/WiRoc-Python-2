@@ -66,7 +66,7 @@ class DisplayStateMachine(object):
             self.wiRocLogger.info("DisplayStateMachine::Init() initialized the OLED")
 
         except Exception as ex:
-            # print(ex)
+            print(ex)
             self.wiRocLogger.debug("DisplayStateMachine::Init no display")
             self.TypeOfDisplay = 'NO_DISPLAY'
 
