@@ -141,8 +141,9 @@ echo "###################################"
 ln -s /usr/lib/python3/dist-packages/_dbus_bindings.cpython-312-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/_dbus_bindings.so
 ln -s /usr/lib/python3/dist-packages/_dbus_glib_bindings.cpython-312-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/_dbus_glib_bindings.so
 
-
+echo "###################################"
 echo "Install bluetooth stuff"
+echo "###################################"
 
 # There is a problem with 5.50-1.2~deb10u3 that makes BLE writes and reads give errors. "u2" works. And it seems it is enough to downgrade bluez.
 # Newer version seem to work too: https://www.makeuseof.com/install-bluez-latest-version-on-ubuntu/ (no need for --experimental) (5.66)
@@ -152,7 +153,6 @@ apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev
 echo "###################################"
 echo "Used by install scripts"
 echo "###################################"
-echo "python/pip"
 # needed for install scripts
 apt-get -y install python3-pip
 # This allows pip to do system wide installs. Probably should change to use virtual environments though
@@ -173,6 +173,7 @@ apt-get -y install libdbus-1-dev
 # these are dependencies for PyGObject (installed in requirements.txt)
 apt-get -y install python3.12-venv
 apt-get -y install libcairo2-dev
+apt-get -y install python3-dev
 pip3 install pycairo
 apt-get -y install libgirepository1.0-dev
 #python3 -m pip install --ignore-installed PyGObject

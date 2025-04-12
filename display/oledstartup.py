@@ -21,10 +21,6 @@ class OledStartup(OledDisplayState):
                 settings = yaml.load(f, Loader=yaml.BaseLoader)
             self.pythonVersion = settings['WiRocPythonVersion']
             self.bleVersion = settings['WiRocBLEAPIVersion']
-            #with open('../WiRocPythonVersion.txt', 'r') as versionFile:
-            #    self.pythonVersion = versionFile.read()
-            # with open('../WiRocBLEVersion.txt', 'r') as versionFile:
-            #    self.bleVersion = versionFile.read()
 
         except:
             pass
