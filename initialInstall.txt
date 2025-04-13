@@ -34,6 +34,8 @@ xz -v WiRoc_Armbian(tab)
 	sudo apt update
 10.2)
 	sudo apt install armbian-config
+
+10.3)	Change WiRocBLEVersion to WiRocBLEAPIVersion in /root/settings.yaml 
 	
 11) Run sudo armbian-config
 	- Disable kernel updates

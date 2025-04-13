@@ -167,7 +167,7 @@ echo "###################################"
 cd /home/chip
 wget -O installWiRocBLEAPI.py https://raw.githubusercontent.com/henla464/WiRoc-BLE-API/master/installWiRocBLEAPI.py
 chmod ugo+x installWiRocBLEAPI.py
-./installWiRocBLEAPI.py $WiRocBLEAPIVersion
+./installWiRocBLEAPI.py $WiRocBLEAPIVersion NEW
 
 apt-get -y install libdbus-1-dev
 
@@ -175,7 +175,6 @@ apt-get -y install libdbus-1-dev
 apt-get -y install python3.12-venv
 apt-get -y install libcairo2-dev
 apt-get -y install python3-dev
-#apt-get -y install python3-cairo
 apt-get -y install libgirepository1.0-dev
 
 cd WiRoc-BLE-API
@@ -213,7 +212,7 @@ echo "###################################"
 
 wget -O installWiRocPython.py https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/installWiRocPython.py
 chmod ugo+x installWiRocPython.py
-./installWiRocPython.py $WiRocPythonVersion
+./installWiRocPython.py $WiRocPythonVersion NEW
 
 # needed for pillow
 apt-get -y install libjpeg-dev
