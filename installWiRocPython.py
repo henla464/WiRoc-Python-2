@@ -23,6 +23,12 @@ newSoftwareVersion = sys.argv[1]
 newSoftwareVersion = newSoftwareVersion.lstrip('v')
 print("New Software version: " + newSoftwareVersion)
 
+# NEW or UPGRADE
+installMode = "UPGRADE"
+if len(sys.argv) > 2: 
+    installMode = sys.argv[2]
+    print("Install mode: " + installMode)
+    
 # HW Version
 f = open("settings.yaml", "r")
 settings = yaml.load(f, Loader=yaml.BaseLoader)
@@ -164,16 +170,17 @@ if resp.status_code == 200:
                 with open('settings.yaml', 'w') as f2:
                     yaml.dump(settings, f2)  # Write a YAML representation of data to 'settings.yaml'.
 
-                serviceStart1Res = subprocess.run(["systemctl", "start", serviceName])
-                print("serviceStart1 response: " + str(serviceStart1Res.returncode))
-                if serviceStart1Res.returncode != 0:
-                    exit(serviceStart1Res.returncode)
+                if installMode == "UPGRADE":
+                    serviceStart1Res = subprocess.run(["systemctl", "start", serviceName])
+                    print("serviceStart1 response: " + str(serviceStart1Res.returncode))
+                    if serviceStart1Res.returncode != 0:
+                        exit(serviceStart1Res.returncode)
 
-                if serviceName2 != "":
-                    serviceStart2Res = subprocess.run(["systemctl", "start", serviceName2])
-                    print("serviceStart2 response: " + str(serviceStart2Res.returncode))
-                    if serviceStart2Res.returncode != 0:
-                        exit(serviceStart2Res.returncode)
+                    if serviceName2 != "":
+                        serviceStart2Res = subprocess.run(["systemctl", "start", serviceName2])
+                        print("serviceStart2 response: " + str(serviceStart2Res.returncode))
+                        if serviceStart2Res.returncode != 0:
+                            exit(serviceStart2Res.returncode)
 
         else:
             print("MD5 hash is WRONG!")
