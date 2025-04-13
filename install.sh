@@ -156,8 +156,9 @@ echo "###################################"
 # needed for install scripts
 apt-get -y install python3-pip
 # This allows pip to do system wide installs. Probably should change to use virtual environments though
-python3 -m pip config set global.break-system-packages true
-pip3 install requests
+# python3 -m pip config set global.break-system-packages true
+#pip3 install requests
+apt-get -y install python3-requests
 
 echo "###################################"
 echo "WiRoc-BLE"
@@ -174,9 +175,8 @@ apt-get -y install libdbus-1-dev
 apt-get -y install python3.12-venv
 apt-get -y install libcairo2-dev
 apt-get -y install python3-dev
-pip3 install pycairo
+#apt-get -y install python3-cairo
 apt-get -y install libgirepository1.0-dev
-#python3 -m pip install --ignore-installed PyGObject
 
 cd WiRoc-BLE-API
 python3 -m venv env
@@ -194,31 +194,22 @@ echo "###################################"
 
 apt-get -y install git
 apt-get -y install python3-dev
-pip3 install cython
-pip3 install build
+#pip3 install cython
+apt-get -y install cython3
+#pip3 install build
+apt-get -y install python3-build
 rm -rf reedsolomon
 git clone https://github.com/tomerfiliba-org/reedsolomon.git
 cd reedsolomon
-pip3 install virtualenv
+#pip3 install virtualenv
+apt-get -y install virtualenv
 python3 -sBm build --config-setting="--build-option=--cythonize"
 export DEB_PYTHON_INSTALL_LAYOUT=deb_system
-# below filename changes with python version
-# pip3 install dist/reedsolo-2.1.2b1-cp312-cp312-linux_armv7l.whl
 cd /home/chip
 
 echo "###################################"
 echo "WiRoc-Python-2"
 echo "###################################"
-
-## venv ## apt-get -y install python3-setuptools
-#
-#apt-get -y install pkg-config
-
-
-#apt-get -y install libtiff5-dev zlib1g-dev
-#apt-get -y install python3-dev build-essential libssl-dev libffi-dev libxml2-dev libxslt1-dev zlib1g-dev
-#apt-get -y install libfreetype6-dev
-#apt-get -y install python3-numpy
 
 wget -O installWiRocPython.py https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/installWiRocPython.py
 chmod ugo+x installWiRocPython.py
