@@ -1372,7 +1372,7 @@ def upgradeWiRocBLE(version):
     logfile = '../installWiRocBLE.log'
     with open(os.devnull, 'r+b') as DEVNULL:
         with open(logfile, 'a') as out:
-            Popen(['./installWiRocBLEAPI.sh %s' % version], shell=True, stdin=DEVNULL, stdout=out, stderr=out,
+            Popen(['./installWiRocBLEAPI.py %s' % version], shell=True, stdin=DEVNULL, stdout=out, stderr=out,
                   close_fds=True, cwd='..')
 
     return jsonpickle.encode(MicroMock(Value='OK'))
