@@ -99,7 +99,7 @@ class SRRSRRMessageToLoraTransform(object):
             return {"Data": (interleavedMessageData,), "MessageID": loraPunchMsg.GetHash()}
         elif len(msgSubBatch.MessageSubscriptionBatchItems) == 2:
             payloadData2 = msgSubBatch.MessageSubscriptionBatchItems[1].MessageData
-            siMsg2: SIMessage = SRRSRRMessageToLoraTransform.GetSIMsg(payloadData2, subscriberAdapter)
+            siMsg2: SIMessage = SRRSRRMessageToLoraTransform.GetSIMsg(payloadData2)
 
             loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(batteryLow, ackReq, None)
             siMsgPayload2 = siMsg2.GetByteArray()
