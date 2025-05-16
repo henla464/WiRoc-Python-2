@@ -53,30 +53,6 @@ class SRRSRRMessageToLoraTransform(object):
         return SRRSRRMessageToLoraTransform.DeleteAfterSent != (not SettingsClass.GetAcknowledgementRequested())
 
     @staticmethod
-    def GetSIMsg(srrPayloadData: bytearray) -> SIMessage:
-        siMsg: SIMessage | None = None
-        headerSize: int = SRRMessage.GetHeaderSize()
-
-        if srrPayloadData[0] >= headerSize:
-            srrMessage = SRRMessage()
-            srrMessage.AddPayload(srrPayloadData[0:headerSize])
-            messageType: int = srrMessage.GetMessageType()
-            if messageType == SRRMessage.SRRBoardPunch:
-                srrBoardPunch = SRRBoardPunch()
-                srrBoardPunch.AddPayload(srrPayloadData)
-                siMsg = srrBoardPunch.GetSIMessage()
-            elif messageType == SRRMessage.AirPlusPunch:
-                airPlusPunch = AirPlusPunch()
-                airPlusPunch.AddPayload(srrPayloadData)
-                siMsg = airPlusPunch.GetSIMessage()
-            elif messageType == SRRMessage.AirPlusPunchOneOfMultiple:
-                airPlusPunchOneOfMultiple = AirPlusPunchOneOfMultiple()
-                airPlusPunchOneOfMultiple.AddPayload(srrPayloadData)
-                siMsg = airPlusPunchOneOfMultiple.GetSIMessage()
-
-        return siMsg
-
-    @staticmethod
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         SRRSRRMessageToLoraTransform.WiRocLogger.debug("SRRSRRMessageToLoraTransform::Transform()")
 
@@ -85,7 +61,10 @@ class SRRSRRMessageToLoraTransform(object):
         batteryLow = Battery.GetIsBatteryLow()
 
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-        siMsg: SIMessage = SRRSRRMessageToLoraTransform.GetSIMsg(payloadData)
+        siMsg: SIMessage = SRRMessage.GetSIMsg(payloadData)
+        if siMsg is None:
+            SRRSRRMessageToLoraTransform.WiRocLogger.error("SRRSRRMessageToLoraTransform::Transform() Couldn't identify SRR message type for msg 1. Data: " + Utils.GetDataInHex(payloadData, logging.ERROR))
+            return None
         siMsgPayload = siMsg.GetByteArray()
 
         if len(msgSubBatch.MessageSubscriptionBatchItems) == 1:
@@ -99,7 +78,12 @@ class SRRSRRMessageToLoraTransform(object):
             return {"Data": (interleavedMessageData,), "MessageID": loraPunchMsg.GetHash()}
         elif len(msgSubBatch.MessageSubscriptionBatchItems) == 2:
             payloadData2 = msgSubBatch.MessageSubscriptionBatchItems[1].MessageData
-            siMsg2: SIMessage = SRRSRRMessageToLoraTransform.GetSIMsg(payloadData2)
+            siMsg2: SIMessage = SRRMessage.GetSIMsg(payloadData2)
+            if siMsg2 is None:
+                SRRSRRMessageToLoraTransform.WiRocLogger.error(
+                    "SRRSRRMessageToLoraTransform::Transform() Couldn't identify SRR message type for msg 2. Data: " + Utils.GetDataInHex(
+                        payloadData2, logging.ERROR))
+                return None
 
             loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(batteryLow, ackReq, None)
             siMsgPayload2 = siMsg2.GetByteArray()
@@ -110,3 +94,4 @@ class SRRSRRMessageToLoraTransform(object):
             interleavedMessageData = LoraRadioMessagePunchDoubleReDCoSRS.InterleaveToAirOrder(
                 loraPunchDoubleMsg.GetByteArray())
             return {"Data": (interleavedMessageData,), "MessageID": loraPunchDoubleMsg.GetHash()}
+        return None

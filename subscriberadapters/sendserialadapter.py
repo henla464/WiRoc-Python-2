@@ -110,6 +110,7 @@ class SendSerialAdapter(object):
     def GetIsInitialized(self):
         return self.isInitialized
 
+    # TOOD. should return true when baudrate changed
     def ShouldBeInitialized(self):
         return not self.isInitialized and SettingsClass.GetRS232Mode == "SEND"
 

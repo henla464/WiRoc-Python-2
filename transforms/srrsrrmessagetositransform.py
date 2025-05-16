@@ -47,27 +47,12 @@ class SRRSRRMessageToSITransform(object):
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         SRRSRRMessageToSITransform.WiRocLogger.debug("SRRSRRMessageToSITransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-        siMsg: SIMessage | None = None
-        headerSize: int = SRRMessage.GetHeaderSize()
-        if len(payloadData) >= headerSize:
-            srrMessage = SRRMessage()
-            srrMessage.AddPayload(payloadData[0:headerSize])
-            messageType: int = srrMessage.GetMessageType()
-            if messageType == SRRMessage.SRRBoardPunch:
-                srrBoardPunch = SRRBoardPunch()
-                srrBoardPunch.AddPayload(payloadData)
-                siMsg = srrBoardPunch.GetSIMessage()
-            elif messageType == SRRMessage.AirPlusPunch:
-                airPlusPunch = AirPlusPunch()
-                airPlusPunch.AddPayload(payloadData)
-                siMsg = airPlusPunch.GetSIMessage()
-            elif messageType == SRRMessage.AirPlusPunchOneOfMultiple:
-                airPlusPunchOneOfMultiple = AirPlusPunchOneOfMultiple()
-                airPlusPunchOneOfMultiple.AddPayload(payloadData)
-                siMsg = airPlusPunchOneOfMultiple.GetSIMessage()
+        siMsg: SIMessage = SRRMessage.GetSIMsg(payloadData)
 
         if siMsg is None:
-            SRRSRRMessageToSITransform.WiRocLogger.error("SRRSRRMessageToSITransform::Transform() Couldn't identify SRR message type. Data: " +  + Utils.GetDataInHex(payloadData, logging.ERROR))
+            SRRSRRMessageToSITransform.WiRocLogger.error(
+                "SRRSRRMessageToSirapTransform::Transform() Couldn't identify SRR message type. Data: " + Utils.GetDataInHex(
+                    payloadData, logging.ERROR))
             return None
         else:
             return {"Data": (siMsg.GetByteArray(),), "MessageID": None}

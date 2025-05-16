@@ -36,7 +36,7 @@ class DB:
             connection.commit()
             return connection
         except Exception as ex:
-            self.WiRocLogger.error(f"DB::openConnection() exception: {ex} {threading.get_ident()}")
+            self.WiRocLogger.exception(f"DB::openConnection() exception: {ex} {threading.get_ident()}")
             connection.close()
             #DB.closed = DB.closed + 1
             return None
@@ -120,10 +120,11 @@ class DB:
                 db_cursor.close()
         finally:
             self.closeConnection(conn)
+            if returnObj:
+                return self.get_table_object(table_object.__class__, rowid)
+            return rowid
 
-        if returnObj:
-            return self.get_table_object(table_object.__class__, rowid)
-        return rowid
+
 
     def get_table_object(self, table_class, rowid: int):
         conn = self.openConnection()

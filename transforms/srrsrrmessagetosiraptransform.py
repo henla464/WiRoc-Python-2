@@ -44,32 +44,16 @@ class SRRSRRMessageToSirapTransform(object):
         return False
 
     @staticmethod
-    def GetSIMsg(srrPayloadData: bytearray) -> SIMessage:
-        siMsg: SIMessage | None = None
-        headerSize: int = SRRMessage.GetHeaderSize()
-
-        if srrPayloadData[0] >= headerSize:
-            srrMessage = SRRMessage()
-            srrMessage.AddPayload(srrPayloadData[0:headerSize])
-            messageType: int = srrMessage.GetMessageType()
-            if messageType == SRRMessage.SRRBoardPunch:
-                srrBoardPunch = SRRBoardPunch()
-                srrBoardPunch.AddPayload(srrPayloadData)
-                siMsg = srrBoardPunch.GetSIMessage()
-            elif messageType == SRRMessage.AirPlusPunch:
-                airPlusPunch = AirPlusPunch()
-                airPlusPunch.AddPayload(srrPayloadData)
-                siMsg = airPlusPunch.GetSIMessage()
-            elif messageType == SRRMessage.AirPlusPunchOneOfMultiple:
-                airPlusPunchOneOfMultiple = AirPlusPunchOneOfMultiple()
-                airPlusPunchOneOfMultiple.AddPayload(srrPayloadData)
-                siMsg = airPlusPunchOneOfMultiple.GetSIMessage()
-
-        return siMsg
-
-    @staticmethod
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         SRRSRRMessageToSirapTransform.WiRocLogger.debug("SRRSRRMessageToSirapTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-        siMsg: SIMessage = SRRSRRMessageToSirapTransform.GetSIMsg(payloadData)
-        return {"Data": (Utils.GetSirapDataFromSIData(siMsg),), "MessageID": None}
+        siMsg: SIMessage = SRRMessage.GetSIMsg(payloadData)
+
+        if siMsg is None:
+            SRRSRRMessageToSirapTransform.WiRocLogger.error("SRRSRRMessageToSirapTransform::Transform() Couldn't identify SRR message type. Data: " + Utils.GetDataInHex(payloadData, logging.ERROR))
+            return None
+        else:
+            return {"Data": (Utils.GetSirapDataFromSIData(siMsg),), "MessageID": None}
+
+
+
