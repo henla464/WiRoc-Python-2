@@ -120,7 +120,7 @@ class BackgroundTasks(object):
                                         batteryIsLow: bool,
                                         batteryIsLowReceived: bool,
                                         ):
-        BackgroundTasks.WiRocLogger.debug("BackgroundTasks::DoInfrequentDatabaseTasksBackground()")
+        BackgroundTasks.WiRocLogger.debug("BackgroundTasks::DoInfrequentHTTPTasksBackground()")
         lastWiRocDeviceNameSentToServer: str | None = None
         lastBatteryIsLow: bool | None = None
         lastBatteryIsLowReceived: bool | None = None
@@ -132,7 +132,7 @@ class BackgroundTasks(object):
                     try:
                         cmd = doInfrequentHTTPTasksQueueCommands.get(False)
                     except Empty:
-                        BackgroundTasks.WiRocLogger.debug("BackgroundTasks::DoInfrequentDatabaseTasksBackground() doInfrequentDatabaseTasksQueueCommands is empty")
+                        BackgroundTasks.WiRocLogger.debug("BackgroundTasks::DoInfrequentHTTPTasksBackground() doInfrequentDatabaseTasksQueueCommands is empty")
                         time.sleep(1)
                         continue
 
@@ -178,7 +178,7 @@ class BackgroundTasks(object):
                 elif cmd == "BATTERYISLOWNOTRECEIVED":
                     batteryIsLowReceived = False
             except Exception as ex:
-                BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::DoInfrequentDatabaseTasksBackground() exception: {ex}")
+                BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::DoInfrequentHTTPTasksBackground() exception: {ex}")
                 time.sleep(40)
 
     @staticmethod
