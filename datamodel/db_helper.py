@@ -883,7 +883,7 @@ class DatabaseHelper:
                    "((MessageSubscriptionData.NoOfSendTries >= %s AND MessageSubscriptionData.SentDate < ?) or MessageSubscriptionData.FindAdapterTries >= %s) "
                    "ORDER BY MessageBoxData.CreatedDate desc "
                    "LIMIT %s") % (maxRetries, maxRetries, limit)
-            return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql, (fifteenSecondsAgo))
+            return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql, (fifteenSecondsAgo,))
         return []
 
     @classmethod
