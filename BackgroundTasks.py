@@ -146,22 +146,23 @@ class BackgroundTasks(object):
                         updateWiRocDevice = (SettingsClass.GetWebServerUp() and btAddress != "NoBTAddress"
                                              and (lastWiRocDeviceNameSentToServer != wiRocDeviceName))
 
-                        if lastBatteryIsLowReceived is None:
-                            lastBatteryIsLowReceived = not batteryIsLowReceived # so it saves the new value
-                        lastBatteryIsLowReceived = BackgroundTasks.UpdateBatteryIsLowReceivedBackground(webServerUrl,
-                                                                                                        apiKey,
-                                                                                                        batteryIsLowReceived,
-                                                                                                        btAddress,
-                                                                                                        lastBatteryIsLowReceived)
-                        if lastBatteryIsLow is None:
-                            lastBatteryIsLow = not batteryIsLow # so it saves the new value
-                        lastBatteryIsLow = BackgroundTasks.UpdateBatteryIsLowBackground(batteryIsLow, webServerUrl, apiKey,
-                                                                                        btAddress, lastBatteryIsLow)
-                        BackgroundTasks.SendSetConnectedToInternetBackground(webServerUrl, apiKey, btAddress)
+                        if btAddress != "NoBTAddress":
+                            if lastBatteryIsLowReceived is None:
+                                lastBatteryIsLowReceived = not batteryIsLowReceived # so it saves the new value
+                            lastBatteryIsLowReceived = BackgroundTasks.UpdateBatteryIsLowReceivedBackground(webServerUrl,
+                                                                                                            apiKey,
+                                                                                                            batteryIsLowReceived,
+                                                                                                            btAddress,
+                                                                                                            lastBatteryIsLowReceived)
+                            if lastBatteryIsLow is None:
+                                lastBatteryIsLow = not batteryIsLow # so it saves the new value
+                            lastBatteryIsLow = BackgroundTasks.UpdateBatteryIsLowBackground(batteryIsLow, webServerUrl, apiKey,
+                                                                                            btAddress, lastBatteryIsLow)
+                            BackgroundTasks.SendSetConnectedToInternetBackground(webServerUrl, apiKey, btAddress)
 
-                        if updateWiRocDevice:
-                            lastWiRocDeviceNameSentToServer = wiRocDeviceName
-                            BackgroundTasks.AddDeviceBackground(wiRocDeviceName, btAddress, apiKey, webServerUrl)
+                            if updateWiRocDevice:
+                                lastWiRocDeviceNameSentToServer = wiRocDeviceName
+                                BackgroundTasks.AddDeviceBackground(wiRocDeviceName, btAddress, apiKey, webServerUrl)
                         time.sleep(40)
                 elif cmd == "EXIT":
                     return
