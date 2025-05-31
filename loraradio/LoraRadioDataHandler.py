@@ -941,6 +941,10 @@ class LoraRadioDataHandler(object):
             return ackMsg
         else:
             expectedMessageID = SettingsClass.GetMessageIDOfLastLoraMessageSent()
+            if expectedMessageID is None:
+                LoraRadioDataHandler.WiRocLogger.error(
+                    "LoraRadioDataHandler::_GetAckMessage() No message could be decoded. No expected message ID exists")
+                return None
             #print("ExpectedMessageID: " + str(expectedMessageID))
             first4bitDifference1 = (expectedMessageID[0] ^ messageDataToConsider[LoraRadioMessageAckRS.HASH0]) & 0xF0
             first4bitDifference2 = (expectedMessageID[0] ^ messageDataToConsider[LoraRadioMessageAckRS.HASH0_2]) & 0xF0

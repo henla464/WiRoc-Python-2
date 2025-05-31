@@ -626,7 +626,7 @@ class LoraRadioMessageHAMCallSignRS(LoraRadioMessageRS):
 
     def __init__(self, HAMCallSign: str = ""):
         super().__init__()
-        self.messageType = LoraRadioMessageRS.MessageTypeLoraAck
+        self.messageType = LoraRadioMessageRS.MessageTypeHAMCallSign
         self.SetRepeater(False)
         self.SetBatteryLow(False)
         self.SetAckRequested(False)

@@ -71,6 +71,7 @@ class CreateHAMCallSignMessageAdapter(object):
 
             self.WiRocLogger.debug("CreateHAMCallSignMessageAdapter::GetData() Data to fetch")
             return {"MessageType": "DATA", "MessageSubTypeName": "Hamcs", "MessageSource": "Ham", "Data": msgHAMCallSign.GetByteArray(), "ChecksumOK": True}
+        return None
 
     def AddedToMessageBox(self, mbid):
         return None
