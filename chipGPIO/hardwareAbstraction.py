@@ -166,18 +166,22 @@ class HardwareAbstraction(object):
     def EnableLora(self):
         if self.isNewGpiod:
             self.line_request.set_value(self.LORAenableLine, Value.INACTIVE)
-            self.line_request.set_value(self.LORAM0Line, Value.INACTIVE)
+            if self.LORAM0Line is not None:
+                self.line_request.set_value(self.LORAM0Line, Value.INACTIVE)
         else:
             self.LORAenable.set_value(0)
-            self.LORAM0Line.set_value(0)
+            if self.LORAM0Line is not None:
+                self.LORAM0Line.set_value(0)
 
     def DisableLora(self):
         if self.isNewGpiod:
             self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
-            self.line_request.set_value(self.LORAM0Line, Value.ACTIVE)
+            if self.LORAM0Line is not None:
+                self.line_request.set_value(self.LORAM0Line, Value.ACTIVE)
         else:
             self.LORAenable.set_value(1)
-            self.LORAM0Line.set_value(1)
+            if self.LORAM0Line is not None:
+                self.LORAM0Line.set_value(1)
 
     def EnableSRR(self):
         if self.isNewGpiod:
