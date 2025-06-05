@@ -82,7 +82,7 @@ class MessageHelper:
             mbd.SIStationNumber = siMsg.GetStationNumber()
         if siPayloadData2 is not None:
             siMsg = SIMessage()
-            siMsg.AddPayload(siPayloadData)
+            siMsg.AddPayload(siPayloadData2)
             mbd.SICardNumber2 = siMsg.GetSICardNumber()
             mbd.SportIdentHour2 = siMsg.GetHour()
             mbd.SportIdentMinute2 = siMsg.GetMinute()
