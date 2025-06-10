@@ -35,7 +35,7 @@ pyusb==1.3.1
 PyYAML==6.0.2
 # sudo env/bin/pip install ../reedsolomon/dist/reedsolo-2.1.2b1-cp312-cp312-linux_armv7l.whl
 #reedsolo @ file:///home/chip/reedsolomon/dist/reedsolo-2.1.2b1-cp312-cp312-linux_armv7l.whl#sha256=f05e2a5616e71cf3d146250ad66edfbdf783b74c7ceb6d1fcd992c51140ab868
-requests==2.32.3
+requests==2.32.4
 smbus2==0.5.0
 sysv_ipc==1.1.0
 typing_extensions==4.13.2
