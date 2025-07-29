@@ -279,9 +279,9 @@ class SettingsClass(object):
             thresholdPerSecondTotalRetryTime = int(sett.Value)
 
         totalRetryTime = SettingsClass.GetTotalRetryDelaySeconds()
-        print("combinationthreshold: " + str(thresholdPerSecondTotalRetryTime))
-        print("combinationthreshold: " + str(totalRetryTime))
-        print("combinationthreshold: " + str(totalRetryTime * thresholdPerSecondTotalRetryTime))
+        print("combinationthreshold per second: " + str(thresholdPerSecondTotalRetryTime))
+        print("combinationthreshold total retry time: " + str(totalRetryTime))
+        print("combinationthreshold threshold: " + str(totalRetryTime * thresholdPerSecondTotalRetryTime))
         return totalRetryTime * thresholdPerSecondTotalRetryTime
 
     @staticmethod

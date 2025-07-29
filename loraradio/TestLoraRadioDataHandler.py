@@ -15,9 +15,22 @@ from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessagePun
 from loraradio.RSCoderLora import RSCoderLora
 
 # Run with python3 -m unittest loraradio/TestLoraRadioDataHandler.py
+# Run specific case: sudo python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case6_FindPunchErasuresDoubleMessage
 from settings.settings import SettingsClass
 from utils.utils import Utils
+from functools import wraps
 
+def max_execution_time(max_time):
+    def decorator(test_func):
+        @wraps(test_func)
+        def wrapper(*args, **kwargs):
+            start_time = time.perf_counter()
+            result = test_func(*args, **kwargs)
+            elapsed = time.perf_counter() - start_time
+            assert elapsed <= max_time, f"Test exceeded {max_time:.2f}s (took {elapsed:.2f}s)"
+            return result
+        return wrapper
+    return decorator
 
 class TestLoraRadioDataHandler(unittest.TestCase):
 
@@ -257,6 +270,13 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     Case24_AckMsg_Correct_AirOrder_WithRS =                  bytearray([0x85, 0xf7, 0x98, 0xf7, 0x98, 0xf7, 0x98])
     Case24_AckMsg_Corrupted_AirOrder_WithRS =                bytearray([0xc5, 0xF7, 0x9C, 0xFB, 0x84, 0xE6, 0x00])
     # --
+
+    # --- Example that generated many message alternatives and took way to much time to decode during o-ringen
+    Case25_PunchDoubleMsg_Previous_AirOrder_WithRS =        bytearray([0x88, 0x4d, 0x21, 0xc9, 0xa3, 0x40, 0x98, 0xa3, 0x7a, 0x3b, 0x00, 0x70, 0x98, 0xa4, 0x02, 0x1a, 0xcf, 0xea, 0x40, 0x3f, 0x25, 0x62, 0x0f, 0x34, 0x89, 0x02, 0xf7])
+    Case25_PunchDoubleMsg_Correct_AirOrder_WithRS =         bytearray([0x88, 0x72, 0x82, 0x18, 0x79, 0x40, 0x98, 0xa4, 0x8a, 0xb5, 0x0f, 0x71, 0x98, 0xa6, 0x02, 0x56, 0x43, 0xb2, 0x40, 0xa9, 0x3a, 0x2e, 0x00, 0xb4, 0x86, 0x02, 0x50])
+    Case25_PunchDoubleMsg_Corrupted_AirOrder_WithRS =         bytearray([0x88, 0x72, 0x82, 0x18, 0x79, 0x40, 0x98, 0xa4, 0x8a, 0xb5, 0x0f, 0x71, 0x98, 0xa6, 0x82, 0xda, 0xc7, 0x0a, 0xd2, 0xec, 0x0b, 0xda, 0xfa, 0x80, 0x4c, 0x4e, 0x3c])
+    # ---
+
 
 #               IN HEX           HEADER   CRC0     CRC1     ECC0     ECC1     ECC2     ECC3
     # Ack sent:     85f4541ae4974c	10000101 11110100 01010100 00011010 11100100 10010111 01001100
@@ -515,9 +535,16 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case8_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case8_GetPunchDoubleMessage ==============================================================================================")
-        deinterleaved = LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case8_PunchDoubleMsg_Previous_AirOrder_WithRS[:])
-        correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(deinterleaved)
-        self.dataHandler._CachePunchMessage(correctMsg)
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(10000)
+
+        deinterleaved = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(
+            TestLoraRadioDataHandler.Case8_PunchDoubleMsg_Correct_AirOrder_WithRS[:])
+        print("Correct message: " + Utils.GetDataInHex(deinterleaved, logging.DEBUG))
+
+        prevDeinterleaved = LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case8_PunchDoubleMsg_Previous_AirOrder_WithRS[:])
+        prevCorrectMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(prevDeinterleaved)
+        self.dataHandler._CachePunchMessage(prevCorrectMsg)
         seconds = 3.4
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
 
@@ -531,6 +558,12 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case9_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case9_GetPunchDoubleMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(600)
+
+        correctMsg = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case9_PunchDoubleMsg_Correct_AirOrder_WithRS[:])
+        print("The correct msg: " + Utils.GetDataInHex(correctMsg, logging.DEBUG))
+
         deinterleaved = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case9_PunchDoubleMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(deinterleaved)
         loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(prevMsg)
@@ -551,6 +584,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case10_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case10_GetPunchDoubleMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         deinterleaved = LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case10_PunchDoubleMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(deinterleaved)
         self.dataHandler._CachePunchMessage(prevMsg)
@@ -570,6 +606,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case11_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case11_GetPunchDoubleMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         deinterleaved = LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case11_PunchDoubleMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(deinterleaved)
         self.dataHandler._CachePunchMessage(prevMsg)
@@ -588,6 +627,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case12_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case12_GetPunchDoubleMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         deinterleaved = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case12_PunchDoubleMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(deinterleaved)
         loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(prevMsg)
@@ -609,6 +651,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case13_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case13_GetPunchDoubleMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         interleaved = TestLoraRadioDataHandler.Case13_PunchDoubleMsg_Previous_AirOrder_WithRS[:]
         for i in range(0, len(interleaved)):
             self.dataHandler.AddData(interleaved[i:i + 1])
@@ -631,6 +676,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case1_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case1_FindPunchErasuresMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case1_PunchMsg_Previous_WithRS)
         self.dataHandler._CachePunchMessage(prevMsg)
@@ -647,6 +695,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case2_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case2_FindPunchErasuresMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case2_PunchMsg_Previous_WithRS)
         self.dataHandler._CachePunchMessage(prevMsg)
@@ -661,6 +712,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case3_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case3_FindPunchErasuresMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case3_PunchMsg_Previous_WithRS)
         self.dataHandler._CachePunchMessage(prevMsg)
@@ -675,6 +729,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case4_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case4_FindPunchErasuresMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case4_PunchMsg_Previous_WithRS)
         self.dataHandler._CachePunchMessage(prevMsg)
@@ -689,6 +746,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case5_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case5_FindPunchErasuresMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case5_PunchMsg_Previous_WithRS)
         self.dataHandler._CachePunchMessage(prevMsg)
@@ -713,6 +773,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case6_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case6_FindPunchErasuresMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case6_PunchMsg_Previous_WithRS)
         self.dataHandler._CachePunchMessage(prevMsg)
@@ -729,6 +792,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case7_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case7_FindPunchErasuresMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case7_PunchMsg_Previous_WithRS)
         self.dataHandler._CachePunchMessage(prevMsg)
@@ -737,6 +803,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case7_PunchMsg_Corrupted_WithRS)
+        SettingsClass.SetSetting("LoraRange", 'L')
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
         print("test_Case7_FindPunchErasuresMessage: " + str(erasures))
         corruptPositions = [9,10,11,12]
@@ -745,11 +812,15 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case8_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case8_FindPunchErasuresMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case8_PunchMsg_Previous_WithRS)
         self.dataHandler._CachePunchMessage(prevMsg)
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case8_PunchMsg_Corrupted_WithRS)
+        SettingsClass.SetSetting("LoraRange", 'L')
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
         print("test_Case8_FindPunchErasuresMessage: " + str(erasures))
         corruptPositions = [10,11,12]
@@ -758,11 +829,15 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case8_FindPunchErasuresMessage2(self):
         print("============================================================================================== START test_Case8_FindPunchErasuresMessage2 ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case8_PunchMsg_Previous_WithRS)
         self.dataHandler._CachePunchMessage(prevMsg)
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case8_PunchMsg_Corrupted_WithRS2)
+        SettingsClass.SetSetting("LoraRange", 'L')
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
         print("test_Case8_FindPunchErasuresMessage2: " + str(erasures))
         corruptPositions = [5, 6, 8, 9, 11, 12]
@@ -771,6 +846,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case8_GetPunchMessage_BestCombination(self):
         print("============================================================================================== START test_Case8_GetPunchMessage_BestCombination ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case8_PunchMsg_Previous_WithRS)
         self.dataHandler._CachePunchMessage(prevMsg)
@@ -786,6 +864,10 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case9_GetPunchMessage(self):
         print("============================================================================================== START test_Case9_GetPunchMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
+        SettingsClass.SetSetting("LoraRange", 'L')
         deinterleaved = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case9_PunchMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(deinterleaved)
         loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(prevMsg)
@@ -807,6 +889,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case10_GetPunchMessage(self):
         print("============================================================================================== START test_Case10_GetPunchMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         deinterleaved = LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case10_PunchMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(deinterleaved)
         self.dataHandler._CachePunchMessage(prevMsg)
@@ -825,6 +910,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case11_GetPunchMessage(self):
         print("============================================================================================== START test_Case11_GetPunchMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         deinterleaved = LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case11_PunchMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(deinterleaved)
         self.dataHandler._CachePunchMessage(prevMsg)
@@ -844,6 +932,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case12_GetPunchMessage(self):
         print("============================================================================================== START test_Case12_GetPunchMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         deinterleaved = LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case12_PunchMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(deinterleaved)
         self.dataHandler._CachePunchMessage(prevMsg)
@@ -862,6 +953,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case13_GetPunchMessage(self):
         print("============================================================================================== START test_Case13_GetPunchMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         deinterleaved = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case13_PunchMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(deinterleaved)
         loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(prevMsg)
@@ -882,6 +976,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case14_GetAckMessage(self):
         print("============================================================================================== START test_Case14_GetAckMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         SettingsClass.SetMessageIDOfLastLoraMessageSent(TestLoraRadioDataHandler.Case14_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1+1])
         recAckMsg = TestLoraRadioDataHandler.Case14_AckMsg_Corrupted_AirOrder_WithRS[:]
         for i in range(0, len(recAckMsg)):
@@ -896,6 +993,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case15_GetAckMessage(self):
         print("============================================================================================== START test_Case15_GetAckMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         SettingsClass.SetMessageIDOfLastLoraMessageSent(TestLoraRadioDataHandler.Case15_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1+1])
         recAckMsg = TestLoraRadioDataHandler.Case15_AckMsg_Corrupted_AirOrder_WithRS[:]
         for i in range(0, len(recAckMsg)):
@@ -909,6 +1009,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case16_GetAckMessage(self):
         print("============================================================================================== START test_Case16_GetAckMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         SettingsClass.SetMessageIDOfLastLoraMessageSent(TestLoraRadioDataHandler.Case16_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1+1])
         recAckMsg = TestLoraRadioDataHandler.Case16_AckMsg_Corrupted_AirOrder_WithRS[:]
         for i in range(0, len(recAckMsg)):
@@ -922,6 +1025,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case17_GetStatusMessage(self):
         print("============================================================================================== START test_Case17_GetStatusMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         prevStatusMsgArr = TestLoraRadioDataHandler.Case17_StatusMsg_Previous_AirOrder_WithRS[:]
         for i in range(0, len(prevStatusMsgArr)):
             self.dataHandler.AddData(prevStatusMsgArr[i:i + 1])
@@ -940,6 +1046,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case18_GetPunchMessage(self):
         print("============================================================================================== START test_Case18_GetPunchMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         deinterleaved = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case18_PunchMsg_Previous_AirOrder_WithRS[:])
         prevMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(deinterleaved)
         loraPunchMsg1, loraPunchMsg2 = self.dataHandler._GetPunchReDCoSTupleFromPunchDouble(prevMsg)
@@ -960,6 +1069,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case19_GetPunchMessage(self):
         print("============================================================================================== START test_Case19_GetPunchMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         interleaved1 = TestLoraRadioDataHandler.Case19_PunchMsg_Previous_AirOrder_WithRS[:]
         for i in range(0, len(interleaved1)):
             self.dataHandler.AddData(interleaved1[i:i + 1])
@@ -979,6 +1091,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case20_GetAckMessage(self):
         print("============================================================================================== START test_Case20_GetAckMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         SettingsClass.SetMessageIDOfLastLoraMessageSent(
             TestLoraRadioDataHandler.Case20_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1 + 1])
         recAckMsg = TestLoraRadioDataHandler.Case20_AckMsg_Corrupted_AirOrder_WithRS[:]
@@ -993,6 +1108,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case21_GetAckMessage(self):
         print("============================================================================================== START test_Case21_GetAckMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         SettingsClass.SetMessageIDOfLastLoraMessageSent(
             TestLoraRadioDataHandler.Case21_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1 + 1])
         recAckMsg = TestLoraRadioDataHandler.Case21_AckMsg_Corrupted_AirOrder_WithRS[:]
@@ -1007,6 +1125,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case22_GetAckMessage(self):
         print("============================================================================================== START test_Case22_GetAckMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         SettingsClass.SetMessageIDOfLastLoraMessageSent(
             TestLoraRadioDataHandler.Case22_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1 + 1])
         recAckMsg = TestLoraRadioDataHandler.Case22_AckMsg_Corrupted_AirOrder_WithRS[:]
@@ -1021,6 +1142,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case23_GetAckMessage(self):
         print("============================================================================================== START test_Case23_GetAckMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         SettingsClass.SetMessageIDOfLastLoraMessageSent(
             TestLoraRadioDataHandler.Case23_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1 + 1])
         recAckMsg = TestLoraRadioDataHandler.Case23_AckMsg_Corrupted_AirOrder_WithRS[:]
@@ -1035,6 +1159,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_Case24_GetAckMessage(self):
         print("============================================================================================== START test_Case24_GetAckMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
         SettingsClass.SetMessageIDOfLastLoraMessageSent(
             TestLoraRadioDataHandler.Case24_AckMsg_Correct_AirOrder_WithRS[LoraRadioMessageAckRS.HASH0:LoraRadioMessageAckRS.HASH1 + 1])
         recAckMsg = TestLoraRadioDataHandler.Case24_AckMsg_Corrupted_AirOrder_WithRS[:]
@@ -1049,6 +1176,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_FindPunchErasures(self):
         print("============================================================================================== START test_FindPunchErasures ==============================================================================================")
+
         loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.PunchMsg_Correct_1)
         self.dataHandler._CachePunchMessage(loraMsg)
@@ -1419,6 +1547,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_SevenPlusOneCRCWrong_FewerCombinations_DecodeReDCos(self):
         print("============================================================================================== START test_SevenPlusOneCRCWrong_FewerCombinations_DecodeReDCos ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
 
         msg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
             (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
@@ -1457,6 +1586,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_SevenPlusOneCRCWrong_MoreCombinations_DecodeReDCos(self):
         print("============================================================================================== START test_SevenPlusOneCRCWrong_MoreCombinations_DecodeReDCos ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
 
         msg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
             (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
@@ -1501,6 +1631,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     def test_FivePlusOneCRCWrong_FewerCombinations_DecodeReDCos(self):
         print("============================================================================================== START test_FivePlusOneCRCWrong_FewerCombinations_DecodeReDCos ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
 
         msg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
             (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS[0] & LoraRadioMessageRS.BatLowBitMask) > 0,
@@ -1542,3 +1673,59 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         self.assertIsNotNone(msg4)
         self.assertEqual(correct, msg4.GetByteArray())
+
+    def max_execution_time(max_time: int):
+        def decorator(test_func):
+            @wraps(test_func)
+            def wrapper(*args, **kwargs):
+                start_time = time.perf_counter()
+                result = test_func(*args, **kwargs)
+                elapsed = time.perf_counter() - start_time
+                assert elapsed <= max_time, f"Test exceeded {max_time:.2f}s (took {elapsed:.2f}s)"
+                return result
+
+            return wrapper
+
+        return decorator
+
+    @max_execution_time(4)
+    def test_Case25_GetPunchDoubleMessage(self):
+        print("============================================================================================== START test_Case25_GetPunchDoubleMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'MS')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
+        # Add all the old control numbers that was added previously. This is needed to recreate the many alternatives
+        # that was created. With new changes to how many differenct control numbers that should be used it should no longer happen though.
+        prevMsgs = [TestLoraRadioDataHandler.PunchMsg_Correct_1.copy() for _ in range(9)]
+        prevMsgs[0][1] = 107
+        prevMsgs[1][1] = 118
+        prevMsgs[2][1] = 235
+        prevMsgs[3][1] = 135
+        prevMsgs[4][1] = 255
+        prevMsgs[4][6] = prevMsgs[4][6] | 0x40
+        prevMsgs[5][1] = 180
+        prevMsgs[6][1] = 115
+        prevMsgs[7][1] = 180
+        prevMsgs[7][6] = prevMsgs[7][6] | 0x40
+        prevMsgs[8][1] = 184
+
+        for prevMsg in prevMsgs:
+            rsCodes = RSCoderLora.encode(prevMsg)
+            loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(prevMsg + rsCodes)
+            self.dataHandler._CachePunchMessage(loraMsg)
+
+        interleaved = TestLoraRadioDataHandler.Case25_PunchDoubleMsg_Previous_AirOrder_WithRS[:]
+        for i in range(0, len(interleaved)):
+            self.dataHandler.AddData(interleaved[i:i + 1])
+        prevPunchDoubleMsg = self.dataHandler.GetMessage()
+
+        seconds = 2
+        self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
+
+        interleaved = TestLoraRadioDataHandler.Case25_PunchDoubleMsg_Corrupted_AirOrder_WithRS[:]
+        for i in range(0, len(interleaved)):
+            self.dataHandler.AddData(interleaved[i:i + 1])
+        punchDoubleMsg = self.dataHandler.GetMessage()
+        self.assertIsNone(punchDoubleMsg)
+        # This test takes arount a minute but we should never spend that much time, especially not when MS is selected
+        print("=== END test_Case25_GetPunchDoubleMessage ===")

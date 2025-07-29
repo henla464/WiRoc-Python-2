@@ -227,7 +227,22 @@ class LoraRadioDataHandler(object):
                     (loraMsg.GetHeaderData()[0] & ~LoraRadioMessageRS.MessageTypeBitMask):
                 headers += [(loraMsg.GetHeaderData()[0] & ~LoraRadioMessageRS.MessageTypeBitMask) | LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS]
 
-        controlNumbers = [(controlNumber & 0xFF) for controlNumber in self.ReceivedPunchMessageDict]
+        # Only use a maximum of 4 control numbers, use the latest 4
+        loraRange = SettingsClass.GetLoraRange()
+        if loraRange == 'UL':
+            maximumNoOfControlNumbersToTest = 4
+        elif loraRange == 'XL':
+            maximumNoOfControlNumbersToTest = 3
+        elif loraRange == 'L':
+            maximumNoOfControlNumbersToTest = 3
+        elif loraRange == 'ML':
+            maximumNoOfControlNumbersToTest = 2
+        elif loraRange == 'MS':
+            maximumNoOfControlNumbersToTest = 2
+        elif loraRange == 'S':
+            maximumNoOfControlNumbersToTest = 1
+
+        controlNumbers = [(controlNumber & 0xFF) for controlNumber in sorted(self.ReceivedPunchMessageDict.keys(), key=lambda k: self.ReceivedPunchMessageDict[k].timeCreated, reverse=True)[:maximumNoOfControlNumbersToTest]]
         controlNumber8bit = (loraMsg.GetControlNumber() & 0xFF)
         if controlNumber8bit not in controlNumbers:
             controlNumbers += [controlNumber8bit]
@@ -255,7 +270,9 @@ class LoraRadioDataHandler(object):
 
 
         # Message 2
-        controlNumbers_2 = [(controlNumber & 0xFF) for controlNumber in self.ReceivedPunchMessageDict]
+        # Only use a maximum of 4 control numbers, use the latest 4
+        controlNumbers_2 = [(controlNumber & 0xFF) for controlNumber in sorted(self.ReceivedPunchMessageDict.keys(), key=lambda k: self.ReceivedPunchMessageDict[k].timeCreated, reverse=True)[:maximumNoOfControlNumbersToTest]]
+        #controlNumbers_2 = [(controlNumber & 0xFF) for controlNumber in self.ReceivedPunchMessageDict]
         controlNumber8bit_2 = (loraMsg.GetControlNumber_2() & 0xFF)
         if controlNumber8bit_2 not in controlNumbers_2:
             controlNumbers_2 += [controlNumber8bit_2]
@@ -269,10 +286,10 @@ class LoraRadioDataHandler(object):
         if self.LastPunchMessageTime is not None:
             noOfSecondsSinceLastMessage = int(time.monotonic() - self.LastPunchMessageTime)
             lowestTimeWeAssumeCanBeCorrect = max(self.LastPunchMessage.GetTwelveHourTimerAsInt() \
-                                                 + noOfSecondsSinceLastMessage -  SettingsClass.GetTotalRetryDelaySeconds(),
+                                                 + noOfSecondsSinceLastMessage - SettingsClass.GetTotalRetryDelaySeconds(),
                                                  self.LastPunchMessage.GetTwelveHourTimerAsInt())
             highestTimeWeAssumeCanBeCorrect = self.LastPunchMessage.GetTwelveHourTimerAsInt() \
-                + noOfSecondsSinceLastMessage + 2*SettingsClass.GetTotalRetryDelaySeconds()
+                + noOfSecondsSinceLastMessage + 2 * SettingsClass.GetTotalRetryDelaySeconds()
             if ((lowestTimeWeAssumeCanBeCorrect & 0xFF00) >> 8) <= loraMsg.GetTwelveHourTimer_2()[0] \
                     <= ((highestTimeWeAssumeCanBeCorrect & 0xFF00) >> 8):
                 # the TH is very reasonable so assume it is correct
@@ -552,7 +569,7 @@ class LoraRadioDataHandler(object):
 
         erasuresCombinationIterator = self._GetReDCoSErasureCombinations(loraMsgWithErrors, fixedValues, fixedErasures, 0)
         erasuresCombinationList = list(erasuresCombinationIterator)
-        LoraRadioDataHandler.WiRocLogger.info("LoraRadioDataHandler::_GetPunchUsingReDCoSDecoding() Erausre combination list: " + str(erasuresCombinationList))
+        LoraRadioDataHandler.WiRocLogger.info("LoraRadioDataHandler::_GetPunchUsingReDCoSDecoding() Erasure combination list: " + str(erasuresCombinationList))
 
         global createDecodePunch
 
@@ -666,12 +683,16 @@ class LoraRadioDataHandler(object):
                 erasuresCombinationList = list(erasuresCombinationIterator)
 
                 if len(erasuresCombinationList) * len(alts) > SettingsClass.GetReDCoSCombinationThreshold():
-                   nOfErasuresToDecreaseWith = 6
-                   erasuresCombinationIterator = self._GetReDCoSErasureCombinations(loraMsgWithErrors, fixedValues, fixedErasures, nOfErasuresToDecreaseWith)
-                   erasuresCombinationList = list(erasuresCombinationIterator)
-                   lengthOfDataErasureCombinationsAreCalculatedOver = len(loraMsgWithErrors.GetByteArray()) - loraMsgWithErrors.NoOfCRCBytes - len(fixedValues) - len(fixedErasures)
-                   noOfHalfMatchesRequired = self._GetNoOfHalfMatchesRequired(lengthOfDataErasureCombinationsAreCalculatedOver, loraMsgWithErrors.NoOfECCBytes,len(fixedErasures), nOfErasuresToDecreaseWith)
-                   LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetPunchDoubleUsingReDCoSDecoding() No of erasure in each combination reduced by six")
+                    nOfErasuresToDecreaseWith = 6
+                    erasuresCombinationIterator = self._GetReDCoSErasureCombinations(loraMsgWithErrors, fixedValues, fixedErasures, nOfErasuresToDecreaseWith)
+                    erasuresCombinationList = list(erasuresCombinationIterator)
+
+                    if len(erasuresCombinationList) * len(alts) > SettingsClass.GetReDCoSCombinationThreshold():
+                        return None
+                    else:
+                        lengthOfDataErasureCombinationsAreCalculatedOver = len(loraMsgWithErrors.GetByteArray()) - loraMsgWithErrors.NoOfCRCBytes - len(fixedValues) - len(fixedErasures)
+                        noOfHalfMatchesRequired = self._GetNoOfHalfMatchesRequired(lengthOfDataErasureCombinationsAreCalculatedOver, loraMsgWithErrors.NoOfECCBytes,len(fixedErasures), nOfErasuresToDecreaseWith)
+                        LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetPunchDoubleUsingReDCoSDecoding() No of erasure in each combination reduced by six")
                 else:
                     lengthOfDataErasureCombinationsAreCalculatedOver = len(loraMsgWithErrors.GetByteArray()) - loraMsgWithErrors.NoOfCRCBytes - len(fixedValues) - len(fixedErasures)
                     noOfHalfMatchesRequired = self._GetNoOfHalfMatchesRequired(lengthOfDataErasureCombinationsAreCalculatedOver, loraMsgWithErrors.NoOfECCBytes,len(fixedErasures), nOfErasuresToDecreaseWith)
@@ -839,6 +860,8 @@ class LoraRadioDataHandler(object):
         erasures = []
 
         messageDataToConsider = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(self.DataReceived[0:expectedMessageLength])
+        LoraRadioDataHandler.WiRocLogger.debug(
+            "LoraRadioDataHandler::_GetPunchDoubleReDCoSMessage() Deinterleaved message to consider: " + Utils.GetDataInHex(messageDataToConsider, logging.DEBUG))
         messageDataToConsider[LoraRadioMessageRS.H] = (messageDataToConsider[LoraRadioMessageRS.H] & ~LoraRadioMessageRS.MessageTypeBitMask) | messageTypeToTry
         rssiByteValue = self.DataReceived[expectedMessageLength] if self.RSSIByteCount == 1 else None
         messageDataToConsiderWithoutCRC = messageDataToConsider[:-LoraRadioMessagePunchDoubleReDCoSRS.NoOfCRCBytes]
@@ -867,11 +890,15 @@ class LoraRadioDataHandler(object):
                         loraMsgWithErrors = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(messageDataToConsider, rssiByteValue)
                         alts, fixedValues, fixedErasures = self._GetPunchDoubleMessageAlternatives(loraMsgWithErrors)
                         for messageAlt in alts:
+                            LoraRadioDataHandler.WiRocLogger.debug(
+                                "LoraRadioDataHandler::_GetPunchDoubleReDCoSMessage() alternatives: " + Utils.GetDataInHex(messageAlt, logging.DEBUG) + " fixedValues: " + str(fixedValues) + " fixedErasures: " + str(fixedErasures))
+
+                        for messageAlt in alts:
                             try:
                                 correctedData = RSCoderLora.decodeLong(bytearray(messageAlt[:-LoraRadioMessagePunchDoubleReDCoSRS.NoOfCRCBytes]))
                             except Exception as err:
                                 LoraRadioDataHandler.WiRocLogger.debug(
-                                    "LoraRadioDataHandler::_GetPunchDoubleReDCoSMessage() 2 RS decoding of messageAlt: " + str(messageAlt) + " failed with exception: " + str(err))
+                                    "LoraRadioDataHandler::_GetPunchDoubleReDCoSMessage() 2 RS decoding of messageAlt: " + Utils.GetDataInHex(messageAlt, logging.DEBUG) + " failed with exception: " + str(err))
 
                             if correctedData is not None and RSCoderLora.checkLong(correctedData):
                                 loraPunchMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
