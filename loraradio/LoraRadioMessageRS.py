@@ -25,7 +25,7 @@ class LoraRadioMessageRS(object):
     MessageLengths: list[int]= [24, 16, 7, 14, 14, 7, 27, 15, 27, 11]
 
     # Positions within the message
-    H = 0
+    H: int = 0
 
     def __init__(self):
         self.messageType: int|None = None
@@ -290,37 +290,37 @@ class LoraRadioMessagePunchReDCoSRS(LoraRadioMessageReDCoSRS):
 
 
 class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
-    NoOfECCBytes:int  = 8
-    NoOfCRCBytes:int  = 2
+    NoOfECCBytes: int = 8
+    NoOfCRCBytes: int = 2
 
     # Positions within the message
-    CN0 = 1  # Control number - bit 0-7
-    SN3 = 2  # SI Number, highest byte
-    SN2 = 3
-    SN1 = 4
-    SN0 = 5
-    CN1Plus = 6 # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
-    TH = 7 # 12 hour timer, high byte, number of seconds
-    TL = 8  # 12 hour timer, high byte, number of seconds
+    CN0: int = 1  # Control number - bit 0-7
+    SN3: int = 2  # SI Number, highest byte
+    SN2: int = 3
+    SN1: int = 4
+    SN0: int = 5
+    CN1Plus: int = 6 # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
+    TH: int = 7 # 12 hour timer, high byte, number of seconds
+    TL: int = 8  # 12 hour timer, high byte, number of seconds
     # Second punch positions
-    CN0_2 = 9
-    SN3_2 = 10  # SI Number, highest byte
-    SN2_2 = 11
-    SN1_2 = 12
-    SN0_2 = 13
-    CN1Plus_2 = 14  # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
-    TH_2 = 15  # 12 hour timer, high byte, number of seconds
-    TL_2 = 16  # 12 hour timer, high byte, number of seconds
-    ECC0 = 17 # Error correcting code
-    ECC1 = 18  # Error correcting code
-    ECC2 = 19  # Error correcting code
-    ECC3 = 20  # Error correcting code
-    ECC4 = 21  # Error correcting code
-    ECC5 = 22  # Error correcting code
-    ECC6 = 23  # Error correcting code
-    ECC7 = 24  # Error correcting code
-    CRC0 = 25  # CRC0 byte
-    CRC1 = 26  # CRC1 byte
+    CN0_2: int = 9
+    SN3_2: int = 10  # SI Number, highest byte
+    SN2_2: int = 11
+    SN1_2: int = 12
+    SN0_2: int = 13
+    CN1Plus_2: int = 14  # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
+    TH_2: int = 15  # 12 hour timer, high byte, number of seconds
+    TL_2: int = 16  # 12 hour timer, high byte, number of seconds
+    ECC0: int = 17 # Error correcting code
+    ECC1: int = 18  # Error correcting code
+    ECC2: int = 19  # Error correcting code
+    ECC3: int = 20  # Error correcting code
+    ECC4: int = 21  # Error correcting code
+    ECC5: int = 22  # Error correcting code
+    ECC6: int = 23  # Error correcting code
+    ECC7: int = 24  # Error correcting code
+    CRC0: int = 25  # CRC0 byte
+    CRC1: int = 26  # CRC1 byte
 
     InterleavingInAirOrder = [LoraRadioMessageReDCoSRS.H, CRC0, SN2, SN1, SN0, CN0, TH, TL, SN2_2, SN1_2, SN3, SN0_2, TH_2, TL_2, CN1Plus, ECC0, ECC1, ECC2, CN0_2, ECC3, ECC4, ECC5, SN3_2, ECC6, ECC7, CN1Plus_2, CRC1]
 

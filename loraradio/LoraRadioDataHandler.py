@@ -217,7 +217,7 @@ class LoraRadioDataHandler(object):
             return alternatives, fixedValues, fixedErasures
 
     def _GetPunchDoubleMessageAlternatives(self, loraMsg) -> Tuple[List[bytearray], list, bytearray]:
-        possibilities: list[int | None] = [None] * LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS]
+        possibilities: list[list[int] | None] = [None] * LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS]
 
         headers = None
         if self.LastPunchMessage is not None:
@@ -228,6 +228,7 @@ class LoraRadioDataHandler(object):
                 headers += [(loraMsg.GetHeaderData()[0] & ~LoraRadioMessageRS.MessageTypeBitMask) | LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS]
 
         # Only use a maximum of 4 control numbers, use the latest 4
+        maximumNoOfControlNumbersToTest = 1
         loraRange = SettingsClass.GetLoraRange()
         if loraRange == 'UL':
             maximumNoOfControlNumbersToTest = 4
@@ -238,7 +239,7 @@ class LoraRadioDataHandler(object):
         elif loraRange == 'ML':
             maximumNoOfControlNumbersToTest = 2
         elif loraRange == 'MS':
-            maximumNoOfControlNumbersToTest = 2
+            maximumNoOfControlNumbersToTest = 1
         elif loraRange == 'S':
             maximumNoOfControlNumbersToTest = 1
 
@@ -246,14 +247,14 @@ class LoraRadioDataHandler(object):
         controlNumber8bit = (loraMsg.GetControlNumber() & 0xFF)
         if controlNumber8bit not in controlNumbers:
             controlNumbers += [controlNumber8bit]
-        sn3 = [0]
+        sn3: list[int]  = [0]
         if loraMsg.GetByteArray()[LoraRadioMessagePunchDoubleReDCoSRS.SN3] != 0:
             sn3 += [loraMsg.GetByteArray()[LoraRadioMessagePunchDoubleReDCoSRS.SN3]]
 
         cn1Plus = None
         if self.LastPunchMessage is not None:
             cn1Plus = [self.LastPunchMessage.GetByteArray()[LoraRadioMessagePunchDoubleReDCoSRS.CN1Plus]]
-        TH = None
+        TH: None | list[int] = None
         if self.LastPunchMessageTime is not None:
             noOfSecondsSinceLastMessage = int(time.monotonic() - self.LastPunchMessageTime)
             lowestTimeWeAssumeCanBeCorrect = max(self.LastPunchMessage.GetTwelveHourTimerAsInt() \
@@ -271,15 +272,14 @@ class LoraRadioDataHandler(object):
 
         # Message 2
         # Only use a maximum of 4 control numbers, use the latest 4
-        controlNumbers_2 = [(controlNumber & 0xFF) for controlNumber in sorted(self.ReceivedPunchMessageDict.keys(), key=lambda k: self.ReceivedPunchMessageDict[k].timeCreated, reverse=True)[:maximumNoOfControlNumbersToTest]]
-        #controlNumbers_2 = [(controlNumber & 0xFF) for controlNumber in self.ReceivedPunchMessageDict]
+        controlNumbers_2 = controlNumbers[:]
         controlNumber8bit_2 = (loraMsg.GetControlNumber_2() & 0xFF)
         if controlNumber8bit_2 not in controlNumbers_2:
             controlNumbers_2 += [controlNumber8bit_2]
-        sn3_2 = [0]
+        sn3_2: list[int] = [0]
         if loraMsg.GetPayloadByteArray()[LoraRadioMessagePunchDoubleReDCoSRS.SN3_2 - 1] != 0:
             sn3_2 += [loraMsg.GetPayloadByteArray()[LoraRadioMessagePunchDoubleReDCoSRS.SN3_2 - 1]]
-        cn1Plus_2 = None
+        cn1Plus_2: list[int] | None = None
         if self.LastPunchMessage is not None:
             cn1Plus_2 = [self.LastPunchMessage.GetPayloadByteArray()[LoraRadioMessagePunchReDCoSRS.CN1Plus - 1]]
         TH2 = None
@@ -335,7 +335,28 @@ class LoraRadioDataHandler(object):
                     (loraMsg.GetHeaderData()[0] & ~LoraRadioMessageRS.MessageTypeBitMask):
                 headers += [(self.LastPunchMessage.GetHeaderData()[0] & ~LoraRadioMessageRS.MessageTypeBitMask) | LoraRadioMessageRS.MessageTypeSIPunchReDCoS]
 
-        controlNumbers = [(controlNumber & 0xFF) for controlNumber in self.ReceivedPunchMessageDict]
+        # Only use a maximum of 8 control numbers, use the latest
+        maximumNoOfControlNumbersToTest = 2
+        loraRange = SettingsClass.GetLoraRange()
+        if loraRange == 'UL':
+            maximumNoOfControlNumbersToTest = 8
+        elif loraRange == 'XL':
+            maximumNoOfControlNumbersToTest = 6
+        elif loraRange == 'L':
+            maximumNoOfControlNumbersToTest = 6
+        elif loraRange == 'ML':
+            maximumNoOfControlNumbersToTest = 4
+        elif loraRange == 'MS':
+            maximumNoOfControlNumbersToTest = 3
+        elif loraRange == 'S':
+            maximumNoOfControlNumbersToTest = 2
+
+        controlNumbers = [(controlNumber & 0xFF) for controlNumber in sorted(self.ReceivedPunchMessageDict.keys(),
+                                                                             key=lambda k:
+                                                                             self.ReceivedPunchMessageDict[
+                                                                                 k].timeCreated, reverse=True)[
+                                                                      :maximumNoOfControlNumbersToTest]]
+
         controlNumber8bit = (loraMsg.GetControlNumber() & 0xFF)
         if controlNumber8bit not in controlNumbers:
             controlNumbers += [controlNumber8bit]
@@ -364,7 +385,7 @@ class LoraRadioDataHandler(object):
                 #print("TH: " + str(TH))
 
         fixedValues = [LoraRadioMessagePunchReDCoSRS.H, LoraRadioMessagePunchReDCoSRS.CN0, LoraRadioMessagePunchReDCoSRS.SN3]
-        possibilities = [None]*LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchReDCoS]
+        possibilities: list[list[int] | None] = [None]*LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchReDCoS]
         possibilities[LoraRadioMessagePunchReDCoSRS.H] = headers
         possibilities[LoraRadioMessagePunchReDCoSRS.CN0] = controlNumbers
         possibilities[LoraRadioMessagePunchReDCoSRS.SN3] = sn3

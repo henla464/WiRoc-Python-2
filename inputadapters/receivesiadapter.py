@@ -367,7 +367,7 @@ class ReceiveSIAdapter(object):
         if SIMsg.GetMessageType() == SIMessage.SIPunch:
             ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::GetData() SI message received! data: " + Utils.GetDataInHex(receivedData, logging.DEBUG))
             if len(allReceivedData) != len(receivedData):
-                logging.error("ReceiveSIAdapter::GetData() Received more data than expected, all data: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
+                ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::GetData() Received more data than expected, all data: " + Utils.GetDataInHex(allReceivedData, logging.ERROR))
 
             if not self.oneWay:
                 self.detectMissedPunches(SIMsg)

@@ -274,9 +274,13 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     # --- Example that generated many message alternatives and took way to much time to decode during o-ringen
     Case25_PunchDoubleMsg_Previous_AirOrder_WithRS =        bytearray([0x88, 0x4d, 0x21, 0xc9, 0xa3, 0x40, 0x98, 0xa3, 0x7a, 0x3b, 0x00, 0x70, 0x98, 0xa4, 0x02, 0x1a, 0xcf, 0xea, 0x40, 0x3f, 0x25, 0x62, 0x0f, 0x34, 0x89, 0x02, 0xf7])
     Case25_PunchDoubleMsg_Correct_AirOrder_WithRS =         bytearray([0x88, 0x72, 0x82, 0x18, 0x79, 0x40, 0x98, 0xa4, 0x8a, 0xb5, 0x0f, 0x71, 0x98, 0xa6, 0x02, 0x56, 0x43, 0xb2, 0x40, 0xa9, 0x3a, 0x2e, 0x00, 0xb4, 0x86, 0x02, 0x50])
-    Case25_PunchDoubleMsg_Corrupted_AirOrder_WithRS =         bytearray([0x88, 0x72, 0x82, 0x18, 0x79, 0x40, 0x98, 0xa4, 0x8a, 0xb5, 0x0f, 0x71, 0x98, 0xa6, 0x82, 0xda, 0xc7, 0x0a, 0xd2, 0xec, 0x0b, 0xda, 0xfa, 0x80, 0x4c, 0x4e, 0x3c])
+    Case25_PunchDoubleMsg_Corrupted_AirOrder_WithRS =       bytearray([0x88, 0x72, 0x82, 0x18, 0x79, 0x40, 0x98, 0xa4, 0x8a, 0xb5, 0x0f, 0x71, 0x98, 0xa6, 0x82, 0xda, 0xc7, 0x0a, 0xd2, 0xec, 0x0b, 0xda, 0xfa, 0x80, 0x4c, 0x4e, 0x3c])
     # ---
 
+    # --- Example that generated many message alternatives and took way to much time to decode during o-ringen
+    Case26_PunchDoubleMsg_Corrupted_AirOrder_WithRS =       bytearray([0xc8, 0xd1, 0x7a, 0x7d, 0xbe, 0x11, 0x15, 0xd9, 0x15, 0xd9, 0x68, 0xe9, 0x14, 0x52, 0xb2, 0x4c, 0x4d, 0x00, 0x99, 0x19, 0x3c, 0x0c, 0x4d, 0x47, 0x03, 0x2f, 0x87])
+    # ---
+# # c8d17a7dbe1115d915d968e91452b24c4d0099193c0c4d47032f87bb
 
 #               IN HEX           HEADER   CRC0     CRC1     ECC0     ECC1     ECC2     ECC3
     # Ack sent:     85f4541ae4974c	10000101 11110100 01010100 00011010 11100100 10010111 01001100
@@ -1709,6 +1713,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         prevMsgs[7][6] = prevMsgs[7][6] | 0x40
         prevMsgs[8][1] = 184
 
+
+
         for prevMsg in prevMsgs:
             rsCodes = RSCoderLora.encode(prevMsg)
             loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(prevMsg + rsCodes)
@@ -1729,3 +1735,51 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNone(punchDoubleMsg)
         # This test takes arount a minute but we should never spend that much time, especially not when MS is selected
         print("=== END test_Case25_GetPunchDoubleMessage ===")
+
+    @max_execution_time(4)
+    def test_Case26_GetPunchDoubleMessage(self):
+        print(
+            "============================================================================================== START test_Case26_GetPunchDoubleMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'MS')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+
+        # Add all the old control numbers that was added previously. This is needed to recreate the many alternatives
+        # that was created. With new changes to how many differenct control numbers that should be used it should no longer happen though.
+        prevMsgs = [TestLoraRadioDataHandler.PunchMsg_Correct_1.copy() for _ in range(14)]
+        prevMsgs[0][1] = 31
+        prevMsgs[1][1] = 164
+        prevMsgs[2][1] = 157
+        prevMsgs[3][1] = 128
+        prevMsgs[4][1] = 255
+        prevMsgs[4][6] = prevMsgs[4][6] | 0x40
+        prevMsgs[5][1] = 105
+        prevMsgs[6][1] = 71
+        prevMsgs[7][1] = 158
+        prevMsgs[8][1] = 255
+        prevMsgs[9][1] = 250
+        prevMsgs[10][1] = 106
+        prevMsgs[10][6] = prevMsgs[4][6] | 0x40
+        prevMsgs[11][1] = 182
+        prevMsgs[12][1] = 159
+        prevMsgs[13][1] = 124
+
+        for prevMsg in prevMsgs:
+            rsCodes = RSCoderLora.encode(prevMsg)
+            loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(prevMsg + rsCodes)
+            self.dataHandler._CachePunchMessage(loraMsg)
+
+        #interleaved = TestLoraRadioDataHandler.Case26_PunchDoubleMsg_Previous_AirOrder_WithRS[:]
+        #for i in range(0, len(interleaved)):
+        #    self.dataHandler.AddData(interleaved[i:i + 1])
+        prevPunchDoubleMsg = self.dataHandler.GetMessage()
+
+        seconds = 2
+        self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
+
+        interleaved = TestLoraRadioDataHandler.Case26_PunchDoubleMsg_Corrupted_AirOrder_WithRS[:]
+        for i in range(0, len(interleaved)):
+            self.dataHandler.AddData(interleaved[i:i + 1])
+        punchDoubleMsg = self.dataHandler.GetMessage()
+        self.assertIsNone(punchDoubleMsg)
+        # This test takes arount a minute but we should never spend that much time, especially not when MS is selected
+        print("=== END test_Case26_GetPunchDoubleMessage ===")
