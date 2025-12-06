@@ -16,7 +16,7 @@ charset-normalizer==3.4.1
 click==8.1.8
 Cython==3.0.12
 daemonize==2.5.0
-Flask==3.1.0
+Flask==3.1.1
 flask-swagger-ui==4.11.1
 future==1.0.0
 gpiod==2.3.0
