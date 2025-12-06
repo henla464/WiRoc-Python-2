@@ -51,7 +51,7 @@ class StatusStatusToLoraTransform(object):
         StatusStatusToLoraTransform.WiRocLogger.debug("StatusStatusToLoraTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         StatusStatusToLoraTransform.WiRocLogger.debug("StatusStatusToLoraTransform::Transform() MessageData: " + Utils.GetDataInHex(payloadData, logging.DEBUG))
-        loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
+        loraStatusMsg = LoraRadioMessageCreator.GetStatus2MessageByFullMessageData(payloadData)
         StatusStatusToLoraTransform.WiRocLogger.debug(
             "StatusStatusToLoraTransform::Transform() Before generate RSCode: " + Utils.GetDataInHex(loraStatusMsg.GetByteArray(), logging.DEBUG))
         loraStatusMsg.SetAckRequested(SettingsClass.GetStatusAcknowledgementRequested())

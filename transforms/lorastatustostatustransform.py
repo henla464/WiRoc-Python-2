@@ -4,6 +4,7 @@ from settings.settings import SettingsClass
 from battery import Battery
 import logging
 
+
 class LoraStatusToStatusTransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 

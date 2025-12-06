@@ -7,7 +7,7 @@ from multiprocessing import Pool
 
 from loraradio.LoraRadioMessageAndMetadata import LoraRadioMessageAndMetadata
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
-from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessageAckRS, LoraRadioMessageStatusRS
+from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessageAckRS, LoraRadioMessageStatusRS, LoraRadioMessageStatus2RS
 from loraradio.LoraRadioMessageRS import LoraRadioMessagePunchReDCoSRS, LoraRadioMessagePunchDoubleReDCoSRS
 from loraradio.RSCoderLora import RSCoderLora
 from settings.settings import SettingsClass
@@ -19,7 +19,7 @@ from typing import Tuple, List
 
 class LoraRadioDataHandler(object):
     WiRocLogger = logging.getLogger('WiRoc')
-    MessageTypesExpected: list[int] = [LoraRadioMessageRS.MessageTypeSIPunchReDCoS, LoraRadioMessageRS.MessageTypeStatus, LoraRadioMessageRS.MessageTypeLoraAck, LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS]
+    MessageTypesExpected: list[int] = [LoraRadioMessageRS.MessageTypeSIPunchReDCoS, LoraRadioMessageRS.MessageTypeStatus, LoraRadioMessageRS.MessageTypeLoraAck, LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS, LoraRadioMessageRS.MessageTypeStatus2]
     RSSIByteCount: int = 0
 
     def __init__(self, rssiByteExpected: bool):
@@ -1091,6 +1091,39 @@ class LoraRadioDataHandler(object):
                 LoraRadioDataHandler.WiRocLogger.error("LoraRadioDataHandler::_GetStatusMessage() No message could be decoded")
                 return None
 
+    def _GetStatus2Message(self) -> LoraRadioMessageStatus2RS | None:
+        messageTypeToTry = LoraRadioMessageRS.MessageTypeStatus2
+        expectedMessageLength = LoraRadioMessageRS.MessageLengths[messageTypeToTry]
+        if len(self.DataReceived) < expectedMessageLength + self.RSSIByteCount:
+            return None
+
+        messageDataToConsider = self.DataReceived[0:expectedMessageLength]
+        messageDataToConsider[LoraRadioMessageRS.H] = (messageDataToConsider[LoraRadioMessageRS.H] & ~LoraRadioMessageRS.MessageTypeBitMask) | messageTypeToTry
+        LoraRadioDataHandler.WiRocLogger.debug(
+            "LoraRadioDataHandler::_GetStatus2Message() MessageDataToConsider: " + Utils.GetDataInHex(messageDataToConsider,
+                                                                                                  logging.DEBUG))
+        rssiByteValue = self.DataReceived[expectedMessageLength] if self.RSSIByteCount == 1 else None
+
+        if RSCoderLora.check(messageDataToConsider):
+            # everything checks out, message should be correct
+            loraStatusMsg = LoraRadioMessageCreator.GetStatus2MessageByFullMessageData(messageDataToConsider, rssiByte=rssiByteValue)
+            return loraStatusMsg
+        else:
+            correctedData = None
+            try:
+                correctedData = RSCoderLora.decode(messageDataToConsider)
+            except Exception as err:
+                LoraRadioDataHandler.WiRocLogger.error("LoraRadioDataHandler::_GetStatus2Message() RS decoding failed with exception: " + str(err))
+
+            if correctedData is not None and RSCoderLora.check(correctedData):
+                LoraRadioDataHandler.WiRocLogger.info("LoraRadioDataHandler::_GetStatus2Message() Decoded, corrected data correctly it seems")
+                loraStatusMsg = LoraRadioMessageCreator.GetStatus2MessageByFullMessageData(correctedData, rssiByte=rssiByteValue)
+                return loraStatusMsg
+
+        LoraRadioDataHandler.WiRocLogger.info("LoraRadioDataHandler::_GetStatus2Message() Could not decode correctly")
+        LoraRadioDataHandler.WiRocLogger.error("LoraRadioDataHandler::_GetStatus2Message() No message could be decoded")
+        return None
+
     def _GetMessageTypesByLength(self):
         expectedMessageLengths = [LoraRadioMessageRS.MessageLengths[idx] + self.RSSIByteCount for idx in
                                   LoraRadioDataHandler.MessageTypesExpected]
@@ -1135,7 +1168,7 @@ class LoraRadioDataHandler(object):
         ackReq = (messageData[LoraRadioMessageRS.H] & LoraRadioMessageRS.AckBitMask) > 0
         return ackReq
 
-    def _TryGetMessage(self) -> LoraRadioMessageAckRS | LoraRadioMessageStatusRS | LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | None:
+    def _TryGetMessage(self) -> LoraRadioMessageAckRS | LoraRadioMessageStatusRS | LoraRadioMessageStatus2RS | LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | None:
         if not self._IsLongEnoughToBeMessage():
             return None
 
@@ -1162,6 +1195,13 @@ class LoraRadioDataHandler(object):
                     messageLength = LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeStatus]
                     self._removeBytesFromDataReceived(messageLength + self.RSSIByteCount)
                     return loraStatusMessage
+            elif messageType == LoraRadioMessageRS.MessageTypeStatus2:
+                loraStatus2Message = self._GetStatus2Message()
+                if loraStatus2Message is not None:
+                    self._CacheStatusMessage(loraStatus2Message)
+                    messageLength = LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeStatus2]
+                    self._removeBytesFromDataReceived(messageLength + self.RSSIByteCount)
+                    return loraStatus2Message
             elif messageType == LoraRadioMessageRS.MessageTypeSIPunchReDCoS:
                 loraPunchMessage = self._GetPunchReDCoSMessage()
                 if loraPunchMessage is not None:

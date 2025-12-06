@@ -5,7 +5,7 @@ from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
-from loraradio.LoraRadioDRF1268DS_RS import LoraRadioDRF1268DS_RS
+from loraradio.LoraRadioDRF1268DS_RS import LoraRadioDRF1268DS_RS, ReturnStatus
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
 import serial
@@ -353,7 +353,7 @@ class SendLoraAdapter(object):
     # messageData is a tuple of bytearrays
     def SendData(self, messageData, successCB, failureCB, notSentCB, settingsDictionary):
         statMessageType = ""
-        returnSuccess = True
+        loraSendStatus = ReturnStatus.SENT
         for data in messageData:
             headerMessageType = LoraRadioDataHandler.GetHeaderMessageType(data)
 
@@ -374,24 +374,40 @@ class SendLoraAdapter(object):
 
             delayS = settingsDictionary["DelayAfterMessageSent"]
             self.BlockSendingUntilMessageSentAndAckReceived(delayS)
-            if self.loraRadio.SendData(data):
+            status = self.loraRadio.SendData(data)
+            if status == ReturnStatus.SENT:
                 repeater = LoraRadioDataHandler.GetRepeater(data)
                 if SendLoraAdapter.WiRocMode == "SENDER" and repeater:
                     self.AddSentWithRepeaterBit()
                 else:
                     self.AddSentWithoutRepeaterBit()
-            else:
+            elif status == ReturnStatus.BUSY:
                 # failed to send now, probably because 'busy' was returned, ie. something else was sending on same frequency. Delay a short bit.
                 self.BlockSendingDueToBusy(None)
-                returnSuccess = False
+                if loraSendStatus == ReturnStatus.SENT:
+                    loraSendStatus = ReturnStatus.BUSY
+            elif status == ReturnStatus.NOREPLY:
+                self.BlockSendingDueToBusy(None)
+                if loraSendStatus == ReturnStatus.SENT:
+                    loraSendStatus = ReturnStatus.NOREPLY
+            elif status == ReturnStatus.OTHER:
+                self.BlockSendingDueToBusy(None)
+                if loraSendStatus == ReturnStatus.SENT:
+                    loraSendStatus = ReturnStatus.OTHER
 
-        if returnSuccess:
+        if loraSendStatus == ReturnStatus.SENT:
             SendLoraAdapter.WiRocLogger.debug(
                 f"SendLoraAdapter::SendData() before add message stat {os.getpid()} {threading.get_ident()}")
             DatabaseHelper.add_message_stat(self.GetInstanceName(), statMessageType, "Sent", 1)
             SendLoraAdapter.WiRocLogger.debug(
                 f"SendLoraAdapter::SendData() after add message stat {os.getpid()} {threading.get_ident()}")
             successCB()
-        else:
+        elif loraSendStatus == ReturnStatus.BUSY:
+            DatabaseHelper.add_message_stat(self.GetInstanceName(), statMessageType, "NotSent", 0)
+            notSentCB()
+        elif loraSendStatus == ReturnStatus.NOREPLY:
+            DatabaseHelper.add_message_stat(self.GetInstanceName(), statMessageType, "NotSent", 0)
+            failureCB()
+        elif loraSendStatus == ReturnStatus.OTHER:
             DatabaseHelper.add_message_stat(self.GetInstanceName(), statMessageType, "NotSent", 0)
             notSentCB()

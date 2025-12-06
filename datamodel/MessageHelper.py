@@ -3,14 +3,15 @@ __author__ = 'henla464'
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from datamodel.datamodel import SIMessage, SRRMessage, SRRBoardPunch, AirPlusPunch, AirPlusPunchOneOfMultiple
 from datamodel.datamodel import MessageBoxData, RepeaterMessageBoxData
-from loraradio.LoraRadioMessageRS import LoraRadioMessagePunchDoubleReDCoSRS, LoraRadioMessagePunchReDCoSRS, LoraRadioMessageAckRS, LoraRadioMessageStatusRS
+from loraradio.LoraRadioMessageRS import LoraRadioMessagePunchDoubleReDCoSRS, LoraRadioMessagePunchReDCoSRS, LoraRadioMessageAckRS, LoraRadioMessageStatusRS, LoraRadioMessageStatus2RS
 from typing import Union
 
 
 class MessageHelper:
     @staticmethod
     def GetMessageBoxData(messageSource: str, messageTypeName: str, messageSubTypeName: str, instanceName: str, powerCycle: int, SIStationSerialNumber: str,
-                          loraMessage: LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | LoraRadioMessageAckRS | LoraRadioMessageStatusRS | None,
+                          loraMessage: LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | LoraRadioMessageAckRS | LoraRadioMessageStatusRS
+                                       | LoraRadioMessageStatus2RS | None,
                           messageData: bytearray) -> MessageBoxData:
         siPayloadData = None
         siPayloadData2 = None
@@ -98,7 +99,8 @@ class MessageHelper:
     def GetRepeaterMessageBoxData(messageSource: str, messageTypeName: str, messageSubTypeName: str, instanceName: str,
                                          checksumOK: bool,
                                          powerCycle: int, serialNumber: str,
-                                         loraMessage: LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | LoraRadioMessageAckRS | LoraRadioMessageStatusRS | None,
+                                         loraMessage: LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | LoraRadioMessageAckRS
+                                                      | LoraRadioMessageStatusRS | LoraRadioMessageStatus2RS | None,
                                          messageData: bytearray,
                                          messageID: bytearray | None):
 

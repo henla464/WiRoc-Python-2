@@ -21,6 +21,7 @@ class ErrorCodeData(object):
     columns = [("Code", str), ("Message", str)]
     ERR_LORA_CONF = "ERR_LORA_CONF"
     ERR_SI_USB_CONF = "ERR_SI_USB_CONF"
+    ERR_LORA_MODULE_COM = "ERR_LORA_MODULE_COM"
 
     def __init__(self):
         self.id: int | None = None

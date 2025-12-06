@@ -48,5 +48,5 @@ class StatusStatusToStatusTransform(object):
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         StatusStatusToStatusTransform.WiRocLogger.debug("StatusStatusToStatusTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-        loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
+        loraStatusMsg = LoraRadioMessageCreator.GetStatus2MessageByFullMessageData(payloadData)
         return {"Data": (loraStatusMsg.GetByteArray(),), "MessageID": None}

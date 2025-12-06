@@ -4,7 +4,7 @@
 
 3) Rename the image file, prefix with WiRoc_
 
-mv Armbian_community_25.2.0-trunk.410_Nanopiair_noble_current_6.6.72.img WiRoc_Armbian_community_25.2.0-trunk.410_Nanopiair_noble_current_6.6.72.img
+mv Armbian_community_25.5.0-trunk.87_Nanopiair_noble_current_6.6.72.img WiRoc_Armbian_community_25.5.0-trunk.87_Nanopiair_noble_current_6.6.72.img
 
 4) Mount the image read/write to be able to change/add some files
 
@@ -37,14 +37,15 @@ xz -v WiRoc_Armbian(tab)
 
 10.3)	Change WiRocBLEVersion to WiRocBLEAPIVersion in /root/settings.yaml 
 	
-11) Run sudo armbian-config
+11.1) 
 	- Disable kernel updates
 		sudo armbian-config --cmd SY203
+11.2)
 	- Disable unattended updates
 		sudo armbian-config --cmd UNAT03
+11.3)
 	- Switch system to stable packages repository
 		sudo armbian-config --cmd SY207
-
 
 12)
 run the commands below to download the install script and make it executable:

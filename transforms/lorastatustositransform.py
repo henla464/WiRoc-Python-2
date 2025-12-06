@@ -5,6 +5,7 @@ from battery import Battery
 from utils.utils import Utils
 import logging
 
+
 class LoraStatusToSITransform(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
 

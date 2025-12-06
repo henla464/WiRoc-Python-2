@@ -66,10 +66,17 @@ class CreateStatusAdapter(object):
             noOfLoraMsgSentNotAcked: int = DatabaseHelper.get_no_of_lora_messages_sent_not_acked(startTime, endTime)
             allLoraPunchesSucceded: bool = DatabaseHelper.get_if_all_lora_punches_succeeded(startTime, endTime)
 
-            msgStatus = LoraRadioMessageCreator.GetStatusMessage(Battery.GetIsBatteryLow(), noOfLoraMsgSentNotAcked, allLoraPunchesSucceded)
-
+            # todo: fetch from recievesiadapter
+            SRRDongleRedFound: bool = False
+            SRRDongleRedAck: bool = False
+            SRRDongleBlueFound: bool = False
+            SRRDongleBlueAck: bool = False
+            msgStatus = LoraRadioMessageCreator.GetStatus2Message(Battery.GetIsBatteryLow(), noOfLoraMsgSentNotAcked,
+                                                                  allLoraPunchesSucceded, SRRDongleRedFound, SRRDongleRedAck,
+                                                                  SRRDongleBlueFound, SRRDongleBlueAck)
             self.WiRocLogger.debug("CreateStatusAdapter::GetData() Data to fetch")
             return {"MessageType": "DATA", "MessageSubTypeName": "Status", "MessageSource": "Status", "Data": msgStatus.GetByteArray(), "ChecksumOK": True}
+        return None
 
     def AddedToMessageBox(self, mbid):
         return None

@@ -22,7 +22,8 @@ class LoraRadioMessageRS(object):
     MessageTypeSIPunchReDCoS: int = 7
     MessageTypeSIPunchDoubleReDCoS: int = 8
     MessageTypeHAMCallSign: int = 9
-    MessageLengths: list[int]= [24, 16, 7, 14, 14, 7, 27, 15, 27, 11]
+    MessageTypeStatus2: int = 10
+    MessageLengths: list[int]= [24, 16, 7, 14, 14, 7, 27, 15, 27, 11, 16]
 
     # Positions within the message
     H: int = 0
@@ -606,6 +607,156 @@ class LoraRadioMessageStatusRS(LoraRadioMessageRS):
 
     def GetMessageSubType(self) -> str:
         return "Status"
+
+
+class LoraRadioMessageStatus2RS(LoraRadioMessageRS):
+    NoOfECCBytes = 4
+    # Positions within the message
+    BAT = 1
+    CN0 = 2
+    RELAYPATHNO = 3
+    SRRStatus1 = 4
+    SRRAndSettings = 5
+    BT0 = 6
+    BT1 = 7
+    BT2 = 8
+    BT3 = 9
+    BT4 = 10
+    BT5 = 11
+    ECC0 = 12  # Error correcting code
+    ECC1 = 13  # Error correcting code
+    ECC2 = 14  # Error correcting code
+    ECC3 = 15  # Error correcting code
+
+    def __init__(self, noOfLoraMsgSentNotAcked: int = None, allLoraPunchesSucceeded: bool = None,
+                 SRRDongleRedFound: bool = None, SRRDongleRedAck: bool = None,
+                 SRRDongleBlueFound: bool = None, SRRDongleBlueAck: bool = None):
+        super().__init__()
+        self.messageType = LoraRadioMessageRS.MessageTypeStatus
+        if noOfLoraMsgSentNotAcked is None or allLoraPunchesSucceeded is None:
+            return
+        siStationNumber = SettingsClass.GetSIStationNumber()
+        batteryPercent = Battery.GetBatteryPercent()
+        if siStationNumber > 255:
+            batteryPercent |= 0x80
+
+        allPunchesOk_NoOfFailedMsg_relayPathNo = ((noOfLoraMsgSentNotAcked & 0x1F) << 2) | SettingsClass.GetRelayPathNumber() & 0x03
+        if allLoraPunchesSucceeded:
+            allPunchesOk_NoOfFailedMsg_relayPathNo += 0x80
+
+        internalSRRRedEnabled = SettingsClass.GetSRREnabled() and SettingsClass.GetSRRRedChannelEnabled()
+        internalSRRRedAck = not SettingsClass.GetSRRRedChannelListenOnly()
+        internalSRRBlueEnabled = SettingsClass.GetSRREnabled() and SettingsClass.GetSRRBlueChannelEnabled()
+        internalSRRBlueAck = not SettingsClass.GetSRRBlueChannelListenOnly()
+
+        internalSRRBlueDirection = SettingsClass.GetSRRMode() != "RECEIVE"
+        internalSRRRedDirection = SettingsClass.GetSRRMode() != "RECEIVE"
+        tcpipSirapEnabled = SettingsClass.GetSendToSirapEnabled()
+        serialPortBaudRate4800 = SettingsClass.GetForceBTSerial4800BaudRateFromSIStation()
+        serialPortDirection = SettingsClass.GetSendSerialAdapterActive()
+        SIMasterConnectedOnUSB2 = False
+        SIMasterConnectedOnUSB1 = False
+
+        btAddressAsInt = SettingsClass.GetBTAddressAsInt()
+        self.payloadData = bytearray(bytes([batteryPercent, siStationNumber, allPunchesOk_NoOfFailedMsg_relayPathNo,
+                                            (internalSRRRedEnabled << 7) | (internalSRRRedAck << 6) | (internalSRRBlueEnabled << 5)
+                                            | (internalSRRBlueAck << 4) | (SRRDongleRedFound << 3)| (SRRDongleRedAck << 2)
+                                            | (SRRDongleBlueFound << 1)| SRRDongleBlueAck,
+                                            (False << 7) | (internalSRRBlueDirection << 6) | (internalSRRRedDirection << 5)
+                                            | (tcpipSirapEnabled << 4) | (serialPortBaudRate4800 << 3)  | (serialPortDirection << 2)
+                                            | (SIMasterConnectedOnUSB2 << 1) | SIMasterConnectedOnUSB1,
+                                            (btAddressAsInt & 0xFF0000000000) >> 40,
+                                            (btAddressAsInt & 0x00FF00000000) >> 32,
+                                            (btAddressAsInt & 0x0000FF000000) >> 24,
+                                            (btAddressAsInt & 0x000000FF0000) >> 16,
+                                            (btAddressAsInt & 0x00000000FF00) >> 8,
+                                            (btAddressAsInt & 0x0000000000FF),
+                                            ]))
+        self.GenerateAndAddRSCode()
+
+    def GetBatteryPercent(self) -> int:
+        return self.payloadData[0] & 0x7F
+
+    def GetSIStationNumber(self) -> int:
+        return ((self.payloadData[0] & 0x80) << 8) + self.payloadData[1]
+
+    def GetRelayPathNo(self) -> int:
+        return self.payloadData[2] & 0x03
+
+    def GetAllLoraPunchesSentOK(self) -> bool:
+        return (self.payloadData[2] & 0x80) > 0
+
+    def GetNoOfLoraMsgSentNotAcked(self) -> int:
+        return (self.payloadData[2] & 0x7C) >> 2
+
+    def SetPayload(self, payload: bytearray) -> None:
+        self.payloadData = payload
+
+    def GetBTAddressAsInt(self) -> int:
+        return (self.payloadData[3] << 40) | \
+               (self.payloadData[4] << 32) | \
+               (self.payloadData[5] << 24) | \
+               (self.payloadData[6] << 16) | \
+               (self.payloadData[7] << 8) | \
+               self.payloadData[8]
+
+    def GetBTAddress(self) -> str:
+        btAddrAsInt = self.GetBTAddressAsInt()
+        btAddress = '{:x}'.format(btAddrAsInt).upper()
+        btAddress = btAddress[0:2] + ':' + btAddress[2:4] + ':' + btAddress[4:6] + \
+            ':' + btAddress[6:8] + ':' + btAddress[8:10] + ':' + btAddress[10:12]
+        return btAddress
+
+    def GetMessageCategory(self) -> str:
+        return "DATA"
+
+    def GetMessageSubType(self) -> str:
+        return "Status"
+
+    def GetInternalSRRRedEnabled(self) -> bool:
+        return (self.payloadData[3] & 0b10000000) > 0
+
+    def GetInternalSRRRedAck(self) -> bool:
+        return (self.payloadData[3] & 0b01000000) > 0
+
+    def GetInternalSRRBlueEnabled(self) -> bool:
+        return (self.payloadData[3] & 0b00100000) > 0
+
+    def GetInternalSRRBlueAck(self) -> bool:
+        return (self.payloadData[3] & 0b00010000) > 0
+
+    def GetSRRDongleRedFound(self) -> bool:
+        return (self.payloadData[3] & 0b00001000) > 0
+
+    def GetSRRDongleRedAck(self) -> bool:
+        return (self.payloadData[3] & 0b00000100) > 0
+
+    def GetSRRDongleBlueFound(self) -> bool:
+        return (self.payloadData[3] & 0b00000010) > 0
+
+    def GetSRRDongleBlueAck(self) -> bool:
+        return (self.payloadData[3] & 0b00000001) > 0
+
+    def GetInternalSRRBlueDirection(self) -> bool:
+        return (self.payloadData[4] & 0b01000000) > 0
+
+    def GetInternalSRRRedDirection(self) -> bool:
+        return (self.payloadData[4] & 0b00100000) > 0
+
+    def GetTcpIPSirapEnabled(self) -> bool:
+        return (self.payloadData[4] & 0b00010000) > 0
+
+    def GetSerialPortBaudRate4800(self) -> bool:
+        return (self.payloadData[4] & 0b00001000) > 0
+
+    def GetSerialPortDirection(self) -> bool:
+        return (self.payloadData[4] & 0b00000100) > 0
+
+    def GetSIMasterConnectedOnUSB2(self) -> bool:
+        return (self.payloadData[4] & 0b00000010) > 0
+
+    def GetSIMasterConnectedOnUSB1(self) -> bool:
+        return (self.payloadData[4] & 0b00000001) > 0
 
 
 class LoraRadioMessageHAMCallSignRS(LoraRadioMessageRS):

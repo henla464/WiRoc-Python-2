@@ -116,15 +116,20 @@ if resp.status_code == 200:
                 if serviceStop2Res.returncode != 0:
                     print("Ignore, service might just not be loaded yet")
 
-            rmRes = subprocess.run(["rm", "-rf", installFolderName])
-            print("rm response: " + str(rmRes.returncode))
-            if rmRes.returncode != 0:
-                exit(rmRes.rmRes)
-
             tarRes = subprocess.run(["tar", "xvfz", localFilePath, installFolderName + '-' + newSoftwareVersion])
             print("tar response: " + str(tarRes.returncode))
             if tarRes.returncode != 0:
                 exit(tarRes.returncode)
+
+            cpEnvRes = subprocess.run(["cp", "-r", installFolderName + "/env", installFolderName + '-' + newSoftwareVersion])
+            print("cp env response: " + str(cpEnvRes.returncode))
+            if cpEnvRes.returncode != 0:
+                exit(cpEnvRes.returncode)
+
+            rmRes = subprocess.run(["rm", "-rf", installFolderName])
+            print("rm response: " + str(rmRes.returncode))
+            if rmRes.returncode != 0:
+                exit(rmRes.returncode)
 
             mvRes = subprocess.run(["mv", installFolderName + '-' + newSoftwareVersion, installFolderName])
             print("mv response: " + str(mvRes.returncode))

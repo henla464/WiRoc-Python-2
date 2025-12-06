@@ -3,59 +3,81 @@ from __future__ import annotations
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
-import socket
 import logging
+from smbus2 import SMBus
+import time
 
-from utils.utils import Utils
 
-
-class SendToSirapAdapter(object):
+class SendToSRRAdapter(object):
     WiRocLogger: logging.Logger = logging.getLogger('WiRoc.Output')
-    Instances: list[SendToSirapAdapter] = []
+    Instances: list[SendToSRRAdapter] = []
     SubscriptionsEnabled: bool = False
+
+    HARDWAREFEATURESENABLEDISABLEREGADDR = 0x06
+
+    PUNCHREGADDR = 0x40
+
+    SEND_MODE_BIT = 0x20
 
     @staticmethod
     def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
-        if len(SendToSirapAdapter.Instances) == 0:
-            SendToSirapAdapter.Instances.append(SendToSirapAdapter('sirap1'))
-            return True
-        # check if enabled changed => let init/enabledisablesubscription run
-        isInitialized = SendToSirapAdapter.Instances[0].GetIsInitialized()
-        enabled = SettingsClass.GetSendToSirapEnabled()
-        subscriptionShouldBeEnabled = (isInitialized and enabled)
-        if SendToSirapAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
-            return True
+        if hardwareAbstraction.HasSRR():
+            if len(SendToSRRAdapter.Instances) == 0:
+                bus = SMBus(0)  # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
+                addr = 0x20
+
+                try:
+                    if SettingsClass.GetSRRRedChannelEnabled() or SettingsClass.GetSRRBlueChannelEnabled():
+                        # send messages on at least one of the two SRR channels.
+                        SendToSRRAdapter.Instances.append(
+                            SendToSRRAdapter("sndsrr1", bus, addr, hardwareAbstraction))
+                        return True
+                    else:
+                        return False
+                except Exception as err:
+                    logging.getLogger('WiRoc.Output').error(
+                        "SendToSRRAdapter::CreateInstances() Exception: " + str(err))
+            else:
+                if SettingsClass.GetSRRMode() == "SEND" and (
+                        SettingsClass.GetSRRRedChannelEnabled() or SettingsClass.GetSRRBlueChannelEnabled()):
+                    # Instance already exists
+                    return False
+                else:
+                    # Shouldn't have a instance
+                    SendToSRRAdapter.Instances = []
+                    return True
         return False
 
     @staticmethod
     def GetTypeName() -> str:
-        return "SIRAP"
+        return "SRR"
 
     @staticmethod
     def EnableDisableSubscription():
-        if len(SendToSirapAdapter.Instances) > 0:
-            isInitialized = SendToSirapAdapter.Instances[0].GetIsInitialized()
+        if len(SendToSRRAdapter.Instances) > 0:
+            isInitialized = SendToSRRAdapter.Instances[0].GetIsInitialized()
             enabled = SettingsClass.GetSendToSirapEnabled()
             subscriptionShouldBeEnabled = (isInitialized and enabled)
-            if SendToSirapAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
-                SendToSirapAdapter.WiRocLogger.info(
-                    "SendToSirapAdapter::EnableDisableSubscription() subscription set enabled: " + str(
+            if SendToSRRAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
+                SendToSRRAdapter.WiRocLogger.info(
+                    "SendToSRRAdapter::EnableDisableSubscription() subscription set enabled: " + str(
                         subscriptionShouldBeEnabled))
-                SendToSirapAdapter.SubscriptionsEnabled = subscriptionShouldBeEnabled
+                SendToSRRAdapter.SubscriptionsEnabled = subscriptionShouldBeEnabled
                 DatabaseHelper.update_subscriptions(subscriptionShouldBeEnabled,
-                                                    SendToSirapAdapter.GetDeleteAfterSent(),
-                                                    SendToSirapAdapter.GetTypeName())
+                                                    SendToSRRAdapter.GetDeleteAfterSent(),
+                                                    SendToSRRAdapter.GetTypeName())
 
     @staticmethod
     def EnableDisableTransforms() -> None:
         return None
 
-    def __init__(self, instanceName):
+    def __init__(self, instanceName: str, i2cBus: SMBus, i2cAddress: int, hardwareAbstraction: HardwareAbstraction):
         self.instanceName: str = instanceName
         self.transforms: dict[str, any] = {}
-        self.sock: socket.socket | None = None
         self.isInitialized: bool = False
         self.isDBInitialized: bool = False
+        self.i2cBus: SMBus = i2cBus
+        self.i2cAddress: int = i2cAddress
 
     def GetInstanceName(self) -> str:
         return self.instanceName
@@ -64,8 +86,6 @@ class SendToSirapAdapter(object):
     def GetDeleteAfterSent() -> bool:
         return True
 
-    # when receiving from other WiRoc device, should we wait until the other
-    # WiRoc device sent an ack to aviod sending at same time
     @staticmethod
     def GetWaitUntilAckSent() -> bool:
         return False
@@ -84,9 +104,8 @@ class SendToSirapAdapter(object):
         self.isDBInitialized = val
 
     def GetTransformNames(self) -> list[str]:
-        return ["LoraSIMessageToSirapTransform", "SISIMessageToSirapTransform",
-                "SITestTestToSirapTransform", "LoraSIMessageDoubleToSirapTransform",
-                "SRRSRRMessageToSirapTransform"]
+        return ["LoraSIMessageToSRRTransform", "SISIMessageToSRRTransform",
+                "SITestTestToSRRTransform", "LoraSIMessageDoubleToSRRTransform"]
 
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass
@@ -97,6 +116,30 @@ class SendToSirapAdapter(object):
     def Init(self) -> bool:
         if self.GetIsInitialized():
             return True
+
+        HardwareAbstraction.Instance.DisableSRR()
+        time.sleep(0.01)
+        HardwareAbstraction.Instance.EnableSRR()
+        time.sleep(0.05)
+
+        # Read current hardware features configuration
+        current_features = self.i2cBus.read_byte_data(
+            self.i2cAddress,
+            SendToSRRAdapter.HARDWAREFEATURESENABLEDISABLEREGADDR
+        )
+
+        # Check if send mode is already enabled
+        original_mode = current_features & SendToSRRAdapter.SEND_MODE_BIT
+
+        # Switch to send mode if not already set
+        if not original_mode:
+            new_features = current_features | SendToSRRAdapter.SEND_MODE_BIT
+            self.i2cBus.write_byte_data(
+                self.i2cAddress,
+                SendToSRRAdapter.HARDWAREFEATURESENABLEDISABLEREGADDR,
+                new_features
+            )
+
         self.isInitialized = True
         return True
 
@@ -110,66 +153,30 @@ class SendToSirapAdapter(object):
     def GetRetryDelay(self, tryNo: int) -> float:
         return 1
 
-    def OpenConnection(self, failureCB, callbackQueue, settingsDictionary: dict[str, any]) -> bool:
-        if self.sock is None:
-            try:
-                self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                SendToSirapAdapter.WiRocLogger.debug(
-                    "SendToSirapAdapter::OpenConnection() Address: " + settingsDictionary["SendToSirapIP"] + " Port: " + str(
-                        settingsDictionary["SendToSirapIPPort"]))
-                server_address = (settingsDictionary["SendToSirapIP"], settingsDictionary["SendToSirapIPPort"])
-                self.sock.settimeout(2)
-                self.sock.connect(server_address)
-                SendToSirapAdapter.WiRocLogger.debug("SendToSirapAdapter::OpenConnection() After connect")
-                return True
-            except socket.gaierror as msg:
-                SendToSirapAdapter.WiRocLogger.error(
-                    "SendToSirapAdapter::OpenConnection() Address-related error connecting to server: " + str(msg))
-                if self.sock is not None:
-                    self.sock.close()
-                self.sock = None
-                failureCB()
-                #callbackQueue.put((failureCB,))
-                return False
-            except socket.error as msg:
-                SendToSirapAdapter.WiRocLogger.error("SendToSirapAdapter::OpenConnection() Connection error: " + str(msg))
-                if self.sock is not None:
-                    self.sock.close()
-                self.sock = None
-                failureCB()
-                #callbackQueue.put((failureCB,))
-                return False
-        return True
-
     # messageData is tuple of bytearray
-    def SendData(self, messageData: tuple[bytearray], successCB, failureCB, notSentCB, settingsDictionary: dict[str, any]) -> bool:
+    def SendData(self, messageData: tuple[bytearray], successCB, failureCB, notSentCB,
+                 settingsDictionary: dict[str, any]) -> bool:
+        # Send data
         try:
-            # Send data
             for data in messageData:
-                if not self.OpenConnection(failureCB, None, settingsDictionary):
-                    self.sock = None
-                    return False
+                if len(data) > 30:
+                    raise ValueError(f"Data length {len(data)} exceeds maximum allowed (30 bytes)")
 
-                self.sock.sendall(data)
-                self.sock.close()
-                self.sock = None
-                SendToSirapAdapter.WiRocLogger.debug(
-                    "SendToSirapAdapter::SendData() Sent to SIRAP: " + Utils.GetDataInHex(data, logging.DEBUG))
+                # Prepend message length (including the length byte)
+                total_length = len(data) + 1  # +1 for the length byte
+                full_message = bytearray([total_length]) + data
 
-            DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Sent", 1)
+                # Write the entire message in one block
+                self.i2cBus.write_i2c_block_data(
+                    self.i2cAddress,
+                    SendToSRRAdapter.PUNCHREGADDR,
+                    list(full_message)
+                )
+
+                self.WiRocLogger.debug(f"SendData: Sent {len(full_message)} bytes")
             successCB()
             return True
-        except socket.error as msg:
-            logging.error(msg)
-            if self.sock is not None:
-                self.sock.close()
-            self.sock = None
-            failureCB()
-            return False
-        except:
-            SendToSirapAdapter.WiRocLogger.error("SendToSirapAdapter::SendData() Exception")
-            if self.sock is not None:
-                self.sock.close()
-            self.sock = None
+        except Exception as e:
+            self.WiRocLogger.error(f"SendData: Exception - {str(e)}")
             failureCB()
             return False

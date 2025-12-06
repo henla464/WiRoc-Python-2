@@ -1,14 +1,7 @@
 WiRoc
 =====
-
-- Add HAM frequencies, Probably should keep to fully within 433.7125 - 433,9625 to stay in the recommended Lora freqency band
-	HAM1 - 433,7375
-	HAM2 - 433,7875
-	HAM3 - 433,8375 
-	HAM4 - 433,8875
-	HAM5 - 433,9375
-	
-	
+- SRR dongle often doesn't initialize correctly, doesn't respond in time to query, seem to get reply later
+- skicka vilka usb enheter (srr donglar) som är anslutna
 - Should we change to not retry, or limit retries to configure SI-USB as two-way when it fails?
 - Option to set SRR as output
 - Send configurations to webbserver
@@ -17,6 +10,7 @@ WiRoc
 - measure power consumption of  SRR receiver: arount 51 mA, 3.3V
     -- Sleep mode: maybe 50mA, very little difference if any
     -- Stop mode: 47mA so even then little difference...
+
 
 implemented but not tested
 - Send hwversion to webbserver, software versions
@@ -31,7 +25,7 @@ SRR code
 - Power optimization
 - measure resend intervals, is it same or does it increase or is it random.
 - "Software flow control" setting for dongle (expert mode in SI Config), what does it do
-- Test air+
+- SRR receiver receives SRR ack messages (from other srr dongle?) should probably not put them in punch queue (SRR reciever firmware)
 
 
 -- Maybe (probably pretty complex, unsure how useful)
@@ -93,12 +87,22 @@ x Make update work for CHIP also
 x When getting alternative punch messages and guessing TH, take datarate/coderate into account.
 x Detect SportIdent SRR usb stick, and open it in one-way mode
 x Make GetReDCoSCombinationThreshold adjust to message datarate / coderate
+x Add HAM frequencies, Probably should keep to fully within 433.7125 - 433,9625 to stay in the recommended Lora freqency bandx
+x	HAM1 - 433,7375
+x	HAM2 - 433,7875
+x	HAM3 - 433,8375 
+x	HAM4 - 433,8875
+x	HAM5 - 433,9375
+x add description to wiroc devices on the web
+x Test air+
+x show if all lora messages acked on webb and no of non acked messages (already sent)
 
 possible HW enhancments
 -----------------------
 
 
 Done
+
 x Add RS232 conversion on board
 x Add SRR receiver module/modules
 x RTC (realtime clock)
