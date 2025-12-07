@@ -358,31 +358,34 @@ class BackgroundTasks(object):
 
                 if cmd == "START":
                     if webServerUp:
-                        messageStat = DatabaseHelper.get_message_stat_to_upload()
-                        if messageStat is not None:
-                            btAddress = SettingsClass.GetBTAddress()
-                            webServerUrl = SettingsClass.GetWebServerUrl()
-                            apiKey = SettingsClass.GetAPIKey()
+                        while True:
+                            messageStat = DatabaseHelper.get_message_stat_to_upload()
+                            if messageStat is None:
+                                break
+                            else:
+                                btAddress = SettingsClass.GetBTAddress()
+                                webServerUrl = SettingsClass.GetWebServerUrl()
+                                apiKey = SettingsClass.GetAPIKey()
 
-                            headers = {'X-Authorization': apiKey}
-                            URL = webServerUrl + "/api/v1/MessageStats"
-                            messageStatToSend = {"adapterInstance": messageStat.AdapterInstanceName,
-                                                 "BTAddress": btAddress,
-                                                 "messageType": messageStat.MessageSubTypeName,
-                                                 "status": messageStat.Status,
-                                                 "noOfMessages": messageStat.NoOfMessages}
+                                headers = {'X-Authorization': apiKey}
+                                URL = webServerUrl + "/api/v1/MessageStats"
+                                messageStatToSend = {"adapterInstance": messageStat.AdapterInstanceName,
+                                                     "BTAddress": btAddress,
+                                                     "messageType": messageStat.MessageSubTypeName,
+                                                     "status": messageStat.Status,
+                                                     "noOfMessages": messageStat.NoOfMessages}
 
-                            try:
-                                resp = requests.post(url=URL, json=messageStatToSend, timeout=2, allow_redirects=False,
-                                                     headers=headers,
-                                                     verify=False)
-                                if resp.status_code == 200 or resp.status_code == 303:
-                                    DatabaseHelper.set_message_stat_uploaded(messageStat.id)
-                            except Exception as ex:
-                                tb = traceback.format_exc()
-                                BackgroundTasks.WiRocLogger.error(
-                                    f"BackgroundTasks::SendMessageStatsBackground() Exception: {ex} StackTrace: {tb}")
-                            time.sleep(10)
+                                try:
+                                    resp = requests.post(url=URL, json=messageStatToSend, timeout=2, allow_redirects=False,
+                                                         headers=headers,
+                                                         verify=False)
+                                    if resp.status_code == 200 or resp.status_code == 303:
+                                        DatabaseHelper.set_message_stat_uploaded(messageStat.id)
+                                except Exception as ex:
+                                    tb = traceback.format_exc()
+                                    BackgroundTasks.WiRocLogger.error(
+                                        f"BackgroundTasks::SendMessageStatsBackground() Exception: {ex} StackTrace: {tb}")
+                        time.sleep(10)
                 elif cmd == "WEBSERVERUP":
                     webServerUp = True
                 elif cmd == "WEBSERVERDOWN":

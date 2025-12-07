@@ -630,9 +630,15 @@ class LoraRadioMessageStatus2RS(LoraRadioMessageRS):
 
     def __init__(self, noOfLoraMsgSentNotAcked: int = None, allLoraPunchesSucceeded: bool = None,
                  SRRDongleRedFound: bool = None, SRRDongleRedAck: bool = None,
-                 SRRDongleBlueFound: bool = None, SRRDongleBlueAck: bool = None):
+                 SRRDongleBlueFound: bool = None, SRRDongleBlueAck: bool = None,
+                 SIMasterConnectedOnUSB1: bool = None, SIMasterConnectedOnUSB2: bool = None,
+                 internalSRRRedEnabled: bool = None, internalSRRRedAck: bool = None,
+                 internalSRRBlueEnabled: bool = None, internalSRRBlueAck: bool = None,
+                 internalSRRBlueDirection: bool = None, internalSRRRedDirection: bool = None,
+                 tcpipSirapEnabled: bool = None, serialPortBaudRate4800: bool = None,
+                 serialPortDirection: bool = None):
         super().__init__()
-        self.messageType = LoraRadioMessageRS.MessageTypeStatus
+        self.messageType = LoraRadioMessageRS.MessageTypeStatus2
         if noOfLoraMsgSentNotAcked is None or allLoraPunchesSucceeded is None:
             return
         siStationNumber = SettingsClass.GetSIStationNumber()
@@ -644,26 +650,13 @@ class LoraRadioMessageStatus2RS(LoraRadioMessageRS):
         if allLoraPunchesSucceeded:
             allPunchesOk_NoOfFailedMsg_relayPathNo += 0x80
 
-        internalSRRRedEnabled = SettingsClass.GetSRREnabled() and SettingsClass.GetSRRRedChannelEnabled()
-        internalSRRRedAck = not SettingsClass.GetSRRRedChannelListenOnly()
-        internalSRRBlueEnabled = SettingsClass.GetSRREnabled() and SettingsClass.GetSRRBlueChannelEnabled()
-        internalSRRBlueAck = not SettingsClass.GetSRRBlueChannelListenOnly()
-
-        internalSRRBlueDirection = SettingsClass.GetSRRMode() != "RECEIVE"
-        internalSRRRedDirection = SettingsClass.GetSRRMode() != "RECEIVE"
-        tcpipSirapEnabled = SettingsClass.GetSendToSirapEnabled()
-        serialPortBaudRate4800 = SettingsClass.GetForceBTSerial4800BaudRateFromSIStation()
-        serialPortDirection = SettingsClass.GetSendSerialAdapterActive()
-        SIMasterConnectedOnUSB2 = False
-        SIMasterConnectedOnUSB1 = False
-
         btAddressAsInt = SettingsClass.GetBTAddressAsInt()
         self.payloadData = bytearray(bytes([batteryPercent, siStationNumber, allPunchesOk_NoOfFailedMsg_relayPathNo,
                                             (internalSRRRedEnabled << 7) | (internalSRRRedAck << 6) | (internalSRRBlueEnabled << 5)
-                                            | (internalSRRBlueAck << 4) | (SRRDongleRedFound << 3)| (SRRDongleRedAck << 2)
+                                            | (internalSRRBlueAck << 4) | (SRRDongleRedFound << 3) | (SRRDongleRedAck << 2)
                                             | (SRRDongleBlueFound << 1)| SRRDongleBlueAck,
                                             (False << 7) | (internalSRRBlueDirection << 6) | (internalSRRRedDirection << 5)
-                                            | (tcpipSirapEnabled << 4) | (serialPortBaudRate4800 << 3)  | (serialPortDirection << 2)
+                                            | (tcpipSirapEnabled << 4) | (serialPortBaudRate4800 << 3) | (serialPortDirection << 2)
                                             | (SIMasterConnectedOnUSB2 << 1) | SIMasterConnectedOnUSB1,
                                             (btAddressAsInt & 0xFF0000000000) >> 40,
                                             (btAddressAsInt & 0x00FF00000000) >> 32,
@@ -693,12 +686,12 @@ class LoraRadioMessageStatus2RS(LoraRadioMessageRS):
         self.payloadData = payload
 
     def GetBTAddressAsInt(self) -> int:
-        return (self.payloadData[3] << 40) | \
-               (self.payloadData[4] << 32) | \
-               (self.payloadData[5] << 24) | \
-               (self.payloadData[6] << 16) | \
-               (self.payloadData[7] << 8) | \
-               self.payloadData[8]
+        return (self.payloadData[5] << 40) | \
+               (self.payloadData[6] << 32) | \
+               (self.payloadData[7] << 24) | \
+               (self.payloadData[8] << 16) | \
+               (self.payloadData[9] << 8) | \
+               self.payloadData[10]
 
     def GetBTAddress(self) -> str:
         btAddrAsInt = self.GetBTAddressAsInt()

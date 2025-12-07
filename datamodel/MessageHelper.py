@@ -66,8 +66,8 @@ class MessageHelper:
             siPayloadData = siMsg.GetByteArray()
             mbd.RSSIValue = messageData[-3]
             mbd.ChecksumOK = messageData[-2] & 0x80
-            linkQuality = messageData[-2] & 0x7F
-            channel = messageData[-1]
+            mbd.LinkQuality = messageData[-2] & 0x7F
+            mbd.Channel = messageData[-1]
         elif messageSubTypeName == "Test":
             # source recievetestpunches adapter
             siPayloadData = messageData

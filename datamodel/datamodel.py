@@ -64,6 +64,7 @@ class MessageBoxData(object):
                ("SportIdentSecond2", str),
                ("SIStationNumber2", str),
                ("LowBattery", str), ("RSSIValue", int),
+               ("LinkQuality", int), ("Channel", int),
                ("ChecksumOK", bool), ("CreatedDate", datetime)]
 
     def __init__(self):
@@ -89,6 +90,8 @@ class MessageBoxData(object):
 
         self.LowBattery = None
         self.RSSIValue = None
+        self.LinkQuality = None
+        self.Channel = None
         self.ChecksumOK = None
         self.CreatedDate = None
 

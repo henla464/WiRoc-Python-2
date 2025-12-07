@@ -171,6 +171,58 @@ class ReceiveSIAdapter(object):
         ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::getStationSettingModelValue: {self.instanceName}: modelNumber:" + Utils.GetDataInHex(modelNumber, logging.DEBUG))
         return modelNumber
 
+    def getSRRChannel(self) -> str | None:
+        cmdLength = 0x02
+        noOfBytesToRead = 0x01
+        srrChannel = 0x34
+        getSRRChannelCmd = [0xFF, 0x02, 0x02, 0x83, cmdLength, srrChannel, noOfBytesToRead, 0x84, 0x12, 0x03]
+        print("calculate crc over this: " + Utils.GetDataInHex(bytearray(bytes(getSRRChannelCmd[3:-3])), logging.DEBUG))
+        #crc = Utils.CalculateCRC(bytearray(bytes(getSRRChannelCmd[3:-3])))
+        #getSRRChannelCmd[7] = crc[0]
+        #getSRRChannelCmd[8] = crc[1]
+        #print("CRC: " + Utils.GetDataInHex(crc, logging.DEBUG))
+        ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::getSRRChannel: {self.instanceName}")
+        sysValResp = self.sendCommand(bytes(getSRRChannelCmd), printLog=True)
+        if sysValResp is None:
+            ReceiveSIAdapter.WiRocLogger.error(
+                f"ReceiveSIAdapter::getSRRChannel: {self.instanceName}: sendCommand returned None")
+            return None
+        ReceiveSIAdapter.WiRocLogger.debug(
+            f"ReceiveSIAdapter::getSRRChannel: len: {len(sysValResp)} - {Utils.GetDataInHex(sysValResp, logging.DEBUG)}")
+        channel = sysValResp[6]
+        channelName = ""
+        if channel & 0x01 == 0x00:
+            channelName = "RED"
+        else:
+            channelName = "BLUE"
+        ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::getSRRChannel: {self.instanceName}: channel: {Utils.GetDataInHex([channel], logging.DEBUG)} channel name: {channelName}")
+        return channelName
+
+    def getIsSRRAcking(self) -> bool | None:
+        cmdLength = 0x02
+        noOfBytesToRead = 0x01
+        srrIsAcking = 0x3D
+        getSRRAckingCmd = [0xFF, 0x02, 0x02, 0x83, cmdLength, srrIsAcking, noOfBytesToRead, 0xb2, 0x12, 0x03]
+        #crc = Utils.CalculateCRC(bytearray(bytes(getSRRAckingCmd[3:-3])))
+        #getSRRAckingCmd[7] = crc[0]
+        #getSRRAckingCmd[8] = crc[1]
+        #print("CRC: " + Utils.GetDataInHex(crc, logging.DEBUG))
+        ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::getIsSRRAcking: {self.instanceName}")
+        sysValResp = self.sendCommand(bytes(getSRRAckingCmd), printLog=True)
+        if sysValResp is None:
+            ReceiveSIAdapter.WiRocLogger.error(
+                f"ReceiveSIAdapter::getIsSRRAcking: {self.instanceName}: sendCommand returned None")
+            return None
+        ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::getIsSRRAcking: {Utils.GetDataInHex(sysValResp, logging.DEBUG)}")
+        isAckingByte = sysValResp[6]
+        isAcking: bool  = True
+        if isAckingByte & 0x01 == 0x01:
+            isAcking = True
+        else:
+            isAcking = False
+        ReceiveSIAdapter.WiRocLogger.debug(f"ReceiveSIAdapter::getIsSRRAcking: {self.instanceName}: isAckingByte: {Utils.GetDataInHex([isAckingByte], logging.DEBUG)} isAcking: {isAcking}")
+        return isAcking
+
     def getSerialNumberSystemValue(self) -> int | None:
         addr = 0x00
         cmdLength = 0x02
@@ -642,7 +694,6 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
 
         return isInitializedTheWayWeWant
 
-
     def Init(self) -> bool:
         try:
             if self.GetIsInitialized() and self.siSerial.is_open:
@@ -683,13 +734,17 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
     Instances: list[ReceiveSIUSBSerialPort] = []
     SRRDongleModel: bytearray = bytearray([0x6F, 0x21])
 
+    def __init__(self, instanceName: str, instanceNumber: int, portName: str):
+        super().__init__(instanceName, instanceNumber, portName)
+        self.SRRChannel: str | None = None
+        self.SRRIsAcking: bool | None = None
+
     @staticmethod
     def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         # Add USB serial ports
-        portInfoList = serial.tools.list_ports.grep('10c4:800a|0525:a4aa|1a86:7523|067b:2303|0403:6001|0557:2008|10c4:ea60')
+        portInfoList = serial.tools.list_ports.grep('10c4:800a|1a86:7523|067b:2303|0403:6001|0557:2008|10c4:ea60')
         serialPorts = [portInfo.device for portInfo in portInfoList]
-        # SPORTident USB device                                                                 -- Works
-        # Linux-USB CDC Composite Gadge (Ethernet and ACM)      {ie:Chip computer}              -- Works
+        # 10c4:800a SPORTident USB device                                                       -- Works
         # 1a86:7523 QinHeng Electronics HL-340 USB-Serial adapter                               -- Doesn't work (possibly works one-way)
         # 067b:2303 Prolific Technology, Inc. PL2303 Serial Port                                -- Works
         # 0403:6001 Future Technology Devices International, Ltd FT232 USB-Serial (UART) IC     -- Works
@@ -792,12 +847,15 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
                         self.oneWay = True
                         self.oneWayFallbackShouldNotTriggerReInit = True
                         self.isSRRDongle = True
+
+                        self.SRRChannel = self.getSRRChannel()
+                        self.SRRIsAcking = self.getIsSRRAcking()
                         return True
                     else:
                         successTwoWay = self.InitTwoWay(skipDetectBaudRate=True)
                         if successTwoWay:
                             return True
-                        else: # better with init one way if two way is not working than aborting
+                        else:  # better with init one way if two way is not working than aborting
                             successOneWay = self.InitOneWay(baudrate)
                             if successOneWay:
                                 self.oneWayFallbackTryReInitWhenDataReceived = False  # reinitialization risks losing messages that arrive at the same time
@@ -817,6 +875,15 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
         except Exception as msg:
             ReceiveSIAdapter.WiRocLogger.error("ReceiveSIUSBSerialPort::Init() Exception: " + str(msg))
             return False
+
+    def GetIsSRRAcking(self) -> bool | None:
+        return self.SRRIsAcking
+
+    def GetIsSRRDongle(self) -> bool | None:
+        return self.isSRRDongle
+
+    def GetSRRChannel(self) -> str | None:
+        return self.SRRChannel
 
 
 class ReceiveSIBluetoothSP(ReceiveSIAdapter):

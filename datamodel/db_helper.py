@@ -1317,6 +1317,7 @@ class DatabaseHelper:
             sql = "UPDATE MessageStatsData SET FetchedForUpload = ? WHERE Id = ?"
             cls.db.execute_SQL(sql, (datetime.now(), messageStats[0].id))
             return messageStats[0]
+        return None
 
     @classmethod
     def set_message_stat_uploaded(cls, messageStatId):
