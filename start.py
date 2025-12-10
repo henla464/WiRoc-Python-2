@@ -64,7 +64,7 @@ class Main:
         SettingsClass.IncrementPowerCycle()
         SettingsClass.SetReceiveSIAdapterActive(False)
         Setup.AddMessageTypes()
-        self.doFrequentMaintenanceTasks()
+        self.doUpdateDisplayBackground()
 
         if Setup.SetupAdapters():
             self.subscriberAdapters = Setup.SubscriberAdapters
@@ -87,13 +87,10 @@ class Main:
         # Disable logToServer, must activate manually
         SettingsClass.SetSetting("LogToServer", "0")
 
-        #self.backgroundTasks.UpdateWebServerUp()
-        #self.backgroundTasks.doInfrequentHTTPTasks() # adds device etc
-
     def updateDisplayBackground(self, displayData : DisplayData):
         self.displayStateMachine.Draw(displayData)
 
-    def doFrequentMaintenanceTasks(self):
+    def doUpdateDisplayBackground(self):
         displayData = DisplayData()
         displayData.wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
         displayData.channel = SettingsClass.GetChannel()
@@ -110,10 +107,6 @@ class Main:
         t = threading.Thread(target=self.updateDisplayBackground, args=(displayData,))
         t.daemon = True
         t.start()
-
-    #def doInfrequentMaintenanceTasks(self):
-    #    self.backgroundTasks.doInfrequentDatabaseTasks()
-    #    self.backgroundTasks.doInfrequentHTTPTasks()
 
     def reconfigure(self):
         if Setup.SetupAdapters():
@@ -426,17 +419,16 @@ class Main:
             for i in range(1,1004):
                 didTasks = False
                 if i % 11 == 0: # use prime numbers to avoid the tasks happening on the same iteration
-                    # Check if button was pressed, if so run doFrequentMaintenanceTasks to update OLED
+                    # Check if button was pressed, if so run doUpdateDisplayBackground to update OLED
                     if HardwareAbstraction.Instance.GetIsPMUIRQ():
                         didTasks = True
-                        self.doFrequentMaintenanceTasks()
+                        self.doUpdateDisplayBackground()
 
                 if i % 149 == 0:
                     # We need to call SettingsClass.Tick() to clear settings cache so new configurations take effect
                     didTasks = True
                     SettingsClass.Tick()
                     self.backgroundTasks.GetDataFromSubProcesses()
-                    self.doFrequentMaintenanceTasks()
 
                 if i % 251 == 0:
                     # print("reconfigure time: " + str(datetime.now()))
@@ -452,11 +444,16 @@ class Main:
                     self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
                                                 if inputAdapter.UpdateInfrequently() and inputAdapter.GetIsInitialized()]
 
+                if i % 499 == 0:
+                    # We need to call SettingsClass.Tick() to clear settings cache so new configurations take effect
+                    didTasks = True
+                    SettingsClass.Tick()
+                    self.doUpdateDisplayBackground()
+
                 if i % 997 == 0:
                     # print("infrequent maintenance time: " + str(datetime.now()))
                     didTasks = True
                     self.backgroundTasks.SendDataToInfrequentHTTPTaskProcess()
-                    #self.doInfrequentMaintenanceTasks()
 
                 if not didTasks:
                     time.sleep(0.04)

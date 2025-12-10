@@ -4,6 +4,7 @@ import os
 import time
 import logging
 from smbus2 import SMBus
+import bisect
 
 
 class Battery(object):
@@ -15,6 +16,17 @@ class Battery(object):
     wifiPowerSaving = None
     i2cAddress = 0x34
     i2cBus = None
+
+    BatteryVoltagePercentageLookupList = [3.0008, 3.0492, 3.0855, 3.1295, 3.1669, 3.2065, 3.2450, 3.2725, 3.3000, 3.3275,
+                                          3.3495, 3.3693, 3.3957, 3.4111, 3.4144, 3.4265, 3.4342, 3.4430, 3.4562, 3.4683,
+                                          3.4793, 3.4892, 3.5002, 3.5189, 3.5299, 3.5409, 3.5497, 3.5563, 3.5651, 3.5739,
+                                          3.5838, 3.5959, 3.6047, 3.6135, 3.6201, 3.6245, 3.6311, 3.6388, 3.6487, 3.6597,
+                                          3.6718, 3.6784, 3.6905, 3.6960, 3.7037, 3.7147, 3.7224, 3.7378, 3.7477, 3.7543,
+                                          3.7642, 3.7675, 3.7763, 3.7851, 3.7939, 3.8060, 3.8148, 3.8214, 3.8313, 3.8357,
+                                          3.8423, 3.8533, 3.8621, 3.8742, 3.8819, 3.8874, 3.8962, 3.9050, 3.9094, 3.9193,
+                                          3.9292, 3.9402, 3.9534, 3.9644, 3.9754, 3.9820, 3.9941, 4.0040, 4.0172, 4.0271,
+                                          4.0348, 4.0403, 4.0458, 4.0469, 4.0480, 4.0513, 4.0524, 4.0546, 4.0567, 4.0601,
+                                          4.0634, 4.0667, 4.0722, 4.0766, 4.0865, 4.0920, 4.1008, 4.1140, 4.1250, 4.1437]
 
     @classmethod
     def Setup(cls):
@@ -128,12 +140,24 @@ class Battery(object):
         return isBatteryLow
 
     @classmethod
+    def GetBatteryVoltage(cls) -> float:
+        # Battery.WiRocLogger.debug("Battery::GetBatteryVoltage")
+        BATTERY_VOLTAGE_HIGH_REGADDR: int = 0x78
+        BATTERY_VOLTAGE_LOW_REGADDR: int = 0x79
+        intHighValue = cls.i2cBus.read_byte_data(cls.i2cAddress, BATTERY_VOLTAGE_HIGH_REGADDR)
+        intLowValue = cls.i2cBus.read_byte_data(cls.i2cAddress, BATTERY_VOLTAGE_LOW_REGADDR)
+        voltageRaw = (intHighValue << 4) | (intLowValue & 0x0F)
+        voltage_mV = voltageRaw * 1.1  # each bit = 1.1 mV
+        voltage_V = voltage_mV / 1000.0  # convert to volts
+        return voltage_V
+
+    @classmethod
     def GetBatteryPercent(cls) -> int:
         # Battery.WiRocLogger.debug("Battery::GetBatteryPercent")
-        POWER_MEASUREMENT_RESULT_REGADDR = 0xb9
-        intPercentValue = cls.i2cBus.read_byte_data(cls.i2cAddress, POWER_MEASUREMENT_RESULT_REGADDR)
-        # intPercentValue = int(strPercentValue, 16)
-        return intPercentValue
+        batVolt = cls.GetBatteryVoltage()
+        batPerc = bisect.bisect_left(cls.BatteryVoltagePercentageLookupList, batVolt/1000)
+        Battery.WiRocLogger.debug("Battery::GetBatteryPercent: " + str(batPerc) + "%")
+        return batPerc
 
     @classmethod
     def GetBatteryPercent4Bits(cls):
