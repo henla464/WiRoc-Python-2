@@ -568,7 +568,7 @@ class DatabaseHelper:
                      "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
                      "where MessageSubscriptionArchiveData.SentDate >= ? and MessageSubscriptionArchiveData.SentDate < ? and "
                      "MessageSubscriptionArchiveData.SubscriberTypeName = 'LORA' and MessageBoxArchiveData.MessageTypeName <> 'STATUS' "
-                     "and MessageSubscriptionArchiveData.AckReceivedDate is not null or MessageSubscriptionArchiveData.SendFailedDate is not null "
+                     "and (MessageSubscriptionArchiveData.AckReceivedDate is not null or MessageSubscriptionArchiveData.SendFailedDate is not null) "
                      "union "
                      "select sum(CASE WHEN MessageSubscriptionData.SendFailedDate is not null THEN NoOfSendTries ELSE NoOfSendTries-1 END) as NoOfSendTries from MessageSubscriptionData "
                      "join SubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
@@ -576,7 +576,7 @@ class DatabaseHelper:
                      "join MessageBoxData on MessageSubscriptionData.MessageBoxId = MessageBoxData.Id "
                      "where MessageSubscriptionData.SentDate >= ? and MessageSubscriptionData.SentDate < ? and "
                      "SubscriberData.TypeName = 'LORA' and MessageBoxData.MessageTypeName <> 'STATUS' "
-                     "and MessageSubscriptionData.AckReceivedDate is not null or MessageSubscriptionData.SendFailedDate is not null);")
+                     "and (MessageSubscriptionData.AckReceivedDate is not null or MessageSubscriptionData.SendFailedDate is not null));")
 
         noOfMessages = cls.db.get_scalar_by_SQL(selectSQL, (startTime,endTime, startTime, endTime))
         if noOfMessages is None:
