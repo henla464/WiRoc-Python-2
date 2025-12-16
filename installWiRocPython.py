@@ -129,14 +129,14 @@ if resp.status_code == 200:
                 exit(mvRes.returncode)
 
             if not Path(installFolderName + "/env").exists():
-                pyVenvRes = subprocess.run(["python3", "-m", "venv", "env"], cwd=Path(installFolderName + '-' + newSoftwareVersion))
+                pyVenvRes = subprocess.run(["python3", "-m", "venv", "env"], cwd=Path(installFolderName))
                 print("python3 create venv response: " + str(pyVenvRes.returncode))
                 if pyVenvRes.returncode != 0:
                     exit(pyVenvRes.returncode)
 
                 instReqRes = subprocess.run(
                     ["env/bin/python", "-m", "pip", "install", "-r", "requirements.txt"],
-                    cwd=Path(installFolderName + '-' + newSoftwareVersion),
+                    cwd=Path(installFolderName),
                     check=True
                 )
                 print("install requiremetns response: " + str(instReqRes.returncode))
