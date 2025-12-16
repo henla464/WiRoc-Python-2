@@ -117,7 +117,18 @@ if resp.status_code == 200:
                 print("cp env response: " + str(cpEnvRes.returncode))
                 if cpEnvRes.returncode != 0:
                     exit(cpEnvRes.returncode)
-            else:
+
+            rmRes = subprocess.run(["rm", "-rf", installFolderName])
+            print("rm response: " + str(rmRes.returncode))
+            if rmRes.returncode != 0:
+                exit(rmRes.returncode)
+
+            mvRes = subprocess.run(["mv", installFolderName + '-' + newSoftwareVersion, installFolderName])
+            print("mv response: " + str(mvRes.returncode))
+            if mvRes.returncode != 0:
+                exit(mvRes.returncode)
+
+            if not Path(installFolderName + "/env").exists():
                 pyVenvRes = subprocess.run(["python3", "-m", "venv", "env"], cwd=Path(installFolderName + '-' + newSoftwareVersion))
                 print("python3 create venv response: " + str(pyVenvRes.returncode))
                 if pyVenvRes.returncode != 0:
@@ -131,16 +142,6 @@ if resp.status_code == 200:
                 print("install requiremetns response: " + str(instReqRes.returncode))
                 if instReqRes.returncode != 0:
                     exit(instReqRes.returncode)
-
-            rmRes = subprocess.run(["rm", "-rf", installFolderName])
-            print("rm response: " + str(rmRes.returncode))
-            if rmRes.returncode != 0:
-                exit(rmRes.returncode)
-
-            mvRes = subprocess.run(["mv", installFolderName + '-' + newSoftwareVersion, installFolderName])
-            print("mv response: " + str(mvRes.returncode))
-            if mvRes.returncode != 0:
-                exit(mvRes.returncode)
 
             # Get and run all required upgrade scripts
             URLScripts = "https://monitor.wiroc.se/api/v1/" + releaseUpgradeScriptRestCollection + "?sort=versionNumber asc&limitFromVersion=" + oldSoftwareVersion + "&limitToVersion=" + newSoftwareVersion
