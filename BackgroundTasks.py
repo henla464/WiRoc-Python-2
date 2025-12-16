@@ -143,8 +143,7 @@ class BackgroundTasks(object):
                         webServerUrl = SettingsClass.GetWebServerUrl()
                         apiKey = SettingsClass.GetAPIKey()
                         wiRocDeviceName = SettingsClass.GetWiRocDeviceName() if SettingsClass.GetWiRocDeviceName() is not None else "WiRoc Device"
-                        updateWiRocDevice = (SettingsClass.GetWebServerUp() and btAddress != "NoBTAddress"
-                                             and (lastWiRocDeviceNameSentToServer != wiRocDeviceName))
+                        updateWiRocDevice = (btAddress != "NoBTAddress" and (lastWiRocDeviceNameSentToServer != wiRocDeviceName))
 
                         if btAddress != "NoBTAddress":
                             if lastBatteryIsLowReceived is None:

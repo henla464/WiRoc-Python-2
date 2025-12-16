@@ -45,7 +45,7 @@ if test -f "$SETTINGSFILE"; then
   echo "WiRoc BLE API version: $WiRocBLEAPIVersion"
   echo "WiRoc HW Version: $WiRocHWVersion"
 else
-  WiRocPythonVersion="0.281"
+  WiRocPythonVersion="1.03"
   echo "Which WiRocPython2Version? [$WiRocPythonVersion]"
   read wPOption
   if ! [[ -z "$wPOption" ]];
@@ -53,7 +53,7 @@ else
     WiRocPythonVersion=$wPOption
   fi
 
-  WiRocBLEAPIVersion="0.14"
+  WiRocBLEAPIVersion="0.15"
   echo "Which WiRocBLEAPIVersion? [$WiRocBLEAPIVersion]"
   read wBLEOption
   if ! [[ -z "$wBLEOption" ]];
@@ -132,8 +132,8 @@ mkdir LogArchive
 echo "###################################"
 echo "sqlite3"
 echo "###################################"
-
 apt-get -y install libsqlite3-dev
+apt-get -y install sqlite3
 
 echo "###################################"
 echo "Relink dbus bindings (for BLE)"
@@ -154,10 +154,7 @@ echo "###################################"
 echo "Used by install scripts"
 echo "###################################"
 # needed for install scripts
-apt-get -y install python3-pip
-# This allows pip to do system wide installs. Probably should change to use virtual environments though
-# python3 -m pip config set global.break-system-packages true
-#pip3 install requests
+#apt-get -y install python3-pip
 apt-get -y install python3-requests
 
 echo "###################################"
@@ -193,14 +190,11 @@ echo "###################################"
 
 apt-get -y install git
 apt-get -y install python3-dev
-#pip3 install cython
 apt-get -y install cython3
-#pip3 install build
 apt-get -y install python3-build
 rm -rf reedsolomon
 git clone https://github.com/tomerfiliba-org/reedsolomon.git
 cd reedsolomon
-#pip3 install virtualenv
 apt-get -y install virtualenv
 python3 -sBm build --config-setting="--build-option=--cythonize"
 export DEB_PYTHON_INSTALL_LAYOUT=deb_system
@@ -247,9 +241,9 @@ env/bin/pip install -r requirements.txt
 deactivate
 cd /home/chip
 
-echo "nanopiair"
-wget -O /usr/bin/devmem2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/devmem2
-chmod ugo+x /usr/bin/devmem2
+#echo "nanopiair"
+#wget -O /usr/bin/devmem2 https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/devmem2
+#chmod ugo+x /usr/bin/devmem2
 
 wget -O /etc/systemd/system/WiRocStartup.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/WiRocStartup.service
 systemctl enable /etc/systemd/system/WiRocStartup.service

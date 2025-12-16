@@ -7,7 +7,7 @@ import yaml
 import requests
 import time
 import os
-import os.path
+from pathlib import Path
 
 releasePackageFolderName = "WiRocPython2ReleasePackages"
 releaseRestCollection = "WiRocPython2Releases"
@@ -16,7 +16,6 @@ serviceName = "WiRocPython"
 serviceName2 = "WiRocPythonWS"
 settingKeyForVersion = "WiRocPythonVersion"
 releaseUpgradeScriptRestCollection = "WiRocPython2ReleaseUpgradeScripts"
-versionTextFileName = "WiRocPythonVersion.txt"
 
 # New software version
 newSoftwareVersion = sys.argv[1]
@@ -59,14 +58,6 @@ if settingKeyForVersion in settings:
     oldSoftwareVersion = oldSoftwareVersion.strip()
     print("1 Old software version: " + oldSoftwareVersion)
 
-if oldSoftwareVersion == "":
-    with open(versionTextFileName, "r") as f:
-        oldSoftwareVersion = f.read()
-    oldSoftwareVersion = oldSoftwareVersion.strip()
-    print("2 Old software version: " + oldSoftwareVersion)
-    settings[settingKeyForVersion] = oldSoftwareVersion
-
-
 with open('apikey.txt', 'r') as apikeyfile:
     apiKey = apikeyfile.read()
     apiKey = apiKey.strip()
@@ -87,7 +78,7 @@ if resp.status_code == 200:
         print("original MD5 hash: " + originalMd5Hash)
 
         # Download the release
-        if not os.path.exists(releasePackageFolderName):
+        if not Path(releasePackageFolderName).exists():
             os.makedirs(releasePackageFolderName)
 
         localFilePath = releasePackageFolderName + "/v" + theRelease['versionNumber'] + ".tar.gz"
@@ -121,10 +112,25 @@ if resp.status_code == 200:
             if tarRes.returncode != 0:
                 exit(tarRes.returncode)
 
-            cpEnvRes = subprocess.run(["cp", "-r", installFolderName + "/env", installFolderName + '-' + newSoftwareVersion])
-            print("cp env response: " + str(cpEnvRes.returncode))
-            if cpEnvRes.returncode != 0:
-                exit(cpEnvRes.returncode)
+            if Path(installFolderName + "/env").exists():
+                cpEnvRes = subprocess.run(["cp", "-r", installFolderName + "/env", installFolderName + '-' + newSoftwareVersion])
+                print("cp env response: " + str(cpEnvRes.returncode))
+                if cpEnvRes.returncode != 0:
+                    exit(cpEnvRes.returncode)
+            else:
+                pyVenvRes = subprocess.run(["python3", "-m", "venv", "env"], cwd=Path(installFolderName + '-' + newSoftwareVersion))
+                print("python3 create venv response: " + str(pyVenvRes.returncode))
+                if pyVenvRes.returncode != 0:
+                    exit(pyVenvRes.returncode)
+
+                instReqRes = subprocess.run(
+                    ["env/bin/python", "-m", "pip", "install", "-r", "requirements.txt"],
+                    cwd=Path(installFolderName + '-' + newSoftwareVersion)
+                    check=True
+                )
+                print("install requiremetns response: " + str(instReqRes.returncode))
+                if instReqRes.returncode != 0:
+                    exit(instReqRes.returncode)
 
             rmRes = subprocess.run(["rm", "-rf", installFolderName])
             print("rm response: " + str(rmRes.returncode))

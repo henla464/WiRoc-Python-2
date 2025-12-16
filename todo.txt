@@ -1,24 +1,13 @@
 WiRoc
 =====
 - SRR dongle often doesn't initialize correctly, doesn't respond in time to query, seem to get reply later
-- skicka vilka usb enheter (srr donglar) som är anslutna
+
 - Should we change to not retry, or limit retries to configure SI-USB as two-way when it fails?
 - Option to set SRR as output
-- Send configurations to webbserver
+- Send configurations to webbserver (srr setting already sent)
 - Send local ip address to webbserver ( add to devices )
 - Add cardno etc to database for SRRMessages
-- measure power consumption of  SRR receiver: arount 51 mA, 3.3V
-    -- Sleep mode: maybe 50mA, very little difference if any
-    -- Stop mode: 47mA so even then little difference...
 
-
-implemented but not tested
-- Send hwversion to webbserver, software versions
-
-
-BLE?APP?
-========
-Double test messages sent
 
 SRR code
 ========
@@ -96,6 +85,11 @@ x	HAM5 - 433,9375
 x add description to wiroc devices on the web
 x Test air+
 x show if all lora messages acked on webb and no of non acked messages (already sent)
+x skicka vilka usb enheter (srr donglar) som är anslutna
+x measure power consumption of  SRR receiver: arount 51 mA, 3.3V
+    -- Sleep mode: maybe 50mA, very little difference if any
+    -- Stop mode: 47mA so even then little difference...
+x Send hwversion to webbserver, software versions
 
 possible HW enhancments
 -----------------------
@@ -122,16 +116,13 @@ x -> 26 kOhm fungerar (26+35kohm - 61 fungerar inte)
 x ===> Seem to only be a problem when the antennaconnector is under water too, so shouldnt be an issue in real life. 
 x      Even though, change the resistor  from 1K to 24Kohm
 
-Ack could include request to resend missed messages. Good idea? Or just a resend adapter fetching from failed messages?
 
-
-
-- BT address 6 bytes: REG 04-0FH: Data Cache
- hciconfig hci0 down
- sudo btmgmt public-addr B0:02:47:00:D7:6D
- hciconfig hci0 up
-In startup script check AXP209 for bt address, then check settings.yaml and actual bt address.
- If AXP209 has address then use it and put it in settings
- If AXP209 is empty but settings.yaml has then write it to AXP209 and use it
- If both AXP209 and settings.yaml is empty then use the actual bt address and write it settings and axp209
+x BT address 6 bytes: REG 04-0FH: Data Cache
+x hciconfig hci0 down
+x sudo btmgmt public-addr B0:02:47:00:D7:6D
+x hciconfig hci0 up
+xIn startup script check AXP209 for bt address, then check settings.yaml and actual bt address.
+x If AXP209 has address then use it and put it in settings
+x If AXP209 is empty but settings.yaml has then write it to AXP209 and use it
+x If both AXP209 and settings.yaml is empty then use the actual bt address and write it settings and axp209
  BUT if ForceBTAddress: true in settings.yaml then use that bt address and write it to AP209

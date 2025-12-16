@@ -102,3 +102,5 @@ ENV/
 *.log.3
 
 apikey.txt
+
+reedsolomon/
