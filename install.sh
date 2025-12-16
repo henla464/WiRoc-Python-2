@@ -169,7 +169,7 @@ chmod ugo+x installWiRocBLEAPI.py
 apt-get -y install libdbus-1-dev
 
 # these are dependencies for PyGObject (installed in requirements.txt)
-apt-get -y install python3.12-venv
+apt-get -y install python3-venv
 apt-get -y install libcairo2-dev
 apt-get -y install python3-dev
 apt-get -y install libgirepository1.0-dev
@@ -216,7 +216,7 @@ python3 -m venv env
 source env/bin/activate
 env/bin/pip install -r requirements.txt
 # below filename changes with python version
-sudo env/bin/pip install ../reedsolomon/dist/reedsolo-2.1.2b1-cp312-cp312-linux_armv7l.whl
+sudo pip install ../reedsolomon/dist/reedsolo-2.1.3b1-cp313-cp313-linux_armv7l.whl
 deactivate
 cd /home/chip
 
