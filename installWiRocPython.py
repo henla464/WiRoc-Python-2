@@ -125,7 +125,7 @@ if resp.status_code == 200:
 
                 instReqRes = subprocess.run(
                     ["env/bin/python", "-m", "pip", "install", "-r", "requirements.txt"],
-                    cwd=Path(installFolderName + '-' + newSoftwareVersion)
+                    cwd=Path(installFolderName + '-' + newSoftwareVersion),
                     check=True
                 )
                 print("install requiremetns response: " + str(instReqRes.returncode))
