@@ -8,6 +8,7 @@ import threading
 import time
 import traceback
 from sqlite3 import Connection, OperationalError, Cursor
+from typing import Any
 
 from databaselib.datamapping import DataMapping
 
@@ -142,7 +143,7 @@ class DB:
         finally:
             self.closeConnection(conn)
 
-    def get_scalar_by_SQL(self, select_SQL_statement: str, parameters: tuple[any, ...] = None) -> any:
+    def get_scalar_by_SQL(self, select_SQL_statement: str, parameters: tuple[any, ...] = None) -> Any:
         conn = self.openConnection()
         try:
             db_cursor = conn.cursor()
@@ -179,7 +180,7 @@ class DB:
         finally:
             self.closeConnection(conn)
 
-    def _execute_cursor_SQL_fetchone_retry(self, cursor: Cursor, SQL_statement: str, parameters=None) -> any:
+    def _execute_cursor_SQL_fetchone_retry(self, cursor: Cursor, SQL_statement: str, parameters=None) -> Any:
         timeout = 10
         for x in range(0, timeout):
             try:
@@ -198,7 +199,7 @@ class DB:
                 continue
         DB.WiRocLogger.error(f"DB::_execute_cursor_SQL_fetchone_retry() ALL RETRIES FAILED {SQL_statement}")
 
-    def _execute_cursor_SQL_fetchall_retry(self, cursor: Cursor, SQL_statement: str, parameters=None) -> any:
+    def _execute_cursor_SQL_fetchall_retry(self, cursor: Cursor, SQL_statement: str, parameters=None) -> Any:
         timeout = 10
         result = None
         for x in range(0, timeout):
