@@ -6,6 +6,8 @@ import logging
 from smbus2 import SMBus
 import bisect
 
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
+
 
 class Battery(object):
     WiRocLogger = logging.getLogger('WiRoc')
@@ -173,10 +175,12 @@ class Battery(object):
         if sendToSirap and (cls.wifiPowerSaving or cls.wifiPowerSaving is None):
             # disable power saving
             Battery.WiRocLogger.info("Start::updateWifiPowerSaving() Disable WiFi power saving")
-            os.system("sudo iw wlan0 set power_save off")
+            wlanIFace = HardwareAbstraction.Instance.GetInternetInterfaceName()
+            os.system(f"sudo iw {wlanIFace} set power_save off")
             cls.wifiPowerSaving = False
         elif not sendToSirap and (not cls.wifiPowerSaving or cls.wifiPowerSaving is None):
             # enable power saving
             Battery.WiRocLogger.info("Start::updateWifiPowerSaving() Enable WiFi power saving")
-            os.system("sudo iw wlan0 set power_save on")
+            wlanIFace = HardwareAbstraction.Instance.GetInternetInterfaceName()
+            os.system("sudo iw {wlanIFace} set power_save on")
             cls.wifiPowerSaving = True

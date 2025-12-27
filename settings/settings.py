@@ -836,7 +836,7 @@ class SettingsClass(object):
 
     @staticmethod
     @cached(cacheUntilChangedByProcess, key=partial(hashkey, 'GetReceiveSIAdapterActive'), lock=rlock)
-    def GetReceiveSIAdapterActive():
+    def GetReceiveSIAdapterActive() -> bool:
         sett = DatabaseHelper.get_setting_by_key('ReceiveSIAdapterActive')
         if sett is None:
             SettingsClass.SetSetting("ReceiveSIAdapterActive", "0")
@@ -845,9 +845,96 @@ class SettingsClass(object):
 
     @staticmethod
     @cached(cacheUntilChangedByProcess, key=partial(hashkey, 'GetSendSerialAdapterActive'), lock=rlock)
-    def GetSendSerialAdapterActive():
+    def GetSendSerialAdapterActive() -> bool:
         sett = DatabaseHelper.get_setting_by_key('SendSerialAdapterActive')
         if sett is None:
             SettingsClass.SetSetting("SendSerialAdapterActive", "0")
             return False
         return sett.Value == "1"
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWifiMeshEnabled'), lock=rlock)
+    def GetWifiMeshEnabled() -> bool:
+        sett = DatabaseHelper.get_setting_by_key('WifiMeshEnabled')
+        if sett is None:
+            SettingsClass.SetSetting("WifiMeshEnabled", "0")
+            return False
+        return sett.Value == "1"
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWifiMeshGatewayEnabled'), lock=rlock)
+    def GetWifiMeshGatewayEnabled() -> bool:
+        sett = DatabaseHelper.get_setting_by_key('WifiMeshGatewayEnabled')
+        if sett is None:
+            SettingsClass.SetSetting("WifiMeshGatewayEnabled", "0")
+            return False
+        return sett.Value == "1"
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWifiMeshChannel'), lock=rlock)
+    def GetWifiMeshChannel() -> int:
+        sett = DatabaseHelper.get_setting_by_key('WifiMeshChannel')
+        if sett is None:
+            SettingsClass.SetSetting("WifiMeshChannel", "6")
+            return 6
+        return int(sett.Value)
+
+    @staticmethod
+    def GetWifiMeshFrequency() -> int:
+        # SRR channel 2461 Mhz och 2471 Mhz
+        meshChannel = SettingsClass.GetWifiMeshChannel()
+        if meshChannel == 1:
+            return 2412  # (2401-2423 MHz range)
+        elif meshChannel == 2:
+            return 2417  # (2406-2428 MHz range)
+        elif meshChannel == 3:
+            return 2422  # (2411-2433 MHz range)
+        elif meshChannel == 4:
+            return 2427  # (2416-2438 MHz range)
+        elif meshChannel == 5:
+            return 2432  # (2421-2443 MHz range)
+        elif meshChannel == 6:
+            return 2437  # (2426-2448 MHz range)
+        elif meshChannel == 7:
+            return 2442  # (2431-2453 MHz range)
+        elif meshChannel == 8:
+            return 2447  # (2436-2458 MHz range)
+        elif meshChannel == 9:
+            return 2452  # (2441-2463 MHz range)
+        elif meshChannel == 10:
+            return 2457  # (2446-2468 MHz range)
+        elif meshChannel == 11:
+            return 2462  # (2451-2473 MHz range)  SRR near
+        elif meshChannel == 12:
+            return 2467  # (2456-2478 MHz range)
+        elif meshChannel == 13:
+            return 2472 # (2461-2483 MHz range)  SRR near
+        return 2437  # channel
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWifiMeshNetworkNameNumber'), lock=rlock)
+    def GetWifiMeshNetworkNameNumber() -> int:
+        sett = DatabaseHelper.get_setting_by_key('WifiMeshNetworkNameNumber')
+        if sett is None:
+            SettingsClass.SetSetting("WifiMeshNetworkNameNumber", "0")
+            return 0
+        return int(sett.Value)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWifiMeshIPNetworkNumber'), lock=rlock)
+    def GetWifiMeshIPNetworkNumber() -> int:
+        # This is used in the ip address 192.168.x.y
+        sett = DatabaseHelper.get_setting_by_key('WifiMeshIPNetworkNumber')
+        if sett is None:
+            SettingsClass.SetSetting("WifiMeshIPNetworkNumber", "25")
+            return 25
+        return int(sett.Value)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWifiMeshPassword'), lock=rlock)
+    def GetWifiMeshPassword() -> str:
+        sett = DatabaseHelper.get_setting_by_key('WifiMeshPassword')
+        if sett is None:
+            SettingsClass.SetSetting("WifiMeshPassword", "MeshWiRocMesh")
+            return "MeshWiRocMesh"
+        return sett.Value

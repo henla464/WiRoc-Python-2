@@ -1,3 +1,34 @@
+1) Ladda ner WiRoc från:
+	Hårdvaruversion V4Rev1: https://monitor.wiroc.se/outher_resources/Armbian-unofficial_25.11.0-trunk_Nanopiair_trixie_current_6.12.51_HW_V4Rev1.img.xz
+
+2) Skriv WiRoc-imagen till SD kortet
+	- med t.ex Balena etcher
+
+3) Skapa ett Wifi nätverk med SSID: WiRoc och lösenord: WiRocWiRoc
+	- Man kan packa upp imagen och ändra i /root/.not_logged_in_yet för att ändra SSID och lösenord men enklast är nog bara att dela ut wifinätverket på mobilen.
+
+4) Frivilligt... För att kunna följa vad som händer under installationen anslut till serial konsolen med en USB-serial adapter 
+
+5) Stoppa i SD-kortet och starta WiRoc
+
+6) Vänta ca 40 min på att installationen ska bli klar. När den är klar så startat den om och efter det ska displayen fungera.
+	- Vid starten så ansluter den först till Wifi
+	- Sedan körs armbian-firstrun skriptet (modifierat jämfört med armbian standard). Detta loggar in, skapar användaren 'chip' med lösen 'chip'. Sätter lösenordet för root till 'chip'. Det genererar sedan locale, sätter tidszon etc.
+	- armbian-firstrun anropar sedan provisioning.sh ( i /root ) som stänger av automatiska kernel uppdateringar, unattended uppdateringar och byter till stable package repository. Efter detta kopierar den install.sh till /chip/home och startar install.sh. 
+
+7) Installera SD kortet till eMMC
+	- Använd serie konsolen eller logga in med SSH (användarnamn chip, lösen chip)
+	- Kör: sudo armbian-config --cmd STO001
+		Välj sedan "Boot from eMMC - system on eMMC"
+		Välj ext4 filesystem
+
+8) Ta bort SD-kortet och starta utan det.
+
+
+=============================
+Older instructions
+=============================
+
 1) Download the Armbian ubuntu cli version image
 
 2) Extract the .xz to a .img file with file roller
@@ -65,7 +96,7 @@ sudo shutdown -r 0
 --------------------
 15) Log in again as user chip and run sudo armbian-config
 	- Install the SD card to eMMC (select System/Storage/Install to internal storage)
-	or run: sudo armbian-config --cmd SY001
+	or run: sudo armbian-config --cmd STO001
 		select "Boot from eMMC - system on eMMC"
 		select ext4 filesystem
 		

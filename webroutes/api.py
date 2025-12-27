@@ -1203,7 +1203,7 @@ def getListWifi():
 def connectWifi(wifiName, wifiPassword):
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    wlanIFace = 'wlan0'
+    wlanIFace = HardwareAbstraction.Instance.GetInternetInterfaceName()
 
     result = subprocess.run(['nmcli', 'device', 'wifi', 'connect', wifiName, 'password', wifiPassword, 'ifname', wlanIFace], stdout=subprocess.PIPE)
     if result.returncode != 0:
@@ -1217,7 +1217,7 @@ def connectWifi(wifiName, wifiPassword):
 def disconnectWifi():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    wlanIFace = 'wlan0'
+    wlanIFace = HardwareAbstraction.Instance.GetInternetInterfaceName()
 
     result = subprocess.run(['nmcli', 'device', 'disconnect', wlanIFace], stdout=subprocess.PIPE)
     if result.returncode != 0:
@@ -1349,6 +1349,121 @@ def setHAMEnabled(enabled):
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/wifimesh/enabled/<enabled>/', methods=['GET'])
+def SetWifiMeshEnabled(enabled):
+    sd = DatabaseHelper.get_setting_by_key('WifiMeshEnabled')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'WifiMeshEnabled'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/wifimesh/enabled/', methods=['GET'])
+def GetWifiMeshEnabled():
+    sett = DatabaseHelper.get_setting_by_key('WifiMeshEnabled')
+    wifiMeshEnabled = '0'
+    if sett is not None:
+        wifiMeshEnabled = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=wifiMeshEnabled))
+
+@app.route('/api/wifimesh/gateway/enabled/<enabled>/', methods=['GET'])
+def SetWifiMeshGatewayEnabled(enabled):
+    sd = DatabaseHelper.get_setting_by_key('WifiMeshGatewayEnabled')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'WifiMeshGatewayEnabled'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/wifimesh/gateway/enabled/', methods=['GET'])
+def GetWifiMeshGatewayEnabled():
+    sett = DatabaseHelper.get_setting_by_key('WifiMeshGatewayEnabled')
+    wifiMeshGatewayEnabled = '0'
+    if sett is not None:
+        wifiMesGatewayhEnabled = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=wifiMeshGatewayEnabled))
+
+@app.route('/api/wifimesh/channel/<channel>/', methods=['GET'])
+def SetWifiMeshChannel(channel):
+    sd = DatabaseHelper.get_setting_by_key('WifiMeshChannel')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'WifiMeshChannel'
+    sd.Value = channel
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/wifimesh/channel/', methods=['GET'])
+def GetWifiMeshChannel():
+    sett = DatabaseHelper.get_setting_by_key('WifiMeshChannel')
+    channel = '6'
+    if sett is not None:
+        channel = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=channel))
+
+@app.route('/api/wifimesh/networknamenumber/<networknamenumber>/', methods=['GET'])
+def SetWifiMeshNetworkNameNumber(networknumber):
+    sd = DatabaseHelper.get_setting_by_key('WifiMeshNetworkNameNumber')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'WifiMeshNetworkNameNumber'
+    sd.Value = networknumber
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/wifimesh/networknamenumber/', methods=['GET'])
+def GetWifiMeshNetworkNameNumber():
+    sett = DatabaseHelper.get_setting_by_key('WifiMeshNetworkNameNumber')
+    networknamenumber = '0'
+    if sett is not None:
+        networknamenumber = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=networknamenumber))
+
+@app.route('/api/wifimesh/password/<password>/', methods=['GET'])
+def SetWifiMeshPassword(password):
+    sd = DatabaseHelper.get_setting_by_key('WifiMeshPassword')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'WifiMeshPassword'
+    sd.Value = password
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/wifimesh/password/', methods=['GET'])
+def GetWifiMeshPassword():
+    sett = DatabaseHelper.get_setting_by_key('WifiMeshPassword')
+    password = 'MeshWiRocMesh'
+    if sett is not None:
+        password = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=password))
 
 @app.route('/api/uploadlogarchive/', methods=['GET'])
 def uploadLogArchive():

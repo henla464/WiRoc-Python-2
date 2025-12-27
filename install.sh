@@ -136,6 +136,16 @@ apt-get -y install libsqlite3-dev
 apt-get -y install sqlite3
 
 echo "###################################"
+echo "dhcp server for use with wifi mesh"
+echo "###################################"
+apt-get -y install dnsmasq
+
+echo "###################################"
+echo "Firmware for ath9k"
+echo "###################################"
+apt-get -y install firmware-ath9k-htc
+
+echo "###################################"
 echo "Relink dbus bindings (for BLE)"
 echo "###################################"
 ln -s /usr/lib/python3/dist-packages/_dbus_bindings.cpython-312-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/_dbus_bindings.so
@@ -203,20 +213,19 @@ cd /home/chip
 echo "###################################"
 echo "WiRoc-Python-2"
 echo "###################################"
+# needed for pillow
+apt-get -y install libjpeg-dev
 
 wget -O installWiRocPython.py https://raw.githubusercontent.com/henla464/WiRoc-Python-2/master/installWiRocPython.py
 chmod ugo+x installWiRocPython.py
 ./installWiRocPython.py $WiRocPythonVersion NEW
-
-# needed for pillow
-apt-get -y install libjpeg-dev
 
 cd WiRoc-Python-2
 python3 -m venv env
 source env/bin/activate
 env/bin/pip install -r requirements.txt
 # below filename changes with python version
-sudo pip install ../reedsolomon/dist/reedsolo-2.1.3b1-cp313-cp313-linux_armv7l.whl
+env/bin/pip install ../reedsolomon/dist/reedsolo-2.1.3b1-cp313-cp313-linux_armv7l.whl
 deactivate
 cd /home/chip
 

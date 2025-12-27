@@ -24,6 +24,8 @@ tags:
     description: ""
   - name: "Network"
     description: "Connect to Wifi and IP options"
+  - name: "HAM"
+    description: "Amateur radio settings"
 paths:
   /channel/:
     get:
@@ -1338,10 +1340,10 @@ paths:
       responses:
         "200":
           description: "successful operation"
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PropertyObj"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /rtc/datetime/{dateAndTimeWithSeconds}:
     get:
       tags:
@@ -1357,10 +1359,10 @@ paths:
       responses:
         "200":
           description: "successful operation"
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PropertyObj"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /rtc/wakeup/:
     get:
       tags:
@@ -1370,10 +1372,10 @@ paths:
       responses:
         "200":
           description: "successful operation"
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PropertyObj"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /rtc/wakeup/{time}:
     get:
       tags:
@@ -1389,10 +1391,10 @@ paths:
       responses:
         "200":
           description: "successful operation"
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PropertyObj"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /rtc/clearwakeup/:
     get:
       tags:
@@ -1402,10 +1404,10 @@ paths:
       responses:
         "200":
           description: "successful operation"
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PropertyObj"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /rtc/wakeupenabled/:
     get:
       tags:
@@ -1415,10 +1417,10 @@ paths:
       responses:
         "200":
           description: "successful operation"
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/TrueFalseObj"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /ham/callsign/:
     get:
       tags:
@@ -1460,10 +1462,10 @@ paths:
       responses:
         "200":
           description: "successful operation"
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/TrueFalseObj"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /ham/enabled/{hamenabled}:
     get:
       tags:
@@ -1483,6 +1485,166 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
+  /wifimesh/enabled/:
+    get:
+      tags:
+      - "Network"
+      summary: "Gets whether Wifi Mesh is enabled or not"
+      operationId: "getWifiMeshEnabled"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /wifimesh/enabled/{enabled}:
+    get:
+      tags:
+      - "Network"
+      summary: "Enable/Disable Wifi Mesh"
+      operationId: "setWifiMeshEnabled"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /wifimesh/gateway/enabled/:
+    get:
+      tags:
+      - "Network"
+      summary: "Gets whether this device is a gateway for the Wifi Mesh. Meaning it routes packages to the normal Wifi interface"
+      operationId: "getWifiMeshGatewayEnabled"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /wifimesh/gateway/enabled/{enabled}:
+    get:
+      tags:
+      - "Network"
+      summary: "Enable/Disable Wifi Mesh Gateway"
+      operationId: "setWifiMeshGatewayEnabled"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /wifimesh/channel/:
+    get:
+      tags:
+      - "Network"
+      summary: "Gets the Wifi channel the Wifi Mesh is is using"
+      operationId: "getWifiMeshChannel"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WifiMeshChannelObj"
+  /wifimesh/channel/{channel}:
+    get:
+      tags:
+      - "Network"
+      summary: "Set the Wifi channel the Wifi Mesh should use (1-13)"
+      operationId: "setWifiMeshChannel"
+      parameters:
+        - name: channel
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/WifiMeshChannel'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WifiMeshChannelObj"
+  /wifimesh/networknamenumber/:
+    get:
+      tags:
+      - "Network"
+      summary: "Gets the Wifi Mesh network name number the Wifi Mesh is using (used in the SSID)"
+      operationId: "getWifiMeshNetworkNameNumber"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WifiMeshNetworkNameNumberObj"
+  /wifimesh/networknamenumber/{networknamenumber}:
+    get:
+      tags:
+      - "Network"
+      summary: "Set the Wifi Mesh network name number (used in the SSID)"
+      operationId: "setWifiMeshNetworkNameNumber"
+      parameters:
+        - name: networknamenumber
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/WifiMeshNetworkNameNumber'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WifiMeshNetworkNameNumberObj"
+  /wifimesh/password/:
+    get:
+      tags:
+      - "Network"
+      summary: "Gets the Wifi Mesh password"
+      operationId: "getWifiMeshPassword"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /wifimesh/password/{password}:
+    get:
+      tags:
+      - "Network"
+      summary: "Set the Wifi Mesh password"
+      operationId: "setWifiMeshPassword"
+      parameters:
+        - name: password
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Property'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /uploadlogarchive/:
     get:
       tags:
@@ -1550,6 +1712,45 @@ components:
       properties:
         Value:
           $ref: '#/components/schemas/Channel'
+        py/object:
+          type: "string"
+    WifiMeshChannel:
+      type: "string"
+      description: "The Wifi Mesh channel as a string"
+      enum:
+        - "1"
+        - "2"
+        - "3"
+        - "4"
+        - "5"
+        - "6"
+        - "7"
+        - "8"
+        - "9"
+        - "10"
+        - "11"
+        - "12"
+        - "13"
+    WifiMeshChannelObj:
+      type: "object"
+      properties:
+        Value:
+          $ref: '#/components/schemas/WifiMeshChannel'
+        py/object:
+          type: "string"
+    WifiMeshNetworkNameNumber:
+      type: "string"
+      description: "The code rate"
+      enum:
+        - "0"
+        - "1"
+        - "2"
+        - "3"
+    WifiMeshNetworkNameNumberObj:
+      type: "object"
+      properties:
+        Value:
+          $ref: '#/components/schemas/WifiMeshNetworkNameNumber'
         py/object:
           type: "string"
     LoraRange:
