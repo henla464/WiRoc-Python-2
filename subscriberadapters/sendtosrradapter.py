@@ -110,7 +110,7 @@ class SendToSRRAdapter(object):
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass
 
-    def GetTransform(self, transformName: str) -> any:
+    def GetTransform(self, transformName: str) -> Any:
         return self.transforms[transformName]
 
     def Init(self) -> bool:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
@@ -91,7 +93,7 @@ class SendToSirapAdapter(object):
     def SetTransform(self, transformClass):
         self.transforms[transformClass.GetName()] = transformClass
 
-    def GetTransform(self, transformName: str) -> any:
+    def GetTransform(self, transformName: str) -> Any:
         return self.transforms[transformName]
 
     def Init(self) -> bool:
