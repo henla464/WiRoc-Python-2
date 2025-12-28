@@ -157,7 +157,7 @@ class Battery(object):
     def GetBatteryPercent(cls) -> int:
         # Battery.WiRocLogger.debug("Battery::GetBatteryPercent")
         batVolt = cls.GetBatteryVoltage()
-        batPerc = bisect.bisect_left(cls.BatteryVoltagePercentageLookupList, batVolt/1000)
+        batPerc = bisect.bisect_left(cls.BatteryVoltagePercentageLookupList, batVolt)
         Battery.WiRocLogger.debug("Battery::GetBatteryPercent: " + str(batPerc) + "%")
         return batPerc
 
