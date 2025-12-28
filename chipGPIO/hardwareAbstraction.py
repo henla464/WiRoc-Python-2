@@ -241,8 +241,8 @@ class HardwareAbstraction(object):
     def GetInternetInterfaceName(self):
         return "wlan0"
 
-    def GetMeshInterfaceName(self) -> str | None:
-        mesh_phys = set()
+    def GetMeshInterfacePhy(self) -> str | None:
+        mesh_phys = []
         current_phy = None
 
         # 1. Get mesh-capable PHYs
@@ -252,7 +252,28 @@ class HardwareAbstraction(object):
                 if line.startswith("Wiphy"):
                     current_phy = line.split()[1]
                 elif line == "* mesh point" and current_phy:
-                    mesh_phys.add(current_phy.replace("phy", ""))
+                    mesh_phys.append(current_phy)
+                    break
+
+            return mesh_phys[0] if len(mesh_phys) > 0 else None
+        except Exception as e:
+            HardwareAbstraction.WiRocLogger.error(
+                f"HardwareAbstraction::GetMeshInterfaceName() listing wifi mesh phys failed {e}")
+            return None
+
+    def GetMeshInterfaceName(self) -> str | None:
+        mesh_phys = []
+        current_phy = None
+
+        # 1. Get mesh-capable PHYs
+        try:
+            for line in subprocess.check_output(["iw", "list"], text=True).splitlines():
+                line = line.strip()
+                if line.startswith("Wiphy"):
+                    current_phy = line.split()[1]
+                elif line == "* mesh point" and current_phy:
+                    mesh_phys.append(current_phy.replace("phy", ""))
+                    break
         except Exception as e:
             HardwareAbstraction.WiRocLogger.error(
                 f"HardwareAbstraction::GetMeshInterfaceName() listing wifi mesh phys failed {e}")

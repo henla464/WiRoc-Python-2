@@ -99,7 +99,8 @@ class SendMeshAdapter(object):
                 SettingsClass.GetWifiMeshGatewayEnabled() == self.wifiMeshGatewayEnabled and
                 SettingsClass.GetWifiMeshPassword() == self.wifiMeshPassword and
                 self.HasExpectedIP() and
-                not self.IsStuckInAvoidJoin(self.theMeshDeviceInterfaceName))
+                not self.IsStuckInAvoidJoin(self.theMeshDeviceInterfaceName) and
+                not self.IsStuckFailedJoin(self.theMeshDeviceInterfaceName))
                 or
                 (SettingsClass.GetWifiMeshEnabled() is False and
                     self.wifiMeshEnabled is False)):
@@ -162,22 +163,64 @@ class SendMeshAdapter(object):
         return True
 
     @staticmethod
+    def RemoveMeshInterface(mesh_interface: str):
+        result = subprocess.run(
+            f"iw dev {mesh_interface} del",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        if result.returncode != 0:
+            SendMeshAdapter.WiRocLogger.error(
+                f"SendMeshAdapter::RemoveMeshInterface() remove {mesh_interface} failed: {result.stderr}")
+            return False
+        return True
+
+    @staticmethod
+    def AddMeshInterface(mesh_interface: str):
+        phy = HardwareAbstraction.Instance.GetMeshInterfacePhy()
+        result = subprocess.run(
+            f"iw phy {phy} interface add {mesh_interface} type managed",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        if result.returncode != 0:
+            SendMeshAdapter.WiRocLogger.error(
+                f"SendMeshAdapter::AddMeshInterface() add {mesh_interface} failed: {result.stderr}")
+            return False
+        return True
+
+    @staticmethod
+    def BringMeshInterfaceUp(mesh_interface: str):
+        result = subprocess.run(
+            f"ip link set {mesh_interface} up",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        if result.returncode != 0:
+            SendMeshAdapter.WiRocLogger.error(
+                f"SendMeshAdapter::BringMeshInterfaceUp() bring {mesh_interface} up failed: {result.stderr}")
+            return False
+        return True
+
+    # sudo ip link set wlxc01c3049cbea up
+    @staticmethod
     def IsStuckInAvoidJoin(interface_name, lookback_seconds=60) -> bool:
         if interface_name is None:
             return False
 
         try:
-            # Calculate timestamp for log filtering
-            since_time = time.strftime('%Y-%m-%d %H:%M:%S',
-                                       time.localtime(time.time() - lookback_seconds))
-
             # Get logs for the interface from journalctl
             cmd = [
                 'journalctl',
                 '-u', 'wpa_supplicant',
-                '--since', since_time,
                 '-o', 'cat',  # Plain output without metadata
-                '-n', '5'  # Last 50 lines
+                '-n', '5'  # Last x lines
             ]
 
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
@@ -192,12 +235,59 @@ class SendMeshAdapter(object):
 
             # Check the most recent log line for this interface
             if interface_logs:
-                last_line = interface_logs[-1]
-                if "Avoiding join because we already joined a mesh group" in last_line:
-                    SendMeshAdapter.WiRocLogger.warning(
-                        f"Found 'Avoiding join' error for {interface_name}: {last_line}"
-                    )
-                    return True
+                for line in interface_logs[-1:-6:-1]:
+                    if "Avoiding join because we already joined a mesh group" in line:
+                        SendMeshAdapter.WiRocLogger.warning(
+                            f"SendMeshAdapter::IsStuckInAvoidJoin() Found 'Avoiding join' error for {interface_name}: {line}"
+                        )
+                        return True
+
+            return False
+
+        except subprocess.TimeoutExpired:
+            SendMeshAdapter.WiRocLogger.error("SendMeshAdapter::IsStuckInAvoidJoin() Timeout checking logs")
+            return False
+        except Exception as e:
+            SendMeshAdapter.WiRocLogger.error(f"SendMeshAdapter::IsStuckInAvoidJoin() Error checking logs: {e}")
+            return False
+
+    @staticmethod
+    def IsStuckFailedJoin(interface_name) -> bool:
+        SendMeshAdapter.WiRocLogger.debug(f"SendMeshAdapter::IsStuckFailedJoin() enter {interface_name}")
+        if interface_name is None:
+            return False
+
+        try:
+            # Calculate timestamp for log filtering
+            # since_time = time.strftime('%Y-%m-%d %H:%M:%S',
+            #                           time.localtime(time.time() - lookback_seconds))
+
+            # Get logs for the interface from journalctl
+            cmd = [
+                'journalctl',
+                '-u', 'wpa_supplicant',
+                '-o', 'cat',  # Plain output without metadata
+                '-n', '5'  # Last x lines
+            ]
+
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+
+            if result.returncode != 0:
+                SendMeshAdapter.WiRocLogger.error(f"Failed to get logs: {result.stderr}")
+                return False
+
+            # Filter logs for this specific interface
+            lines = result.stdout.strip().split('\n')
+            interface_logs = [line for line in lines if interface_name in line]
+
+            # Check the most recent log lines for this interface
+            if interface_logs:
+                for line in interface_logs[-1:-6:-1]:
+                    if "mesh join error=-100" in line:
+                        SendMeshAdapter.WiRocLogger.warning(
+                            f"Found 'mesh join error=-100' error for {interface_name}: {line}"
+                        )
+                        return True
 
             return False
 
@@ -264,12 +354,12 @@ class SendMeshAdapter(object):
                 return False
             SendMeshAdapter.WiRocLogger.error(f"SendMeshAdapter::ReconfigureWpa() Set ENABLE_NETWORK")
 
-            result = self.SendWPACommand(controlPath, f"SET mesh_max_inactivity 300")
+            result = self.SendWPACommand(controlPath, f"SET mesh_max_inactivity 30")
             if result != "OK":
                 SendMeshAdapter.WiRocLogger.error(
-                    f"SendMeshAdapter::ReconfigureWpa() Failed to set mesh_max_Inactivity 300: {result}")
+                    f"SendMeshAdapter::ReconfigureWpa() Failed to set mesh_max_Inactivity 30: {result}")
                 return False
-            SendMeshAdapter.WiRocLogger.error(f"SendMeshAdapter::ReconfigureWpa() set mesh_max_Inactivity 300")
+            SendMeshAdapter.WiRocLogger.error(f"SendMeshAdapter::ReconfigureWpa() set mesh_max_Inactivity 30")
 
             result = self.SendWPACommand(controlPath, f"SET mesh_fwding 1")
             if result != "OK":
@@ -449,21 +539,24 @@ class SendMeshAdapter(object):
         if not self.ShouldBeInitialized():
             return True
 
-        SendMeshAdapter.WiRocLogger.info(f"SendMeshAdapter::Init() GetWifiMeshEnabled {SettingsClass.GetWifiMeshEnabled()}")
-        SendMeshAdapter.WiRocLogger.info(
-            f"SendMeshAdapter::Init() GetWifiMeshNetworkNameNumber {SettingsClass.GetWifiMeshNetworkNameNumber()}")
-        SendMeshAdapter.WiRocLogger.info(
-            f"SendMeshAdapter::Init() GetWifiMeshGatewayEnabled {SettingsClass.GetWifiMeshGatewayEnabled()}")
-        SendMeshAdapter.WiRocLogger.info(
-            f"SendMeshAdapter::Init() GetWifiMeshPassword {SettingsClass.GetWifiMeshPassword()}")
-
         theMeshDevice: str = HardwareAbstraction.Instance.GetMeshInterfaceName()
         self.theMeshDeviceInterfaceName = theMeshDevice
 
         if self.IsStuckInAvoidJoin(theMeshDevice):
+            self.RemoveMeshInterface(theMeshDevice)
+            self.AddMeshInterface(theMeshDevice)
+            self.BringMeshInterfaceUp(theMeshDevice)
             self.RestartWPASupplicant()
             self.wifiMeshEnabled = False
-            return False
+            #return False
+
+        if self.IsStuckFailedJoin(theMeshDevice):
+            self.RemoveMeshInterface(theMeshDevice)
+            self.AddMeshInterface(theMeshDevice)
+            self.BringMeshInterfaceUp(theMeshDevice)
+            self.RestartWPASupplicant()
+            self.wifiMeshEnabled = False
+            #return False
 
         wifiMeshGatewayEnabled = SettingsClass.GetWifiMeshGatewayEnabled()
         if not wifiMeshGatewayEnabled and self.wifiMeshEnabled and not self.HasExpectedIP():
