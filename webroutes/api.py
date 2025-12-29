@@ -1391,7 +1391,7 @@ def GetWifiMeshGatewayEnabled():
     sett = DatabaseHelper.get_setting_by_key('WifiMeshGatewayEnabled')
     wifiMeshGatewayEnabled = '0'
     if sett is not None:
-        wifiMesGatewayEnabled = sett.Value
+        wifiMeshGatewayEnabled = sett.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=wifiMeshGatewayEnabled))
