@@ -558,11 +558,11 @@ class SendMeshAdapter(object):
             self.wifiMeshEnabled = False
             #return False
 
-        wifiMeshGatewayEnabled = SettingsClass.GetWifiMeshGatewayEnabled()
-        if not wifiMeshGatewayEnabled and self.wifiMeshEnabled and not self.HasExpectedIP():
+        if not SettingsClass.GetWifiMeshGatewayEnabled() and self.wifiMeshEnabled and not self.HasExpectedIP():
             self.StartDHCPClient(theMeshDevice)
 
-        if SettingsClass.GetWifiMeshEnabled() != self.wifiMeshEnabled:
+        if (SettingsClass.GetWifiMeshEnabled() != self.wifiMeshEnabled or
+                SettingsClass.GetWifiMeshGatewayEnabled() != self.wifiMeshGatewayEnabled):
             if SettingsClass.GetWifiMeshEnabled():
                 if theMeshDevice is None:
                     SendMeshAdapter.WiRocLogger.error(
@@ -608,7 +608,7 @@ class SendMeshAdapter(object):
                         f"SendMeshAdapter::Init() bringing the wifi mesh device up failed: {result.stderr}")
 
                 internetInterface = HardwareAbstraction.Instance.GetInternetInterfaceName()
-                if wifiMeshGatewayEnabled:
+                if SettingsClass.GetWifiMeshGatewayEnabled():
                     self.wifiMeshIPNetworkNumber = SettingsClass.GetWifiMeshIPNetworkNumber()
                     wifiMeshIPAddress = f"192.168.{self.wifiMeshIPNetworkNumber}.1"
 
@@ -630,11 +630,13 @@ class SendMeshAdapter(object):
                     self.SetupInternetSharing(theMeshDevice, internetInterface)
                     self.StartMeshDHCPServer(theMeshDevice, wifiMeshIPAddress)
                     self.wifiMeshEnabled = True
+                    self.wifiMeshGatewayEnabled = True
                     self.isInitialized = True
                 else:
                     self.TearDownInternetSharing(theMeshDevice, internetInterface)
                     self.StartDHCPClient(theMeshDevice)
                     self.wifiMeshEnabled = True
+                    self.wifiMeshGatewayEnabled = False
                     self.isInitialized = True
             else:
                 internetInterface = HardwareAbstraction.Instance.GetInternetInterfaceName()

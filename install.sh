@@ -145,6 +145,9 @@ echo "Firmware for ath9k"
 echo "###################################"
 apt-get -y install firmware-ath9k-htc
 
+
+apt-get -y install dhcpcd
+
 echo "###################################"
 echo "Relink dbus bindings (for BLE)"
 echo "###################################"
