@@ -416,7 +416,7 @@ paths:
     get:
       tags:
       - "Radio"
-      summary: "Get the device name"
+      summary: "Get the lora mode"
       operationId: "getLoraMode"
       responses:
         "200":
@@ -1553,7 +1553,7 @@ paths:
     get:
       tags:
       - "Network"
-      summary: "Gets the Wifi channel the Wifi Mesh is is using"
+      summary: "Get the Wifi channel the Wifi Mesh is using"
       operationId: "getWifiMeshChannel"
       responses:
         "200":
@@ -1613,6 +1613,70 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WifiMeshNetworkNameNumberObj"
+  /wifimesh/ipnetworknumber/:
+    get:
+      tags:
+      - "Network"
+      summary: "Gets the Wifi Mesh network ip network number"
+      operationId: "getWifiMeshIPNetworkNumber"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WifiMeshIPNetworkNumberObj"
+  /wifimesh/ipnetworknumber/{ipnetworknumber}:
+    get:
+      tags:
+      - "Network"
+      summary: "Set the Wifi Mesh network number"
+      operationId: "setWifiMeshIPNetworkNumber"
+      parameters:
+        - name: ipnetworknumber
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/WifiMeshIPNetworkNumber'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WifiMeshIPNetworkNumberObj"
+  /wifimesh/nodenumber/:
+    get:
+      tags:
+      - "Network"
+      summary: "Gets the Wifi Mesh network name number the Wifi Mesh is using (used in the SSID)"
+      operationId: "getWifiMeshNodeNumber"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WifiMeshNodeNumberObj"
+  /wifimesh/nodenumber/{nodenumber}:
+    get:
+      tags:
+      - "Network"
+      summary: "Set the Wifi Mesh node number (gateway 1, other nodes unique number 2...30)"
+      operationId: "setWifiMeshNodeNumber"
+      parameters:
+        - name: nodenumber
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/WifiMeshNodeNumber'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WifiMeshNodeNumberObj"
   /wifimesh/password/:
     get:
       tags:
@@ -1740,7 +1804,7 @@ components:
           type: "string"
     WifiMeshNetworkNameNumber:
       type: "string"
-      description: "The code rate"
+      description: "the mesh SSID number"
       enum:
         - "0"
         - "1"
@@ -1751,6 +1815,90 @@ components:
       properties:
         Value:
           $ref: '#/components/schemas/WifiMeshNetworkNameNumber'
+        py/object:
+          type: "string"
+    WifiMeshIPNetworkNumber:
+      type: "string"
+      description: "IP Network number"
+      enum:
+        - "0"
+        - "1"
+        - "2"
+        - "3"
+        - "4"
+        - "5"
+        - "6"
+        - "7"
+        - "8"
+        - "9"
+        - "10"
+        - "11"
+        - "12"
+        - "13"
+        - "14"
+        - "15"
+        - "16"
+        - "17"
+        - "18"
+        - "19"
+        - "20"
+        - "21"
+        - "22"
+        - "23"
+        - "24"
+        - "25"
+        - "26"
+        - "27"
+        - "28"
+        - "29"
+        - "30"
+    WifiMeshIPNetworkNumberObj:
+      type: "object"
+      properties:
+        Value:
+          $ref: '#/components/schemas/WifiMeshIPNetworkNumber'
+        py/object:
+          type: "string"
+    WifiMeshNodeNumber:
+      type: "string"
+      description: "Mesh node number"
+      enum:
+        - "0"
+        - "1"
+        - "2"
+        - "3"
+        - "4"
+        - "5"
+        - "6"
+        - "7"
+        - "8"
+        - "9"
+        - "10"
+        - "11"
+        - "12"
+        - "13"
+        - "14"
+        - "15"
+        - "16"
+        - "17"
+        - "18"
+        - "19"
+        - "20"
+        - "21"
+        - "22"
+        - "23"
+        - "24"
+        - "25"
+        - "26"
+        - "27"
+        - "28"
+        - "29"
+        - "30"
+    WifiMeshNodeNumberObj:
+      type: "object"
+      properties:
+        Value:
+          $ref: '#/components/schemas/WifiMeshNodeNumber'
         py/object:
           type: "string"
     LoraRange:

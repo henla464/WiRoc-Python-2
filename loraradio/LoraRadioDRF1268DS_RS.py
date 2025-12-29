@@ -386,12 +386,19 @@ class LoraRadioDRF1268DS_RS:
             f"LoraRange {loraRange} LoraPower: {loraPower} CodeRate: {codeRate} "
             f"RxGain: {rxGain} Enabled: {enabled}")
 
+        self.channel = channel
+        self.loraPower = loraPower
+        self.loraRange = loraRange
+        self.codeRate = codeRate
+        self.rxGain = rxGain
+
         if enabled:
             self.hardwareAbstraction.EnableLora()
             self.enabled = enabled
         else:
             self.hardwareAbstraction.DisableLora()
             self.enabled = enabled
+            self.isInitialized = True
             return True
 
         self.serialLock.acquire()
@@ -399,12 +406,6 @@ class LoraRadioDRF1268DS_RS:
 
             self.hardwareAbstraction.EnableLora()
             time.sleep(0.1)
-
-            self.channel = channel
-            self.loraPower = loraPower
-            self.loraRange = loraRange
-            self.codeRate = codeRate
-            self.rxGain = rxGain
 
             self.radioSerial.baudrate = 9600
             self.radioSerial.port = self.portName

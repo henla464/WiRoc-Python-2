@@ -1442,6 +1442,52 @@ def GetWifiMeshNetworkNameNumber():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=networknamenumber))
 
+@app.route('/api/wifimesh/ipnetworknumber/<ipnetworknumber>/', methods=['GET'])
+def SetWifiMeshIPNetworkNumber(ipnetworknumber):
+    sd = DatabaseHelper.get_setting_by_key('WifiMeshIPNetworkNumber')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'WifiMeshIPNetworkNumber'
+    sd.Value = ipnetworknumber
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/wifimesh/ipnetworknumber/', methods=['GET'])
+def GetWifiMeshIPNetworkNumber():
+    sett = DatabaseHelper.get_setting_by_key('WifiMeshIPNetworkNumber')
+    ipnetworknumber = '25'
+    if sett is not None:
+        ipnetworknumber = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=ipnetworknumber))
+
+@app.route('/api/wifimesh/nodenumber/<nodenumber>/', methods=['GET'])
+def SetWifiMeshNodeNumber(networknumber):
+    sd = DatabaseHelper.get_setting_by_key('WifiMeshNodeNumber')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'WifiMeshNodeNumber'
+    sd.Value = networknumber
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/wifimesh/nodenumber/', methods=['GET'])
+def GetWifiMeshNodeNumber():
+    sett = DatabaseHelper.get_setting_by_key('WifiMeshNodeNumber')
+    nodenumber = '2'
+    if sett is not None:
+        nodenumber = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=nodenumber))
+
 @app.route('/api/wifimesh/password/<password>/', methods=['GET'])
 def SetWifiMeshPassword(password):
     sd = DatabaseHelper.get_setting_by_key('WifiMeshPassword')

@@ -923,11 +923,21 @@ class SettingsClass(object):
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetWifiMeshIPNetworkNumber'), lock=rlock)
     def GetWifiMeshIPNetworkNumber() -> int:
-        # This is used in the ip address 192.168.x.y
+        # This is used in the ip address 192.168.x.y (the x)
         sett = DatabaseHelper.get_setting_by_key('WifiMeshIPNetworkNumber')
         if sett is None:
             SettingsClass.SetSetting("WifiMeshIPNetworkNumber", "25")
             return 25
+        return int(sett.Value)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWifiMeshNodeNumber'), lock=rlock)
+    def GetWifiMeshNodeNumber() -> int:
+        # This is used in the ip address 192.168.x.y (the y)
+        sett = DatabaseHelper.get_setting_by_key('WifiMeshNodeNumber')
+        if sett is None:
+            SettingsClass.SetSetting("WifiMeshNodeNumber", "2")
+            return 2
         return int(sett.Value)
 
     @staticmethod

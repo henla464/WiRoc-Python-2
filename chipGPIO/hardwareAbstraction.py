@@ -262,41 +262,7 @@ class HardwareAbstraction(object):
             return None
 
     def GetMeshInterfaceName(self) -> str | None:
-        mesh_phys = []
-        current_phy = None
-
-        # 1. Get mesh-capable PHYs
-        try:
-            for line in subprocess.check_output(["iw", "list"], text=True).splitlines():
-                line = line.strip()
-                if line.startswith("Wiphy"):
-                    current_phy = line.split()[1]
-                elif line == "* mesh point" and current_phy:
-                    mesh_phys.append(current_phy.replace("phy", ""))
-                    break
-        except Exception as e:
-            HardwareAbstraction.WiRocLogger.error(
-                f"HardwareAbstraction::GetMeshInterfaceName() listing wifi mesh phys failed {e}")
-            return None
-
-        # 2. Map PHYs to interfaces
-        interfaces = []
-        current_phy = None
-
-        try:
-            for line in subprocess.check_output(["iw", "dev"], text=True).splitlines():
-                line = line.strip()
-                if line.startswith("phy#"):
-                    current_phy = line.replace("phy#", "")
-                elif line.startswith("Interface") and current_phy in mesh_phys:
-                    interfaces.append(line.split()[1])
-        except Exception as e:
-            HardwareAbstraction.WiRocLogger.error(
-                f"HardwareAbstraction::GetMeshInterfaceName() listing wifi mesh interfaces failed {e}")
-            return None
-
-        interfacesExcludingInternetInterface = [iface for iface in interfaces if iface != self.GetInternetInterfaceName()]
-        return interfacesExcludingInternetInterface[0] if len(interfacesExcludingInternetInterface) > 0 else None
+        return "mesh0"
 
     def GetWiRocIPAddresses(self):
         ipAddresses = subprocess.check_output(["hostname", "-I"]).decode('ascii')
