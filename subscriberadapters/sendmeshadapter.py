@@ -415,6 +415,21 @@ class SendMeshAdapter(object):
         return True
 
     @staticmethod
+    def AddDNSOnInterface(mesh_interface: str):
+        result = subprocess.run(
+            f"resolvectl dns {mesh_interface} 1.1.1.1 8.8.8.8",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        if result.returncode != 0:
+            SendMeshAdapter.WiRocLogger.error(
+                f"SendMeshAdapter::AddDNSOnInterface() add DNS failed: {result.stderr}")
+            return False
+        return True
+
+    @staticmethod
     def PowerSaveOff(mesh_interface: str):
         result = subprocess.run(
             f"iw dev {mesh_interface} set power_save off",
@@ -430,15 +445,61 @@ class SendMeshAdapter(object):
             return False
         return True
 
+    @staticmethod
+    def GetAllIPAddressesOnInterface(mesh_interface: str):
+        # Get all IPs on the interface
+        result = subprocess.run(
+            f"ip -4 addr show dev {mesh_interface}",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+
+        # Extract current IPv4 addresses
+        current_ips = []
+        for line in result.stdout.splitlines():
+            line = line.strip()
+            if line.startswith("inet "):
+                ip_cidr = line.split()[1]  # e.g., "192.168.50.2/24"
+                ip = ip_cidr.split("/")[0]
+                current_ips.append(ip)
+
+        return current_ips
+
+    @staticmethod
+    def ShouldIPAddressBeRemovedAndAdded(mesh_interface: str, new_ip_address: str):
+        ipAddresses = SendMeshAdapter.GetAllIPAddressesOnInterface(mesh_interface)
+        if len(ipAddresses) > 1:
+            return True
+        else:
+            if new_ip_address in ipAddresses:
+                return False
+            else:
+                return True
+
+    @staticmethod
+    def DeleteDefaultRoute(mesh_interface: str, gateway_ip_address: str) -> None:
+        subprocess.run(
+            f"ip route del default via {gateway_ip_address} dev {mesh_interface}",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        # ignore errors from delete
+
     def Init(self) -> bool:
         if not self.ShouldBeInitialized():
             return True
 
         theMeshDevice: str = HardwareAbstraction.Instance.GetMeshInterfaceName()
+        wifiMeshGatewayIPAddress: str = f"192.168.{SettingsClass.GetWifiMeshIPNetworkNumber()}.1"
 
         if not SettingsClass.GetWifiMeshEnabled():
             internetInterface = HardwareAbstraction.Instance.GetInternetInterfaceName()
             self.TearDownInternetSharing(HardwareAbstraction.Instance.GetMeshInterfaceName(), internetInterface)
+            self.DeleteDefaultRoute(theMeshDevice, wifiMeshGatewayIPAddress)
             self.wifiMeshEnabled = False
             self.isInitialized = True
             return True
@@ -446,6 +507,7 @@ class SendMeshAdapter(object):
         if not self.DoesMeshInterfaceExist(theMeshDevice):
             internetInterface = HardwareAbstraction.Instance.GetInternetInterfaceName()
             self.TearDownInternetSharing(HardwareAbstraction.Instance.GetMeshInterfaceName(), internetInterface)
+            self.DeleteDefaultRoute(theMeshDevice, wifiMeshGatewayIPAddress)
             self.wifiMeshEnabled = False
             self.isInitialized = False
             return False
@@ -464,13 +526,25 @@ class SendMeshAdapter(object):
         wifiMeshIPAddress = None
         self.wifiMeshIPNetworkNumber = SettingsClass.GetWifiMeshIPNetworkNumber()
         self.wifiMeshNodeNumber = SettingsClass.GetWifiMeshNodeNumber()
-        wifiMeshGatewayIPAddress = f"192.168.{self.wifiMeshIPNetworkNumber}.1"
         if SettingsClass.GetWifiMeshGatewayEnabled():
             wifiMeshIPAddress = wifiMeshGatewayIPAddress
         else:
             wifiMeshIPAddress = f"192.168.{self.wifiMeshIPNetworkNumber}.{self.wifiMeshNodeNumber}"
 
         # Set fixed IP address
+        if self.ShouldIPAddressBeRemovedAndAdded(theMeshDevice, wifiMeshIPAddress):
+            result = subprocess.run(
+                f"ip addr flush dev {theMeshDevice}",
+                shell=True,
+                capture_output=True,
+                text=True,
+                check=False
+            )
+            if result.returncode != 0:
+                SendMeshAdapter.WiRocLogger.error(
+                    f"SendMeshAdapter::Init() flushing mesh IP address failed: {result.stderr}")
+                return False
+
         result = subprocess.run(
             f"ip addr replace {wifiMeshIPAddress}/24 dev {theMeshDevice}",
             shell=True,
@@ -485,14 +559,7 @@ class SendMeshAdapter(object):
             return False
 
         if not SettingsClass.GetWifiMeshGatewayEnabled():
-            result = subprocess.run(
-                f"ip route del default via {wifiMeshGatewayIPAddress} dev {theMeshDevice}",
-                shell=True,
-                capture_output=True,
-                text=True,
-                check=False
-            )
-            # ignore errors from delete
+            self.DeleteDefaultRoute(theMeshDevice, wifiMeshGatewayIPAddress)
 
             result = subprocess.run(
                 f"ip route add default via {wifiMeshGatewayIPAddress} dev {theMeshDevice}",
@@ -504,6 +571,10 @@ class SendMeshAdapter(object):
             if result.returncode != 0:
                 SendMeshAdapter.WiRocLogger.error(
                     f"SendMeshAdapter::Init() adding default route failed: {result.stderr}")
+                self.isInitialized = False
+                return False
+
+            if not self.AddDNSOnInterface(theMeshDevice):
                 self.isInitialized = False
                 return False
 
