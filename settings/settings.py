@@ -939,12 +939,3 @@ class SettingsClass(object):
             SettingsClass.SetSetting("WifiMeshNodeNumber", "2")
             return 2
         return int(sett.Value)
-
-    @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetWifiMeshPassword'), lock=rlock)
-    def GetWifiMeshPassword() -> str:
-        sett = DatabaseHelper.get_setting_by_key('WifiMeshPassword')
-        if sett is None:
-            SettingsClass.SetSetting("WifiMeshPassword", "MeshWiRocMesh")
-            return "MeshWiRocMesh"
-        return sett.Value

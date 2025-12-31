@@ -25,33 +25,13 @@ class BackgroundTasks(object):
         self.webServerUpQueueCommands = Queue()
         self.messageStatQueueCommands = Queue()
         self.doInfrequentDatabaseTasksQueueCommands = Queue()
-        #self.infrequentHTTPTaskWebServerUpQueue = Queue()
-        #self.infrequentHTTPTaskBatteryIsLowQueue = Queue()
-        #self.infrequentHTTPTaskBatteryIsLowReceivedQueue = Queue()
         self.doInfrequentHTTPTasksQueueCommands = Queue()
-        #self.exitHTTPQueue = Queue()
 
         self.messageStatProcess: Process | None = None
         self.updateWebServerUpProcess: Process | None = None
 
         self.doInfrequentHTTPTasksBackgroundProcess: Process | None = None
         self.doInfrequentDatabaseTasksBackgroundProcess: Process | None = None
-
-    #def processInfrequentHTTPTaskQueues(self):
-    #    try:
-    #        while not self.infrequentHTTPTaskWebServerUpQueue.empty():
-    #            webServerUp = self.infrequentHTTPTaskWebServerUpQueue.get(False)
-    #            SettingsClass.SetWebServerUp(webServerUp)
-
-    #        while not self.infrequentHTTPTaskBatteryIsLowQueue.empty():
-    #            self.lastBatteryIsLow = self.infrequentHTTPTaskBatteryIsLowQueue.get(False)
-
-    #        while not self.infrequentHTTPTaskBatteryIsLowReceivedQueue.empty():
-    #            self.lastBatteryIsLowReceived = self.infrequentHTTPTaskBatteryIsLowReceivedQueue.get(False)
-
-    #        self.exitHTTPQueue.put("Exit!")
-    #    except Exception as ex:
-    #        BackgroundTasks.WiRocLogger.error(f"BackgroundTasks::processInfrequentHTTPTaskQueues() exception: {ex}")
 
     def SendDataToInfrequentHTTPTaskProcess(self):
         batteryIsLow = Battery.GetIsBatteryLow()
@@ -107,10 +87,10 @@ class BackgroundTasks(object):
                     daemon=True)
                 self.doInfrequentHTTPTasksBackgroundProcess.start()
             try:
-                self.doInfrequentDatabaseTasksQueueCommands.put("START", False)
+                self.doInfrequentHTTPTasksQueueCommands.put("START", False)
             except Full as fex:
                 BackgroundTasks.WiRocLogger.error(
-                    f"BackgroundTasks::StartInfrequentHTTPTasks() doInfrequentDatabaseTasksQueueCommands FULL Exception: {fex}")
+                    f"BackgroundTasks::StartInfrequentHTTPTasks() doInfrequentHTTPTasksQueueCommands FULL Exception: {fex}")
         except Exception as ex:
             tb = traceback.format_exc()
             BackgroundTasks.WiRocLogger.error(f"BackgroundTasks::StartInfrequentHTTPTasks() Exception: {ex} StackTrace: {tb}")

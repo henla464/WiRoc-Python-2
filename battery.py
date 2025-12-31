@@ -32,6 +32,8 @@ class Battery(object):
 
     @classmethod
     def Setup(cls):
+        if HardwareAbstraction.Instance is None:
+            HardwareAbstraction.Instance = HardwareAbstraction()
         cls.i2cBus = SMBus(0)  # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
 
     @classmethod

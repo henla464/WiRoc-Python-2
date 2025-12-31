@@ -1203,6 +1203,8 @@ def getListWifi():
 def connectWifi(wifiName, wifiPassword):
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
     wlanIFace = HardwareAbstraction.Instance.GetInternetInterfaceName()
 
     result = subprocess.run(['nmcli', 'device', 'wifi', 'connect', wifiName, 'password', wifiPassword, 'ifname', wlanIFace], stdout=subprocess.PIPE)
@@ -1217,6 +1219,8 @@ def connectWifi(wifiName, wifiPassword):
 def disconnectWifi():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
     wlanIFace = HardwareAbstraction.Instance.GetInternetInterfaceName()
 
     result = subprocess.run(['nmcli', 'device', 'disconnect', wlanIFace], stdout=subprocess.PIPE)
@@ -1487,29 +1491,6 @@ def GetWifiMeshNodeNumber():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=nodenumber))
-
-@app.route('/api/wifimesh/password/<password>/', methods=['GET'])
-def SetWifiMeshPassword(password):
-    sd = DatabaseHelper.get_setting_by_key('WifiMeshPassword')
-    if sd is None:
-        sd = SettingData()
-        sd.Key = 'WifiMeshPassword'
-    sd.Value = password
-    sd = DatabaseHelper.save_setting(sd)
-    SettingsClass.SetSettingUpdatedByWebService()
-    jsonpickle.set_preferred_backend('json')
-    jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=sd.Value))
-
-@app.route('/api/wifimesh/password/', methods=['GET'])
-def GetWifiMeshPassword():
-    sett = DatabaseHelper.get_setting_by_key('WifiMeshPassword')
-    password = 'MeshWiRocMesh'
-    if sett is not None:
-        password = sett.Value
-    jsonpickle.set_preferred_backend('json')
-    jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=password))
 
 @app.route('/api/uploadlogarchive/', methods=['GET'])
 def uploadLogArchive():

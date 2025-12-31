@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import socket
 from typing import Any
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from settings.settings import SettingsClass
 import logging
 import subprocess
-import tempfile
-import os
 
 
 # Virtual adapter that creates and configures a mesh network if a
@@ -18,6 +15,8 @@ class SendMeshAdapter(object):
 
     @staticmethod
     def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
+        if HardwareAbstraction.Instance is None:
+            HardwareAbstraction.Instance = HardwareAbstraction()
         # because we want to also tear down when we disable mesh, we always create an instance
         if len(SendMeshAdapter.Instances) == 0:
             SendMeshAdapter.Instances.append(SendMeshAdapter('mesh1'))
@@ -48,17 +47,11 @@ class SendMeshAdapter(object):
         self.isInitialized: bool = False
         self.isDBInitialized: bool = False
 
-        self.wpaSupplicantConfigurationFilePath = None
-        self.wpaSupplicantLogFilePath = None
-        self.wpaSupplicantPID = None
         self.wifiMeshEnabled = False
         self.wifiMeshNetworkNameNumber = None
         self.wifiMeshIPNetworkNumber = None
         self.wifiMeshNodeNumber = None
         self.wifiMeshGatewayEnabled = None
-        self.wifiMeshPassword = None
-        self.dnsmasqConfPath = None
-        self.dnsmasqPID = None
 
     def GetInstanceName(self) -> str:
         return self.instanceName
@@ -148,6 +141,22 @@ class SendMeshAdapter(object):
         return False
 
     @staticmethod
+    def SetupIPForwarding():
+        # Enable IP forwarding
+        result = subprocess.run(
+            f"sysctl -w net.ipv4.ip_forward=1",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        if result.returncode != 0:
+            SendMeshAdapter.WiRocLogger.error(
+                f"SendMeshAdapter::SetupIPForwarding() setup ip forwarding failed: {result.stderr}")
+            return False
+        return True
+
+    @staticmethod
     def SetupInternetSharing(mesh_interface: str, internet_interface: str):
         """Set up internet sharing via NAT"""
         try:
@@ -168,7 +177,7 @@ class SendMeshAdapter(object):
                 f"SendMeshAdapter::SetupInternetSharing() Setting up internet sharing from {internet_interface} to {mesh_interface}...")
 
             # Enable IP forwarding
-            subprocess.run(['sysctl', '-w', 'net.ipv4.ip_forward=1'], check=True)
+            SendMeshAdapter.SetupIPForwarding()
 
             # Configure iptables rules
             # Check if rules already exist
@@ -242,9 +251,6 @@ class SendMeshAdapter(object):
                 SendMeshAdapter.WiRocLogger.debug(
                     f"SendMeshAdapter::TearDownInternetSharing() NAT rule may not exist: {e}")
 
-            # Optionally disable IP forwarding (careful with this - might affect other services)
-            subprocess.run(['sysctl', '-w', 'net.ipv4.ip_forward=0'], capture_output=True, check=False)
-
             SendMeshAdapter.WiRocLogger.info(
                 "SendMeshAdapter::TearDownInternetSharing() Internet sharing torn down successfully")
             return True
@@ -253,65 +259,6 @@ class SendMeshAdapter(object):
             SendMeshAdapter.WiRocLogger.error(
                 f"SendMeshAdapter::TearDownInternetSharing() Error tearing down internet sharing: {e}")
             return False
-
-    def StartMeshDHCPServer(self, mesh_interface: str, gateway_ip: str):
-        try:
-            conf = f"""
-                    interface={mesh_interface}
-                    bind-interfaces
-                    dhcp-range=192.168.25.50,192.168.25.200,255.255.255.0,24h
-                    dhcp-option=3,{gateway_ip}
-                    dhcp-option=6,8.8.8.8,1.1.1.1
-                    log-dhcp
-                    """
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.conf', delete=False) as f:
-                f.write(conf)
-                self.dnsmasqConfPath = f.name
-
-            cmd = [
-                'dnsmasq',
-                '--conf-file=' + self.dnsmasqConfPath,
-                '--no-daemon'
-            ]
-
-            proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            self.dnsmasqPID = proc.pid
-
-            SendMeshAdapter.WiRocLogger.info(
-                f"SendMeshAdapter::StartMeshDHCPServer() Mesh DHCP server started (PID {self.dnsmasqPID})"
-            )
-            return True
-
-        except Exception as e:
-            SendMeshAdapter.WiRocLogger.error(
-                f"SendMeshAdapter::StartMeshDHCPServer() Failed to start mesh DHCP server: {e}")
-            return False
-
-    def StopMeshDHCPServer(self):
-        if self.dnsmasqPID:
-            subprocess.run(['kill', str(self.dnsmasqPID)], check=False)
-            self.dnsmasqPID = None
-
-        if self.dnsmasqConfPath and os.path.exists(self.dnsmasqConfPath):
-            os.remove(self.dnsmasqConfPath)
-
-    def StartDHCPClient(self, mesh_interface: str):
-        result = subprocess.run(
-            f"dhcpcd {mesh_interface}",
-            shell=True,
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        if result.returncode != 0:
-            SendMeshAdapter.WiRocLogger.error(
-                f"SendMeshAdapter::StartDHCPClient() starting dhcpcd on interface {mesh_interface} failed: {result.stderr}")
-            self.isInitialized = False
-            return False
-        SendMeshAdapter.WiRocLogger.info(
-            f"SendMeshAdapter::StartDHCPClient() started dhcpcd on interface {mesh_interface}")
-
-        return True
 
     @staticmethod
     def DoesMeshInterfaceExist(mesh_interface: str) -> bool:
@@ -592,6 +539,8 @@ class SendMeshAdapter(object):
                 self.isInitialized = True
                 return True
             else:
+                # Enable IP forwarding
+                self.SetupIPForwarding()
                 self.TearDownInternetSharing(theMeshDevice, internetInterface)
                 self.wifiMeshEnabled = True
                 self.wifiMeshGatewayEnabled = False
@@ -617,245 +566,3 @@ class SendMeshAdapter(object):
     def SendData(self, messageData: tuple[bytearray], successCB, failureCB, notSentCB,
                  settingsDictionary: dict[str, Any]) -> bool:
         return False
-
-    # older mwthods when using encryption and wpa_supplicant
-    # could not get it to work reliably...
-    @staticmethod
-    def SendWPACommand(controlPath: str, cmd: str):
-        client = None
-        try:
-            # Generate a unique temp path (file must NOT exist)
-            with tempfile.TemporaryDirectory() as tmpdir:
-                temp_path = os.path.join(tmpdir, "wpa_ctrl_socket")
-
-                # Create datagram UNIX socket
-                client = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-                client.bind(temp_path)  # bind to temporary local socket
-                client.connect(controlPath)
-
-                # Send null-terminated command
-                client.send(cmd.encode() + b'\0')
-
-                # Receive response
-                resp = client.recv(4096)
-                return resp.decode().strip()
-        finally:
-            if client:
-                client.close()
-
-    def RestartWPASupplicant(self):
-        # sudo systemctl restart wpa_supplicant
-        result = subprocess.run(
-            f"systemctl restart wpa_supplicant",
-            shell=True,
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        if result.returncode != 0:
-            SendMeshAdapter.WiRocLogger.error(
-                f"SendMeshAdapter::RestartWPASupplicant() restarting wpa_supplicant service failed: {result.stderr}")
-            self.isInitialized = False
-            return False
-        return True
-
-    @staticmethod
-    def RemoveMeshInterface(mesh_interface: str):
-        result = subprocess.run(
-            f"iw dev {mesh_interface} del",
-            shell=True,
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        if result.returncode != 0:
-            SendMeshAdapter.WiRocLogger.error(
-                f"SendMeshAdapter::RemoveMeshInterface() remove {mesh_interface} failed: {result.stderr}")
-            return False
-        return True
-
-    @staticmethod
-    def AddMeshInterface(mesh_interface: str):
-        phy = HardwareAbstraction.Instance.GetMeshInterfacePhy()
-        result = subprocess.run(
-            f"iw phy {phy} interface add {mesh_interface} type managed",
-            shell=True,
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        if result.returncode != 0:
-            SendMeshAdapter.WiRocLogger.error(
-                f"SendMeshAdapter::AddMeshInterface() add {mesh_interface} failed: {result.stderr}")
-            return False
-        return True
-
-    # sudo ip link set wlxc01c3049cbea up
-    @staticmethod
-    def IsStuckInAvoidJoin(interface_name, lookback_seconds=60) -> bool:
-        if interface_name is None:
-            return False
-
-        try:
-            # Get logs for the interface from journalctl
-            cmd = [
-                'journalctl',
-                '-u', 'wpa_supplicant',
-                '-o', 'cat',  # Plain output without metadata
-                '-n', '5'  # Last x lines
-            ]
-
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
-
-            if result.returncode != 0:
-                SendMeshAdapter.WiRocLogger.error(f"Failed to get logs: {result.stderr}")
-                return False
-
-            # Filter logs for this specific interface
-            lines = result.stdout.strip().split('\n')
-            interface_logs = [line for line in lines if interface_name in line]
-
-            # Check the most recent log line for this interface
-            if interface_logs:
-                for line in interface_logs[-1:-6:-1]:
-                    if "Avoiding join because we already joined a mesh group" in line:
-                        SendMeshAdapter.WiRocLogger.warning(
-                            f"SendMeshAdapter::IsStuckInAvoidJoin() Found 'Avoiding join' error for {interface_name}: {line}"
-                        )
-                        return True
-
-            return False
-
-        except subprocess.TimeoutExpired:
-            SendMeshAdapter.WiRocLogger.error("SendMeshAdapter::IsStuckInAvoidJoin() Timeout checking logs")
-            return False
-        except Exception as e:
-            SendMeshAdapter.WiRocLogger.error(f"SendMeshAdapter::IsStuckInAvoidJoin() Error checking logs: {e}")
-            return False
-
-    @staticmethod
-    def IsStuckFailedJoin(interface_name) -> bool:
-        SendMeshAdapter.WiRocLogger.debug(f"SendMeshAdapter::IsStuckFailedJoin() enter {interface_name}")
-        if interface_name is None:
-            return False
-
-        try:
-            # Calculate timestamp for log filtering
-            # since_time = time.strftime('%Y-%m-%d %H:%M:%S',
-            #                           time.localtime(time.time() - lookback_seconds))
-
-            # Get logs for the interface from journalctl
-            cmd = [
-                'journalctl',
-                '-u', 'wpa_supplicant',
-                '-o', 'cat',  # Plain output without metadata
-                '-n', '5'  # Last x lines
-            ]
-
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
-
-            if result.returncode != 0:
-                SendMeshAdapter.WiRocLogger.error(f"Failed to get logs: {result.stderr}")
-                return False
-
-            # Filter logs for this specific interface
-            lines = result.stdout.strip().split('\n')
-            interface_logs = [line for line in lines if interface_name in line]
-
-            # Check the most recent log lines for this interface
-            if interface_logs:
-                for line in interface_logs[-1:-6:-1]:
-                    if "mesh join error=-100" in line:
-                        SendMeshAdapter.WiRocLogger.warning(
-                            f"Found 'mesh join error=-100' error for {interface_name}: {line}"
-                        )
-                        return True
-
-            return False
-
-        except subprocess.TimeoutExpired:
-            SendMeshAdapter.WiRocLogger.error("Timeout checking logs")
-            return False
-        except Exception as e:
-            SendMeshAdapter.WiRocLogger.error(f"Error checking logs: {e}")
-            return False
-
-    def ReconfigureWpa(self, theMeshDeviceInterfaceName, mesh_ssid, password, frequency) -> bool:
-        try:
-            controlPath = f"/run/wpa_supplicant/{theMeshDeviceInterfaceName}"
-
-            # Example: check status
-            response = self.SendWPACommand(controlPath, "STATUS")
-            SendMeshAdapter.WiRocLogger.info(f"SendMeshAdapter::ReconfigureWpa() STATUS: {response}")
-
-            # Example: remove all networks (reconfigure)
-            result = self.SendWPACommand(controlPath, "REMOVE_NETWORK all")
-            if result != "OK":
-                SendMeshAdapter.WiRocLogger.error(
-                    f"SendMeshAdapter::ReconfigureWpa() Failed to REMOVE_NETWORK all: {result}")
-                return False
-
-            # Example: add a mesh network
-            network_id = self.SendWPACommand(controlPath, "ADD_NETWORK")
-
-            # Configure mesh network
-            result = self.SendWPACommand(controlPath, f"SET_NETWORK {network_id} mode 5")
-            if result != "OK":
-                SendMeshAdapter.WiRocLogger.error(
-                    f"SendMeshAdapter::ReconfigureWpa() Failed to set mode 5: {result}")
-                return False
-            SendMeshAdapter.WiRocLogger.info(f"SendMeshAdapter::ReconfigureWpa() Set mode 5")
-            result = self.SendWPACommand(controlPath, f'SET_NETWORK {network_id} ssid "{mesh_ssid}"')
-            if result != "OK":
-                SendMeshAdapter.WiRocLogger.error(
-                    f"SendMeshAdapter::ReconfigureWpa() Failed to set ssid {mesh_ssid}: {result}")
-                return False
-            SendMeshAdapter.WiRocLogger.info(f"SendMeshAdapter::ReconfigureWpa() Set ssid {mesh_ssid}")
-            result = self.SendWPACommand(controlPath, f"SET_NETWORK {network_id} frequency {frequency}")
-            if result != "OK":
-                SendMeshAdapter.WiRocLogger.error(
-                    f"SendMeshAdapter::ReconfigureWpa() Failed to set frequency {frequency} {result}")
-                return False
-            SendMeshAdapter.WiRocLogger.info(f"SendMeshAdapter::ReconfigureWpa() set frequency {frequency}")
-
-            result = self.SendWPACommand(controlPath, f"SET_NETWORK {network_id} key_mgmt SAE")
-            if result != "OK":
-                SendMeshAdapter.WiRocLogger.error(
-                    f"SendMeshAdapter::ReconfigureWpa() Failed to set key_mgmt SAE: {result}")
-                return False
-            SendMeshAdapter.WiRocLogger.info(f"SendMeshAdapter::ReconfigureWpa() Set key_mgmt SAE")
-            result = self.SendWPACommand(controlPath, f'SET_NETWORK {network_id} psk "{password}"')
-            if result != "OK":
-                SendMeshAdapter.WiRocLogger.error(
-                    f"SendMeshAdapter::ReconfigureWpa() Failed to set password: {result}")
-                return False
-            SendMeshAdapter.WiRocLogger.error(f"SendMeshAdapter::ReconfigureWpa() Set password: {password}")
-            result = self.SendWPACommand(controlPath, f"ENABLE_NETWORK {network_id}")
-            if result != "OK":
-                SendMeshAdapter.WiRocLogger.error(
-                    f"SendMeshAdapter::ReconfigureWpa() Failed to ENABLE_NETWORK: {result}")
-                return False
-            SendMeshAdapter.WiRocLogger.error(f"SendMeshAdapter::ReconfigureWpa() Set ENABLE_NETWORK")
-
-            result = self.SendWPACommand(controlPath, f"SET mesh_max_inactivity 30")
-            if result != "OK":
-                SendMeshAdapter.WiRocLogger.error(
-                    f"SendMeshAdapter::ReconfigureWpa() Failed to set mesh_max_Inactivity 30: {result}")
-                return False
-            SendMeshAdapter.WiRocLogger.error(f"SendMeshAdapter::ReconfigureWpa() set mesh_max_Inactivity 30")
-
-            result = self.SendWPACommand(controlPath, f"SET mesh_fwding 1")
-            if result != "OK":
-                SendMeshAdapter.WiRocLogger.error(
-                    f"SendMeshAdapter::ReconfigureWpa() Failed to set SET mesh_fwding 1: {result}")
-                return False
-            SendMeshAdapter.WiRocLogger.error(f"SendMeshAdapter::ReconfigureWpa() set SET mesh_fwding 1")
-
-            response = self.SendWPACommand(controlPath, "STATUS")
-            SendMeshAdapter.WiRocLogger.info(f"SendMeshAdapter::ReconfigureWpa() STATUS: {response}")
-
-            return True
-        except Exception as e:
-            SendMeshAdapter.WiRocLogger.error(
-                f"SendMeshAdapter::ReconfigureWpa() reconfiguring wpa supplicant: {e}")
-            return False

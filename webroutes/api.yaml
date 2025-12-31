@@ -1677,38 +1677,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WifiMeshNodeNumberObj"
-  /wifimesh/password/:
-    get:
-      tags:
-      - "Network"
-      summary: "Gets the Wifi Mesh password"
-      operationId: "getWifiMeshPassword"
-      responses:
-        "200":
-          description: "successful operation"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PropertyObj"
-  /wifimesh/password/{password}:
-    get:
-      tags:
-      - "Network"
-      summary: "Set the Wifi Mesh password"
-      operationId: "setWifiMeshPassword"
-      parameters:
-        - name: password
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Property'
-      responses:
-        "200":
-          description: "successful operation"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PropertyObj"
   /uploadlogarchive/:
     get:
       tags:
