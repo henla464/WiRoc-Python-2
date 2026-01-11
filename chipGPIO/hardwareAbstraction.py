@@ -72,7 +72,7 @@ class HardwareAbstraction(object):
                 self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
                 self.line_request.set_value(self.LORAM0Line, Value.INACTIVE)
 
-            elif self.wirocHWVersionNumber >= 6:
+            elif self.wirocHWVersionNumber >= 6 and self.wirocHWRevisionNumber <= 7:
                 self.SRRirqLine = 6
                 self.LORAM0Line = 17
                 self.LORAauxLine = 64
@@ -88,7 +88,22 @@ class HardwareAbstraction(object):
                 self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
                 self.line_request.set_value(self.LORAM0Line, Value.ACTIVE)
                 self.line_request.set_value(self.SRRnrstLine, Value.ACTIVE)
-
+            elif self.wirocHWVersionNumber >= 8:
+                self.SRRirqLine = 6
+                self.LORAM0Line = 17
+                self.LORAauxLine = 64
+                self.SRRnrstLine = 201
+                self.line_request = gpiod.request_lines(chipPath, consumer="wirocpython", config={
+                    self.LORAenableLine: gpiod.LineSettings(direction=Direction.OUTPUT),  # lora enable pin (corresponds to pin 13)
+                    self.PMUIRQLine: gpiod.LineSettings(direction=Direction.INPUT),  # IRQ pin GPIOA3 Pin 15
+                    self.SRRirqLine : gpiod.LineSettings(direction=Direction.INPUT),  # SRR_IRQ input interrupt message available (corresponds to pin 12 GPIOA6)
+                    self.LORAM0Line: gpiod.LineSettings(direction=Direction.OUTPUT),      # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
+                    self.LORAauxLine: gpiod.LineSettings(direction=Direction.INPUT),       # lora aux pin (corresponds to pin 19)
+                    self.SRRnrstLine: gpiod.LineSettings(direction=Direction.OUTPUT)  # SRR_NRST reset SRR (GPIOG9)
+                })
+                self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
+                self.line_request.set_value(self.LORAM0Line, Value.ACTIVE)
+                self.line_request.set_value(self.SRRnrstLine, Value.ACTIVE)
             else:
                 self.LORAauxLine = 0
                 self.StatusLedLine = 6
@@ -263,6 +278,42 @@ class HardwareAbstraction(object):
 
     def GetMeshInterfaceName(self) -> str | None:
         return "mesh0"
+
+    def GetAllIPAddressesOnInterface(self, interface: str):
+        # Get all IPs on the interface
+        result = subprocess.run(
+            f"ip -4 addr show dev {interface}",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+
+        # Extract current IPv4 addresses
+        current_ips = []
+        for line in result.stdout.splitlines():
+            line = line.strip()
+            if line.startswith("inet "):
+                ip_cidr = line.split()[1]  # e.g., "192.168.50.2/24"
+                ip = ip_cidr.split("/")[0]
+                current_ips.append(ip)
+
+        return current_ips
+
+    def DoesInterfaceExist(self, interface:str) -> bool:
+        result = subprocess.run(
+            f"ip link show dev {interface}",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        meshInterfaceCreated = '1'
+        if result.returncode != 0:
+            HardwareAbstraction.WiRocLogger.error(
+                f"HardwareAbstraction::DoesInterfaceExist({interface}): {result.stderr}")
+            return False
+        return True
 
     def GetWiRocIPAddresses(self):
         ipAddresses = subprocess.check_output(["hostname", "-I"]).decode('ascii')

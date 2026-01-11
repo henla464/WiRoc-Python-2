@@ -89,7 +89,7 @@ class SendMeshAdapter(object):
              SettingsClass.GetWifiMeshGatewayEnabled() == self.wifiMeshGatewayEnabled and
              SettingsClass.GetWifiMeshIPNetworkNumber() == self.wifiMeshIPNetworkNumber and
              SettingsClass.GetWifiMeshNodeNumber() == self.wifiMeshNodeNumber and
-             self.DoesMeshInterfaceExist(HardwareAbstraction.Instance.GetMeshInterfaceName()) and
+             HardwareAbstraction.Instance.DoesInterfaceExist(HardwareAbstraction.Instance.GetMeshInterfaceName()) and
              self.IsMeshPoint(HardwareAbstraction.Instance.GetMeshInterfaceName()))
                 or
                 (SettingsClass.GetWifiMeshEnabled() is False and
@@ -261,22 +261,6 @@ class SendMeshAdapter(object):
             return False
 
     @staticmethod
-    def DoesMeshInterfaceExist(mesh_interface: str) -> bool:
-        #ip link show dev mesh0
-        result = subprocess.run(
-            f"ip link show dev {mesh_interface}",
-            shell=True,
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        if result.returncode != 0:
-            SendMeshAdapter.WiRocLogger.error(
-                f"SendMeshAdapter::DoesMeshInterfaceExist() mesh0 doesn't exist: {result.stderr}")
-            return False
-        return True
-
-    @staticmethod
     def IsMeshPoint(mesh_interface: str) -> bool:
         result = subprocess.run(
             f"iw dev {mesh_interface} info",
@@ -393,30 +377,8 @@ class SendMeshAdapter(object):
         return True
 
     @staticmethod
-    def GetAllIPAddressesOnInterface(mesh_interface: str):
-        # Get all IPs on the interface
-        result = subprocess.run(
-            f"ip -4 addr show dev {mesh_interface}",
-            shell=True,
-            capture_output=True,
-            text=True,
-            check=True
-        )
-
-        # Extract current IPv4 addresses
-        current_ips = []
-        for line in result.stdout.splitlines():
-            line = line.strip()
-            if line.startswith("inet "):
-                ip_cidr = line.split()[1]  # e.g., "192.168.50.2/24"
-                ip = ip_cidr.split("/")[0]
-                current_ips.append(ip)
-
-        return current_ips
-
-    @staticmethod
     def ShouldIPAddressBeRemovedAndAdded(mesh_interface: str, new_ip_address: str):
-        ipAddresses = SendMeshAdapter.GetAllIPAddressesOnInterface(mesh_interface)
+        ipAddresses = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(mesh_interface)
         if len(ipAddresses) > 1:
             return True
         else:
@@ -451,7 +413,7 @@ class SendMeshAdapter(object):
             self.isInitialized = True
             return True
 
-        if not self.DoesMeshInterfaceExist(theMeshDevice):
+        if not HardwareAbstraction.Instance.DoesInterfaceExist(theMeshDevice):
             internetInterface = HardwareAbstraction.Instance.GetInternetInterfaceName()
             self.TearDownInternetSharing(HardwareAbstraction.Instance.GetMeshInterfaceName(), internetInterface)
             self.DeleteDefaultRoute(theMeshDevice, wifiMeshGatewayIPAddress)

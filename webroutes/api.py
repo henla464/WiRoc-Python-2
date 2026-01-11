@@ -1,6 +1,7 @@
 __author__ = 'henla464'
 
 from datamodel.db_helper import DatabaseHelper
+from installWiRocPython import hardwareVersion
 from settings.settings import SettingsClass
 from datamodel.datamodel import SettingData, BluetoothSerialPortData, TestPunchView
 from battery import Battery
@@ -1492,6 +1493,91 @@ def GetWifiMeshNodeNumber():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=nodenumber))
 
+@app.route('/api/wifimesh/interfacecreated/', methods=['GET'])
+def GetWifiMeshInterfaceCreated():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+
+    meshInterface = HardwareAbstraction.Instance.GetMeshInterfaceName()
+    meshInterfaceExists = HardwareAbstraction.Instance.DoesInterfaceExist(meshInterface)
+    meshInterfaceCreated = '1' if meshInterfaceExists else '0'
+
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=meshInterfaceCreated))
+
+@app.route('/api/wifimesh/ipaddress/', methods=['GET'])
+def GetWifiMeshIPAddress():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+
+    meshInterface = HardwareAbstraction.Instance.GetMeshInterfaceName()
+    ips = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(meshInterface)
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=ips))
+
+@dataclass
+class MeshPath:
+    dest_addr: str
+    next_hop: str
+    iface: str
+    sn: int
+    metric: int
+    qlen: int
+    exptime: int
+    dtim: int
+    dret: int
+    flags: int
+    hop_count: int
+    path_change: int
+
+@app.route('/api/wifimesh/mpath/', methods=['GET'])
+def GetWifiMeshMPath():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    interface = HardwareAbstraction.Instance.GetMeshInterfaceName()
+    cmd = ["iw", "dev", interface, "mpath", "dump"]
+
+    result = subprocess.run(
+        cmd,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    lines = result.stdout.strip().splitlines()
+    paths: List[MeshPath] = []
+
+    # skip header row
+    for line in lines[1:]:
+        # Split on any whitespace
+        parts = line.split()
+        if len(parts) < 12:
+            # Unexpected format; skip safely
+            continue
+
+        paths.append(
+            MeshPath(
+                dest_addr=parts[0],
+                next_hop=parts[1],
+                iface=parts[2],
+                sn=int(parts[3]),
+                metric=int(parts[4]),
+                qlen=int(parts[5]),
+                exptime=int(parts[6]),
+                dtim=int(parts[7]),
+                dret=int(parts[8]),
+                flags=int(parts[9], 16),  # hex value like 0x14
+                hop_count=int(parts[10]),
+                path_change=int(parts[11]),
+            )
+        )
+
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=paths))
+
 @app.route('/api/uploadlogarchive/', methods=['GET'])
 def uploadLogArchive():
     btAddress = getBTAddress()
@@ -1507,7 +1593,6 @@ def uploadLogArchive():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value='OK'))
-
 
 @app.route('/api/upgradewirocble/<version>/', methods=['GET'])
 def upgradeWiRocBLE(version):
