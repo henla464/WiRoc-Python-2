@@ -1471,12 +1471,12 @@ def GetWifiMeshIPNetworkNumber():
     return jsonpickle.encode(MicroMock(Value=ipnetworknumber))
 
 @app.route('/api/wifimesh/nodenumber/<nodenumber>/', methods=['GET'])
-def SetWifiMeshNodeNumber(networknumber):
+def SetWifiMeshNodeNumber(nodenumber):
     sd = DatabaseHelper.get_setting_by_key('WifiMeshNodeNumber')
     if sd is None:
         sd = SettingData()
         sd.Key = 'WifiMeshNodeNumber'
-    sd.Value = networknumber
+    sd.Value = nodenumber
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
     jsonpickle.set_preferred_backend('json')
