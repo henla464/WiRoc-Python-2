@@ -413,6 +413,7 @@ class LoraRadioDRF1268DS_RS:
                 self.radioSerial.open()
             if not self.radioSerial.is_open:
                 LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() Serial port not open")
+                self.SetErrorCode(ErrorCodeData.ERR_LORA_MODULE_COM, "Lora mod. comm")
                 return False
 
             newSettingsWritten = False
