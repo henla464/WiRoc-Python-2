@@ -202,6 +202,15 @@ class SendMeshAdapter(object):
                             '-i', internet_interface, '-o', mesh_interface,
                             '-m', 'state', '--state', 'RELATED,ESTABLISHED', '-j', 'ACCEPT'], check=True)
 
+            # Set this as the root node and announce
+            subprocess.run(
+                ['iw', 'dev', mesh_interface, 'set', 'mesh_param', 'mesh_hwmp_rootmode', '2'],
+                check=True)
+
+            subprocess.run(
+                ['iw', 'dev', mesh_interface, 'set', 'mesh_param', 'mesh_gate_announcements', '1'],
+                check=True)
+
             SendMeshAdapter.WiRocLogger.info(
                 "SendMeshAdapter::SetupInternetSharing() Internet sharing configured successfully")
             return True
@@ -250,6 +259,25 @@ class SendMeshAdapter(object):
             except Exception as e:
                 SendMeshAdapter.WiRocLogger.debug(
                     f"SendMeshAdapter::TearDownInternetSharing() NAT rule may not exist: {e}")
+
+
+            # remove this as the root node
+            try:
+                subprocess.run(
+                    ['iw', 'dev', mesh_interface, 'set', 'mesh_param', 'mesh_hwmp_rootmode', '0'],
+                    check=False)
+            except Exception as e:
+                SendMeshAdapter.WiRocLogger.error(
+                    f"SendMeshAdapter::TearDownInternetSharing() mesh_hwmp_rootmode: {e}")
+
+            # stop root announcements
+            try:
+                subprocess.run(
+                    ['iw', 'dev', mesh_interface, 'set', 'mesh_param', 'mesh_gate_announcements', '0'],
+                    check=False)
+            except Exception as e:
+                SendMeshAdapter.WiRocLogger.error(
+                    f"SendMeshAdapter::TearDownInternetSharing() mesh_gate_announcements: {e}")
 
             SendMeshAdapter.WiRocLogger.info(
                 "SendMeshAdapter::TearDownInternetSharing() Internet sharing torn down successfully")
@@ -377,6 +405,36 @@ class SendMeshAdapter(object):
         return True
 
     @staticmethod
+    def SetMaxSyncOffset(mesh_interface: str):
+        result = subprocess.run(
+            f"iw dev {mesh_interface} set mesh_param mesh_sync_offset_max_neighbor 5000",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        if result.returncode != 0:
+            SendMeshAdapter.WiRocLogger.error(
+                f"SendMeshAdapter::SetMaxSyncOffset() setting mesh_sync_offset_max_neighbor failed: {result.stderr}")
+            return False
+        return True
+
+    @staticmethod
+    def SetPLinkTimeout(mesh_interface: str):
+        result = subprocess.run(
+            f"iw dev {mesh_interface} set mesh_param mesh_plink_timeout 60",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        if result.returncode != 0:
+            SendMeshAdapter.WiRocLogger.error(
+                f"SendMeshAdapter::SetMaxSyncOffset() setting mesh_plink_timeout failed: {result.stderr}")
+            return False
+        return True
+
+    @staticmethod
     def ShouldIPAddressBeRemovedAndAdded(mesh_interface: str, new_ip_address: str):
         ipAddresses = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(mesh_interface)
         if len(ipAddresses) > 1:
@@ -487,6 +545,8 @@ class SendMeshAdapter(object):
                 self.isInitialized = False
                 return False
 
+        self.SetMaxSyncOffset(theMeshDevice)
+        self.SetPLinkTimeout(theMeshDevice)
         self.PowerSaveOff(theMeshDevice)
 
         # Join mesh

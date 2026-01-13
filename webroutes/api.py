@@ -1,7 +1,6 @@
 __author__ = 'henla464'
 
 from datamodel.db_helper import DatabaseHelper
-from installWiRocPython import hardwareVersion
 from settings.settings import SettingsClass
 from datamodel.datamodel import SettingData, BluetoothSerialPortData, TestPunchView
 from battery import Battery
@@ -19,6 +18,7 @@ import os
 from subprocess import Popen
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from utils.utils import Utils
+from dataclasses import dataclass
 
 @app.route('/api/openapicontent/', methods=['GET'])
 def getOpenApiContent():

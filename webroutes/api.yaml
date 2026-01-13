@@ -1677,6 +1677,45 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WifiMeshNodeNumberObj"
+  /wifimesh/interfacecreated/:
+    get:
+      tags:
+        - "Network"
+      summary: "Gets true/false if the mesh interface was created"
+      operationId: "GetWifiMeshInterfaceCreated"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /wifimesh/ipaddress/:
+    get:
+      tags:
+        - "Network"
+      summary: "Gets the Wifi Mesh network IP address"
+      operationId: "GetWifiMeshIPAddress"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /wifimesh/mpath/:
+    get:
+      tags:
+        - "Network"
+      summary: "Gets the Wifi Mesh MPATH table"
+      operationId: "GetWifiMeshMPath"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeshPathList"
   /uploadlogarchive/:
     get:
       tags:
@@ -1981,3 +2020,56 @@ components:
           $ref: '#/components/schemas/PropertyInt'
         py/object:
           type: "string"
+    MeshPath:
+      type: object
+      properties:
+        dest_addr:
+          type: string
+        next_hop:
+          type: string
+        iface:
+          type: string
+        sn:
+          type: integer
+          format: int64
+        metric:
+          type: integer
+          format: int64
+        qlen:
+          type: integer
+          format: int64
+        exptime:
+          type: integer
+          format: int64
+        dtim:
+          type: integer
+          format: int64
+        dret:
+          type: integer
+          format: int64
+        flags:
+          type: integer
+          format: int64
+        hop_count:
+          type: integer
+          format: int64
+        path_change:
+          type: integer
+          format: int64
+      required:
+        - dest_addr
+        - next_hop
+        - iface
+        - sn
+        - metric
+        - qlen
+        - exptime
+        - dtim
+        - dret
+        - flags
+        - hop_count
+        - path_change
+    MeshPathList:
+      type: array
+      items:
+        $ref: "#/components/schemas/MeshPath"
