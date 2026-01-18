@@ -446,6 +446,21 @@ class SendMeshAdapter(object):
                 return True
 
     @staticmethod
+    def FlushIPAddress(mesh_interface: str):
+        result = subprocess.run(
+            f"ip addr flush dev {mesh_interface}",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        if result.returncode != 0:
+            SendMeshAdapter.WiRocLogger.error(
+                f"SendMeshAdapter::FlushIPAddress() flushing mesh IP address failed: {result.stderr}")
+            return False
+        return True
+
+    @staticmethod
     def DeleteDefaultRoute(mesh_interface: str, gateway_ip_address: str) -> None:
         subprocess.run(
             f"ip route del default via {gateway_ip_address} dev {mesh_interface}",
@@ -467,6 +482,7 @@ class SendMeshAdapter(object):
             internetInterface = HardwareAbstraction.Instance.GetInternetInterfaceName()
             self.TearDownInternetSharing(HardwareAbstraction.Instance.GetMeshInterfaceName(), internetInterface)
             self.DeleteDefaultRoute(theMeshDevice, wifiMeshGatewayIPAddress)
+            self.FlushIPAddress(theMeshDevice)
             self.wifiMeshEnabled = False
             self.isInitialized = True
             return True
@@ -500,17 +516,7 @@ class SendMeshAdapter(object):
 
         # Set fixed IP address
         if self.ShouldIPAddressBeRemovedAndAdded(theMeshDevice, wifiMeshIPAddress):
-            result = subprocess.run(
-                f"ip addr flush dev {theMeshDevice}",
-                shell=True,
-                capture_output=True,
-                text=True,
-                check=False
-            )
-            if result.returncode != 0:
-                SendMeshAdapter.WiRocLogger.error(
-                    f"SendMeshAdapter::Init() flushing mesh IP address failed: {result.stderr}")
-                return False
+            self.FlushIPAddress(theMeshDevice)
 
         result = subprocess.run(
             f"ip addr replace {wifiMeshIPAddress}/24 dev {theMeshDevice}",

@@ -177,12 +177,12 @@ class Battery(object):
         if sendToSirap and (cls.wifiPowerSaving or cls.wifiPowerSaving is None):
             # disable power saving
             Battery.WiRocLogger.info("Start::updateWifiPowerSaving() Disable WiFi power saving")
-            wlanIFace = HardwareAbstraction.Instance.GetInternetInterfaceName()
+            wlanIFace = HardwareAbstraction.Instance.GetBuiltinWifiInterfaceName()
             os.system(f"sudo iw {wlanIFace} set power_save off")
             cls.wifiPowerSaving = False
         elif not sendToSirap and (not cls.wifiPowerSaving or cls.wifiPowerSaving is None):
             # enable power saving
             Battery.WiRocLogger.info("Start::updateWifiPowerSaving() Enable WiFi power saving")
-            wlanIFace = HardwareAbstraction.Instance.GetInternetInterfaceName()
+            wlanIFace = HardwareAbstraction.Instance.GetBuiltinWifiInterfaceName()
             os.system("sudo iw {wlanIFace} set power_save on")
             cls.wifiPowerSaving = True

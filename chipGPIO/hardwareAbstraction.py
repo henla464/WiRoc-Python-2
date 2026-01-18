@@ -253,7 +253,13 @@ class HardwareAbstraction(object):
                 return int(row.split(':')[2])
         return None
 
-    def GetInternetInterfaceName(self):
+    def GetBuiltinWifiInterfaceName(self) -> str:
+        return "wlan0"
+
+    def GetBuiltinEthernetInterfaceName(self) -> str:
+        return ""
+
+    def GetInternetInterfaceName(self) -> str:
         return "wlan0"
 
     def GetMeshInterfacePhy(self) -> str | None:
@@ -279,26 +285,63 @@ class HardwareAbstraction(object):
     def GetMeshInterfaceName(self) -> str | None:
         return "mesh0"
 
+    def GetUSBEthernetInterfaces(self) -> list[str]:
+        result = subprocess.run(['nmcli', '-m', 'multiline', '-f', 'device,type', 'device', 'status'], stdout=subprocess.PIPE, check=True)
+        if result.returncode != 0:
+            errStr = result.stderr.decode('utf-8')
+            raise Exception("Error: " + errStr)
+        devices = result.stdout.decode('utf-8').splitlines()[0: -1]  # remove last empty element
+        devices = [dev[40:] for dev in devices]
+        ifaces = devices[::2]
+        ifaceNetworkTypes = devices[1::2]
+        ethernetInterfaces: list[str] = []
+        for iface, ifaceNetworkType in zip(ifaces, ifaceNetworkTypes):
+            if ifaceNetworkType == 'ethernet':
+                if iface != self.GetBuiltinEthernetInterfaceName():
+                    ethernetInterfaces.append(iface)
+        return ethernetInterfaces
+
     def GetAllIPAddressesOnInterface(self, interface: str):
-        # Get all IPs on the interface
-        result = subprocess.run(
-            f"ip -4 addr show dev {interface}",
-            shell=True,
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        try:
+            # Get all IPs on the interface
+            result = subprocess.run(
+                f"ip -4 addr show dev {interface}",
+                shell=True,
+                capture_output=True,
+                text=True,
+                check=True
+            )
 
-        # Extract current IPv4 addresses
-        current_ips = []
-        for line in result.stdout.splitlines():
-            line = line.strip()
-            if line.startswith("inet "):
-                ip_cidr = line.split()[1]  # e.g., "192.168.50.2/24"
-                ip = ip_cidr.split("/")[0]
-                current_ips.append(ip)
+            # Extract current IPv4 addresses
+            current_ips = []
+            for line in result.stdout.splitlines():
+                line = line.strip()
+                if line.startswith("inet "):
+                    ip_cidr = line.split()[1]  # e.g., "192.168.50.2/24"
+                    ip = ip_cidr.split("/")[0]
+                    current_ips.append(ip)
 
-        return current_ips
+            return current_ips
+        except Exception as e:
+            HardwareAbstraction.WiRocLogger.error(
+                f"HardwareAbstraction::GetAllIPAddressesOnInterface() getting IPAddresses of interface {interface} failed {e}")
+            return []
+
+    def GetInterfaceMAC(self, interface: str):
+        try:
+            result = subprocess.run(f"cat /sys/class/net/{interface}/address",
+                                shell=True,
+                                capture_output=True,
+                                text=True,
+                                check=True)
+
+            mac = result.stdout
+            return mac
+        except Exception as e:
+            HardwareAbstraction.WiRocLogger.error(
+                f"HardwareAbstraction::GetInterfaceMAC() getting MAC of interface {interface} failed {e}")
+            return ""
+
 
     def DoesInterfaceExist(self, interface:str) -> bool:
         result = subprocess.run(

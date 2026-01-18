@@ -1111,6 +1111,31 @@ def getIP2():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=getIP()))
 
+@app.route('/api/wifiip/', methods=['GET'])
+def getWifiIP():
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    iface = HardwareAbstraction.Instance.GetBuiltinWifiInterfaceName()
+    ipAddresses = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(iface)
+    if len(ipAddresses) == 0:
+        return jsonpickle.encode(MicroMock(Value=''))
+    else:
+        return jsonpickle.encode(MicroMock(Value=ipAddresses[0]))
+
+@app.route('/api/usbethernetip/', methods=['GET'])
+def getUSBEthernetIP():
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    ifaces = HardwareAbstraction.Instance.GetUSBEthernetInterfaces()
+    if len(ifaces) == 0:
+        return jsonpickle.encode(MicroMock(Value=''))
+
+    # Assume only one USB ethernet
+    ipAddresses = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(ifaces[0])
+    if len(ipAddresses) == 0:
+        return jsonpickle.encode(MicroMock(Value=''))
+    else:
+        return jsonpickle.encode(MicroMock(Value=ipAddresses[0]))
 
 @app.route('/api/renewip/<ifaceNetType>/', methods=['GET'])
 def renewIP(ifaceNetType):
@@ -1206,7 +1231,7 @@ def connectWifi(wifiName, wifiPassword):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
-    wlanIFace = HardwareAbstraction.Instance.GetInternetInterfaceName()
+    wlanIFace = HardwareAbstraction.Instance.GetBuiltinWifiInterfaceName()
 
     result = subprocess.run(['nmcli', 'device', 'wifi', 'connect', wifiName, 'password', wifiPassword, 'ifname', wlanIFace], stdout=subprocess.PIPE)
     if result.returncode != 0:
@@ -1222,7 +1247,7 @@ def disconnectWifi():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
-    wlanIFace = HardwareAbstraction.Instance.GetInternetInterfaceName()
+    wlanIFace = HardwareAbstraction.Instance.GetBuiltinWifiInterfaceName()
 
     result = subprocess.run(['nmcli', 'device', 'disconnect', wlanIFace], stdout=subprocess.PIPE)
     if result.returncode != 0:
@@ -1515,7 +1540,21 @@ def GetWifiMeshIPAddress():
     ips = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(meshInterface)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=ips))
+    if len(ips)>0:
+        return jsonpickle.encode(MicroMock(Value=ips[0]))
+    else:
+        return jsonpickle.encode(MicroMock(Value=''))
+
+@app.route('/api/wifimesh/mac/', methods=['GET'])
+def GetWifiMeshMAC():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+
+    meshInterface = HardwareAbstraction.Instance.GetMeshInterfaceName()
+    mac = HardwareAbstraction.Instance.GetInterfaceMAC(meshInterface)
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=mac))
 
 @dataclass
 class MeshPath:
@@ -1574,9 +1613,10 @@ def GetWifiMeshMPath():
             )
         )
 
+    data = {'mpaths': paths}
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=paths))
+    return jsonpickle.encode(MicroMock(Value=data))
 
 @app.route('/api/uploadlogarchive/', methods=['GET'])
 def uploadLogArchive():
@@ -1684,7 +1724,7 @@ def getAllMainSettings():
     if sett is not None:
         codeRate = sett.Value
 
-    ipAddress = getIP()
+    ipAddress = getWifiIP()
     batteryPercent = getBatteryLevel()
 
     sett = DatabaseHelper.get_setting_by_key('RS232Mode')

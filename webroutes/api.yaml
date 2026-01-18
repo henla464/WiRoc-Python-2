@@ -1249,6 +1249,32 @@ paths:
               application/json:
                 schema:
                   $ref: "#/components/schemas/PropertyObj"
+  /wifiip/:
+      get:
+        tags:
+        - "Network"
+        summary: "Gets the current builtin wifi ip"
+        operationId: "getWifiIP"
+        responses:
+          "200":
+            description: "The current builtin wifi ip address"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/PropertyObj"
+  /usbethernetip/:
+    get:
+      tags:
+        - "Network"
+      summary: "Gets the first ethernet ip that is not built in (ie: USB ethernet adapter)"
+      operationId: "getUSBEthernetIP"
+      responses:
+        "200":
+          description: "The current ip address of the first USB ethernet adpater"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /renewip/{ifaceNetType}:
     get:
       tags:
@@ -1696,6 +1722,19 @@ paths:
         - "Network"
       summary: "Gets the Wifi Mesh network IP address"
       operationId: "GetWifiMeshIPAddress"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /wifimesh/mac/:
+    get:
+      tags:
+        - "Network"
+      summary: "Gets the Wifi Mesh interface mac"
+      operationId: "GetWifiMeshMAC"
       responses:
         "200":
           description: "successful operation"
