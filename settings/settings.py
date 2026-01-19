@@ -939,3 +939,12 @@ class SettingsClass(object):
             SettingsClass.SetSetting("WifiMeshNodeNumber", "2")
             return 2
         return int(sett.Value)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWifiRouteToInterface'), lock=rlock)
+    def GetWifiMeshRouteToInterface() -> str:
+        sett = DatabaseHelper.get_setting_by_key('WifiMeshRouteToInterface')
+        if sett is None:
+            SettingsClass.SetSetting("WifiMeshRouteToInterface", "wlan0")
+            return 'wlan0'
+        return sett.Value

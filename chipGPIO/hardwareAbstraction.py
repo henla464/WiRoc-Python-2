@@ -8,6 +8,7 @@ import yaml
 from datetime import timedelta, datetime, timezone
 from pathlib import Path
 import inspect
+
 try:
     from gpiod.line import Direction, Value
 except ImportError:
@@ -258,9 +259,6 @@ class HardwareAbstraction(object):
 
     def GetBuiltinEthernetInterfaceName(self) -> str:
         return ""
-
-    def GetInternetInterfaceName(self) -> str:
-        return "wlan0"
 
     def GetMeshInterfacePhy(self) -> str | None:
         mesh_phys = []

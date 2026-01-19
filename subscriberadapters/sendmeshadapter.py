@@ -399,7 +399,7 @@ class SendMeshAdapter(object):
         )
         if result.returncode != 0:
             SendMeshAdapter.WiRocLogger.error(
-                f"SendMeshAdapter::JoinMesh() join mesh failed: {result.stderr}")
+                f"SendMeshAdapter::PowerSaveOff() set power_save off failed: {result.stderr}")
 
             return False
         return True
@@ -407,7 +407,7 @@ class SendMeshAdapter(object):
     @staticmethod
     def SetMaxSyncOffset(mesh_interface: str):
         result = subprocess.run(
-            f"iw dev {mesh_interface} set mesh_param mesh_sync_offset_max_neighbor 5000",
+            f"iw dev {mesh_interface} set mesh_param mesh_sync_offset_max_neighor 90",
             shell=True,
             capture_output=True,
             text=True,
@@ -415,7 +415,7 @@ class SendMeshAdapter(object):
         )
         if result.returncode != 0:
             SendMeshAdapter.WiRocLogger.error(
-                f"SendMeshAdapter::SetMaxSyncOffset() setting mesh_sync_offset_max_neighbor failed: {result.stderr}")
+                f"SendMeshAdapter::SetMaxSyncOffset() setting mesh_sync_offset_max_neighor failed: {result.stderr}")
             return False
         return True
 
@@ -430,7 +430,7 @@ class SendMeshAdapter(object):
         )
         if result.returncode != 0:
             SendMeshAdapter.WiRocLogger.error(
-                f"SendMeshAdapter::SetMaxSyncOffset() setting mesh_plink_timeout failed: {result.stderr}")
+                f"SendMeshAdapter::SetPLinkTimeout() setting mesh_plink_timeout failed: {result.stderr}")
             return False
         return True
 
@@ -461,6 +461,21 @@ class SendMeshAdapter(object):
         return True
 
     @staticmethod
+    def AddDefaultRoute(mesh_interface:str, gateway_ip_address: str):
+        result = subprocess.run(
+            f"ip route add default via {gateway_ip_address} dev {mesh_interface}",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        if result.returncode != 0:
+            SendMeshAdapter.WiRocLogger.error(
+                f"SendMeshAdapter::Init() adding default route failed: {result.stderr}")
+            return False
+        return True
+
+    @staticmethod
     def DeleteDefaultRoute(mesh_interface: str, gateway_ip_address: str) -> None:
         subprocess.run(
             f"ip route del default via {gateway_ip_address} dev {mesh_interface}",
@@ -479,7 +494,8 @@ class SendMeshAdapter(object):
         wifiMeshGatewayIPAddress: str = f"192.168.{SettingsClass.GetWifiMeshIPNetworkNumber()}.1"
 
         if not SettingsClass.GetWifiMeshEnabled():
-            internetInterface = HardwareAbstraction.Instance.GetInternetInterfaceName()
+            SendMeshAdapter.WiRocLogger.info(f"SendMeshAdapter::Init() Wifi mesh should not be enabled")
+            internetInterface = SettingsClass.GetWifiMeshRouteToInterface()
             self.TearDownInternetSharing(HardwareAbstraction.Instance.GetMeshInterfaceName(), internetInterface)
             self.DeleteDefaultRoute(theMeshDevice, wifiMeshGatewayIPAddress)
             self.FlushIPAddress(theMeshDevice)
@@ -488,7 +504,8 @@ class SendMeshAdapter(object):
             return True
 
         if not HardwareAbstraction.Instance.DoesInterfaceExist(theMeshDevice):
-            internetInterface = HardwareAbstraction.Instance.GetInternetInterfaceName()
+            SendMeshAdapter.WiRocLogger.info(f"SendMeshAdapter::Init() mesh interface doesnt exist")
+            internetInterface = SettingsClass.GetWifiMeshRouteToInterface()
             self.TearDownInternetSharing(HardwareAbstraction.Instance.GetMeshInterfaceName(), internetInterface)
             self.DeleteDefaultRoute(theMeshDevice, wifiMeshGatewayIPAddress)
             self.wifiMeshEnabled = False
@@ -505,7 +522,7 @@ class SendMeshAdapter(object):
             self.isInitialized = False
             return False
 
-        internetInterface = HardwareAbstraction.Instance.GetInternetInterfaceName()
+        internetInterface = SettingsClass.GetWifiMeshRouteToInterface()
         wifiMeshIPAddress = None
         self.wifiMeshIPNetworkNumber = SettingsClass.GetWifiMeshIPNetworkNumber()
         self.wifiMeshNodeNumber = SettingsClass.GetWifiMeshNodeNumber()
@@ -532,30 +549,27 @@ class SendMeshAdapter(object):
             return False
 
         if not SettingsClass.GetWifiMeshGatewayEnabled():
+            SendMeshAdapter.WiRocLogger.info(f"SendMeshAdapter::Init() should not be gateway")
             self.DeleteDefaultRoute(theMeshDevice, wifiMeshGatewayIPAddress)
-
-            result = subprocess.run(
-                f"ip route add default via {wifiMeshGatewayIPAddress} dev {theMeshDevice}",
-                shell=True,
-                capture_output=True,
-                text=True,
-                check=False
-            )
-            if result.returncode != 0:
-                SendMeshAdapter.WiRocLogger.error(
-                    f"SendMeshAdapter::Init() adding default route failed: {result.stderr}")
+            if not self.AddDefaultRoute(theMeshDevice, wifiMeshGatewayIPAddress):
                 self.isInitialized = False
                 return False
 
             if not self.AddDNSOnInterface(theMeshDevice):
                 self.isInitialized = False
                 return False
+        else:
+            SendMeshAdapter.WiRocLogger.info(f"SendMeshAdapter::Init() should be gateway")
+            self.DeleteDefaultRoute(theMeshDevice, wifiMeshGatewayIPAddress)
 
+        # why are these failing?
         self.SetMaxSyncOffset(theMeshDevice)
         self.SetPLinkTimeout(theMeshDevice)
+
         self.PowerSaveOff(theMeshDevice)
 
         # Join mesh
+        SendMeshAdapter.WiRocLogger.info(f"SendMeshAdapter::Init() before join mesh")
         self.wifiMeshNetworkNameNumber = SettingsClass.GetWifiMeshNetworkNameNumber()
         wifiMeshSSIDName = f"WiRocMesh{self.wifiMeshNetworkNameNumber}"
         wifiMeshFrequency = SettingsClass.GetWifiMeshFrequency()

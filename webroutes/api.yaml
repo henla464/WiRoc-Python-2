@@ -1275,6 +1275,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
+  /network/interfaces/:
+    get:
+      tags:
+        - "Network"
+      summary: "Gets all network interfaces"
+      operationId: "getNetworkInterfaces"
+      responses:
+        "200":
+          description: "All network interfaces"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /renewip/{ifaceNetType}:
     get:
       tags:
@@ -1755,6 +1768,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MeshPathList"
+  /wifimesh/routetointerface/:
+    get:
+      tags:
+      - "Network"
+      summary: "Get the interface that we should route Wifi Mesh traffic to"
+      operationId: "getWifiMeshRouteToInterface"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /wifimesh/routetointerface/{interface}:
+    get:
+      tags:
+      - "Network"
+      summary: "Set the interface that we should route Wifi Mesh traffic to"
+      operationId: "setWifiMeshRouteToInterface"
+      parameters:
+        - name: interface
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Property'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /uploadlogarchive/:
     get:
       tags:

@@ -668,16 +668,6 @@ def getIsCharging():
 def getBatteryLevel():
     intPercent: int = Battery.GetBatteryPercent()
     return str(intPercent);
-    #hostname = socket.gethostname()
-    #if hostname == "chip" or hostname == "nanopiair":
-    #    result = subprocess.run(['/usr/sbin/i2cget', '-f', '-y', '0', '0x34', '0xb9'], stdout=subprocess.PIPE)
-    #    if result.returncode != 0:
-    #        errStr = result.stderr.decode('utf-8')
-    #        return 'Error: ' + errStr
-    #   intPercent = int(result.stdout.decode('utf-8').splitlines()[0], 0)
-    #    return str(intPercent)
-    #else:
-    #    return '1'
 
 
 @app.route('/api/batterylevel/', methods=['GET'])
@@ -1028,9 +1018,6 @@ def getWiRocHWVersion():
     f.close()
     wirocHWVersion = settings['WiRocHWVersion']
 
-    #f = open("../WiRocHWVersion.txt", "r")
-    #wirocHWVersion = f.read()
-    #f.close()
     wirocHWVersion = wirocHWVersion.strip()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -1136,6 +1123,20 @@ def getUSBEthernetIP():
         return jsonpickle.encode(MicroMock(Value=''))
     else:
         return jsonpickle.encode(MicroMock(Value=ipAddresses[0]))
+
+@app.route('/api/network/interfaces/', methods=['GET'])
+def getNetworkInterfaces():
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    ifaceWifi = HardwareAbstraction.Instance.GetBuiltinWifiInterfaceName()
+    ifaceUSBEthernet = HardwareAbstraction.Instance.GetUSBEthernetInterfaces()
+    ifaceMesh = HardwareAbstraction.Instance.GetMeshInterfaceName()
+    allIfaces = []
+    allIfaces.append(ifaceWifi)
+    allIfaces.append(ifaceMesh)
+    allIfaces += ifaceUSBEthernet
+
+    return jsonpickle.encode(MicroMock(Value=allIfaces))
 
 @app.route('/api/renewip/<ifaceNetType>/', methods=['GET'])
 def renewIP(ifaceNetType):
@@ -1617,6 +1618,29 @@ def GetWifiMeshMPath():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=data))
+
+@app.route('/api/wifimesh/routetointerface/', methods=['GET'])
+def getWifiMeshRouteToInterface():
+    sett = DatabaseHelper.get_setting_by_key('WifiMeshRouteToInterface')
+    interface = 'wlan0'
+    if sett is not None:
+        interface = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=interface))
+
+@app.route('/api/wifimesh/routetointerface/<interface>/', methods=['GET'])
+def setWifiMeshRouteToInterface(interface):
+    sd = DatabaseHelper.get_setting_by_key('WifiMeshRouteToInterface')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'WifiMeshRouteToInterface'
+    sd.Value = interface
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 @app.route('/api/uploadlogarchive/', methods=['GET'])
 def uploadLogArchive():
