@@ -101,7 +101,14 @@ class Main:
         displayData.sendSerialActive = SettingsClass.GetSendSerialAdapterActive()
         displayData.sirapIPAddress = SettingsClass.GetSendToSirapIP()
         displayData.sirapIPPort = SettingsClass.GetSendToSirapIPPort()
-        displayData.wiRocIPAddresses = HardwareAbstraction.Instance.GetWiRocIPAddresses()
+        wifiIFace = HardwareAbstraction.Instance.GetBuiltinWifiInterfaceName()
+        wifiIpAddresses = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(wifiIFace)
+        if len(wifiIpAddresses) == 0:
+            usbEthernetIface = HardwareAbstraction.Instance.GetUSBEthernetInterfaces()
+            if len(usbEthernetIface) > 0:
+                displayData.wiRocIPAddresses = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(usbEthernetIface[0])
+        else:
+            displayData.wiRocIPAddresses = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(wifiIFace)
         displayData.errorCodes = DatabaseHelper.get_error_codes()
 
         t = threading.Thread(target=self.updateDisplayBackground, args=(displayData,))
