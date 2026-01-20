@@ -299,7 +299,7 @@ class HardwareAbstraction(object):
                     ethernetInterfaces.append(iface)
         return ethernetInterfaces
 
-    def GetAllIPAddressesOnInterface(self, interface: str):
+    def GetAllIPAddressesOnInterface(self, interface: str) -> list[str]:
         try:
             # Get all IPs on the interface
             result = subprocess.run(
@@ -325,7 +325,7 @@ class HardwareAbstraction(object):
                 f"HardwareAbstraction::GetAllIPAddressesOnInterface() getting IPAddresses of interface {interface} failed {e}")
             return []
 
-    def GetInterfaceMAC(self, interface: str):
+    def GetInterfaceMAC(self, interface: str) -> str:
         try:
             result = subprocess.run(f"cat /sys/class/net/{interface}/address",
                                 shell=True,
