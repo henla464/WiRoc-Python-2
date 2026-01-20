@@ -52,6 +52,7 @@ class SendMeshAdapter(object):
         self.wifiMeshIPNetworkNumber = None
         self.wifiMeshNodeNumber = None
         self.wifiMeshGatewayEnabled = None
+        self.wifiMeshRouteToInterface = None
 
     def GetInstanceName(self) -> str:
         return self.instanceName
@@ -82,6 +83,8 @@ class SendMeshAdapter(object):
             f"SendMeshAdapter::ShouldBeInitialized() self.wifiMeshNodeNumber {self.wifiMeshNodeNumber}")
         SendMeshAdapter.WiRocLogger.info(
             f"SendMeshAdapter::ShouldBeInitialized() self.isInitialized {self.isInitialized}")
+        SendMeshAdapter.WiRocLogger.info(
+            f"SendMeshAdapter::ShouldBeInitialized() self.wifiMeshRouteToInterface {self.wifiMeshRouteToInterface}")
         if ((SettingsClass.GetWifiMeshEnabled() is True and
              self.wifiMeshEnabled and
              self.isInitialized and
@@ -89,6 +92,7 @@ class SendMeshAdapter(object):
              SettingsClass.GetWifiMeshGatewayEnabled() == self.wifiMeshGatewayEnabled and
              SettingsClass.GetWifiMeshIPNetworkNumber() == self.wifiMeshIPNetworkNumber and
              SettingsClass.GetWifiMeshNodeNumber() == self.wifiMeshNodeNumber and
+             SettingsClass.GetWifiMeshRouteToInterface() == self.wifiMeshRouteToInterface and
              HardwareAbstraction.Instance.DoesInterfaceExist(HardwareAbstraction.Instance.GetMeshInterfaceName()) and
              self.IsMeshPoint(HardwareAbstraction.Instance.GetMeshInterfaceName()))
                 or
@@ -576,6 +580,7 @@ class SendMeshAdapter(object):
         if self.JoinMesh(theMeshDevice, wifiMeshSSIDName, wifiMeshFrequency):
             if SettingsClass.GetWifiMeshGatewayEnabled():
                 self.SetupInternetSharing(theMeshDevice, internetInterface)
+                self.wifiMeshRouteToInterface = internetInterface
                 self.wifiMeshEnabled = True
                 self.wifiMeshGatewayEnabled = True
                 self.isInitialized = True
