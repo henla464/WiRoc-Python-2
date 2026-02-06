@@ -100,4 +100,60 @@ sudo shutdown -r 0
 		select "Boot from eMMC - system on eMMC"
 		select ext4 filesystem
 		
-	
+=======================================
+
+Create image from SD card
+
+1) Shrink filesystem to absolute minimum
+sudo umount /dev/mmcblk0p1
+sudo e2fsck -f /dev/mmcblk0p1
+sudo resize2fs -M /dev/mmcblk0p1
+
+2) Check minimal size
+sudo resize2fs -P /dev/mmcblk0p1
+
+gives something like: Estimated minimum size of the filesystem: 3123456
+=> 707677 blocks
+
+3) Shrink the partition to match the filesystem
+sudo dumpe2fs -h /dev/mmcblk0p1 | grep "Block size"
+Gives something like:
+dumpe2fs 1.47.0 (5-Feb-2023)
+Block size:               4096
+
+4) Calculate minimal filesystem size in MiB
+
+	size = blocks × 4096 / 1024 / 1024
+=> 2785,21875 MiB
+
+5) 
+sudo parted /dev/mmcblk0
+set unit to MiB with:
+> unit MiB
+use print to see:
+
+Model: SD EC1S5 (sd/mmc)
+Disk /dev/mmcblk0: 61120MiB
+Sector size (logical/physical): 512B/512B
+Partition Table: msdos
+Disk Flags: 
+
+Number  Start    End       Size      Type     File system  Flags
+ 1      4,00MiB  60496MiB  60492MiB  primary  ext4
+
+
+Resize with:
+> resizepart 1 <size +16>
+> quit
+
+Add +16 MiB for safety alignment or something similar
+
+
+6) get block count
+sudo dumpe2fs /dev/mmcblk0p1 | grep 'Block count:'
+> 711414
+7)
+./createNewImage2.sh <block count>
+
+8) Compress it
+xz -T0 -9 small_bootable.img

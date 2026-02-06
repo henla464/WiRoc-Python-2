@@ -168,6 +168,7 @@ echo "Used by install scripts"
 echo "###################################"
 # needed for install scripts
 #apt-get -y install python3-pip
+apt-get -y install python3-venv
 apt-get -y install python3-requests
 
 echo "###################################"
@@ -182,7 +183,6 @@ chmod ugo+x installWiRocBLEAPI.py
 apt-get -y install libdbus-1-dev
 
 # these are dependencies for PyGObject (installed in requirements.txt)
-apt-get -y install python3-venv
 apt-get -y install libcairo2-dev
 apt-get -y install python3-dev
 apt-get -y install libgirepository1.0-dev
