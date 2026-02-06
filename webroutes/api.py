@@ -1581,7 +1581,7 @@ def GetWifiMeshMPath():
 
     result = subprocess.run(
         cmd,
-        check=True,
+        check=False,
         capture_output=True,
         text=True,
     )

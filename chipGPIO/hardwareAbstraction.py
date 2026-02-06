@@ -49,6 +49,8 @@ class HardwareAbstraction(object):
         self.wirocHWVersionNumber: int = int(self.wirocHWVersion.split("Rev")[0][1:])
         self.wirocHWRevisionNumber: int = int(self.wirocHWVersion.split("Rev")[1])
 
+        self.EnablePEKShortAndLong()
+
     def SetupPins(self):
         # gpioinfo give us gpiochip0 and gpiochip1. But gpiochip0 for the lines (pins) needed
         chip: gpiod.chip = None
@@ -232,12 +234,13 @@ class HardwareAbstraction(object):
                 if irqValue:
                     Path('/home/chip/PMUIRQ.txt').touch()
                 return irqValue
+            return False
         else:
             if self.PMUIRQ is not None:
                 irqValue = self.PMUIRQ.get_value()
                 if irqValue == 0:
                     Path('/home/chip/PMUIRQ.txt').touch()
-                return self.PMUIRQ.get_value() == 0
+                return irqValue == 0
             else:
                 return False
 
@@ -340,7 +343,6 @@ class HardwareAbstraction(object):
                 f"HardwareAbstraction::GetInterfaceMAC() getting MAC of interface {interface} failed {e}")
             return ""
 
-
     def DoesInterfaceExist(self, interface:str) -> bool:
         result = subprocess.run(
             f"ip link show dev {interface}",
@@ -434,6 +436,13 @@ class HardwareAbstraction(object):
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::DisablePMUIRQ4")
         IRQ_4_REGADDR = 0x43
         self.i2cBus.write_byte_data(self.i2cAddress, IRQ_4_REGADDR, 0x00)
+
+    # IRQ3 Contains PEK short and long. Default is should be correct but it happened
+    # on one device that it was changed somehow
+    def EnablePEKShortAndLong(self):
+        HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::EnablePEKShortAndLong")
+        IRQ_3_REGADDR = 0x42
+        self.i2cBus.write_byte_data(self.i2cAddress, IRQ_3_REGADDR, 0x03)
 
     def HasRTC(self):
         return self.wirocHWVersionNumber >= 7

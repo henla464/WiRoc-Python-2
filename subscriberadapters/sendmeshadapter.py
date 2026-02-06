@@ -566,10 +566,6 @@ class SendMeshAdapter(object):
             SendMeshAdapter.WiRocLogger.info(f"SendMeshAdapter::Init() should be gateway")
             self.DeleteDefaultRoute(theMeshDevice, wifiMeshGatewayIPAddress)
 
-        # why are these failing?
-        self.SetMaxSyncOffset(theMeshDevice)
-        self.SetPLinkTimeout(theMeshDevice)
-
         self.PowerSaveOff(theMeshDevice)
 
         # Join mesh
@@ -578,6 +574,8 @@ class SendMeshAdapter(object):
         wifiMeshSSIDName = f"WiRocMesh{self.wifiMeshNetworkNameNumber}"
         wifiMeshFrequency = SettingsClass.GetWifiMeshFrequency()
         if self.JoinMesh(theMeshDevice, wifiMeshSSIDName, wifiMeshFrequency):
+            self.SetMaxSyncOffset(theMeshDevice)
+            self.SetPLinkTimeout(theMeshDevice)
             if SettingsClass.GetWifiMeshGatewayEnabled():
                 self.SetupInternetSharing(theMeshDevice, internetInterface)
                 self.wifiMeshRouteToInterface = internetInterface
@@ -589,6 +587,7 @@ class SendMeshAdapter(object):
                 # Enable IP forwarding
                 self.SetupIPForwarding()
                 self.TearDownInternetSharing(theMeshDevice, internetInterface)
+                self.wifiMeshRouteToInterface = internetInterface
                 self.wifiMeshEnabled = True
                 self.wifiMeshGatewayEnabled = False
                 self.isInitialized = True
