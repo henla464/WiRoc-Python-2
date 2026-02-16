@@ -2,15 +2,14 @@ import os
 import threading
 
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
+from loraradio.LoraRadioRAK3172 import LoraRadioRAK3172
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
-from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
-from loraradio.LoraRadioDRF1268DS_RS import LoraRadioDRF1268DS_RS, ReturnStatus
+from loraradio.LoraRadioDRF1268DS_RS import LoraRadioDRF1268DS_RS
+from loraradio.ReturnStatus import ReturnStatus
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
-import serial
 import logging
-import socket
 import collections
 from datetime import datetime, timedelta
 
@@ -86,6 +85,10 @@ class SendLoraAdapter(object):
         self.instanceNumber = instanceNumber
         self.portName = portName
         self.loraRadio = LoraRadioDRF1268DS_RS.GetInstance(portName, hardwareAbstraction)
+        if hardwareAbstraction.Instance.wirocHWVersionNumber <= 7:
+            self.loraRadio: LoraRadioDRF1268DS_RS = LoraRadioDRF1268DS_RS.GetInstance(portName, hardwareAbstraction)
+        else:
+            self.loraRadio: LoraRadioRAK3172 = LoraRadioRAK3172.GetInstance(portName, hardwareAbstraction)
         self.transforms = {}
         self.isDBInitialized = False
         self.lastMessageRepeaterBit = False

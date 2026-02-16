@@ -1,5 +1,6 @@
 import traceback
 from loraradio.LoraRadioDRF1268DS_RS import LoraRadioDRF1268DS_RS
+from loraradio.LoraRadioRAK3172 import LoraRadioRAK3172
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
 import serial
@@ -59,7 +60,10 @@ class ReceiveLoraAdapter(object):
     def __init__(self, instanceNumber: int, portName: str, hardwareAbstraction: HardwareAbstraction):
         self.instanceNumber = instanceNumber
         self.portName = portName
-        self.loraRadio: LoraRadioDRF1268DS_RS = LoraRadioDRF1268DS_RS.GetInstance(portName, hardwareAbstraction)
+        if hardwareAbstraction.Instance.wirocHWVersionNumber <= 7:
+            self.loraRadio: LoraRadioDRF1268DS_RS = LoraRadioDRF1268DS_RS.GetInstance(portName, hardwareAbstraction)
+        else:
+            self.loraRadio: LoraRadioRAK3172 = LoraRadioRAK3172.GetInstance(portName, hardwareAbstraction)
         self.hardwareAbstraction = hardwareAbstraction
 
     def GetInstanceNumber(self) -> int:

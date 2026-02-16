@@ -32,11 +32,13 @@ class ErrorCodeData(object):
 class ChannelData(object):
     columns = [("Channel", str), ("DataRate", int),  ("LoraRange", str),
                ("Frequency", int), ("SlopeCoefficient", int),
-               ("M", int), ("RfFactor", int), ("RfBw", int), ("LoraModem", str)]
+               ("M", int), ("RfFactor", int), ("RfBw", int), ("LowDatarateOptimize", bool),
+               ("LoraModem", str)]
 
     def __init__(self, Channel: str | None = None, DataRate: int | None = None, LoraRange: str | None = None,
                  Frequency: int | None = None, SlopeCoefficient: int | None = None,
-                 M: int | None = None, RfFactor: int | None = None, RfBw: int | None = None, LoraModem: str | None = None):
+                 M: int | None = None, RfFactor: int | None = None, RfBw: int | None = None,
+                 LowDatarateOptimize: bool | None = None, LoraModem: str | None = None):
         self.id: int | None = None
         self.Channel: str | None = Channel
         self.DataRate: int | None = DataRate
@@ -46,6 +48,7 @@ class ChannelData(object):
         self.M: int | None = M
         self.RfFactor: int | None = RfFactor
         self.RfBw: int | None = RfBw
+        self.LowDatarateOptimize: int | None = LowDatarateOptimize
         self.LoraModem: str | None = LoraModem
 
 

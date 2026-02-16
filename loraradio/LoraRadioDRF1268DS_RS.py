@@ -1,27 +1,20 @@
 __author__ = 'henla464'
 
 import threading
-from typing import Self
 import serial
 import time
 import logging
 from datamodel.db_helper import DatabaseHelper, ErrorCodeData, ChannelData
 from loraradio.LoraRadioMessageRS import (LoraRadioMessageAckRS, LoraRadioMessageStatusRS, LoraRadioMessageStatus2RS,
                                           LoraRadioMessagePunchReDCoSRS, LoraRadioMessagePunchDoubleReDCoSRS)
+from loraradio.ReturnStatus import ReturnStatus
 from utils.utils import Utils
 from loraradio.loraparameters import LoraParameters
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 import struct
 import errno
-from enum import Enum
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 
-
-class ReturnStatus(Enum):
-    SENT = 1
-    BUSY = 2
-    NOREPLY = 3
-    OTHER = 4
 
 class LoraRadioDRF1268DS_RS:
     Instances = []
@@ -300,13 +293,13 @@ class LoraRadioDRF1268DS_RS:
         readParameterResp[3] = 0x03  # write
         readParameterResp[6] = channelNumber
         readParameterResp[11] = channelData.RfFactor
-        readParameterResp[12] = 0x05  # Bandwidth 31,25kHz
+        readParameterResp[12] = channelData.RfBw # 0x05 = Bandwidth 31,25kHz
         readParameterResp[13] = codeRate
         readParameterResp[14] = loraPower
         if rxGain:
-            readParameterResp[23] = 0x81  # ID / Rx Gain enable
+            readParameterResp[23] |= 0x81  # ID / Rx Gain enable
         else:
-            readParameterResp[23] = 0x01  # ID / Rx Gain disabled
+            readParameterResp[23] |= 0x01  # ID / Rx Gain disabled
         readParameterResp[24] = 0x01  # LBT enable
         readParameterResp[25] = 0x01  # RSSI enable
         struct.pack_into('>II', readParameterResp, 15, channelData.Frequency, channelData.Frequency)
@@ -425,15 +418,16 @@ class LoraRadioDRF1268DS_RS:
                         self.SetErrorCode(ErrorCodeData.ERR_LORA_CONF, "Lora config failed")
                         return False
                     channelData = DatabaseHelper.get_channel(channel, loraRange, 'DRF1268DS')
+                    channelNumber = int(channel.lstrip("HAM"))
                     if channelData.Frequency ==  LoraRadioDRF1268DS_RS.LoraModuleParameters.TransmitFrequency and \
                         channelData.Frequency == LoraRadioDRF1268DS_RS.LoraModuleParameters.ReceiveFrequency and \
                         channelData.RfFactor == LoraRadioDRF1268DS_RS.LoraModuleParameters.SpreadingFactor and \
                         loraPower == LoraRadioDRF1268DS_RS.LoraModuleParameters.TransmitPower and \
                         channelData.RfBw == LoraRadioDRF1268DS_RS.LoraModuleParameters.Bandwidth and \
-                        channel == LoraRadioDRF1268DS_RS.LoraModuleParameters.NetID and \
+                        channelNumber == LoraRadioDRF1268DS_RS.LoraModuleParameters.NetID and \
                         codeRate == LoraRadioDRF1268DS_RS.LoraModuleParameters.CodeRate and \
-                        ((rxGain and 0x81 == LoraRadioDRF1268DS_RS.LoraModuleParameters.IDRxGainEnable) or
-                        (not rxGain and 0x01 == LoraRadioDRF1268DS_RS.LoraModuleParameters.IDRxGainEnable)):
+                        ((rxGain and 0x81 == (0x81 & LoraRadioDRF1268DS_RS.LoraModuleParameters.IDRxGainEnable)) or
+                        (not rxGain and 0x01 == (0x81 & LoraRadioDRF1268DS_RS.LoraModuleParameters.IDRxGainEnable))):
                         self.isInitialized = True
                         LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() Already correct parameters")
                         self.ClearErrorCode(ErrorCodeData.ERR_LORA_CONF)
@@ -441,7 +435,6 @@ class LoraRadioDRF1268DS_RS:
                         return True
                     else:
                         LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() frequency" + str(channelData.Frequency))
-                        channelNumber = int(channel.lstrip("HAM"))
                         if self.setParameters(channelData, channelNumber, loraPower, codeRate, rxGain):
                             LoraRadioDRF1268DS_RS.WiRocLogger.info("LoraRadioDRF1268DS_RS::Init() Parameters set")
                             self.isInitialized = True

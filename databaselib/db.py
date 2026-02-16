@@ -125,8 +125,6 @@ class DB:
                 return self.get_table_object(table_object.__class__, rowid)
             return rowid
 
-
-
     def get_table_object(self, table_class, rowid: int):
         conn = self.openConnection()
         try:

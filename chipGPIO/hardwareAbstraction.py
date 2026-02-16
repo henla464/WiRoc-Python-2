@@ -31,6 +31,7 @@ class HardwareAbstraction(object):
         self.SRRnrst = None
         self.PMUIRQ = None
         self.StatusLed = None
+        self.LORARS = None
 
         self.line_request = None
         self.PMUIRQLine = None
@@ -96,13 +97,15 @@ class HardwareAbstraction(object):
                 self.LORAM0Line = 17
                 self.LORAauxLine = 64
                 self.SRRnrstLine = 201
+                self.LORARS = 363
                 self.line_request = gpiod.request_lines(chipPath, consumer="wirocpython", config={
                     self.LORAenableLine: gpiod.LineSettings(direction=Direction.OUTPUT),  # lora enable pin (corresponds to pin 13)
                     self.PMUIRQLine: gpiod.LineSettings(direction=Direction.INPUT),  # IRQ pin GPIOA3 Pin 15
                     self.SRRirqLine : gpiod.LineSettings(direction=Direction.INPUT),  # SRR_IRQ input interrupt message available (corresponds to pin 12 GPIOA6)
                     self.LORAM0Line: gpiod.LineSettings(direction=Direction.OUTPUT),      # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
                     self.LORAauxLine: gpiod.LineSettings(direction=Direction.INPUT),       # lora aux pin (corresponds to pin 19)
-                    self.SRRnrstLine: gpiod.LineSettings(direction=Direction.OUTPUT)  # SRR_NRST reset SRR (GPIOG9)
+                    self.SRRnrstLine: gpiod.LineSettings(direction=Direction.OUTPUT),  # SRR_NRST reset SRR (GPIOG9)
+                    self.LORARS: gpiod.LineSettings(direction=Direction.OUTPUT)         # LoraRAK3172 reset
                 })
                 self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
                 self.line_request.set_value(self.LORAM0Line, Value.ACTIVE)

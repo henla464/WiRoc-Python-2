@@ -13,12 +13,6 @@ class DatabaseHelper:
     @classmethod
     def init(cls) -> None:
         pass
-        #if cls.db is None:
-        #    cls.db = DB("WiRoc.db", DataMapping())
-
-    #@classmethod
-    #def reInit(cls) -> None:
-    #    cls.db = DB("WiRoc.db", DataMapping())
 
     @classmethod
     def ensure_tables_created(cls) -> None:
@@ -1251,37 +1245,6 @@ class DatabaseHelper:
          ORDER BY (cast(TwelveHourTimer as integer) * 3600 + cast(TwentyFourHour as integer) * 43200), MessageBoxId;")
 
         testPunchesView = cls.db.get_table_objects_by_SQL(TestPunchView, sql)
-        # "SELECT TestPunchData.id, TestPunchData.SICardNumber, TestPunchData.TwentyFourHour, "
-        # "TestPunchData.TwelveHourTimer, TestPunchData.Fetched, TestPunchData.MessageBoxId, CASE "
-        #   "WHEN MessageSubscriptionData.id is not null THEN MessageSubscriptionData.SubscriptionId "
-        #   "WHEN MessageSubscriptionArchiveData.id is not null THEN MessageSubscriptionArchiveData.SubscriptionId "
-        #   "ELSE -1 "
-        # "END SubscriptionId, CASE "
-        #   "WHEN MessageSubscriptionData.id is not null THEN MessageSubscriptionData.NoOfSendTries "
-        #   "WHEN MessageSubscriptionArchiveData.id is not null THEN MessageSubscriptionArchiveData.NoOfSendTries "
-        #   "ELSE 0 "
-        # "END NoOfSendTries, CASE "
-        #   "WHEN MessageBoxData.id is null and MessageBoxArchiveData.id is null THEN 'Not added' "
-        #   "WHEN MessageSubscriptionData.id is not null "
-        #     "and MessageSubscriptionData.SentDate is null THEN 'Added' "
-        #   "WHEN MessageSubscriptionData.id is not null "
-        #     "and MessageSubscriptionData.SentDate is not null and MessageSubscriptionData.AckReceivedDate is null THEN 'Sent' "
-        #   "WHEN MessageSubscriptionArchiveData.id is not null "
-        #     "and MessageSubscriptionArchiveData.SentDate is null THEN 'Not sent' "
-        #   "WHEN MessageSubscriptionArchiveData.id is not null "
-        #     "and MessageSubscriptionArchiveData.SentDate is not null and MessageSubscriptionArchiveData.AckReceivedDate is null THEN 'Not acked' "
-        #   "WHEN MessageSubscriptionArchiveData.id is not null "
-        #     "and MessageSubscriptionArchiveData.SentDate is not null and MessageSubscriptionArchiveData.AckReceivedDate is not null THEN 'Acked' "
-        #   "ELSE 'No subscr.' "
-        # "END Status, CASE "
-        #   "WHEN MessageSubscriptionArchiveData.id is not null THEN MessageSubscriptionArchiveData.AckRSSIValue "
-        #   "ELSE 0 "
-        # "END AckRSSIValue "
-        # "FROM TestPunchData LEFT JOIN MessageBoxData ON TestPunchData.MessageBoxId = MessageBoxData.id "
-        # "LEFT JOIN MessageSubscriptionData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
-        # "LEFT JOIN MessageBoxArchiveData ON TestPunchData.MessageBoxId = MessageBoxArchiveData.OrigId "
-        # "LEFT JOIN MessageSubscriptionArchiveData ON MessageBoxArchiveData.OrigId = MessageSubscriptionArchiveData.MessageBoxId "
-        # "WHERE BatchGuid = '%s'" % testBatchGuid)
         return testPunchesView
 
     @classmethod
@@ -1329,7 +1292,7 @@ class DatabaseHelper:
 
     # Channels
     @classmethod
-    def get_channel(cls, channel: str, loraRange: str, loraModem: str):
+    def get_channel(cls, channel: str, loraRange: str, loraModem: str) -> ChannelData:
         cls.init()
         sql = ("SELECT * FROM ChannelData WHERE Channel = '" + str(channel) +
                "' and LoraRange = '" + loraRange + "' and LoraModem = '" + loraModem + "'")
@@ -1339,144 +1302,177 @@ class DatabaseHelper:
         return None
 
     @classmethod
-    def save_channel(cls, channel):
+    def save_channel(cls, channel) -> None:
         cls.init()
         cls.db.save_table_object(channel, False)
 
     @classmethod
+    def delete_channels(cls) -> None:
+        cls.init()
+        cls.db.execute_SQL("DELETE FROM ChannelData")
+
+    @classmethod
+    def get_channels_exists(cls) -> bool:
+        cls.init()
+        cnt = cls.db.get_scalar_by_SQL("SELECT count(*) FROM ChannelData")
+        return cnt > 0
+
+    @classmethod
     def add_default_channels(cls):
         cls.init()
-        channels = [ChannelData('1', 293, 'L', 439750000, 52590, 16, 12, 7, "RF1276T"),
-                    ChannelData('2', 293, 'L', 439775000, 52590, 16, 12, 7, "RF1276T"),
-                    ChannelData('3', 293, 'L', 439800000, 52590, 16, 12, 7, "RF1276T"),
-                    ChannelData('4', 293, 'L', 439825000, 52590, 16, 12, 7, "RF1276T"),
-                    ChannelData('5', 293, 'L', 439850000, 52590, 16, 12, 7, "RF1276T"),
-                    ChannelData('6', 293, 'L', 439875000, 52590, 16, 12, 7, "RF1276T"),
-                    ChannelData('7', 293, 'L', 439900000, 52590, 16, 12, 7, "RF1276T"),
-                    ChannelData('8', 293, 'L', 439925000, 52590, 16, 12, 7, "RF1276T"),
-                    ChannelData('1', 537, 'ML', 439750000, 24130, 16, 11, 7, "RF1276T"),
-                    ChannelData('2', 537, 'ML', 439775000, 24130, 16, 11, 7, "RF1276T"),
-                    ChannelData('3', 537, 'ML', 439800000, 24130, 16, 11, 7, "RF1276T"),
-                    ChannelData('4', 537, 'ML', 439825000, 24130, 16, 11, 7, "RF1276T"),
-                    ChannelData('5', 537, 'ML', 439850000, 24130, 16, 11, 7, "RF1276T"),
-                    ChannelData('6', 537, 'ML', 439875000, 24130, 16, 11, 7, "RF1276T"),
-                    ChannelData('7', 537, 'ML', 439900000, 24130, 16, 11, 7, "RF1276T"),
-                    ChannelData('8', 537, 'ML', 439925000, 24130, 16, 11, 7, "RF1276T"),
-                    ChannelData('1', 977, 'MS', 439750000, 15680, 16, 10, 7, "RF1276T"),
-                    ChannelData('2', 977, 'MS', 439775000, 15680, 16, 10, 7, "RF1276T"),
-                    ChannelData('3', 977, 'MS', 439800000, 15680, 16, 10, 7, "RF1276T"),
-                    ChannelData('4', 977, 'MS', 439825000, 15680, 16, 10, 7, "RF1276T"),
-                    ChannelData('5', 977, 'MS', 439850000, 15680, 16, 10, 7, "RF1276T"),
-                    ChannelData('6', 977, 'MS', 439875000, 15680, 16, 10, 7, "RF1276T"),
-                    ChannelData('7', 977, 'MS', 439900000, 15680, 16, 10, 7, "RF1276T"),
-                    ChannelData('8', 977, 'MS', 439925000, 15680, 16, 10, 7, "RF1276T"),
-                    ChannelData('1', 1758, 'S', 439750000, 8714, 15, 9, 7, "RF1276T"),
-                    ChannelData('2', 1758, 'S', 439775000, 8714, 15, 9, 7, "RF1276T"),
-                    ChannelData('3', 1758, 'S', 439800000, 8714, 15, 9, 7, "RF1276T"),
-                    ChannelData('4', 1758, 'S', 439825000, 8714, 15, 9, 7, "RF1276T"),
-                    ChannelData('5', 1758, 'S', 439850000, 8714, 15, 9, 7, "RF1276T"),
-                    ChannelData('6', 1758, 'S', 439875000, 8714, 15, 9, 7, "RF1276T"),
-                    ChannelData('7', 1758, 'S', 439900000, 8714, 15, 9, 7, "RF1276T"),
-                    ChannelData('8', 1758, 'S', 439925000, 8714, 15, 9, 7, "RF1276T"),
-                    ChannelData('1', 3125, 'XS', 439750000, 4793, 15, 8, 7, "RF1276T"),
-                    ChannelData('2', 3125, 'XS', 439775000, 4793, 15, 8, 7, "RF1276T"),
-                    ChannelData('3', 3125, 'XS', 439800000, 4793, 15, 8, 7, "RF1276T"),
-                    ChannelData('4', 3125, 'XS', 439825000, 4793, 15, 8, 7, "RF1276T"),
-                    ChannelData('5', 3125, 'XS', 439850000, 4793, 15, 8, 7, "RF1276T"),
-                    ChannelData('6', 3125, 'XS', 439875000, 4793, 15, 8, 7, "RF1276T"),
-                    ChannelData('7', 3125, 'XS', 439900000, 4793, 15, 8, 7, "RF1276T"),
-                    ChannelData('8', 3125, 'XS', 439925000, 4793, 15, 8, 7, "RF1276T"),
-                    ChannelData('1', 5470, 'US', 439750000, 2736, 15, 7, 7, "RF1276T"),
-                    ChannelData('2', 5470, 'US', 439775000, 2736, 15, 7, 7, "RF1276T"),
-                    ChannelData('3', 5470, 'US', 439800000, 2736, 15, 7, 7, "RF1276T"),
-                    ChannelData('4', 5470, 'US', 439825000, 2736, 15, 7, 7, "RF1276T"),
-                    ChannelData('5', 5470, 'US', 439850000, 2736, 15, 7, 7, "RF1276T"),
-                    ChannelData('6', 5470, 'US', 439875000, 2736, 15, 7, 7, "RF1276T"),
-                    ChannelData('7', 5470, 'US', 439900000, 2736, 15, 7, 7, "RF1276T"),
-                    ChannelData('8', 5470, 'US', 439925000, 2736, 15, 7, 7, "RF1276T"),
-                    ChannelData('1', 73, 'UL', 439712500, 210410, 16, 12, 5, "DRF1268DS"),
-                    ChannelData('2', 73, 'UL', 439762500, 210410, 16, 12, 5, "DRF1268DS"),
-                    ChannelData('3', 73, 'UL', 439812500, 210410, 16, 12, 5, "DRF1268DS"),
-                    ChannelData('4', 73, 'UL', 439862500, 210410, 16, 12, 5, "DRF1268DS"),
-                    ChannelData('5', 73, 'UL', 439912500, 210410, 16, 12, 5, "DRF1268DS"),
-                    ChannelData('6', 73, 'UL', 439962500, 210410, 16, 12, 5, "DRF1268DS"),
-                    ChannelData('1', 134, 'XL', 439712500, 114626, 16, 11, 5, "DRF1268DS"),
-                    ChannelData('2', 134, 'XL', 439762500, 114626, 16, 11, 5, "DRF1268DS"),
-                    ChannelData('3', 134, 'XL', 439812500, 114626, 16, 11, 5, "DRF1268DS"),
-                    ChannelData('4', 134, 'XL', 439862500, 114626, 16, 11, 5, "DRF1268DS"),
-                    ChannelData('5', 134, 'XL', 439912500, 114626, 16, 11, 5, "DRF1268DS"),
-                    ChannelData('6', 134, 'XL', 439962500, 114626, 16, 11, 5, "DRF1268DS"),
-                    ChannelData('1', 244, 'L', 439712500, 62950, 16, 10, 5, "DRF1268DS"),
-                    ChannelData('2', 244, 'L', 439762500, 62950, 16, 10, 5, "DRF1268DS"),
-                    ChannelData('3', 244, 'L', 439812500, 62950, 16, 10, 5, "DRF1268DS"),
-                    ChannelData('4', 244, 'L', 439862500, 62950, 16, 10, 5, "DRF1268DS"),
-                    ChannelData('5', 244, 'L', 439912500, 62950, 16, 10, 5, "DRF1268DS"),
-                    ChannelData('6', 244, 'L', 439962500, 62950, 16, 10, 5, "DRF1268DS"),
-                    ChannelData('1', 439, 'ML', 439712500, 34988, 16, 9, 5, "DRF1268DS"),
-                    ChannelData('2', 439, 'ML', 439762500, 34988, 16, 9, 5, "DRF1268DS"),
-                    ChannelData('3', 439, 'ML', 439812500, 34988, 16, 9, 5, "DRF1268DS"),
-                    ChannelData('4', 439, 'ML', 439862500, 34988, 16, 9, 5, "DRF1268DS"),
-                    ChannelData('5', 439, 'ML', 439912500, 34988, 16, 9, 5, "DRF1268DS"),
-                    ChannelData('6', 439, 'ML', 439962500, 34988, 16, 9, 5, "DRF1268DS"),
-                    ChannelData('1', 781, 'MS', 439712500, 19667, 16, 8, 5, "DRF1268DS"),
-                    ChannelData('2', 781, 'MS', 439762500, 19667, 16, 8, 5, "DRF1268DS"),
-                    ChannelData('3', 781, 'MS', 439812500, 19667, 16, 8, 5, "DRF1268DS"),
-                    ChannelData('4', 781, 'MS', 439862500, 19667, 16, 8, 5, "DRF1268DS"),
-                    ChannelData('5', 781, 'MS', 439912500, 19667, 16, 8, 5, "DRF1268DS"),
-                    ChannelData('6', 781, 'MS', 439962500, 19667, 16, 8, 5, "DRF1268DS"),
-                    ChannelData('1', 1367, 'S', 439712500, 11236, 16, 7, 5, "DRF1268DS"),
-                    ChannelData('2', 1367, 'S', 439762500, 11236, 16, 7, 5, "DRF1268DS"),
-                    ChannelData('3', 1367, 'S', 439812500, 11236, 16, 7, 5, "DRF1268DS"),
-                    ChannelData('4', 1367, 'S', 439862500, 11236, 16, 7, 5, "DRF1268DS"),
-                    ChannelData('5', 1367, 'S', 439912500, 11236, 16, 7, 5, "DRF1268DS"),
-                    ChannelData('6', 1367, 'S', 439962500, 11236, 16, 7, 5, "DRF1268DS"),
+        if not cls.get_channels_exists():
+            channels = [ChannelData('1', 73, 'UL', 439712500, 210410, 16, 12, 5, None, "DRF1268DS"),
+                    ChannelData('2', 73, 'UL', 439762500, 210410, 16, 12, 5, None, "DRF1268DS"),
+                    ChannelData('3', 73, 'UL', 439812500, 210410, 16, 12, 5, None, "DRF1268DS"),
+                    ChannelData('4', 73, 'UL', 439862500, 210410, 16, 12, 5, None, "DRF1268DS"),
+                    ChannelData('5', 73, 'UL', 439912500, 210410, 16, 12, 5, None, "DRF1268DS"),
+                    ChannelData('6', 73, 'UL', 439962500, 210410, 16, 12, 5, None, "DRF1268DS"),
+                    ChannelData('1', 134, 'XL', 439712500, 114626, 16, 11, 5, None, "DRF1268DS"),
+                    ChannelData('2', 134, 'XL', 439762500, 114626, 16, 11, 5, None, "DRF1268DS"),
+                    ChannelData('3', 134, 'XL', 439812500, 114626, 16, 11, 5, None, "DRF1268DS"),
+                    ChannelData('4', 134, 'XL', 439862500, 114626, 16, 11, 5, None, "DRF1268DS"),
+                    ChannelData('5', 134, 'XL', 439912500, 114626, 16, 11, 5, None, "DRF1268DS"),
+                    ChannelData('6', 134, 'XL', 439962500, 114626, 16, 11, 5, None, "DRF1268DS"),
+                    ChannelData('1', 244, 'L', 439712500, 62950, 16, 10, 5, None, "DRF1268DS"),
+                    ChannelData('2', 244, 'L', 439762500, 62950, 16, 10, 5, None, "DRF1268DS"),
+                    ChannelData('3', 244, 'L', 439812500, 62950, 16, 10, 5, None, "DRF1268DS"),
+                    ChannelData('4', 244, 'L', 439862500, 62950, 16, 10, 5, None, "DRF1268DS"),
+                    ChannelData('5', 244, 'L', 439912500, 62950, 16, 10, 5, None, "DRF1268DS"),
+                    ChannelData('6', 244, 'L', 439962500, 62950, 16, 10, 5, None, "DRF1268DS"),
+                    ChannelData('1', 439, 'ML', 439712500, 34988, 16, 9, 5, None, "DRF1268DS"),
+                    ChannelData('2', 439, 'ML', 439762500, 34988, 16, 9, 5, None, "DRF1268DS"),
+                    ChannelData('3', 439, 'ML', 439812500, 34988, 16, 9, 5, None, "DRF1268DS"),
+                    ChannelData('4', 439, 'ML', 439862500, 34988, 16, 9, 5, None, "DRF1268DS"),
+                    ChannelData('5', 439, 'ML', 439912500, 34988, 16, 9, 5, None, "DRF1268DS"),
+                    ChannelData('6', 439, 'ML', 439962500, 34988, 16, 9, 5, None, "DRF1268DS"),
+                    ChannelData('1', 781, 'MS', 439712500, 19667, 16, 8, 5, None, "DRF1268DS"),
+                    ChannelData('2', 781, 'MS', 439762500, 19667, 16, 8, 5, None, "DRF1268DS"),
+                    ChannelData('3', 781, 'MS', 439812500, 19667, 16, 8, 5, None, "DRF1268DS"),
+                    ChannelData('4', 781, 'MS', 439862500, 19667, 16, 8, 5, None, "DRF1268DS"),
+                    ChannelData('5', 781, 'MS', 439912500, 19667, 16, 8, 5, None, "DRF1268DS"),
+                    ChannelData('6', 781, 'MS', 439962500, 19667, 16, 8, 5, None, "DRF1268DS"),
+                    ChannelData('1', 1367, 'S', 439712500, 11236, 16, 7, 5, None, "DRF1268DS"),
+                    ChannelData('2', 1367, 'S', 439762500, 11236, 16, 7, 5, None, "DRF1268DS"),
+                    ChannelData('3', 1367, 'S', 439812500, 11236, 16, 7, 5, None, "DRF1268DS"),
+                    ChannelData('4', 1367, 'S', 439862500, 11236, 16, 7, 5, None, "DRF1268DS"),
+                    ChannelData('5', 1367, 'S', 439912500, 11236, 16, 7, 5, None, "DRF1268DS"),
+                    ChannelData('6', 1367, 'S', 439962500, 11236, 16, 7, 5, None, "DRF1268DS"),
 
-                    ChannelData('HAM1', 73, 'UL', 439712500, 210410, 16, 12, 5, "DRF1268DS"),
-                    ChannelData('HAM2', 73, 'UL', 433787500, 210410, 16, 12, 5, "DRF1268DS"),
-                    ChannelData('HAM3', 73, 'UL', 433837500, 210410, 16, 12, 5, "DRF1268DS"),
-                    ChannelData('HAM4', 73, 'UL', 433887500, 210410, 16, 12, 5, "DRF1268DS"),
-                    ChannelData('HAM5', 73, 'UL', 433937500, 210410, 16, 12, 5, "DRF1268DS"),
+                    ChannelData('HAM1', 73, 'UL', 439712500, 210410, 16, 12, 5, None, "DRF1268DS"),
+                    ChannelData('HAM2', 73, 'UL', 433787500, 210410, 16, 12, 5, None, "DRF1268DS"),
+                    ChannelData('HAM3', 73, 'UL', 433837500, 210410, 16, 12, 5, None, "DRF1268DS"),
+                    ChannelData('HAM4', 73, 'UL', 433887500, 210410, 16, 12, 5, None, "DRF1268DS"),
+                    ChannelData('HAM5', 73, 'UL', 433937500, 210410, 16, 12, 5, None, "DRF1268DS"),
 
-                    ChannelData('HAM1', 134, 'XL', 433737500, 114626, 16, 11, 5, "DRF1268DS"),
-                    ChannelData('HAM2', 134, 'XL', 433787500, 114626, 16, 11, 5, "DRF1268DS"),
-                    ChannelData('HAM3', 134, 'XL', 433837500, 114626, 16, 11, 5, "DRF1268DS"),
-                    ChannelData('HAM4', 134, 'XL', 433887500, 114626, 16, 11, 5, "DRF1268DS"),
-                    ChannelData('HAM5', 134, 'XL', 433937500, 114626, 16, 11, 5, "DRF1268DS"),
+                    ChannelData('HAM1', 134, 'XL', 433737500, 114626, 16, 11, 5, None, "DRF1268DS"),
+                    ChannelData('HAM2', 134, 'XL', 433787500, 114626, 16, 11, 5, None, "DRF1268DS"),
+                    ChannelData('HAM3', 134, 'XL', 433837500, 114626, 16, 11, 5, None, "DRF1268DS"),
+                    ChannelData('HAM4', 134, 'XL', 433887500, 114626, 16, 11, 5, None, "DRF1268DS"),
+                    ChannelData('HAM5', 134, 'XL', 433937500, 114626, 16, 11, 5, None, "DRF1268DS"),
 
-                    ChannelData('HAM1', 244, 'L', 433737500, 62950, 16, 10, 5, "DRF1268DS"),
-                    ChannelData('HAM2', 244, 'L', 433787500, 62950, 16, 10, 5, "DRF1268DS"),
-                    ChannelData('HAM3', 244, 'L', 433837500, 62950, 16, 10, 5, "DRF1268DS"),
-                    ChannelData('HAM4', 244, 'L', 433887500, 62950, 16, 10, 5, "DRF1268DS"),
-                    ChannelData('HAM5', 244, 'L', 433937500, 62950, 16, 10, 5, "DRF1268DS"),
+                    ChannelData('HAM1', 244, 'L', 433737500, 62950, 16, 10, 5, None, "DRF1268DS"),
+                    ChannelData('HAM2', 244, 'L', 433787500, 62950, 16, 10, 5, None, "DRF1268DS"),
+                    ChannelData('HAM3', 244, 'L', 433837500, 62950, 16, 10, 5, None, "DRF1268DS"),
+                    ChannelData('HAM4', 244, 'L', 433887500, 62950, 16, 10, 5, None, "DRF1268DS"),
+                    ChannelData('HAM5', 244, 'L', 433937500, 62950, 16, 10, 5, None, "DRF1268DS"),
 
-                    ChannelData('HAM1', 439, 'ML', 433737500, 34988, 16, 9, 5, "DRF1268DS"),
-                    ChannelData('HAM2', 439, 'ML', 433787500, 34988, 16, 9, 5, "DRF1268DS"),
-                    ChannelData('HAM3', 439, 'ML', 433837500, 34988, 16, 9, 5, "DRF1268DS"),
-                    ChannelData('HAM4', 439, 'ML', 433887500, 34988, 16, 9, 5, "DRF1268DS"),
-                    ChannelData('HAM5', 439, 'ML', 433937500, 34988, 16, 9, 5, "DRF1268DS"),
+                    ChannelData('HAM1', 439, 'ML', 433737500, 34988, 16, 9, 5, None, "DRF1268DS"),
+                    ChannelData('HAM2', 439, 'ML', 433787500, 34988, 16, 9, 5, None,  "DRF1268DS"),
+                    ChannelData('HAM3', 439, 'ML', 433837500, 34988, 16, 9, 5, None, "DRF1268DS"),
+                    ChannelData('HAM4', 439, 'ML', 433887500, 34988, 16, 9, 5, None, "DRF1268DS"),
+                    ChannelData('HAM5', 439, 'ML', 433937500, 34988, 16, 9, 5, None, "DRF1268DS"),
 
-                    ChannelData('HAM1', 781, 'MS', 433737500, 19667, 16, 8, 5, "DRF1268DS"),
-                    ChannelData('HAM2', 781, 'MS', 433787500, 19667, 16, 8, 5, "DRF1268DS"),
-                    ChannelData('HAM3', 781, 'MS', 433837500, 19667, 16, 8, 5, "DRF1268DS"),
-                    ChannelData('HAM4', 781, 'MS', 433887500, 19667, 16, 8, 5, "DRF1268DS"),
-                    ChannelData('HAM5', 781, 'MS', 433937500, 19667, 16, 8, 5, "DRF1268DS"),
+                    ChannelData('HAM1', 781, 'MS', 433737500, 19667, 16, 8, 5, None, "DRF1268DS"),
+                    ChannelData('HAM2', 781, 'MS', 433787500, 19667, 16, 8, 5, None, "DRF1268DS"),
+                    ChannelData('HAM3', 781, 'MS', 433837500, 19667, 16, 8, 5, None, "DRF1268DS"),
+                    ChannelData('HAM4', 781, 'MS', 433887500, 19667, 16, 8, 5, None, "DRF1268DS"),
+                    ChannelData('HAM5', 781, 'MS', 433937500, 19667, 16, 8, 5, None, "DRF1268DS"),
 
-                    ChannelData('HAM1', 1367, 'S', 433737500, 11236, 16, 7, 5, "DRF1268DS"),
-                    ChannelData('HAM2', 1367, 'S', 433787500, 11236, 16, 7, 5, "DRF1268DS"),
-                    ChannelData('HAM3', 1367, 'S', 433837500, 11236, 16, 7, 5, "DRF1268DS"),
-                    ChannelData('HAM4', 1367, 'S', 433887500, 11236, 16, 7, 5, "DRF1268DS"),
-                    ChannelData('HAM5', 1367, 'S', 433937500, 11236, 16, 7, 5, "DRF1268DS"),
+                    ChannelData('HAM1', 1367, 'S', 433737500, 11236, 16, 7, 5, None, "DRF1268DS"),
+                    ChannelData('HAM2', 1367, 'S', 433787500, 11236, 16, 7, 5, None, "DRF1268DS"),
+                    ChannelData('HAM3', 1367, 'S', 433837500, 11236, 16, 7, 5, None, "DRF1268DS"),
+                    ChannelData('HAM4', 1367, 'S', 433887500, 11236, 16, 7, 5, None, "DRF1268DS"),
+                    ChannelData('HAM5', 1367, 'S', 433937500, 11236, 16, 7, 5, None,  "DRF1268DS"),
 
+                    ChannelData('1', 73, 'UL', 439712500, 210410, 16, 12, 7, True, "RAK3172"),
+                    ChannelData('2', 73, 'UL', 439762500, 210410, 16, 12, 7, True,"RAK3172"),
+                    ChannelData('3', 73, 'UL', 439812500, 210410, 16, 12, 7, True,"RAK3172"),
+                    ChannelData('4', 73, 'UL', 439862500, 210410, 16, 12, 7, True,"RAK3172"),
+                    ChannelData('5', 73, 'UL', 439912500, 210410, 16, 12, 7, True,"RAK3172"),
+                    ChannelData('6', 73, 'UL', 439962500, 210410, 16, 12, 7, True,"RAK3172"),
+                    ChannelData('1', 134, 'XL', 439712500, 114626, 16, 11, 7, True,"RAK3172"),
+                    ChannelData('2', 134, 'XL', 439762500, 114626, 16, 11, 7, True,"RAK3172"),
+                    ChannelData('3', 134, 'XL', 439812500, 114626, 16, 11, 7, True,"RAK3172"),
+                    ChannelData('4', 134, 'XL', 439862500, 114626, 16, 11, 7, True,"RAK3172"),
+                    ChannelData('5', 134, 'XL', 439912500, 114626, 16, 11, 7, True,"RAK3172"),
+                    ChannelData('6', 134, 'XL', 439962500, 114626, 16, 11, 7, True,"RAK3172"),
+                    ChannelData('1', 244, 'L', 439712500, 62950, 16, 10, 7, True,"RAK3172"),
+                    ChannelData('2', 244, 'L', 439762500, 62950, 16, 10, 7, True,"RAK3172"),
+                    ChannelData('3', 244, 'L', 439812500, 62950, 16, 10, 7, True,"RAK3172"),
+                    ChannelData('4', 244, 'L', 439862500, 62950, 16, 10, 7, True,"RAK3172"),
+                    ChannelData('5', 244, 'L', 439912500, 62950, 16, 10, 7, True,"RAK3172"),
+                    ChannelData('6', 244, 'L', 439962500, 62950, 16, 10, 7, True,"RAK3172"),
+                    ChannelData('1', 439, 'ML', 439712500, 34988, 16, 9, 7, True,"RAK3172"),
+                    ChannelData('2', 439, 'ML', 439762500, 34988, 16, 9, 7, True,"RAK3172"),
+                    ChannelData('3', 439, 'ML', 439812500, 34988, 16, 9, 7, True,"RAK3172"),
+                    ChannelData('4', 439, 'ML', 439862500, 34988, 16, 9, 7, True,"RAK3172"),
+                    ChannelData('5', 439, 'ML', 439912500, 34988, 16, 9, 7, True,"RAK3172"),
+                    ChannelData('6', 439, 'ML', 439962500, 34988, 16, 9, 7, True,"RAK3172"),
+                    ChannelData('1', 781, 'MS', 439712500, 19667, 16, 8, 7, True,"RAK3172"),
+                    ChannelData('2', 781, 'MS', 439762500, 19667, 16, 8, 7, True,"RAK3172"),
+                    ChannelData('3', 781, 'MS', 439812500, 19667, 16, 8, 7, True,"RAK3172"),
+                    ChannelData('4', 781, 'MS', 439862500, 19667, 16, 8, 7, True,"RAK3172"),
+                    ChannelData('5', 781, 'MS', 439912500, 19667, 16, 8, 7, True,"RAK3172"),
+                    ChannelData('6', 781, 'MS', 439962500, 19667, 16, 8, 7, True,"RAK3172"),
+                    ChannelData('1', 1367, 'S', 439712500, 11236, 16, 7, 7, True,"RAK3172"),
+                    ChannelData('2', 1367, 'S', 439762500, 11236, 16, 7, 7, True,"RAK3172"),
+                    ChannelData('3', 1367, 'S', 439812500, 11236, 16, 7, 7, True,"RAK3172"),
+                    ChannelData('4', 1367, 'S', 439862500, 11236, 16, 7, 7, True,"RAK3172"),
+                    ChannelData('5', 1367, 'S', 439912500, 11236, 16, 7, 7, True,"RAK3172"),
+                    ChannelData('6', 1367, 'S', 439962500, 11236, 16, 7, 7, True,"RAK3172"),
 
+                    ChannelData('HAM1', 73, 'UL', 439712500, 210410, 16, 12, 7, True,"RAK3172"),
+                    ChannelData('HAM2', 73, 'UL', 433787500, 210410, 16, 12, 7, True,"RAK3172"),
+                    ChannelData('HAM3', 73, 'UL', 433837500, 210410, 16, 12, 7, True,"RAK3172"),
+                    ChannelData('HAM4', 73, 'UL', 433887500, 210410, 16, 12, 7, True,"RAK3172"),
+                    ChannelData('HAM5', 73, 'UL', 433937500, 210410, 16, 12, 7, True,"RAK3172"),
 
+                    ChannelData('HAM1', 134, 'XL', 433737500, 114626, 16, 11, 7, True,"RAK3172"),
+                    ChannelData('HAM2', 134, 'XL', 433787500, 114626, 16, 11, 7, True,"RAK3172"),
+                    ChannelData('HAM3', 134, 'XL', 433837500, 114626, 16, 11, 7, True,"RAK3172"),
+                    ChannelData('HAM4', 134, 'XL', 433887500, 114626, 16, 11, 7, True,"RAK3172"),
+                    ChannelData('HAM5', 134, 'XL', 433937500, 114626, 16, 11, 7, True,"RAK3172"),
+
+                    ChannelData('HAM1', 244, 'L', 433737500, 62950, 16, 10, 7, True,"RAK3172"),
+                    ChannelData('HAM2', 244, 'L', 433787500, 62950, 16, 10, 7, True,"RAK3172"),
+                    ChannelData('HAM3', 244, 'L', 433837500, 62950, 16, 10, 7, True,"RAK3172"),
+                    ChannelData('HAM4', 244, 'L', 433887500, 62950, 16, 10, 7, True,"RAK3172"),
+                    ChannelData('HAM5', 244, 'L', 433937500, 62950, 16, 10, 7, True,"RAK3172"),
+
+                    ChannelData('HAM1', 439, 'ML', 433737500, 34988, 16, 9, 7, True,"RAK3172"),
+                    ChannelData('HAM2', 439, 'ML', 433787500, 34988, 16, 9, 7, True,"RAK3172"),
+                    ChannelData('HAM3', 439, 'ML', 433837500, 34988, 16, 9, 7, True,"RAK3172"),
+                    ChannelData('HAM4', 439, 'ML', 433887500, 34988, 16, 9, 7, True,"RAK3172"),
+                    ChannelData('HAM5', 439, 'ML', 433937500, 34988, 16, 9, 7, True,"RAK3172"),
+
+                    ChannelData('HAM1', 781, 'MS', 433737500, 19667, 16, 8, 7, True,"RAK3172"),
+                    ChannelData('HAM2', 781, 'MS', 433787500, 19667, 16, 8, 7, True,"RAK3172"),
+                    ChannelData('HAM3', 781, 'MS', 433837500, 19667, 16, 8, 7, True,"RAK3172"),
+                    ChannelData('HAM4', 781, 'MS', 433887500, 19667, 16, 8, 7, True,"RAK3172"),
+                    ChannelData('HAM5', 781, 'MS', 433937500, 19667, 16, 8, 7, True,"RAK3172"),
+
+                    ChannelData('HAM1', 1367, 'S', 433737500, 11236, 16, 7, 7, True,"RAK3172"),
+                    ChannelData('HAM2', 1367, 'S', 433787500, 11236, 16, 7, 7, True,"RAK3172"),
+                    ChannelData('HAM3', 1367, 'S', 433837500, 11236, 16, 7, 7, True,"RAK3172"),
+                    ChannelData('HAM4', 1367, 'S', 433887500, 11236, 16, 7, 7, True,"RAK3172"),
+                    ChannelData('HAM5', 1367, 'S', 433937500, 11236, 16, 7, 7, True,"RAK3172"),
                     ]
-        # =========================      RF1276T      ==============================
 
-        #  ======================
-        #                     channel, datarate, freq, slopek, M, rffactor, rfBw, loramodem
-
-        for channel in channels:
-            cls.save_channel(channel)
+            for channel in channels:
+                cls.save_channel(channel)
+            DatabaseHelper.WiRocLogger.debug("DatabaseHelper::add_default_channels() Channels added")
+        else:
+            DatabaseHelper.WiRocLogger.debug("DatabaseHelper::add_default_channels() Channels already exists")
 
     # BluetoothSerialPortData
     @classmethod

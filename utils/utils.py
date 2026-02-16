@@ -222,6 +222,16 @@ class Utils:
         return "(Not printed in this logging level)"
 
     @staticmethod
+    def GetDataInHexUpperCase(data):
+        dataInHex = ''.join(format(x, '02X') for x in data)
+        return dataInHex
+
+    @staticmethod
+    def GetByteArrayFromHex(hexString):
+        dataInHex = bytearray.fromhex(hexString)
+        return dataInHex
+
+    @staticmethod
     def GetShouldDropMessage(dropPercentage):
         return random.choices([True, False], weights=[dropPercentage, 100-dropPercentage], k=1)[0]
 
