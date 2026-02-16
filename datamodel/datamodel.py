@@ -48,7 +48,7 @@ class ChannelData(object):
         self.M: int | None = M
         self.RfFactor: int | None = RfFactor
         self.RfBw: int | None = RfBw
-        self.LowDatarateOptimize: int | None = LowDatarateOptimize
+        self.LowDatarateOptimize: bool | None = LowDatarateOptimize
         self.LoraModem: str | None = LoraModem
 
 

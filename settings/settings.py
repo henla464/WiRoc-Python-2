@@ -411,7 +411,7 @@ class SettingsClass(object):
         sett = DatabaseHelper.get_setting_by_key('CodeRate')
         if sett is None:
             SettingsClass.SetSetting("CodeRate", str(0x00))
-            return False
+            return 0
         return int(sett.Value)
 
     @staticmethod

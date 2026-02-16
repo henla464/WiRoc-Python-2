@@ -165,7 +165,7 @@ class LoraRadioDRF1268DS_RS:
         self.acksReceivedSinceLastMessageSent: int = 0
         self.runningAveragePercentageAcked: float = 0.5
         self.hardwareAbstraction: HardwareAbstraction = hardwareAbstraction
-        self.loraRadioDataHandler: LoraRadioDataHandler = LoraRadioDataHandler(True)
+        self.loraRadioDataHandler: LoraRadioDataHandler = LoraRadioDataHandler(1)
         self.ackReceivedMatchingLastSentMessage: bool = True
         self.serialLock: threading.Lock = threading.Lock()
 

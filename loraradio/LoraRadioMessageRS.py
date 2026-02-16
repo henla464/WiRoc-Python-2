@@ -35,7 +35,7 @@ class LoraRadioMessageRS(object):
         self.repeater: bool = False
         self.payloadData: bytearray = bytearray()
         self.rsCodeData: bytearray = bytearray()
-        self.rssiByteArray: bytearray = bytearray()
+        self.rssiValue: int | None = None
 
     @staticmethod
     def GetLoraMessageTimeSendingTimeSByMessageType(messageType: int) -> float:
@@ -77,20 +77,14 @@ class LoraRadioMessageRS(object):
     def GetRepeater(self) -> bool:
         return self.repeater
 
-    def SetRSSIByte(self, rssiByte: int|None):
-        if rssiByte is None:
-            self.rssiByteArray = bytearray()
-            return
-        if len(self.rssiByteArray) > 0:
-            self.rssiByteArray[0] = rssiByte
-        else:
-            self.rssiByteArray.append(rssiByte)
+    def SetRSSIValue(self, rssiValue: int|None):
+        self.rssiValue = rssiValue
 
     def GetRSSIValue(self) -> int:
-        if len(self.rssiByteArray) > 0:
-            return self.rssiByteArray[0]
-        else:
+        if self.rssiValue is None:
             return 0
+        else:
+            return self.rssiValue
 
     def SetHeader(self, headerData: bytearray):
         self.ackRequest = (headerData[0] & 0x80) > 0
