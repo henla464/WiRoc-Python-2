@@ -8,7 +8,6 @@ import logging
 import requests
 import json
 
-
 class SendStatusAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
     Instances = []

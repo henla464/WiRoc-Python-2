@@ -169,7 +169,7 @@ class LoraRadioDRF1268DS_RS:
         self.ackReceivedMatchingLastSentMessage: bool = True
         self.serialLock: threading.Lock = threading.Lock()
 
-    def GetIsInitialized(self, channel: str, loraRange: str, loraPower: int, codeRate: int, rxGain: bool, enabled: bool) -> bool:
+    def GetIsInitialized(self, channel: str, loraRange: str, loraPower: int, codeRate: int, crcOn: bool, rxGain: bool, drf1268dsCompatModeEnabled: bool, enabled: bool) -> bool:
         return self.isInitialized and \
                 channel == self.channel and \
                 loraPower == self.loraPower and \
@@ -294,7 +294,7 @@ class LoraRadioDRF1268DS_RS:
         readParameterResp[6] = channelNumber
         readParameterResp[11] = channelData.RfFactor
         readParameterResp[12] = channelData.RfBw # 0x05 = Bandwidth 31,25kHz
-        readParameterResp[13] = codeRate
+        readParameterResp[13] = codeRate -1 if codeRate > 0 else codeRate  # code rate 4/4 (no hamming code) not available on this chip. 0 instead means 4/5
         readParameterResp[14] = loraPower
         if rxGain:
             readParameterResp[23] |= 0x81  # ID / Rx Gain enable
@@ -330,7 +330,7 @@ class LoraRadioDRF1268DS_RS:
             loraModuleParameters.StopBit = readParameterResp[10]
             loraModuleParameters.SpreadingFactor = readParameterResp[11]
             loraModuleParameters.Bandwidth = readParameterResp[12]
-            loraModuleParameters.CodeRate = readParameterResp[13]
+            loraModuleParameters.CodeRate = readParameterResp[13] + 1  # code rate 4/4 doesnt exist in this module, 0 in module means 4/5
             loraModuleParameters.TransmitPower = readParameterResp[14]
             loraModuleParameters.TransmitFrequency = struct.unpack_from(">I", bytes(readParameterResp[15:]))[0]
             loraModuleParameters.ReceiveFrequency = struct.unpack_from(">I", bytes(readParameterResp[19:]))[0]
@@ -373,7 +373,7 @@ class LoraRadioDRF1268DS_RS:
         # clear any lora config error code
         self.SetErrorCode(code, "")
 
-    def Init(self, channel: str, loraRange: str, loraPower: int, codeRate: int, rxGain: bool, enabled: bool):
+    def Init(self, channel: str, loraRange: str, loraPower: int, codeRate: int, crcOn: bool, rxGain: bool, drf1268dsCompatModeEnabled: bool, enabled: bool):
         LoraRadioDRF1268DS_RS.WiRocLogger.info(
             f"LoraRadioDRF1268DS_RS::Init() Port name: {self.portName} Channel: {channel} "
             f"LoraRange {loraRange} LoraPower: {loraPower} CodeRate: {codeRate} "

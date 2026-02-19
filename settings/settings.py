@@ -424,6 +424,15 @@ class SettingsClass(object):
         return sett.Value == "1"
 
     @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetDRF1268CompatModeEnabled'), lock=rlock)
+    def GetDRF1268CompatModeEnabled() -> bool:
+        sett = DatabaseHelper.get_setting_by_key('DRF1268CompatModeEnabled')
+        if sett is None:
+            SettingsClass.SetSetting("DRF1268CompatModeEnabled", "1")
+            return False
+        return sett.Value == "1"
+
+    @staticmethod
     @cached(cache, key=partial(hashkey, 'GetAcknowledgementRequested'), lock=rlock)
     def GetAcknowledgementRequested():
         sett = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')

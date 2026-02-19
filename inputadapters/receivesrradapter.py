@@ -8,7 +8,7 @@ import time
 from datamodel.db_helper import DatabaseHelper
 from utils.utils import Utils
 from .inputdatadict import InputDataDict
-
+import random
 
 class ReceiveSRRAdapter(object):
     Instances = []
@@ -107,6 +107,9 @@ class ReceiveSRRAdapter(object):
     def ShouldBeInitialized(self) -> bool:
         return not self.GetIsInitialized()
 
+    def GetRandomBluetoothAddress(self) -> str:
+        return ":".join(f"{random.randint(0, 255):02X}" for _ in range(6))
+
     def Init(self) -> bool:
         if self.GetIsInitialized():
             return True
@@ -120,6 +123,9 @@ class ReceiveSRRAdapter(object):
             # The SRR receiver/sender should have a unique serialno. This is used as the sender id in messages.
             # The lower four bytes of the BT Address should be unique enough.
             btAddress: str = SettingsClass.GetBTAddress()
+            if btAddress == "NoBTAddress":
+                # random one should be fine here
+                btAddress = self.GetRandomBluetoothAddress()
             srrSerialNoByte0 = int(btAddress[15:17], 16)
             srrSerialNoByte1 = int(btAddress[12:14], 16)
             srrSerialNoByte2 = int(btAddress[9:11], 16)

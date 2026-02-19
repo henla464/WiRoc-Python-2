@@ -85,7 +85,9 @@ class ReceiveLoraAdapter(object):
         loraPower = SettingsClass.GetLoraPower()
         codeRate = SettingsClass.GetCodeRate()
         rxGain = SettingsClass.GetRxGainEnabled()
-        return self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, enabled)
+        crcOn = False  # Is ignored by DRF1268DRF
+        drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268CompatModeEnabled()
+        return self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, crcOn, rxGain, drf1268dsCompatModeEnabled, enabled)
 
     def ShouldBeInitialized(self) -> bool:
         enabled: bool = SettingsClass.GetLoraEnabled()
@@ -94,7 +96,9 @@ class ReceiveLoraAdapter(object):
         loraPower: int = SettingsClass.GetLoraPower()
         codeRate: int = SettingsClass.GetCodeRate()
         rxGain: bool = SettingsClass.GetRxGainEnabled()
-        return not self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, enabled)
+        crcOn = False  # Is ignored by DRF1268DRF
+        drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268CompatModeEnabled()
+        return not self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, crcOn, rxGain, drf1268dsCompatModeEnabled, enabled)
 
     def Init(self) -> bool:
         enabled: bool = SettingsClass.GetLoraEnabled()
@@ -103,9 +107,11 @@ class ReceiveLoraAdapter(object):
         loraPower: int = SettingsClass.GetLoraPower()
         codeRate: int = SettingsClass.GetCodeRate()
         rxGain: bool = SettingsClass.GetRxGainEnabled()
-        if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, enabled):
+        crcOn = False  # Is ignored by DRF1268DRF
+        drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268CompatModeEnabled()
+        if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, crcOn, rxGain, drf1268dsCompatModeEnabled, enabled):
             return True
-        return self.loraRadio.Init(channel, loraRange, loraPower, codeRate, rxGain, enabled)
+        return self.loraRadio.Init(channel, loraRange, loraPower, codeRate, crcOn, rxGain, drf1268dsCompatModeEnabled, enabled)
 
     def UpdateInfrequently(self):
         return True
