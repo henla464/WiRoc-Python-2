@@ -22,9 +22,9 @@ class LoraRadioRAK3172:
     LoraModuleParameters: LoraParametersRAK3172 = None
 
     # Send Data
-    SendLORADataCmd = "AT+PSEND={data}\r"
+    SendLORADataCmd = "ATC+SEND={data}\r"
     SendLORADataCmd_ExpectedResponseStart1 = "OK"
-    SendLORADataCmd_ExpectedResponseStart2 = "+EVT:TXP2P DONE"
+    SendLORADataCmd_ExpectedResponseStart2 = "BU"
 
     # Receive Data
     ReceiveLORADataCmd = "ATC+REC=?\r"

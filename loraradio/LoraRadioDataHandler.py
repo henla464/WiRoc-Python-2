@@ -989,7 +989,7 @@ class LoraRadioDataHandler(object):
             ackMsg.AddPayload(bytearray([hash0, hash1]))
             ackMsg.AddPayload(bytearray([hash0, hash1]))
             ackMsg.AddPayload(bytearray([hash0, hash1]))
-            ackMsg.SetrssiValue(rssiValue)
+            ackMsg.SetRSSIValue(rssiValue)
             LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetAckMessage() Ack found, At least two of the three CRC0 are same, and at least two of the three CRC1 are same")
             return ackMsg
         else:
@@ -1044,7 +1044,7 @@ class LoraRadioDataHandler(object):
                 loraAckMessage.AddPayload(expectedMessageID)
                 loraAckMessage.AddPayload(expectedMessageID)
                 loraAckMessage.AddPayload(expectedMessageID)
-                loraAckMessage.SetrssiValue(rssiValue)
+                loraAckMessage.SetRSSIValue(rssiValue)
                 return loraAckMessage
             else:
                 LoraRadioDataHandler.WiRocLogger.error("LoraRadioDataHandler::_GetAckMessage() No message could be decoded. Selecting best 4bit groups resulted in " + str(noOfBitErrors) + " bit errors compared to expected CRC")
