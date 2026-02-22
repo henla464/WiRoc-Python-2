@@ -13,11 +13,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="22423968-cdc8-408a-8f9a-f776c9e32777" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/RadioBaseUnit.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/RadioBaseUnit.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/chipGPIO/hardwareAbstraction.py" beforeDir="false" afterPath="$PROJECT_DIR$/chipGPIO/hardwareAbstraction.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loraradio/LoraRadioDataHandler.py" beforeDir="false" afterPath="$PROJECT_DIR$/loraradio/LoraRadioDataHandler.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/loraradio/LoraRadioRAK3172.py" beforeDir="false" afterPath="$PROJECT_DIR$/loraradio/LoraRadioRAK3172.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

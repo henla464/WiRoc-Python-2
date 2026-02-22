@@ -399,44 +399,45 @@ class LoraRadioRAK3172:
             #    return None
             # Should probably add a dataavailable line in addition to lora aux
             # LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::GetRadioData() data to fetch")
+            if self.hardwareAbstraction.GetLORAIRQValue():
+                allReceivedData = bytearray()
+                # Let's wait a little so that the full message is available to be read from serial.
+                self.radioSerial.write(LoraRadioRAK3172.ReceiveLORADataCmd.encode("ascii"))
+                self.WaitForSerialUpToTimeMS(100)
+                while self.radioSerial.in_waiting > 0:
+                    bytesRead = self.radioSerial.read(1)
+                    allReceivedData.append(bytesRead[0])
 
-            allReceivedData = bytearray()
-            # Let's wait a little so that the full message is available to be read from serial.
-            self.radioSerial.write(LoraRadioRAK3172.ReceiveLORADataCmd.encode("ascii"))
-            self.WaitForSerialUpToTimeMS(100)
-            while self.radioSerial.in_waiting > 0:
-                bytesRead = self.radioSerial.read(1)
-                allReceivedData.append(bytesRead[0])
-
-            returnStatus = allReceivedData[0:2]
-            if returnStatus == "EM".encode("ascii"):
-                # No data to fetch
-                return None
-            elif returnStatus == "OK".encode("ascii"):
-                if len(allReceivedData) < 6:
-                    LoraRadioRAK3172.WiRocLogger.debug(
-                        "LoraRadioRAK3172::GetRadioData() data fetched, too short: " + Utils.GetDataInHex(allReceivedData,
-                                                                                               loggingLevel=logging.DEBUG))
+                returnStatus = allReceivedData[0:2]
+                if returnStatus == "EM".encode("ascii"):
+                    # No data to fetch
                     return None
-                receivedMsgData = allReceivedData[2:]
-                if receivedMsgData[-1] == 0x0A:
-                    receivedMsgData = receivedMsgData[0:-1]
-                if receivedMsgData[-1] == 0x0D:
-                    receivedMsgData = receivedMsgData[0:-1]
-                # remove NetID
-                receivedMsgData = receivedMsgData[1:]
-                # remove SNR and Status
-                # Status. 0=Rx Done, 1=rx timeout 2=rx error ie crc error
-                receivedMsgData = receivedMsgData[0:-2]
+                elif returnStatus == "OK".encode("ascii"):
+                    if len(allReceivedData) < 6:
+                        LoraRadioRAK3172.WiRocLogger.debug(
+                            "LoraRadioRAK3172::GetRadioData() data fetched, too short: " + Utils.GetDataInHex(allReceivedData,
+                                                                                                   loggingLevel=logging.DEBUG))
+                        return None
+                    receivedMsgData = allReceivedData[2:]
+                    if receivedMsgData[-1] == 0x0A:
+                        receivedMsgData = receivedMsgData[0:-1]
+                    if receivedMsgData[-1] == 0x0D:
+                        receivedMsgData = receivedMsgData[0:-1]
+                    # remove NetID
+                    receivedMsgData = receivedMsgData[1:]
+                    # remove SNR and Status
+                    # Status. 0=Rx Done, 1=rx timeout 2=rx error ie crc error
+                    receivedMsgData = receivedMsgData[0:-2]
 
-                self.loraRadioDataHandler.AddData(receivedMsgData)
-                LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::GetRadioData() data fetched: " + Utils.GetDataInHex(receivedMsgData,loggingLevel=logging.DEBUG))
+                    self.loraRadioDataHandler.AddData(receivedMsgData)
+                    LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::GetRadioData() data fetched: " + Utils.GetDataInHex(receivedMsgData,loggingLevel=logging.DEBUG))
 
-            msg = self.loraRadioDataHandler.GetMessage()
+                msg = self.loraRadioDataHandler.GetMessage()
 
-            if msg is None:
-                LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::GetRadioData() No message found")
+                if msg is None:
+                    LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::GetRadioData() No message found")
 
-            return msg
+                return msg
+            return None
         finally:
             self.serialLock.release()

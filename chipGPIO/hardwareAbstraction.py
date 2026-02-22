@@ -31,6 +31,7 @@ class HardwareAbstraction(object):
         self.SRRnrstLine = None
         self.StatusLedLine = None
         self.LORARSLine = None
+        self.LORAirqLine = None
         self.isNewGpiod = None
 
         with open("../settings.yaml", "r") as f:
@@ -48,10 +49,10 @@ class HardwareAbstraction(object):
         chip1Path = "/dev/gpiochip1"
 
         self.PMUIRQLine = 3
-        self.LORAenableLine = 2
 
         if self.wirocHWVersion == 'v3Rev2':
             self.LORAauxLine = 0
+            self.LORAenableLine = 2
             self.StatusLedLine = 6
             self.line_request = gpiod.request_lines(chipPath, consumer="wirocpython", config={
                 self.LORAenableLine: gpiod.LineSettings(direction=Direction.OUTPUT),
@@ -64,6 +65,7 @@ class HardwareAbstraction(object):
             self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
             self.line_request.set_value(self.StatusLedLine, Value.ACTIVE)
         elif self.wirocHWVersion == 'v4Rev1' or self.wirocHWVersion == 'v5Rev1':
+            self.LORAenableLine = 2
             self.LORAM0Line = 17
             self.LORAauxLine = 64
 
@@ -76,6 +78,7 @@ class HardwareAbstraction(object):
             self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
             self.line_request.set_value(self.LORAM0Line, Value.INACTIVE)
         elif 6 <= self.wirocHWVersionNumber <= 7:
+            self.LORAenableLine = 2
             self.SRRirqLine = 6
             self.LORAM0Line = 17
             self.LORAauxLine = 64
@@ -91,13 +94,37 @@ class HardwareAbstraction(object):
             self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
             self.line_request.set_value(self.LORAM0Line, Value.ACTIVE)
             self.line_request.set_value(self.SRRnrstLine, Value.ACTIVE)
-        elif self.wirocHWVersionNumber >= 8:
+        elif self.wirocHWVersion == 'v8Rev1':
+            self.LORAenableLine = None
             self.LORAEnabledLineInverted = False
             self.SRRirqLine = 6
             self.LORAM0Line = None
             self.LORAauxLine = 64
             self.SRRnrstLine = 201
             self.LORARSLine = 11
+            self.LORAirqLine = 2
+            self.line_request = gpiod.request_lines(chipPath, consumer="wirocpython", config={
+                self.LORAirqLine: gpiod.LineSettings(direction=Direction.INPUT),
+                self.PMUIRQLine: gpiod.LineSettings(direction=Direction.INPUT),  # IRQ pin GPIOA3 Pin 15
+                self.SRRirqLine: gpiod.LineSettings(direction=Direction.INPUT),
+                # SRR_IRQ input interrupt message available (corresponds to pin 12 GPIOA6)
+                self.LORAauxLine: gpiod.LineSettings(direction=Direction.INPUT),  # lora aux pin (corresponds to pin 19)
+                self.SRRnrstLine: gpiod.LineSettings(direction=Direction.OUTPUT)  # SRR_NRST reset SRR (GPIOG9)
+            })
+            self.line_request_gpiochip1 = gpiod.request_lines(chip1Path, consumer="wirocpython", config={
+                self.LORARSLine: gpiod.LineSettings(direction=Direction.OUTPUT)  # LoraRAK3172 reset
+            })
+            self.line_request_gpiochip1.set_value(self.LORARSLine, Value.ACTIVE)
+            self.line_request.set_value(self.SRRnrstLine, Value.ACTIVE)
+        elif self.wirocHWVersionNumber >= 8:
+            self.LORAenableLine = 2
+            self.LORAEnabledLineInverted = False
+            self.SRRirqLine = 6
+            self.LORAM0Line = None
+            self.LORAauxLine = 64
+            self.SRRnrstLine = 201
+            self.LORARSLine = None
+            self.LORAirqLine = 11
             self.line_request = gpiod.request_lines(chipPath, consumer="wirocpython", config={
                 self.LORAenableLine: gpiod.LineSettings(direction=Direction.OUTPUT),  # lora enable pin (corresponds to pin 13)
                 self.PMUIRQLine: gpiod.LineSettings(direction=Direction.INPUT),  # IRQ pin GPIOA3 Pin 15
@@ -106,9 +133,8 @@ class HardwareAbstraction(object):
                 self.SRRnrstLine: gpiod.LineSettings(direction=Direction.OUTPUT)  # SRR_NRST reset SRR (GPIOG9)
             })
             self.line_request_gpiochip1 = gpiod.request_lines(chip1Path, consumer="wirocpython", config={
-                self.LORARSLine: gpiod.LineSettings(direction=Direction.OUTPUT)         # LoraRAK3172 reset
+                self.LORAirqLine: gpiod.LineSettings(direction=Direction.INPUT)
             })
-            self.line_request_gpiochip1.set_value(self.LORARSLine, Value.ACTIVE)
             self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
             self.line_request.set_value(self.SRRnrstLine, Value.ACTIVE)
 
@@ -125,12 +151,14 @@ class HardwareAbstraction(object):
             self.line_request.set_value(self.LORARSLine, Value.ACTIVE)
 
     def EnableLora(self):
-        self.line_request.set_value(self.LORAenableLine, Value.INACTIVE if self.LORAEnabledLineInverted else Value.ACTIVE)
+        if self.LORAenableLine is not None:
+            self.line_request.set_value(self.LORAenableLine, Value.INACTIVE if self.LORAEnabledLineInverted else Value.ACTIVE)
         if self.LORAM0Line is not None:
             self.line_request.set_value(self.LORAM0Line, Value.INACTIVE)
 
     def DisableLora(self):
-        self.line_request.set_value(self.LORAenableLine, Value.ACTIVE if self.LORAEnabledLineInverted else Value.INACTIVE)
+        if self.LORAenableLine is not None:
+            self.line_request.set_value(self.LORAenableLine, Value.ACTIVE if self.LORAEnabledLineInverted else Value.INACTIVE)
         if self.LORAM0Line is not None:
             self.line_request.set_value(self.LORAM0Line, Value.ACTIVE)
 
@@ -145,6 +173,12 @@ class HardwareAbstraction(object):
     def GetSRRIRQValue(self):
         if self.SRRirqLine is not None:
             return self.line_request.get_value(self.SRRirqLine) == Value.ACTIVE
+        else:
+            return False
+
+    def GetLORAIRQValue(self):
+        if self.LORAirqLine is not None:
+            return self.line_request.get_value(self.LORAirqLine) == Value.ACTIVE
         else:
             return False
 
