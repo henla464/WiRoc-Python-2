@@ -84,7 +84,7 @@ class SendLoraAdapter(object):
     def __init__(self, instanceNumber, portName, hardwareAbstraction):
         self.instanceNumber = instanceNumber
         self.portName = portName
-        self.loraRadio = LoraRadioDRF1268DS_RS.GetInstance(portName, hardwareAbstraction)
+        self.loraRadio: LoraRadioDRF1268DS_RS | LoraRadioRAK3172
         if hardwareAbstraction.Instance.wirocHWVersionNumber <= 7:
             self.loraRadio: LoraRadioDRF1268DS_RS = LoraRadioDRF1268DS_RS.GetInstance(portName, hardwareAbstraction)
         else:
@@ -187,13 +187,14 @@ class SendLoraAdapter(object):
         rxGain = SettingsClass.GetRxGainEnabled()
         crcOn = False # Is ignored by DRF1268DRF
         drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268CompatModeEnabled()
+        sendAck = SettingsClass.GetLoraMode() == "RECEIVER"
         # set the AdapterInitialized to same value as loraRadios initialized
         # if loraRadio changes initialize value later we can detect this.
-        if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, crcOn, rxGain, drf1268dsCompatModeEnabled, enabled):
+        if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, crcOn, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled):
             SendLoraAdapter.Instances[0].AdapterInitialized = True
             return True
 
-        loraInitialized = self.loraRadio.Init(channel, loraRange, loraPower, codeRate, crcOn, rxGain, drf1268dsCompatModeEnabled, enabled)
+        loraInitialized = self.loraRadio.Init(channel, loraRange, loraPower, codeRate, crcOn, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled)
         SendLoraAdapter.Instances[0].AdapterInitialized = loraInitialized
         return loraInitialized
 

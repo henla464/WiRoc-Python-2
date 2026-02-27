@@ -46,7 +46,7 @@ class ReceiveTestPunchesAdapter(object):
 
     def GetData(self):
         self.TimeToFetchCounter += 1
-        if self.TimeToFetchCounter == 10:
+        if self.TimeToFetchCounter == 5:
             self.TimeToFetchCounter = 0
             punchToAdd = DatabaseHelper.get_test_punch_to_add()
             if punchToAdd is not None:

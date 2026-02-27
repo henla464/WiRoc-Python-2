@@ -495,6 +495,13 @@ if __name__ == '__main__':
                         filename='WiRoc.log',
                         filemode='a')
     logging.raiseExceptions = False
+    # monkey patch a verbose function
+    logging.VERBOSE = 5
+    logging.addLevelName(logging.VERBOSE, "VERBOSE")
+    logging.Logger.verbose = lambda inst, msg, *args, **kwargs: inst.log(logging.VERBOSE, msg, *args, **kwargs)
+    logging.LoggerAdapter.verbose = lambda inst, msg, *args, **kwargs: inst.log(logging.VERBOSE, msg, *args, **kwargs)
+    logging.verbose = lambda msg, *args, **kwargs: logging.log(logging.VERBOSE, msg, *args, **kwargs)
+
     # set a format which is simpler for console use
     formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
     rotFileHandler = logging.handlers.RotatingFileHandler('WiRoc.log', maxBytes=20000000, backupCount=5)

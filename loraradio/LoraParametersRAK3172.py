@@ -13,4 +13,6 @@ class LoraParametersRAK3172(object):
         self.LowDataRateOptimize: bool  | None = None
         self.CRCOn: bool | None = None
         self.RxGain: bool | None = None
+        self.Drf1268dsCompatMode: bool | None = None
+        self.SendAck: bool | None = None
         self.PayloadLength: int|None = None

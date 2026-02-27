@@ -143,7 +143,6 @@ class ReceiveLoraAdapter(object):
 
         if loraMessage is not None:
             receivedData = loraMessage.GetByteArray()
-            ackRequested = loraMessage.GetAckRequested()
             repeaterRequested = loraMessage.GetRepeater()
             # For testing purposes we can set SimulatedMessageDropPercentageRepeaterNotRequested and/or
             # SimulatedMessageDropPercentageRepeaterRequested to randomly drop a percentage of messages
@@ -185,7 +184,11 @@ class ReceiveLoraAdapter(object):
                 if loraMessage.GetBatteryLow():
                     SettingsClass.SetBatteryIsLowReceived(True)
 
-                if ackRequested and \
+                ackRequested = loraMessage.GetAckRequested()
+                ackAlreadySent = loraMessage.GetAckAlreadySent()
+                if ackAlreadySent:
+                    ReceiveLoraAdapter.WiRocLogger.debug("Lora message received, ack already sent. WiRocMode: " + SettingsClass.GetLoraMode())
+                elif ackRequested and \
                         ((SettingsClass.GetLoraMode() == "RECEIVER" and not repeaterRequested)
                          or (SettingsClass.GetLoraMode() == "REPEATER" and repeaterRequested)):
                     ReceiveLoraAdapter.WiRocLogger.debug(

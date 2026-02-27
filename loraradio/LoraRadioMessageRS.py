@@ -8,6 +8,14 @@ from utils.utils import Utils
 from battery import *
 from settings.settings import SettingsClass
 
+# inheritance hierarchy
+# LoraRadioMessageRS----> LoraRadioMessageReDCoSRS ------> LoraRadioMessagePunchReDCoSRS
+# 			\  \  \  \                                \ -> LoraRadioMessagePunchDoubleReDCoSRS
+# 			 \  \  \  \-> LoraRadioMessageAckRS
+# 			  \  \  \---> LoraRadioMessageStatusRS
+# 		       \  \-----> LoraRadioMessageStatus2RS
+#  		        \-------> LoraRadioMessageHAMCallSignRS
+
 
 class LoraRadioMessageRS(object):
     MessageTypeBitMask: int = 0b00011111
@@ -36,6 +44,8 @@ class LoraRadioMessageRS(object):
         self.payloadData: bytearray = bytearray()
         self.rsCodeData: bytearray = bytearray()
         self.rssiValue: int | None = None
+        self.snrValue: int | None = None
+        self.statusValue: int | None = None
 
     @staticmethod
     def GetLoraMessageTimeSendingTimeSByMessageType(messageType: int) -> float:
@@ -55,7 +65,7 @@ class LoraRadioMessageRS(object):
 
     def GetHash(self) -> bytearray:
         shake = hashlib.shake_128()
-        shake.update(self.payloadData)
+        shake.update(self.payloadData + self.rsCodeData)
         theHash = shake.digest(2)
         return bytearray(theHash)
 
@@ -71,6 +81,11 @@ class LoraRadioMessageRS(object):
     def GetAckRequested(self) -> bool:
         return self.ackRequest
 
+    def GetAckAlreadySent(self) -> bool:
+        if self.statusValue is None:
+            return False
+        return (self.statusValue & 0x80)>0
+
     def SetRepeater(self, reqRepeaterOrRepeaterAck: bool):
         self.repeater = reqRepeaterOrRepeaterAck
 
@@ -85,6 +100,24 @@ class LoraRadioMessageRS(object):
             return 0
         else:
             return self.rssiValue
+
+    def SetSNRValue(self, snrValue: int|None):
+        self.snrValue = snrValue
+
+    def GetSNRValue(self) -> int:
+        if self.snrValue is None:
+            return 0
+        else:
+            return self.snrValue
+
+    def SetStatusValue(self, statusValue: int|None):
+        self.statusValue = statusValue
+
+    def GetStatusValue(self) -> int:
+        if self.statusValue is None:
+            return 0
+        else:
+            return self.statusValue
 
     def SetHeader(self, headerData: bytearray):
         self.ackRequest = (headerData[0] & 0x80) > 0
@@ -462,7 +495,7 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
         loraPunchMessage1.AddPayload(firstArray)
         # loraPunchMessage.AddRSCode()
         if len(self.rssiByteArray) > 0:
-            loraPunchMessage1.SetRSSIByte(self.rssiByteArray[0])
+            loraPunchMessage1.SetRSSIValue(self.rssiByteArray[0])
         firstSIMessageByteArray = loraPunchMessage1.GetSIMessageByteArray()
 
         loraPunchMessage2 = LoraRadioMessagePunchReDCoSRS()
@@ -470,7 +503,7 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
         loraPunchMessage2.AddPayload(secondArray)
         # loraPunchMessage.AddRSCode()
         if len(self.rssiByteArray) > 0:
-            loraPunchMessage2.SetRSSIByte(self.rssiByteArray[0])
+            loraPunchMessage2.SetRSSIValue(self.rssiByteArray[0])
         secondSIMessageByteArray = loraPunchMessage2.GetSIMessageByteArray()
         return firstSIMessageByteArray, secondSIMessageByteArray
 
