@@ -15,16 +15,10 @@
     <list default="true" id="22423968-cdc8-408a-8f9a-f776c9e32777" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/inputadapters/receiveloraadapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/inputadapters/receiveloraadapter.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/inputadapters/receivetestpunchesadapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/inputadapters/receivetestpunchesadapter.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loraradio/LoraParametersRAK3172.py" beforeDir="false" afterPath="$PROJECT_DIR$/loraradio/LoraParametersRAK3172.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loraradio/LoraRadioDRF1268DS_RS.py" beforeDir="false" afterPath="$PROJECT_DIR$/loraradio/LoraRadioDRF1268DS_RS.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loraradio/LoraRadioDataHandler.py" beforeDir="false" afterPath="$PROJECT_DIR$/loraradio/LoraRadioDataHandler.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loraradio/LoraRadioMessageCreator.py" beforeDir="false" afterPath="$PROJECT_DIR$/loraradio/LoraRadioMessageCreator.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/loraradio/LoraRadioMessageRS.py" beforeDir="false" afterPath="$PROJECT_DIR$/loraradio/LoraRadioMessageRS.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/loraradio/LoraRadioRAK3172.py" beforeDir="false" afterPath="$PROJECT_DIR$/loraradio/LoraRadioRAK3172.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/start.py" beforeDir="false" afterPath="$PROJECT_DIR$/start.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/subscriberadapters/sendloraadapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/subscriberadapters/sendloraadapter.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/transforms/repeatersimessagetoloraacktransform.py" beforeDir="false" afterPath="$PROJECT_DIR$/transforms/repeatersimessagetoloraacktransform.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/subscriberadapters/sendmeshadapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/subscriberadapters/sendmeshadapter.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

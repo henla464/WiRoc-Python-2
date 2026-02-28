@@ -494,16 +494,14 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
         loraPunchMessage1.SetHeader(bytearray([header]))
         loraPunchMessage1.AddPayload(firstArray)
         # loraPunchMessage.AddRSCode()
-        if len(self.rssiByteArray) > 0:
-            loraPunchMessage1.SetRSSIValue(self.rssiByteArray[0])
+        loraPunchMessage1.SetRSSIValue(self.rssiValue)
         firstSIMessageByteArray = loraPunchMessage1.GetSIMessageByteArray()
 
         loraPunchMessage2 = LoraRadioMessagePunchReDCoSRS()
         loraPunchMessage2.SetHeader(bytearray([header]))
         loraPunchMessage2.AddPayload(secondArray)
         # loraPunchMessage.AddRSCode()
-        if len(self.rssiByteArray) > 0:
-            loraPunchMessage2.SetRSSIValue(self.rssiByteArray[0])
+        loraPunchMessage2.SetRSSIValue(self.rssiValue)
         secondSIMessageByteArray = loraPunchMessage2.GetSIMessageByteArray()
         return firstSIMessageByteArray, secondSIMessageByteArray
 

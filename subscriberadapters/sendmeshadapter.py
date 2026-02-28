@@ -71,19 +71,19 @@ class SendMeshAdapter(object):
         return self.isInitialized
 
     def ShouldBeInitialized(self) -> bool:
-        SendMeshAdapter.WiRocLogger.info(
+        SendMeshAdapter.WiRocLogger.verbose(
             f"SendMeshAdapter::ShouldBeInitialized() self.wifiMeshEnabled {self.wifiMeshEnabled}")
-        SendMeshAdapter.WiRocLogger.info(
+        SendMeshAdapter.WiRocLogger.verbose(
             f"SendMeshAdapter::ShouldBeInitialized() self.wifiMeshNetworkNameNumber {self.wifiMeshNetworkNameNumber}")
-        SendMeshAdapter.WiRocLogger.info(
+        SendMeshAdapter.WiRocLogger.verbose(
             f"SendMeshAdapter::ShouldBeInitialized() self.wifiMeshGatewayEnabled {self.wifiMeshGatewayEnabled}")
-        SendMeshAdapter.WiRocLogger.info(
+        SendMeshAdapter.WiRocLogger.verbose(
             f"SendMeshAdapter::ShouldBeInitialized() self.wifiMeshIPNetworkNumber {self.wifiMeshIPNetworkNumber}")
-        SendMeshAdapter.WiRocLogger.info(
+        SendMeshAdapter.WiRocLogger.verbose(
             f"SendMeshAdapter::ShouldBeInitialized() self.wifiMeshNodeNumber {self.wifiMeshNodeNumber}")
-        SendMeshAdapter.WiRocLogger.info(
+        SendMeshAdapter.WiRocLogger.verbose(
             f"SendMeshAdapter::ShouldBeInitialized() self.isInitialized {self.isInitialized}")
-        SendMeshAdapter.WiRocLogger.info(
+        SendMeshAdapter.WiRocLogger.verbose(
             f"SendMeshAdapter::ShouldBeInitialized() self.wifiMeshRouteToInterface {self.wifiMeshRouteToInterface}")
         if ((SettingsClass.GetWifiMeshEnabled() is True and
              self.wifiMeshEnabled and

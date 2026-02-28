@@ -423,6 +423,10 @@ class LoraRadioRAK3172:
         self.serialLock.acquire()
         try:
             if self.hardwareAbstraction.GetLORAIRQValue():
+                # clear the serial buffers
+                while self.radioSerial.in_waiting > 0:
+                    self.radioSerial.read(1)
+
                 allReceivedData = bytearray()
                 # Let's wait a little so that the full message is available to be read from serial.
                 self.radioSerial.write(LoraRadioRAK3172.ReceiveLORADataCmd.encode("ascii"))
