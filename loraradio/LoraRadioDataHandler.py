@@ -41,6 +41,9 @@ class LoraRadioDataHandler(object):
         else:
             self.DataReceived.append(dataByteOrArray)
 
+    def HasData(self) -> bool:
+       return len(self.DataReceived) > 0
+
     def _IsLongEnoughToBeMessage(self):
         return len(self.DataReceived) >= (min(LoraRadioMessageRS.MessageLengths) + self.rssiByteCount + self.SNRByteCount + self.StatusByteCount)
 
@@ -1181,6 +1184,7 @@ class LoraRadioDataHandler(object):
 
     def _GetLikelyMessageTypes(self):
         messageTypes = []
+        # Adds the message type in the header if that message type fits within the received data
         headerMessageType = LoraRadioDataHandler.GetHeaderMessageType(self.DataReceived)
         if headerMessageType in LoraRadioDataHandler.MessageTypesExpected:
             expectedMessageLength = LoraRadioMessageRS.MessageLengths[headerMessageType] + self.rssiByteCount + self.SNRByteCount + self.StatusByteCount
@@ -1189,10 +1193,12 @@ class LoraRadioDataHandler(object):
             elif len(self.DataReceived) > expectedMessageLength:
                 messageTypes.append(headerMessageType)
 
+        # Adds the message type(s) that exactly matches the current length of the data
         messageTypesByLength = self._GetMessageTypesByLength()
         for messageTypeByLength in messageTypesByLength:
             if messageTypeByLength not in messageTypes:
-                messageTypes.append(messageTypeByLength)
+                # try the one that matches by length first if there is also another that matches only by message type in header
+                messageTypes.insert(0, messageTypeByLength)
 
         return messageTypes
 

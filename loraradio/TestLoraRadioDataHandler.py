@@ -32,6 +32,7 @@ def max_execution_time(max_time):
         return wrapper
     return decorator
 
+
 class TestLoraRadioDataHandler(unittest.TestCase):
 
     # Message: 8b97bdf2be0a
@@ -1744,7 +1745,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
 
         # Add all the old control numbers that was added previously. This is needed to recreate the many alternatives
-        # that was created. With new changes to how many differenct control numbers that should be used it should no longer happen though.
+        # that was created. With new changes to how many different control numbers that should be used it should no longer happen though.
         prevMsgs = [TestLoraRadioDataHandler.PunchMsg_Correct_1.copy() for _ in range(14)]
         prevMsgs[0][1] = 31
         prevMsgs[1][1] = 164
@@ -1783,3 +1784,52 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNone(punchDoubleMsg)
         # This test takes arount a minute but we should never spend that much time, especially not when MS is selected
         print("=== END test_Case26_GetPunchDoubleMessage ===")
+
+
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_DoubleMessage
+    def test_DoubleMessage(self):
+        print("============================================================================================== START test_DoubleMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(10000)
+
+        #DoubleMsg_WithRS = bytearray.fromhex("85083f083f083f39ffff00ff643a40f40315ff3cc5f5001e3b403fff9df902")
+        DoubleMsg_WithRS = bytearray.fromhex("c8b7ffffffff643affff00ff643b40f6c52aff80a40e00628850c5ff9df800")
+
+        print("len: " + str(len(DoubleMsg_WithRS)))
+
+        deinterleaved = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(DoubleMsg_WithRS[:27])
+        print("Deinterleved message: " + Utils.GetDataInHex(deinterleaved, logging.DEBUG))
+
+        interleaved = DoubleMsg_WithRS[:]
+        for i in range(0, len(interleaved)):
+            self.dataHandler.AddData(interleaved[i:i + 1])
+        punchDoubleMsg = self.dataHandler._GetPunchDoubleReDCoSMessage()
+        self.assertIsNotNone(punchDoubleMsg)
+        print("control1: "  +str(punchDoubleMsg.GetControlNumber()))
+        print("cardno 1: " + str(punchDoubleMsg.GetSICardNo()))
+        print("hour 1: " + str(punchDoubleMsg.GetHour()))
+        print("control2: " + str(punchDoubleMsg.GetControlNumber_2()))
+        print("cardno 2: " + str(punchDoubleMsg.GetSICardNo_2()))
+        print("hour 2: " + str(punchDoubleMsg.GetHour_2()))
+        print("=== END test_DoubleMessage ===")
+
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_SingleMessage
+    def test_SingleMessage(self):
+        print(
+            "============================================================================================== START test_SingleMessage ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'L')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(10000)
+
+        SingleMsg_WithRS = bytearray.fromhex("ff643a40f40315ff3cc5f5001e3b403fff9df902")
+
+        print("len: " + str(len(SingleMsg_WithRS)))
+
+        interleaved = SingleMsg_WithRS[:]
+        for i in range(0, len(interleaved)):
+            self.dataHandler.AddData(interleaved[i:i + 1])
+        singleMsg = self.dataHandler._GetPunchReDCoSMessage()
+        self.assertIsNotNone(singleMsg)
+        print("control1: " + str(singleMsg.GetControlNumber()))
+        print("cardno 1: " + str(singleMsg.GetSICardNo()))
+        print("hour 1: " + str(singleMsg.GetHour()))
+        print("=== END test_SingleMessage ===")

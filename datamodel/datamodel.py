@@ -2,6 +2,9 @@ __author__ = 'henla464'
 
 from datetime import datetime
 from struct import *
+
+from werkzeug.sansio.multipart import Preamble
+
 from constants import *
 from utils.utils import Utils
 import logging
@@ -32,13 +35,13 @@ class ErrorCodeData(object):
 class ChannelData(object):
     columns = [("Channel", str), ("DataRate", int),  ("LoraRange", str),
                ("Frequency", int), ("SlopeCoefficient", int),
-               ("M", int), ("RfFactor", int), ("RfBw", int), ("LowDatarateOptimize", bool),
+               ("M", int), ("SpreadingFactor", int), ("RfBw", int), ("LowDatarateOptimize", bool),
                ("LoraModem", str)]
 
     def __init__(self, Channel: str | None = None, DataRate: int | None = None, LoraRange: str | None = None,
                  Frequency: int | None = None, SlopeCoefficient: int | None = None,
-                 M: int | None = None, RfFactor: int | None = None, RfBw: int | None = None,
-                 LowDatarateOptimize: bool | None = None, LoraModem: str | None = None):
+                 M: int | None = None, SpreadingFactor: int | None = None, RfBw: int | None = None,
+                 CRCOn: bool | None = None, LowDatarateOptimize: bool | None = None, LoraModem: str | None = None):
         self.id: int | None = None
         self.Channel: str | None = Channel
         self.DataRate: int | None = DataRate
@@ -46,10 +49,39 @@ class ChannelData(object):
         self.Frequency: int | None = Frequency
         self.SlopeCoefficient: int | None = SlopeCoefficient
         self.M: int | None = M
-        self.RfFactor: int | None = RfFactor
+        self.SpreadingFactor: int | None = SpreadingFactor
         self.RfBw: int | None = RfBw
+        self.CRCOn: bool | None = CRCOn
         self.LowDatarateOptimize: bool | None = LowDatarateOptimize
         self.LoraModem: str | None = LoraModem
+
+
+class TimeOnAirData(object):
+    columns = [("SpreadingFactor", int), ("RfBw", int), ("CodingRate", int), ("LowDatarateOptimize", bool), ("Header", bool),
+               ("CRCOn", bool), ("DRF1268DSCompatMode", bool), ("LoraModem", bool), ("PunchTOA", int), ("DoublePunchTOA", int),
+               ("AckTOA", int), ("StatusTOA", int), ("HAMCallSignTOA", int)]
+
+    def __init__(self, SpreadingFactor: int | None = None, RfBw: int | None = None,
+                 CodingRate: int | None = None, LowDatarateOptimize: bool | None = None,
+                 Header: bool | None = None, CRCOn: bool | None = None, PreambleLength: int | None = None,
+                 DRF1268DSCompatMode: bool | None = None, LoraModem: str | None = None,
+                 PunchTOA: int | None = None, DoublePunchTOA: int | None = None, AckTOA: int | None = None,
+                 StatusTOA: int | None = None, HAMCallSignTOA: int | None = None):
+        self.id: int | None = None
+        self.SpreadingFactor: int | None = SpreadingFactor
+        self.RfBw: int | None = RfBw
+        self.CodingRate: int | None = CodingRate
+        self.LowDatarateOptimize: bool | None = LowDatarateOptimize
+        self.Header: bool | None = Header
+        self.CRCOn: bool | None = CRCOn
+        self.PreambleLength: int | None = PreambleLength
+        self.DRF1268DSCompatMode: bool | None = DRF1268DSCompatMode
+        self.LoraModem: str | None = LoraModem
+        self.PunchTOA: int | None = PunchTOA
+        self.DoublePunchTOA: int | None = DoublePunchTOA
+        self.AckTOA: int | None = AckTOA
+        self.StatusTOA: int | None = StatusTOA
+        self.HAMCallSignTOA: int | None = HAMCallSignTOA
 
 
 class MessageBoxData(object):

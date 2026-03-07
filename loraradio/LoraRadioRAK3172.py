@@ -239,7 +239,7 @@ class LoraRadioRAK3172:
         return readParameterResp.startswith(
             LoraRadioRAK3172.ReceiveLORADataCmd_ExpectedResponseStart1.encode('ascii'))
 
-    def Init(self, channel: str, loraRange: str, loraPower: int, codeRate: int, crcOn: bool, rxGain: bool,
+    def Init(self, channel: str, loraRange: str, loraPower: int, codeRate: int, rxGain: bool,
              drf1268dsCompatMode: bool, sendAck: bool, enabled: bool):
         LoraRadioRAK3172.WiRocLogger.info(
             f"LoraRadioRAK3172::Init() Port name: {self.portName} Channel: {channel} "
@@ -251,7 +251,6 @@ class LoraRadioRAK3172:
         self.loraPower = loraPower
         self.loraRange = loraRange
         self.codeRate = codeRate
-        self.CRCOn = crcOn
         self.rxGain = rxGain
         self.drf1268dsCompatMode = drf1268dsCompatMode  # no change of radio config, adds netid to message in senddata
         self.sendAck = sendAck
@@ -295,12 +294,12 @@ class LoraRadioRAK3172:
                     return False
                 channelData = DatabaseHelper.get_channel(channel, loraRange, 'RAK3172')
                 LoraRadioRAK3172.WiRocLogger.verbose(f"Freq {channelData.Frequency} {LoraRadioRAK3172.LoraModuleParameters.Frequency} {channelData.Frequency == LoraRadioRAK3172.LoraModuleParameters.Frequency}")
-                LoraRadioRAK3172.WiRocLogger.verbose(f"RfFactor {channelData.RfFactor} {LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor} {channelData.RfFactor == LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor}")
+                LoraRadioRAK3172.WiRocLogger.verbose(f"SpreadingFactor {channelData.RfFactor} {LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor} {channelData.RfFactor == LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor}")
                 LoraRadioRAK3172.WiRocLogger.verbose(f"loraPower {loraPower} {LoraRadioRAK3172.LoraModuleParameters.TransmitPower} {loraPower == LoraRadioRAK3172.LoraModuleParameters.TransmitPower}")
                 LoraRadioRAK3172.WiRocLogger.verbose(f"RfBw {channelData.RfBw} {LoraRadioRAK3172.LoraModuleParameters.Bandwidth} {channelData.RfBw == LoraRadioRAK3172.LoraModuleParameters.Bandwidth}")
                 LoraRadioRAK3172.WiRocLogger.verbose(f"CodeRate {codeRate} {LoraRadioRAK3172.LoraModuleParameters.CodeRate} {codeRate == LoraRadioRAK3172.LoraModuleParameters.CodeRate}")
                 LoraRadioRAK3172.WiRocLogger.verbose(f"LowDatarateOptimize {channelData.LowDatarateOptimize} {LoraRadioRAK3172.LoraModuleParameters.LowDataRateOptimize} {channelData.LowDatarateOptimize == LoraRadioRAK3172.LoraModuleParameters.LowDataRateOptimize}")
-                LoraRadioRAK3172.WiRocLogger.verbose(f"CRCOn {crcOn} {LoraRadioRAK3172.LoraModuleParameters.CRCOn} {crcOn == LoraRadioRAK3172.LoraModuleParameters.CRCOn}")
+                LoraRadioRAK3172.WiRocLogger.verbose(f"CRCOn {channelData.CRCOn} {LoraRadioRAK3172.LoraModuleParameters.CRCOn} {channelData.CRCOn == LoraRadioRAK3172.LoraModuleParameters.CRCOn}")
                 LoraRadioRAK3172.WiRocLogger.verbose(f"RxGain {rxGain} {LoraRadioRAK3172.LoraModuleParameters.RxGain} {rxGain == LoraRadioRAK3172.LoraModuleParameters.RxGain}")
                 LoraRadioRAK3172.WiRocLogger.verbose(f"drf1268dsCompatMode {drf1268dsCompatMode} {LoraRadioRAK3172.LoraModuleParameters.Drf1268dsCompatMode} {drf1268dsCompatMode == LoraRadioRAK3172.LoraModuleParameters.Drf1268dsCompatMode}")
                 LoraRadioRAK3172.WiRocLogger.verbose(f"sendAck {sendAck} {LoraRadioRAK3172.LoraModuleParameters.SendAck} {sendAck == LoraRadioRAK3172.LoraModuleParameters.SendAck}")
@@ -397,7 +396,7 @@ class LoraRadioRAK3172:
             if sendReply.decode("ascii").startswith(LoraRadioRAK3172.SendLORADataCmd_ExpectedResponseStart1):  # ok
                 LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::SendData() Module returned ok")
                 if self.radioSerial.in_waiting >= 2:
-                    self.radioSerial.read(2) # remove also 'CR LF'
+                    self.radioSerial.read(2)  # remove also 'CR LF'
                 return ReturnStatus.SENT
             elif sendReply.decode("ascii") == "BU":  # busy
                 LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::SendData() Module returned busy")
@@ -422,6 +421,15 @@ class LoraRadioRAK3172:
             self) -> LoraRadioMessageAckRS | LoraRadioMessageStatusRS | LoraRadioMessageStatus2RS | LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | None:
         self.serialLock.acquire()
         try:
+            if self.loraRadioDataHandler.HasData():
+                # Normally there should never be data but it can happen if for example data with errors
+                # has been added previously and the GetMessage returned a message of a shorter type. Try to get
+                # a message now, likely it will not find a correct one and then clear the buffer
+                message = self.loraRadioDataHandler.GetMessage()
+                if message is None:
+                    LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::GetRadioData() Datahandler had message data but no message was found")
+                return message
+
             if self.hardwareAbstraction.GetLORAIRQValue():
                 # clear the serial buffers
                 while self.radioSerial.in_waiting > 0:

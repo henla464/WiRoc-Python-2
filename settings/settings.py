@@ -358,16 +358,7 @@ class SettingsClass(object):
     @staticmethod
     def GetDataRate(loraRange) -> int:
         loraDataRate = 244
-        if SettingsClass.GetLoraModule() == 'RF1276T':
-            if loraRange == 'L':
-                loraDataRate = 293
-            elif loraRange == 'ML':
-                loraDataRate = 537
-            elif loraRange == 'MS':
-                loraDataRate = 977
-            elif loraRange == 'S':
-                loraDataRate = 1758
-        else:
+        if SettingsClass.GetLoraModule() == 'DRF1268DS':
             if loraRange == 'UL':
                 loraDataRate = 73
             elif loraRange == 'XL':
@@ -569,6 +560,7 @@ class SettingsClass(object):
         return sett.Value == "1"
 
     channelData = None
+    timeOnAirData = None
     microSecondsToSendAMessage = None
     microSecondsToSendAnAckMessage = None
 
@@ -647,6 +639,35 @@ class SettingsClass(object):
         # extra delay for higher error coderates
         microSecs = microSecs * (1 + 0.2 * codeRate)
         return microSecs/1000000
+
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetLoraMessageTimeSendingTimeMSByMessageType'), lock=rlock)
+    def GetLoraMessageTimeSendingTimeMSByMessageType(messageType: int) -> float:
+        loraRange: str = SettingsClass.GetLoraRange()
+        channel: str = SettingsClass.GetChannel()
+        loraModule: str = SettingsClass.GetLoraModule()
+        SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
+        codeRate = SettingsClass.GetCodeRate()
+        header = True
+        DRF1268DSCompatMode = SettingsClass.GetDRF1268CompatModeEnabled()
+        SettingsClass.timeOnAirData = DatabaseHelper.get_timeonair(SettingsClass.channelData.SpreadingFactor, SettingsClass.channelData.RfBw,codeRate, SettingsClass.channelData.LowDatarateOptimize, header, SettingsClass.channelData.CRCOn, DRF1268DSCompatMode, loraModule)
+        MessageTypeLoraAck: int = 5
+        MessageTypeSIPunchReDCoS: int = 7
+        MessageTypeSIPunchDoubleReDCoS: int = 8
+        MessageTypeHAMCallSign: int = 9
+        MessageTypeStatus2: int = 10
+        if MessageTypeSIPunchReDCoS == messageType:
+            return SettingsClass.timeOnAirData.PunchTOA
+        elif MessageTypeSIPunchDoubleReDCoS == messageType:
+            return SettingsClass.timeOnAirData.DoublePunchTOA
+        elif MessageTypeLoraAck == messageType:
+            return SettingsClass.timeOnAirData.AckTOA
+        elif MessageTypeHAMCallSign == messageType:
+            return SettingsClass.timeOnAirData.HAMCallTOA
+        elif MessageTypeStatus2 == messageType:
+            return SettingsClass.timeOnAirData.StatusTOA
+        return 0
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetStatusMessageInterval'), lock=rlock)
