@@ -127,7 +127,11 @@ class Setup:
 
         for adapterObj in inputObjects:
             Setup.WiRocLogger.debug("Setup::SetupAdapters() Before Init() input adapter: " + str(adapterObj.GetInstanceName()))
-            adapterObj.Init()
+            if not adapterObj.Init():
+                Setup.WiRocLogger.error("Setup::SetupAdapters() Init adapter failed: " + adapterObj.GetInstanceName())
+            else:
+                Setup.WiRocLogger.debug(
+                    "Setup::SetupAdapters() Initialized input adapter: " + str(adapterObj.GetInstanceName()))
         DatabaseHelper.update_input_adapter_instances(inputObjects)
 
         Setup.InputAdapters = inputObjects
