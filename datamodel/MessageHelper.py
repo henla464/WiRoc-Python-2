@@ -49,7 +49,7 @@ class MessageHelper:
             srrMessage = SRRMessage()
             headerSize: int = SRRMessage.GetHeaderSize()
             srrMessage.AddPayload(messageData[0:headerSize])
-            messageType: int = srrMessage.GetMessageType()
+            messageType: int | None = srrMessage.GetMessageType()
             if messageType == SRRMessage.SRRBoardPunch:
                 srrBoardPunch = SRRBoardPunch()
                 srrBoardPunch.AddPayload(messageData)
@@ -62,10 +62,14 @@ class MessageHelper:
                 airPlusPunchOneOfMultiple = AirPlusPunchOneOfMultiple()
                 airPlusPunchOneOfMultiple.AddPayload(messageData)
                 siMsg = airPlusPunchOneOfMultiple.GetSIMessage()
+            elif messageType is None:
+                siMsg = None
 
-            siPayloadData = siMsg.GetByteArray()
+            if siMsg is not None:
+                siPayloadData = siMsg.GetByteArray()
+
             mbd.RSSIValue = messageData[-3]
-            mbd.ChecksumOK = messageData[-2] & 0x80
+            mbd.ChecksumOK = (messageData[-2] & 0x80) > 0
             mbd.LinkQuality = messageData[-2] & 0x7F
             mbd.Channel = messageData[-1]
         elif messageSubTypeName == "Test":
