@@ -72,10 +72,10 @@ class ResubmitLoraAdapter(object):
     def GetData(self):
         if self.TimeToFetch:
             currentTime = time.monotonic()
-            self.WiRocLogger.debug(f"ResubmitLoraAdapter::GetData() time to fetch!, currentTime: {currentTime} timeOfLastPunchMessageSentToLora: {SettingsClass.GetTimeOfLastPunchMessageSentToLora()} 2*resubmitRetryInterval: {2*self.GetResubmitRetryInterval()}")
+            self.WiRocLogger.debug(f"ResubmitLoraAdapter::GetData() time to fetch!, currentTime: {currentTime} timeOfLastPunchMessageSentToLora: {SettingsClass.GetTimeOfLastPunchMessageSentToLora()} 0.8*resubmitRetryInterval: {0.8*self.GetResubmitRetryInterval()}")
             self.TimeToFetch = False
-            if currentTime - SettingsClass.GetTimeOfLastPunchMessageSentToLora() > 2*self.GetResubmitRetryInterval():
-                # Only resubmit it if it has gone 2*resubmitretryintervals since last lora punch message was sent
+            if currentTime - SettingsClass.GetTimeOfLastPunchMessageSentToLora() > 0.8*self.GetResubmitRetryInterval():
+                # Only resubmit it if it has gone 0.8*resubmitretryintervals since last lora punch message was sent
                 self.LastTimeFetched = currentTime
                 endTime: datetime = datetime.now()
                 startTime: datetime = endTime - timedelta(seconds=1800)  # 30 minutes ago
