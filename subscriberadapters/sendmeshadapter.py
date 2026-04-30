@@ -18,12 +18,18 @@ class SendMeshAdapter(object):
         if HardwareAbstraction.Instance is None:
             HardwareAbstraction.Instance = HardwareAbstraction()
         # because we want to also tear down when we disable mesh, we always create an instance
-        if len(SendMeshAdapter.Instances) == 0:
+        enabled = SettingsClass.GetWifiMeshEnabled()
+        if len(SendMeshAdapter.Instances) == 0 and enabled:
             SendMeshAdapter.Instances.append(SendMeshAdapter('mesh1'))
+            return True
+
+        if len(SendMeshAdapter.Instances) > 0 and not enabled:
+            # Teardown
+            SendMeshAdapter.Instances[0].Init()
+            SendMeshAdapter.Instances = []
             return True
         # check if enabled changed => let init/enabledisablesubscription run
         isInitialized = SendMeshAdapter.Instances[0].GetIsInitialized()
-        enabled = SettingsClass.GetWifiMeshEnabled()
         allInitializedAsItShould = ((isInitialized and enabled) or (not enabled and not isInitialized))
         if allInitializedAsItShould:
             return False
