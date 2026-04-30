@@ -71,7 +71,7 @@ class LoraSIMessageToLoraAckTransform(object):
                 if incomingMsgType == LoraRadioMessageRS.MessageTypeStatus:
                     return None
 
-                loraPunchMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(payloadData, rssiByte=None)
+                loraPunchMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(payloadData)
                 hash = loraPunchMsg.GetHash()
                 loraAck = LoraRadioMessageCreator.GetAckMessage(hash)
                 loraAck.SetAckRequested(msgSubBatch.AckReceivedFromReceiver)  # indicate ack received from receiver

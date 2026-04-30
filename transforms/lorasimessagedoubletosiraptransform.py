@@ -48,7 +48,7 @@ class LoraSIMessageDoubleToSirapTransform(object):
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         LoraSIMessageDoubleToSirapTransform.WiRocLogger.debug("LoraSIMessageDoubleToSirapTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-        msg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(payloadData, rssiByte=None)
+        msg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(payloadData)
         siPayloadDatas = msg.GetSIMessageByteTuple()
         siMsg = SIMessage()
         siMsg.AddPayload(siPayloadDatas[0])
