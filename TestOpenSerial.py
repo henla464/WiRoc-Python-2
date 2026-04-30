@@ -4,7 +4,7 @@ import time
 import sys
 
 
-f = open('/dev/ttyUSB5', 'w')
+f = open('/dev/ttyS1', 'w')
 print(f)
 
 
