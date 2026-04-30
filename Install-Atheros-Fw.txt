@@ -1,0 +1,20 @@
+#sudo date -s "2026-04-20 23:25:00"
+sudo apt update
+sudo apt install firmware-atheros
+
+cd /tmp
+dpkg-deb -x /var/cache/apt/archives/firmware-atheros_20250410-2_all.deb firmware-extract
+dpkg-deb -e /var/cache/apt/archives/firmware-atheros_20250410-2_all.deb firmware-control
+
+# Check what files are in the package
+find firmware-extract -type f -name "*.bin" -o -name "*.fw"
+
+# Copy all firmware files (preserving structure)
+sudo cp -rv firmware-extract/usr/lib/firmware/* /usr/lib/firmware/
+
+# Verify the files were copied
+ls -la /usr/lib/firmware/ath11k/WCN6855/hw2.0/
+
+sudo dpkg --set-selections <<< "firmware-atheros install"
+
+sudo update-initramfs -u

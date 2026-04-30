@@ -13,12 +13,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="22423968-cdc8-408a-8f9a-f776c9e32777" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/RadioBaseUnit.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/RadioBaseUnit.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chipGPIO/hardwareAbstraction.py" beforeDir="false" afterPath="$PROJECT_DIR$/chipGPIO/hardwareAbstraction.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datamodel/datamodel.py" beforeDir="false" afterPath="$PROJECT_DIR$/datamodel/datamodel.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datamodel/db_helper.py" beforeDir="false" afterPath="$PROJECT_DIR$/datamodel/db_helper.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/display/displaystatemachine.py" beforeDir="false" afterPath="$PROJECT_DIR$/display/displaystatemachine.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/inputadapters/receiveloraadapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/inputadapters/receiveloraadapter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/loraradio/LoraRadioDRF1268DS_RS.py" beforeDir="false" afterPath="$PROJECT_DIR$/loraradio/LoraRadioDRF1268DS_RS.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/loraradio/LoraRadioMessageRS.py" beforeDir="false" afterPath="$PROJECT_DIR$/loraradio/LoraRadioMessageRS.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/loraradio/LoraRadioRAK3172.py" beforeDir="false" afterPath="$PROJECT_DIR$/loraradio/LoraRadioRAK3172.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/settings/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/subscriberadapters/sendloraadapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/subscriberadapters/sendloraadapter.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/subscriberadapters/sendmeshadapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/subscriberadapters/sendmeshadapter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/transforms/lorasimessagedoubletosiraptransform.py" beforeDir="false" afterPath="$PROJECT_DIR$/transforms/lorasimessagedoubletosiraptransform.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/transforms/lorasimessagetoloraacktransform.py" beforeDir="false" afterPath="$PROJECT_DIR$/transforms/lorasimessagetoloraacktransform.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -363,8 +371,15 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
     "git-widget-placeholder": "master",
     "last_opened_file_path": "/home/henla464/Documents/WiRoc/WiRoc-Python-2/loraradio",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
     "run.code.analysis.last.selected.profile": "pProject Default",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
@@ -411,6 +426,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="true" />
       <option name="RUN_TOOL" value="" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/start.py" />
       <option name="PARAMETERS" value="" />
@@ -430,7 +446,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-4762d8aabb82-6d6dccd035ac-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.30387.173" />
+        <option value="bundled-python-sdk-b63d5a1f7c97-b61e75351b1f-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-261.22158.340" />
       </set>
     </attachedChunks>
   </component>
@@ -494,6 +510,9 @@
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3998195" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout-to-restore>
   </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
       <map>
@@ -542,6 +561,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/TestSerial.py</url>
+          <line>4</line>
           <option name="timeStamp" value="62" />
         </line-breakpoint>
       </breakpoints>
