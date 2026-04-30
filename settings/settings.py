@@ -9,6 +9,7 @@ import random
 import os
 import socket
 import yaml
+import logging
 from cachetools import cached, TTLCache
 from cachetools.keys import hashkey
 from functools import partial
@@ -21,6 +22,8 @@ rlock = RLock()
 
 
 class SettingsClass(object):
+    WiRocLogger = logging.getLogger('WiRoc.Settings')
+
     timeOfLastMessageAdded = time.monotonic()
     timeOfLastMessageSentToLora = time.monotonic()
     timeOfLastPunchMessageSentToLora = time.monotonic()
@@ -225,7 +228,9 @@ class SettingsClass(object):
             sett = SettingsClass.SetSetting('ReceiveSIAdapterActive', "0")
         SettingsClass.receiveSIAdapterActive = (sett.Value == "1")
         cacheUntilChangedByProcess.clear()
-        cache.clear()  # GetWiRocMode uses this value so needs to be invalidated
+        cache.clear()
+        # GetWiRocMode uses this value so needs to be invalidated
+        return None
 
     @staticmethod
     def SetSetting(key, value):
@@ -246,6 +251,7 @@ class SettingsClass(object):
         SettingsClass.sendSerialAdapterActive = (sett.Value == "1")
         cacheUntilChangedByProcess.clear()
         cache.clear()  # GetWiRocMode uses this value so needs to be invalidated
+        return None
 
     @staticmethod
     def SetReDCoSCombinationThresholdPerSecondTotalRetryTime(val):
@@ -330,7 +336,10 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("LoraEnabled", '1')
             return True
-        return sett.Value == "1"
+        loraEnabled = sett.Value == "1"
+        if not loraEnabled:
+            SettingsClass.WiRocLogger.debug("SettingsClass::GetLoraEnabled() loraEnabled not enabled!!!!!!")
+        return loraEnabled
 
     # Also see the code for wirocmode in the api. This is duplicated there.
     @staticmethod
@@ -569,12 +578,16 @@ class SettingsClass(object):
         loraRange = SettingsClass.GetLoraRange()
         channel = SettingsClass.GetChannel()
         loraModule = SettingsClass.GetLoraModule()
-        codeRate = SettingsClass.GetCodeRate()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
-        messageLengthInBytes = 26  # length of double punch message
-        SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
+        MessageTypeSIPunchDoubleReDCoS: int = 8
+        SettingsClass.microSecondsToSendAMessage = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(MessageTypeSIPunchDoubleReDCoS) * 1000
+
+        #codeRate = SettingsClass.GetCodeRate()
+        #messageLengthInBytes = 26  # length of double punch message
+        #SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
         # extra delay for higher error coderates
-        SettingsClass.microSecondsToSendAMessage = SettingsClass.microSecondsToSendAMessage * (1+0.2*codeRate)
+        #SettingsClass.microSecondsToSendAMessage = SettingsClass.microSecondsToSendAMessage * (1+0.2*codeRate)
+
         microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 2)*SettingsClass.microSecondsToSendAMessage
         return microSecondsDelay
 
@@ -583,62 +596,66 @@ class SettingsClass(object):
         loraRange = SettingsClass.GetLoraRange()
         channel = SettingsClass.GetChannel()
         loraModule = SettingsClass.GetLoraModule()
-        codeRate = SettingsClass.GetCodeRate()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
-        messageLengthInBytes = 26  # length of double punch message
-        SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
+        MessageTypeSIPunchDoubleReDCoS: int = 8
+        SettingsClass.microSecondsToSendAMessage  = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(MessageTypeSIPunchDoubleReDCoS) * 1000
+
+        #codeRate = SettingsClass.GetCodeRate()
+        #messageLengthInBytes = 26  # length of double punch message
+        #SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
         # extra delay for higher error coderates
-        SettingsClass.microSecondsToSendAMessage = SettingsClass.microSecondsToSendAMessage * (1+0.2*codeRate)
+        #SettingsClass.microSecondsToSendAMessage = SettingsClass.microSecondsToSendAMessage * (1+0.2*codeRate)
+
         microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 1) + SettingsClass.microSecondsToSendAMessage
         microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 2) + SettingsClass.microSecondsToSendAMessage
         microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 3) + SettingsClass.microSecondsToSendAMessage
         microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 4) + SettingsClass.microSecondsToSendAMessage
         return int(microSecondsDelay / 1000000)
 
-    @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetLoraAckMessageWaitTimeoutS'), lock=rlock)
-    def GetLoraAckMessageWaitTimeoutS():
-        if SettingsClass.microSecondsToSendAMessage is None:
-            loraRange = SettingsClass.GetLoraRange()
-            channel = SettingsClass.GetChannel()
-            loraModule = SettingsClass.GetLoraModule()
-            codeRate = SettingsClass.GetCodeRate()
-            SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
-            messageLengthInBytes = 24  # typical length
-            SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
-            # extra delay for higher error coderates
-            SettingsClass.microSecondsToSendAMessage = SettingsClass.microSecondsToSendAMessage * (1 + 0.2 * codeRate)
-        return 1+(SettingsClass.microSecondsToSendAMessage * 2.1)/1000000
+    #@staticmethod
+    #@cached(cache, key=partial(hashkey, 'GetLoraAckMessageWaitTimeoutS'), lock=rlock)
+    #def GetLoraAckMessageWaitTimeoutS():
+    #    if SettingsClass.microSecondsToSendAMessage is None:
+    #        loraRange = SettingsClass.GetLoraRange()
+    #        channel = SettingsClass.GetChannel()
+    #        loraModule = SettingsClass.GetLoraModule()
+    #        codeRate = SettingsClass.GetCodeRate()
+    #        SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
+    #        messageLengthInBytes = 24  # typical length
+    #        SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
+    #        # extra delay for higher error coderates
+    #        SettingsClass.microSecondsToSendAMessage = SettingsClass.microSecondsToSendAMessage * (1 + 0.2 * codeRate)
+    #    return 1+(SettingsClass.microSecondsToSendAMessage * 2.1)/1000000
 
-    @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetLoraAckMessageSendingTimeS'), lock=rlock)
-    def GetLoraAckMessageSendingTimeS():
-        if SettingsClass.microSecondsToSendAnAckMessage is None:
-            loraRange = SettingsClass.GetLoraRange()
-            channel = SettingsClass.GetChannel()
-            loraModule = SettingsClass.GetLoraModule()
-            codeRate = SettingsClass.GetCodeRate()
-            SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
-            messageLengthInBytes = 10  # typical length
-            SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
-            # extra delay for higher error coderates
-            SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.microSecondsToSendAnAckMessage * (1 + 0.2 * codeRate)
-        return 0.2+SettingsClass.microSecondsToSendAnAckMessage/1000000
+    #@staticmethod
+    #@cached(cache, key=partial(hashkey, 'GetLoraAckMessageSendingTimeS'), lock=rlock)
+    #def GetLoraAckMessageSendingTimeS():
+    #    if SettingsClass.microSecondsToSendAnAckMessage is None:
+    #        loraRange = SettingsClass.GetLoraRange()
+    #        channel = SettingsClass.GetChannel()
+    #        loraModule = SettingsClass.GetLoraModule()
+    #        codeRate = SettingsClass.GetCodeRate()
+    #        SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
+    #        messageLengthInBytes = 10  # typical length
+    #        SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
+    #        # extra delay for higher error coderates
+    #        SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.microSecondsToSendAnAckMessage * (1 + 0.2 * codeRate)
+    #    return 0.2+SettingsClass.microSecondsToSendAnAckMessage/1000000
 
-    @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetLoraMessageTimeSendingTimeS'), lock=rlock)
-    def GetLoraMessageTimeSendingTimeS(noOfBytes: int) -> float:
-        if noOfBytes == 0:
-            return 0
-        loraRange: str = SettingsClass.GetLoraRange()
-        channel: str = SettingsClass.GetChannel()
-        loraModule: str = SettingsClass.GetLoraModule()
-        codeRate = SettingsClass.GetCodeRate()
-        SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
-        microSecs = SettingsClass.channelData.SlopeCoefficient * (noOfBytes + SettingsClass.channelData.M)
-        # extra delay for higher error coderates
-        microSecs = microSecs * (1 + 0.2 * codeRate)
-        return microSecs/1000000
+    #@staticmethod
+    #@cached(cache, key=partial(hashkey, 'GetLoraMessageTimeSendingTimeS'), lock=rlock)
+    #def GetLoraMessageTimeSendingTimeS(noOfBytes: int) -> float:
+    #    if noOfBytes == 0:
+    #        return 0
+    #    loraRange: str = SettingsClass.GetLoraRange()
+    #    channel: str = SettingsClass.GetChannel()
+    #    loraModule: str = SettingsClass.GetLoraModule()
+    #    codeRate = SettingsClass.GetCodeRate()
+    #    SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
+    #    microSecs = SettingsClass.channelData.SlopeCoefficient * (noOfBytes + SettingsClass.channelData.M)
+    #    # extra delay for higher error coderates
+    #    microSecs = microSecs * (1 + 0.2 * codeRate)
+    #    return microSecs/1000000
 
 
     @staticmethod
@@ -651,12 +668,15 @@ class SettingsClass(object):
         codeRate = SettingsClass.GetCodeRate()
         header = True
         DRF1268DSCompatMode = SettingsClass.GetDRF1268CompatModeEnabled()
-        SettingsClass.timeOnAirData = DatabaseHelper.get_timeonair(SettingsClass.channelData.SpreadingFactor, SettingsClass.channelData.RfBw,codeRate, SettingsClass.channelData.LowDatarateOptimize, header, SettingsClass.channelData.CRCOn, DRF1268DSCompatMode, loraModule)
+        SettingsClass.timeOnAirData = DatabaseHelper.get_timeonair(SettingsClass.channelData.SpreadingFactor, SettingsClass.channelData.RfBw,codeRate, SettingsClass.channelData.LowDatarateOptimize, header,  SettingsClass.channelData.CRCOn, SettingsClass.channelData.PreambleLength, DRF1268DSCompatMode, loraModule)
+        if SettingsClass.timeOnAirData is None:
+            return None
         MessageTypeLoraAck: int = 5
         MessageTypeSIPunchReDCoS: int = 7
         MessageTypeSIPunchDoubleReDCoS: int = 8
         MessageTypeHAMCallSign: int = 9
         MessageTypeStatus2: int = 10
+        MessageTypeStatus: int = 4
         if MessageTypeSIPunchReDCoS == messageType:
             return SettingsClass.timeOnAirData.PunchTOA
         elif MessageTypeSIPunchDoubleReDCoS == messageType:
@@ -664,10 +684,10 @@ class SettingsClass(object):
         elif MessageTypeLoraAck == messageType:
             return SettingsClass.timeOnAirData.AckTOA
         elif MessageTypeHAMCallSign == messageType:
-            return SettingsClass.timeOnAirData.HAMCallTOA
-        elif MessageTypeStatus2 == messageType:
+            return SettingsClass.timeOnAirData.HAMCallSignTOA
+        elif MessageTypeStatus2 == messageType or MessageTypeStatus == messageType:
             return SettingsClass.timeOnAirData.StatusTOA
-        return 0
+        return None
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetStatusMessageInterval'), lock=rlock)

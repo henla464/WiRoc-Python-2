@@ -137,17 +137,17 @@ class LoraRadioRAK3172:
             "LoraRadioRAK3172::getRadioReply() response: " + Utils.GetDataInHex(data, logging.DEBUG))
         return data
 
-    def setParameters(self, channelData: ChannelData, channelNumber: int, loraPower: int, codeRate: int, CRCOn: bool,
+    def setParameters(self, channelData: ChannelData, channelNumber: int, loraPower: int, codeRate: int,
                       rxGain: bool, drf1268dsCompatMode: bool, sendAck: bool, preambleLength: int) -> bool:
         # {frequency}:{spreadingfactor}:{bandwidth}:{coderate}:{preamblelength}:{txpower}:{lowdatarateoptimize}:{crcon}:{rxgain}:{drf1268dsCompatMode}:{sendAck}:{payloadlength}
         setParameters: str = LoraRadioRAK3172.SetLORAP2PParametersCmd.format(frequency=str(channelData.Frequency),
-                                                                             spreadingfactor=str(channelData.RfFactor),
+                                                                             spreadingfactor=str(channelData.SpreadingFactor),
                                                                              bandwidth=str(channelData.RfBw),
                                                                              coderate=str(codeRate),
                                                                              preamblelength=str(preambleLength),
                                                                              txpower=str(loraPower),
                                                                              lowdatarateoptimize=("1" if channelData.LowDatarateOptimize else "0"),
-                                                                             crcon=("1" if CRCOn else "0"),
+                                                                             crcon=("1" if channelData.CRCOn else "0"),
                                                                              rxgain=("1" if rxGain else "0"),
                                                                              drf1268dscompatmode=("1" if drf1268dsCompatMode else "0"),
                                                                              sendack=("1" if sendAck else "0"),
@@ -294,7 +294,7 @@ class LoraRadioRAK3172:
                     return False
                 channelData = DatabaseHelper.get_channel(channel, loraRange, 'RAK3172')
                 LoraRadioRAK3172.WiRocLogger.verbose(f"Freq {channelData.Frequency} {LoraRadioRAK3172.LoraModuleParameters.Frequency} {channelData.Frequency == LoraRadioRAK3172.LoraModuleParameters.Frequency}")
-                LoraRadioRAK3172.WiRocLogger.verbose(f"SpreadingFactor {channelData.RfFactor} {LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor} {channelData.RfFactor == LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor}")
+                LoraRadioRAK3172.WiRocLogger.verbose(f"SpreadingFactor {channelData.SpreadingFactor} {LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor} {channelData.SpreadingFactor == LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor}")
                 LoraRadioRAK3172.WiRocLogger.verbose(f"loraPower {loraPower} {LoraRadioRAK3172.LoraModuleParameters.TransmitPower} {loraPower == LoraRadioRAK3172.LoraModuleParameters.TransmitPower}")
                 LoraRadioRAK3172.WiRocLogger.verbose(f"RfBw {channelData.RfBw} {LoraRadioRAK3172.LoraModuleParameters.Bandwidth} {channelData.RfBw == LoraRadioRAK3172.LoraModuleParameters.Bandwidth}")
                 LoraRadioRAK3172.WiRocLogger.verbose(f"CodeRate {codeRate} {LoraRadioRAK3172.LoraModuleParameters.CodeRate} {codeRate == LoraRadioRAK3172.LoraModuleParameters.CodeRate}")
@@ -305,12 +305,12 @@ class LoraRadioRAK3172:
                 LoraRadioRAK3172.WiRocLogger.verbose(f"sendAck {sendAck} {LoraRadioRAK3172.LoraModuleParameters.SendAck} {sendAck == LoraRadioRAK3172.LoraModuleParameters.SendAck}")
 
                 if (channelData.Frequency == LoraRadioRAK3172.LoraModuleParameters.Frequency and
-                        channelData.RfFactor == LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor and
+                        channelData.SpreadingFactor == LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor and
                         loraPower == LoraRadioRAK3172.LoraModuleParameters.TransmitPower and
                         channelData.RfBw == LoraRadioRAK3172.LoraModuleParameters.Bandwidth and
                         codeRate == LoraRadioRAK3172.LoraModuleParameters.CodeRate and
                         channelData.LowDatarateOptimize == LoraRadioRAK3172.LoraModuleParameters.LowDataRateOptimize and
-                        crcOn == LoraRadioRAK3172.LoraModuleParameters.CRCOn and
+                        channelData.CRCOn == LoraRadioRAK3172.LoraModuleParameters.CRCOn and
                         rxGain == LoraRadioRAK3172.LoraModuleParameters.RxGain and
                         drf1268dsCompatMode == LoraRadioRAK3172.LoraModuleParameters.Drf1268dsCompatMode and
                         sendAck == LoraRadioRAK3172.LoraModuleParameters.SendAck and
@@ -320,7 +320,7 @@ class LoraRadioRAK3172:
                     return True
                 else:
                     channelNumber = int(channel.lstrip("HAM"))
-                    if self.setParameters(channelData, channelNumber, loraPower, codeRate, crcOn, rxGain, drf1268dsCompatMode, sendAck, preambleLength):
+                    if self.setParameters(channelData, channelNumber, loraPower, codeRate, rxGain, drf1268dsCompatMode, sendAck, preambleLength):
                         LoraRadioRAK3172.WiRocLogger.info("LoraRadioRAK3172::Init() Parameters set")
                         self.isInitialized = True
                         newSettingsWritten = True

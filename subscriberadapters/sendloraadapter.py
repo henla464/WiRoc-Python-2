@@ -57,7 +57,7 @@ class SendLoraAdapter(object):
                     deleteAfterSent = transf.GetDeleteAfterSent()
                     SendLoraAdapter.WiRocLogger.info(
                         "SendLoraAdapter::EnableDisableSubscription() subscription set enabled: " + str(
-                            shouldSubscriptionBeEnabled))
+                            shouldSubscriptionBeEnabled) + " name: " + name + " deleteAfterSent: " + str(deleteAfterSent))
                     DatabaseHelper.update_subscription(shouldSubscriptionBeEnabled, deleteAfterSent,
                                                        SendLoraAdapter.GetTypeName(), name)
             SendLoraAdapter.SubscriptionsEnabled = shouldSubscriptionBeEnabled
@@ -163,7 +163,7 @@ class SendLoraAdapter(object):
         codeRate = SettingsClass.GetCodeRate()
         rxGain = SettingsClass.GetRxGainEnabled()
         drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268CompatModeEnabled()  # only for RAK3172
-        sendAck = SettingsClass.GetLoraMode == "RECEIVER"  # only for RAK3172
+        sendAck = SettingsClass.GetLoraMode() == "RECEIVER"  # only for RAK3172
         loraRadioInitialized = self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled)
         SendLoraAdapter.WiRocLogger.debug(f"SendLoraAdapter::ShouldBeInitialized() loraRadioInitialized {loraRadioInitialized}")
         SendLoraAdapter.WiRocLogger.debug(
@@ -320,7 +320,6 @@ class SendLoraAdapter(object):
                 len(self.sentQueueWithRepeaterBit)))
 
     def GetSuccessRateToDestination(self):
-        #dateTimeToUse = max(min(self.successWithoutRepeaterBitQueue[-1], self.sentQueueWithoutRepeaterBit[-1]), datetime.now() - timedelta(minutes=30))
         dateTimeToUse = max(self.sentQueueWithoutRepeaterBit[-1], datetime.now() - timedelta(minutes=30))
         successCount = sum(1 for successDate in self.successWithoutRepeaterBitQueue if successDate >= dateTimeToUse)
         sentCount = sum(1 for sentDate in self.sentQueueWithoutRepeaterBit if sentDate >= dateTimeToUse)
@@ -332,8 +331,6 @@ class SendLoraAdapter(object):
         return int((successCount / sentCount) * 100)
 
     def GetSuccessRateToRepeater(self):
-        #dateTimeToUse = max(min(self.successWithRepeaterBitQueue[-1], self.sentQueueWithRepeaterBit[-1]),
-        #                    datetime.now() - timedelta(minutes=30))
         dateTimeToUse = max(self.sentQueueWithRepeaterBit[-1], datetime.now() - timedelta(minutes=30))
 
         successCount = sum(1 for successDate in self.successWithRepeaterBitQueue if successDate >= dateTimeToUse)

@@ -36,23 +36,22 @@ class ChannelData(object):
     columns = [("Channel", str), ("DataRate", int),  ("LoraRange", str),
                ("Frequency", int), ("SlopeCoefficient", int),
                ("M", int), ("SpreadingFactor", int), ("RfBw", int), ("LowDatarateOptimize", bool),
-               ("LoraModem", str)]
+               ("PreambleLength", int), ("LoraModem", str)]
 
     def __init__(self, Channel: str | None = None, DataRate: int | None = None, LoraRange: str | None = None,
-                 Frequency: int | None = None, SlopeCoefficient: int | None = None,
-                 M: int | None = None, SpreadingFactor: int | None = None, RfBw: int | None = None,
-                 CRCOn: bool | None = None, LowDatarateOptimize: bool | None = None, LoraModem: str | None = None):
+                 Frequency: int | None = None, SpreadingFactor: int | None = None, RfBw: int | None = None,
+                 CRCOn: bool | None = None, LowDatarateOptimize: bool | None = None, PreambleLength: int | None = None,
+                 LoraModem: str | None = None):
         self.id: int | None = None
         self.Channel: str | None = Channel
         self.DataRate: int | None = DataRate
         self.LoraRange: str | None = LoraRange
         self.Frequency: int | None = Frequency
-        self.SlopeCoefficient: int | None = SlopeCoefficient
-        self.M: int | None = M
         self.SpreadingFactor: int | None = SpreadingFactor
         self.RfBw: int | None = RfBw
         self.CRCOn: bool | None = CRCOn
         self.LowDatarateOptimize: bool | None = LowDatarateOptimize
+        self.PreambleLength: int | None = PreambleLength
         self.LoraModem: str | None = LoraModem
 
 

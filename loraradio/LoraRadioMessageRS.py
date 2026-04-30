@@ -18,6 +18,8 @@ from settings.settings import SettingsClass
 
 
 class LoraRadioMessageRS(object):
+    WiRocLogger = logging.getLogger('WiRoc.Output')
+
     MessageTypeBitMask: int = 0b00011111
     RepeaterBitMask: int = 0b00100000
     BatLowBitMask: int = 0b01000000
@@ -48,9 +50,15 @@ class LoraRadioMessageRS(object):
         self.statusValue: int | None = None
 
     @staticmethod
-    def GetLoraMessageTimeSendingTimeSByMessageType(messageType: int) -> float:
-        noOfBytes: int = LoraRadioMessageRS.MessageLengths[messageType]
-        return SettingsClass.GetLoraMessageTimeSendingTimeS(noOfBytes)
+    def GetLoraMessageTimeSendingTimeSByMessageType(messageType: int) -> float | None:
+        #noOfBytes: int = LoraRadioMessageRS.MessageLengths[messageType]
+        ms = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(messageType)
+        if ms is None:
+            LoraRadioMessageRS.WiRocLogger.error(f"LoraRadioMessageRS::GetLoraMessageTimeSendingTimeSByMessageType() None returned from GetLoraMessageTimeSendingTimeMSByMessageType for message type {messageType}")
+            return 0
+        else:
+            return ms/1000
+        #return SettingsClass.GetLoraMessageTimeSendingTimeS(noOfBytes)
 
     @staticmethod
     def getHeaderFormatString() -> str:
