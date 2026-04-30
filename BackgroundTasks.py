@@ -355,7 +355,7 @@ class BackgroundTasks(object):
                                                      "noOfMessages": messageStat.NoOfMessages}
 
                                 try:
-                                    resp = requests.post(url=URL, json=messageStatToSend, timeout=2, allow_redirects=False,
+                                    resp = requests.post(url=URL, json=messageStatToSend, timeout=3, allow_redirects=False,
                                                          headers=headers,
                                                          verify=False)
                                     if resp.status_code == 200 or resp.status_code == 303:
