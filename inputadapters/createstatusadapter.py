@@ -8,7 +8,7 @@ import logging
 import time
 from datetime import datetime, timedelta
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
-
+import random
 
 class CreateStatusAdapter(object):
     Instances = []
@@ -54,7 +54,8 @@ class CreateStatusAdapter(object):
 
     def UpdateInfrequently(self):
         currentTime = time.monotonic()
-        self.TimeToFetch = (currentTime - self.LastTimeCreated > SettingsClass.GetStatusMessageInterval())
+        intervalSeconds: int = SettingsClass.GetStatusMessageInterval() + random.randint(-4, 4)
+        self.TimeToFetch = (currentTime - self.LastTimeCreated > intervalSeconds)
         return self.TimeToFetch
 
     def GetData(self):
@@ -100,10 +101,10 @@ class CreateStatusAdapter(object):
                 if usb2Instance.GetIsSRRDongle():
                     if usb2Instance.GetSRRChannel() == "RED":
                         SRRDongleRedFound = True
-                        SRRDongleRedAck = usb2Instance.GetIsSRRAcking()
+                        SRRDongleRedAck = True if usb2Instance.GetIsSRRAcking() else False
                     if usb2Instance.GetSRRChannel() == "BLUE":
                         SRRDongleBlueFound = True
-                        SRRDongleBlueAck = usb2Instance.GetIsSRRAcking()
+                        SRRDongleBlueAck = True if usb2Instance.GetIsSRRAcking() else False
                 else:
                     SIMasterConnectedOnUSB2 = True
             else:
