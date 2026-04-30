@@ -99,7 +99,7 @@ class HardwareAbstraction(object):
             self.LORAEnabledLineInverted = False
             self.SRRirqLine = 6
             self.LORAM0Line = None
-            self.LORAauxLine = 64
+            self.LORAauxLine = 200
             self.SRRnrstLine = 201
             self.LORARSLine = 11
             self.LORAirqLine = 2
