@@ -120,7 +120,7 @@ class SendToSirapAdapter(object):
                     "SendToSirapAdapter::OpenConnection() Address: " + settingsDictionary["SendToSirapIP"] + " Port: " + str(
                         settingsDictionary["SendToSirapIPPort"]))
                 server_address = (settingsDictionary["SendToSirapIP"], settingsDictionary["SendToSirapIPPort"])
-                self.sock.settimeout(2)
+                self.sock.settimeout(3)
                 self.sock.connect(server_address)
                 SendToSirapAdapter.WiRocLogger.debug("SendToSirapAdapter::OpenConnection() After connect")
                 return True

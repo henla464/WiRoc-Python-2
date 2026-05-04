@@ -123,6 +123,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
+  /loralistenonly/:
+    get:
+      tags:
+        - "Radio"
+      summary: "Get if this WiRoc should only listen to LORA message and not send ack (even when requested)"
+      operationId: "getLoraListenOnly"
+      responses:
+        "200":
+          description: "0/1, 1 if it should only listen"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /loralistenonly/{listenonly}:
+    get:
+      tags:
+        - "Radio"
+      summary: "Set if this WiRoc should only listen to LORA message and not send ack (even when requested)"
+      operationId: "setLoraListenOnly"
+      parameters:
+        - name: listenonly
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /power/:
     get:
       tags:
@@ -1453,6 +1485,25 @@ paths:
       - "RTC"
       summary: "Gets whether Wake up is enabled to be activated at shutdown"
       operationId: "getWakeUpToBeEnabledAtShutdown"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /rtc/wakeupenabled/{enabled}:
+    get:
+      tags:
+      - "RTC"
+      summary: "Enable/Disable wakeup enabling at shutdown"
+      operationId: "setWakeUpToBeEnabledAtShutdown"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TrueFalse'
       responses:
         "200":
           description: "successful operation"

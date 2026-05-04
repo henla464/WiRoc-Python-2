@@ -55,7 +55,7 @@ class SettingsClass(object):
 
     @staticmethod
     def GetStatusAcknowledgementRequested():
-        # Never wait for ack for status messages. Never reqeust Ack.
+        # Never wait for ack for status messages. Never request Ack.
         return False
 
     @staticmethod
@@ -442,6 +442,15 @@ class SettingsClass(object):
         return sett.Value == "1"
 
     @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetLoraListenOnly'), lock=rlock)
+    def GetLoraListenOnly():
+        sett = DatabaseHelper.get_setting_by_key('LoraListenOnly')
+        if sett is None:
+            SettingsClass.SetSetting("LoraListenOnly", "0")
+            return True
+        return sett.Value == "1"
+
+    @staticmethod
     @cached(cache, key=partial(hashkey, 'GetSendToSirapEnabled'), lock=rlock)
     def GetSendToSirapEnabled():
         sett = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
@@ -724,7 +733,7 @@ class SettingsClass(object):
     @cached(cache, key=partial(hashkey, 'GetResubmitMessageInterval'), lock=rlock)
     def GetResubmitMessageInterval() -> int:
         sett = DatabaseHelper.get_setting_by_key('ResubmitMessageInterval')
-        if sett is None:
+        if sett is None or sett.Value is None:
             SettingsClass.SetSetting('ResubmitMessageInterval', 300)
             statusMessageBaseInterval = 300
         else:
@@ -739,7 +748,7 @@ class SettingsClass(object):
     @cached(cache, key=partial(hashkey, 'GetHAMCallSign'), lock=rlock)
     def GetHAMCallSign() -> str:
         sett = DatabaseHelper.get_setting_by_key('HAMCallSign')
-        if sett is None:
+        if sett is None or sett.Value is None:
             return ""
         return sett.Value
 
@@ -837,6 +846,7 @@ class SettingsClass(object):
     # Not changed from web services
     #####
     TheBTAddress = "NoBTAddress"
+
     @staticmethod
     # @cached(cacheForEver, key=partial(hashkey, 'GetBTAddress'), lock=rlock) seems sometimes NoBTAddress is returned, we dont want to cache that...
     def GetBTAddress():
@@ -853,7 +863,6 @@ class SettingsClass(object):
         return SettingsClass.TheBTAddress
 
     @staticmethod
-    #@cached(cacheForEver, key=partial(hashkey, 'GetBTAddressAsInt'), lock=rlock)
     def GetBTAddressAsInt():
         btAddressAsString = SettingsClass.GetBTAddress()
         if btAddressAsString == "NoBTAddress":
@@ -879,7 +888,7 @@ class SettingsClass(object):
     @cached(cacheForEver, key=partial(hashkey, 'GetPowerCycle'), lock=rlock)
     def GetPowerCycle():
         sett = DatabaseHelper.get_setting_by_key('PowerCycle')
-        if sett is None:
+        if sett is None or sett.Value is None:
             SettingsClass.SetSetting("PowerCycle", "1")
             return 1
         return int(sett.Value)
