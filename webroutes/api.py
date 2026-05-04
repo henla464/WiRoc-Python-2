@@ -125,6 +125,31 @@ def setAcknowledgementRequested(ack):
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 
+@app.route('/api/loralistenonly/', methods=['GET'])
+def getLoraListenOnly():
+    setting = DatabaseHelper.get_setting_by_key('LoraListenOnly')
+    listenOnly = '0'
+    if setting is not None or settings.Value is not None:
+        listenOnly = setting.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=listenOnly))
+
+
+@app.route('/api/loralistenonly/<ack>/', methods=['GET'])
+def setLoraListenOnly(listenOnly):
+    sd = DatabaseHelper.get_setting_by_key('LoraListenOnly')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'LoraListenOnly'
+    sd.Value = '1' if (listenOnly.lower() == 'true' or listenOnly.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
 @app.route('/api/power/', methods=['GET'])
 def getPower():
     setting = DatabaseHelper.get_setting_by_key('LoraPower')
@@ -1330,6 +1355,20 @@ def clearRTCWakeUp():
 def getWakeUpToBeEnabledAtShutdown():
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
+    isEnabled = HardwareAbstraction.Instance.GetWakeUpToBeEnabledAtShutdown()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value= '1' if isEnabled else '0'))
+
+@app.route('/api/rtc/wakeupenabled/<enabled>/', methods=['GET'])
+def setWakeUpToBeEnabledAtShutdown(enabled):
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    if enabled == '1':
+        HardwareAbstraction.Instance.SetWakeUpToBeEnabledAtShutdown()
+    else:
+        HardwareAbstraction.Instance.ClearWakeUpToBeEnabledAtShutdown()
+
     isEnabled = HardwareAbstraction.Instance.GetWakeUpToBeEnabledAtShutdown()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
