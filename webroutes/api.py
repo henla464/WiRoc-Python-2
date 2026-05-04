@@ -1787,7 +1787,13 @@ def getAllMainSettings():
     if sett is not None:
         codeRate = sett.Value
 
-    ipAddress = getWifiIP()
+    iface = HardwareAbstraction.Instance.GetBuiltinWifiInterfaceName()
+    ipAddresses = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(iface)
+    if len(ipAddresses) > 0:
+        ipAddress = ipAddresses[0]
+    else:
+        ipAddress = ""
+
     batteryPercent = getBatteryLevel()
 
     sett = DatabaseHelper.get_setting_by_key('RS232Mode')

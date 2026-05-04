@@ -5,14 +5,14 @@ from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 
 
-class LoraSIMessageToLoraAckTransform(object):
+class LoraSIMessageDoubleToLoraAckTransform(object):
     @staticmethod
     def GetInputMessageType() -> str:
         return "LORA"
 
     @staticmethod
     def GetInputMessageSubType() -> str:
-        return "SIMessage"
+        return "SIMessageDouble"
 
     @staticmethod
     def GetOutputMessageType() -> str:
@@ -24,7 +24,7 @@ class LoraSIMessageToLoraAckTransform(object):
 
     @staticmethod
     def GetName() -> str:
-        return "LoraSIMessageToLoraAckTransform"
+        return "LoraSIMessageDoubleToLoraAckTransform"
 
     @staticmethod
     def GetBatchSize() -> int:
@@ -72,8 +72,8 @@ class LoraSIMessageToLoraAckTransform(object):
                 if incomingMsgType == LoraRadioMessageRS.MessageTypeStatus or incomingMsgType == LoraRadioMessageRS.MessageTypeStatus2:
                     return None
 
-                loraPunchMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(payloadData)
-                hash = loraPunchMsg.GetHash()
+                loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(payloadData)
+                hash = loraPunchDoubleMsg.GetHash()
                 loraAck = LoraRadioMessageCreator.GetAckMessage(hash)
                 loraAck.SetAckRequested(msgSubBatch.AckReceivedFromReceiver)  # indicate ack received from receiver
                 loraAck.SetRepeater(False)  # indicate this ack comes from receiver

@@ -445,7 +445,7 @@ class DatabaseHelper:
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData JOIN SubscriptionData "
                "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
                "JOIN TransformData ON SubscriptionData.TransformId = TransformData.id "
-               "WHERE TransformData.Name = 'LoraSIMessageToLoraAckTransform' AND "
+               "WHERE (TransformData.Name = 'LoraSIMessageToLoraAckTransform' OR TransformData.Name = 'LoraSIMessageDoubleToLoraAckTransform') AND "
                "MessageSubscriptionData.MessageID = ?")
         rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID, ))
 
