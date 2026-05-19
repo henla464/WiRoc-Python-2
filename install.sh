@@ -168,7 +168,7 @@ echo "Used by install scripts"
 echo "###################################"
 # needed for install scripts
 #apt-get -y install python3-pip
-apt-get -y install python3-venv
+apt-get -y install python3-venva
 apt-get -y install python3-requests
 
 echo "###################################"
@@ -309,11 +309,20 @@ then
        echo "Change overlays"
        sed -i -E "s/(overlays=).*/overlays=uart1 uart3 usbhost1 usbhost2 usbhost3 i2c0/" /boot/armbianEnv.txt
    fi
-else
+fi
+
+if [ "$hwVersion" = "v4Rev1" ] || [ "$hwVersion" = "v6Rev1" ] || [ "$hwVersion" = "v7Rev1" ] || [ "$hwVersion" = "v7Rev2" ]
+then
    if ! grep -Fxq "overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
    then
        echo "Change overlays"
        sed -i -E "s/(overlays=).*/overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0/" /boot/armbianEnv.txt
+   fi
+else
+   if ! grep -Fxq "overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0 spi-enable" /boot/armbianEnv.txt
+   then
+       echo "Change overlays"
+       sed -i -E "s/(overlays=).*/overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0 spi-enable/" /boot/armbianEnv.txt
    fi
 fi
 

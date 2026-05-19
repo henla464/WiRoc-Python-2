@@ -4,7 +4,6 @@ from loraradio.LoraRadioRAK3172 import LoraRadioRAK3172
 from loraradio.ReturnStatus import ReturnStatus
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
-import serial
 import time
 import logging
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
