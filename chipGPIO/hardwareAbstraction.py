@@ -124,7 +124,7 @@ class HardwareAbstraction(object):
             self.LORAauxLine = 64
             self.SRRnrstLine = 201
             self.LORARSLine = None
-            self.LORAirqLine = 139 #11
+            self.LORAirqLine = 11 #PL11
             self.line_request = gpiod.request_lines(chipPath, consumer="wirocpython", config={
                 self.LORAenableLine: gpiod.LineSettings(direction=Direction.OUTPUT),  # lora enable pin (corresponds to pin 13)
                 self.PMUIRQLine: gpiod.LineSettings(direction=Direction.INPUT),  # IRQ pin GPIOA3 Pin 15
