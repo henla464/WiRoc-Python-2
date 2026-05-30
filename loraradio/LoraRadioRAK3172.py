@@ -72,7 +72,7 @@ class LoraRadioRAK3172:
         self.loraRange: str | None = None
         self.loraPower: int | None = None
         self.codeRate: int | None = None
-        self.CRCOn: bool | None = None
+        #self.CRCOn: bool | None = None
         self.rxGain: bool | None = None
         self.drf1268dsCompatMode: bool | None = None
         self.sendAck: bool | None = None
@@ -86,13 +86,13 @@ class LoraRadioRAK3172:
         self.ackReceivedMatchingLastSentMessage: bool = True
         self.serialLock: threading.Lock = threading.Lock()
 
-    def GetIsInitialized(self, channel: str, loraRange: str, loraPower: int, codeRate: int, crcOn: bool, rxGain: bool,
+    def GetIsInitialized(self, channel: str, loraRange: str, loraPower: int, codeRate: int, rxGain: bool,
                          drf1268dsCompatMode: bool, sendAck: bool, enabled: bool) -> bool:
         LoraRadioRAK3172.WiRocLogger.verbose(f"channel {channel} {self.channel}")
         LoraRadioRAK3172.WiRocLogger.verbose(f"loraRange {loraRange} {self.loraRange}")
         LoraRadioRAK3172.WiRocLogger.verbose(f"loraPower {loraPower} {self.loraPower}")
         LoraRadioRAK3172.WiRocLogger.verbose(f"CodeRate {codeRate} {self.codeRate}")
-        LoraRadioRAK3172.WiRocLogger.verbose(f"CRCOn {crcOn} {self.CRCOn}")
+        #LoraRadioRAK3172.WiRocLogger.verbose(f"CRCOn {crcOn} {self.CRCOn}")
         LoraRadioRAK3172.WiRocLogger.verbose(f"RxGain {rxGain} {self.rxGain}")
         LoraRadioRAK3172.WiRocLogger.verbose(f"drf1268dsCompatMode {drf1268dsCompatMode} {self.drf1268dsCompatMode}")
         LoraRadioRAK3172.WiRocLogger.verbose(f"sendAck {sendAck} {self.sendAck}")
@@ -105,7 +105,6 @@ class LoraRadioRAK3172:
             loraRange == self.loraRange and \
             codeRate == self.codeRate and \
             rxGain == self.rxGain and \
-            crcOn == self.CRCOn and \
             drf1268dsCompatMode == self.drf1268dsCompatMode and \
             sendAck == self.sendAck and \
             enabled == self.enabled

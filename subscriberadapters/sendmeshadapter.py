@@ -29,7 +29,7 @@ class SendMeshAdapter(object):
             SendMeshAdapter.Instances = []
             return True
         # check if enabled changed => let init/enabledisablesubscription run
-        isInitialized = SendMeshAdapter.Instances[0].GetIsInitialized()
+        isInitialized = SendMeshAdapter.Instances[0].GetIsInitialized() if len(SendMeshAdapter.Instances) > 0 else False
         allInitializedAsItShould = ((isInitialized and enabled) or (not enabled and not isInitialized))
         if allInitializedAsItShould:
             return False

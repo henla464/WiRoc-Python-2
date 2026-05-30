@@ -1585,6 +1585,7 @@ class DatabaseHelper:
                         ]
 
             for channel in channels:
+                DatabaseHelper.WiRocLogger.debug("DatabaseHelper::add_default_channels() Add channel {channel.Channel}")
                 cls.save_channel(channel)
             DatabaseHelper.WiRocLogger.debug("DatabaseHelper::add_default_channels() Channels added")
         else:

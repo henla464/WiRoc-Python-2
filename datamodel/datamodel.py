@@ -34,9 +34,9 @@ class ErrorCodeData(object):
 
 class ChannelData(object):
     columns = [("Channel", str), ("DataRate", int),  ("LoraRange", str),
-               ("Frequency", int), ("SlopeCoefficient", int),
-               ("M", int), ("SpreadingFactor", int), ("RfBw", int), ("LowDatarateOptimize", bool),
-               ("PreambleLength", int), ("LoraModem", str)]
+               ("Frequency", int), ("SpreadingFactor", int), ("RfBw", int),
+               ("CRCOn", bool), ("LowDatarateOptimize", bool), ("PreambleLength", int),
+               ("LoraModem", str)]
 
     def __init__(self, Channel: str | None = None, DataRate: int | None = None, LoraRange: str | None = None,
                  Frequency: int | None = None, SpreadingFactor: int | None = None, RfBw: int | None = None,
