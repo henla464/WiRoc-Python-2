@@ -30,7 +30,7 @@ paths:
   /channel/:
     get:
       tags:
-      - "Radio"
+        - "Radio"
       summary: "Get the channel used"
       operationId: "getChannel"
       responses:
@@ -43,7 +43,7 @@ paths:
   /channel/{channel}:
     get:
       tags:
-      - "Radio"
+        - "Radio"
       summary: "Set the channel"
       operationId: "setChannel"
       parameters:
@@ -51,7 +51,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/Channel'
+            $ref: "#/components/schemas/Channel"
       responses:
         "200":
           description: "successful operation"
@@ -62,7 +62,7 @@ paths:
   /lorarange/:
     get:
       tags:
-      - "Radio"
+        - "Radio"
       summary: "Get the Lora Range"
       operationId: "getLoraRange"
       responses:
@@ -75,7 +75,7 @@ paths:
   /lorarange/{lorarange}:
     get:
       tags:
-      - "Radio"
+        - "Radio"
       summary: "Set the Lora Range"
       operationId: "setLoraRange"
       parameters:
@@ -83,7 +83,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/LoraRange'
+            $ref: "#/components/schemas/LoraRange"
       responses:
         "200":
           description: "successful operation"
@@ -94,7 +94,7 @@ paths:
   /acknowledgementrequested/:
     get:
       tags:
-      - "Radio"
+        - "Radio"
       summary: "Get if acknowledgemnt should be requested when sending message over the LORA radio"
       operationId: "getAcknowledgementRequested"
       responses:
@@ -107,7 +107,7 @@ paths:
   /acknowledgementrequested/{ackreq}:
     get:
       tags:
-      - "Radio"
+        - "Radio"
       summary: "Set if acknowledgemnt should be requested when sending message over the lora radio"
       operationId: "setAcknowledgementRequested"
       parameters:
@@ -115,7 +115,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -147,7 +147,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -158,7 +158,7 @@ paths:
   /power/:
     get:
       tags:
-      - "Radio"
+        - "Radio"
       summary: "Get lora radio power in dBm"
       operationId: "getPower"
       responses:
@@ -171,7 +171,7 @@ paths:
   /power/{power}:
     get:
       tags:
-      - "Radio"
+        - "Radio"
       summary: "Set the lora radio power in dBm"
       operationId: "setPower"
       parameters:
@@ -179,7 +179,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/Power'
+            $ref: "#/components/schemas/Power"
       responses:
         "200":
           description: "successful operation"
@@ -190,7 +190,7 @@ paths:
   /coderate/:
     get:
       tags:
-      - "Radio"
+        - "Radio"
       summary: "Get lora radio code rate"
       operationId: "getCodeRate"
       responses:
@@ -203,7 +203,7 @@ paths:
   /coderate/{coderate}:
     get:
       tags:
-      - "Radio"
+        - "Radio"
       summary: "Set the lora radio code rate"
       operationId: "setCodeRate"
       parameters:
@@ -211,7 +211,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/CodeRate'
+            $ref: "#/components/schemas/CodeRate"
       responses:
         "200":
           description: "successful operation"
@@ -222,7 +222,7 @@ paths:
   /rxgainenabled/:
     get:
       tags:
-      - "Radio"
+        - "Radio"
       summary: "Get if RxGain is enabled"
       operationId: "GetRxGainEnabled"
       responses:
@@ -235,7 +235,7 @@ paths:
   /rxgainenabled/{rxgainenabled}:
     get:
       tags:
-      - "Radio"
+        - "Radio"
       summary: "Enable/Disable RxGain"
       operationId: "setRxGainEnabled"
       parameters:
@@ -243,7 +243,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -254,7 +254,7 @@ paths:
   /sendtosirapenabled/:
     get:
       tags:
-      - "SIRAP"
+        - "SIRAP"
       summary: "Get if sending to SIRAP is enabled"
       operationId: "GetSendToSirapEnabled"
       responses:
@@ -267,7 +267,7 @@ paths:
   /sendtosirapenabled/{sendtosirapenabled}:
     get:
       tags:
-      - "SIRAP"
+        - "SIRAP"
       summary: "Enable/Disable sending punches to SIRAP"
       operationId: "setSendToSirapEnabled"
       parameters:
@@ -275,7 +275,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -286,7 +286,7 @@ paths:
   /sendtosirapip/:
     get:
       tags:
-      - "SIRAP"
+        - "SIRAP"
       summary: "Get the IP address that SIRAP messages are sent to"
       operationId: "getSendToSirapIP"
       responses:
@@ -299,7 +299,7 @@ paths:
   /sendtosirapip/{sendtosirapip}:
     get:
       tags:
-      - "SIRAP"
+        - "SIRAP"
       summary: "Set the IP address to send SIRAP messages to"
       operationId: "setSendToSirapIP"
       parameters:
@@ -307,7 +307,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/IPAddress'
+            $ref: "#/components/schemas/IPAddress"
       responses:
         "200":
           description: "successful operation"
@@ -318,7 +318,7 @@ paths:
   /sendtosirapipport/:
     get:
       tags:
-      - "SIRAP"
+        - "SIRAP"
       summary: "Get the TCP/IP port that SIRAP messages are sent to"
       operationId: "getSendToSirapIPPort"
       responses:
@@ -331,7 +331,7 @@ paths:
   /sendtosirapipport/{sendtosirapipport}:
     get:
       tags:
-      - "SIRAP"
+        - "SIRAP"
       summary: "Set the TCP/IP port to send SIRAP messages to"
       operationId: "setSendToSirapIPPort"
       parameters:
@@ -339,7 +339,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/Property'
+            $ref: "#/components/schemas/Property"
       responses:
         "200":
           description: "successful operation"
@@ -350,7 +350,7 @@ paths:
   /status/:
     get:
       tags:
-      - "Status"
+        - "Status"
       summary: "Get the status, with enabled input and output adapters and transformations"
       operationId: "getStatus"
       responses:
@@ -363,7 +363,7 @@ paths:
   /settings/:
     get:
       tags:
-      - "Status"
+        - "Status"
       summary: "Get all settings"
       operationId: "getSettings"
       responses:
@@ -376,7 +376,7 @@ paths:
   /setting/{key}/{value}:
     get:
       tags:
-      - "Status"
+        - "Status"
       summary: "Add or change a setting"
       operationId: "setSetting"
       parameters:
@@ -385,13 +385,13 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/Property'
+            $ref: "#/components/schemas/Property"
         - name: value
           description: "The settings value"
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/Property'
+            $ref: "#/components/schemas/Property"
       responses:
         "200":
           description: "successful operation"
@@ -402,7 +402,7 @@ paths:
   /errorcodes/:
     get:
       tags:
-      - "Status"
+        - "Status"
       summary: "Get the error codes"
       operationId: "getErrorCodes"
       responses:
@@ -415,7 +415,7 @@ paths:
   /wirocdevicename/:
     get:
       tags:
-      - "Status"
+        - "Status"
       summary: "Get the device name"
       operationId: "getWiRocDeviceName"
       responses:
@@ -428,7 +428,7 @@ paths:
   /wirocdevicename/{devicename}:
     get:
       tags:
-      - "Status"
+        - "Status"
       summary: "Set the WiRoc device name"
       operationId: "setWiRocDeviceName"
       parameters:
@@ -436,7 +436,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/Property'
+            $ref: "#/components/schemas/Property"
       responses:
         "200":
           description: "successful operation"
@@ -447,7 +447,7 @@ paths:
   /loramode/:
     get:
       tags:
-      - "Radio"
+        - "Radio"
       summary: "Get the lora mode"
       operationId: "getLoraMode"
       responses:
@@ -460,7 +460,7 @@ paths:
   /loramode/{loramode}:
     get:
       tags:
-      - "Radio"
+        - "Radio"
       summary: "Set the Lora mode (RECEIVER, REPEATER, SENDER)"
       operationId: "setLoraMode"
       parameters:
@@ -468,7 +468,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/Property'
+            $ref: "#/components/schemas/Property"
       responses:
         "200":
           description: "successful operation"
@@ -479,7 +479,7 @@ paths:
   /srr/enabled/:
     get:
       tags:
-      - "SRR"
+        - "SRR"
       summary: "Get if SRR receiver is enabled"
       operationId: "GetSRREnabled"
       responses:
@@ -492,7 +492,7 @@ paths:
   /srr/enabled/{enabled}:
     get:
       tags:
-      - "SRR"
+        - "SRR"
       summary: "Enable/Disable the SRR receiver"
       operationId: "setSRREnabled"
       parameters:
@@ -500,7 +500,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -511,7 +511,7 @@ paths:
   /srr/mode:
     get:
       tags:
-      - "SRR"
+        - "SRR"
       summary: "Get the mode of the SRR radio"
       operationId: "getSRRMode"
       responses:
@@ -524,7 +524,7 @@ paths:
   /srr/mode/{mode}:
     get:
       tags:
-      - "SRR"
+        - "SRR"
       summary: "Set the SRR mode (RECEIVE, SEND)"
       operationId: "setSRRMode"
       parameters:
@@ -532,7 +532,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/Property'
+            $ref: "#/components/schemas/Property"
       responses:
         "200":
           description: "successful operation"
@@ -543,7 +543,7 @@ paths:
   /srr/redchannellistenonly/:
     get:
       tags:
-      - "SRR"
+        - "SRR"
       summary: "Get if SRR receiver is only listening without acknowledgeing messages on red channel"
       operationId: "getSRRRedChannelListenOnly"
       responses:
@@ -556,7 +556,7 @@ paths:
   /srr/redchannellistenonly/{enabled}:
     get:
       tags:
-      - "SRR"
+        - "SRR"
       summary: "Enable/Disable the SRR receiver listen only mode on red channel"
       operationId: "setSRRRedChannelListenOnly"
       parameters:
@@ -564,7 +564,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -575,7 +575,7 @@ paths:
   /srr/bluechannellistenonly/:
     get:
       tags:
-      - "SRR"
+        - "SRR"
       summary: "Get if SRR receiver is only listening without acknowledgeing messages on blue channel"
       operationId: "getSRRBlueChannelListenOnly"
       responses:
@@ -588,7 +588,7 @@ paths:
   /srr/bluechannellistenonly/{enabled}:
     get:
       tags:
-      - "SRR"
+        - "SRR"
       summary: "Enable/Disable the SRR receiver listen only mode on blue channel"
       operationId: "setSRRBlueChannelListenOnly"
       parameters:
@@ -596,7 +596,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -607,7 +607,7 @@ paths:
   /srr/redchannel/:
     get:
       tags:
-      - "SRR"
+        - "SRR"
       summary: "Get if the red channel of the SRR receiver is enabled"
       operationId: "GetSRRRedChannel"
       responses:
@@ -620,7 +620,7 @@ paths:
   /srr/redchannel/{enabled}:
     get:
       tags:
-      - "SRR"
+        - "SRR"
       summary: "Enable/Disable the red channel of the SRR receiver"
       operationId: "setSRRRedChannel"
       parameters:
@@ -628,7 +628,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -639,7 +639,7 @@ paths:
   /srr/bluechannel/:
     get:
       tags:
-      - "SRR"
+        - "SRR"
       summary: "Get if the blue channel of the SRR receiver is enabled"
       operationId: "GetSRRBlueChannel"
       responses:
@@ -652,7 +652,7 @@ paths:
   /srr/bluechannel/{enabled}:
     get:
       tags:
-      - "SRR"
+        - "SRR"
       summary: "Enable/Disable the blue channel of the SRR receiver"
       operationId: "setSRRBlueChannel"
       parameters:
@@ -660,7 +660,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -668,10 +668,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
+  /srr/hardwarefeatures/:
+    get:
+      tags:
+        - "SRR"
+      summary: "Get the hardware features byte of the connected SRR device"
+      operationId: "getSRRHardwareFeatures"
+      responses:
+        "200":
+          description: "Integer representing the hardware features bitmask of the SRR device"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /srr/hassendmode/:
+    get:
+      tags:
+        - "SRR"
+      summary: "Get if the connected SRR device has send mode capability"
+      operationId: "getSRRHasSendMode"
+      responses:
+        "200":
+          description: "0/1 depending on if SRR device supports send mode"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /punches/:
     get:
       tags:
-      - "Punches"
+        - "Punches"
       summary: "Get new punches (sendtoblenoenabled must be enabled)"
       operationId: "getPunches"
       responses:
@@ -684,7 +710,7 @@ paths:
   /deletepunches/:
     get:
       tags:
-      - "Punches"
+        - "Punches"
       summary: "Delete all punches in the database"
       operationId: "deletePunches"
       responses:
@@ -697,7 +723,7 @@ paths:
   /dropalltables/:
     get:
       tags:
-      - "Database"
+        - "Database"
       summary: "Drop and recreate all tables in the database"
       operationId: "dropalltables"
       responses:
@@ -710,7 +736,7 @@ paths:
   /testpunches/gettestpunches/{testbatchguid}/{includeall}/:
     get:
       tags:
-      - "Punches"
+        - "Punches"
       summary: "Get the test punches given the batch guid"
       operationId: "getTestPunches"
       parameters:
@@ -718,12 +744,12 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/Property'
+            $ref: "#/components/schemas/Property"
         - name: includeall
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalseString'
+            $ref: "#/components/schemas/TrueFalseString"
       responses:
         "200":
           description: "JSON with test punches"
@@ -734,7 +760,7 @@ paths:
   /testpunches/addtestpunch/{testbatchguid}/{sinumber}/:
     get:
       tags:
-      - "Punches"
+        - "Punches"
       summary: "Add a test punch to a test batch"
       operationId: "addTestPunch"
       parameters:
@@ -742,7 +768,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/Property'
+            $ref: "#/components/schemas/Property"
         - name: sinumber
           in: path
           required: true
@@ -759,7 +785,7 @@ paths:
   /ischarging/:
     get:
       tags:
-      - "Status"
+        - "Status"
       summary: "Get if the device is charging now"
       operationId: "getIsCharging"
       responses:
@@ -772,7 +798,7 @@ paths:
   /batterylevel/:
     get:
       tags:
-      - "Status"
+        - "Status"
       summary: "Get the current battery level percentage"
       operationId: "getBatteryLevel"
       responses:
@@ -785,7 +811,7 @@ paths:
   /apikey/:
     get:
       tags:
-      - "Public web server"
+        - "Public web server"
       summary: "Get the API key required for posting things to the internet server"
       operationId: "getApiKey"
       responses:
@@ -798,7 +824,7 @@ paths:
   /webserverurl/:
     get:
       tags:
-      - "Public web server"
+        - "Public web server"
       summary: "Get the web server url to the internet server"
       operationId: "getWebServerUrl"
       responses:
@@ -811,7 +837,7 @@ paths:
   /onewayreceive/:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Get if one-way recieve from USB SportIdent master station is enabled"
       operationId: "getOneWayReceive"
       responses:
@@ -824,7 +850,7 @@ paths:
   /onewayreceive/{onewayenabled}:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Enable/Disable one-way recieve from USB SportIdent master station"
       operationId: "setOneWayReceive"
       parameters:
@@ -832,7 +858,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -843,7 +869,7 @@ paths:
   /force4800baudrate/:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Get if baudrate 4800 kbps is enabled on USB port"
       operationId: "getForce4800BaudRate"
       responses:
@@ -856,7 +882,7 @@ paths:
   /force4800baudrate/{forceenabled}:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Enable/Disable baudrate 4800 kbps on USB port"
       operationId: "setForce4800BaudRate"
       parameters:
@@ -864,7 +890,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -875,7 +901,7 @@ paths:
   /rs232mode/:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Get the mode of the RS232 port(s), SEND or RECEIVE"
       operationId: "getR232Mode"
       responses:
@@ -888,7 +914,7 @@ paths:
   /rs232mode/{rs232mode}:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Set the mode of the RS232 port(s), SEND or RECEIVE"
       operationId: "setRS232Mode"
       parameters:
@@ -896,7 +922,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/Property'
+            $ref: "#/components/schemas/Property"
       responses:
         "200":
           description: "successful operation"
@@ -907,7 +933,7 @@ paths:
   /rs232onewayreceive/:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Get if one-way recieve from SportIdent master station is enabled for the RS232 port(s)"
       operationId: "getRS232OneWayReceive"
       responses:
@@ -920,7 +946,7 @@ paths:
   /rs232onewayreceive/{onewayenabled}:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Enable/Disable one-way recieve from SportIdent master station for the RS232 port(s)"
       operationId: "setRS232OneWayReceive"
       parameters:
@@ -928,7 +954,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -939,7 +965,7 @@ paths:
   /forcers2324800baudrate/:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Get if 4800 baudrate is set on RS232 port"
       operationId: "getForceRS2324800BaudRate"
       responses:
@@ -952,7 +978,7 @@ paths:
   /forcers2324800baudrate/{forceenabled}:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Enable/Disable baudrate 4800 kbps for RS232 serial ports"
       operationId: "setForceRS2324800BaudRateEnabled"
       parameters:
@@ -960,7 +986,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -971,7 +997,7 @@ paths:
   /btserialonewayreceive/:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Get if one-way recieve from SportIdent master station is enabled for BT serial"
       operationId: "getBTSerialOneWayReceive"
       responses:
@@ -984,7 +1010,7 @@ paths:
   /btserialonewayreceive/{enabled}:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Enable/Disable one-way recieve from SportIdent master station for BT serial"
       operationId: "setBTSerialOneWayReceive"
       parameters:
@@ -992,7 +1018,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -1003,7 +1029,7 @@ paths:
   /forcebtserial4800baudrate/:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Get if 4800 baudrate is set for bt serial"
       operationId: "getForceBTSerial4800BaudRate"
       responses:
@@ -1016,7 +1042,7 @@ paths:
   /forcebtserial4800baudrate/{enabled}:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Enable/Disable baudrate 4800 kbps for bt serial"
       operationId: "setForceBTSerial4800BaudRateEnabled"
       parameters:
@@ -1024,7 +1050,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -1035,7 +1061,7 @@ paths:
   /sendtoblenoenabled/:
     get:
       tags:
-      - "Punches"
+        - "Punches"
       summary: "Is sending punches to webservice enabled"
       operationId: "getSendToBlenoEnabled"
       responses:
@@ -1048,7 +1074,7 @@ paths:
   /sendtoblenoenabled/{blenoenabled}:
     get:
       tags:
-      - "Punches"
+        - "Punches"
       summary: "Enable/Disable one-way recieve from SportIdent master station"
       operationId: "setSendToBlenoEnabled"
       parameters:
@@ -1056,7 +1082,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -1067,7 +1093,7 @@ paths:
   /logtoserver/:
     get:
       tags:
-      - "Debug"
+        - "Debug"
       summary: "Is logging to server enabled"
       operationId: "getLogToServer"
       responses:
@@ -1080,7 +1106,7 @@ paths:
   /logtoserver/{logtoserver}:
     get:
       tags:
-      - "Debug"
+        - "Debug"
       summary: "Enable/Disable logging to server"
       operationId: "setLogToServer"
       parameters:
@@ -1088,7 +1114,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -1099,7 +1125,7 @@ paths:
   /loggingserverhost/:
     get:
       tags:
-      - "Debug"
+        - "Debug"
       summary: "Get the logging server host"
       operationId: "getLoggingServerHost"
       responses:
@@ -1112,7 +1138,7 @@ paths:
   /loggingserverhost/{host}:
     get:
       tags:
-      - "Debug"
+        - "Debug"
       summary: "Set the logging server host"
       operationId: "setLoggingServerHost"
       parameters:
@@ -1120,7 +1146,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/Property'
+            $ref: "#/components/schemas/Property"
       responses:
         "200":
           description: "successful operation"
@@ -1131,7 +1157,7 @@ paths:
   /loggingserverport/:
     get:
       tags:
-      - "Debug"
+        - "Debug"
       summary: "Get the TCP/IP port to send logging to"
       operationId: "getLoggingServerPort"
       responses:
@@ -1144,7 +1170,7 @@ paths:
   /loggingserverport/{port}:
     get:
       tags:
-      - "Debug"
+        - "Debug"
       summary: "Set the TCP/IP port send logging to"
       operationId: "setLoggingServerPort"
       parameters:
@@ -1163,7 +1189,7 @@ paths:
   /wirocpythonversion/:
     get:
       tags:
-      - "Status"
+        - "Status"
       summary: "Get the WiRoc Python version"
       operationId: "getWiRocPythonVersion"
       responses:
@@ -1176,7 +1202,7 @@ paths:
   /wirocbleversion/:
     get:
       tags:
-      - "Status"
+        - "Status"
       summary: "Get the WiRoc BLE version"
       operationId: "getWiRocBLEVersion"
       responses:
@@ -1189,7 +1215,7 @@ paths:
   /wirocbleapiversion/:
     get:
       tags:
-      - "Status"
+        - "Status"
       summary: "Get the WiRoc BLE API version"
       operationId: "getWiRocBLEAPIVersion"
       responses:
@@ -1202,7 +1228,7 @@ paths:
   /wirochwversion/:
     get:
       tags:
-      - "Status"
+        - "Status"
       summary: "Get the WiRoc hardware version"
       operationId: "getWiRocHWVersion"
       responses:
@@ -1215,7 +1241,7 @@ paths:
   /scanbtaddresses/:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Gets a bluetooth devices"
       operationId: "getBTAddresses"
       responses:
@@ -1228,7 +1254,7 @@ paths:
   /bindrfcomm/{btAddress}/{btName}:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Bind a serial port to the bluetooth address"
       operationId: "bindRFComm"
       parameters:
@@ -1252,7 +1278,7 @@ paths:
   /releaserfcomm/{portNumberUsed}:
     get:
       tags:
-      - "SportIdent"
+        - "SportIdent"
       summary: "Release a serial port from the bluetooth address"
       operationId: "releaseRFComm"
       parameters:
@@ -1260,7 +1286,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/PropertyObj'
+            $ref: "#/components/schemas/PropertyObj"
       responses:
         "200":
           description: "successful operation"
@@ -1268,32 +1294,58 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
+  /rfcomm/:
+    get:
+      tags:
+        - "SportIdent"
+      summary: "Get all bound RFCOMM bluetooth serial ports"
+      operationId: "getRFComm"
+      responses:
+        "200":
+          description: "JSON array of bound RFCOMM bluetooth serial ports with DeviceBTAddress, Name and Status"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /hasrfcomm/:
+    get:
+      tags:
+        - "SportIdent"
+      summary: "Get if the hardware supports RFCOMM (bluetooth serial)"
+      operationId: "getHasRFComm"
+      responses:
+        "200":
+          description: "0/1 depending on if hardware version is <= 7"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /ip/:
-      get:
-        tags:
+    get:
+      tags:
         - "Network"
-        summary: "Gets the current ip"
-        operationId: "getIP2"
-        responses:
-          "200":
-            description: "The current ip address"
-            content:
-              application/json:
-                schema:
-                  $ref: "#/components/schemas/PropertyObj"
+      summary: "Gets the current ip"
+      operationId: "getIP2"
+      responses:
+        "200":
+          description: "The current ip address"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /wifiip/:
-      get:
-        tags:
+    get:
+      tags:
         - "Network"
-        summary: "Gets the current builtin wifi ip"
-        operationId: "getWifiIP"
-        responses:
-          "200":
-            description: "The current builtin wifi ip address"
-            content:
-              application/json:
-                schema:
-                  $ref: "#/components/schemas/PropertyObj"
+      summary: "Gets the current builtin wifi ip"
+      operationId: "getWifiIP"
+      responses:
+        "200":
+          description: "The current builtin wifi ip address"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /usbethernetip/:
     get:
       tags:
@@ -1323,7 +1375,7 @@ paths:
   /renewip/{ifaceNetType}:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Renew the IP address"
       operationId: "renewIP"
       parameters:
@@ -1331,7 +1383,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/PropertyObj'
+            $ref: "#/components/schemas/PropertyObj"
       responses:
         "200":
           description: "successful operation"
@@ -1342,7 +1394,7 @@ paths:
   /services/:
     get:
       tags:
-      - "Status"
+        - "Status"
       summary: "Gets a list of services and their status"
       operationId: "getServices"
       responses:
@@ -1355,7 +1407,7 @@ paths:
   /listwifi/:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Gets a list of available wifi networks"
       operationId: "getListWifi"
       responses:
@@ -1368,7 +1420,7 @@ paths:
   /connectwifi/{wifiName}/{wifiPassword}:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Connect to a wifi network"
       operationId: "connectWifi"
       parameters:
@@ -1376,12 +1428,12 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/PropertyObj'
+            $ref: "#/components/schemas/PropertyObj"
         - name: wifiPassword
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/PropertyObj'
+            $ref: "#/components/schemas/PropertyObj"
       responses:
         "200":
           description: "successful operation"
@@ -1392,7 +1444,7 @@ paths:
   /disconnectwifi/:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Disconnect from the wifi network"
       operationId: "disconnectWifi"
       responses:
@@ -1405,7 +1457,7 @@ paths:
   /rtc/datetime/:
     get:
       tags:
-      - "RTC"
+        - "RTC"
       summary: "Get the current time of the WiRoc device"
       operationId: "getRTCDateTime"
       responses:
@@ -1418,7 +1470,7 @@ paths:
   /rtc/datetime/{dateAndTimeWithSeconds}:
     get:
       tags:
-      - "RTC"
+        - "RTC"
       summary: "Set the current date and time of the WiRoc device"
       operationId: "setRTCDateTime"
       parameters:
@@ -1437,7 +1489,7 @@ paths:
   /rtc/wakeup/:
     get:
       tags:
-      - "RTC"
+        - "RTC"
       summary: "Gets the current wake up time set in the RTC chip"
       operationId: "getRTCWakeUp"
       responses:
@@ -1450,7 +1502,7 @@ paths:
   /rtc/wakeup/{time}:
     get:
       tags:
-      - "RTC"
+        - "RTC"
       summary: "Set the wake up time and the flag saying Wake Up should be be activated at shutdown"
       operationId: "setRTCWakeUp"
       parameters:
@@ -1469,7 +1521,7 @@ paths:
   /rtc/clearwakeup/:
     get:
       tags:
-      - "RTC"
+        - "RTC"
       summary: "Clears the flag saying Wake Up should be be activated at shutdown"
       operationId: "clearRTCWakeUp"
       responses:
@@ -1482,7 +1534,7 @@ paths:
   /rtc/wakeupenabled/:
     get:
       tags:
-      - "RTC"
+        - "RTC"
       summary: "Gets whether Wake up is enabled to be activated at shutdown"
       operationId: "getWakeUpToBeEnabledAtShutdown"
       responses:
@@ -1495,7 +1547,7 @@ paths:
   /rtc/wakeupenabled/{enabled}:
     get:
       tags:
-      - "RTC"
+        - "RTC"
       summary: "Enable/Disable wakeup enabling at shutdown"
       operationId: "setWakeUpToBeEnabledAtShutdown"
       parameters:
@@ -1503,7 +1555,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -1514,7 +1566,7 @@ paths:
   /ham/callsign/:
     get:
       tags:
-      - "HAM"
+        - "HAM"
       summary: "Get the amateur radio / HAM callsign"
       operationId: "getHAMCallSign"
       responses:
@@ -1527,7 +1579,7 @@ paths:
   /ham/callsign/{callsign}:
     get:
       tags:
-      - "HAM"
+        - "HAM"
       summary: "Set the amateur radio / HAM callsign"
       operationId: "setHAMCallSign"
       parameters:
@@ -1535,7 +1587,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/Property'
+            $ref: "#/components/schemas/Property"
       responses:
         "200":
           description: "successful operation"
@@ -1546,7 +1598,7 @@ paths:
   /ham/enabled/:
     get:
       tags:
-      - "HAM"
+        - "HAM"
       summary: "Gets whether HAM is enabled or not"
       operationId: "getHAMEnabled"
       responses:
@@ -1559,7 +1611,7 @@ paths:
   /ham/enabled/{hamenabled}:
     get:
       tags:
-      - "HAM"
+        - "HAM"
       summary: "Enable/Disable HAM"
       operationId: "setHAMEnabled"
       parameters:
@@ -1567,7 +1619,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -1578,7 +1630,7 @@ paths:
   /wifimesh/enabled/:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Gets whether Wifi Mesh is enabled or not"
       operationId: "getWifiMeshEnabled"
       responses:
@@ -1591,7 +1643,7 @@ paths:
   /wifimesh/enabled/{enabled}:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Enable/Disable Wifi Mesh"
       operationId: "setWifiMeshEnabled"
       parameters:
@@ -1599,7 +1651,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -1610,7 +1662,7 @@ paths:
   /wifimesh/gateway/enabled/:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Gets whether this device is a gateway for the Wifi Mesh. Meaning it routes packages to the normal Wifi interface"
       operationId: "getWifiMeshGatewayEnabled"
       responses:
@@ -1623,7 +1675,7 @@ paths:
   /wifimesh/gateway/enabled/{enabled}:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Enable/Disable Wifi Mesh Gateway"
       operationId: "setWifiMeshGatewayEnabled"
       parameters:
@@ -1631,7 +1683,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/TrueFalse'
+            $ref: "#/components/schemas/TrueFalse"
       responses:
         "200":
           description: "successful operation"
@@ -1642,7 +1694,7 @@ paths:
   /wifimesh/channel/:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Get the Wifi channel the Wifi Mesh is using"
       operationId: "getWifiMeshChannel"
       responses:
@@ -1655,7 +1707,7 @@ paths:
   /wifimesh/channel/{channel}:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Set the Wifi channel the Wifi Mesh should use (1-13)"
       operationId: "setWifiMeshChannel"
       parameters:
@@ -1663,7 +1715,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/WifiMeshChannel'
+            $ref: "#/components/schemas/WifiMeshChannel"
       responses:
         "200":
           description: "successful operation"
@@ -1674,7 +1726,7 @@ paths:
   /wifimesh/networknamenumber/:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Gets the Wifi Mesh network name number the Wifi Mesh is using (used in the SSID)"
       operationId: "getWifiMeshNetworkNameNumber"
       responses:
@@ -1687,7 +1739,7 @@ paths:
   /wifimesh/networknamenumber/{networknamenumber}:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Set the Wifi Mesh network name number (used in the SSID)"
       operationId: "setWifiMeshNetworkNameNumber"
       parameters:
@@ -1695,7 +1747,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/WifiMeshNetworkNameNumber'
+            $ref: "#/components/schemas/WifiMeshNetworkNameNumber"
       responses:
         "200":
           description: "successful operation"
@@ -1706,7 +1758,7 @@ paths:
   /wifimesh/ipnetworknumber/:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Gets the Wifi Mesh network ip network number"
       operationId: "getWifiMeshIPNetworkNumber"
       responses:
@@ -1719,7 +1771,7 @@ paths:
   /wifimesh/ipnetworknumber/{ipnetworknumber}:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Set the Wifi Mesh network number"
       operationId: "setWifiMeshIPNetworkNumber"
       parameters:
@@ -1727,7 +1779,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/WifiMeshIPNetworkNumber'
+            $ref: "#/components/schemas/WifiMeshIPNetworkNumber"
       responses:
         "200":
           description: "successful operation"
@@ -1738,7 +1790,7 @@ paths:
   /wifimesh/nodenumber/:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Gets the Wifi Mesh network name number the Wifi Mesh is using (used in the SSID)"
       operationId: "getWifiMeshNodeNumber"
       responses:
@@ -1751,7 +1803,7 @@ paths:
   /wifimesh/nodenumber/{nodenumber}:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Set the Wifi Mesh node number (gateway 1, other nodes unique number 2...30)"
       operationId: "setWifiMeshNodeNumber"
       parameters:
@@ -1759,7 +1811,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/WifiMeshNodeNumber'
+            $ref: "#/components/schemas/WifiMeshNodeNumber"
       responses:
         "200":
           description: "successful operation"
@@ -1822,7 +1874,7 @@ paths:
   /wifimesh/routetointerface/:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Get the interface that we should route Wifi Mesh traffic to"
       operationId: "getWifiMeshRouteToInterface"
       responses:
@@ -1835,7 +1887,7 @@ paths:
   /wifimesh/routetointerface/{interface}:
     get:
       tags:
-      - "Network"
+        - "Network"
       summary: "Set the interface that we should route Wifi Mesh traffic to"
       operationId: "setWifiMeshRouteToInterface"
       parameters:
@@ -1843,7 +1895,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/Property'
+            $ref: "#/components/schemas/Property"
       responses:
         "200":
           description: "successful operation"
@@ -1854,7 +1906,7 @@ paths:
   /uploadlogarchive/:
     get:
       tags:
-      - "Debug"
+        - "Debug"
       summary: "Upload log archive to webserver"
       operationId: "uploadLogArchive"
       responses:
@@ -1867,7 +1919,7 @@ paths:
   /upgradewirocble/{version}:
     get:
       tags:
-      - "Debug"
+        - "Debug"
       summary: "Upgrade WiRoc BLE service"
       operationId: "upgradeWiRocBLE"
       parameters:
@@ -1875,7 +1927,7 @@ paths:
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/PropertyObj'
+            $ref: "#/components/schemas/PropertyObj"
       responses:
         "200":
           description: "successful operation"
@@ -1886,7 +1938,7 @@ paths:
   /all/:
     get:
       tags:
-      - "Status"
+        - "Status"
       summary: "Gets a semicolon separated list of settings"
       operationId: "getAllMainSettings"
       responses:
@@ -1902,22 +1954,22 @@ components:
       type: "string"
       description: "The channel as a string"
       enum:
-      - "1"
-      - "2"
-      - "3"
-      - "4"
-      - "5"
-      - "6"
-      - "HAM1"
-      - "HAM2"
-      - "HAM3"
-      - "HAM4"
-      - "HAM5"
+        - "1"
+        - "2"
+        - "3"
+        - "4"
+        - "5"
+        - "6"
+        - "HAM1"
+        - "HAM2"
+        - "HAM3"
+        - "HAM4"
+        - "HAM5"
     ChannelObj:
       type: "object"
       properties:
         Value:
-          $ref: '#/components/schemas/Channel'
+          $ref: "#/components/schemas/Channel"
         py/object:
           type: "string"
     WifiMeshChannel:
@@ -1941,7 +1993,7 @@ components:
       type: "object"
       properties:
         Value:
-          $ref: '#/components/schemas/WifiMeshChannel'
+          $ref: "#/components/schemas/WifiMeshChannel"
         py/object:
           type: "string"
     WifiMeshNetworkNameNumber:
@@ -1956,7 +2008,7 @@ components:
       type: "object"
       properties:
         Value:
-          $ref: '#/components/schemas/WifiMeshNetworkNameNumber'
+          $ref: "#/components/schemas/WifiMeshNetworkNameNumber"
         py/object:
           type: "string"
     WifiMeshIPNetworkNumber:
@@ -1998,7 +2050,7 @@ components:
       type: "object"
       properties:
         Value:
-          $ref: '#/components/schemas/WifiMeshIPNetworkNumber'
+          $ref: "#/components/schemas/WifiMeshIPNetworkNumber"
         py/object:
           type: "string"
     WifiMeshNodeNumber:
@@ -2040,91 +2092,91 @@ components:
       type: "object"
       properties:
         Value:
-          $ref: '#/components/schemas/WifiMeshNodeNumber'
+          $ref: "#/components/schemas/WifiMeshNodeNumber"
         py/object:
           type: "string"
     LoraRange:
       type: "string"
       description: "The lora range as a string"
       enum:
-      - "UL"
-      - "XL"
-      - "L"
-      - "ML"
-      - "MS"
-      - "S"
+        - "UL"
+        - "XL"
+        - "L"
+        - "ML"
+        - "MS"
+        - "S"
     LoraRangeObj:
       type: "object"
       properties:
         Value:
-          $ref: '#/components/schemas/LoraRange'
+          $ref: "#/components/schemas/LoraRange"
         py/object:
           type: "string"
     TrueFalseString:
       type: "string"
       description: "true or false as string"
       enum:
-      - "true"
-      - "false"
+        - "true"
+        - "false"
     TrueFalse:
       type: "string"
       description: "True or False as 0/1 string"
       enum:
-      - "0"
-      - "1"
+        - "0"
+        - "1"
     TrueFalseObj:
       type: "object"
       properties:
         Value:
-          $ref: '#/components/schemas/TrueFalse'
+          $ref: "#/components/schemas/TrueFalse"
         py/object:
           type: "string"
     Power:
       type: "string"
       description: "The lora power in dBm"
       enum:
-      - "1"
-      - "2"
-      - "3"
-      - "4"
-      - "5"
-      - "6"
-      - "7"
-      - "8"
-      - "9"
-      - "10"
-      - "11"
-      - "12"
-      - "13"
-      - "14"
-      - "15"
-      - "16"
-      - "17"
-      - "18"
-      - "19"
-      - "20"
-      - "21"
-      - "22"
+        - "1"
+        - "2"
+        - "3"
+        - "4"
+        - "5"
+        - "6"
+        - "7"
+        - "8"
+        - "9"
+        - "10"
+        - "11"
+        - "12"
+        - "13"
+        - "14"
+        - "15"
+        - "16"
+        - "17"
+        - "18"
+        - "19"
+        - "20"
+        - "21"
+        - "22"
     PowerObj:
       type: "object"
       properties:
         Value:
-          $ref: '#/components/schemas/Power'
+          $ref: "#/components/schemas/Power"
         py/object:
           type: "string"
     CodeRate:
       type: "string"
       description: "The code rate"
       enum:
-      - "0"
-      - "1"
-      - "2"
-      - "3"
+        - "0"
+        - "1"
+        - "2"
+        - "3"
     CodeRateObj:
       type: "object"
       properties:
         Value:
-          $ref: '#/components/schemas/CodeRate'
+          $ref: "#/components/schemas/CodeRate"
         py/object:
           type: "string"
     IPAddress:
@@ -2134,7 +2186,7 @@ components:
       type: "object"
       properties:
         Value:
-          $ref: '#/components/schemas/IPAddress'
+          $ref: "#/components/schemas/IPAddress"
         py/object:
           type: "string"
     Property:
@@ -2143,7 +2195,7 @@ components:
       type: "object"
       properties:
         Value:
-          $ref: '#/components/schemas/Property'
+          $ref: "#/components/schemas/Property"
         py/object:
           type: "string"
     PropertyInt:
@@ -2152,7 +2204,7 @@ components:
       type: "object"
       properties:
         Value:
-          $ref: '#/components/schemas/PropertyInt'
+          $ref: "#/components/schemas/PropertyInt"
         py/object:
           type: "string"
     MeshPath:

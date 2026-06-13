@@ -13,8 +13,9 @@ from gpiod.line import Direction, Value
 class HardwareAbstraction(object):
     WiRocLogger = logging.getLogger('WiRoc')
     Instance: HardwareAbstraction = None
-    i2cAddress: int = 0x34
+    pmuAddress: int = 0x34 #power managment unit - axp209
     rtcAddress: int = 0x51
+    srrAddress: int = 0x20
 
     def __init__(self):
         HardwareAbstraction.WiRocLogger.info("HardwareAbstraction::Init start")
@@ -121,7 +122,7 @@ class HardwareAbstraction(object):
             self.LORAEnabledLineInverted = False
             self.SRRirqLine = 6
             self.LORAM0Line = None
-            self.LORAauxLine = 64
+            self.LORAauxLine = 200
             self.SRRnrstLine = 201
             self.LORARSLine = None
             self.LORAirqLine = 11 #PL11
@@ -310,7 +311,7 @@ class HardwareAbstraction(object):
         # HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetIsShortKeyPress")
 
         IRQ_STATUS_3_REGADDR = 0x4a
-        statusReg = self.i2cBus.read_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR)
+        statusReg = self.i2cBus.read_byte_data(self.pmuAddress, IRQ_STATUS_3_REGADDR)
 
         shortKeyPress = statusReg & 0x02
         return shortKeyPress > 0
@@ -318,13 +319,13 @@ class HardwareAbstraction(object):
     def ClearShortKeyPress(self):
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearShortKeyPress")
         IRQ_STATUS_3_REGADDR = 0x4a
-        self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR, 0x02)
+        self.i2cBus.write_byte_data(self.pmuAddress, IRQ_STATUS_3_REGADDR, 0x02)
 
     def GetIsLongKeyPress(self):
         # HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetIsLongKeyPress")
 
         IRQ_STATUS_3_REGADDR = 0x4a
-        statusReg = self.i2cBus.read_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR)
+        statusReg = self.i2cBus.read_byte_data(self.pmuAddress, IRQ_STATUS_3_REGADDR)
 
         longKeyPress = statusReg & 0x01
         return longKeyPress > 0
@@ -332,60 +333,60 @@ class HardwareAbstraction(object):
     def ClearLongKeyPress(self):
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearLongKeyPress")
         IRQ_STATUS_3_REGADDR = 0x4a
-        self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR, 0x01)
+        self.i2cBus.write_byte_data(self.pmuAddress, IRQ_STATUS_3_REGADDR, 0x01)
 
     def ClearPMUIRQStatus1(self):
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearPMUIRQStatus1")
         IRQ_STATUS_1_REGADDR = 0x48
-        self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_1_REGADDR, 0xFF)
+        self.i2cBus.write_byte_data(self.pmuAddress, IRQ_STATUS_1_REGADDR, 0xFF)
 
     def ClearPMUIRQStatus2(self):
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearPMUIRQStatus2")
         IRQ_STATUS_2_REGADDR = 0x49
-        self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_2_REGADDR, 0xFF)
+        self.i2cBus.write_byte_data(self.pmuAddress, IRQ_STATUS_2_REGADDR, 0xFF)
 
     def ClearPMUIRQStatus3(self):
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearPMUIRQStatus3")
         IRQ_STATUS_3_REGADDR = 0x4a
-        self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_3_REGADDR, 0xFF)
+        self.i2cBus.write_byte_data(self.pmuAddress, IRQ_STATUS_3_REGADDR, 0xFF)
 
     def ClearPMUIRQStatus4(self):
            HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearPMUIRQStatus4")
            IRQ_STATUS_4_REGADDR = 0x4b
-           self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_4_REGADDR, 0xFF)
+           self.i2cBus.write_byte_data(self.pmuAddress, IRQ_STATUS_4_REGADDR, 0xFF)
 
     def ClearPMUIRQStatus5(self):
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::ClearPMUIRQStatus5")
         IRQ_STATUS_5_REGADDR = 0x4c
-        self.i2cBus.write_byte_data(self.i2cAddress, IRQ_STATUS_5_REGADDR, 0xFF)
+        self.i2cBus.write_byte_data(self.pmuAddress, IRQ_STATUS_5_REGADDR, 0xFF)
 
     def DisablePMUIRQ1(self):
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::DisablePMUIRQ4")
         IRQ_1_REGADDR = 0x40
-        self.i2cBus.write_byte_data(self.i2cAddress, IRQ_1_REGADDR, 0x00)
+        self.i2cBus.write_byte_data(self.pmuAddress, IRQ_1_REGADDR, 0x00)
 
     def DisablePMUIRQ2(self):
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::DisablePMUIRQ4")
         IRQ_2_REGADDR = 0x41
-        self.i2cBus.write_byte_data(self.i2cAddress, IRQ_2_REGADDR, 0x00)
+        self.i2cBus.write_byte_data(self.pmuAddress, IRQ_2_REGADDR, 0x00)
 
     # IRQ3 Contains PEK short and long. Default is correct so no need to disable.
     def DisablePMUIRQ3(self):
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::DisablePMUIRQ4")
         IRQ_3_REGADDR = 0x42
-        self.i2cBus.write_byte_data(self.i2cAddress, IRQ_3_REGADDR, 0x00)
+        self.i2cBus.write_byte_data(self.pmuAddress, IRQ_3_REGADDR, 0x00)
 
     def DisablePMUIRQ4(self):
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::DisablePMUIRQ4")
         IRQ_4_REGADDR = 0x43
-        self.i2cBus.write_byte_data(self.i2cAddress, IRQ_4_REGADDR, 0x00)
+        self.i2cBus.write_byte_data(self.pmuAddress, IRQ_4_REGADDR, 0x00)
 
     # IRQ3 Contains PEK short and long. Default is should be correct but it happened
     # on one device that it was changed somehow
     def EnablePEKShortAndLong(self):
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::EnablePEKShortAndLong")
         IRQ_3_REGADDR = 0x42
-        self.i2cBus.write_byte_data(self.i2cAddress, IRQ_3_REGADDR, 0x03)
+        self.i2cBus.write_byte_data(self.pmuAddress, IRQ_3_REGADDR, 0x03)
 
     def HasRTC(self):
         return self.wirocHWVersionNumber >= 7
@@ -394,6 +395,26 @@ class HardwareAbstraction(object):
         # The version 6 had SRR but with flex cable that seem to only give problems.
         # So lets only enabled SRR when version >= 7
         return self.wirocHWVersionNumber >= 7
+
+    def HasRFComm(self):
+        return self.wirocHWVersionNumber <= 7
+
+    def GetSRRHardwareFeatures(self) -> int:
+        if not self.HasSRR():
+            return 0
+        try:
+            SRR_HARDWAREFEATURESREGADDR = 0x01
+            hardwareFeatures = self.i2cBus.read_byte_data(self.srrAddress, SRR_HARDWAREFEATURESREGADDR)
+            self.i2cBus.close()
+            return hardwareFeatures
+        except Exception as e:
+            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::GetSRRHardwareFeatures() Exception: {e}")
+            return 0
+
+    def GetSRRHasSendMode(self) -> bool:
+        hardwareFeatures = self.GetSRRHardwareFeatures()
+        SRR_SEND_MODE_BIT = 0x20
+        return (hardwareFeatures & SRR_SEND_MODE_BIT) != 0
 
     def GetRTCDateTime(self) -> str:
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetRTCDateTime")

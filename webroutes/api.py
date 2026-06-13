@@ -575,6 +575,24 @@ def getHasHWSRR():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value='1' if hasSRR else '0'))
 
+@app.route('/api/srr/hardwarefeatures/', methods=['GET'])
+def getSRRHardwareFeatures():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    hardwareFeatures = HardwareAbstraction.Instance.GetSRRHardwareFeatures()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=hardwareFeatures))
+
+@app.route('/api/srr/hassendmode/', methods=['GET'])
+def getSRRHasSendMode():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    hasSendMode = HardwareAbstraction.Instance.GetSRRHasSendMode()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value='1' if hasSendMode else '0'))
+
 @app.route('/api/hashw/rtc/', methods=['GET'])
 def getHasHWRTC():
     if HardwareAbstraction.Instance is None:
@@ -1100,6 +1118,30 @@ def releaseRFComm(btAddress):
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=btAddresses))
+
+
+@app.route('/api/rfcomm/', methods=['GET'])
+def getRFComm():
+    btSerialPortDatas = DatabaseHelper.get_bluetooth_serial_ports()
+    rfcommList = []
+    for btSerialPortData in btSerialPortDatas:
+        rfcommList.append({'DeviceBTAddress': btSerialPortData.DeviceBTAddress,
+                           'Name': btSerialPortData.Name,
+                           'Status': btSerialPortData.Status})
+    data = {'rfcomm': rfcommList}
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=json.dumps(data)))
+
+
+@app.route('/api/hasrfcomm/', methods=['GET'])
+def getHasRFComm():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    hasRFComm = HardwareAbstraction.Instance.HasRFComm()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value='1' if hasRFComm else '0'))
 
 
 def getIP():
