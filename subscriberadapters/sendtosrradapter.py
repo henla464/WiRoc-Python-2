@@ -27,7 +27,8 @@ class SendToSRRAdapter(object):
                 addr = 0x20
 
                 try:
-                    if SettingsClass.GetSRRRedChannelEnabled() or SettingsClass.GetSRRBlueChannelEnabled():
+                    if SettingsClass.GetSRRMode() == "SEND" and (
+                            SettingsClass.GetSRRRedChannelEnabled() or SettingsClass.GetSRRBlueChannelEnabled()):
                         # send messages on at least one of the two SRR channels.
                         SendToSRRAdapter.Instances.append(
                             SendToSRRAdapter("sndsrr1", bus, addr, hardwareAbstraction))
@@ -56,7 +57,7 @@ class SendToSRRAdapter(object):
     def EnableDisableSubscription():
         if len(SendToSRRAdapter.Instances) > 0:
             isInitialized = SendToSRRAdapter.Instances[0].GetIsInitialized()
-            enabled = SettingsClass.GetSendToSirapEnabled()
+            enabled = (SettingsClass.GetSRREnabled() and SettingsClass.GetSRRMode() == "SEND")
             subscriptionShouldBeEnabled = (isInitialized and enabled)
             if SendToSRRAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
                 SendToSRRAdapter.WiRocLogger.info(
@@ -69,7 +70,12 @@ class SendToSRRAdapter(object):
 
     @staticmethod
     def EnableDisableTransforms() -> None:
-        return None
+        if len(SendToSRRAdapter.Instances) > 0:
+            enableSendTransforms = (SettingsClass.GetSRREnabled() and SettingsClass.GetSRRMode() == "SEND")
+            DatabaseHelper.set_transform_enabled(enableSendTransforms, "LoraSIMessageToSRRTransform")
+            DatabaseHelper.set_transform_enabled(enableSendTransforms, "SISIMessageToSRRTransform")
+            DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestTestToSRRTransform")
+            DatabaseHelper.set_transform_enabled(enableSendTransforms, "LoraSIMessageDoubleToSRRTransform")
 
     def __init__(self, instanceName: str, i2cBus: SMBus, i2cAddress: int, hardwareAbstraction: HardwareAbstraction):
         self.instanceName: str = instanceName
@@ -159,8 +165,8 @@ class SendToSRRAdapter(object):
         # Send data
         try:
             for data in messageData:
-                if len(data) > 30:
-                    raise ValueError(f"Data length {len(data)} exceeds maximum allowed (30 bytes)")
+                if len(data) > 15:
+                    raise ValueError(f"Data length {len(data)} exceeds maximum allowed (15 bytes)")
 
                 # Prepend message length (including the length byte)
                 total_length = len(data) + 1  # +1 for the length byte
