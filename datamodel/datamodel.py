@@ -56,12 +56,15 @@ class ChannelData(object):
 
 
 class TimeOnAirData(object):
-    columns = [("SpreadingFactor", int), ("RfBw", int), ("CodingRate", int), ("LowDatarateOptimize", bool), ("Header", bool),
-               ("CRCOn", bool), ("DRF1268DSCompatMode", bool), ("LoraModem", bool), ("PunchTOA", int), ("DoublePunchTOA", int),
-               ("AckTOA", int), ("StatusTOA", int), ("HAMCallSignTOA", int)]
+    columns = [("SpreadingFactor", int), ("RfBw", int),
+               ("CodeRate", int), ("LowDatarateOptimize", bool),
+               ("Header", bool), ("CRCOn", bool), ("PreambleLength", int),
+               ("DRF1268DSCompatMode", bool), ("LoraModem", bool),
+               ("PunchTOA", int), ("DoublePunchTOA", int), ("AckTOA", int),
+               ("StatusTOA", int), ("HAMCallSignTOA", int)]
 
     def __init__(self, SpreadingFactor: int | None = None, RfBw: int | None = None,
-                 CodingRate: int | None = None, LowDatarateOptimize: bool | None = None,
+                 CodeRate: int | None = None, LowDatarateOptimize: bool | None = None,
                  Header: bool | None = None, CRCOn: bool | None = None, PreambleLength: int | None = None,
                  DRF1268DSCompatMode: bool | None = None, LoraModem: str | None = None,
                  PunchTOA: int | None = None, DoublePunchTOA: int | None = None, AckTOA: int | None = None,
@@ -69,7 +72,7 @@ class TimeOnAirData(object):
         self.id: int | None = None
         self.SpreadingFactor: int | None = SpreadingFactor
         self.RfBw: int | None = RfBw
-        self.CodingRate: int | None = CodingRate
+        self.CodeRate: int | None = CodeRate
         self.LowDatarateOptimize: bool | None = LowDatarateOptimize
         self.Header: bool | None = Header
         self.CRCOn: bool | None = CRCOn

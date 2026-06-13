@@ -7,7 +7,6 @@ import time
 import math
 import random
 import os
-import socket
 import yaml
 import logging
 from cachetools import cached, TTLCache
@@ -175,13 +174,6 @@ class SettingsClass(object):
     @staticmethod
     def GetWebServerUp() -> bool:
         return SettingsClass.webServerUp
-
-    @staticmethod
-    def GetLoraModule() -> str:
-        if socket.gethostname() == 'chip':
-            return 'RF1276T'
-        else:
-            return 'DRF1268DS'
 
     relayPathNo = 0
 
@@ -366,8 +358,10 @@ class SettingsClass(object):
 
     @staticmethod
     def GetDataRate(loraRange) -> int:
+        if HardwareAbstraction.Instance is None:
+            HardwareAbstraction.Instance = HardwareAbstraction()
         loraDataRate = 244
-        if SettingsClass.GetLoraModule() == 'DRF1268DS':
+        if HardwareAbstraction.Instance.GetLoraModule() == 'DRF1268DS':
             if loraRange == 'UL':
                 loraDataRate = 73
             elif loraRange == 'XL':
@@ -586,7 +580,9 @@ class SettingsClass(object):
     def GetRetryDelay(retryNumber: int) -> float:
         loraRange = SettingsClass.GetLoraRange()
         channel = SettingsClass.GetChannel()
-        loraModule = SettingsClass.GetLoraModule()
+        if HardwareAbstraction.Instance is None:
+            HardwareAbstraction.Instance = HardwareAbstraction()
+        loraModule =HardwareAbstraction.Instance.GetLoraModule()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
         MessageTypeSIPunchDoubleReDCoS: int = 8
         SettingsClass.microSecondsToSendAMessage = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(MessageTypeSIPunchDoubleReDCoS) * 1000
@@ -604,7 +600,9 @@ class SettingsClass(object):
     def GetTotalRetryDelaySeconds():
         loraRange = SettingsClass.GetLoraRange()
         channel = SettingsClass.GetChannel()
-        loraModule = SettingsClass.GetLoraModule()
+        if HardwareAbstraction.Instance is None:
+            HardwareAbstraction.Instance = HardwareAbstraction()
+        loraModule = HardwareAbstraction.Instance.GetLoraModule()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
         MessageTypeSIPunchDoubleReDCoS: int = 8
         SettingsClass.microSecondsToSendAMessage  = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(MessageTypeSIPunchDoubleReDCoS) * 1000
@@ -621,63 +619,24 @@ class SettingsClass(object):
         microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 4) + SettingsClass.microSecondsToSendAMessage
         return int(microSecondsDelay / 1000000)
 
-    #@staticmethod
-    #@cached(cache, key=partial(hashkey, 'GetLoraAckMessageWaitTimeoutS'), lock=rlock)
-    #def GetLoraAckMessageWaitTimeoutS():
-    #    if SettingsClass.microSecondsToSendAMessage is None:
-    #        loraRange = SettingsClass.GetLoraRange()
-    #        channel = SettingsClass.GetChannel()
-    #        loraModule = SettingsClass.GetLoraModule()
-    #        codeRate = SettingsClass.GetCodeRate()
-    #        SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
-    #        messageLengthInBytes = 24  # typical length
-    #        SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
-    #        # extra delay for higher error coderates
-    #        SettingsClass.microSecondsToSendAMessage = SettingsClass.microSecondsToSendAMessage * (1 + 0.2 * codeRate)
-    #    return 1+(SettingsClass.microSecondsToSendAMessage * 2.1)/1000000
-
-    #@staticmethod
-    #@cached(cache, key=partial(hashkey, 'GetLoraAckMessageSendingTimeS'), lock=rlock)
-    #def GetLoraAckMessageSendingTimeS():
-    #    if SettingsClass.microSecondsToSendAnAckMessage is None:
-    #        loraRange = SettingsClass.GetLoraRange()
-    #        channel = SettingsClass.GetChannel()
-    #        loraModule = SettingsClass.GetLoraModule()
-    #        codeRate = SettingsClass.GetCodeRate()
-    #        SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
-    #        messageLengthInBytes = 10  # typical length
-    #        SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
-    #        # extra delay for higher error coderates
-    #        SettingsClass.microSecondsToSendAnAckMessage = SettingsClass.microSecondsToSendAnAckMessage * (1 + 0.2 * codeRate)
-    #    return 0.2+SettingsClass.microSecondsToSendAnAckMessage/1000000
-
-    #@staticmethod
-    #@cached(cache, key=partial(hashkey, 'GetLoraMessageTimeSendingTimeS'), lock=rlock)
-    #def GetLoraMessageTimeSendingTimeS(noOfBytes: int) -> float:
-    #    if noOfBytes == 0:
-    #        return 0
-    #    loraRange: str = SettingsClass.GetLoraRange()
-    #    channel: str = SettingsClass.GetChannel()
-    #    loraModule: str = SettingsClass.GetLoraModule()
-    #    codeRate = SettingsClass.GetCodeRate()
-    #    SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
-    #    microSecs = SettingsClass.channelData.SlopeCoefficient * (noOfBytes + SettingsClass.channelData.M)
-    #    # extra delay for higher error coderates
-    #    microSecs = microSecs * (1 + 0.2 * codeRate)
-    #    return microSecs/1000000
-
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetLoraMessageTimeSendingTimeMSByMessageType'), lock=rlock)
     def GetLoraMessageTimeSendingTimeMSByMessageType(messageType: int) -> float:
         loraRange: str = SettingsClass.GetLoraRange()
         channel: str = SettingsClass.GetChannel()
-        loraModule: str = SettingsClass.GetLoraModule()
+        if HardwareAbstraction.Instance is None:
+            HardwareAbstraction.Instance = HardwareAbstraction()
+        loraModule: str = HardwareAbstraction.Instance.GetLoraModule()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
         codeRate = SettingsClass.GetCodeRate()
         header = True
         DRF1268DSCompatMode = SettingsClass.GetDRF1268CompatModeEnabled()
-        SettingsClass.timeOnAirData = DatabaseHelper.get_timeonair(SettingsClass.channelData.SpreadingFactor, SettingsClass.channelData.RfBw,codeRate, SettingsClass.channelData.LowDatarateOptimize, header,  SettingsClass.channelData.CRCOn, SettingsClass.channelData.PreambleLength, DRF1268DSCompatMode, loraModule)
+        SettingsClass.timeOnAirData = DatabaseHelper.get_timeonair(SettingsClass.channelData.SpreadingFactor, SettingsClass.channelData.RfBw,
+                                                                   codeRate, SettingsClass.channelData.LowDatarateOptimize, header,
+                                                                   SettingsClass.channelData.CRCOn, DRF1268DSCompatMode,
+                                                                   SettingsClass.channelData.PreambleLength,
+                                                                   loraModule)
         if SettingsClass.timeOnAirData is None:
             return None
         MessageTypeLoraAck: int = 5

@@ -288,7 +288,7 @@ class BackgroundTasks(object):
                     BackgroundTasks.ArchiveOldRepeaterMessagesBackground()
                 elif cmd == "EXIT":
                     return
-                time.sleep(40)
+                time.sleep(20)
             except Exception as ex:
                 BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::DoInfrequentDatabaseTasksBackground() exception: {ex}")
                 time.sleep(40)

@@ -55,6 +55,8 @@ class DatabaseHelper:
         db.ensure_table_created(table)
         table = BluetoothSerialPortData()
         db.ensure_table_created(table)
+        table = TimeOnAirData()
+        db.ensure_table_created(table)
 
     @classmethod
     def drop_all_tables(cls) -> None:
@@ -1596,6 +1598,7 @@ class DatabaseHelper:
         cls.init()
         sql = (f"SELECT * FROM TimeOnAirData WHERE SpreadingFactor = {spreadingFactor} and RfBw = {rfBw} and CodeRate = {codeRate} and LowDatarateOptimize = {lowDatarateOptimize} "
                f"and header = {header} and CRCOn = {CRCOn} and DRF1268DSCompatMode = {DRF1268DSCompatMode} and PreambleLength = {preambleLength} and LoraModem = '" + loraModule + "'")
+        print(sql)
         rows = cls.db.get_table_objects_by_SQL(ChannelData, sql)
         if len(rows) >= 1:
             return rows[0]
@@ -1616,7 +1619,7 @@ class DatabaseHelper:
     def add_timeonair(cls):
         cls.init()
         if not cls.get_timeonair_exists():
-            # RfBW = 5 => 31,25 kHz on DRF1268DS, CodingRate 1 = 4/5
+            # RfBW = 5 => 31,25 kHz on DRF1268DS, CodeRate 1 = 4/5
             timeOnAirDatas = [
                         # DRF
                         TimeOnAirData(12, 5, 1, True, True, True, 8, True, "DRF1268DS", 5280, 6590, 3960,5280, 4620),
@@ -1625,21 +1628,21 @@ class DatabaseHelper:
                         TimeOnAirData(9, 5, 1, True, True, True, 8, True, "DRF1268DS", 742, 1070, 578, 824, 660),
                         TimeOnAirData(8, 5, 1, True, True, True, 8, True, "DRF1268DS", 412, 576, 330, 453, 371),
                         TimeOnAirData(7, 5, 1, True, True, True, 8, True, "DRF1268DS", 247, 329, 165,247, 206),
-                        # CodingRate 2 = 4/6
+                        # CodeRate 2 = 4/6
                         TimeOnAirData(12, 5, 2, True, True, True, 8, True, "DRF1268DS", 5800, 7370, 4230, 5800, 5010),
                         TimeOnAirData(11, 5, 2, True, True, True, 8, True, "DRF1268DS", 2900, 4080, 2110, 2900, 2510),
                         TimeOnAirData(10, 5, 2, True, True, True, 8, True, "DRF1268DS", 1650, 2240, 1250, 1650, 1450),
                         TimeOnAirData(9, 5, 2, True, True, True, 8, True, "DRF1268DS", 824, 1220, 627, 922, 725),
                         TimeOnAirData(8, 5, 2, True, True, True, 8, True, "DRF1268DS", 461, 658, 363, 510, 412),
                         TimeOnAirData(7, 5, 2, True, True, True, 8, True, "DRF1268DS", 280, 378, 182, 280, 231),
-                        # CodingRate 3 = 4/7
+                        # CodeRate 3 = 4/7
                         TimeOnAirData(12, 5, 3, True, True, True, 8, True, "DRF1268DS", 6320, 8160, 4490, 6320, 5410),
                         TimeOnAirData(11, 5, 3, True, True, True, 8, True, "DRF1268DS", 3160, 4540, 2240, 3160, 2700),
                         TimeOnAirData(10, 5, 3, True, True, True, 8, True, "DRF1268DS", 1810, 2500, 1350, 1810, 1580),
                         TimeOnAirData(9, 5, 3, True, True, True, 8, True, "DRF1268DS", 906, 1360, 676, 1020, 791),
                         TimeOnAirData(8, 5, 3, True, True, True, 8, True, "DRF1268DS", 510, 740, 396, 568, 453),
                         TimeOnAirData(7, 5, 3, True, True, True, 8, True, "DRF1268DS", 313, 427, 198, 313, 255),
-                        # CodingRate 4 = 4/8
+                        # CodeRate 4 = 4/8
                         TimeOnAirData(12, 5, 4, True, True, True, 8, True, "DRF1268DS", 6850, 8950, 4750, 6850, 5800),
                         TimeOnAirData(11, 5, 4, True, True, True, 8, True, "DRF1268DS", 3420, 5000, 2380, 3420, 2900),
                         TimeOnAirData(10, 5, 4, True, True, True, 8, True, "DRF1268DS", 1970, 2760, 1450, 1970, 1710),
@@ -1648,7 +1651,7 @@ class DatabaseHelper:
                         TimeOnAirData(7, 5, 4, True, True, True, 8, True, "DRF1268DS", 346, 477, 214, 346, 280),
 
                         # RAK3172 Compat mode
-                        # RfBW = 7 => 31,25 kHz on RAK3172, CodingRate 0 = 4/4
+                        # RfBW = 7 => 31,25 kHz on RAK3172, CodeRate 0 = 4/4
                         TimeOnAirData(12, 7, 0, True, True, False, 8, True, "RAK3172", 4620, 6590, 3310, 4620, 3960),
                         TimeOnAirData(11, 7, 0, True, True, False, 8, True, "RAK3172", 2310, 3290, 1980, 2310, 1980),
                         TimeOnAirData(10, 7, 0, True, True, False, 8, True, "RAK3172", 1160, 1810, 992, 1320, 1160),
@@ -1656,28 +1659,28 @@ class DatabaseHelper:
                         TimeOnAirData(8, 7, 0, True, True, False, 8, True, "RAK3172", 371, 576, 289, 371, 330),
                         TimeOnAirData(7, 7, 0, True, True, False, 8, True, "RAK3172", 206, 288, 145, 206, 165),
 
-                        # RfBW = 7 => 31,25 kHz on RAK3172, CodingRate 1 = 4/5
+                        # RfBW = 7 => 31,25 kHz on RAK3172, CodeRate 1 = 4/5
                         TimeOnAirData(12, 7, 1, True, True, False, 8,True, "RAK3172", 4620, 6590, 3960, 4620, 3960),
                         TimeOnAirData(11, 7, 1, True, True, False, 8,True, "RAK3172", 2640, 3290, 1980, 2640, 2310),
                         TimeOnAirData(10, 7, 1, True, True, False, 8,True, "RAK3172", 1320, 1810, 992, 1320, 1160),
                         TimeOnAirData(9, 7, 1, True, True, False, 8,True, "RAK3172", 742, 988, 496, 742, 660),
                         TimeOnAirData(8, 7, 1, True, True, False, 8,True, "RAK3172", 412, 576, 289, 412, 330),
                         TimeOnAirData(7, 7, 1, True, True, False, 8,True, "RAK3172", 227, 329, 165, 227, 186),
-                        # RfBW = 7 => 31,25 kHz on RAK3172, CodingRate 2 = 4/6
+                        # RfBW = 7 => 31,25 kHz on RAK3172, CodeRate 2 = 4/6
                         TimeOnAirData(12, 7, 2, True, True, False, 8, True, "RAK3172", 5010, 7370, 4230, 5010, 4230),
                         TimeOnAirData(11, 7, 2, True, True, False, 8, True, "RAK3172", 2900, 3690, 2110, 2900, 2510),
                         TimeOnAirData(10, 7, 2, True, True, False, 8, True, "RAK3172", 1450, 2040, 1060, 1450, 1250),
                         TimeOnAirData(9, 7, 2, True, True, False, 8, True, "RAK3172", 824, 1120, 529, 824, 725),
                         TimeOnAirData(8, 7, 2, True, True, False, 8, True, "RAK3172", 461, 658, 314, 461, 363),
                         TimeOnAirData(7, 7, 2, True, True, False, 8, True, "RAK3172", 255, 378, 182, 255, 206),
-                        # RfBW = 7 => 31,25 kHz on RAK3172, CodingRate 3 = 4/7
+                        # RfBW = 7 => 31,25 kHz on RAK3172, CodeRate 3 = 4/7
                         TimeOnAirData(12, 7, 3, True, True, False, 8, True, "RAK3172", 5410, 8160, 4490, 5410, 4490),
                         TimeOnAirData(11, 7, 3, True, True, False, 8, True, "RAK3172", 3160, 4080, 2240, 3160, 2700),
                         TimeOnAirData(10, 7, 3, True, True, False, 8, True, "RAK3172", 1580, 2270, 1120, 1580, 1350),
                         TimeOnAirData(9, 7, 3, True, True, False, 8, True, "RAK3172", 906, 1250, 562, 906, 791),
                         TimeOnAirData(8, 7, 3, True, True, False, 8, True, "RAK3172", 510, 740, 338, 510, 396),
                         TimeOnAirData(7, 7, 3, True, True, False, 8, True, "RAK3172", 284, 427, 198, 284, 227),
-                        # RfBW = 7 => 31,25 kHz on RAK3172, CodingRate 4 = 4/8
+                        # RfBW = 7 => 31,25 kHz on RAK3172, CodeRate 4 = 4/8
                         TimeOnAirData(12, 7, 4, True, True, False, 8, True, "RAK3172", 5800, 8950, 4750, 5800, 4750),
                         TimeOnAirData(11, 7, 4, True, True, False, 8, True, "RAK3172", 3420, 4470, 2380, 3420, 2900),
                         TimeOnAirData(10, 7, 4, True, True, False, 8, True, "RAK3172", 1710, 2500, 1190, 1710, 1450),
@@ -1686,7 +1689,7 @@ class DatabaseHelper:
                         TimeOnAirData(7, 7, 4, True, True, False, 8, True, "RAK3172", 313, 477, 214, 313, 247),
 
                         # Non compat mode
-                        # RfBW = 4 => 10.4 kHz on RAK3172, CodingRate 0=4/4
+                        # RfBW = 4 => 10.4 kHz on RAK3172, CodeRate 0=4/4
                         # recommended to no use LDO for spreadingfactor 5,6,7 so maybe change that...
                         TimeOnAirData(10, 4, 0, True, True, False, 8, False, "RAK3172", 3470, 4940, 2970, 3470, 2970),
                         TimeOnAirData(9, 4, 0, True, True, False, 8, False, "RAK3172", 1980, 2470, 1490, 1980, 1730),
@@ -1698,7 +1701,7 @@ class DatabaseHelper:
                         TimeOnAirData(6, 4, 0, False, True, False, 8, False, "RAK3172", 260, 383, 229, 291, 229),
                         TimeOnAirData(5, 4, 0, False, True, False, 8, False, "RAK3172", 145, 207, 115, 161, 130),
 
-                        # CodingRate 1=4/5
+                        # CodeRate 1=4/5
                         TimeOnAirData(10, 4, 1, True, True, False, 8, False, "RAK3172", 3960, 5430, 2970, 3960, 3470),
                         TimeOnAirData(9, 4, 1, True, True, False, 8, False, "RAK3172", 1980, 2960, 1490, 2220, 1730),
                         TimeOnAirData(8, 4, 1, True, True, False, 8, False, "RAK3172", 1110, 1600, 867, 1230, 990),
@@ -1706,7 +1709,7 @@ class DatabaseHelper:
                         TimeOnAirData(6, 4, 1, False, True, False, 8, False, "RAK3172", 291, 414, 229, 321, 260),
                         TimeOnAirData(5, 4, 1, False, True, False, 8, False, "RAK3172", 161, 238, 115, 176, 146),
 
-                        # CodingRate 2=4/6
+                        # CodeRate 2=4/6
                         TimeOnAirData(10, 4, 2, True, True, False, 8, False, "RAK3172", 4350, 6120, 3170, 4350, 3760),
                         TimeOnAirData(9, 4, 2, True, True, False, 8, False, "RAK3172", 2170, 3350, 1590, 2470, 1880),
                         TimeOnAirData(8, 4, 2, True, True, False, 8, False, "RAK3172", 1230, 1820, 940, 1380, 1090),
@@ -1714,7 +1717,7 @@ class DatabaseHelper:
                         TimeOnAirData(6, 4, 2, False, True, False, 8, False, "RAK3172", 321, 469, 248, 358, 285),
                         TimeOnAirData(5, 4, 2, False, True, False, 8, False, "RAK3172", 179, 271, 124, 198, 161),
 
-                        # CodingRate 3=4/7
+                        # CodeRate 3=4/7
                         TimeOnAirData(10, 4, 3, True, True, False, 8, False, "RAK3172", 4740, 6810, 3370, 4740, 4050),
                         TimeOnAirData(9, 4, 3, True, True, False, 8, False, "RAK3172", 2370, 3750, 1680, 2720, 2030),
                         TimeOnAirData(8, 4, 3, True, True, False, 8, False, "RAK3172", 1360, 2050, 1010, 1530, 1190),
@@ -1725,7 +1728,7 @@ class DatabaseHelper:
                         TimeOnAirData(6, 4, 3, False, True, False, 8, False, "RAK3172", 352, 524, 266, 395, 309),
                         TimeOnAirData(5, 4, 3, False, True, False, 8, False, "RAK3172", 198, 305, 133, 219, 176),
 
-                        # CodingRate 4=4/8
+                        # CodeRate 4=4/8
                         TimeOnAirData(10, 4, 4, True, True, False, 8, False, "RAK3172", 5140, 7500, 3560, 5140, 4350),
                         TimeOnAirData(9, 4, 4, True, True, False, 8, False, "RAK3172", 2570, 4140, 1780, 2960, 2170),
                         TimeOnAirData(8, 4, 4, True, True, False, 8, False, "RAK3172", 1480, 2270, 1090, 1680, 1280),
@@ -1736,7 +1739,7 @@ class DatabaseHelper:
                         TimeOnAirData(6, 4, 4, False, True, False, 8, False, "RAK3172", 383, 579, 284, 432, 334),
                         TimeOnAirData(5, 4, 4, False, True, False, 8, False, "RAK3172", 216, 339, 142, 241, 192),
 
-                        # Fixed length, no header mode, CodingRate 0
+                        # Fixed length, no header mode, CodeRate 0
                         TimeOnAirData(11, 4, 0, True, False, False, 8, False, "RAK3172", 5950, None, 4960, None, 4960),
                         TimeOnAirData(10, 4, 0, True, False, False, 8, False, "RAK3172", 2970, None, 2480, None, 2970),
                         TimeOnAirData(9, 4, 0, True, False, False, 8, False, "RAK3172", 1730, None, 1240, None, 1730),

@@ -194,6 +194,12 @@ class HardwareAbstraction(object):
     def GetIsTransmittingReceiving(self):
         return self.line_request.get_value(self.LORAauxLine) == Value.INACTIVE
 
+    def GetLoraModule(self):
+        if self.wirocHWVersionNumber >= 8:
+            return "RAK3172"
+        else:
+            return "DRF1268DS"
+
     def GetWifiSignalStrength(self):
         wifiInUseSSIDSignal = str(subprocess.check_output(["nmcli", "-t", "-f", "in-use,ssid,signal", "device", "wifi"]))
         for row in wifiInUseSSIDSignal.split('\\n'):

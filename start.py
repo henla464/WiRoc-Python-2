@@ -59,6 +59,7 @@ class Main:
         DatabaseHelper.ensure_tables_created()
         DatabaseHelper.truncate_setup_tables()
         DatabaseHelper.add_default_channels()
+        DatabaseHelper.add_timeonair()
         DatabaseHelper.change_future_created_dates()
         DatabaseHelper.change_future_sent_dates()
         SettingsClass.IncrementPowerCycle()

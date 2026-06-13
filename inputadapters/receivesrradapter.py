@@ -42,10 +42,10 @@ class ReceiveSRRAdapter(object):
 
                 try:
                     # firmware version
-                    firmwareVersion = 1 #bus.read_byte_data(addr, ReceiveSRRAdapter.FIRMWAREVERSIONREGADDR)
+                    firmwareVersion = bus.read_byte_data(addr, ReceiveSRRAdapter.FIRMWAREVERSIONREGADDR)
 
                     # hardware features
-                    hardwareFeatures = 0x1f #bus.read_byte_data(addr, ReceiveSRRAdapter.HARDWAREFEATURESREGADDR)
+                    hardwareFeatures = bus.read_byte_data(addr, ReceiveSRRAdapter.HARDWAREFEATURESREGADDR)
 
                     if SettingsClass.GetSRRRedChannelEnabled() or SettingsClass.GetSRRBlueChannelEnabled():
                         # Listens for messages on at least one of the two SRR channels.
@@ -198,6 +198,9 @@ class ReceiveSRRAdapter(object):
             self.blueChannelListenOnly = blueChannelListenOnly
             self.srrMode = srrMode
             self.isInitialized = True
+            if not srrEnabled:
+                # if not enabled turn off the power to the SRR module
+                HardwareAbstraction.Instance.DisableSRR()
         except Exception as ex:
             self.WiRocLogger.error(f"ReceiveSRRAdapter::Init() Exception {ex}")
             return False
