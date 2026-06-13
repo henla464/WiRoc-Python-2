@@ -26,6 +26,8 @@ tags:
     description: "Connect to Wifi and IP options"
   - name: "HAM"
     description: "Amateur radio settings"
+  - name: "Power"
+    description: "Power management"
 paths:
   /channel/:
     get:
@@ -187,6 +189,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PowerObj"
+  /power/shutdown/:
+    get:
+      tags:
+        - "Power"
+      summary: "Shutdown the system"
+      operationId: "shutdown"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /power/restart/:
+    get:
+      tags:
+        - "Power"
+      summary: "Restart the system"
+      operationId: "restart"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /coderate/:
     get:
       tags:

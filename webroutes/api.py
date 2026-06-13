@@ -175,6 +175,25 @@ def setPower(power):
     return jsonpickle.encode(MicroMock(Value=int(sd.Value)))
 
 
+@app.route('/api/power/shutdown/', methods=['GET'])
+def shutdown():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    HardwareAbstraction.Instance.Shutdown()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value='OK'))
+
+@app.route('/api/power/restart/', methods=['GET'])
+def restart():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    HardwareAbstraction.Instance.Restart()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value='OK'))
+
+
 @app.route('/api/coderate/', methods=['GET'])
 def getCodeRate():
     setting = DatabaseHelper.get_setting_by_key('CodeRate')

@@ -1,5 +1,6 @@
 from __future__ import annotations
 import logging
+import os
 import subprocess
 import time
 from smbus2 import SMBus
@@ -191,6 +192,22 @@ class HardwareAbstraction(object):
             return irqValue
         return False
 
+    def Shutdown(self):
+        # Set gpio2 on axp209 to low for three seconds, simulates a normal button press
+        # to shutdown the system. (AXP209 creates irq, which is picked up by this program,
+        # and PMUIRQ file is created, which is used to signal to WiRoc-Watchdog to start the shutdown process)
+        GPIO2_FEATURE_SET_REGADDR: int = 0x93
+        # Set gpio2 low
+        self.i2cBus.write_byte_data(self.pmuAddress, GPIO2_FEATURE_SET_REGADDR, 0x00)
+        time.sleep(3)
+        # Set gpio2 high impedance
+        self.i2cBus.write_byte_data(self.pmuAddress, GPIO2_FEATURE_SET_REGADDR, 0x01)
+
+    def Restart(self):
+        HardwareAbstraction.WiRocLogger.info("HardwareAbstraction::Restart() Rebooting system")
+        os.system('shutdown --reboot now')
+        
+
     def GetIsTransmittingReceiving(self):
         return self.line_request.get_value(self.LORAauxLine) == Value.INACTIVE
 
@@ -329,7 +346,6 @@ class HardwareAbstraction(object):
 
     def GetIsLongKeyPress(self):
         # HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetIsLongKeyPress")
-
         IRQ_STATUS_3_REGADDR = 0x4a
         statusReg = self.i2cBus.read_byte_data(self.pmuAddress, IRQ_STATUS_3_REGADDR)
 
