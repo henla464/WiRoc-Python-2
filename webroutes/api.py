@@ -1134,8 +1134,8 @@ def getRFComm():
     return jsonpickle.encode(MicroMock(Value=json.dumps(data)))
 
 
-@app.route('/api/hasrfcomm/', methods=['GET'])
-def getHasRFComm():
+@app.route('/api/hashw/rfcomm/', methods=['GET'])
+def getHasHWRFComm():
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
     hasRFComm = HardwareAbstraction.Instance.HasRFComm()

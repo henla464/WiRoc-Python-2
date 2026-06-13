@@ -1307,12 +1307,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /hasrfcomm/:
+  /hashw/rfcomm/:
     get:
       tags:
         - "SportIdent"
       summary: "Get if the hardware supports RFCOMM (bluetooth serial)"
-      operationId: "getHasRFComm"
+      operationId: "getHasHWRFComm"
       responses:
         "200":
           description: "0/1 depending on if hardware version is <= 7"
