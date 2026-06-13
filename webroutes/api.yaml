@@ -125,7 +125,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /loralistenonly/:
+  /lora/listenonly/:
     get:
       tags:
         - "Radio"
@@ -138,7 +138,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /loralistenonly/{listenonly}:
+  /lora/listenonly/{listenonly}:
     get:
       tags:
         - "Radio"

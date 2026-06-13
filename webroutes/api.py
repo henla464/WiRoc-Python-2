@@ -125,7 +125,7 @@ def setAcknowledgementRequested(ack):
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 
-@app.route('/api/loralistenonly/', methods=['GET'])
+@app.route('/api/lora/listenonly/', methods=['GET'])
 def getLoraListenOnly():
     setting = DatabaseHelper.get_setting_by_key('LoraListenOnly')
     listenOnly = '0'
@@ -136,7 +136,7 @@ def getLoraListenOnly():
     return jsonpickle.encode(MicroMock(Value=listenOnly))
 
 
-@app.route('/api/loralistenonly/<ack>/', methods=['GET'])
+@app.route('/api/lora/listenonly/<listenOnly>/', methods=['GET'])
 def setLoraListenOnly(listenOnly):
     sd = DatabaseHelper.get_setting_by_key('LoraListenOnly')
     if sd is None:
