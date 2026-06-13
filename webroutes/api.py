@@ -178,7 +178,7 @@ def setPower(power):
 @app.route('/api/coderate/', methods=['GET'])
 def getCodeRate():
     setting = DatabaseHelper.get_setting_by_key('CodeRate')
-    # 0->4/4 (no hamming code for data RAK3172 only), 0x01->4/5, 0x02->4/6, 0x03->4/7, 0x0->4/8
+    # 0->4/4 (no hamming code for data RAK3172 only), 0x01->4/5, 0x02->4/6, 0x03->4/7, 0x04->4/8
     codeRate = 0x01
     if setting is not None:
         codeRate = int(setting.Value)
