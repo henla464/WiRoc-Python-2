@@ -48,7 +48,7 @@ class LoraSIMessageDoubleToSRRTransform(object):
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         msg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(payloadData)
         siPayloadDatas = msg.GetSIMessageByteTuple()
-        # Extract 13-byte SI punch payloads from each SIMessage (skip STX, MsgType, Length, CRC, ETX)
-        siPayload1 = siPayloadDatas[0][3:16]
-        siPayload2 = siPayloadDatas[1][3:16]
+        # Extract 15-byte SI punch payloads from each SIMessage (skip STX, include MsgType+Length+data)
+        siPayload1 = siPayloadDatas[0][1:16]
+        siPayload2 = siPayloadDatas[1][1:16]
         return {"Data": (siPayload1, siPayload2), "MessageID": msg.GetHash()}

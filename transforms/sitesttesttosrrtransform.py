@@ -48,7 +48,7 @@ class SITestTestToSRRTransform(object):
         siMsg = SIMessage()
         siMsg.AddPayload(payloadData)
         if siMsg.GetMessageType() == SIMessage.SIPunch:
-            # Extract the 13-byte SI punch payload (skip STX, MsgType, Length header and CRC, ETX footer)
-            siPayload = payloadData[3:16]
+            # Extract the 15-byte SI punch payload (skip STX header, include MsgType, Length and data)
+            siPayload = payloadData[1:16]
             return {"Data": (siPayload,), "MessageID": None}
         return None

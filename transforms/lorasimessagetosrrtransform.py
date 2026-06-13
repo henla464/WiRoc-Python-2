@@ -48,6 +48,6 @@ class LoraSIMessageToSRRTransform(object):
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(payloadData)
         siMsgByteArray = loraMsg.GetSIMessageByteArray()
-        # Extract the 13-byte SI punch payload (skip STX, MsgType, Length header and CRC, ETX footer)
-        siPayload = siMsgByteArray[3:16]
+        # Extract the 15-byte SI punch payload (skip STX header, include MsgType, Length and data)
+        siPayload = siMsgByteArray[1:16]
         return {"Data": (siPayload,), "MessageID": loraMsg.GetHash()}
