@@ -1812,7 +1812,7 @@ def getAllMainSettings():
 
     loraModule = SettingsClass.GetLoraModule()
 
-    dataRate = SettingsClass.GetDataRate(loraRange)
+    dataRate = 0 # not used, but keep for backward compatibility with old web interface
     loraRange = _LORARANGE_TO_OLD.get(loraRange, loraRange)
 
     setting = DatabaseHelper.get_setting_by_key('Channel')

@@ -357,30 +357,6 @@ class SettingsClass(object):
         return sett.Value
 
     @staticmethod
-    def GetDataRate(loraRange) -> int:
-        if HardwareAbstraction.Instance is None:
-            HardwareAbstraction.Instance = HardwareAbstraction()
-        loraDataRate = 244
-        if HardwareAbstraction.Instance.GetLoraModule() == 'DRF1268DS':
-            if loraRange == 'UL':
-                loraDataRate = 73
-            elif loraRange == 'XL':
-                loraDataRate = 134
-            elif loraRange == 'L':
-                loraDataRate = 244
-            elif loraRange == 'ML':
-                loraDataRate = 439
-            elif loraRange == 'MF' or loraRange == 'MS':
-                loraDataRate = 781
-            elif loraRange == 'F' or loraRange == 'S':
-                loraDataRate = 1367
-            elif loraRange == 'XF':
-                loraDataRate = 2734
-            elif loraRange == 'UF':
-                loraDataRate = 5469
-        return loraDataRate
-
-    @staticmethod
     @cached(cache, key=partial(hashkey, 'GetLoraRange'), lock=rlock)
     def GetLoraRange() -> str:
         sett = DatabaseHelper.get_setting_by_key('LoraRange')
