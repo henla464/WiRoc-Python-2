@@ -75,12 +75,18 @@ def setChannel(channel):
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 
+# Map internal (new) LoraRange names to legacy (old) names for API compatibility
+_LORARANGE_TO_OLD = {'MF': 'MS', 'F': 'S'}
+# Map legacy (old) names to internal (new) names
+_LORARANGE_FROM_OLD = {'MS': 'MF', 'S': 'F'}
+
 @app.route('/api/lorarange/', methods=['GET'])
 def getLoraRange():
     setting = DatabaseHelper.get_setting_by_key('LoraRange')
     loraRange = 'L'
     if setting is not None:
         loraRange = setting.Value
+        loraRange = _LORARANGE_TO_OLD.get(loraRange, loraRange)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=loraRange))
@@ -88,11 +94,12 @@ def getLoraRange():
 
 @app.route('/api/lorarange/<lorarange>/', methods=['GET'])
 def setLoraRange(lorarange):
+    loraRange = _LORARANGE_FROM_OLD.get(lorarange, lorarange)
     sd = DatabaseHelper.get_setting_by_key('LoraRange')
     if sd is None:
         sd = SettingData()
         sd.Key = 'LoraRange'
-    sd.Value = lorarange
+    sd.Value = loraRange
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
     jsonpickle.set_preferred_backend('json')
@@ -1806,6 +1813,7 @@ def getAllMainSettings():
     loraModule = SettingsClass.GetLoraModule()
 
     dataRate = SettingsClass.GetDataRate(loraRange)
+    loraRange = _LORARANGE_TO_OLD.get(loraRange, loraRange)
 
     setting = DatabaseHelper.get_setting_by_key('Channel')
     channel = '1'

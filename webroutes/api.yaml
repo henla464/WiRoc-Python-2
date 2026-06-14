@@ -2125,12 +2125,16 @@ components:
           type: "string"
     LoraRange:
       type: "string"
-      description: "The lora range as a string"
+      description: "The lora range (MF/F = new names, MS/S = legacy)"
       enum:
+        - "UF"
+        - "XF"
         - "UL"
         - "XL"
         - "L"
         - "ML"
+        - "MF"
+        - "F"
         - "MS"
         - "S"
     LoraRangeObj:

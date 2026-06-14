@@ -318,7 +318,7 @@ class LoraRadioRAK3172:
                     self.isInitialized = True
                     return True
                 else:
-                    channelNumber = int(channel.lstrip("HAM"))
+                    channelNumber = int(''.join(c for c in channel if c.isdigit()) or '0')
                     if self.setParameters(channelData, channelNumber, loraPower, codeRate, rxGain, drf1268dsCompatMode, sendAck, preambleLength):
                         LoraRadioRAK3172.WiRocLogger.info("LoraRadioRAK3172::Init() Parameters set")
                         self.isInitialized = True
@@ -375,7 +375,7 @@ class LoraRadioRAK3172:
                             "LoraRadioRAK3172::SendData() Bytes received before send " + Utils.GetDataInHex(bytesRead,
                                                                                                             loggingLevel=logging.ERROR))
 
-                    channelNumber = int(self.channel.lstrip("HAM"))
+                    channelNumber = int(''.join(c for c in self.channel if c.isdigit()) or '0')
 
                     data = bytearray([channelNumber]) + messageData if self.drf1268dsCompatMode else messageData
                     messageDataWithNetID = Utils.GetDataInHexUpperCase(data)

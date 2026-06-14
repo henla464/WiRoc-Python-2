@@ -370,10 +370,14 @@ class SettingsClass(object):
                 loraDataRate = 244
             elif loraRange == 'ML':
                 loraDataRate = 439
-            elif loraRange == 'MS':
+            elif loraRange == 'MF' or loraRange == 'MS':
                 loraDataRate = 781
-            elif loraRange == 'S':
+            elif loraRange == 'F' or loraRange == 'S':
                 loraDataRate = 1367
+            elif loraRange == 'XF':
+                loraDataRate = 2734
+            elif loraRange == 'UF':
+                loraDataRate = 5469
         return loraDataRate
 
     @staticmethod

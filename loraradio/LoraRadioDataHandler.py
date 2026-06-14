@@ -240,9 +240,13 @@ class LoraRadioDataHandler(object):
             maximumNoOfControlNumbersToTest = 3
         elif loraRange == 'ML':
             maximumNoOfControlNumbersToTest = 2
-        elif loraRange == 'MS':
+        elif loraRange == 'MF' or loraRange == 'MS':
             maximumNoOfControlNumbersToTest = 1
-        elif loraRange == 'S':
+        elif loraRange == 'F' or loraRange == 'S':
+            maximumNoOfControlNumbersToTest = 1
+        elif loraRange == 'XF':
+            maximumNoOfControlNumbersToTest = 1
+        elif loraRange == 'UF':
             maximumNoOfControlNumbersToTest = 1
 
         controlNumbers = [(controlNumber & 0xFF) for controlNumber in sorted(self.ReceivedPunchMessageDict.keys(), key=lambda k: self.ReceivedPunchMessageDict[k].timeCreated, reverse=True)[:maximumNoOfControlNumbersToTest]]
@@ -348,9 +352,13 @@ class LoraRadioDataHandler(object):
             maximumNoOfControlNumbersToTest = 6
         elif loraRange == 'ML':
             maximumNoOfControlNumbersToTest = 4
-        elif loraRange == 'MS':
+        elif loraRange == 'MF' or loraRange == 'MS':
             maximumNoOfControlNumbersToTest = 3
-        elif loraRange == 'S':
+        elif loraRange == 'F' or loraRange == 'S':
+            maximumNoOfControlNumbersToTest = 2
+        elif loraRange == 'XF':
+            maximumNoOfControlNumbersToTest = 2
+        elif loraRange == 'UF':
             maximumNoOfControlNumbersToTest = 2
 
         controlNumbers = [(controlNumber & 0xFF) for controlNumber in sorted(self.ReceivedPunchMessageDict.keys(),

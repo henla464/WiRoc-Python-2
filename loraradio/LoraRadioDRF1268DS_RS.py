@@ -414,7 +414,7 @@ class LoraRadioDRF1268DS_RS:
                         self.isInitialized = False
                         return False
                     channelData = DatabaseHelper.get_channel(channel, loraRange, 'DRF1268DS')
-                    channelNumber = int(channel.lstrip("HAM"))
+                    channelNumber = int(''.join(c for c in channel if c.isdigit()) or '0')
                     if channelData.Frequency ==  LoraRadioDRF1268DS_RS.LoraModuleParameters.TransmitFrequency and \
                         channelData.Frequency == LoraRadioDRF1268DS_RS.LoraModuleParameters.ReceiveFrequency and \
                         channelData.SpreadingFactor == LoraRadioDRF1268DS_RS.LoraModuleParameters.SpreadingFactor and \

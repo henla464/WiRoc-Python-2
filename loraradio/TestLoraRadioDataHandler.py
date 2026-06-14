@@ -1696,7 +1696,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     @max_execution_time(4)
     def test_Case25_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case25_GetPunchDoubleMessage ==============================================================================================")
-        SettingsClass.SetSetting("LoraRange", 'MS')
+        SettingsClass.SetSetting("LoraRange", 'MF')
         SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
 
         # Add all the old control numbers that was added previously. This is needed to recreate the many alternatives
@@ -1741,7 +1741,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     def test_Case26_GetPunchDoubleMessage(self):
         print(
             "============================================================================================== START test_Case26_GetPunchDoubleMessage ==============================================================================================")
-        SettingsClass.SetSetting("LoraRange", 'MS')
+        SettingsClass.SetSetting("LoraRange", 'MF')
         SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
 
         # Add all the old control numbers that was added previously. This is needed to recreate the many alternatives
