@@ -1,5 +1,4 @@
 import display.displaystatemachine
-import display.displaystate
 from display.oleddisplaystate import OledDisplayState
 from PIL import Image
 from PIL import ImageDraw
@@ -139,7 +138,7 @@ class OledNormal(OledDisplayState):
                 letterPart = self.channel[-1]
                 self.OledDraw.rectangle((0, 0, 39, 31), outline=0, fill=0)
                 self.OledDraw.text((0, 0), numberPart, font=self.OledBoldFont, fill=255)
-                self.OledDraw.text((24, 17), letterPart, font=self.OledBoldFont2, fill=255)
+                self.OledDraw.text((24, 8), letterPart, font=self.OledThinFont3, fill=255)
             else:
                 self.OledDraw.rectangle((0, 0, 39, 31), outline=0, fill=0)
                 self.OledDraw.text((14, 0), displayData.channel, font=self.OledBoldFont, fill=255)
