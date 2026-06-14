@@ -133,6 +133,13 @@ class OledNormal(OledDisplayState):
                 self.OledDraw.text((2, 0), 'H', font=self.OledThinFont, fill=255)
                 self.OledDraw.text((2, 10), 'A', font=self.OledThinFont, fill=255)
                 self.OledDraw.text((1, 20), 'M', font=self.OledThinFont, fill=255)
+            elif len(self.channel) > 1 and self.channel[-1] in ('A', 'B'):
+                # A/B channel: no CH marker, shift left, render letter smaller
+                numberPart = self.channel[:-1]
+                letterPart = self.channel[-1]
+                self.OledDraw.rectangle((0, 0, 39, 31), outline=0, fill=0)
+                self.OledDraw.text((0, 0), numberPart, font=self.OledBoldFont, fill=255)
+                self.OledDraw.text((24, 17), letterPart, font=self.OledBoldFont2, fill=255)
             else:
                 self.OledDraw.rectangle((0, 0, 39, 31), outline=0, fill=0)
                 self.OledDraw.text((14, 0), displayData.channel, font=self.OledBoldFont, fill=255)
