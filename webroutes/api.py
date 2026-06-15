@@ -1810,7 +1810,9 @@ def getAllMainSettings():
     if setting is not None:
         loraRange = setting.Value
 
-    loraModule = SettingsClass.GetLoraModule()
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    loraModule = HardwareAbstraction.Instance.GetLoraModule()
 
     dataRate = 0 # not used, but keep for backward compatibility with old web interface
     loraRange = _LORARANGE_TO_OLD.get(loraRange, loraRange)
