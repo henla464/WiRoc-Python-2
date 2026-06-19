@@ -85,7 +85,7 @@ class ReceiveLoraAdapter(object):
         loraPower = SettingsClass.GetLoraPower()
         codeRate = SettingsClass.GetCodeRate()
         rxGain = SettingsClass.GetRxGainEnabled()
-        drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268CompatModeEnabled()
+        drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268DSCompatModeEnabled()
         sendAck = SettingsClass.GetLoraMode() == "RECEIVER"  # only for RAK3172
         return self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled)
 
@@ -96,7 +96,7 @@ class ReceiveLoraAdapter(object):
         loraPower: int = SettingsClass.GetLoraPower()
         codeRate: int = SettingsClass.GetCodeRate()
         rxGain: bool = SettingsClass.GetRxGainEnabled()
-        drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268CompatModeEnabled()
+        drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268DSCompatModeEnabled()
         sendAck = SettingsClass.GetLoraMode() == "RECEIVER"  # only for RAK3172
         return not self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled)
 
@@ -107,7 +107,7 @@ class ReceiveLoraAdapter(object):
         loraPower: int = SettingsClass.GetLoraPower()
         codeRate: int = SettingsClass.GetCodeRate()
         rxGain: bool = SettingsClass.GetRxGainEnabled()
-        drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268CompatModeEnabled()
+        drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268DSCompatModeEnabled()
         sendAck = SettingsClass.GetLoraMode() == "RECEIVER"  # only for RAK3172
         if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled):
             return True

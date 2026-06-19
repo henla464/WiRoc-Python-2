@@ -151,7 +151,7 @@ class SendLoraAdapter(object):
         loraPower = SettingsClass.GetLoraPower()
         codeRate = SettingsClass.GetCodeRate()
         rxGain = SettingsClass.GetRxGainEnabled()
-        drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268CompatModeEnabled()  # only for RAK3172
+        drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268DSCompatModeEnabled()  # only for RAK3172
         sendAck = SettingsClass.GetLoraMode == "RECEIVER"  # only for RAK3172
         return self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled)
 
@@ -162,7 +162,7 @@ class SendLoraAdapter(object):
         loraPower = SettingsClass.GetLoraPower()
         codeRate = SettingsClass.GetCodeRate()
         rxGain = SettingsClass.GetRxGainEnabled()
-        drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268CompatModeEnabled()  # only for RAK3172
+        drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268DSCompatModeEnabled()  # only for RAK3172
         sendAck = SettingsClass.GetLoraMode() == "RECEIVER"  # only for RAK3172
         loraRadioInitialized = self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled)
         SendLoraAdapter.WiRocLogger.debug(f"SendLoraAdapter::ShouldBeInitialized() loraRadioInitialized {loraRadioInitialized}")
@@ -185,7 +185,7 @@ class SendLoraAdapter(object):
         loraPower = SettingsClass.GetLoraPower()
         codeRate = SettingsClass.GetCodeRate()
         rxGain = SettingsClass.GetRxGainEnabled()
-        drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268CompatModeEnabled()
+        drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268DSCompatModeEnabled()
         sendAck = SettingsClass.GetLoraMode() == "RECEIVER"
         # set the AdapterInitialized to same value as loraRadios initialized
         # if loraRadio changes initialize value later we can detect this.

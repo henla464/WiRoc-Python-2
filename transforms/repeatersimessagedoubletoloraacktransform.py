@@ -66,7 +66,7 @@ class RepeaterSIMessageDoubleToLoraAckTransform(object):
             if incomingMsgType == LoraRadioMessageRS.MessageTypeStatus:
                 return None
 
-            loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(payloadData, rssiByte=None)
+            loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(payloadData, rssiValue=None)
             hash: bytearray = loraPunchDoubleMsg.GetHash()
             loraAck = LoraRadioMessageCreator.GetAckMessage(hash)
             loraAck.SetAckRequested(msgSubBatch.AckReceivedFromReceiver)  # indicate ack received from receiver

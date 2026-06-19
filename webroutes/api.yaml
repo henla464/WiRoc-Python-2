@@ -247,6 +247,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CodeRateObj"
+  /lora/drf1268dscompatmode/:
+    get:
+      tags:
+        - "Radio"
+      summary: "Get if DRF1268DS compatibility mode is enabled"
+      operationId: "getDRF1268DSCompatMode"
+      responses:
+        "200":
+          description: "0/1 depending on if DRF1268DS compat mode is enabled"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /lora/drf1268dscompatmode/{enabled}:
+    get:
+      tags:
+        - "Radio"
+      summary: "Enable/Disable DRF1268DS compatibility mode"
+      operationId: "setDRF1268DSCompatMode"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/TrueFalse"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /rxgainenabled/:
     get:
       tags:

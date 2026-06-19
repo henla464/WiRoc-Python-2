@@ -398,11 +398,11 @@ class SettingsClass(object):
         return sett.Value == "1"
 
     @staticmethod
-    @cached(cache, key=partial(hashkey, 'GetDRF1268CompatModeEnabled'), lock=rlock)
-    def GetDRF1268CompatModeEnabled() -> bool:
-        sett = DatabaseHelper.get_setting_by_key('DRF1268CompatModeEnabled')
+    @cached(cache, key=partial(hashkey, 'GetDRF1268DSCompatModeEnabled'), lock=rlock)
+    def GetDRF1268DSCompatModeEnabled() -> bool:
+        sett = DatabaseHelper.get_setting_by_key('DRF1268DSCompatModeEnabled')
         if sett is None:
-            SettingsClass.SetSetting("DRF1268CompatModeEnabled", "1")
+            SettingsClass.SetSetting("DRF1268DSCompatModeEnabled", "1")
             return False
         return sett.Value == "1"
 
@@ -611,7 +611,7 @@ class SettingsClass(object):
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
         codeRate = SettingsClass.GetCodeRate()
         header = True
-        DRF1268DSCompatMode = SettingsClass.GetDRF1268CompatModeEnabled()
+        DRF1268DSCompatMode = SettingsClass.GetDRF1268DSCompatModeEnabled()
         SettingsClass.timeOnAirData = DatabaseHelper.get_timeonair(SettingsClass.channelData.SpreadingFactor, SettingsClass.channelData.RfBw,
                                                                    codeRate, SettingsClass.channelData.LowDatarateOptimize, header,
                                                                    SettingsClass.channelData.CRCOn, DRF1268DSCompatMode,

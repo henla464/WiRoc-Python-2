@@ -201,6 +201,31 @@ def restart():
     return jsonpickle.encode(MicroMock(Value='OK'))
 
 
+@app.route('/api/lora/drf1268dscompatmode/', methods=['GET'])
+def getDRF1268DSCompatMode():
+    setting = DatabaseHelper.get_setting_by_key('DRF1268DSCompatModeEnabled')
+    enabled = '1'
+    if setting is not None:
+        enabled = setting.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=enabled))
+
+
+@app.route('/api/lora/drf1268dscompatmode/<enabled>/', methods=['GET'])
+def setDRF1268DSCompatMode(enabled):
+    sd = DatabaseHelper.get_setting_by_key('DRF1268DSCompatModeEnabled')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'DRF1268DSCompatModeEnabled'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
 @app.route('/api/coderate/', methods=['GET'])
 def getCodeRate():
     setting = DatabaseHelper.get_setting_by_key('CodeRate')
