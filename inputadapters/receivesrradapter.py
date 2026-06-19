@@ -36,7 +36,23 @@ class ReceiveSRRAdapter(object):
     @staticmethod
     def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         if hardwareAbstraction.HasSRR():
+            
+
             if len(ReceiveSRRAdapter.Instances) == 0:
+
+                srrEnabled: bool = SettingsClass.GetSRREnabled()
+                if not srrEnabled:
+                    # if not enabled turn off the power to the SRR module
+                    HardwareAbstraction.Instance.DisableSRR()
+                    ReceiveSRRAdapter.Instances = []
+                    return False
+                srrMode: str = SettingsClass.GetSRRMode()
+                sendMode: bool = srrMode == "SEND"
+                if sendMode:
+                    # shouldn't create a receive adapter if in send mode
+                    ReceiveSRRAdapter.Instances = []
+                    return False
+            
                 bus = SMBus(0)  # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
                 addr = 0x20
 
@@ -58,12 +74,27 @@ class ReceiveSRRAdapter(object):
                 except Exception as err:
                     logging.getLogger('WiRoc.Input').error(
                         "ReceiveSRRAdapter::CreateInstances() Exception: " + str(err))
+                    return False
             else:
+
+                srrEnabled: bool = SettingsClass.GetSRREnabled()
+                if not srrEnabled:
+                    # if not enabled turn off the power to the SRR module
+                    HardwareAbstraction.Instance.DisableSRR()
+                    ReceiveSRRAdapter.Instances = []
+                    return True
+                srrMode: str = SettingsClass.GetSRRMode()
+                sendMode: bool = srrMode == "SEND"
+                if sendMode:
+                    # shouldn't create a receive adapter if in send mode
+                    ReceiveSRRAdapter.Instances = []
+                    return True
+            
                 if SettingsClass.GetSRRRedChannelEnabled() or SettingsClass.GetSRRBlueChannelEnabled():
                     # Instance already exists
                     return False
                 else:
-                    # Shouldn't have a instance
+                    # Shouldn't have an instance
                     ReceiveSRRAdapter.Instances = []
                     return True
         return False
@@ -138,7 +169,9 @@ class ReceiveSRRAdapter(object):
             featuresEnabledDisabled: int = self.i2cBus.read_byte_data(self.i2cAddress,
                                                                       ReceiveSRRAdapter.HARDWAREFEATURESENABLEDISABLEREGADDR)
             newFeaturesEnabledDisabled: int = featuresEnabledDisabled
+            # we don't create an instance when srrEnabled is false so srrEnabled should always be true here
             srrEnabled: bool = SettingsClass.GetSRREnabled()
+            # we don't create an instance when srrMode is SEND so srrMode should always be RECEIVE here
             srrMode: str = SettingsClass.GetSRRMode()
             sendMode: bool = srrMode == "SEND"
             redChannelEnabled: bool = SettingsClass.GetSRRRedChannelEnabled()
@@ -198,9 +231,6 @@ class ReceiveSRRAdapter(object):
             self.blueChannelListenOnly = blueChannelListenOnly
             self.srrMode = srrMode
             self.isInitialized = True
-            if not srrEnabled:
-                # if not enabled turn off the power to the SRR module
-                HardwareAbstraction.Instance.DisableSRR()
         except Exception as ex:
             self.WiRocLogger.error(f"ReceiveSRRAdapter::Init() Exception {ex}")
             return False
