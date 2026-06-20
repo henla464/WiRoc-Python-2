@@ -40,13 +40,16 @@ class SendToSirapAdapter(object):
             enabled = SettingsClass.GetSendToSirapEnabled()
             subscriptionShouldBeEnabled = (isInitialized and enabled)
             if SendToSirapAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
-                SendToSirapAdapter.WiRocLogger.info(
-                    "SendToSirapAdapter::EnableDisableSubscription() subscription set enabled: " + str(
-                        subscriptionShouldBeEnabled))
                 SendToSirapAdapter.SubscriptionsEnabled = subscriptionShouldBeEnabled
-                DatabaseHelper.update_subscriptions(subscriptionShouldBeEnabled,
-                                                    SendToSirapAdapter.GetDeleteAfterSent(),
-                                                    SendToSirapAdapter.GetTypeName())
+                deleteAfterSent = SendToSirapAdapter.GetDeleteAfterSent()
+                for name, transf in SendToSirapAdapter.Instances[0].transforms.items():
+                    maxTries = transf.GetMaxTries()
+                    SendToSirapAdapter.WiRocLogger.info(
+                        "SendToSirapAdapter::EnableDisableSubscription() subscription set enabled: " + str(
+                            subscriptionShouldBeEnabled) + " name: " + name + " deleteAfterSent: " + str(deleteAfterSent) +
+                        " maxTries: " + str(maxTries))
+                    DatabaseHelper.update_subscription(subscriptionShouldBeEnabled, deleteAfterSent,
+                                                       SendToSirapAdapter.GetTypeName(), name, maxTries)
 
     @staticmethod
     def EnableDisableTransforms() -> None:

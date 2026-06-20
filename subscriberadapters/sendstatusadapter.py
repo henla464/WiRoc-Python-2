@@ -47,9 +47,12 @@ class SendStatusAdapter(object):
             connectionOK = SendStatusAdapter.IsConnectionOK()
             subscriptionShouldBeEnabled = isInitialized and connectionOK
             if SendStatusAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
-                SendStatusAdapter.WiRocLogger.info("SendStatusAdapter::EnableDisableSubscription() subscription set enabled: " + str(subscriptionShouldBeEnabled))
                 SendStatusAdapter.SubscriptionsEnabled = subscriptionShouldBeEnabled
-                DatabaseHelper.update_subscriptions(subscriptionShouldBeEnabled, SendStatusAdapter.GetDeleteAfterSent(), SendStatusAdapter.GetTypeName())
+                deleteAfterSent = SendStatusAdapter.GetDeleteAfterSent()
+                for name, transf in SendStatusAdapter.Instances[0].transforms.items():
+                    maxTries = transf.GetMaxTries()
+                    SendStatusAdapter.WiRocLogger.info("SendStatusAdapter::EnableDisableSubscription() subscription set enabled: " + str(subscriptionShouldBeEnabled) + " name: " + name + " deleteAfterSent: " + str(deleteAfterSent) + " maxTries: " + str(maxTries))
+                    DatabaseHelper.update_subscription(subscriptionShouldBeEnabled, deleteAfterSent, SendStatusAdapter.GetTypeName(), name, maxTries)
 
 
     @staticmethod

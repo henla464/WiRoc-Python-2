@@ -30,9 +30,12 @@ class SendToBlenoAdapter(object):
             enabled = SettingsClass.GetSendToBlenoEnabled()
             isInitialized = SendToBlenoAdapter.Instances[0].GetIsInitialized()
             if SendToBlenoAdapter.SubscriptionsEnabled != (isInitialized and enabled):
-                SendToBlenoAdapter.WiRocLogger.info("SendToBlenoAdapter subscription set enabled: " + str(isInitialized and enabled))
                 SendToBlenoAdapter.SubscriptionsEnabled = (isInitialized and enabled)
-                DatabaseHelper.update_subscriptions((isInitialized and enabled), SendToBlenoAdapter.GetDeleteAfterSent(), SendToBlenoAdapter.GetTypeName())
+                deleteAfterSent = SendToBlenoAdapter.GetDeleteAfterSent()
+                for name, transf in SendToBlenoAdapter.Instances[0].transforms.items():
+                    maxTries = transf.GetMaxTries()
+                    SendToBlenoAdapter.WiRocLogger.info("SendToBlenoAdapter subscription set enabled: " + str(isInitialized and enabled) + " name: " + name + " deleteAfterSent: " + str(deleteAfterSent) + " maxTries: " + str(maxTries))
+                    DatabaseHelper.update_subscription((isInitialized and enabled), deleteAfterSent, SendToBlenoAdapter.GetTypeName(), name, maxTries)
 
 
     @staticmethod

@@ -44,6 +44,11 @@ class SRRSRRMessageToSirapTransform(object):
         return False
 
     @staticmethod
+    def GetMaxTries() -> int:
+        return 1
+
+
+    @staticmethod
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         SRRSRRMessageToSirapTransform.WiRocLogger.debug("SRRSRRMessageToSirapTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData

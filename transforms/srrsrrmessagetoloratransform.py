@@ -53,6 +53,10 @@ class SRRSRRMessageToLoraTransform(object):
         return SRRSRRMessageToLoraTransform.DeleteAfterSent != (not SettingsClass.GetAcknowledgementRequested())
 
     @staticmethod
+    def GetMaxTries() -> int:
+        return SettingsClass.GetMaxTries()
+
+    @staticmethod
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         SRRSRRMessageToLoraTransform.WiRocLogger.debug("SRRSRRMessageToLoraTransform::Transform()")
 

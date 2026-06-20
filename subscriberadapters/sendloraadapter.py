@@ -55,11 +55,13 @@ class SendLoraAdapter(object):
                 if (SendLoraAdapter.SubscriptionsEnabled != shouldSubscriptionBeEnabled or
                         transf.GetDeleteAfterSentChanged()):
                     deleteAfterSent = transf.GetDeleteAfterSent()
+                    maxTries = transf.GetMaxTries()
                     SendLoraAdapter.WiRocLogger.info(
                         "SendLoraAdapter::EnableDisableSubscription() subscription set enabled: " + str(
-                            shouldSubscriptionBeEnabled) + " name: " + name + " deleteAfterSent: " + str(deleteAfterSent))
+                            shouldSubscriptionBeEnabled) + " name: " + name + " deleteAfterSent: " + str(deleteAfterSent) +
+                        " maxTries: " + str(maxTries))
                     DatabaseHelper.update_subscription(shouldSubscriptionBeEnabled, deleteAfterSent,
-                                                       SendLoraAdapter.GetTypeName(), name)
+                                                       SendLoraAdapter.GetTypeName(), name, maxTries)
             SendLoraAdapter.SubscriptionsEnabled = shouldSubscriptionBeEnabled
 
     @staticmethod

@@ -53,12 +53,16 @@ class SettingsClass(object):
         return SettingsClass.hasReceivedMessageFromRepeater
 
     @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetStatusAcknowledgementRequested'), lock=rlock)
     def GetStatusAcknowledgementRequested():
-        # Never wait for ack for status messages. Never request Ack.
-        return False
+        sett = DatabaseHelper.get_setting_by_key('StatusAcknowledgementRequested')
+        if sett is None:
+            SettingsClass.SetSetting("StatusAcknowledgementRequested", "1")
+            return True
+        return sett.Value == "1"
 
     @staticmethod
-    def GetMaxRetries():
+    def GetMaxTries():
         return 5
 
     @staticmethod
@@ -602,7 +606,7 @@ class SettingsClass(object):
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetLoraMessageTimeSendingTimeMSByMessageType'), lock=rlock)
-    def GetLoraMessageTimeSendingTimeMSByMessageType(messageType: int) -> float:
+    def GetLoraMessageTimeSendingTimeMSByMessageType(messageType: int) -> int:
         loraRange: str = SettingsClass.GetLoraRange()
         channel: str = SettingsClass.GetChannel()
         if HardwareAbstraction.Instance is None:

@@ -48,6 +48,10 @@ class SITestTestToLoraTransform(object):
     def GetDeleteAfterSentChanged() -> bool:
         return SITestTestToLoraTransform.DeleteAfterSent != (not SettingsClass.GetAcknowledgementRequested())
 
+    @staticmethod
+    def GetMaxTries() -> int:
+        return SettingsClass.GetMaxTries()
+
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):

@@ -310,16 +310,18 @@ class TransformData(object):
 class SubscriptionData(object):
     columns = [("DeleteAfterSent", bool), ("Enabled", bool),
                ("SubscriberId", int), ("TransformId", int),
-               ("BatchSize", int)]
+               ("BatchSize", int), ("MaxTries", int)]
 
     def __init__(self, DeleteAfterSent=None, Enabled=None,
-                 SubscriberId=None, TransformId=None, BatchSize=1):
+                 SubscriberId=None, TransformId=None, BatchSize=1,
+                 MaxTries=None):
         self.id = None
         self.DeleteAfterSent = DeleteAfterSent
         self.Enabled = Enabled
         self.SubscriberId = SubscriberId
         self.TransformId = TransformId
         self.BatchSize = BatchSize
+        self.MaxTries = MaxTries
 
 
 class SubscriptionViewData(object):
@@ -419,7 +421,7 @@ class MessageSubscriptionView(object):
                ("DeleteAfterSent", bool), ("Enabled", bool), ("SubscriberId", int),
                ("SubscriberTypeName", str), ("SubscriberInstanceName", str),
                ("TransformName", str), ("MessageData", bytearray),
-               ("CreatedDate", datetime)
+               ("CreatedDate", datetime), ("MaxTries", int)
                ]
 
     def __init__(self):
@@ -447,6 +449,7 @@ class MessageSubscriptionView(object):
         self.TransformName = None
         self.MessageData: bytearray | None = None
         self.CreatedDate = None
+        self.MaxTries = None
 
 
 class SubscriberView(object):

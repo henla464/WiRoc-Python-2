@@ -45,6 +45,11 @@ class StatusStatusToStatusTransform(object):
         return False
 
     @staticmethod
+    def GetMaxTries() -> int:
+        return 1
+
+
+    @staticmethod
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         StatusStatusToStatusTransform.WiRocLogger.debug("StatusStatusToStatusTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData

@@ -43,6 +43,11 @@ class LoraSIMessageToSRRTransform(object):
         return False
 
     @staticmethod
+    def GetMaxTries() -> int:
+        return 1
+
+
+    @staticmethod
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         LoraSIMessageToSRRTransform.WiRocLogger.debug("LoraSIMessageToSRRTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData

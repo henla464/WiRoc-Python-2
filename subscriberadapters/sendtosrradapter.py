@@ -50,13 +50,16 @@ class SendToSRRAdapter(object):
             enabled = (SettingsClass.GetSRREnabled() and SettingsClass.GetSRRMode() == "SEND")
             subscriptionShouldBeEnabled = (isInitialized and enabled)
             if SendToSRRAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
-                SendToSRRAdapter.WiRocLogger.info(
-                    "SendToSRRAdapter::EnableDisableSubscription() subscription set enabled: " + str(
-                        subscriptionShouldBeEnabled))
                 SendToSRRAdapter.SubscriptionsEnabled = subscriptionShouldBeEnabled
-                DatabaseHelper.update_subscriptions(subscriptionShouldBeEnabled,
-                                                    SendToSRRAdapter.GetDeleteAfterSent(),
-                                                    SendToSRRAdapter.GetTypeName())
+                deleteAfterSent = SendToSRRAdapter.GetDeleteAfterSent()
+                for name, transf in SendToSRRAdapter.Instances[0].transforms.items():
+                    maxTries = transf.GetMaxTries()
+                    SendToSRRAdapter.WiRocLogger.info(
+                        "SendToSRRAdapter::EnableDisableSubscription() subscription set enabled: " + str(
+                            subscriptionShouldBeEnabled) + " name: " + name + " deleteAfterSent: " + str(deleteAfterSent) +
+                        " maxTries: " + str(maxTries))
+                    DatabaseHelper.update_subscription(subscriptionShouldBeEnabled, deleteAfterSent,
+                                                       SendToSRRAdapter.GetTypeName(), name, maxTries)
 
     @staticmethod
     def EnableDisableTransforms() -> None:

@@ -44,6 +44,11 @@ class LoraStatusToStatusTransform(object):
     def GetDeleteAfterSentChanged() -> bool:
         return False
 
+    @staticmethod
+    def GetMaxTries() -> int:
+        return 1
+
+
     #msgSub.MessageData is a bytearray
     @staticmethod
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):

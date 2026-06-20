@@ -299,7 +299,7 @@ class BackgroundTasks(object):
 
     @staticmethod
     def ArchiveFailedMessagesBackground():
-        msgSubscriptions = DatabaseHelper.get_message_subscriptions_view_to_archive(SettingsClass.GetMaxRetries(),100)
+        msgSubscriptions = DatabaseHelper.get_message_subscriptions_view_to_archive(100)
         for msgSub in msgSubscriptions:
             BackgroundTasks.WiRocLogger.info(
                 "BackgroundTasks::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(

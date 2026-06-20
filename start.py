@@ -300,7 +300,7 @@ class Main:
     def handleOutput(self, settDict):
         #self.wirocLogger.debug("Handle output")
         if self.messagesToSendExists:
-            noOfMsgSubWaiting, msgSubBatch = DatabaseHelper.get_message_subscriptions_view_to_send(SettingsClass.GetMaxRetries())
+            noOfMsgSubWaiting, msgSubBatch = DatabaseHelper.get_message_subscriptions_view_to_send()
             if noOfMsgSubWaiting == 0:
                 self.messagesToSendExists = False
             #self.wirocLogger.debug("Handle output no of noOfMsgSubWaiting: " + str(noOfMsgSubWaiting))

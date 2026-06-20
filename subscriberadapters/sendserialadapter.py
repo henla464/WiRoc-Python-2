@@ -45,15 +45,21 @@ class SendSerialAdapter(object):
         if len(SendSerialAdapter.Instances) > 0:
             if SendSerialAdapter.Instances[0].GetIsInitialized():
                 if SendSerialAdapter.SendSerialAdapterActive is None or not SendSerialAdapter.SendSerialAdapterActive:
-                    SendSerialAdapter.WiRocLogger.info("SendSerialAdapter::EnableDisableSubscription() update subscription enable")
                     SendSerialAdapter.SendSerialAdapterActive = True
-                    DatabaseHelper.update_subscriptions(True, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
+                    deleteAfterSent = SendSerialAdapter.GetDeleteAfterSent()
+                    for name, transf in SendSerialAdapter.Instances[0].transforms.items():
+                        maxTries = transf.GetMaxTries()
+                        SendSerialAdapter.WiRocLogger.info("SendSerialAdapter::EnableDisableSubscription() update subscription enable name: " + name + " deleteAfterSent: " + str(deleteAfterSent) + " maxTries: " + str(maxTries))
+                        DatabaseHelper.update_subscription(True, deleteAfterSent, SendSerialAdapter.GetTypeName(), name, maxTries)
                     SettingsClass.SetForceReconfigure(True)
             else:
                 if SendSerialAdapter.SendSerialAdapterActive is None or SendSerialAdapter.SendSerialAdapterActive:
-                    SendSerialAdapter.WiRocLogger.info("SendSerialAdapter::EnableDisableSubscription() update subscription disable")
                     SendSerialAdapter.SendSerialAdapterActive = False
-                    DatabaseHelper.update_subscriptions(False, SendSerialAdapter.GetDeleteAfterSent(), SendSerialAdapter.GetTypeName())
+                    deleteAfterSent = SendSerialAdapter.GetDeleteAfterSent()
+                    for name, transf in SendSerialAdapter.Instances[0].transforms.items():
+                        maxTries = transf.GetMaxTries()
+                        SendSerialAdapter.WiRocLogger.info("SendSerialAdapter::EnableDisableSubscription() update subscription disable name: " + name + " deleteAfterSent: " + str(deleteAfterSent) + " maxTries: " + str(maxTries))
+                        DatabaseHelper.update_subscription(False, deleteAfterSent, SendSerialAdapter.GetTypeName(), name, maxTries)
                     SettingsClass.SetForceReconfigure(True)
         else:
             SendSerialAdapter.WiRocLogger.debug("SendSerialAdapter::EnableDisableSubscription() Setting SetSendSerialAdapterActive False 2")

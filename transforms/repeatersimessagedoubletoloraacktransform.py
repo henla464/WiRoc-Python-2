@@ -51,6 +51,10 @@ class RepeaterSIMessageDoubleToLoraAckTransform(object):
     def GetDeleteAfterSentChanged() -> bool:
         return False
 
+    @staticmethod
+    def GetMaxTries() -> int:
+        return SettingsClass.GetMaxTries()
+
     #payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):

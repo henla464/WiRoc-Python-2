@@ -294,10 +294,16 @@ class DatabaseHelper:
         cls.db.execute_SQL(sql)
 
     @classmethod
-    def update_subscription(cls, enabled: bool, deleteAfterSent: bool, subscriberTypeName: str, transformName: str) -> None:
+    def update_subscription(cls, enabled: bool, deleteAfterSent: bool, subscriberTypeName: str, transformName: str, maxTries: int | None = None) -> None:
         cls.init()
+        maxTriesSQL = ""
+        if maxTries is not None:
+            maxTriesSQL = ", MaxTries = " + str(maxTries)
+        else:
+            maxTriesSQL = ", MaxTries = NULL"
         sql = ("UPDATE SubscriptionData SET Enabled = " + str(1 if enabled else 0) + ", "
-               "DeleteAfterSent = " + str(1 if deleteAfterSent else 0) + " WHERE SubscriberId IN "
+               "DeleteAfterSent = " + str(1 if deleteAfterSent else 0) +
+               maxTriesSQL + " WHERE SubscriberId IN "
                "(SELECT id from SubscriberData WHERE SubscriberData.TypeName = '" + str(subscriberTypeName) + "') "
                "AND TransformId IN "
                "(SELECT id from TransformData WHERE TransformData.Name = '" + str(transformName) + "') ")
@@ -718,7 +724,7 @@ class DatabaseHelper:
         return None
 
     @classmethod
-    def get_message_subscriptions_view_to_send(cls, maxRetries: int) -> tuple[int, MessageSubscriptionBatch | None]:
+    def get_message_subscriptions_view_to_send(cls) -> tuple[int, MessageSubscriptionBatch | None]:
         sql = "SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData"
         cls.init()
         cnt = cls.db.get_scalar_by_SQL(sql)
@@ -743,6 +749,7 @@ class DatabaseHelper:
                    "SubscriptionData.Enabled, "
                    "SubscriptionData.SubscriberId, "
                    "SubscriptionData.BatchSize, "
+                   "SubscriptionData.MaxTries, "
                    "SubscriberData.TypeName as SubscriberTypeName, "
                    "SubscriberData.InstanceName as SubscriberInstanceName, "
                    "TransformData.Name as TransformName, "
@@ -794,13 +801,13 @@ class DatabaseHelper:
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
 
-                if messageSubscription.NoOfSendTries >= maxRetries:
+                if messageSubscription.NoOfSendTries >= messageSubscription.MaxTries:
                     # Message may have been sent, noOfSendTries incremented, passed the retry time
                     # BUT has not yet been archived. Just skip/should be ignored
                     #DatabaseHelper.WiRocLogger.debug("Message may have been sent, noOfSendTries incremented, passed the retry time BUT has not yet been archived. Just skip/should be ignored")
                     continue
 
-                if messageSubscription.FindAdapterTries >= maxRetries:
+                if messageSubscription.FindAdapterTries >= 5:
                     #DatabaseHelper.WiRocLogger.debug("Ignore messages exceeding find adapter tries. Has not yet been archived.")
                     # Ignore messages exceeding find adapter tries. Has not yet been archived.
                     continue
@@ -844,7 +851,7 @@ class DatabaseHelper:
         return cnt, None
 
     @classmethod
-    def get_message_subscriptions_view_to_archive(cls, maxRetries: int, limit: int = 100):
+    def get_message_subscriptions_view_to_archive(cls, limit: int = 100):
         sql = "SELECT count(MessageSubscriptionData.id) FROM MessageSubscriptionData "
         cls.init()
         cnt = cls.db.get_scalar_by_SQL(sql)
@@ -870,6 +877,7 @@ class DatabaseHelper:
                    "SubscriptionData.DeleteAfterSent, "
                    "SubscriptionData.Enabled, "
                    "SubscriptionData.SubscriberId, "
+                   "SubscriptionData.MaxTries, "
                    "SubscriberData.TypeName as SubscriberTypeName, "
                    "SubscriberData.InstanceName as SubscriberInstanceName, "
                    "TransformData.Name as TransformName, "
@@ -882,9 +890,9 @@ class DatabaseHelper:
                    "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
                    "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
                    "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
-                   "((MessageSubscriptionData.NoOfSendTries >= %s AND MessageSubscriptionData.SentDate < ?) or MessageSubscriptionData.FindAdapterTries >= %s) "
+                   "((MessageSubscriptionData.NoOfSendTries >= SubscriptionData.MaxTries AND MessageSubscriptionData.SentDate < ?) or MessageSubscriptionData.FindAdapterTries >= 5) "
                    "ORDER BY MessageBoxData.CreatedDate desc "
-                   "LIMIT %s") % (maxRetries, maxRetries, limit)
+                   "LIMIT %s") % limit
             return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql, (fifteenSecondsAgo,))
         return []
 

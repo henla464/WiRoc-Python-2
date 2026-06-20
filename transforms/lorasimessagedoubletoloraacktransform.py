@@ -55,6 +55,10 @@ class LoraSIMessageDoubleToLoraAckTransform(object):
     def GetDeleteAfterSentChanged() -> bool:
         return False
 
+    @staticmethod
+    def GetMaxTries() -> int:
+        return 1
+
     # payloadData is a bytearray
     @staticmethod
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
