@@ -609,26 +609,26 @@ class LoraRadioDataHandler(object):
 
             def decodePunch(innerErasuresCombination):
                 try:
-                    print(str(innerErasuresCombination))
+                    LoraRadioDataHandler.WiRocLogger.debug(str(innerErasuresCombination))
                     res2 = RSCoderLora.decode(innerCorruptedMessageData, innerErasuresCombination)
                 except Exception as ex:
-                    print(ex)
+                    LoraRadioDataHandler.WiRocLogger.debug(ex)
                     res2 = None
                 return res2
 
             return decodePunch
 
         for startMessageDataComboToTry in alts:
-            print("alternative: " + str(Utils.GetDataInHex(startMessageDataComboToTry, logging.DEBUG)))
+            LoraRadioDataHandler.WiRocLogger.debug("alternative: " + str(Utils.GetDataInHex(startMessageDataComboToTry, logging.DEBUG)))
             theDecodeFunction = createDecodePunch(startMessageDataComboToTry[0:-LoraRadioMessagePunchReDCoSRS.NoOfCRCBytes])
             crcDictionary = {}
             with Pool(5) as p:
-                print(str(erasuresCombinationList))
+                LoraRadioDataHandler.WiRocLogger.debug(str(erasuresCombinationList))
                 res = p.map(theDecodeFunction, erasuresCombinationList)
                 for decoded in res:
                     if decoded is None:
                         continue
-                    print(Utils.GetDataInHex(decoded, logging.DEBUG))
+                    LoraRadioDataHandler.WiRocLogger.debug(Utils.GetDataInHex(decoded, logging.DEBUG))
                     shake = hashlib.shake_128()
                     shake.update(decoded[1:])
                     theCRCHash = shake.digest(2)
@@ -814,10 +814,10 @@ class LoraRadioDataHandler(object):
             else:
                 loraMsgWithErrors: LoraRadioMessagePunchReDCoSRS = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(messageDataToConsider, rssiValue=rssiValue, snrValue=snrValue, statusValue=statusValue)
                 alts, fixedValues, fixedErasures = self._GetPunchMessageAlternatives(loraMsgWithErrors)
-                print("alternatives: " + str(alts))
+                LoraRadioDataHandler.WiRocLogger.debug("alternatives: " + str(alts))
                 # todo - run each alternative in own process?
                 for messageAlt in alts:
-                    print("messageAlt: " + str(messageAlt))
+                    LoraRadioDataHandler.WiRocLogger.debug("messageAlt: " + str(messageAlt))
                     try:
                         correctedData = RSCoderLora.decode(bytearray(messageAlt[:-LoraRadioMessagePunchReDCoSRS.NoOfCRCBytes]))
                     except Exception as err:
