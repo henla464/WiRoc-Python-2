@@ -388,8 +388,8 @@ class SettingsClass(object):
     def GetCodeRate() -> int:
         sett = DatabaseHelper.get_setting_by_key('CodeRate')
         if sett is None:
-            SettingsClass.SetSetting("CodeRate", str(0x00))
-            return 0
+            SettingsClass.SetSetting("CodeRate", "1")
+            return 1
         return int(sett.Value)
 
     @staticmethod

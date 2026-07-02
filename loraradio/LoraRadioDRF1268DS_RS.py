@@ -294,7 +294,7 @@ class LoraRadioDRF1268DS_RS:
         readParameterResp[6] = channelNumber
         readParameterResp[11] = channelData.SpreadingFactor
         readParameterResp[12] = channelData.RfBw  # 0x05 = Bandwidth 31,25kHz
-        readParameterResp[13] = codeRate -1 if codeRate > 0 else codeRate  # code rate 4/4 (no hamming code) not available on this chip. 0 instead means 4/5
+        readParameterResp[13] = codeRate-1 if codeRate > 0 else codeRate  # code rate 4/4 (no hamming code) not available on this chip. 0 instead means 4/5
         readParameterResp[14] = loraPower
         if rxGain:
             readParameterResp[23] |= 0x81  # ID / Rx Gain enable

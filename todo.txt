@@ -11,7 +11,6 @@ WiRoc
 
 SRR code
 ========
-- Power optimization
 - measure resend intervals, is it same or does it increase or is it random.
 - "Software flow control" setting for dongle (expert mode in SI Config), what does it do
 - SRR receiver receives SRR ack messages (from other srr dongle?) should probably not put them in punch queue (SRR reciever firmware)
@@ -90,6 +89,8 @@ x measure power consumption of  SRR receiver: arount 51 mA, 3.3V
     -- Sleep mode: maybe 50mA, very little difference if any
     -- Stop mode: 47mA so even then little difference...
 x Send hwversion to webbserver, software versions
+x Power optimization SRR
+
 
 possible HW enhancments
 -----------------------
