@@ -524,6 +524,7 @@ class LoraRadioDRF1268DS_RS:
             if sendReply == bytearray([0x6F, 0x6B, 0x0D, 0x0A]):  # ok
                 LoraRadioDRF1268DS_RS.WiRocLogger.debug(
                     "LoraRadioDRF1268DS_RS::SendData() Module returned ok")
+                self.ClearErrorCode(ErrorCodeData.ERR_LORA_MODULE_COM)
                 return ReturnStatus.SENT
             elif sendReply == bytearray([0x62, 0x75, 0x73, 0x79]):  # busy
                 LoraRadioDRF1268DS_RS.WiRocLogger.debug(
@@ -541,7 +542,7 @@ class LoraRadioDRF1268DS_RS:
                     bytesRead = self.radioSerial.read(1)
                     allReceivedData.append(bytesRead[0])
                 # if another message was received above then we may need to wait a bit for the ok/busy to be received. (noticed in logs)
-                self.WaitForSerialUpToTimeMS(10)
+                self.WaitForSerialUpToTimeMS(300)
                 while self.radioSerial.in_waiting > 0:
                     bytesRead = self.radioSerial.read(1)
                     allReceivedData.append(bytesRead[0])
@@ -550,7 +551,8 @@ class LoraRadioDRF1268DS_RS:
                     LoraRadioDRF1268DS_RS.WiRocLogger.debug(
                         "LoraRadioDRF1268DS_RS::SendData() 2 Module returned ok")
                     for dataByte in allReceivedData[:-4]:
-                        self.loraRadioDataHandler.AddData(dataByte)
+                        self.loraRadioDataHandler.AddData(dataByte)  
+                    self.ClearErrorCode(ErrorCodeData.ERR_LORA_MODULE_COM)
                     return ReturnStatus.SENT
                 elif allReceivedData[-6:] == bytearray([0x62, 0x75, 0x73, 0x79, 0x0d, 0x0a]):  # busy
                     LoraRadioDRF1268DS_RS.WiRocLogger.debug(
@@ -565,11 +567,14 @@ class LoraRadioDRF1268DS_RS:
                     LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::SendData() Module didn't reply ok or busy, didn't reply anything. Try to reinitialize it.")
                     return ReturnStatus.NOREPLY
                 else:
-                    # Unknown response
-                    self.SetErrorCode(ErrorCodeData.ERR_LORA_MODULE_COM, "Lora mod. comm")
-                    LoraRadioDRF1268DS_RS.WiRocLogger.error(
-                        "LoraRadioDRF1268DS_RS::SendData() Module returned allReceivedData: " + Utils.GetDataInHex(allReceivedData,
-                                                                                                                   logging.ERROR))
+                    # Almost always an interleaved received message, not a real module fault:
+                    # the ok/busy just didn't arrive in the wait window. Feed the bytes to the
+                    # data handler so the overheard message is processed (and its sender isn't
+                    # forced to retransmit), and don't raise a comm error.
+                    for dataByte in allReceivedData:
+                        self.loraRadioDataHandler.AddData(dataByte)
+                    LoraRadioDRF1268DS_RS.WiRocLogger.warning(
+                        "LoraRadioDRF1268DS_RS::SendData() No ok/busy seen; treating as interleaved received data: " + Utils.GetDataInHex(allReceivedData, logging.WARNING))
                     return ReturnStatus.OTHER
         finally:
             self.serialLock.release()
