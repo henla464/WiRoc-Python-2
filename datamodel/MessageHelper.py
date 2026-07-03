@@ -102,7 +102,7 @@ class MessageHelper:
     @staticmethod
     def GetRepeaterMessageBoxData(messageSource: str, messageTypeName: str, messageSubTypeName: str, instanceName: str,
                                          checksumOK: bool,
-                                         powerCycle: int, serialNumber: str,
+                                         powerCycle: int,
                                          loraMessage: LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | LoraRadioMessageAckRS
                                                       | LoraRadioMessageStatusRS | LoraRadioMessageStatus2RS | None,
                                          messageData: bytearray,
@@ -125,15 +125,13 @@ class MessageHelper:
         rmbd.InstanceName = instanceName
         rmbd.MessageSubTypeName = messageSubTypeName
         rmbd.MessageSource = messageSource
-        rmbd.SIStationSerialNumber = serialNumber
         rmbd.NoOfTimesSeen = 1
         rmbd.NoOfTimesAckSeen = 0
         rmbd.SIStationNumber = None
-        rmbd.SIStationSerialNumber = None
         rmbd.MessageID = messageID
         if loraMessage is not None:
             rmbd.RSSIValue = loraMessage.GetRSSIValue()
-            rmbd.LowBattery = loraMessage.GetBatteryLow()
+            #rmbd.LowBattery = loraMessage.GetBatteryLow() should add to repeatermessageboxdata/archive
             rmbd.AckRequested = loraMessage.GetAckRequested()
             rmbd.RepeaterRequested = loraMessage.GetRepeater()
 

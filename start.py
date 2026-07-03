@@ -178,7 +178,7 @@ class Main:
                             continue
 
                         rmbd = MessageHelper.GetRepeaterMessageBoxData(messageSource, messageTypeName, messageSubTypeName, instanceName,
-                            True, powerCycle, SIStationSerialNumber, loraMessage, messageData, messageID)
+                            True, powerCycle, loraMessage, messageData, messageID)
 
                         rmbdid = DatabaseHelper.save_repeater_message_box(rmbd)
                     else:
