@@ -78,7 +78,7 @@ class CreateStatusAdapter(object):
             SIMasterConnectedOnUSB2: bool = False
 
             a = [inst.portName for inst in ReceiveSIUSBSerialPort.Instances]
-            print(a)
+            self.WiRocLogger.debug(a)
             usbInstances: list[ReceiveSIUSBSerialPort] = ReceiveSIUSBSerialPort.Instances
             # first instance
             usb1Instance: ReceiveSIUSBSerialPort | None = next((inst for inst in usbInstances), None)
@@ -93,7 +93,7 @@ class CreateStatusAdapter(object):
                 else:
                     SIMasterConnectedOnUSB1 = True
             else:
-                print("USB1 instance none")
+                self.WiRocLogger.debug("USB1 instance none")
 
             # skip first one, get second
             usb2Instance: ReceiveSIUSBSerialPort | None = next((inst for inst in usbInstances[1:]), None)
@@ -108,7 +108,7 @@ class CreateStatusAdapter(object):
                 else:
                     SIMasterConnectedOnUSB2 = True
             else:
-                print("USB2 instance none")
+                self.WiRocLogger.debug("USB2 instance none")
 
             internalSRRRedEnabled = False
             internalSRRRedAck = True
