@@ -438,7 +438,7 @@ class DatabaseHelper:
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData JOIN SubscriptionData "
                "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
                "JOIN TransformData ON SubscriptionData.TransformId = TransformData.id "
-               "WHERE TransformData.Name = 'RepeaterToLoraAckTransform' AND "
+               "WHERE TransformData.Name IN ('RepeaterSIMessageToLoraAckTransform', 'RepeaterSIMessageDoubleToLoraAckTransform') AND "
                "MessageSubscriptionData.MessageID = ? ORDER BY SentDate desc LIMIT 2")
         rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID,))
 
