@@ -16,7 +16,34 @@ from collections.abc import Iterable
 import hashlib
 from typing import Tuple, List
 
-"""Internal callgraph of LoraRadioDataHandler
+"""
+Upstream — Who creates and calls LoraRadioDataHandler
+
+LoraRadioDRF1268DS_RS.__init__()          LoraRadioRAK3172.__init__()
+        │                                          │
+        ├── new LoraRadioDataHandler(1,0,0)        ├── new LoraRadioDataHandler(2,1,1)
+        │                                          │
+        ▼                                          ▼
+LoraRadioDRF1268DS_RS.GetRadioData()      LoraRadioRAK3172.GetRadioData()
+        │                                          │
+        ├── .AddData(bytes)                        ├── .HasData() → .GetMessage()
+        │   (per byte from serial)                 ├── .AddData(receivedMsgData)
+        │                                          │   (per radio message)
+        ├── .GetMessage()                          └── .GetMessage()
+        │                                          │
+        └──────────────────┬───────────────────────┘
+                           │
+                           ▼
+              ReceiveLoraAdapter (line 144)
+                           │
+                           ▼
+              DecodeLoraMessage.py
+                           │
+                           ▼
+              Start.py (main loop)
+
+
+Internal callgraph of LoraRadioDataHandler
 
 GetMessage()                         ◄── public entry point
   ├── _CheckAndRemoveLoraModuleRXError()
