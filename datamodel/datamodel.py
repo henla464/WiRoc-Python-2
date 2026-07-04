@@ -147,9 +147,10 @@ class MessageBoxArchiveData(object):
                ("SportIdentSecond2", str),
                ("SIStationNumber2", str),
                ("LowBattery", str), ("RSSIValue", int),
+               ("LinkQuality", int), ("Channel", int),
                ("ChecksumOK", bool), ("CreatedDate", datetime),
                ("Resubmitted", bool)]
-
+    
     def __init__(self):
         self.id = None
         self.OrigId = None
@@ -174,6 +175,8 @@ class MessageBoxArchiveData(object):
 
         self.LowBattery = None
         self.RSSIValue = None
+        self.LinkQuality = None
+        self.Channel = None
         self.ChecksumOK = None
         self.CreatedDate = None
         self.Resubmitted: bool = False
@@ -256,7 +259,7 @@ class RepeaterMessageBoxArchiveData(object):
         self.SportIdentSecond = None
         self.MessageID = None
         self.AckRequested = None
-        self.SIStationNumber2 = None
+        self.SIStationNumber = None
 
         self.SICardNumber2 = None
         self.SportIdentHour2 = None

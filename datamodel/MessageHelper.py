@@ -30,6 +30,7 @@ class MessageHelper:
             mbd.lowBattery = loraMessage.GetBatteryLow()
             mbd.ackRequested = loraMessage.GetAckRequested()
             mbd.repeater = loraMessage.GetRepeater()
+            mbd.LinkQuality = loraMessage.GetSNRValue()
 
         if messageTypeName == "LORA" and messageSubTypeName == "SIMessage":
             siPayloadData = loraMessage.GetSIMessageByteArray()

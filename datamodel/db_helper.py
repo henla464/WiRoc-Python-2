@@ -678,6 +678,14 @@ class DatabaseHelper:
         msa.SportIdentSecond = repeaterMessageBox.SportIdentSecond
         msa.MessageID = repeaterMessageBox.MessageID
         msa.AckRequested = repeaterMessageBox.AckRequested
+        msa.SIStationNumber = repeaterMessageBox.SIStationNumber
+
+        msa.SICardNumber2 = repeaterMessageBox.SICardNumber2
+        msa.SportIdentHour2 = repeaterMessageBox.SportIdentHour2
+        msa.SportIdentMinute2 = repeaterMessageBox.SportIdentMinute2
+        msa.SportIdentSecond2 = repeaterMessageBox.SportIdentSecond2
+        msa.SIStationNumber2 = repeaterMessageBox.SIStationNumber2
+
         msa.RepeaterRequested = repeaterMessageBox.RepeaterRequested
         msa.NoOfTimesSeen = repeaterMessageBox.NoOfTimesSeen
         msa.NoOfTimesAckSeen = repeaterMessageBox.NoOfTimesAckSeen
@@ -961,12 +969,12 @@ class DatabaseHelper:
               "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
               "SportIdentSecond, SIStationNumber," \
               "SICardNumber2, SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2," \
-              "LowBattery, ChecksumOK, CreatedDate) SELECT id, MessageData," \
+              "LowBattery, RSSIValue, LinkQuality, Channel, ChecksumOK, CreatedDate) SELECT id, MessageData," \
               "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
               "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
               "SportIdentSecond, SIStationNumber, " \
               "SICardNumber2, SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2," \
-              "LowBattery, ChecksumOK, CreatedDate FROM " \
+              "LowBattery, RSSIValue, LinkQuality, Channel, ChecksumOK, CreatedDate FROM " \
               "MessageBoxData WHERE Id = %s" % msgBoxId
 
         cls.db.execute_SQL(sql)
@@ -980,12 +988,12 @@ class DatabaseHelper:
               "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
               "SportIdentSecond, SIStationNumber, " \
               "SICardNumber2, SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2," \
-              "LowBattery, ChecksumOK, CreatedDate) SELECT MessageBoxData.id, MessageData," \
+              "LowBattery, RSSIValue, LinkQuality, Channel, ChecksumOK, CreatedDate) SELECT MessageBoxData.id, MessageData," \
               "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
               "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
               "SportIdentSecond, SIStationNumber, " \
               "SICardNumber2, SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2," \
-              "LowBattery, ChecksumOK, CreatedDate FROM " \
+              "LowBattery, RSSIValue, LinkQuality, Channel, ChecksumOK, CreatedDate FROM " \
               "MessageBoxData LEFT JOIN MessageSubscriptionData ON MessageBoxData.id = " \
               "MessageSubscriptionData.MessageboxId WHERE MessageSubscriptionData.id is null"
         cls.db.execute_SQL(sql)
