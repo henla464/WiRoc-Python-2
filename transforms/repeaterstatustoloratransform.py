@@ -63,8 +63,16 @@ class RepeaterStatusToLoraTransform(object):
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         RepeaterStatusToLoraTransform.WiRocLogger.debug("RepeaterStatusToLoraTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-        loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
-        loraStatusMsg.SetAckRequested(SettingsClass.GetStatusAcknowledgementRequested())
-        loraStatusMsg.SetRepeater(False)
-        loraStatusMsg.GenerateAndAddRSCode()
-        return {"Data": (loraStatusMsg.GetByteArray(),), "MessageID": loraStatusMsg.GetHash()}
+        messageType = payloadData & 0x1F
+        if messageType == LoraRadioMessageRS.MessageTypeStatus:
+            loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
+            loraStatusMsg.SetAckRequested(SettingsClass.GetStatusAcknowledgementRequested())
+            loraStatusMsg.SetRepeater(False)
+            loraStatusMsg.GenerateAndAddRSCode()
+            return {"Data": (loraStatusMsg.GetByteArray(),), "MessageID": loraStatusMsg.GetHash()}
+        else:
+            loraStatusMsg = LoraRadioMessageCreator.GetStatus2MessageByFullMessageData(payloadData)
+            loraStatusMsg.SetAckRequested(SettingsClass.GetStatusAcknowledgementRequested())
+            loraStatusMsg.SetRepeater(False)
+            loraStatusMsg.GenerateAndAddRSCode()
+            return {"Data": (loraStatusMsg.GetByteArray(),), "MessageID": loraStatusMsg.GetHash()}
