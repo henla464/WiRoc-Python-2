@@ -488,12 +488,21 @@ class DatabaseHelper:
 
     @classmethod
     def archive_repeater_lora_message_subscriptions_after_ack(cls, messageID: bytearray, rssiValue: int):
+        # This method and archive_message_subscriptions_after_ack() are similar, this one only archives "repeater"
+        # messages. It does so even if the ack matches a message sent long time ago.
+        # archive_message_subscriptions_after_ack() archives all types of messages (including repeater) 
+        # but only if the message was sent within the last 60 seconds. 
+        #
+        # This method doesn't have the time check, so will archive messages even if not sent yet.
+        # This is useful if we see an ack meant for the sender (no need to forward it then). 
+        #
+        
         cls.init()
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData JOIN SubscriptionData "
                "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
                "JOIN TransformData ON SubscriptionData.TransformId = TransformData.id "
                "WHERE (TransformData.Name = 'RepeaterSIMessageToLoraTransform' OR "
-               "TransformData.Name = 'SITestTestToLoraTransform' OR "
+               "TransformData.Name = 'RepeaterStatusToLoraTransform' OR "
                "TransformData.Name = 'RepeaterSIMessageDoubleToLoraTransform') AND "
                "MessageSubscriptionData.MessageID = ? ORDER BY SentDate desc LIMIT 2")
         rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID, ))
@@ -529,6 +538,14 @@ class DatabaseHelper:
 
     @classmethod
     def archive_message_subscriptions_after_ack(cls, messageID: bytearray, ackRSSIValue: int):
+        # Archiving is limited to those messages recently sent. We don't expect to receive ack,
+        # for messages sent long ago, or for messages not yet sent. So to reduce the risk that we archive
+        # a message that shouldn't be archived (due to receiving ack with corrupt hash, or if two 
+        # messages has same hash) we limit it to recently sent message.
+        #
+        # Possible negative consequnce: If receiver is really slow sending back ack then we will not archive
+        # the message even if we receive the ack. And then we will keep trying to send the message, and increase congestion.
+        #
         cls.init()
         sixtySecondsAgo = datetime.now() - timedelta(seconds=60)
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData WHERE "

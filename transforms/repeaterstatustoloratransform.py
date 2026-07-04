@@ -56,7 +56,7 @@ class RepeaterStatusToLoraTransform(object):
 
     @staticmethod
     def GetMaxTries() -> int:
-        return SettingsClass.GetMaxTries()
+        return 2
 
     #payloadData is a bytearray
     @staticmethod
