@@ -81,6 +81,8 @@ class SendLoraAdapter(object):
                 DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraSIMessageToLoraAckTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraAckTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageDoubleToLoraAckTransform")
+                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageDoubleToLoraTransform")
                 DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterStatusToLoraTransform")
 
     def __init__(self, instanceNumber, portName, hardwareAbstraction):
