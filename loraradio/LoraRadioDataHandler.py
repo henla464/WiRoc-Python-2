@@ -16,6 +16,65 @@ from collections.abc import Iterable
 import hashlib
 from typing import Tuple, List
 
+"""Internal callgraph of LoraRadioDataHandler
+
+GetMessage()                         ◄── public entry point
+  ├── _CheckAndRemoveLoraModuleRXError()
+  ├── _removeBytesFromDataReceived()
+  ├── ClearDataReceived()
+  └── _TryGetMessage()
+        ├── _GetLikelyMessageTypes()
+        │     ├── _GetMessageTypesByLength()
+        │     └── GetHeaderMessageType() [static]
+        ├── _GetPunchReDCoSMessage()          ←─── single punch decode
+        │     ├── RSCoderLora.check()
+        │     ├── RSCoderLora.decode()
+        │     ├── _GetPunchMessageAlternatives()
+        │     │     ├── _GenerateMessageAlternatives()
+        │     │     └── GetHeaderMessageType()
+        │     ├── _GetPunchReDCoSMessageWithErasures()
+        │     │     ├── _FindReDCoSPunchErasures()
+        │     │     │     └── _GetPunchReDCoSErasures()
+        │     │     ├── _AddFixedErasursToCombinationIterator()
+        │     │     ├── _GetReDCoSErasureCombinations()
+        │     │     └── RSCoderLora.decode()
+        │     ├── _GetPunchUsingReDCoSDecoding()                                                <======= Multiple processes are used here
+        │     │     ├── _GetNoOfCombinations()
+        │     │     ├── _GetNoOfHalfMatchesRequired()
+        │     │     ├── RSCoderLora.decode()
+        │     │     └── LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData()
+        │     ├── LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData()
+        │     └── _IsSamePunchMessage() + _CachePunchMessage()
+        ├── _GetPunchDoubleReDCoSMessage()    ←─── double punch decode
+        │     ├── same RS/prebuilt alt pattern
+        │     ├── _GetPunchDoubleMessageAlternatives()
+        │     ├── _GetPunchDoubleReDCoSMessageWithErasures()
+        │     │     ├── _FindReDCoSPunchDoubleErasures()
+        │     │     │     └── _FindReDCoSPunchErasures() [×2]
+        │     │     ├── _GetReDCoSErasureCombinations()
+        │     │     └── RSCoderLora.decode()
+        │     ├── _GetPunchDoubleUsingReDCoSDecoding()                                          <======= Multiple processes are used here
+        │     │     ├── _GetNoOfCombinations()
+        │     │     ├── _GetNoOfHalfMatchesRequired()
+        │     │     ├── RSCoderLora.decode()
+        │     │     ├── LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData()
+        │     │     └── _GetPunchReDCoSTupleFromPunchDouble()
+        │     ├── LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData()
+        │     └── _IsSameDoublePunchMessage() + _CacheDoublePunchMessage()
+        ├── _GetAckMessage()
+        │     ├── SettingsClass.GetMessageIDOfLastLoraMessageSent()
+        │     └── LoraRadioMessageAckRS [constructor]
+        ├── _GetStatusMessage()
+        │     ├── RSCoderLora.check()
+        │     ├── RSCoderLora.decode()
+        │     ├── _GetStatusMessageAlternatives()
+        │     │     └── _GenerateMessageAlternatives()
+        │     └── LoraRadioMessageCreator.GetStatusMessageByFullMessageData()
+        └── _GetStatus2Message()
+              ├── RSCoderLora.check()
+              ├── RSCoderLora.decode()
+              └── LoraRadioMessageCreator.GetStatus2MessageByFullMessageData()
+"""
 
 class LoraRadioDataHandler(object):
     WiRocLogger = logging.getLogger('WiRoc')
@@ -815,6 +874,10 @@ class LoraRadioDataHandler(object):
                 loraMsgWithErrors: LoraRadioMessagePunchReDCoSRS = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(messageDataToConsider, rssiValue=rssiValue, snrValue=snrValue, statusValue=statusValue)
                 alts, fixedValues, fixedErasures = self._GetPunchMessageAlternatives(loraMsgWithErrors)
                 LoraRadioDataHandler.WiRocLogger.debug("alternatives: " + str(alts))
+                for messageAlt in alts:
+                    LoraRadioDataHandler.WiRocLogger.debug(
+                        "LoraRadioDataHandler::_GetPunchReDCoSMessage() alternatives: " + Utils.GetDataInHex(messageAlt, logging.DEBUG) + " fixedValues: " + str(fixedValues) + " fixedErasures: " + str(fixedErasures))
+
                 # todo - run each alternative in own process?
                 for messageAlt in alts:
                     LoraRadioDataHandler.WiRocLogger.debug("messageAlt: " + str(messageAlt))
@@ -936,6 +999,7 @@ class LoraRadioDataHandler(object):
                             LoraRadioDataHandler.WiRocLogger.debug(
                                 "LoraRadioDataHandler::_GetPunchDoubleReDCoSMessage() alternatives: " + Utils.GetDataInHex(messageAlt, logging.DEBUG) + " fixedValues: " + str(fixedValues) + " fixedErasures: " + str(fixedErasures))
 
+                        # todo - run each alternative in own process?
                         for messageAlt in alts:
                             try:
                                 correctedData = RSCoderLora.decodeLong(bytearray(messageAlt[:-LoraRadioMessagePunchDoubleReDCoSRS.NoOfCRCBytes]))
