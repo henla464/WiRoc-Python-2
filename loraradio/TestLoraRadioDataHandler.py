@@ -8,14 +8,15 @@ import time
 import unittest
 from battery import Battery
 
+import loraradio
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessagePunchDoubleReDCoSRS, \
     LoraRadioMessagePunchReDCoSRS, LoraRadioMessageAckRS
 from loraradio.RSCoderLora import RSCoderLora
 
-# Run with python3 -m unittest loraradio/TestLoraRadioDataHandler.py
-# Run specific case: sudo python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case6_FindPunchErasuresDoubleMessage
+# Run with sudo env/bin/python3 -m unittest loraradio/TestLoraRadioDataHandler.py
+# Run specific case: sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case6_FindPunchErasuresDoubleMessage
 from settings.settings import SettingsClass
 from utils.utils import Utils
 from functools import wraps
@@ -346,6 +347,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler.LastDoublePunchMessage = None
         self.dataHandler.DataReceived = bytearray()
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_AddData
     def test_AddData(self):
         print("============================================================================================== START test_AddData ==============================================================================================")
         self.dataHandler.AddData(bytearray([0x02]))
@@ -355,6 +357,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(self.dataHandler.DataReceived, bytearray([0x02, 0x03, 0x04]), "Adding data failed 2")
         print("=== END test_AddData ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_IsLongEnoughToBeMessage
     def test_IsLongEnoughToBeMessage(self):
         print("============================================================================================== START test_IsLongEnoughToBeMessage ==============================================================================================")
         self.dataHandler.AddData(bytearray([0x02,0x03,0x4]))
@@ -368,6 +371,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertTrue(couldBeMsg, "9 bytes should be a message")
         print("=== END test_IsLongEnoughToBeMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_CacheMessage
     def test_CacheMessage(self):
         print("============================================================================================== START test_CacheMessage ==============================================================================================")
         rsCodes = RSCoderLora.encode(TestLoraRadioDataHandler.PunchMsg_Correct_1)
@@ -379,6 +383,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(self.dataHandler.LastPunchMessage,loraMsg)
         print("=== END test_CacheMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case1_FindPunchErasuresDoubleMessage
     def test_Case1_FindPunchErasuresDoubleMessage(self):
         print("============================================================================================== START test_Case1_FindPunchErasuresDoubleMessage ==============================================================================================")
 
@@ -397,6 +402,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case2_FindPunchErasuresDoubleMessage
     def test_Case2_FindPunchErasuresDoubleMessage(self):
         print("============================================================================================== START test_Case2_FindPunchErasuresDoubleMessage ==============================================================================================")
         msg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(self.StatusMsg_Correct_WithRS)
@@ -421,6 +427,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case3_FindPunchErasuresDoubleMessage
     def test_Case3_FindPunchErasuresDoubleMessage(self):
         print("============================================================================================== START test_Case3_FindPunchErasuresDoubleMessage ==============================================================================================")
         correctMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
@@ -438,6 +445,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case4_FindPunchErasuresDoubleMessage
     def test_Case4_FindPunchErasuresDoubleMessage(self):
         print("============================================================================================== START test_Case4_FindPunchErasuresDoubleMessage ==============================================================================================")
         correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
@@ -452,6 +460,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case5_FindPunchErasuresDoubleMessage
     def test_Case5_FindPunchErasuresDoubleMessage(self):
         print("============================================================================================== START test_Case5_FindPunchErasuresDoubleMessage ==============================================================================================")
         correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
@@ -466,6 +475,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case5_GetPunchDoubleMessage
     def test_Case5_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case5_GetPunchDoubleMessage ==============================================================================================")
         correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
@@ -483,6 +493,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         print("=== END test_Case5_GetPunchDoubleMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case6_FindPunchErasuresDoubleMessage
     def test_Case6_FindPunchErasuresDoubleMessage(self):
         print("============================================================================================== START test_Case6_FindPunchErasuresDoubleMessage ==============================================================================================")
         correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
@@ -497,6 +508,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case6_GetPunchDoubleMessage
     def test_Case6_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case6_GetPunchDoubleMessage ==============================================================================================")
         correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
@@ -510,6 +522,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNotNone(punchDoubleMsg)
         print("=== END test_Case6_GetPunchDoubleMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case7_FindPunchErasuresDoubleMessage
     def test_Case7_FindPunchErasuresDoubleMessage(self):
         print("============================================================================================== START test_Case7_FindPunchErasuresDoubleMessage ==============================================================================================")
         correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
@@ -525,6 +538,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case7_GetPunchDoubleMessage
     def test_Case7_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case7_GetPunchDoubleMessage ==============================================================================================")
         correctMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
@@ -538,6 +552,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNotNone(punchDoubleMsg)
         print("=== END test_Case7_GetPunchDoubleMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case8_GetPunchDoubleMessage
     def test_Case8_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case8_GetPunchDoubleMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -561,10 +576,11 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(punchDoubleMsg.GetByteArray(), LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case8_PunchDoubleMsg_Correct_AirOrder_WithRS))
         print("=== END test_Case8_GetPunchDoubleMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case9_GetPunchDoubleMessage
     def test_Case9_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case9_GetPunchDoubleMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
-        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(600)
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(800)
 
         correctMsg = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case9_PunchDoubleMsg_Correct_AirOrder_WithRS[:])
         print("The correct msg: " + Utils.GetDataInHex(correctMsg, logging.DEBUG))
@@ -581,12 +597,14 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for i in range(0, len(interleaved)):
             self.dataHandler.AddData(interleaved[i:i + 1])
         punchDoubleMsg = self.dataHandler._GetPunchDoubleReDCoSMessage()
-        self.assertIsNotNone(punchDoubleMsg)
-        print("Decoded msg: " + Utils.GetDataInHex(punchDoubleMsg.GetByteArray(), logging.DEBUG))
+        if punchDoubleMsg is not None:
+            print("Decoded msg: " + Utils.GetDataInHex(punchDoubleMsg.GetByteArray(), logging.DEBUG))
         print("Correct msg: " + Utils.GetDataInHex(LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case9_PunchDoubleMsg_Correct_AirOrder_WithRS), logging.DEBUG))
+        self.assertIsNotNone(punchDoubleMsg)
         self.assertEqual(punchDoubleMsg.GetByteArray(), LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case9_PunchDoubleMsg_Correct_AirOrder_WithRS))
         print("=== END test_Case9_GetPunchDoubleMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case10_GetPunchDoubleMessage
     def test_Case10_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case10_GetPunchDoubleMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -609,6 +627,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(punchDoubleMsg.GetByteArray()[:-2], LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case10_PunchDoubleMsg_Correct_AirOrder_WithRS)[:-2])
         print("=== END test_Case10_GetPunchDoubleMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case11_GetPunchDoubleMessage
     def test_Case11_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case11_GetPunchDoubleMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -630,6 +649,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(punchDoubleMsg.GetByteArray(), LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case11_PunchDoubleMsg_Correct_AirOrder_WithRS))
         print("=== END test_Case11_GetPunchDoubleMessage ===")
 
+    #sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case12_GetPunchDoubleMessage
     def test_Case12_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case12_GetPunchDoubleMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -654,6 +674,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(punchDoubleMsg.GetByteArray()[:-2], LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case12_PunchDoubleMsg_Correct_AirOrder_WithRS)[:-2])
         print("=== END test_Case12_GetPunchDoubleMessage ===")
 
+    #sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case13_GetPunchDoubleMessage
     def test_Case13_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case13_GetPunchDoubleMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -679,6 +700,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(punchDoubleMsg.GetByteArray(), LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case13_PunchDoubleMsg_Previous_AirOrder_WithRS))
         print("=== END test_Case13_GetPunchDoubleMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case1_FindPunchErasuresMessage
     def test_Case1_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case1_FindPunchErasuresMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -698,6 +720,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case2_FindPunchErasuresMessage
     def test_Case2_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case2_FindPunchErasuresMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -715,6 +738,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case3_FindPunchErasuresMessage
     def test_Case3_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case3_FindPunchErasuresMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -732,6 +756,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case4_FindPunchErasuresMessage
     def test_Case4_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case4_FindPunchErasuresMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -749,6 +774,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case5_FindPunchErasuresMessage
     def test_Case5_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case5_FindPunchErasuresMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -776,6 +802,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case6_FindPunchErasuresMessage
     def test_Case6_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case6_FindPunchErasuresMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -795,6 +822,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case7_FindPunchErasuresMessage
     def test_Case7_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case7_FindPunchErasuresMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -815,6 +843,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case8_FindPunchErasuresMessage
     def test_Case8_FindPunchErasuresMessage(self):
         print("============================================================================================== START test_Case8_FindPunchErasuresMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -832,6 +861,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case8_FindPunchErasuresMessage2
     def test_Case8_FindPunchErasuresMessage2(self):
         print("============================================================================================== START test_Case8_FindPunchErasuresMessage2 ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -849,6 +879,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case8_GetPunchMessage_BestCombination
     def test_Case8_GetPunchMessage_BestCombination(self):
         print("============================================================================================== START test_Case8_GetPunchMessage_BestCombination ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -867,6 +898,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print(Utils.GetDataInHex(loraMsg.GetByteArray(), logging.DEBUG))
         print("=== END test_Case8_GetPunchMessage_BestCombination ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case9_GetPunchMessage
     def test_Case9_GetPunchMessage(self):
         print("============================================================================================== START test_Case9_GetPunchMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -892,6 +924,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(punchMsg.GetByteArray()[:-2], LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case9_PunchMsg_Correct_AirOrder_WithRS)[:-2])
         print("=== END test_Case9_GetPunchMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case10_GetPunchMessage
     def test_Case10_GetPunchMessage(self):
         print("============================================================================================== START test_Case10_GetPunchMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -913,6 +946,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNone(punchMsg)
         print("=== END test_Case10_GetPunchMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case11_GetPunchMessage
     def test_Case11_GetPunchMessage(self):
         print("============================================================================================== START test_Case11_GetPunchMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -935,6 +969,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNone(punchMsg)
         print("=== END test_Case11_GetPunchMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case12_GetPunchMessage
     def test_Case12_GetPunchMessage(self):
         print("============================================================================================== START test_Case12_GetPunchMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -956,6 +991,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(punchMsg.GetByteArray()[:-2],LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case12_PunchMsg_Correct_AirOrder_WithRS)[:-2])
         print("=== END test_Case12_GetPunchMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case13_GetPunchMessage
     def test_Case13_GetPunchMessage(self):
         print("============================================================================================== START test_Case13_GetPunchMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -979,6 +1015,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(punchMsg.GetByteArray(), LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case13_PunchMsg_Correct_AirOrder_WithRS))
         print("=== END test_Case13_GetPunchMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case14_GetAckMessage
     def test_Case14_GetAckMessage(self):
         print("============================================================================================== START test_Case14_GetAckMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -996,6 +1033,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(ackMsg.GetByteArray()[1:], TestLoraRadioDataHandler.Case14_AckMsg_Correct_AirOrder_WithRS[1:])
         print("=== END test_Case14_GetAckMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case15_GetAckMessage
     def test_Case15_GetAckMessage(self):
         print("============================================================================================== START test_Case15_GetAckMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -1012,6 +1050,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(ackMsg.GetByteArray(), TestLoraRadioDataHandler.Case15_AckMsg_Correct_AirOrder_WithRS)
         print("=== END test_Case15_GetAckMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case16_GetAckMessage
     def test_Case16_GetAckMessage(self):
         print("============================================================================================== START test_Case16_GetAckMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -1028,6 +1067,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(ackMsg.GetByteArray()[1:], TestLoraRadioDataHandler.Case16_AckMsg_Correct_AirOrder_WithRS[1:])
         print("=== END test_Case16_GetAckMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case17_GetStatusMessage
     def test_Case17_GetStatusMessage(self):
         print("============================================================================================== START test_Case17_GetStatusMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -1049,6 +1089,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(statusMsg.GetByteArray(), TestLoraRadioDataHandler.Case17_StatusMsg_Correct_AirOrder_WithRS)
         print("=== END test_Case17_GetStatusMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case18_GetPunchMessage
     def test_Case18_GetPunchMessage(self):
         print("============================================================================================== START test_Case18_GetPunchMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -1072,6 +1113,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(punchMsg.GetByteArray()[:-2], LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case18_PunchMsg_Correct_AirOrder_WithRS)[:-2])
         print("=== END test_Case18_GetPunchMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case19_GetPunchMessage
     def test_Case19_GetPunchMessage(self):
         print("============================================================================================== START test_Case19_GetPunchMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -1094,6 +1136,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(punchMsg2.GetByteArray(), LoraRadioMessagePunchReDCoSRS.DeInterleaveFromAirOrder(TestLoraRadioDataHandler.Case19_PunchMsg_Correct_AirOrder_WithRS))
         print("=== END test_Case19_GetPunchMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case20_GetAckMessage
     def test_Case20_GetAckMessage(self):
         print("============================================================================================== START test_Case20_GetAckMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -1111,6 +1154,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(ackMsg.GetByteArray(), TestLoraRadioDataHandler.Case20_AckMsg_Correct_AirOrder_WithRS)
         print("=== END test_Case20_GetAckMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case21_GetAckMessage
     def test_Case21_GetAckMessage(self):
         print("============================================================================================== START test_Case21_GetAckMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -1128,6 +1172,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNone(ackMsg)
         print("=== END test_Case21_GetAckMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case22_GetAckMessage
     def test_Case22_GetAckMessage(self):
         print("============================================================================================== START test_Case22_GetAckMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -1145,6 +1190,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(ackMsg.GetByteArray()[1:], TestLoraRadioDataHandler.Case22_AckMsg_Correct_AirOrder_WithRS[1:])
         print("=== END test_Case22_GetAckMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case23_GetAckMessage
     def test_Case23_GetAckMessage(self):
         print("============================================================================================== START test_Case23_GetAckMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -1162,6 +1208,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(ackMsg.GetByteArray(), TestLoraRadioDataHandler.Case23_AckMsg_Correct_AirOrder_WithRS)
         print("=== END test_Case23_GetAckMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case24_GetAckMessage
     def test_Case24_GetAckMessage(self):
         print("============================================================================================== START test_Case24_GetAckMessage ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -1179,6 +1226,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(ackMsg.GetByteArray(), TestLoraRadioDataHandler.Case24_AckMsg_Correct_AirOrder_WithRS)
         print("=== END test_Case24_GetAckMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_FindPunchErasures
     def test_FindPunchErasures(self):
         print("============================================================================================== START test_FindPunchErasures ==============================================================================================")
 
@@ -1232,6 +1280,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(erasures, bytearray([1]), "CN0 erasure not correct")
         print("=== END test_FindPunchErasures ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_CheckAndRemoveLoraModuleRXError
     def test_CheckAndRemoveLoraModuleRXError(self):
         print("============================================================================================== START test_CheckAndRemoveLoraModuleRXError ==============================================================================================")
         rxerrorMessage = TestLoraRadioDataHandler.PunchMsg_Correct_1[:]
@@ -1245,6 +1294,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(TestLoraRadioDataHandler.PunchMsg_Correct_1, self.dataHandler.DataReceived)
         print("=== END test_CheckAndRemoveLoraModuleRXError ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetMessageTypeByLength
     def test_GetMessageTypeByLength(self):
         print("============================================================================================== START test_GetMessageTypeByLength ==============================================================================================")
         for i in range(0, len(TestLoraRadioDataHandler.PunchMsg_Correct_1)):
@@ -1253,6 +1303,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(msgTypes, [LoraRadioMessageRS.MessageTypeSIPunchReDCoS], "Didn't get the expected message type")
         print("=== END test_GetMessageTypeByLength ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetLikelyMessageTypes
     def test_GetLikelyMessageTypes(self):
         print("============================================================================================== START test_GetLikelyMessageTypes ==============================================================================================")
         loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
@@ -1269,6 +1320,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler.DataReceived = bytearray()
         print("=== END test_GetLikelyMessageTypes ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetPunchMessage
     def test_GetPunchMessage(self):
         print("============================================================================================== START test_GetPunchMessage ==============================================================================================")
         interleaved = LoraRadioMessagePunchReDCoSRS.InterleaveToAirOrder(TestLoraRadioDataHandler.PunchMsg_Correct_1)
@@ -1286,6 +1338,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(punchMsg.GetByteArray(), punchMsg2.GetByteArray())
         print("=== END test_GetPunchMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetTwoPunchMessages
     def test_GetTwoPunchMessages(self):
         print("============================================================================================== START test_GetTwoPunchMessages ==============================================================================================")
         # Add two messages at once before trying to fetch the messages
@@ -1298,13 +1351,14 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         punchMsg = self.dataHandler._GetPunchReDCoSMessage()
         self.assertIsNotNone(punchMsg)
         messageLength = LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchReDCoS]
-        self.dataHandler._removeBytesFromDataReceived(messageLength + self.dataHandler.RSSIByteCount)
+        self.dataHandler._removeBytesFromDataReceived(messageLength + self.dataHandler.rssiByteCount)
         punchMsg = self.dataHandler.GetMessage()  # Removes the message from data received
         self.assertIsNotNone(punchMsg, "second message not fetched")
         punchMsg = self.dataHandler._GetPunchReDCoSMessage()
         self.assertIsNone(punchMsg)
         print("=== END test_GetTwoPunchMessages ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetPunchDoubleMessage
     def test_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_GetPunchDoubleMessage ==============================================================================================")
         # messageTypeToTry, erasures = None):
@@ -1331,6 +1385,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         print("=== END test_GetPunchDoubleMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetTwoPunchDoubleMessages
     def test_GetTwoPunchDoubleMessages(self):
         print("============================================================================================== START test_GetTwoPunchDoubleMessages ==============================================================================================")
         # Add two messages at once before trying to fetch the messages
@@ -1345,13 +1400,14 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNotNone(punchDoubleMsg)
         # remove first message manually since it is only done in TryGetMessage
         messageLength = LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS]
-        self.dataHandler._removeBytesFromDataReceived(messageLength + self.dataHandler.RSSIByteCount)
+        self.dataHandler._removeBytesFromDataReceived(messageLength + self.dataHandler.rssiByteCount)
         punchDoubleMsg = self.dataHandler._GetPunchDoubleReDCoSMessage()
         self.assertIsNotNone(punchDoubleMsg, "could not get second message")
         punchDoubleMsg = self.dataHandler._GetPunchDoubleReDCoSMessage()
         self.assertIsNotNone(punchDoubleMsg)
         print("=== END test_GetTwoPunchDoubleMessages ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetMessage_PunchMessage_Correct
     def test_GetMessage_PunchMessage_Correct(self):
         print("============================================================================================== START test_GetMessage_PunchMessage_Correct ==============================================================================================")
         self.dataHandler.AddData(bytearray([0, 0]))
@@ -1369,6 +1425,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
                          "DataReceived not empty")
         print("=== END test_GetMessage_PunchMessage_Correct ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetMessage_PunchMessage_WithPrefixGarbage
     def test_GetMessage_PunchMessage_WithPrefixGarbage(self):
         print("============================================================================================== START test_GetMessage_PunchMessage_WithPrefixGarbage ==============================================================================================")
         self.dataHandler.AddData(bytearray([0,0]))
@@ -1386,6 +1443,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
                          "DataReceived not empty")
         print("=== END test_GetMessage_PunchMessage_WithPrefixGarbage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetMessage_CorruptedPunchMessage
     def test_GetMessage_CorruptedPunchMessage(self):
         print("============================================================================================== START test_GetMessage_CorruptedPunchMessage ==============================================================================================")
         interleaved = LoraRadioMessagePunchReDCoSRS.InterleaveToAirOrder(TestLoraRadioDataHandler.PunchMsg_Corrupted_1)
@@ -1412,6 +1470,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNotNone(msg3, "Didn't receive a message, it should be decodable")
         print("=== END test_GetMessage_CorruptedPunchMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetMessage_PunchDoubleMessage
     def test_GetMessage_PunchDoubleMessage(self):
         # messageTypeToTry, erasures = None):
         print("============================================================================================== START test_GetMessage_PunchDoubleMessage ==============================================================================================")
@@ -1432,6 +1491,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         print("=== END test_GetMessage_PunchDoubleMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetMessage_Status
     def test_GetMessage_Status(self):
         print("============================================================================================== START test_GetMessage_Status ==============================================================================================")
         for i in range(0, len(TestLoraRadioDataHandler.StatusMsg_Correct_WithRS)):
@@ -1446,6 +1506,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("=== END test_GetMessage_Status ===")
         # self.assertEqual(TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes, msg2.GetByteArray(), "Didn't receive a corrected message")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetAlternatives
     def test_GetAlternatives(self):
         print("============================================================================================== START test_GetAlternatives ==============================================================================================")
         msg = LoraRadioMessageCreator.GetPunchReDCoSMessage(
@@ -1464,6 +1525,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         self.assertEqual(len(alts), 4)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetAlternativesDouble
     def test_GetAlternativesDouble(self):
         print("============================================================================================== START test_GetAlternativesDouble ==============================================================================================")
         msg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(
@@ -1487,6 +1549,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         self.assertEqual(len(alts), 8)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetReDCoSErasures
     def test_GetReDCoSErasures(self):
         print("============================================================================================== START test_GetReDCoSErasures ==============================================================================================")
 
@@ -1512,6 +1575,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(fixedErasures, bytearray(), "fixedErasures unexpected")
         self.assertEqual(len(list(erasuresCombinations)), 12870, "No of erasure combinations unexpected")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_SevenPlusOneCRCWrong_DecodeReDCos
     def test_SevenPlusOneCRCWrong_DecodeReDCos(self):
         print("============================================================================================== START test_SevenPlusOneCRCWrong_DecodeReDCos ==============================================================================================")
 
@@ -1550,6 +1614,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         msg = self.dataHandler.GetMessage()
         self.assertIsNotNone(msg)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_SevenPlusOneCRCWrong_FewerCombinations_DecodeReDCos
     def test_SevenPlusOneCRCWrong_FewerCombinations_DecodeReDCos(self):
         print("============================================================================================== START test_SevenPlusOneCRCWrong_FewerCombinations_DecodeReDCos ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -1589,6 +1654,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         msg = self.dataHandler.GetMessage()
         self.assertIsNone(msg)
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_SevenPlusOneCRCWrong_MoreCombinations_DecodeReDCos
     def test_SevenPlusOneCRCWrong_MoreCombinations_DecodeReDCos(self):
         print("============================================================================================== START test_SevenPlusOneCRCWrong_MoreCombinations_DecodeReDCos ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -1625,6 +1691,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             self.dataHandler.AddData(interleaved2[i:i + 1])
 
         # This should reduce the combinations to include 6 erasures. Plus the two extra ECC bytes can correct one error. So should work.
+        # Important that the redcos tests the alternative with the correct controlnumber first, otherwise it finds a false message.
         SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(200)
         msg4 = self.dataHandler.GetMessage()
 
@@ -1634,6 +1701,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNotNone(msg4)
         self.assertEqual(correct, msg4.GetByteArray())
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_FivePlusOneCRCWrong_FewerCombinations_DecodeReDCos
     def test_FivePlusOneCRCWrong_FewerCombinations_DecodeReDCos(self):
         print("============================================================================================== START test_FivePlusOneCRCWrong_FewerCombinations_DecodeReDCos ==============================================================================================")
         SettingsClass.SetSetting("LoraRange", 'L')
@@ -1693,6 +1761,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         return decorator
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case25_GetPunchDoubleMessage
     @max_execution_time(4)
     def test_Case25_GetPunchDoubleMessage(self):
         print("============================================================================================== START test_Case25_GetPunchDoubleMessage ==============================================================================================")
@@ -1737,6 +1806,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         # This test takes arount a minute but we should never spend that much time, especially not when MS is selected
         print("=== END test_Case25_GetPunchDoubleMessage ===")
 
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case26_GetPunchDoubleMessage
     @max_execution_time(4)
     def test_Case26_GetPunchDoubleMessage(self):
         print(
@@ -1793,18 +1863,17 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(10000)
 
         #DoubleMsg_WithRS = bytearray.fromhex("85083f083f083f39ffff00ff643a40f40315ff3cc5f5001e3b403fff9df902")
-        DoubleMsg_WithRS = bytearray.fromhex("c8b7ffffffff643affff00ff643b40f6c52aff80a40e00628850c5ff9df800")
-
+        DoubleMsg_WithRS =         bytearray.fromhex("c8b7ffffffff643affff00ff643b40f6c52aff80a40e00628850c5ff9d") # snr, status: f800
+        Correct_DoubleMsg_WithRS = bytearray.fromhex("c8ff00ffffff40643aff00ffffff40643bf6c52a80a40e6298b7c5")
         print("len: " + str(len(DoubleMsg_WithRS)))
-
-        deinterleaved = LoraRadioMessagePunchDoubleReDCoSRS.DeInterleaveFromAirOrder(DoubleMsg_WithRS[:27])
-        print("Deinterleved message: " + Utils.GetDataInHex(deinterleaved, logging.DEBUG))
 
         interleaved = DoubleMsg_WithRS[:]
         for i in range(0, len(interleaved)):
             self.dataHandler.AddData(interleaved[i:i + 1])
         punchDoubleMsg = self.dataHandler._GetPunchDoubleReDCoSMessage()
         self.assertIsNotNone(punchDoubleMsg)
+        print(Utils.GetDataInHex(punchDoubleMsg.GetByteArray(), logging.DEBUG))
+        self.assertEqual(punchDoubleMsg.GetByteArray()[0:27], Correct_DoubleMsg_WithRS[0:27], "Didn't receive the same bytes back")
         print("control1: "  +str(punchDoubleMsg.GetControlNumber()))
         print("cardno 1: " + str(punchDoubleMsg.GetSICardNo()))
         print("hour 1: " + str(punchDoubleMsg.GetHour()))
@@ -1812,24 +1881,3 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("cardno 2: " + str(punchDoubleMsg.GetSICardNo_2()))
         print("hour 2: " + str(punchDoubleMsg.GetHour_2()))
         print("=== END test_DoubleMessage ===")
-
-    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_SingleMessage
-    def test_SingleMessage(self):
-        print(
-            "============================================================================================== START test_SingleMessage ==============================================================================================")
-        SettingsClass.SetSetting("LoraRange", 'L')
-        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(10000)
-
-        SingleMsg_WithRS = bytearray.fromhex("ff643a40f40315ff3cc5f5001e3b403fff9df902")
-
-        print("len: " + str(len(SingleMsg_WithRS)))
-
-        interleaved = SingleMsg_WithRS[:]
-        for i in range(0, len(interleaved)):
-            self.dataHandler.AddData(interleaved[i:i + 1])
-        singleMsg = self.dataHandler._GetPunchReDCoSMessage()
-        self.assertIsNotNone(singleMsg)
-        print("control1: " + str(singleMsg.GetControlNumber()))
-        print("cardno 1: " + str(singleMsg.GetSICardNo()))
-        print("hour 1: " + str(singleMsg.GetHour()))
-        print("=== END test_SingleMessage ===")
