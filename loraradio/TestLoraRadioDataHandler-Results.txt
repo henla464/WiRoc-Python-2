@@ -27,5 +27,19 @@ With changes now ~1.3 s
 With some more debug changed to verbose and without cProfile
 Ran 68 tests in 12.469s
 
+v1.28
+
+All tests
 With worst case test also
-Ran 69 tests in 12.391s
+Ran 69 tests in 12.561s
+Ran 69 tests in 12.548s
+
+sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case26_GetPunchDoubleMessage
+Ran 1 test in 0.503s
+Ran 1 test in 0.509s
+
+
+sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case27_GetPunchDoubleMessage_UL_WorstCase
+Worst case with the highest no of alterantives
+Ran 1 test in 1.296s
+Ran 1 test in 1.268s
