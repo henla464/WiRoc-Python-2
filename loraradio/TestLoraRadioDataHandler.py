@@ -282,6 +282,13 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     # --- Example that generated many message alternatives and took way to much time to decode during o-ringen
     Case26_PunchDoubleMsg_Corrupted_AirOrder_WithRS =       bytearray([0xc8, 0xd1, 0x7a, 0x7d, 0xbe, 0x11, 0x15, 0xd9, 0x15, 0xd9, 0x68, 0xe9, 0x14, 0x52, 0xb2, 0x4c, 0x4d, 0x00, 0x99, 0x19, 0x3c, 0x0c, 0x4d, 0x47, 0x03, 0x2f, 0x87])
     # ---
+
+    # --- Many errors, don't know correct values. Used to test maximum alternatives
+    Case27_PunchDoubleMsg_Corrupted_WithRS =                bytearray([0xc8, 0x11, 0xff, 0x7a, 0x7d, 0xbe, 0xb2, 0x92, 0x18, 0x99, 0xff, 0x15, 0xd9, 0xe9, 0x2f, 0x92, 0x18, 0x4c, 0x4d, 0x00, 0x19, 0x3c, 0x0c, 0x4d, 0x47, 0x03, 0x2f])
+    #                                                                   H     CN0  SN3  SN2    SN1  SN0  CN1Plus  TH   TL    CN0   SN3   SN2   SN1   SN0 CN1Plus TH    TL   ECC0  ECC1  ECC2  ECC3  ECC4  ECC5  ECC6  ECC7  CRC0  CRC1
+    Case27_PunchMsg_Correct_Previous =                      bytearray([0x87, 0x1F, 0x00, 0x00, 0x00, 0xFF, 0x00, 0X93, 0xA8, 0x13, 0x95, 0xfe, 0x24, 0xba, 0xb2])
+
+
 # # c8d17a7dbe1115d915d968e91452b24c4d0099193c0c4d47032f87bb
 
 #               IN HEX           HEADER   CRC0     CRC1     ECC0     ECC1     ECC2     ECC3
@@ -338,6 +345,13 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     def setUp(self):
         #LoraRadioDataHandler.WiRocLogger.setLevel(logging.DEBUG)
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+        logging.raiseExceptions = False
+        # monkey patch a verbose function
+        logging.VERBOSE = 5
+        logging.addLevelName(logging.VERBOSE, "VERBOSE")
+        logging.Logger.verbose = lambda inst, msg, *args, **kwargs: inst.log(logging.VERBOSE, msg, *args, **kwargs)
+        logging.LoggerAdapter.verbose = lambda inst, msg, *args, **kwargs: inst.log(logging.VERBOSE, msg, *args, **kwargs)
+        logging.verbose = lambda msg, *args, **kwargs: logging.log(logging.VERBOSE, msg, *args, **kwargs)
         Battery.Setup()
 
     def tearDown(self):
@@ -1807,7 +1821,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("=== END test_Case25_GetPunchDoubleMessage ===")
 
     # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case26_GetPunchDoubleMessage
-    @max_execution_time(4)
+    @max_execution_time(2)
     def test_Case26_GetPunchDoubleMessage(self):
         print(
             "============================================================================================== START test_Case26_GetPunchDoubleMessage ==============================================================================================")
@@ -1842,7 +1856,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         #interleaved = TestLoraRadioDataHandler.Case26_PunchDoubleMsg_Previous_AirOrder_WithRS[:]
         #for i in range(0, len(interleaved)):
         #    self.dataHandler.AddData(interleaved[i:i + 1])
-        prevPunchDoubleMsg = self.dataHandler.GetMessage()
+        #prevPunchDoubleMsg = self.dataHandler.GetMessage()
 
         seconds = 2
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
@@ -1852,7 +1866,6 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             self.dataHandler.AddData(interleaved[i:i + 1])
         punchDoubleMsg = self.dataHandler.GetMessage()
         self.assertIsNone(punchDoubleMsg)
-        # This test takes arount a minute but we should never spend that much time, especially not when MS is selected
         print("=== END test_Case26_GetPunchDoubleMessage ===")
 
 
@@ -1881,3 +1894,56 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("cardno 2: " + str(punchDoubleMsg.GetSICardNo_2()))
         print("hour 2: " + str(punchDoubleMsg.GetHour_2()))
         print("=== END test_DoubleMessage ===")
+
+
+    @max_execution_time(2)
+    def test_Case27_GetPunchDoubleMessage_UL_WorstCase(self):
+        print(
+            "============================================================================================== START test_Case27_GetPunchDoubleMessage_UL_WorstCase ==============================================================================================")
+        SettingsClass.SetSetting("LoraRange", 'UL')
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100) # standard setting
+
+        # Add all the old control numbers that was added previously. This is needed to recreate the many alternatives
+        # that was created. With new changes to how many different control numbers that should be used it should no longer happen though.
+        prevMsgs = [TestLoraRadioDataHandler.Case27_PunchMsg_Correct_Previous.copy() for _ in range(14)]
+        prevMsgs[0][1] = 31
+        prevMsgs[1][1] = 164
+        prevMsgs[2][1] = 157
+        prevMsgs[3][1] = 128
+        prevMsgs[4][1] = 255
+        prevMsgs[4][6] = prevMsgs[4][6] | 0x40
+        prevMsgs[5][1] = 105
+        prevMsgs[6][1] = 71
+        prevMsgs[7][1] = 158
+        prevMsgs[8][1] = 255
+        prevMsgs[9][1] = 250
+        prevMsgs[10][1] = 106
+        prevMsgs[10][6] = prevMsgs[4][6] | 0x40
+        prevMsgs[11][1] = 182
+        prevMsgs[12][1] = 159
+        prevMsgs[13][1] = 124
+
+        for prevMsg in prevMsgs:
+            rsCodes = RSCoderLora.encode(prevMsg)
+            loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(prevMsg + rsCodes)
+            self.dataHandler._CachePunchMessage(loraMsg)
+            # Case27_PunchMsg_Correct_Previous [0x87, 0x1F, 0x00, 0x00, 0x00, 0xFF, 0x00, 0X93, 0xA8, 0x13, 0x95, 0xfe, 0x24, 0xba, 0xb2]
+            #                       H   CN0    SN3  SN2    SN1  SN0  CN1Plus TH    TL    ECC  ECC   ECC   ECC    CRC  CRC
+
+        #prevPunchDoubleMsg = self.dataHandler.GetMessage()
+
+        seconds = 2
+        self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
+
+        # Case27 has different header, TH/TL 400 seconds back in time compared to previous message. SN3 is not 0. This should be worst case.
+        deinterleaved = TestLoraRadioDataHandler.Case27_PunchDoubleMsg_Corrupted_WithRS[:]
+        interleaved = LoraRadioMessagePunchDoubleReDCoSRS.InterleaveToAirOrder(deinterleaved)
+        print("Deinterleaved: " + Utils.GetDataInHex(deinterleaved, logging.DEBUG))
+        print("Interleaved: " + Utils.GetDataInHex(interleaved, logging.DEBUG))
+        
+        for i in range(0, len(interleaved)):
+            self.dataHandler.AddData(interleaved[i:i + 1])
+        punchDoubleMsg = self.dataHandler.GetMessage()
+        self.assertIsNone(punchDoubleMsg)
+        # This test takes arount a minute but we should never spend that much time, especially not when MS is selected
+        print("=== END test_Case27_GetPunchDoubleMessage_UL_WorstCase ===")
