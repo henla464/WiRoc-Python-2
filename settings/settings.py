@@ -591,12 +591,6 @@ class SettingsClass(object):
         MessageTypeSIPunchDoubleReDCoS: int = 8
         SettingsClass.microSecondsToSendAMessage  = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(MessageTypeSIPunchDoubleReDCoS) * 1000
 
-        #codeRate = SettingsClass.GetCodeRate()
-        #messageLengthInBytes = 26  # length of double punch message
-        #SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
-        # extra delay for higher error coderates
-        #SettingsClass.microSecondsToSendAMessage = SettingsClass.microSecondsToSendAMessage * (1+0.2*codeRate)
-
         microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 1) + SettingsClass.microSecondsToSendAMessage
         microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 2) + SettingsClass.microSecondsToSendAMessage
         microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 3) + SettingsClass.microSecondsToSendAMessage

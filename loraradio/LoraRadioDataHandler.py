@@ -1031,41 +1031,6 @@ class LoraRadioDataHandler(object):
                 else:
                     return loraPunchMsg2
 
-    def _GetPunchDoubleReDCoSMessageWithErasures(self, messageDataToConsider: bytearray, rssiValue: int, snrValue: int, statusValue: int, erasures=None):
-        loraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(messageDataToConsider, rssiValue=rssiValue, snrValue=snrValue, statusValue=statusValue)
-        erasures.extend(self._FindReDCoSPunchDoubleErasures(loraMsg))
-        if len(erasures) > 0:
-            try:
-                erasuresToUse = list(set(erasures))
-                if len(erasuresToUse) >= LoraRadioMessagePunchDoubleReDCoSRS.NoOfECCBytes:
-                    erasuresToUse = erasuresToUse[0:LoraRadioMessagePunchReDCoSRS.NoOfECCBytes]
-                elif len(erasuresToUse) % 2 != 0:
-                    # Odd number
-                    numberOfErasuresToUse = len(erasuresToUse) - 1
-                    erasuresToUse = erasuresToUse[0:numberOfErasuresToUse]
-                messageDataToConsiderWithoutCRC = messageDataToConsider[:-LoraRadioMessagePunchDoubleReDCoSRS.NoOfCRCBytes]
-
-                LoraRadioDataHandler.WiRocLogger.verbose("LoraRadioDataHandler::_GetPunchDoubleReDCoSMessageWithErasures() ErasuresToUse: " + str(erasuresToUse))
-                correctedData2 = RSCoderLora.decodeLong(messageDataToConsiderWithoutCRC, bytearray(erasuresToUse))
-
-                if not RSCoderLora.checkLong(correctedData2):
-                    # for some reason sometimes decode just returns the corrupted message with no change
-                    # and no exception thrown. So check the decoded message to make sure we don't return
-                    # a message that is clearly wrong
-                    LoraRadioDataHandler.WiRocLogger.debug("LoraRadioDataHandler::_GetPunchDoubleReDCoSMessageWithErasures() Could not decode with erasures")
-                    return None
-                loraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(correctedData2 + messageDataToConsider[-LoraRadioMessagePunchDoubleReDCoSRS.NoOfCRCBytes:],
-                                                                                   rssiValue=rssiValue, snrValue=snrValue, statusValue=statusValue)
-                return loraMsg
-            except Exception as err2:
-                LoraRadioDataHandler.WiRocLogger.error(
-                    "LoraRadioDataHandler::_GetPunchDoubleReDCoSMessageWithErasures() RS decoding failed also with erasures with exception: " + str(err2))
-                return None
-        else:
-            LoraRadioDataHandler.WiRocLogger.error(
-                "LoraRadioDataHandler::_GetPunchDoubleMessageWithErasures() No erasures found so could not decode")
-            return None
-
     def _GetPunchDoubleReDCoSMessage(self) -> LoraRadioMessagePunchDoubleReDCoSRS | None:
         messageTypeToTry = LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS
         expectedMessageLength = LoraRadioMessageRS.MessageLengths[messageTypeToTry]

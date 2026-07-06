@@ -410,7 +410,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case1_PunchDoubleMsg_Corrupted_WithRS)
-        erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg)
+        
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case1_FindPunchErasuresDoubleMessage: " + str(erasures))
         corruptPositions = [0,  1,  2,  3, 5, 6, 7, 8, 11, 12, 17, 18, 19, 20]
         for pos in erasures:
@@ -435,7 +437,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case2_PunchDoubleMsg_Corrupted_WithRS)
-        erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         corruptPositions = [1,  2,  3, 6, 7, 8, 21, 22, 23, 24]
         print("test_Case2_FindPunchErasuresDoubleMessage erasures: " + str(erasures))
         for pos in erasures:
@@ -453,7 +456,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case3_PunchDoubleMsg_Corrupted_WithRS)
-        erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case3_FindPunchErasuresDoubleMessage: " + str(erasures))
         corruptPositions = [8, 9, 10, 11, 16]
         for pos in erasures:
@@ -468,7 +472,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case4_PunchDoubleMsg_Corrupted_WithRS)
-        erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case4_FindPunchErasuresDoubleMessage: " + str(erasures))
         corruptPositions = [21, 22, 23, 24]
         for pos in erasures:
@@ -483,7 +488,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case5_PunchDoubleMsg_Corrupted_WithRS)
-        erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case5_FindPunchErasuresDoubleMessage: " + str(erasures))
         corruptPositions = [9, 10, 11, 12, 13, 16]
         for pos in erasures:
@@ -516,7 +522,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case6_PunchDoubleMsg_Corrupted_WithRS)
-        erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case6_FindPunchErasuresDoubleMessage: " + str(erasures))
         corruptPositions = [18, 19, 20]
         for pos in erasures:
@@ -546,7 +553,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case7_PunchDoubleMsg_Corrupted_WithRS)
-        erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case7_FindPunchErasuresDoubleMessage: " + str(erasures))
         corruptPositions = [1, 2, 3, 4, 5]
         for pos in erasures:
@@ -726,7 +734,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case1_PunchMsg_Corrupted_WithRS)
-        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case1_FindPunchErasuresMessage: " + str(erasures))
         corruptPositions: list[int] = [0, 1, 2, 3, 4, 8, 9, 10, 11, 12]
         # add 6 since we sent incorrect week information
@@ -744,9 +753,11 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             TestLoraRadioDataHandler.Case2_PunchMsg_Previous_WithRS)
         self.dataHandler._CachePunchMessage(prevMsg)
 
+
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case2_PunchMsg_Corrupted_WithRS)
-        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case2_FindPunchErasuresMessage: " + str(erasures))
         corruptPositions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         for pos in erasures:
@@ -764,7 +775,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case3_PunchMsg_Corrupted_WithRS)
-        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case3_FindPunchErasuresMessage: " + str(erasures))
         corruptPositions = [1, 2, 3, 4, 6, 7, 8, 9]
         for pos in erasures:
@@ -782,7 +794,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case4_PunchMsg_Corrupted_WithRS)
-        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case4_FindPunchErasuresMessage: " + str(erasures))
         corruptPositions = [9,10,11,12]
         for pos in erasures:
@@ -800,7 +813,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case5_PunchMsg_Corrupted_WithRS)
-        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case5_FindPunchErasuresMessage: " + str(erasures))
         corruptPositions = [1,2,3,4,5,6,7,8,9,10,12]
         for pos in erasures:
@@ -810,7 +824,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         corruptedLoraMsg2 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case5_PunchMsg_Corrupted_WithRS2)
-        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg2)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg2, totalRetryDelaySeconds)
         print("test_Case5_FindPunchErasuresMessage 2: " + str(erasures))
         corruptPositions = [1, 2, 3, 4, 5]
         for pos in erasures:
@@ -830,7 +845,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case6_PunchMsg_Corrupted_WithRS)
-        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case6_FindPunchErasuresMessage: " + str(erasures))
         corruptPositions = [5,6,7,8]
         for pos in erasures:
@@ -851,7 +867,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case7_PunchMsg_Corrupted_WithRS)
         SettingsClass.SetSetting("LoraRange", 'L')
-        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case7_FindPunchErasuresMessage: " + str(erasures))
         corruptPositions = [9,10,11,12]
         for pos in erasures:
@@ -868,8 +885,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler._CachePunchMessage(prevMsg)
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case8_PunchMsg_Corrupted_WithRS)
-        SettingsClass.SetSetting("LoraRange", 'L')
-        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case8_FindPunchErasuresMessage: " + str(erasures))
         corruptPositions = [10,11,12]
         for pos in erasures:
@@ -887,7 +904,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         corruptedLoraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.Case8_PunchMsg_Corrupted_WithRS2)
         SettingsClass.SetSetting("LoraRange", 'L')
-        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case8_FindPunchErasuresMessage2: " + str(erasures))
         corruptPositions = [5, 6, 8, 9, 11, 12]
         for pos in erasures:
@@ -1253,7 +1271,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         corruptedMessageTH[7] = corruptedMessageTH[7] | 0x04
         corruptedLoraMsgTH = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             corruptedMessageTH)
-        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTH)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTH, totalRetryDelaySeconds)
         self.assertEqual(erasures, bytearray([7]), "TH erasure not correct")
 
         # TH changed to higher than possible
@@ -1261,7 +1280,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         corruptedMessageTH2[7] = 0xA9
         corruptedLoraMsgTH2 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             corruptedMessageTH2)
-        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTH2)
+        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTH2, totalRetryDelaySeconds)
         self.assertEqual(erasures, bytearray([7]), "TH erasure not correct")
 
         # TH changed to more than 5 minutes more and the combination TH TL too high
@@ -1270,7 +1289,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         corruptedMessageTL[8] = 0xC1
         corruptedLoraMsgTL = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             corruptedMessageTL)
-        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTL)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTL, totalRetryDelaySeconds)
         self.assertEqual(erasures, bytearray([7]), "TH, TL erasure not correct")
 
         # TL changed to higher than possible (TH already highest)
@@ -1281,7 +1301,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         corruptedMessageTL2[8] = 0xC1
         corruptedLoraMsgTL2 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             corruptedMessageTL2)
-        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTL2)
+        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTL2, totalRetryDelaySeconds)
         self.assertEqual(erasures, bytearray([8]), "TL erasure not correct")
 
         # Control number changed
@@ -1290,7 +1310,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         corruptedMessageCN0[1] = 0x20
         corruptedLoraMsgCN0 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             corruptedMessageCN0)
-        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgCN0)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgCN0, totalRetryDelaySeconds)
         self.assertEqual(erasures, bytearray([1]), "CN0 erasure not correct")
         print("=== END test_FindPunchErasures ===")
 
@@ -1535,7 +1556,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
              (TestLoraRadioDataHandler.PunchReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchReDCoSMsg_Correct_2_WithoutRS_CS[1:])
 
-        alts, fixedValues, fixedErasures = self.dataHandler._GetPunchMessageAlternatives(msg2)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        alts, fixedValues, fixedErasures = self.dataHandler._GetPunchMessageAlternatives(msg2, totalRetryDelaySeconds)
 
         self.assertEqual(len(alts), 4)
 
@@ -1556,7 +1578,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
              (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[1:])
 
-        alts, fixedValues, fixedErasures = self.dataHandler._GetPunchDoubleMessageAlternatives(msg3)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        alts, fixedValues, fixedErasures = self.dataHandler._GetPunchDoubleMessageAlternatives(msg3, totalRetryDelaySeconds)
 
         for i in range(len(alts)):
             print(alts[i])
@@ -1581,7 +1604,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             (TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[0] & LoraRadioMessageRS.AckBitMask) > 0,
             TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS[1:])
 
-        alts, fixedValues, fixedErasures = self.dataHandler._GetPunchDoubleMessageAlternatives(msg3)
+        totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
+        alts, fixedValues, fixedErasures = self.dataHandler._GetPunchDoubleMessageAlternatives(msg3, totalRetryDelaySeconds)
         erasuresCombinations = self.dataHandler._GetReDCoSErasureCombinations(msg3, fixedValues, fixedErasures, 0)
 
         self.assertEqual(len(alts), 8, "No of alternatives wrong")
