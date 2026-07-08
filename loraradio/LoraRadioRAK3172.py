@@ -121,7 +121,6 @@ class LoraRadioRAK3172:
         return commandBytes
 
     def getRadioReply(self, expectedLength: int) -> bytearray:
-        LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::getRadioReply() Enter")
         time.sleep(0.01)
         data = bytearray([])
         while self.radioSerial.in_waiting > 0:
@@ -171,26 +170,30 @@ class LoraRadioRAK3172:
         readParameterResp = self.getRadioReply(expectedLengthAtLeast)
         readParameterRespStr = readParameterResp.decode('ascii').rstrip()
         LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::getParameters(): got: " + readParameterRespStr)
-        if len(readParameterResp) >= expectedLengthAtLeast:
-            loraModuleParameters = LoraParametersRAK3172()
-            parameters = readParameterRespStr[8:].split(':')
-            loraModuleParameters.Frequency = int(parameters[0])
-            loraModuleParameters.SpreadingFactor = int(parameters[1])
-            loraModuleParameters.Bandwidth = int(parameters[2])
-            loraModuleParameters.CodeRate = int(parameters[3])
-            loraModuleParameters.PreambleLength = int(parameters[4])
-            loraModuleParameters.TransmitPower = int(parameters[5])
-            loraModuleParameters.LowDataRateOptimize = (int(parameters[6]) > 0)
-            loraModuleParameters.CRCOn = (int(parameters[7]) > 0)
-            loraModuleParameters.RxGain = (int(parameters[8]) > 0)
-            loraModuleParameters.Drf1268dsCompatMode = (int(parameters[9]) > 0)
-            loraModuleParameters.SendAck = (int(parameters[10]) > 0)
-            loraModuleParameters.PayloadLength = int(parameters[11])
-            return loraModuleParameters
-        else:
-            LoraRadioRAK3172.WiRocLogger.debug(
-                "LoraRadioRAK3172::getParameters(): got: " + readParameterRespStr + ", expected at least: " + str(
-                    expectedLengthAtLeast) + " bytes")
+        try:
+            if len(readParameterResp) >= expectedLengthAtLeast:
+                loraModuleParameters = LoraParametersRAK3172()
+                parameters = readParameterRespStr[8:].split(':')
+                loraModuleParameters.Frequency = int(parameters[0])
+                loraModuleParameters.SpreadingFactor = int(parameters[1])
+                loraModuleParameters.Bandwidth = int(parameters[2])
+                loraModuleParameters.CodeRate = int(parameters[3])
+                loraModuleParameters.PreambleLength = int(parameters[4])
+                loraModuleParameters.TransmitPower = int(parameters[5])
+                loraModuleParameters.LowDataRateOptimize = (int(parameters[6]) > 0)
+                loraModuleParameters.CRCOn = (int(parameters[7]) > 0)
+                loraModuleParameters.RxGain = (int(parameters[8]) > 0)
+                loraModuleParameters.Drf1268dsCompatMode = (int(parameters[9]) > 0)
+                loraModuleParameters.SendAck = (int(parameters[10]) > 0)
+                loraModuleParameters.PayloadLength = int(parameters[11])
+                return loraModuleParameters
+            else:
+                LoraRadioRAK3172.WiRocLogger.debug(
+                    "LoraRadioRAK3172::getParameters(): got: " + readParameterRespStr + ", expected at least: " + str(
+                        expectedLengthAtLeast) + " bytes")
+        except Exception as e:
+            LoraRadioRAK3172.WiRocLogger.error(
+                "LoraRadioRAK3172::getParameters() Exception: " + str(e) + " readParameterRespStr: " + readParameterRespStr)
 
         LoraRadioRAK3172.WiRocLogger.error("LoraRadioRAK3172::getParameters() return None")
         return None
@@ -256,6 +259,8 @@ class LoraRadioRAK3172:
         preambleLength: int = 8
 
         if enabled:
+            self.hardwareAbstraction.DisableLora()
+            time.sleep(2/1000)
             self.hardwareAbstraction.EnableLora()
             self.enabled = enabled
         else:
@@ -379,8 +384,9 @@ class LoraRadioRAK3172:
 
                     data = bytearray([channelNumber]) + messageData if self.drf1268dsCompatMode else messageData
                     messageDataWithNetID = Utils.GetDataInHexUpperCase(data)
-
+                    
                     messageString = LoraRadioRAK3172.SendLORADataCmd.format(data=messageDataWithNetID)
+                    LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::SendData() messagestring: " + messageString)
                     self.radioSerial.write(messageString.encode("ascii"))
                     self.radioSerial.flush()
                 except IOError as ioe:

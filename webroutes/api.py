@@ -92,6 +92,16 @@ def getLoraRange():
     return jsonpickle.encode(MicroMock(Value=loraRange))
 
 
+@app.route('/api/lora/module/', methods=['GET'])
+def getLoraModule():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    loraModule = HardwareAbstraction.Instance.GetLoraModule()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=loraModule))
+
+
 @app.route('/api/lorarange/<lorarange>/', methods=['GET'])
 def setLoraRange(lorarange):
     loraRange = _LORARANGE_FROM_OLD.get(lorarange, lorarange)
@@ -1851,9 +1861,7 @@ def getAllMainSettings():
     loraPower = '7'
     if setting is not None:
         loraPower = setting.Value
-    if loraModule == 'RF1276T' and int(loraPower) > 7:
-        loraPower = '7'
-
+    
     wiRocPythonVersion = settings['WiRocPythonVersion']
     wirocBLEVersion = settings['WiRocBLEAPIVersion']
     wirocHWVersion = settings['WiRocHWVersion']

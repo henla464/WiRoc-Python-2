@@ -67,6 +67,7 @@ else
   echo "5: NanoPi+SerialPort+SRR"
   echo "6: NanoPi+SerialPort+SRR with pin headers"
   echo "7: NanoPi+SerialPort+SRR with pin headers (programming pins for SRR)"
+  echo "8: WiRoc H3 SBC v8Rev2"
 
   read hwOption
   WiRocHWVersion="v3Rev2"
@@ -90,6 +91,9 @@ else
   fi
   if [[ $hwOption = 7 ]]; then
     WiRocHWVersion="v7Rev2"
+  fi
+    if [[ $hwOption = 8 ]]; then
+    WiRocHWVersion="v8Rev2"
   fi
 fi
 
@@ -367,13 +371,16 @@ else
     echo "compat"
 fi
 
-echo "Add SP service"
-if ! grep -Fxq 'ExecStartPost=/usr/bin/sdptool add SP' /usr/lib/systemd/system/bluetooth.service
-then
-    echo "add SP profile"
-    sed -i '/ExecStart=.*/a ExecStartPost=/usr/bin/sdptool add SP' /usr/lib/systemd/system/bluetooth.service
-    systemctl daemon-reload
-else
-    echo "SP profile already exist"
+if [[ $hwOption < 8 ]]; then
+    echo "Add SP service"
+    if ! grep -Fxq 'ExecStartPost=/usr/bin/sdptool add SP' /usr/lib/systemd/system/bluetooth.service
+    then
+        echo "add SP profile"
+        sed -i '/ExecStart=.*/a ExecStartPost=/usr/bin/sdptool add SP' /usr/lib/systemd/system/bluetooth.service
+        systemctl daemon-reload
+    else
+        echo "SP profile already exist"
+    fi
 fi
+
 

@@ -1198,7 +1198,11 @@ class DatabaseHelper:
            WHEN MessageSubscriptionArchiveData.id is not null \
              and MessageSubscriptionArchiveData.SentDate is null THEN 'Not sent' \
            WHEN MessageSubscriptionArchiveData.id is not null \
-             and MessageSubscriptionArchiveData.SentDate is not null and MessageSubscriptionArchiveData.AckReceivedDate is null THEN 'Not acked' \
+             and MessageSubscriptionArchiveData.SentDate is not null and MessageSubscriptionArchiveData.AckReceivedDate is null \
+             and SubscriberData.TypeName != 'SIRAP' THEN 'Not acked' \
+           WHEN MessageSubscriptionArchiveData.id is not null \
+             and MessageSubscriptionArchiveData.SentDate is not null \
+             and SubscriberData.TypeName = 'SIRAP' THEN 'Sent' \
            WHEN MessageSubscriptionArchiveData.id is not null \
              and MessageSubscriptionArchiveData.SentDate is not null and MessageSubscriptionArchiveData.AckReceivedDate is not null THEN 'Acked' \
            ELSE 'No subscr.' \
@@ -1212,7 +1216,7 @@ class DatabaseHelper:
          FROM TestPunchData LEFT JOIN MessageBoxData ON TestPunchData.MessageBoxId = MessageBoxData.id \
          LEFT JOIN MessageSubscriptionData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId \
          LEFT JOIN MessageBoxArchiveData ON TestPunchData.MessageBoxId = MessageBoxArchiveData.OrigId \
-         LEFT JOIN MessageSubscriptionArchiveData ON MessageBoxArchiveData.OrigId = MessageSubscriptionArchiveData.MessageBoxId \
+         LEFT JOIN MessageSubscriptionArchiveData ON (MessageBoxArchiveData.OrigId = MessageSubscriptionArchiveData.MessageBoxId OR TestPunchData.MessageBoxId = MessageSubscriptionArchiveData.MessageBoxId) \
          LEFT JOIN SubscriptionData ON (SubscriptionData.Id = MessageSubscriptionArchiveData.SubscriptionId or SubscriptionData.Id = MessageSubscriptionData.SubscriptionId) \
          LEFT JOIN SubscriberData ON SubscriberData.Id = SubscriptionData.SubscriberId \
         WHERE BatchGuid = '{testBatchGuid}' \
@@ -1265,7 +1269,11 @@ class DatabaseHelper:
            WHEN MessageSubscriptionArchiveData.id is not null \
              and MessageSubscriptionArchiveData.SentDate is null THEN 'Not sent' \
            WHEN MessageSubscriptionArchiveData.id is not null \
-             and MessageSubscriptionArchiveData.SentDate is not null and MessageSubscriptionArchiveData.AckReceivedDate is null THEN 'Not acked' \
+             and MessageSubscriptionArchiveData.SentDate is not null and MessageSubscriptionArchiveData.AckReceivedDate is null \
+             and SubscriberData.TypeName != 'SIRAP' THEN 'Not acked' \
+           WHEN MessageSubscriptionArchiveData.id is not null \
+             and MessageSubscriptionArchiveData.SentDate is not null \
+             and SubscriberData.TypeName = 'SIRAP' THEN 'Sent' \
            WHEN MessageSubscriptionArchiveData.id is not null \
              and MessageSubscriptionArchiveData.SentDate is not null and MessageSubscriptionArchiveData.AckReceivedDate is not null THEN 'Acked' \
            ELSE 'No subscr.' \
