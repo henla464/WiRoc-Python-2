@@ -257,21 +257,15 @@ class LoraRadioRAK3172:
         self.drf1268dsCompatMode = drf1268dsCompatMode  # no change of radio config, adds netid to message in senddata
         self.sendAck = sendAck
         preambleLength: int = 8
-
-        if enabled:
+        self.enabled = enabled
+            
+        if not enabled:
             self.hardwareAbstraction.DisableLora()
-            time.sleep(2/1000)
-            self.hardwareAbstraction.EnableLora()
-            self.enabled = enabled
-        else:
-            self.hardwareAbstraction.DisableLora()
-            self.enabled = enabled
             self.isInitialized = True
             return True
 
         self.serialLock.acquire()
         try:
-
             self.hardwareAbstraction.EnableLora()
             time.sleep(0.1)
 
