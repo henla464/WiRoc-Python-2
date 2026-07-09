@@ -44,7 +44,7 @@ class SITestTestToSirapTransform(object):
 
     @staticmethod
     def GetMaxTries() -> int:
-        return 1
+        return 5
 
 
     #payloadData is a bytearray

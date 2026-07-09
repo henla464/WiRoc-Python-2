@@ -724,7 +724,8 @@ def getTestPunches(testBatchGuid: str, includeAll):
     for testPunch in testPunches:
         punch = {'Id': testPunch.id, 'MsgId': testPunch.MessageBoxId, 'Status': testPunch.Status,
                  'SINo': testPunch.SICardNumber, 'NoOfSendTries': testPunch.NoOfSendTries,
-                 'Type': testPunch.Type, 'RSSI': testPunch.AckRSSIValue, 'TypeName': testPunch.TypeName}
+                 'Type': testPunch.Type, 'RSSI': testPunch.AckRSSIValue, 'TypeName': testPunch.TypeName,
+                 'MaxTries': testPunch.MaxTries, 'TestPunchId': testPunch.TestPunchId}
         timeInSeconds = testPunch.TwelveHourTimer
         if testPunch.TwentyFourHour == 1:
             timeInSeconds += 3600 * 12

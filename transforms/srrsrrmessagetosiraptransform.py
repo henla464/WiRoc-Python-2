@@ -45,7 +45,7 @@ class SRRSRRMessageToSirapTransform(object):
 
     @staticmethod
     def GetMaxTries() -> int:
-        return 1
+        return 5
 
 
     @staticmethod

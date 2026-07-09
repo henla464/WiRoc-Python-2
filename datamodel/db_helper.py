@@ -414,6 +414,8 @@ class DatabaseHelper:
     def increment_send_tries_and_set_send_failed_date(cls, messageSubscriptionId: int, retryDelay: float, sendFailureDate: datetime) -> None:
         cls.init()
         msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionId)
+        if msa is None:
+            return None
         msa.SendFailedDate = sendFailureDate
         msa.NoOfSendTries = msa.NoOfSendTries + 1
         msa.FindAdapterTryDate = None
@@ -916,10 +918,10 @@ class DatabaseHelper:
                    "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
                    "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
                    "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
-                   "((MessageSubscriptionData.NoOfSendTries >= SubscriptionData.MaxTries AND MessageSubscriptionData.SentDate < ?) or MessageSubscriptionData.FindAdapterTries >= 5) "
+                   "((MessageSubscriptionData.NoOfSendTries >= SubscriptionData.MaxTries AND (MessageSubscriptionData.SentDate < ? or MessageSubscriptionData.SendFailedDate < ?)) or MessageSubscriptionData.FindAdapterTries >= 5) "
                    "ORDER BY MessageBoxData.CreatedDate desc "
                    "LIMIT %s") % limit
-            return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql, (fifteenSecondsAgo,))
+            return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql, (fifteenSecondsAgo, fifteenSecondsAgo))
         return []
 
     @classmethod
@@ -1177,116 +1179,103 @@ class DatabaseHelper:
     @classmethod
     def get_test_punches(cls, testBatchGuid: str, msgBoxId: int | None) -> list[TestPunchView]:
         cls.init()
-        sql = (f"SELECT * FROM ( \
-         SELECT TestPunchData.id, \
-         TestPunchData.SICardNumber, \
-         TestPunchData.TwentyFourHour, \
-         TestPunchData.TwelveHourTimer, \
-         TestPunchData.Fetched, \
-         TestPunchData.MessageBoxId, \
-         CASE \
-           WHEN MessageSubscriptionData.id is not null THEN MessageSubscriptionData.NoOfSendTries \
-           WHEN MessageSubscriptionArchiveData.id is not null THEN MessageSubscriptionArchiveData.NoOfSendTries \
-           ELSE 0 \
-         END NoOfSendTries, \
-         CASE \
-           WHEN MessageBoxData.id is null and MessageBoxArchiveData.id is null THEN 'Not added' \
-           WHEN MessageSubscriptionData.id is not null \
-             and MessageSubscriptionData.SentDate is null THEN 'Added' \
-           WHEN MessageSubscriptionData.id is not null \
-             and MessageSubscriptionData.SentDate is not null and MessageSubscriptionData.AckReceivedDate is null THEN 'Sent' \
-           WHEN MessageSubscriptionArchiveData.id is not null \
-             and MessageSubscriptionArchiveData.SentDate is null THEN 'Not sent' \
-           WHEN MessageSubscriptionArchiveData.id is not null \
-             and MessageSubscriptionArchiveData.SentDate is not null and MessageSubscriptionArchiveData.AckReceivedDate is null \
-             and SubscriberData.TypeName != 'SIRAP' THEN 'Not acked' \
-           WHEN MessageSubscriptionArchiveData.id is not null \
-             and MessageSubscriptionArchiveData.SentDate is not null \
-             and SubscriberData.TypeName = 'SIRAP' THEN 'Sent' \
-           WHEN MessageSubscriptionArchiveData.id is not null \
-             and MessageSubscriptionArchiveData.SentDate is not null and MessageSubscriptionArchiveData.AckReceivedDate is not null THEN 'Acked' \
-           ELSE 'No subscr.' \
-         END Status, \
-         'TestPunch' as Type, \
-         CASE \
-           WHEN MessageSubscriptionArchiveData.id is not null THEN MessageSubscriptionArchiveData.AckRSSIValue \
-           ELSE 0 \
-         END AckRSSIValue, \
-         SubscriberData.TypeName \
-         FROM TestPunchData LEFT JOIN MessageBoxData ON TestPunchData.MessageBoxId = MessageBoxData.id \
-         LEFT JOIN MessageSubscriptionData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId \
-         LEFT JOIN MessageBoxArchiveData ON TestPunchData.MessageBoxId = MessageBoxArchiveData.OrigId \
-         LEFT JOIN MessageSubscriptionArchiveData ON (MessageBoxArchiveData.OrigId = MessageSubscriptionArchiveData.MessageBoxId OR TestPunchData.MessageBoxId = MessageSubscriptionArchiveData.MessageBoxId) \
-         LEFT JOIN SubscriptionData ON (SubscriptionData.Id = MessageSubscriptionArchiveData.SubscriptionId or SubscriptionData.Id = MessageSubscriptionData.SubscriptionId) \
-         LEFT JOIN SubscriberData ON SubscriberData.Id = SubscriptionData.SubscriberId \
-        WHERE BatchGuid = '{testBatchGuid}' \
-         UNION ALL \
-         SELECT \
-         'MSDID' || MessageSubscriptionData.id as id, \
-         MessageBoxData.SICardNumber, \
-         CASE \
-           WHEN cast(MessageBoxData.SportIdentHour as integer) >= 12 THEN 1 \
-           ELSE 0 \
-         END TwentyFourHour, \
-         CASE \
-           WHEN cast(MessageBoxData.SportIdentHour as integer) >= 12 THEN (cast(MessageBoxData.SportIdentHour as integer)-12) * 3600 + cast(MessageBoxData.SportIdentMinute as integer) * 60 + cast(MessageBoxData.SportIdentSecond as integer) \
-           ELSE cast(MessageBoxData.SportIdentHour as integer) * 3600 + cast(MessageBoxData.SportIdentMinute as integer) * 60 + cast(MessageBoxData.SportIdentSecond as integer) \
-         END TwelveHourTimer, \
-         False as Fetched, \
-         MessageBoxData.id as MessageBoxId, \
-         MessageSubscriptionData.NoOfSendTries, \
-        CASE \
-           WHEN MessageSubscriptionData.id is not null \
-             and MessageSubscriptionData.SentDate is null THEN 'Added' \
-           WHEN MessageSubscriptionData.id is not null \
-             and MessageSubscriptionData.SentDate is not null and MessageSubscriptionData.AckReceivedDate is null THEN 'Sent' \
-         ELSE 'No subscr.' \
-         END Status, \
-         'Punch' as Type, \
-         0 as AckRSSIValue, \
-         SubscriberData.TypeName \
-         FROM MessageBoxData LEFT JOIN (SELECT * FROM TestPunchData WHERE BatchGuid = '{testBatchGuid}') as tp ON tp.MessageBoxId = MessageBoxData.id \
-         JOIN MessageSubscriptionData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId \
-         JOIN SubscriptionData ON SubscriptionData.Id = MessageSubscriptionData.SubscriptionId \
-         JOIN SubscriberData ON SubscriberData.Id = SubscriptionData.SubscriberId \
-         WHERE tp.id is null and MessageBoxData.MessageTypeName != 'STATUS' and (SubscriberData.TypeName = 'LORA' or SubscriberData.TypeName = 'SIRAP') \
-        UNION ALL \
-         SELECT \
-         'MSDID' || MessageSubscriptionArchiveData.OrigId as id, \
-         MessageBoxArchiveData.SICardNumber, \
-         CASE \
-           WHEN cast(MessageBoxArchiveData.SportIdentHour as integer) >= 12 THEN 1 \
-           ELSE 0 \
-         END TwentyFourHour, \
-         CASE \
-           WHEN cast(MessageBoxArchiveData.SportIdentHour as integer)>= 12 THEN (cast(MessageBoxArchiveData.SportIdentHour as integer)-12) * 3600 + cast(MessageBoxArchiveData.SportIdentMinute as integer) * 60 + cast(MessageBoxArchiveData.SportIdentSecond as integer) \
-           ELSE cast(MessageBoxArchiveData.SportIdentHour as integer) * 3600 + cast(MessageBoxArchiveData.SportIdentMinute as integer) * 60 + cast(MessageBoxArchiveData.SportIdentSecond as integer) \
-         END TwelveHourTimer, \
-         False as Fetched, \
-         MessageBoxArchiveData.OrigId as MessageBoxId, \
-         MessageSubscriptionArchiveData.NoOfSendTries, \
-         CASE \
-           WHEN MessageSubscriptionArchiveData.id is not null \
-             and MessageSubscriptionArchiveData.SentDate is null THEN 'Not sent' \
-           WHEN MessageSubscriptionArchiveData.id is not null \
-             and MessageSubscriptionArchiveData.SentDate is not null and MessageSubscriptionArchiveData.AckReceivedDate is null \
-             and SubscriberData.TypeName != 'SIRAP' THEN 'Not acked' \
-           WHEN MessageSubscriptionArchiveData.id is not null \
-             and MessageSubscriptionArchiveData.SentDate is not null \
-             and SubscriberData.TypeName = 'SIRAP' THEN 'Sent' \
-           WHEN MessageSubscriptionArchiveData.id is not null \
-             and MessageSubscriptionArchiveData.SentDate is not null and MessageSubscriptionArchiveData.AckReceivedDate is not null THEN 'Acked' \
-           ELSE 'No subscr.' \
-         END Status, \
-         'Punch' as Type, \
-         0 as AckRSSIValue, \
-         SubscriberData.TypeName \
-         FROM MessageBoxArchiveData LEFT JOIN (SELECT * FROM TestPunchData WHERE BatchGuid = '{testBatchGuid}') as tp ON tp.MessageBoxId = MessageBoxArchiveData.OrigId \
-         JOIN MessageSubscriptionArchiveData ON MessageBoxArchiveData.OrigId = MessageSubscriptionArchiveData.MessageBoxId \
-         JOIN SubscriptionData ON SubscriptionData.Id = MessageSubscriptionArchiveData.SubscriptionId \
-         JOIN SubscriberData ON SubscriberData.Id = SubscriptionData.SubscriberId \
-         WHERE tp.id is null and MessageBoxArchiveData.MessageTypeName != 'STATUS' and (SubscriberData.TypeName = 'LORA' or SubscriberData.TypeName = 'SIRAP') {f'and MessageBoxArchiveData.OrigId >= {msgBoxId}' if msgBoxId is not None else ''}) \
-         ORDER BY (cast(TwelveHourTimer as integer) * 3600 + cast(TwentyFourHour as integer) * 43200), MessageBoxId;")
+        sql = f"""
+        SELECT * FROM (
+        SELECT 
+            TestPunchData.id || '_' || ifnull(ms.id,'') as id, 
+            TestPunchData.id as TestPunchId,
+            TestPunchData.SICardNumber, 
+            TestPunchData.TwentyFourHour, 
+            TestPunchData.TwelveHourTimer, 
+            TestPunchData.Fetched, 
+            TestPunchData.MessageBoxId, 
+         	ms.NoOfSendTries,
+            CASE 
+                WHEN mb.id is null THEN 'Not added' 
+                WHEN ms.id is not null and ms.SendFailedDate is not null THEN 'Failed' 
+                WHEN ms.id is not null and ms.SentDate is null THEN 'Added' 
+                WHEN ms.id is not null and ms.SentDate is not null and ms.AckReceivedDate is null and SubscriberData.TypeName = 'SIRAP' THEN 'Sent' 
+                WHEN ms.id is not null and ms.SentDate is not null and ms.AckReceivedDate is null and SubscriberData.TypeName = 'LORA' and ProgressStatus = 'ACTIVE' THEN 'Sent'   
+                WHEN ms.id is not null and ms.SentDate is not null and ms.AckReceivedDate is null and SubscriberData.TypeName = 'LORA' and ProgressStatus = 'ARCHIVED' THEN 'Not acked'
+                WHEN ms.id is not null and ms.SendFailedDate is not null THEN 'Failed' 
+                WHEN ms.id is not null and ms.SentDate is null THEN 'Not sent'
+                WHEN ms.id is not null and ms.SentDate is not null and SubscriberData.TypeName = 'SIRAP' THEN 'Sent' 
+                WHEN ms.id is not null and ms.SentDate is not null and ms.AckReceivedDate is not null THEN 'Acked' 
+                ELSE 'No subscr.' 
+            END Status, 
+            'TestPunch' as Type, 
+            ms.AckRSSIValue, 
+            SubscriberData.TypeName, 
+            SubscriptionData.MaxTries 
+	    FROM 
+		    TestPunchData 
+        LEFT JOIN 	
+            (SELECT id FROM MessageBoxData
+            UNION ALL
+            SELECT OrigId as id FROM MessageBoxArchiveData) mb
+        ON TestPunchData.MessageBoxId = mb.id
+        LEFT JOIN
+            (SELECT id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, 0 as AckRSSIValue, SubscriptionId, SendFailedDate, 'ACTIVE' as ProgressStatus FROM MessageSubscriptionData
+            UNION ALL
+            SELECT OrigId, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, AckRSSIValue, SubscriptionId, SendFailedDate, 'ARCHIVED' as ProgressStatus FROM MessageSubscriptionArchiveData) ms
+        ON TestPunchData.MessageBoxId = ms.MessageBoxId
+        LEFT JOIN SubscriptionData ON SubscriptionData.Id = ms.SubscriptionId 
+        LEFT JOIN SubscriberData ON SubscriberData.Id = SubscriptionData.SubscriberId
+
+        UNION ALL 
+
+        SELECT 
+            'MSDID' || ms2.id as id, 
+            null as TestPunchId,
+            CASE
+               WHEN mb2.MessageTypeName = 'STATUS' THEN 'STATUS'
+               ELSE mb2.SICardNumber
+            END SICardNumber,
+            CASE 
+                WHEN mb2.SportIdentHour is not null and cast(mb2.SportIdentHour as integer) >= 12 THEN 1 
+                ELSE 0 
+            END TwentyFourHour, 
+            CASE 
+                WHEN mb2.SportIdentHour is null THEN 0
+                WHEN cast(mb2.SportIdentHour as integer)>= 12 THEN (cast(mb2.SportIdentHour as integer)-12) * 3600 + cast(mb2.SportIdentMinute as integer) * 60 + cast(mb2.SportIdentSecond as integer) 
+                ELSE cast(mb2.SportIdentHour as integer) * 3600 + cast(mb2.SportIdentMinute as integer) * 60 + cast(mb2.SportIdentSecond as integer) 
+            END TwelveHourTimer, 
+            False as Fetched, 
+            mb2.id as MessageBoxId, 
+            ms2.NoOfSendTries, 
+            CASE 
+	            WHEN mb2.id is null THEN 'Not added' 
+                WHEN ms2.id is not null and ms2.SendFailedDate is not null THEN 'Failed' 
+                WHEN ms2.id is not null and ms2.SentDate is null THEN 'Added' 
+                WHEN ms2.id is not null and ms2.SentDate is not null and ms2.AckReceivedDate is null and SubscriberData.TypeName = 'SIRAP' THEN 'Sent' 
+	            WHEN ms2.id is not null and ms2.SentDate is not null and ms2.AckReceivedDate is null and SubscriberData.TypeName = 'LORA' and ProgressStatus = 'ACTIVE' THEN 'Sent'
+                WHEN ms2.id is not null and ms2.SentDate is not null and ms2.AckReceivedDate is null and SubscriberData.TypeName = 'LORA' and ProgressStatus = 'ARCHIVED' THEN 'Not acked'
+	            WHEN ms2.id is not null and ms2.SendFailedDate is not null THEN 'Failed' 
+	            WHEN ms2.id is not null and ms2.SentDate is null THEN 'Not sent'
+                WHEN ms2.id is not null and ms2.SentDate is not null and SubscriberData.TypeName = 'SIRAP' THEN 'Sent' 
+                WHEN ms2.id is not null and ms2.SentDate is not null and ms2.AckReceivedDate is not null THEN 'Acked' 
+                ELSE 'No subscr.' 
+            END Status, 
+            'Punch' as Type, 
+            0 as AckRSSIValue, 
+            SubscriberData.TypeName, 
+            SubscriptionData.MaxTries 
+            FROM 
+                    (SELECT id, SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, MessageTypeName FROM MessageBoxData
+                    UNION ALL
+                    SELECT OrigId, SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, MessageTypeName FROM MessageBoxArchiveData) mb2
+	            JOIN
+		            (SELECT id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, 0 as AckRSSIValue, SubscriptionId, SendFailedDate, 'ACTIVE' as ProgressStatus FROM MessageSubscriptionData
+		            UNION ALL
+		            SELECT OrigId, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, AckRSSIValue, SubscriptionId, SendFailedDate, 'ARCHIVED' as ProgressStatus FROM MessageSubscriptionArchiveData) ms2
+                ON mb2.id = ms2.MessageBoxId
+                JOIN SubscriptionData ON SubscriptionData.Id = ms2.SubscriptionId
+                JOIN SubscriberData ON SubscriberData.Id = SubscriptionData.SubscriberId
+                LEFT JOIN (SELECT * FROM TestPunchData WHERE BatchGuid = '{testBatchGuid}') as tp ON tp.MessageBoxId = mb2.id
+	            where tp.id is null {f' and mb2.id >= {msgBoxId}' if msgBoxId is not None else ''} and (TypeName = 'LORA' or TypeName = 'SIRAP')
+        )
+        ORDER BY (cast(TwelveHourTimer as integer) * 3600 + cast(TwentyFourHour as integer) * 43200), MessageBoxId;      
+               """
 
         testPunchesView = cls.db.get_table_objects_by_SQL(TestPunchView, sql)
         return testPunchesView
@@ -1298,7 +1287,7 @@ class DatabaseHelper:
         notFetchedPunches: list[TestPunchView] = list(filter(lambda p: not p.Fetched, allPunches))
         for punch in notFetchedPunches:
             if punch.Type == 'TestPunch' and (punch.Status == 'Not sent' or punch.Status == 'Acked' or punch.Status == 'Not acked'):
-                cls.db.execute_SQL("UPDATE TestPunchData SET Fetched = 1 WHERE id = %s" % punch.id)
+                cls.db.execute_SQL("UPDATE TestPunchData SET Fetched = 1 WHERE id = %s" % punch.TestPunchId)
         return notFetchedPunches
 
 # MessageStatsData

@@ -112,8 +112,9 @@ class Setup:
 
                             # add subscription to database
                             deleteAfterSent = transformClass.GetDeleteAfterSent()
+                            maxTries = transformClass.GetMaxTries()
                             enabled = False
-                            subscriptionData = SubscriptionData(deleteAfterSent, enabled, subscriberDataId, transformDataId, batchSize)
+                            subscriptionData = SubscriptionData(deleteAfterSent, enabled, subscriberDataId, transformDataId, batchSize, maxTries)
                             DatabaseHelper.save_subscription(subscriptionData)
                 adapter.SetIsDBInitialized()
 
