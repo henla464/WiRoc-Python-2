@@ -726,14 +726,17 @@ def getTestPunches(testBatchGuid: str, includeAll):
                  'SINo': testPunch.SICardNumber, 'NoOfSendTries': testPunch.NoOfSendTries,
                  'Type': testPunch.Type, 'RSSI': testPunch.AckRSSIValue, 'TypeName': testPunch.TypeName,
                  'MaxTries': testPunch.MaxTries, 'TestPunchId': testPunch.TestPunchId}
-        timeInSeconds = testPunch.TwelveHourTimer
-        if testPunch.TwentyFourHour == 1:
-            timeInSeconds += 3600 * 12
-        hours = timeInSeconds // 3600
-        remainingSeconds = timeInSeconds % 3600
-        minutes = remainingSeconds // 60
-        seconds = remainingSeconds % 60
-        punch['Time'] = str(hours) + ':' + str(minutes).zfill(2) + ':' + str(seconds).zfill(2)
+        if testPunch.SICardNumber == 'STATUS':
+            punch['Time'] = 'STATUS'
+        else:
+            timeInSeconds = testPunch.TwelveHourTimer
+            if testPunch.TwentyFourHour == 1:
+                timeInSeconds += 3600 * 12
+            hours = timeInSeconds // 3600
+            remainingSeconds = timeInSeconds % 3600
+            minutes = remainingSeconds // 60
+            seconds = remainingSeconds % 60
+            punch['Time'] = str(hours) + ':' + str(minutes).zfill(2) + ':' + str(seconds).zfill(2)
         punches.append(punch)
 
     data = {'punches': punches}

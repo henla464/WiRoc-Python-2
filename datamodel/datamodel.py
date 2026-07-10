@@ -510,7 +510,7 @@ class TestPunchData(object):
 
 class TestPunchView(object):
     columns = [("BatchGuid", str), ("MessageBoxId", int), ("TwentyFourHour", int), ("TwelveHourTimer", int),
-               ("SICardNumber", int), ("Fetched", bool), ("NoOfSendTries", int), ("Status", str), ("AckRSSIValue", int), ("MaxTries", int), ("TestPunchId", int|None)]
+               ("SICardNumber", str), ("Fetched", bool), ("NoOfSendTries", int), ("Status", str), ("AckRSSIValue", int), ("MaxTries", int), ("TestPunchId", int|None)]
 
     def __init__(self):
         self.id = None
@@ -518,7 +518,7 @@ class TestPunchView(object):
         self.MessageBoxId = None
         self.TwentyFourHour = 1
         self.TwelveHourTimer = 0
-        self.SICardNumber = 0
+        self.SICardNumber = ''
         self.Fetched = 0
         self.NoOfSendTries = 0
         self.MaxTries = 0

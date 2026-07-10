@@ -965,7 +965,12 @@ class LoraRadioDataHandler(object):
         messageDataToConsider[LoraRadioMessageRS.H] = (messageDataToConsider[LoraRadioMessageRS.H] & ~LoraRadioMessageRS.MessageTypeBitMask) | messageTypeToTry
         rssiValue = None
         if self.rssiByteCount > 0:
-            rssiValue = int.from_bytes(self.DataReceived[expectedMessageLength:expectedMessageLength+self.rssiByteCount], byteorder='big')
+            if self.rssiByteCount == 2:
+                # RAK3172 sends two byte signed (negative number dbm)
+                rssiValue = int.from_bytes(self.DataReceived[expectedMessageLength:expectedMessageLength+self.rssiByteCount], byteorder='big', signed=True)
+            else:
+                # DRF1268DS sends one byte, a positive number.
+                rssiValue = int.from_bytes(self.DataReceived[expectedMessageLength:expectedMessageLength+self.rssiByteCount], byteorder='big', signed=False)
         snrValue = None
         if self.SNRByteCount > 0:
             snrValue = int.from_bytes(self.DataReceived[expectedMessageLength + self.rssiByteCount:expectedMessageLength + self.rssiByteCount + self.SNRByteCount], byteorder='big')
@@ -1045,8 +1050,12 @@ class LoraRadioDataHandler(object):
         messageDataToConsider[LoraRadioMessageRS.H] = (messageDataToConsider[LoraRadioMessageRS.H] & ~LoraRadioMessageRS.MessageTypeBitMask) | messageTypeToTry
         rssiValue = None
         if self.rssiByteCount > 0:
-            rssiValue = int.from_bytes(
-                self.DataReceived[expectedMessageLength:expectedMessageLength + self.rssiByteCount], byteorder='big')
+            if self.rssiByteCount == 2:
+                # RAK3172 sends two byte signed (negative number dbm)
+                rssiValue = int.from_bytes(self.DataReceived[expectedMessageLength:expectedMessageLength+self.rssiByteCount], byteorder='big', signed=True)
+            else:
+                # DRF1268DS sends one byte, a positive number.
+                rssiValue = int.from_bytes(self.DataReceived[expectedMessageLength:expectedMessageLength+self.rssiByteCount], byteorder='big', signed=False)
         snrValue = None
         if self.SNRByteCount > 0:
             snrValue = int.from_bytes(
@@ -1142,8 +1151,12 @@ class LoraRadioDataHandler(object):
             "LoraRadioDataHandler::_GetAckMessage() MessageDataToConsider: " + Utils.GetDataInHex(messageDataToConsider, logging.DEBUG))
         rssiValue = None
         if self.rssiByteCount > 0:
-            rssiValue = int.from_bytes(
-                self.DataReceived[expectedMessageLength:expectedMessageLength + self.rssiByteCount], byteorder='big')
+            if self.rssiByteCount == 2:
+                # RAK3172 sends two byte signed (negative number dbm)
+                rssiValue = int.from_bytes(self.DataReceived[expectedMessageLength:expectedMessageLength+self.rssiByteCount], byteorder='big', signed=True)
+            else:
+                # DRF1268DS sends one byte, a positive number.
+                rssiValue = int.from_bytes(self.DataReceived[expectedMessageLength:expectedMessageLength+self.rssiByteCount], byteorder='big', signed=False)
         snrValue = None
         if self.SNRByteCount > 0:
             snrValue = int.from_bytes(
@@ -1240,8 +1253,12 @@ class LoraRadioDataHandler(object):
                                                                                                   logging.DEBUG))
         rssiValue = None
         if self.rssiByteCount > 0:
-            rssiValue = int.from_bytes(
-                self.DataReceived[expectedMessageLength:expectedMessageLength + self.rssiByteCount], byteorder='big')
+            if self.rssiByteCount == 2:
+                # RAK3172 sends two byte signed (negative number dbm)
+                rssiValue = int.from_bytes(self.DataReceived[expectedMessageLength:expectedMessageLength+self.rssiByteCount], byteorder='big', signed=True)
+            else:
+                # DRF1268DS sends one byte, a positive number.
+                rssiValue = int.from_bytes(self.DataReceived[expectedMessageLength:expectedMessageLength+self.rssiByteCount], byteorder='big', signed=False)
         snrValue = None
         if self.SNRByteCount > 0:
             snrValue = int.from_bytes(self.DataReceived[expectedMessageLength + self.rssiByteCount:expectedMessageLength + self.rssiByteCount + self.SNRByteCount], byteorder='big')
@@ -1296,8 +1313,13 @@ class LoraRadioDataHandler(object):
                                                                                                   logging.DEBUG))
         rssiValue = None
         if self.rssiByteCount > 0:
-            rssiValue = int.from_bytes(
-                self.DataReceived[expectedMessageLength:expectedMessageLength + self.rssiByteCount], byteorder='big')
+            if self.rssiByteCount == 2:
+                # RAK3172 sends two byte signed (negative number dbm)
+                rssiValue = int.from_bytes(self.DataReceived[expectedMessageLength:expectedMessageLength+self.rssiByteCount], byteorder='big', signed=True)
+            else:
+                # DRF1268DS sends one byte, a positive number.
+                rssiValue = int.from_bytes(self.DataReceived[expectedMessageLength:expectedMessageLength+self.rssiByteCount], byteorder='big', signed=False)
+      
         snrValue = None
         if self.SNRByteCount > 0:
             snrValue = int.from_bytes(self.DataReceived[expectedMessageLength + self.rssiByteCount:expectedMessageLength + self.rssiByteCount + self.SNRByteCount], byteorder='big')

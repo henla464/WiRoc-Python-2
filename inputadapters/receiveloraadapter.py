@@ -172,23 +172,15 @@ class ReceiveLoraAdapter(object):
                 if SettingsClass.GetLoraMode() == "SENDER" or SettingsClass.GetLoraMode() == "REPEATER":
                     messageIDToReturn = loraMessage.GetMessageIDThatIsAcked()
                     self.loraRadio.SetAckReceivedMatchingLastSentMessage(SettingsClass.GetMessageIDOfLastLoraMessageSent() == messageIDToReturn)
-            elif messageType == LoraRadioMessageRS.MessageTypeStatus:
+            elif messageType == LoraRadioMessageRS.MessageTypeStatus or messageType == LoraRadioMessageRS.MessageTypeStatus2 or \
+                    messageType == LoraRadioMessageRS.MessageTypeSIPunchReDCoS or messageType == LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS:
                 if loraMessage.GetBatteryLow():
                     SettingsClass.SetBatteryIsLowReceived(True)
 
-                relayPathNo = loraMessage.GetRelayPathNo()
-                SettingsClass.UpdateRelayPathNumber(relayPathNo+1)
-                DatabaseHelper.add_message_stat(self.GetInstanceName(), "Status", "Received", 1)
-            elif messageType == LoraRadioMessageRS.MessageTypeStatus2:
-                if loraMessage.GetBatteryLow():
-                    SettingsClass.SetBatteryIsLowReceived(True)
-
-                relayPathNo = loraMessage.GetRelayPathNo()
-                SettingsClass.UpdateRelayPathNumber(relayPathNo + 1)
-                DatabaseHelper.add_message_stat(self.GetInstanceName(), "Status", "Received", 1)
-            elif messageType == LoraRadioMessageRS.MessageTypeSIPunchReDCoS or messageType == LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS:
-                if loraMessage.GetBatteryLow():
-                    SettingsClass.SetBatteryIsLowReceived(True)
+                if messageType == LoraRadioMessageRS.MessageTypeStatus or messageType == LoraRadioMessageRS.MessageTypeStatus2:
+                    relayPathNo = loraMessage.GetRelayPathNo()
+                    SettingsClass.UpdateRelayPathNumber(relayPathNo+1)
+                    DatabaseHelper.add_message_stat(self.GetInstanceName(), "Status", "Received", 1)
 
                 ackRequested = loraMessage.GetAckRequested()
                 ackAlreadySent = loraMessage.GetAckAlreadySent()
@@ -211,10 +203,12 @@ class ReceiveLoraAdapter(object):
                     except Exception as ex2:
                         ReceiveLoraAdapter.WiRocLogger.error(
                             "ReceiveLoraAdapter::GetData() Error sending ack: " + str(ex2))
-                try:
-                    DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Received", 1)
-                except Exception as ex:
-                    ReceiveLoraAdapter.WiRocLogger.error("ReceiveLoraAdapter::GetData() Error saving statistics: " + str(ex))
+
+                if messageType == LoraRadioMessageRS.MessageTypeSIPunchReDCoS or messageType == LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS:
+                    try:
+                        DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Received", 1)
+                    except Exception as ex:
+                        ReceiveLoraAdapter.WiRocLogger.error("ReceiveLoraAdapter::GetData() Error saving statistics: " + str(ex))
             return {"MessageType": loraMessage.GetMessageCategory(), "MessageSource": "Lora", "MessageSubTypeName": loraMessage.GetMessageSubType(),
                     "Data": receivedData, "MessageID": messageIDToReturn, "LoraRadioMessage": loraMessage, "ChecksumOK": True}
         return None
