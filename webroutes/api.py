@@ -170,7 +170,7 @@ def setLoraListenOnly(listenOnly):
 @app.route('/api/power/', methods=['GET'])
 def getPower():
     setting = DatabaseHelper.get_setting_by_key('LoraPower')
-    power = 0x07
+    power = 0x16
     if setting is not None:
         power = int(setting.Value)
     jsonpickle.set_preferred_backend('json')

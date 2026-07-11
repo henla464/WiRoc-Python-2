@@ -192,7 +192,7 @@ class RepeaterMessageBoxData(object):
                ("SportIdentMinute2", int), ("SportIdentSecond2", int), ("SIStationNumber2", int),
                ("RepeaterRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", int),
                ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int), ("RSSIValue", int), 
-               ("AckRSSIValue", int), ("AckLinkQuality"),
+               ("AckRSSIValue", int), ("AckLinkQuality", int),
                ("LastSeenTime", datetime), ("CreatedDate", datetime)]
 
     def __init__(self):
@@ -516,7 +516,8 @@ class TestPunchData(object):
 
 class TestPunchView(object):
     columns = [("BatchGuid", str), ("MessageBoxId", int), ("TwentyFourHour", int), ("TwelveHourTimer", int),
-               ("SICardNumber", str), ("Fetched", bool), ("NoOfSendTries", int), ("Status", str), ("AckRSSIValue", int), ("MaxTries", int), ("TestPunchId", int|None)]
+               ("SICardNumber", str), ("Fetched", bool), ("NoOfSendTries", int), ("Status", str), 
+               ("AckRSSIValue", int), ("AckLinkQuality", int), ("MaxTries", int), ("TestPunchId", int|None)]
 
     def __init__(self):
         self.id = None
@@ -532,6 +533,7 @@ class TestPunchView(object):
         self.Status = None
         self.Type: str | None = None
         self.AckRSSIValue = 0
+        self.AckLinkQuality = 0
         self.TypeName: str | None = None
 
 
