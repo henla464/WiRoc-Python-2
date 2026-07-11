@@ -491,7 +491,7 @@ class DatabaseHelper:
                 cls.archive_message_box(msd.MessageBoxId)
 
     @classmethod
-    def archive_repeater_lora_message_subscriptions_after_ack(cls, messageID: bytearray, rssiValue: int):
+    def archive_repeater_lora_message_subscriptions_after_ack(cls, messageID: bytearray, rssiValue: int, ackLinkQuality: int):
         # This method and archive_message_subscriptions_after_ack() are similar, this one only archives "repeater"
         # messages. It does so even if the ack matches a message sent long time ago.
         # archive_message_subscriptions_after_ack() archives all types of messages (including repeater) 
@@ -527,6 +527,7 @@ class DatabaseHelper:
             msa.FindAdapterRetryDelay = msd.FindAdapterRetryDelay
             msa.AckReceivedDate = now
             msa.AckRSSIValue = rssiValue
+            msa.AckLinkQuality = ackLinkQuality
             msa.MessageBoxId = msd.MessageBoxId
             msa.SubscriptionId = msd.SubscriptionId
             subscriberView = DatabaseHelper.get_subscriber_by_subscription_id(msd.SubscriptionId)
@@ -541,7 +542,7 @@ class DatabaseHelper:
                 cls.archive_message_box(msd.MessageBoxId)
 
     @classmethod
-    def archive_message_subscriptions_after_ack(cls, messageID: bytearray, ackRSSIValue: int):
+    def archive_message_subscriptions_after_ack(cls, messageID: bytearray, ackRSSIValue: int, ackLinkQuality: int):
         # Archiving is limited to those messages recently sent. We don't expect to receive ack,
         # for messages sent long ago, or for messages not yet sent. So to reduce the risk that we archive
         # a message that shouldn't be archived (due to receiving ack with corrupt hash, or if two 
@@ -573,6 +574,7 @@ class DatabaseHelper:
             msa.FindAdapterRetryDelay = msd.FindAdapterRetryDelay
             msa.MessageBoxId = msd.MessageBoxId
             msa.AckRSSIValue = ackRSSIValue
+            msa.AckLinkQuality = ackLinkQuality
             msa.SubscriptionId = msd.SubscriptionId
             subscriberView = DatabaseHelper.get_subscriber_by_subscription_id(msd.SubscriptionId)
             if len(subscriberView) > 0:
@@ -649,7 +651,7 @@ class DatabaseHelper:
         cls.db.execute_SQL(updateSQL, (messageBoxArchiveId,))
 
     @classmethod
-    def repeater_messages_acked(cls, messageID: bytearray, ackRSSIValue: int):
+    def repeater_messages_acked(cls, messageID: bytearray, ackRSSIValue: int, ackLinkQuality: int):
         cls.init()
         sql = ("SELECT RepeaterMessageBoxData.* FROM RepeaterMessageBoxData WHERE "
                "MessageID = ?")
@@ -658,6 +660,7 @@ class DatabaseHelper:
             msgToUpdate.Acked = True
             msgToUpdate.NoOfTimesAckSeen = msgToUpdate.NoOfTimesAckSeen + 1
             msgToUpdate.AckRSSIValue = ackRSSIValue
+            msgToUpdate.AckLinkQuality = ackLinkQuality
             if msgToUpdate.AckedTime is None:
                 msgToUpdate.AckedTime = datetime.now()
             DatabaseHelper.WiRocLogger.debug("DatabaseHelper::repeater_messages_acked(): Marking RepeaterMessageBoxData message as acked")
@@ -699,6 +702,7 @@ class DatabaseHelper:
         msa.AddedToMessageBoxTime = datetime.now()
         msa.RSSIValue = repeaterMessageBox.RSSIValue
         msa.AckRSSIValue = repeaterMessageBox.AckRSSIValue
+        msa.AckLinkQuality = repeaterMessageBox.AckLinkQuality
         msa.LastSeenTime = repeaterMessageBox.LastSeenTime
         msa.OrigCreatedDate = repeaterMessageBox.CreatedDate
         cls.db.save_table_object(msa, False)
@@ -1070,7 +1074,7 @@ class DatabaseHelper:
                "SICardNumber2,SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2, "
                "MessageID, AckRequested, RepeaterRequested, NoOfTimesSeen, "
                "NoOfTimesAckSeen, Acked, AckedTime, MessageBoxId, RSSIValue, "
-               "AckRSSIValue, AddedToMessageBoxTime, LastSeenTime, OrigCreatedDate, "
+               "AckRSSIValue, AckLinkQuality, AddedToMessageBoxTime, LastSeenTime, OrigCreatedDate, "
                "CreatedDate) SELECT NULL, "
                "id as OrigId, MessageData, MessageTypeName, PowerCycleCreated, "
                "InstanceName, MessageSubTypeName, ChecksumOK, MessageSource, "
@@ -1078,7 +1082,7 @@ class DatabaseHelper:
                "SICardNumber2,SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2, "
                "MessageID, AckRequested, RepeaterRequested, NoOfTimesSeen, "
                "NoOfTimesAckSeen, Acked, AckedTime, MessageBoxId, RSSIValue, "
-               "AckRSSIValue, ? as AddedToMessageBoxTime, LastSeenTime, CreatedDate as OrigCreatedDate, "
+               "AckRSSIValue, AckLinkQuality, ? as AddedToMessageBoxTime, LastSeenTime, CreatedDate as OrigCreatedDate, "
                "? as CreatedDate "
                "FROM RepeaterMessageBoxData WHERE LastSeenTime < ?")
         cls.db.execute_SQL(sql, (datetime.now(), datetime.now(), fiveMinutesAgo))
@@ -1207,6 +1211,7 @@ class DatabaseHelper:
             END Status, 
             'TestPunch' as Type, 
             ms.AckRSSIValue, 
+            ms.AckLinkQuality,
             SubscriberData.TypeName, 
             SubscriptionData.MaxTries 
 	    FROM 
@@ -1217,9 +1222,9 @@ class DatabaseHelper:
             SELECT OrigId as id FROM MessageBoxArchiveData) mb
         ON TestPunchData.MessageBoxId = mb.id
         LEFT JOIN
-            (SELECT id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, 0 as AckRSSIValue, SubscriptionId, SendFailedDate, 'ACTIVE' as ProgressStatus FROM MessageSubscriptionData
+            (SELECT id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, 0 as AckRSSIValue, 0 as AckLinkQuality, SubscriptionId, SendFailedDate, 'ACTIVE' as ProgressStatus FROM MessageSubscriptionData
             UNION
-            SELECT OrigId as id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, AckRSSIValue, SubscriptionId, SendFailedDate, 'ARCHIVED' as ProgressStatus FROM MessageSubscriptionArchiveData) ms
+            SELECT OrigId as id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, AckRSSIValue, AckLinkQuality, SubscriptionId, SendFailedDate, 'ARCHIVED' as ProgressStatus FROM MessageSubscriptionArchiveData) ms
         ON TestPunchData.MessageBoxId = ms.MessageBoxId
         LEFT JOIN SubscriptionData ON SubscriptionData.Id = ms.SubscriptionId 
         LEFT JOIN SubscriberData ON SubscriberData.Id = SubscriptionData.SubscriberId
@@ -1260,6 +1265,7 @@ class DatabaseHelper:
             END Status, 
             'Punch' as Type, 
             0 as AckRSSIValue, 
+            0 as AckLinkQuality, 
             SubscriberData.TypeName, 
             SubscriptionData.MaxTries 
             FROM 
@@ -1267,9 +1273,9 @@ class DatabaseHelper:
                     UNION ALL
                     SELECT OrigId as id, SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, MessageTypeName FROM MessageBoxArchiveData) mb2
 	            JOIN
-		            (SELECT id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, 0 as AckRSSIValue, SubscriptionId, SendFailedDate, 'ACTIVE' as ProgressStatus FROM MessageSubscriptionData
+		            (SELECT id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, 0 as AckRSSIValue, 0 as AckLinkQuality, SubscriptionId, SendFailedDate, 'ACTIVE' as ProgressStatus FROM MessageSubscriptionData
 		            UNION ALL
-		            SELECT OrigId as id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, AckRSSIValue, SubscriptionId, SendFailedDate, 'ARCHIVED' as ProgressStatus FROM MessageSubscriptionArchiveData) ms2
+		            SELECT OrigId as id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, AckRSSIValue, AckLinkQuality, SubscriptionId, SendFailedDate, 'ARCHIVED' as ProgressStatus FROM MessageSubscriptionArchiveData) ms2
                 ON mb2.id = ms2.MessageBoxId
                 JOIN SubscriptionData ON SubscriptionData.Id = ms2.SubscriptionId
                 JOIN SubscriberData ON SubscriberData.Id = SubscriptionData.SubscriberId

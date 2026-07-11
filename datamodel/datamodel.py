@@ -191,7 +191,8 @@ class RepeaterMessageBoxData(object):
                ("SICardNumber2", int), ("SportIdentHour2", int),
                ("SportIdentMinute2", int), ("SportIdentSecond2", int), ("SIStationNumber2", int),
                ("RepeaterRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", int),
-               ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int), ("RSSIValue", int), ("AckRSSIValue", int),
+               ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int), ("RSSIValue", int), 
+               ("AckRSSIValue", int), ("AckLinkQuality"),
                ("LastSeenTime", datetime), ("CreatedDate", datetime)]
 
     def __init__(self):
@@ -225,6 +226,7 @@ class RepeaterMessageBoxData(object):
         self.MessageBoxId = None
         self.RSSIValue = None
         self.AckRSSIValue = None
+        self.AckLinkQuality = None
         self.AddedToMessageBoxTime = None
         self.LastSeenTime = None
         self.CreatedDate = None
@@ -239,7 +241,8 @@ class RepeaterMessageBoxArchiveData(object):
                ("SICardNumber2", int), ("SportIdentHour2", int),
                ("SportIdentMinute2", int), ("SportIdentSecond2", int), ("SIStationNumber2", int),
                ("RepeaterRequested", bool), ("NoOfTimesSeen", int), ("NoOfTimesAckSeen", int),
-               ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int), ("RSSIValue", int), ("AckRSSIValue", int),
+               ("Acked", bool), ("AckedTime", datetime), ("MessageBoxId", int), ("RSSIValue", int), 
+               ("AckRSSIValue", int), ("AckLinkQuality", int), 
                ("AddedToMessageBoxTime", datetime), ("LastSeenTime", datetime), ("OrigCreatedDate", datetime),
                ("CreatedDate", datetime)]
 
@@ -275,6 +278,7 @@ class RepeaterMessageBoxArchiveData(object):
         self.MessageBoxId = None
         self.RSSIValue = None
         self.AckRSSIValue = None
+        self.AckLinkQuality = None
         self.AddedToMessageBoxTime = None
         self.LastSeenTime = None
         self.OrigCreatedDate = None
@@ -388,6 +392,7 @@ class MessageSubscriptionArchiveData(object):
                ("MessageBoxId", int),
                ("SubscriptionId", int),
                ("AckRSSIValue", int),
+               ("AckLinkQuality", int),
                ("SubscriberTypeName", str),
                ("TransformName", str),]
 
@@ -407,6 +412,7 @@ class MessageSubscriptionArchiveData(object):
         self.MessageBoxId = None
         self.SubscriptionId = None
         self.AckRSSIValue = 0
+        self.AckLinkQuality = 0
         self.SubscriberTypeName = None
         self.TransformName = None
 
