@@ -25,6 +25,7 @@ class ReceiveTestPunchesAdapter(object):
         self.isInitialized = False
         self.TimeToFetchCounter = 0
         self.LastPunchIdAdded = None
+        self.HadTestPunchToAddLastTime = False
 
     def GetInstanceName(self):
         return self.instanceName
@@ -46,7 +47,7 @@ class ReceiveTestPunchesAdapter(object):
 
     def GetData(self):
         self.TimeToFetchCounter += 1
-        if self.TimeToFetchCounter == 5:
+        if self.TimeToFetchCounter == 5 or self.HadTestPunchToAddLastTime:
             self.TimeToFetchCounter = 0
             punchToAdd = DatabaseHelper.get_test_punch_to_add()
             if punchToAdd is not None:
@@ -67,8 +68,11 @@ class ReceiveTestPunchesAdapter(object):
                 siMessage.AddPayload(payload)
                 siMessage.AddFooter()
 
+                self.HadTestPunchToAddLastTime = True
                 ReceiveTestPunchesAdapter.WiRocLogger.debug("ReceiveTestPunchesAdapter::GetData() Data to fetch: " + Utils.GetDataInHex(siMessage.GetByteArray(), logging.DEBUG))
                 return {"MessageType": "DATA", "MessageSource": "Test", "MessageSubTypeName": "Test", "Data": siMessage.GetByteArray(), "ChecksumOK": True}
+            else:
+                self.HadTestPunchToAddLastTime = False
         return None
 
     def AddedToMessageBox(self, mbid):
