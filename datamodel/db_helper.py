@@ -1350,9 +1350,7 @@ class DatabaseHelper:
     def set_message_stat_uploaded(cls, messageStatId):
         cls.init()
         sql = "UPDATE MessageStatsData SET Uploaded = 1 WHERE Id = " + str(messageStatId)
-        DatabaseHelper.WiRocLogger.debug("DatabaseHelper::set_message_stat_uploaded() 1")
         cls.db.execute_SQL(sql)
-        DatabaseHelper.WiRocLogger.debug("DatabaseHelper::set_message_stat_uploaded() 2")
 
     # Channels
     @classmethod
