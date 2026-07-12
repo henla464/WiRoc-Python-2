@@ -1222,9 +1222,15 @@ class DatabaseHelper:
             SELECT OrigId as id FROM MessageBoxArchiveData) mb
         ON TestPunchData.MessageBoxId = mb.id
         LEFT JOIN
-            (SELECT id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, 0 as AckRSSIValue, 0 as AckLinkQuality, SubscriptionId, SendFailedDate, 'ACTIVE' as ProgressStatus FROM MessageSubscriptionData
+            (SELECT id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, 0 as AckRSSIValue, 0 as AckLinkQuality, SubscriptionId, SendFailedDate, 'ACTIVE' as ProgressStatus
+                FROM MessageSubscriptionData d
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM MessageSubscriptionArchiveData a
+                    WHERE a.OrigId = d.id
+                )
             UNION
-            SELECT OrigId as id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, AckRSSIValue, AckLinkQuality, SubscriptionId, SendFailedDate, 'ARCHIVED' as ProgressStatus FROM MessageSubscriptionArchiveData) ms
+            SELECT OrigId as id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, AckRSSIValue, AckLinkQuality, SubscriptionId, SendFailedDate, 'ARCHIVED' as ProgressStatus
+            FROM MessageSubscriptionArchiveData) ms
         ON TestPunchData.MessageBoxId = ms.MessageBoxId
         LEFT JOIN SubscriptionData ON SubscriptionData.Id = ms.SubscriptionId 
         LEFT JOIN SubscriberData ON SubscriberData.Id = SubscriptionData.SubscriberId
@@ -1270,19 +1276,24 @@ class DatabaseHelper:
             SubscriptionData.MaxTries 
             FROM 
                     (SELECT id, SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, MessageTypeName FROM MessageBoxData
-                    UNION ALL
+                    UNION
                     SELECT OrigId as id, SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, MessageTypeName FROM MessageBoxArchiveData) mb2
 	            JOIN
-		            (SELECT id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, 0 as AckRSSIValue, 0 as AckLinkQuality, SubscriptionId, SendFailedDate, 'ACTIVE' as ProgressStatus FROM MessageSubscriptionData
-		            UNION ALL
+                    (SELECT id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, 0 as AckRSSIValue, 0 as AckLinkQuality, SubscriptionId, SendFailedDate, 'ACTIVE' as ProgressStatus
+                        FROM MessageSubscriptionData d
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM MessageSubscriptionArchiveData a
+                            WHERE a.OrigId = d.id
+                        )
+		            UNION
 		            SELECT OrigId as id, NoOfSendTries, SentDate, AckReceivedDate, MessageBoxId, AckRSSIValue, AckLinkQuality, SubscriptionId, SendFailedDate, 'ARCHIVED' as ProgressStatus FROM MessageSubscriptionArchiveData) ms2
                 ON mb2.id = ms2.MessageBoxId
                 JOIN SubscriptionData ON SubscriptionData.Id = ms2.SubscriptionId
                 JOIN SubscriberData ON SubscriberData.Id = SubscriptionData.SubscriberId
                 LEFT JOIN (SELECT * FROM TestPunchData WHERE BatchGuid = '{testBatchGuid}') as tp ON tp.MessageBoxId = mb2.id
-	        WHERE tp.id is null {f' and mb2.id >= {msgBoxId}' if msgBoxId is not None else ''} and (TypeName = 'LORA' or TypeName = 'SIRAP')
+	        WHERE tp.id is null {f' and mb2.id >= {msgBoxId}' if msgBoxId is not None else ''} AND SubscriberData.TypeName IN ('LORA', 'SIRAP')
         )
-        ORDER BY (cast(TwelveHourTimer as integer) * 3600 + cast(TwentyFourHour as integer) * 43200), MessageBoxId;      
+        ORDER BY (cast(TwelveHourTimer as integer) + cast(TwentyFourHour as integer) * 43200), MessageBoxId;      
                """
 
         testPunchesView = cls.db.get_table_objects_by_SQL(TestPunchView, sql)
