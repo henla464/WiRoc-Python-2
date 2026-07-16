@@ -214,10 +214,21 @@ class SendLoraAdapter(object):
             SendLoraAdapter.WiRocLogger.debug("SendLoraAdapter::BlockAfterReceivingAck lets go")
 
     def BlockSendingToLetRepeaterSendAndReceiveAck(self):
-        timeS = LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(
-            LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS) + \
-                LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(
-                    LoraRadioMessageRS.MessageTypeLoraAck) + 0.35
+        # Block sending until the whole repeater round-trip can complete, so we don't
+        # retransmit while the message is still in flight:
+        #   repeater relays the punch to the receiver   -> 1x double-punch airtime
+        #   receiver acks the repeater                   -> 1x ack airtime
+        #   repeater acks back to this sender            -> 1x ack airtime  (was missing)
+        # The airtime terms scale with lora range (small at short range, large at long range).
+        # The +0.35 is a FIXED floor: at the fastest ranges the airtimes are tiny and the
+        # round-trip is dominated by fixed per-hop processing / main-loop latency, which does
+        # NOT scale down - so this floor must be >= that latency. 0.35 was the previous one-hop
+        # margin; TODO confirm it still covers the loop latency at the fastest ranges.
+        doublePunchTimeS = LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(
+            LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS)
+        ackTimeS = LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(
+            LoraRadioMessageRS.MessageTypeLoraAck)
+        timeS = doublePunchTimeS + 2 * ackTimeS + 0.35
         self.blockSendingForSeconds = timeS
         self.blockSendingFromThisDate = datetime.now()
         self.blockSendingReason = "waitforrepeater"
