@@ -296,7 +296,16 @@ class Main:
                             self.wirocLogger.debug("Start::handleInput() Received ack, for message id: " + Utils.GetDataInHex(messageID, logging.DEBUG) + " "
                                           + " receivedFromRepeater: " + str(receivedFromRepeater)
                                           + " destinationHasAcked: " + str(destinationHasAcked))
-                        DatabaseHelper.archive_message_subscriptions_after_ack(messageID, rssiValue, snrValue)
+                        # A repeater hop-ack (receivedFromRepeater, but destination not yet confirmed)
+                        # means the repeater has the message but the final receiver has not confirmed
+                        # it. Don't archive/retire the sender's message on that - the send block was
+                        # already extended above (BlockSendingToLetRepeaterSendAndReceiveAck), so keep
+                        # the message queued and let it retransmit (bounded by MaxTries) until the
+                        # end-to-end ack (destinationHasAcked) arrives. Every other case - a direct ack,
+                        # a confirmed repeater ack, or repeater mode - archives as before.
+                        repeaterHopAckOnly = (wiRocMode == "SENDER" and receivedFromRepeater and not destinationHasAcked)
+                        if not repeaterHopAckOnly:
+                            DatabaseHelper.archive_message_subscriptions_after_ack(messageID, rssiValue, snrValue)
 
     def handleOutput(self, settDict):
         #self.wirocLogger.debug("Handle output")
