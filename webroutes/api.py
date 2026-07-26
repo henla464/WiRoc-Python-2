@@ -1844,6 +1844,48 @@ def setWifiMeshRouteToInterface(interface):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
+@app.route('/api/network/tailscale/enabled/', methods=['GET'])
+def getTailscaleEnabled():
+    active = True
+    for service in ['tailscaled', 'tailscale-auto-route']:
+        result = subprocess.run(['systemctl', 'is-active', service], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if result.returncode != 0:
+            active = False
+    enabled = '1' if active else '0'
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=enabled))
+
+@app.route('/api/network/tailscale/enabled/<enabled>/', methods=['GET'])
+def setTailscaleEnabled(enabled):
+    enable = (enabled.lower() == 'true' or enabled.lower() == '1')
+    if enable:
+        for service in ['tailscaled', 'tailscale-auto-route']:
+            subprocess.run(['systemctl', 'enable', service], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run(['systemctl', 'start', service], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    else:
+        for service in ['tailscale-auto-route', 'tailscaled']:
+            subprocess.run(['systemctl', 'disable', service], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run(['systemctl', 'stop', service], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return getTailscaleEnabled()
+
+@app.route('/api/network/tailscale/login/', methods=['GET'])
+def tailscaleLogin():
+    # Capture the login URL from tailscale login (prints a URL then blocks), then re-launch it in the background.
+    result = subprocess.run(['timeout', '5', 'tailscale', 'login'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    loginOutput = result.stdout.decode('utf-8').strip()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=loginOutput))
+
+@app.route('/api/network/tailscale/status/', methods=['GET'])
+def tailscaleStatus():
+    result = subprocess.run(['tailscale', 'status', '--json'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    statusOutput = result.stdout.decode('utf-8').strip()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=statusOutput))
+
 @app.route('/api/uploadlogarchive/', methods=['GET'])
 def uploadLogArchive():
     btAddress = getBTAddress()

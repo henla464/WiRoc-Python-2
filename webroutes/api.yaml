@@ -2034,6 +2034,64 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
+  /network/tailscale/enabled/:
+    get:
+      tags:
+        - "Network"
+      summary: "Get if Tailscale VPN service is enabled"
+      operationId: "getTailscaleEnabled"
+      responses:
+        "200":
+          description: "0/1 depending on if Tailscale is enabled"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /network/tailscale/enabled/{enabled}:
+    get:
+      tags:
+        - "Network"
+      summary: "Enable/Disable Tailscale VPN service"
+      operationId: "setTailscaleEnabled"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/TrueFalse"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /network/tailscale/login/:
+    get:
+      tags:
+        - "Network"
+      summary: "Start Tailscale login and return the login URL"
+      operationId: "tailscaleLogin"
+      responses:
+        "200":
+          description: "The Tailscale login URL"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /network/tailscale/status/:
+    get:
+      tags:
+        - "Network"
+      summary: "Get Tailscale status as JSON"
+      operationId: "tailscaleStatus"
+      responses:
+        "200":
+          description: "Tailscale status JSON"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /uploadlogarchive/:
     get:
       tags:
