@@ -4,6 +4,7 @@ from datamodel.db_helper import DatabaseHelper
 from utils.utils import Utils
 import serial
 import logging
+import threading
 
 
 class SendSerialAdapter(object):
@@ -81,6 +82,7 @@ class SendSerialAdapter(object):
         self.isDBInitialized = False
         self.isInitialized = False
         self.rs232Serial = serial.Serial()
+        self.serialLock: threading.Lock = threading.Lock()
 
     def GetInstanceNumber(self):
         return self.instanceNumber
@@ -154,23 +156,27 @@ class SendSerialAdapter(object):
 
     # messageData is a tuple of bytearrays
     def SendData(self, messageData, successCB, failureCB, notSentCB, settingsDictionary):
-        returnSuccess = True
+        self.serialLock.acquire()
+        try:
+            returnSuccess = True
 
-        for data in messageData:
-            try:
-                self.rs232Serial.write(data)
-                self.rs232Serial.flush()
-                DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "Sent", 1)
-                SendSerialAdapter.WiRocLogger.error(
-                    "SendSerialAdapter::SendData() Sent to RS232 Serial, data: " + Utils.GetDataInHex(data, logging.DEBUG))
-            except IOError as ioe:
-                returnSuccess = False
-                DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "NotSent", 0)
-                SendSerialAdapter.WiRocLogger.error("SendSerialAdapter::SendData() Could not send to RS232 serial: " + str(ioe))
+            for data in messageData:
+                try:
+                    self.rs232Serial.write(data)
+                    self.rs232Serial.flush()
+                    DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "Sent", 1)
+                    SendSerialAdapter.WiRocLogger.error(
+                        "SendSerialAdapter::SendData() Sent to RS232 Serial, data: " + Utils.GetDataInHex(data, logging.DEBUG))
+                except IOError as ioe:
+                    returnSuccess = False
+                    DatabaseHelper.add_message_stat(self.GetInstanceName(), None, "NotSent", 0)
+                    SendSerialAdapter.WiRocLogger.error("SendSerialAdapter::SendData() Could not send to RS232 serial: " + str(ioe))
 
-        if returnSuccess:
-            successCB()
-            return True
-        else:
-            failureCB()
-            return False
+            if returnSuccess:
+                successCB()
+                return True
+            else:
+                failureCB()
+                return False
+        finally:
+            self.serialLock.release()
