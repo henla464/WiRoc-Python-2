@@ -282,57 +282,49 @@ class LoraRadioRAK3172:
                 self.SetErrorCode(ErrorCodeData.ERR_LORA_MODULE_COM, "Lora mod. comm")
                 return False
 
-            newSettingsWritten = False
-            try:
-                LoraRadioRAK3172.LoraModuleParameters = self.getParameters()
-                if LoraRadioRAK3172.LoraModuleParameters is None:
-                    self.isInitialized = False
-                    LoraRadioRAK3172.WiRocLogger.error("LoraRadioRAK3172::Init() Could not get parameters")
-                    self.SetErrorCode(ErrorCodeData.ERR_LORA_CONF, "Lora config failed")
-                    return False
-                channelData = DatabaseHelper.get_channel(channel, loraRange, 'RAK3172')
-                LoraRadioRAK3172.WiRocLogger.verbose(f"Freq {channelData.Frequency} {LoraRadioRAK3172.LoraModuleParameters.Frequency} {channelData.Frequency == LoraRadioRAK3172.LoraModuleParameters.Frequency}")
-                LoraRadioRAK3172.WiRocLogger.verbose(f"SpreadingFactor {channelData.SpreadingFactor} {LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor} {channelData.SpreadingFactor == LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor}")
-                LoraRadioRAK3172.WiRocLogger.verbose(f"loraPower {loraPower} {LoraRadioRAK3172.LoraModuleParameters.TransmitPower} {loraPower == LoraRadioRAK3172.LoraModuleParameters.TransmitPower}")
-                LoraRadioRAK3172.WiRocLogger.verbose(f"RfBw {channelData.RfBw} {LoraRadioRAK3172.LoraModuleParameters.Bandwidth} {channelData.RfBw == LoraRadioRAK3172.LoraModuleParameters.Bandwidth}")
-                LoraRadioRAK3172.WiRocLogger.verbose(f"CodeRate {codeRate} {LoraRadioRAK3172.LoraModuleParameters.CodeRate} {codeRate == LoraRadioRAK3172.LoraModuleParameters.CodeRate}")
-                LoraRadioRAK3172.WiRocLogger.verbose(f"LowDatarateOptimize {channelData.LowDatarateOptimize} {LoraRadioRAK3172.LoraModuleParameters.LowDataRateOptimize} {channelData.LowDatarateOptimize == LoraRadioRAK3172.LoraModuleParameters.LowDataRateOptimize}")
-                LoraRadioRAK3172.WiRocLogger.verbose(f"CRCOn {channelData.CRCOn} {LoraRadioRAK3172.LoraModuleParameters.CRCOn} {channelData.CRCOn == LoraRadioRAK3172.LoraModuleParameters.CRCOn}")
-                LoraRadioRAK3172.WiRocLogger.verbose(f"RxGain {rxGain} {LoraRadioRAK3172.LoraModuleParameters.RxGain} {rxGain == LoraRadioRAK3172.LoraModuleParameters.RxGain}")
-                LoraRadioRAK3172.WiRocLogger.verbose(f"drf1268dsCompatMode {drf1268dsCompatMode} {LoraRadioRAK3172.LoraModuleParameters.Drf1268dsCompatMode} {drf1268dsCompatMode == LoraRadioRAK3172.LoraModuleParameters.Drf1268dsCompatMode}")
-                LoraRadioRAK3172.WiRocLogger.verbose(f"sendAck {sendAck} {LoraRadioRAK3172.LoraModuleParameters.SendAck} {sendAck == LoraRadioRAK3172.LoraModuleParameters.SendAck}")
+            LoraRadioRAK3172.LoraModuleParameters = self.getParameters()
+            if LoraRadioRAK3172.LoraModuleParameters is None:
+                self.isInitialized = False
+                LoraRadioRAK3172.WiRocLogger.error("LoraRadioRAK3172::Init() Could not get parameters")
+                self.SetErrorCode(ErrorCodeData.ERR_LORA_CONF, "Lora config failed")
+                return False
+            channelData = DatabaseHelper.get_channel(channel, loraRange, 'RAK3172')
+            LoraRadioRAK3172.WiRocLogger.verbose(f"Freq {channelData.Frequency} {LoraRadioRAK3172.LoraModuleParameters.Frequency} {channelData.Frequency == LoraRadioRAK3172.LoraModuleParameters.Frequency}")
+            LoraRadioRAK3172.WiRocLogger.verbose(f"SpreadingFactor {channelData.SpreadingFactor} {LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor} {channelData.SpreadingFactor == LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor}")
+            LoraRadioRAK3172.WiRocLogger.verbose(f"loraPower {loraPower} {LoraRadioRAK3172.LoraModuleParameters.TransmitPower} {loraPower == LoraRadioRAK3172.LoraModuleParameters.TransmitPower}")
+            LoraRadioRAK3172.WiRocLogger.verbose(f"RfBw {channelData.RfBw} {LoraRadioRAK3172.LoraModuleParameters.Bandwidth} {channelData.RfBw == LoraRadioRAK3172.LoraModuleParameters.Bandwidth}")
+            LoraRadioRAK3172.WiRocLogger.verbose(f"CodeRate {codeRate} {LoraRadioRAK3172.LoraModuleParameters.CodeRate} {codeRate == LoraRadioRAK3172.LoraModuleParameters.CodeRate}")
+            LoraRadioRAK3172.WiRocLogger.verbose(f"LowDatarateOptimize {channelData.LowDatarateOptimize} {LoraRadioRAK3172.LoraModuleParameters.LowDataRateOptimize} {channelData.LowDatarateOptimize == LoraRadioRAK3172.LoraModuleParameters.LowDataRateOptimize}")
+            LoraRadioRAK3172.WiRocLogger.verbose(f"CRCOn {channelData.CRCOn} {LoraRadioRAK3172.LoraModuleParameters.CRCOn} {channelData.CRCOn == LoraRadioRAK3172.LoraModuleParameters.CRCOn}")
+            LoraRadioRAK3172.WiRocLogger.verbose(f"RxGain {rxGain} {LoraRadioRAK3172.LoraModuleParameters.RxGain} {rxGain == LoraRadioRAK3172.LoraModuleParameters.RxGain}")
+            LoraRadioRAK3172.WiRocLogger.verbose(f"drf1268dsCompatMode {drf1268dsCompatMode} {LoraRadioRAK3172.LoraModuleParameters.Drf1268dsCompatMode} {drf1268dsCompatMode == LoraRadioRAK3172.LoraModuleParameters.Drf1268dsCompatMode}")
+            LoraRadioRAK3172.WiRocLogger.verbose(f"sendAck {sendAck} {LoraRadioRAK3172.LoraModuleParameters.SendAck} {sendAck == LoraRadioRAK3172.LoraModuleParameters.SendAck}")
 
-                if (channelData.Frequency == LoraRadioRAK3172.LoraModuleParameters.Frequency and
-                        channelData.SpreadingFactor == LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor and
-                        loraPower == LoraRadioRAK3172.LoraModuleParameters.TransmitPower and
-                        channelData.RfBw == LoraRadioRAK3172.LoraModuleParameters.Bandwidth and
-                        codeRate == LoraRadioRAK3172.LoraModuleParameters.CodeRate and
-                        channelData.LowDatarateOptimize == LoraRadioRAK3172.LoraModuleParameters.LowDataRateOptimize and
-                        channelData.CRCOn == LoraRadioRAK3172.LoraModuleParameters.CRCOn and
-                        rxGain == LoraRadioRAK3172.LoraModuleParameters.RxGain and
-                        drf1268dsCompatMode == LoraRadioRAK3172.LoraModuleParameters.Drf1268dsCompatMode and
-                        sendAck == LoraRadioRAK3172.LoraModuleParameters.SendAck and
-                        preambleLength == LoraRadioRAK3172.LoraModuleParameters.PreambleLength):
-                    LoraRadioRAK3172.WiRocLogger.info("LoraRadioRAK3172::Init() Already correct parameters")
+            if (channelData.Frequency == LoraRadioRAK3172.LoraModuleParameters.Frequency and
+                    channelData.SpreadingFactor == LoraRadioRAK3172.LoraModuleParameters.SpreadingFactor and
+                    loraPower == LoraRadioRAK3172.LoraModuleParameters.TransmitPower and
+                    channelData.RfBw == LoraRadioRAK3172.LoraModuleParameters.Bandwidth and
+                    codeRate == LoraRadioRAK3172.LoraModuleParameters.CodeRate and
+                    channelData.LowDatarateOptimize == LoraRadioRAK3172.LoraModuleParameters.LowDataRateOptimize and
+                    channelData.CRCOn == LoraRadioRAK3172.LoraModuleParameters.CRCOn and
+                    rxGain == LoraRadioRAK3172.LoraModuleParameters.RxGain and
+                    drf1268dsCompatMode == LoraRadioRAK3172.LoraModuleParameters.Drf1268dsCompatMode and
+                    sendAck == LoraRadioRAK3172.LoraModuleParameters.SendAck and
+                    preambleLength == LoraRadioRAK3172.LoraModuleParameters.PreambleLength):
+                LoraRadioRAK3172.WiRocLogger.info("LoraRadioRAK3172::Init() Already correct parameters")
+                self.isInitialized = True
+                return True
+            else:
+                channelNumber = int(''.join(c for c in channel if c.isdigit()) or '0')
+                if self.setParameters(channelData, channelNumber, loraPower, codeRate, rxGain, drf1268dsCompatMode, sendAck, preambleLength):
+                    LoraRadioRAK3172.WiRocLogger.info("LoraRadioRAK3172::Init() Parameters set")
                     self.isInitialized = True
                     return True
                 else:
-                    channelNumber = int(''.join(c for c in channel if c.isdigit()) or '0')
-                    if self.setParameters(channelData, channelNumber, loraPower, codeRate, rxGain, drf1268dsCompatMode, sendAck, preambleLength):
-                        LoraRadioRAK3172.WiRocLogger.info("LoraRadioRAK3172::Init() Parameters set")
-                        self.isInitialized = True
-                        newSettingsWritten = True
-                        return True
-                    else:
-                        LoraRadioRAK3172.WiRocLogger.error("LoraRadioRAK3172::Init() Setting parameters failed")
-                        self.SetErrorCode(ErrorCodeData.ERR_LORA_CONF, "Lora config failed")
-                        self.isInitialized = False
-                        return False
-            finally:
-                if not newSettingsWritten:  # when new settings is written then a reset/restart is done automatically
-                    self.hardwareAbstraction.DisableLora()
-                    time.sleep(0.1)
-                    self.hardwareAbstraction.EnableLora()
+                    LoraRadioRAK3172.WiRocLogger.error("LoraRadioRAK3172::Init() Setting parameters failed")
+                    self.SetErrorCode(ErrorCodeData.ERR_LORA_CONF, "Lora config failed")
+                    self.isInitialized = False
+                    return False
         finally:
             self.serialLock.release()
 
@@ -378,7 +370,7 @@ class LoraRadioRAK3172:
 
                     data = bytearray([channelNumber]) + messageData if self.drf1268dsCompatMode else messageData
                     messageDataWithNetID = Utils.GetDataInHexUpperCase(data)
-                    
+
                     messageString = LoraRadioRAK3172.SendLORADataCmd.format(data=messageDataWithNetID)
                     LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::SendData() messagestring: " + messageString)
                     self.radioSerial.write(messageString.encode("ascii"))
