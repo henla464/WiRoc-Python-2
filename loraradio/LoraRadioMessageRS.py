@@ -4,6 +4,7 @@ import hashlib
 from struct import *
 from datamodel.datamodel import SIMessage
 from loraradio.RSCoderLora import RSCoderLora
+from loraradio.LoraMessageTypes import LoraMessageTypes
 from utils.utils import Utils
 from battery import *
 from settings.settings import SettingsClass
@@ -24,15 +25,14 @@ class LoraRadioMessageRS(object):
     RepeaterBitMask: int = 0b00100000
     BatLowBitMask: int = 0b01000000
     AckBitMask: int = 0b10000000
-    # Six bits for message type
-    MessageTypeSIPunch: int = 3
-    MessageTypeStatus: int = 4
-    MessageTypeLoraAck: int = 5
-    MessageTypeSIPunchDouble: int = 6
-    MessageTypeSIPunchReDCoS: int = 7
-    MessageTypeSIPunchDoubleReDCoS: int = 8
-    MessageTypeHAMCallSign: int = 9
-    MessageTypeStatus2: int = 10
+    MessageTypeSIPunch: int = LoraMessageTypes.MessageTypeSIPunch
+    MessageTypeStatus: int = LoraMessageTypes.MessageTypeStatus
+    MessageTypeLoraAck: int = LoraMessageTypes.MessageTypeLoraAck
+    MessageTypeSIPunchDouble: int = LoraMessageTypes.MessageTypeSIPunchDouble
+    MessageTypeSIPunchReDCoS: int = LoraMessageTypes.MessageTypeSIPunchReDCoS
+    MessageTypeSIPunchDoubleReDCoS: int = LoraMessageTypes.MessageTypeSIPunchDoubleReDCoS
+    MessageTypeHAMCallSign: int = LoraMessageTypes.MessageTypeHAMCallSign
+    MessageTypeStatus2: int = LoraMessageTypes.MessageTypeStatus2
     MessageLengths: list[int]= [24, 16, 7, 14, 14, 7, 27, 15, 27, 11, 16]
 
     # Positions within the message

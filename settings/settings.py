@@ -15,7 +15,7 @@ from cachetools.keys import hashkey
 from functools import partial
 from threading import RLock
 
-from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
+from loraradio.LoraMessageTypes import LoraMessageTypes
 
 cache = TTLCache(maxsize=100, ttl=300)  # 300 seconds
 cacheForEver = TTLCache(maxsize=100, ttl=30000)  # 30000 seconds (500 min)
@@ -571,7 +571,7 @@ class SettingsClass(object):
             HardwareAbstraction.Instance = HardwareAbstraction()
         loraModule =HardwareAbstraction.Instance.GetLoraModule()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
-        SettingsClass.microSecondsToSendAMessage = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS) * 1000
+        SettingsClass.microSecondsToSendAMessage = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraMessageTypes.MessageTypeSIPunchDoubleReDCoS) * 1000
 
         microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 2)*SettingsClass.microSecondsToSendAMessage
         return microSecondsDelay
@@ -584,7 +584,7 @@ class SettingsClass(object):
             HardwareAbstraction.Instance = HardwareAbstraction()
         loraModule = HardwareAbstraction.Instance.GetLoraModule()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
-        SettingsClass.microSecondsToSendAMessage  = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS) * 1000
+        SettingsClass.microSecondsToSendAMessage  = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraMessageTypes.MessageTypeSIPunchDoubleReDCoS) * 1000
 
         microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 1) + SettingsClass.microSecondsToSendAMessage
         microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 2) + SettingsClass.microSecondsToSendAMessage
@@ -643,10 +643,10 @@ class SettingsClass(object):
         sentDoublePunchCount: int = DatabaseHelper.get_no_of_sent_lora_double_punch_messages(startTime, endTime)
         sentStatusCount: int = DatabaseHelper.get_no_of_sent_lora_status_messages(startTime, endTime)
 
-        punchTOA: int | None = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraRadioMessageRS.MessageTypeSIPunchReDCoS)
-        doublePunchTOA: int | None = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS)
-        ackTOA: int | None = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck)
-        statusTOA: int | None = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraRadioMessageRS.MessageTypeStatus2)
+        punchTOA: int | None = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraMessageTypes.MessageTypeSIPunchReDCoS)
+        doublePunchTOA: int | None = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraMessageTypes.MessageTypeSIPunchDoubleReDCoS)
+        ackTOA: int | None = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraMessageTypes.MessageTypeLoraAck)
+        statusTOA: int | None = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraMessageTypes.MessageTypeStatus2)
 
         if punchTOA is None or doublePunchTOA is None or ackTOA is None or statusTOA is None:
             SettingsClass.WiRocLogger.error(f"SettingsClass::GetTotalLoraAirTime() TOA is mising: {punchTOA} , {doublePunchTOA}, {ackTOA}, {statusTOA}")
