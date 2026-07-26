@@ -128,17 +128,15 @@ class HardwareAbstraction(object):
             self.LORARSLine = None
             self.LORAirqLine = 11 #PL11
             self.line_request = gpiod.request_lines(chipPath, consumer="wirocpython", config={
-                self.LORAenableLine: gpiod.LineSettings(direction=Direction.OUTPUT),  # lora enable pin (corresponds to pin 13)
+                self.LORAenableLine: gpiod.LineSettings(direction=Direction.OUTPUT, output_value=Value.ACTIVE),  # lora enable pin (corresponds to pin 13)
                 self.PMUIRQLine: gpiod.LineSettings(direction=Direction.INPUT),  # IRQ pin GPIOA3 Pin 15
                 self.SRRirqLine : gpiod.LineSettings(direction=Direction.INPUT),  # SRR_IRQ input interrupt message available (corresponds to pin 12 GPIOA6)
                 self.LORAauxLine: gpiod.LineSettings(direction=Direction.INPUT),       # lora aux pin (corresponds to pin 19)
-                self.SRRnrstLine: gpiod.LineSettings(direction=Direction.OUTPUT)  # SRR_NRST reset SRR (GPIOG9)
+                self.SRRnrstLine: gpiod.LineSettings(direction=Direction.OUTPUT, output_value=Value.ACTIVE)  # SRR_NRST reset SRR (GPIOG9)
             })
             self.line_request_gpiochip1 = gpiod.request_lines(chip1Path, consumer="wirocpython", config={
                 self.LORAirqLine: gpiod.LineSettings(direction=Direction.INPUT)
             })
-            self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
-            self.line_request.set_value(self.SRRnrstLine, Value.ACTIVE)
 
     def GetSISerialPorts(self):
         if self.wirocHWVersionNumber >= 4:
