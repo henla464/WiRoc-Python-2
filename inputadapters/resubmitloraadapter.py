@@ -106,7 +106,7 @@ class ResubmitLoraAdapter(object):
 
         self.LastTimeFetched = currentTime
         endTime: datetime = datetime.now()
-        startTime: datetime = endTime - timedelta(seconds=1800)  # 30 minutes ago
+        startTime: datetime = endTime - timedelta(seconds=SettingsClass.GetResubmitLookbackSeconds())
 
         messageBoxArchiveDatas: list[MessageBoxArchiveData] = DatabaseHelper.get_failed_lora_messages(startTime, endTime)
         self.WiRocLogger.debug(f"ResubmitLoraAdapter::GetData() startTime: {startTime} endTime: {endTime} Messages exists: {len(messageBoxArchiveDatas) > 0}")

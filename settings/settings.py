@@ -702,6 +702,18 @@ class SettingsClass(object):
         return (totalAirtimeMs / windowDurationMs) * 100.0
 
     @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetResubmitLookbackSeconds'), lock=rlock)
+    def GetResubmitLookbackSeconds() -> int:
+        sett = DatabaseHelper.get_setting_by_key('ResubmitLookbackSeconds')
+        if sett is None:
+            SettingsClass.SetSetting('ResubmitLookbackSeconds', '1800')
+            return 1800
+        try:
+            return int(sett.Value)
+        except ValueError:
+            return 1800
+
+    @staticmethod
     @cached(cache, key=partial(hashkey, 'GetStatusMessageInterval'), lock=rlock)
     def GetStatusMessageInterval() -> int:
         sett = DatabaseHelper.get_setting_by_key('StatusMessageBaseInterval')
