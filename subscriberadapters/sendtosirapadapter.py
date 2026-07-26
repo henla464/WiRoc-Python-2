@@ -58,7 +58,6 @@ class SendToSirapAdapter(object):
     def __init__(self, instanceName):
         self.instanceName: str = instanceName
         self.transforms: dict[str, any] = {}
-        self.sock: socket.socket | None = None
         self.isInitialized: bool = False
         self.isDBInitialized: bool = False
 
@@ -115,66 +114,52 @@ class SendToSirapAdapter(object):
     def GetRetryDelay(self, tryNo: int) -> float:
         return 1
 
-    def OpenConnection(self, failureCB, callbackQueue, settingsDictionary: dict[str, any]) -> bool:
-        if self.sock is None:
-            try:
-                self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                SendToSirapAdapter.WiRocLogger.debug(
-                    "SendToSirapAdapter::OpenConnection() Address: " + settingsDictionary["SendToSirapIP"] + " Port: " + str(
-                        settingsDictionary["SendToSirapIPPort"]))
-                server_address = (settingsDictionary["SendToSirapIP"], settingsDictionary["SendToSirapIPPort"])
-                self.sock.settimeout(3)
-                self.sock.connect(server_address)
-                SendToSirapAdapter.WiRocLogger.debug("SendToSirapAdapter::OpenConnection() After connect")
-                return True
-            except socket.gaierror as msg:
-                SendToSirapAdapter.WiRocLogger.error(
-                    "SendToSirapAdapter::OpenConnection() Address-related error connecting to server: " + str(msg))
-                if self.sock is not None:
-                    self.sock.close()
-                self.sock = None
-                failureCB()
-                #callbackQueue.put((failureCB,))
-                return False
-            except socket.error as msg:
-                SendToSirapAdapter.WiRocLogger.error("SendToSirapAdapter::OpenConnection() Connection error: " + str(msg))
-                if self.sock is not None:
-                    self.sock.close()
-                self.sock = None
-                failureCB()
-                #callbackQueue.put((failureCB,))
-                return False
-        return True
+    def OpenConnection(self, failureCB, settingsDictionary: dict[str, any]) -> socket.socket | None:
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            SendToSirapAdapter.WiRocLogger.debug(
+                "SendToSirapAdapter::OpenConnection() Address: " + settingsDictionary["SendToSirapIP"] + " Port: " + str(
+                    settingsDictionary["SendToSirapIPPort"]))
+            server_address = (settingsDictionary["SendToSirapIP"], settingsDictionary["SendToSirapIPPort"])
+            sock.settimeout(3)
+            sock.connect(server_address)
+            SendToSirapAdapter.WiRocLogger.debug("SendToSirapAdapter::OpenConnection() After connect")
+            return sock
+        except socket.gaierror as msg:
+            SendToSirapAdapter.WiRocLogger.error(
+                "SendToSirapAdapter::OpenConnection() Address-related error connecting to server: " + str(msg))
+            sock.close()
+            failureCB()
+            return None
+        except socket.error as msg:
+            SendToSirapAdapter.WiRocLogger.error("SendToSirapAdapter::OpenConnection() Connection error: " + str(msg))
+            sock.close()
+            failureCB()
+            return None
 
     # messageData is tuple of bytearray
     def SendData(self, messageData: tuple[bytearray], successCB, failureCB, notSentCB, settingsDictionary: dict[str, any]) -> bool:
         try:
-            # Send data
             for data in messageData:
-                if not self.OpenConnection(failureCB, None, settingsDictionary):
-                    self.sock = None
+                sock = self.OpenConnection(failureCB, settingsDictionary)
+                if sock is None:
                     return False
 
-                self.sock.sendall(data)
-                self.sock.close()
-                self.sock = None
-                SendToSirapAdapter.WiRocLogger.debug(
-                    "SendToSirapAdapter::SendData() Sent to SIRAP: " + Utils.GetDataInHex(data, logging.DEBUG))
+                try:
+                    sock.sendall(data)
+                    sock.close()
+                    SendToSirapAdapter.WiRocLogger.debug(
+                        "SendToSirapAdapter::SendData() Sent to SIRAP: " + Utils.GetDataInHex(data, logging.DEBUG))
+                except socket.error as msg:
+                    logging.error(msg)
+                    sock.close()
+                    failureCB()
+                    return False
 
             DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Sent", 1)
             successCB()
             return True
-        except socket.error as msg:
-            logging.error(msg)
-            if self.sock is not None:
-                self.sock.close()
-            self.sock = None
-            failureCB()
-            return False
         except:
             SendToSirapAdapter.WiRocLogger.error("SendToSirapAdapter::SendData() Exception")
-            if self.sock is not None:
-                self.sock.close()
-            self.sock = None
             failureCB()
             return False
