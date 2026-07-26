@@ -3,6 +3,7 @@ __author__ = 'henla464'
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from datamodel.db_helper import DatabaseHelper
 from datamodel.datamodel import SettingData
+from datetime import datetime, timedelta
 import time
 import math
 import random
@@ -13,6 +14,8 @@ from cachetools import cached, TTLCache
 from cachetools.keys import hashkey
 from functools import partial
 from threading import RLock
+
+from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 
 cache = TTLCache(maxsize=100, ttl=300)  # 300 seconds
 cacheForEver = TTLCache(maxsize=100, ttl=30000)  # 30000 seconds (500 min)
@@ -568,14 +571,7 @@ class SettingsClass(object):
             HardwareAbstraction.Instance = HardwareAbstraction()
         loraModule =HardwareAbstraction.Instance.GetLoraModule()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
-        MessageTypeSIPunchDoubleReDCoS: int = 8
-        SettingsClass.microSecondsToSendAMessage = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(MessageTypeSIPunchDoubleReDCoS) * 1000
-
-        #codeRate = SettingsClass.GetCodeRate()
-        #messageLengthInBytes = 26  # length of double punch message
-        #SettingsClass.microSecondsToSendAMessage = SettingsClass.channelData.SlopeCoefficient * (messageLengthInBytes + SettingsClass.channelData.M)
-        # extra delay for higher error coderates
-        #SettingsClass.microSecondsToSendAMessage = SettingsClass.microSecondsToSendAMessage * (1+0.2*codeRate)
+        SettingsClass.microSecondsToSendAMessage = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS) * 1000
 
         microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 2)*SettingsClass.microSecondsToSendAMessage
         return microSecondsDelay
@@ -588,8 +584,7 @@ class SettingsClass(object):
             HardwareAbstraction.Instance = HardwareAbstraction()
         loraModule = HardwareAbstraction.Instance.GetLoraModule()
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
-        MessageTypeSIPunchDoubleReDCoS: int = 8
-        SettingsClass.microSecondsToSendAMessage  = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(MessageTypeSIPunchDoubleReDCoS) * 1000
+        SettingsClass.microSecondsToSendAMessage  = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS) * 1000
 
         microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 1) + SettingsClass.microSecondsToSendAMessage
         microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 2) + SettingsClass.microSecondsToSendAMessage
@@ -634,6 +629,77 @@ class SettingsClass(object):
         elif MessageTypeStatus2 == messageType or MessageTypeStatus == messageType:
             return SettingsClass.timeOnAirData.StatusTOA
         return None
+
+    @staticmethod
+    def GetTotalLoraAirTime(startTime: datetime, endTime: datetime) -> int:
+        """Calculate total LoRa airtime in milliseconds for all LoRa messages in the time window."""
+        # Received messages
+        receivedSinglePunchCount: int = DatabaseHelper.get_no_of_received_lora_single_punch_messages(startTime, endTime)
+        receivedDoublePunchCount: int = DatabaseHelper.get_no_of_received_lora_double_punch_messages(startTime, endTime)
+        receivedStatusCount: int = DatabaseHelper.get_no_of_received_lora_status_messages(startTime, endTime)
+
+        # Sent messages (including retries)
+        sentSinglePunchCount: int = DatabaseHelper.get_no_of_sent_lora_single_punch_messages(startTime, endTime)
+        sentDoublePunchCount: int = DatabaseHelper.get_no_of_sent_lora_double_punch_messages(startTime, endTime)
+        sentStatusCount: int = DatabaseHelper.get_no_of_sent_lora_status_messages(startTime, endTime)
+
+        punchTOA: int | None = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraRadioMessageRS.MessageTypeSIPunchReDCoS)
+        doublePunchTOA: int | None = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS)
+        ackTOA: int | None = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraRadioMessageRS.MessageTypeLoraAck)
+        statusTOA: int | None = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraRadioMessageRS.MessageTypeStatus2)
+
+        if punchTOA is None or doublePunchTOA is None or ackTOA is None or statusTOA is None:
+            SettingsClass.WiRocLogger.error(f"SettingsClass::GetTotalLoraAirTime() TOA is mising: {punchTOA} , {doublePunchTOA}, {ackTOA}, {statusTOA}")
+            punchTOA = punchTOA or 0
+            doublePunchTOA = doublePunchTOA or 0
+            ackTOA = ackTOA or 0
+            statusTOA = statusTOA or 0
+
+        # Received: each punch received consumes airtime for the punch + the ack we send back
+        receivedSingleAirTime: int = receivedSinglePunchCount * (punchTOA + ackTOA)
+        receivedDoubleAirTime: int = receivedDoublePunchCount * (doublePunchTOA + ackTOA)
+        receivedStatusAirTime: int = receivedStatusCount * statusTOA
+
+        # Sent: each sent message (including retries) consumes airtime for the punch + the ack we receive
+        sentSingleAirTime: int = sentSinglePunchCount * (punchTOA + ackTOA)
+        sentDoubleAirTime: int = sentDoublePunchCount * (doublePunchTOA + ackTOA)
+        sentStatusAirTime: int = sentStatusCount * statusTOA
+
+        return receivedSingleAirTime + receivedDoubleAirTime + receivedStatusAirTime + sentSingleAirTime + sentDoubleAirTime + sentStatusAirTime
+
+    @staticmethod
+    def GetLoraAirTimePercentage() -> float:
+        """Calculate the percentage of airtime used for the current datarate over its observation window.
+
+        Returns a float where 100.0 means 100% of the allowed airtime is used."""
+        # Observation window in minutes per LoraRange.
+        _observationWindowMinutes: dict[str, float] = {
+            'UF': 0.5,
+            'XF': 1,
+            'F':  2,
+            'MF': 3,
+            'ML': 4,
+            'L':  5,
+            'XL': 6,
+            'UL': 7,
+        }
+
+        loraRange: str = SettingsClass.GetLoraRange()
+        timeWindowMinutes: float | None = _observationWindowMinutes.get(loraRange)
+        if timeWindowMinutes is None:
+            return 0.0
+        timeWindowS: float = timeWindowMinutes * 60
+
+        endTime: datetime = datetime.now()
+        startTime: datetime = endTime - timedelta(seconds=timeWindowS)
+
+        totalAirtimeMs: int = SettingsClass.GetTotalLoraAirTime(startTime, endTime)
+        windowDurationMs: float = timeWindowS * 1000.0
+
+        if windowDurationMs == 0:
+            return 0.0
+
+        return (totalAirtimeMs / windowDurationMs) * 100.0
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetStatusMessageInterval'), lock=rlock)

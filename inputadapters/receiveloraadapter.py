@@ -185,6 +185,7 @@ class ReceiveLoraAdapter(object):
                 ackRequested = loraMessage.GetAckRequested()
                 ackAlreadySent = loraMessage.GetAckAlreadySent()
                 loraListenOnly = SettingsClass.GetLoraListenOnly()
+                ReceiveLoraAdapter.WiRocLogger.debug("ReceiveLoraAdapter::GetData() Lora message received: ackRequested: " +str(ackRequested)+ " ackAlreadySent: " +str(ackAlreadySent)+ " loraListenOnly: " +str(loraListenOnly)+ " WiRocMode: " + SettingsClass.GetLoraMode())
                 if ackAlreadySent:
                     ReceiveLoraAdapter.WiRocLogger.debug("ReceiveLoraAdapter::GetData() Lora message received, ack already sent by lora module. WiRocMode: " + SettingsClass.GetLoraMode())
                 elif ackRequested and \

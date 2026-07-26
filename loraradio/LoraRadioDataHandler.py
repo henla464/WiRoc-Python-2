@@ -973,7 +973,7 @@ class LoraRadioDataHandler(object):
                 rssiValue = int.from_bytes(self.DataReceived[expectedMessageLength:expectedMessageLength+self.rssiByteCount], byteorder='big', signed=False)
         snrValue = None
         if self.SNRByteCount > 0:
-            snrValue = int.from_bytes(self.DataReceived[expectedMessageLength + self.rssiByteCount:expectedMessageLength + self.rssiByteCount + self.SNRByteCount], byteorder='big')
+            snrValue = int.from_bytes(self.DataReceived[expectedMessageLength + self.rssiByteCount:expectedMessageLength + self.rssiByteCount + self.SNRByteCount], byteorder='big', signed=True)
         statusValue = None
         if self.StatusByteCount > 0:
             statusValue = int.from_bytes(
@@ -1059,7 +1059,7 @@ class LoraRadioDataHandler(object):
         snrValue = None
         if self.SNRByteCount > 0:
             snrValue = int.from_bytes(
-                self.DataReceived[expectedMessageLength + self.rssiByteCount:expectedMessageLength + self.rssiByteCount + self.SNRByteCount], byteorder='big')
+                self.DataReceived[expectedMessageLength + self.rssiByteCount:expectedMessageLength + self.rssiByteCount + self.SNRByteCount], byteorder='big', signed=True)
         statusValue = None
         if self.StatusByteCount > 0:
             statusValue = int.from_bytes(
@@ -1160,7 +1160,7 @@ class LoraRadioDataHandler(object):
         snrValue = None
         if self.SNRByteCount > 0:
             snrValue = int.from_bytes(
-                self.DataReceived[expectedMessageLength + self.rssiByteCount:expectedMessageLength + self.rssiByteCount + self.SNRByteCount], byteorder='big')
+                self.DataReceived[expectedMessageLength + self.rssiByteCount:expectedMessageLength + self.rssiByteCount + self.SNRByteCount], byteorder='big', signed=True)
         statusValue = None
         if self.StatusByteCount > 0:
             statusValue = int.from_bytes(
@@ -1261,7 +1261,7 @@ class LoraRadioDataHandler(object):
                 rssiValue = int.from_bytes(self.DataReceived[expectedMessageLength:expectedMessageLength+self.rssiByteCount], byteorder='big', signed=False)
         snrValue = None
         if self.SNRByteCount > 0:
-            snrValue = int.from_bytes(self.DataReceived[expectedMessageLength + self.rssiByteCount:expectedMessageLength + self.rssiByteCount + self.SNRByteCount], byteorder='big')
+            snrValue = int.from_bytes(self.DataReceived[expectedMessageLength + self.rssiByteCount:expectedMessageLength + self.rssiByteCount + self.SNRByteCount], byteorder='big', signed=True)
         statusValue = None
         if self.StatusByteCount > 0:
             statusValue = int.from_bytes(
@@ -1322,7 +1322,7 @@ class LoraRadioDataHandler(object):
       
         snrValue = None
         if self.SNRByteCount > 0:
-            snrValue = int.from_bytes(self.DataReceived[expectedMessageLength + self.rssiByteCount:expectedMessageLength + self.rssiByteCount + self.SNRByteCount], byteorder='big')
+            snrValue = int.from_bytes(self.DataReceived[expectedMessageLength + self.rssiByteCount:expectedMessageLength + self.rssiByteCount + self.SNRByteCount], byteorder='big', signed=True)
         statusValue = None
         if self.StatusByteCount > 0:
             statusValue = int.from_bytes(

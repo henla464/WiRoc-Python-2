@@ -619,6 +619,135 @@ class DatabaseHelper:
         return noOfMessages == 0
 
     @classmethod
+    def get_no_of_received_lora_single_punch_messages(cls, startTime: datetime, endTime: datetime) -> int:
+        cls.init()
+        activeSQL = ("SELECT COUNT(1) FROM MessageBoxData "
+                     "WHERE MessageTypeName = 'LORA' AND MessageSubTypeName = 'SIMessage' "
+                     "AND CreatedDate >= ? AND CreatedDate < ?")
+        activeCount = cls.db.get_scalar_by_SQL(activeSQL, (startTime, endTime))
+
+        archiveSQL = ("SELECT COUNT(1) FROM MessageBoxArchiveData "
+                      "WHERE MessageTypeName = 'LORA' AND MessageSubTypeName = 'SIMessage' "
+                      "AND CreatedDate >= ? AND CreatedDate < ?")
+        archiveCount = cls.db.get_scalar_by_SQL(archiveSQL, (startTime, endTime))
+
+        return (activeCount or 0) + (archiveCount or 0)
+
+    @classmethod
+    def get_no_of_received_lora_double_punch_messages(cls, startTime: datetime, endTime: datetime) -> int:
+        cls.init()
+        activeSQL = ("SELECT COUNT(1) FROM MessageBoxData "
+                     "WHERE MessageTypeName = 'LORA' AND MessageSubTypeName = 'SIMessageDouble' "
+                     "AND CreatedDate >= ? AND CreatedDate < ?")
+        activeCount = cls.db.get_scalar_by_SQL(activeSQL, (startTime, endTime))
+
+        archiveSQL = ("SELECT COUNT(1) FROM MessageBoxArchiveData "
+                      "WHERE MessageTypeName = 'LORA' AND MessageSubTypeName = 'SIMessageDouble' "
+                      "AND CreatedDate >= ? AND CreatedDate < ?")
+        archiveCount = cls.db.get_scalar_by_SQL(archiveSQL, (startTime, endTime))
+
+        return (activeCount or 0) + (archiveCount or 0)
+
+    @classmethod
+    def get_no_of_received_lora_status_messages(cls, startTime: datetime, endTime: datetime) -> int:
+        cls.init()
+        activeSQL = ("SELECT COUNT(1) FROM MessageBoxData "
+                     "WHERE MessageTypeName = 'LORA' AND MessageSubTypeName = 'Status' "
+                     "AND CreatedDate >= ? AND CreatedDate < ?")
+        activeCount = cls.db.get_scalar_by_SQL(activeSQL, (startTime, endTime))
+
+        archiveSQL = ("SELECT COUNT(1) FROM MessageBoxArchiveData "
+                      "WHERE MessageTypeName = 'LORA' AND MessageSubTypeName = 'Status' "
+                      "AND CreatedDate >= ? AND CreatedDate < ?")
+        archiveCount = cls.db.get_scalar_by_SQL(archiveSQL, (startTime, endTime))
+
+        return (activeCount or 0) + (archiveCount or 0)
+    
+    @classmethod
+    def get_no_of_sent_lora_single_punch_messages(cls, startTime: datetime, endTime: datetime) -> int:
+        # NOTE: SentDate is only the timestamp of the last send attempt. Earlier retries may have
+        # occurred before startTime even if SentDate falls within the window. Since endTime is
+        # typically "now" this is an acceptable approximation.
+        cls.init()
+        archiveSQL = ("SELECT SUM(NoOfSendTries) FROM MessageSubscriptionArchiveData "
+                      "JOIN MessageBoxArchiveData ON MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
+                      "WHERE MessageSubscriptionArchiveData.SentDate >= ? AND MessageSubscriptionArchiveData.SentDate < ? "
+                      "AND MessageSubscriptionArchiveData.SubscriberTypeName = 'LORA' "
+                      "AND MessageBoxArchiveData.MessageSubTypeName = 'SIMessage'")
+        archiveCount = cls.db.get_scalar_by_SQL(archiveSQL, (startTime, endTime))
+
+        activeSQL = ("SELECT SUM(MessageSubscriptionData.NoOfSendTries) FROM MessageSubscriptionData "
+                     "JOIN SubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
+                     "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
+                     "JOIN MessageBoxData ON MessageSubscriptionData.MessageBoxId = MessageBoxData.Id "
+                     "WHERE MessageSubscriptionData.SentDate >= ? AND MessageSubscriptionData.SentDate < ? "
+                     "AND SubscriberData.TypeName = 'LORA' "
+                     "AND MessageBoxData.MessageSubTypeName = 'SIMessage'")
+        activeCount = cls.db.get_scalar_by_SQL(activeSQL, (startTime, endTime))
+
+        return (activeCount or 0) + (archiveCount or 0)
+
+    @classmethod
+    def get_no_of_sent_lora_double_punch_messages(cls, startTime: datetime, endTime: datetime) -> int:
+        # NOTE: SentDate is only the timestamp of the last send attempt. Earlier retries may have
+        # occurred before startTime even if SentDate falls within the window. Since endTime is
+        # typically "now" this is an acceptable approximation.
+        cls.init()
+        archiveSQL = ("SELECT SUM(NoOfSendTries) FROM MessageSubscriptionArchiveData "
+                      "JOIN MessageBoxArchiveData ON MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
+                      "WHERE MessageSubscriptionArchiveData.SentDate >= ? AND MessageSubscriptionArchiveData.SentDate < ? "
+                      "AND MessageSubscriptionArchiveData.SubscriberTypeName = 'LORA' "
+                      "AND MessageBoxArchiveData.MessageSubTypeName = 'SIMessageDouble'")
+        archiveCount = cls.db.get_scalar_by_SQL(archiveSQL, (startTime, endTime))
+
+        activeSQL = ("SELECT SUM(MessageSubscriptionData.NoOfSendTries) FROM MessageSubscriptionData "
+                     "JOIN SubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
+                     "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
+                     "JOIN MessageBoxData ON MessageSubscriptionData.MessageBoxId = MessageBoxData.Id "
+                     "WHERE MessageSubscriptionData.SentDate >= ? AND MessageSubscriptionData.SentDate < ? "
+                     "AND SubscriberData.TypeName = 'LORA' "
+                     "AND MessageBoxData.MessageSubTypeName = 'SIMessageDouble'")
+        activeCount = cls.db.get_scalar_by_SQL(activeSQL, (startTime, endTime))
+
+        return (activeCount or 0) + (archiveCount or 0)
+
+    @classmethod
+    def get_no_of_sent_lora_status_messages(cls, startTime: datetime, endTime: datetime) -> int:
+        # NOTE: SentDate is only the timestamp of the last send attempt. Earlier retries may have
+        # occurred before startTime even if SentDate falls within the window. Since endTime is
+        # typically "now" this is an acceptable approximation.
+        cls.init()
+        archiveSQL = ("SELECT SUM(NoOfSendTries) FROM MessageSubscriptionArchiveData "
+                      "JOIN MessageBoxArchiveData ON MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
+                      "WHERE MessageSubscriptionArchiveData.SentDate >= ? AND MessageSubscriptionArchiveData.SentDate < ? "
+                      "AND MessageSubscriptionArchiveData.SubscriberTypeName = 'LORA' "
+                      "AND MessageBoxArchiveData.MessageSubTypeName = 'Status'")
+        archiveCount = cls.db.get_scalar_by_SQL(archiveSQL, (startTime, endTime))
+
+        activeSQL = ("SELECT SUM(MessageSubscriptionData.NoOfSendTries) FROM MessageSubscriptionData "
+                     "JOIN SubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
+                     "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
+                     "JOIN MessageBoxData ON MessageSubscriptionData.MessageBoxId = MessageBoxData.Id "
+                     "WHERE MessageSubscriptionData.SentDate >= ? AND MessageSubscriptionData.SentDate < ? "
+                     "AND SubscriberData.TypeName = 'LORA' "
+                     "AND MessageBoxData.MessageSubTypeName = 'Status'")
+        activeCount = cls.db.get_scalar_by_SQL(activeSQL, (startTime, endTime))
+
+        return (activeCount or 0) + (archiveCount or 0)
+
+    @classmethod
+    def any_active_lora_subscriptions_not_acked(cls) -> bool:
+        """Check if there are any active (non-archived) LORA message subscriptions that not yet been acked."""
+        cls.init()
+        sql = ("SELECT COUNT(1) FROM MessageSubscriptionData "
+               "JOIN SubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
+               "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
+               "WHERE SubscriberData.TypeName = 'LORA' "
+               "AND MessageSubscriptionData.AckReceivedDate IS NULL")
+        count = cls.db.get_scalar_by_SQL(sql)
+        return (count or 0) > 0
+
+    @classmethod
     def get_failed_lora_messages(cls, startTime: datetime, endTime: datetime) -> list[MessageBoxArchiveData]:
         selectSQL = ("select MessageBoxArchiveData.* from MessageSubscriptionArchiveData "
                      "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "

@@ -40,8 +40,8 @@ class ResubmitLoraAdapter(object):
         self.WiRocLogger = logging.getLogger('WiRoc.Input')
         self.instanceName = instanceName
         self.isInitialized = False
-        self.TimeToFetch = False
         self.LastTimeFetched = time.monotonic()
+        self._nextResubmitTime: float = 0  # 0 = idle; >0 = earliest monotonic time to try next resubmit
 
     def GetInstanceName(self):
         return self.instanceName
@@ -60,45 +60,67 @@ class ResubmitLoraAdapter(object):
 
     @cached(resubmitCache, key=partial(hashkey, 'GetResubmitInterval'), lock=rlock)
     def GetResubmitRetryInterval(self):
-        totalRetryDelay = SettingsClass.GetTotalRetryDelaySeconds()
-        return totalRetryDelay
+        # Adjust to not query database too often but still resubmit often enough
+        resubmitInterval = SettingsClass.GetRetryDelay(4)
+        return resubmitInterval
 
-    def UpdateInfrequently(self):
+    def UpdateInfrequently(self) -> bool:
         currentTime = time.monotonic()
-        self.TimeToFetch = (currentTime - self.LastTimeFetched > self.GetResubmitRetryInterval())
-        self.WiRocLogger.debug(f"ResubmitLoraAdapter::UpdateInfrequently() time to fetch: {self.TimeToFetch} currentTime: {currentTime} lastTimeFetched: {self.LastTimeFetched} resubmitRetryInterval: {self.GetResubmitRetryInterval()}")
-        return self.TimeToFetch
+        if self._nextResubmitTime == 0:
+            # Idle: check if enough time has passed since last fetch to start looking for failed messages.
+            if currentTime - self.LastTimeFetched > self.GetResubmitRetryInterval():
+                self._nextResubmitTime = currentTime  # fetch due now
+        # Return True if a resubmit is scheduled (now or future), so the adapter stays
+        # in the active list and GetData() is called each loop iteration for its own gating.
+        return self._nextResubmitTime != 0
 
     def GetData(self):
-        if self.TimeToFetch:
-            currentTime = time.monotonic()
-            self.WiRocLogger.debug(f"ResubmitLoraAdapter::GetData() time to fetch!, currentTime: {currentTime} timeOfLastPunchMessageSentToLora: {SettingsClass.GetTimeOfLastPunchMessageSentToLora()} 0.8*resubmitRetryInterval: {0.8*self.GetResubmitRetryInterval()}")
-            self.TimeToFetch = False
-            if currentTime - SettingsClass.GetTimeOfLastPunchMessageSentToLora() > 0.8*self.GetResubmitRetryInterval():
-                # Only resubmit it if it has gone 0.8*resubmitretryintervals since last lora punch message was sent
-                self.LastTimeFetched = currentTime
-                endTime: datetime = datetime.now()
-                startTime: datetime = endTime - timedelta(seconds=1800)  # 30 minutes ago
-
-                self.WiRocLogger.debug(f"ResubmitLoraAdapter::GetData() startTime: {startTime} endTime: {endTime}")
-                messageBoxArchiveDatas: list[MessageBoxArchiveData] = DatabaseHelper.get_failed_lora_messages(startTime, endTime)
-                self.WiRocLogger.debug(f"ResubmitLoraAdapter::GetData() len(messageBoxArchiveDatas): {len(messageBoxArchiveDatas)}")
-                if len(messageBoxArchiveDatas) == 0:
-                    return None
-                messageBoxArchiveData = messageBoxArchiveDatas[0]
-
-                noOfSubmitted = DatabaseHelper.get_no_of_times_message_data_submitted_since_last_acked_message(messageBoxArchiveData.MessageData)
-                if noOfSubmitted < 4:
-                    # need to mark as resubmitted so it is not picked up again
-                    DatabaseHelper.set_message_resubmitted(messageBoxArchiveData.id)
-
-                    self.WiRocLogger.debug("ResubmitLoraAdapter::GetData() Data to fetch")
-                    return {"MessageType": "DATA", "MessageSubTypeName": messageBoxArchiveData.MessageSubTypeName, "MessageSource": "Resumbmit", "TypeName": messageBoxArchiveData.MessageTypeName, "Data": messageBoxArchiveData.MessageData, "ChecksumOK": True}
-                else:
-                    # Already submitted 4 times since last acked message so give up. Might be submitted again if a new message is acked.
-                    return None
+        if self._nextResubmitTime == 0:
             return None
-        return None
+
+        currentTime = time.monotonic()
+        if currentTime < self._nextResubmitTime:
+            return None  # not yet due
+        
+        self.WiRocLogger.debug(f"ResubmitLoraAdapter::GetData() currentTime: {currentTime} nextResubmitTime: {self._nextResubmitTime} timeOfLastPunchMessageSentToLora: {SettingsClass.GetTimeOfLastPunchMessageSentToLora()}")
+
+        # Clear the scheduled time. Will be re-set below if a resubmit succeeds.
+        self._nextResubmitTime = 0
+
+        # Only resubmit if no active LORA messages are currently being sent (not yet acked)
+        if DatabaseHelper.any_active_lora_subscriptions_not_acked():
+            self.WiRocLogger.debug("ResubmitLoraAdapter::GetData() Skipping resubmit: active LORA message subscriptions are not yet acked")
+            return None
+        # Don't resubmit if airtime usage is already above 20%
+        if SettingsClass.GetLoraAirTimePercentage() > 20.0:
+            self.WiRocLogger.debug("ResubmitLoraAdapter::GetData() Skipping resubmit: airtime percentage above 20%%")
+            return None
+
+        self.LastTimeFetched = currentTime
+        endTime: datetime = datetime.now()
+        startTime: datetime = endTime - timedelta(seconds=1800)  # 30 minutes ago
+
+        messageBoxArchiveDatas: list[MessageBoxArchiveData] = DatabaseHelper.get_failed_lora_messages(startTime, endTime)
+        self.WiRocLogger.debug(f"ResubmitLoraAdapter::GetData() startTime: {startTime} endTime: {endTime}")
+        self.WiRocLogger.debug(f"ResubmitLoraAdapter::GetData() len(messageBoxArchiveDatas): {len(messageBoxArchiveDatas)}")
+        if len(messageBoxArchiveDatas) == 0:
+            return None
+        messageBoxArchiveData = messageBoxArchiveDatas[0]
+
+        noOfSubmitted = DatabaseHelper.get_no_of_times_message_data_submitted_since_last_acked_message(messageBoxArchiveData.MessageData)
+        if noOfSubmitted < 4:
+            # need to mark as resubmitted so it is not picked up again
+            DatabaseHelper.set_message_resubmitted(messageBoxArchiveData.id)
+
+            # Schedule next resubmit after GetRetryDelay(1) so more failed messages
+            # can be processed quickly without waiting for the next UpdateInfrequently cycle.
+            self._nextResubmitTime = currentTime + SettingsClass.GetRetryDelay(1)
+
+            self.WiRocLogger.debug("ResubmitLoraAdapter::GetData() Data to fetch")
+            return {"MessageType": "DATA", "MessageSubTypeName": messageBoxArchiveData.MessageSubTypeName, "MessageSource": "Resumbmit", "TypeName": messageBoxArchiveData.MessageTypeName, "Data": messageBoxArchiveData.MessageData, "ChecksumOK": True}
+        else:
+            # Already submitted 4 times since last acked message so give up. Might be submitted again if a new message is acked.
+            return None
 
     def AddedToMessageBox(self, mbid):
         return None

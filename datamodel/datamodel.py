@@ -87,8 +87,11 @@ class TimeOnAirData(object):
 
 
 class MessageBoxData(object):
+    # MessageTypeName: LORA, SI, REPEATER, SRR, SITEST
+    # MessageSubTypeName: LoraRadioMessage, SIMessage, SIMessageDouble, Status, Ack
     columns = [("MessageData", bytearray), ("PowerCycleCreated", int),
-               ("MessageTypeName", str), ("InstanceName", str),
+               ("MessageTypeName", str), 
+               ("InstanceName", str),
                ("MessageSubTypeName", str), ("MemoryAddress", int),
                ("SICardNumber", str),
                ("SIStationSerialNumber", str), ("SportIdentHour", str),
