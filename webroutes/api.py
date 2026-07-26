@@ -50,6 +50,7 @@ def setLoraEnabled(enabled):
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
+@app.route('/api/lora/channel/', methods=['GET'])
 @app.route('/api/channel/', methods=['GET'])
 def getChannel():
     setting = DatabaseHelper.get_setting_by_key('Channel')
@@ -60,7 +61,7 @@ def getChannel():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=channel))
 
-
+@app.route('/api/lora/channel/<channel>/', methods=['GET'])
 @app.route('/api/channel/<channel>/', methods=['GET'])
 def setChannel(channel):
     sd = DatabaseHelper.get_setting_by_key('Channel')
@@ -81,6 +82,7 @@ _LORARANGE_TO_OLD = {'MF': 'MS', 'F': 'S'}
 _LORARANGE_FROM_OLD = {'MS': 'MF', 'S': 'F'}
 
 @app.route('/api/lorarange/', methods=['GET'])
+@app.route('/api/lora/lorarange/', methods=['GET'])
 def getLoraRange():
     setting = DatabaseHelper.get_setting_by_key('LoraRange')
     loraRange = 'L'
@@ -103,6 +105,7 @@ def getLoraModule():
 
 
 @app.route('/api/lorarange/<lorarange>/', methods=['GET'])
+@app.route('/api/lora/lorarange/<lorarange>/', methods=['GET'])
 def setLoraRange(lorarange):
     loraRange = _LORARANGE_FROM_OLD.get(lorarange, lorarange)
     sd = DatabaseHelper.get_setting_by_key('LoraRange')
@@ -129,6 +132,7 @@ def getAcknowledgementRequested():
 
 
 @app.route('/api/acknowledgementrequested/<ack>/', methods=['GET'])
+@app.route('/api/lora/acknowledgementrequested/<ack>/', methods=['GET'])
 def setAcknowledgementRequested(ack):
     sd = DatabaseHelper.get_setting_by_key('AcknowledgementRequested')
     if sd is None:
@@ -168,6 +172,7 @@ def setLoraListenOnly(listenOnly):
 
 
 @app.route('/api/power/', methods=['GET'])
+@app.route('/api/lora/power/', methods=['GET'])
 def getPower():
     setting = DatabaseHelper.get_setting_by_key('LoraPower')
     power = 0x16
@@ -179,6 +184,7 @@ def getPower():
 
 
 @app.route('/api/power/<int:power>/', methods=['GET'])
+@app.route('/api/lora/power/<int:power>/', methods=['GET'])
 def setPower(power):
     sd = DatabaseHelper.get_setting_by_key('LoraPower')
     if sd is None:
@@ -237,6 +243,7 @@ def setDRF1268DSCompatMode(enabled):
 
 
 @app.route('/api/coderate/', methods=['GET'])
+@app.route('/api/lora/coderate/', methods=['GET'])
 def getCodeRate():
     setting = DatabaseHelper.get_setting_by_key('CodeRate')
     # 0->4/4 (no hamming code for data RAK3172 only), 0x01->4/5, 0x02->4/6, 0x03->4/7, 0x04->4/8
@@ -249,6 +256,7 @@ def getCodeRate():
 
 
 @app.route('/api/coderate/<int:coderate>/', methods=['GET'])
+@app.route('/api/lora/coderate/<int:coderate>/', methods=['GET'])
 def setCodeRate(coderate):
     sd = DatabaseHelper.get_setting_by_key('CodeRate')
     if sd is None:
@@ -263,6 +271,7 @@ def setCodeRate(coderate):
 
 
 @app.route('/api/rxgainenabled/', methods=['GET'])
+@app.route('/api/lora/rxgainenabled/', methods=['GET'])
 def getRxGainEnabled():
     setting = DatabaseHelper.get_setting_by_key('RxGainEnabled')
     enabled = '0'
@@ -274,6 +283,7 @@ def getRxGainEnabled():
 
 
 @app.route('/api/rxgainenabled/<enabled>/', methods=['GET'])
+@app.route('/api/lora/rxgainenabled/<enabled>/', methods=['GET'])
 def setRxGainEnabled(enabled):
     sd = DatabaseHelper.get_setting_by_key('RxGainEnabled')
     if sd is None:
@@ -288,6 +298,7 @@ def setRxGainEnabled(enabled):
 
 
 @app.route('/api/sendtosirapenabled/', methods=['GET'])
+@app.route('/api/sirap/enabled/', methods=['GET'])
 def getSendToSirapEnabled():
     setting = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
     enabled = '0'
@@ -299,6 +310,7 @@ def getSendToSirapEnabled():
 
 
 @app.route('/api/sendtosirapenabled/<enabled>/', methods=['GET'])
+@app.route('/api/sirap/enabled/<enabled>/', methods=['GET'])
 def setSendToSirapEnabled(enabled):
     sd = DatabaseHelper.get_setting_by_key('SendToSirapEnabled')
     if sd is None:
@@ -313,6 +325,7 @@ def setSendToSirapEnabled(enabled):
 
 
 @app.route('/api/sendtosirapip/', methods=['GET'])
+@app.route('/api/sirap/ip/', methods=['GET'])
 def getSendToSirapIP():
     setting = DatabaseHelper.get_setting_by_key('SendToSirapIP')
     ip = ""
@@ -324,6 +337,7 @@ def getSendToSirapIP():
 
 
 @app.route('/api/sendtosirapip/<ip>/', methods=['GET'])
+@app.route('/api/sirap/ip/<ip>/', methods=['GET'])
 def setSendToSirapIP(ip):
     sd = DatabaseHelper.get_setting_by_key('SendToSirapIP')
     if sd is None:
@@ -338,6 +352,7 @@ def setSendToSirapIP(ip):
 
 
 @app.route('/api/sendtosirapipport/', methods=['GET'])
+@app.route('/api/sirap/ipport/', methods=['GET'])
 def getSendToSirapIPPort():
     setting = DatabaseHelper.get_setting_by_key('SendToSirapIPPort')
     port = ""
@@ -349,6 +364,7 @@ def getSendToSirapIPPort():
 
 
 @app.route('/api/sendtosirapipport/<port>/', methods=['GET'])
+@app.route('/api/sirap/ipport/<port>/', methods=['GET'])
 def setSendToSirapIPPort(port):
     sd = DatabaseHelper.get_setting_by_key('SendToSirapIPPort')
     if sd is None:
@@ -455,6 +471,7 @@ def setWiRocDeviceName(deviceName):
 
 
 @app.route('/api/loramode/', methods=['GET'])
+@app.route('/api/lora/mode/', methods=['GET'])
 def getLoraMode():
     loramode = "RECEIVER"
     setting = DatabaseHelper.get_setting_by_key('LoraMode')
@@ -466,6 +483,7 @@ def getLoraMode():
 
 
 @app.route('/api/loramode/<loramode>/', methods=['GET'])
+@app.route('/api/lora/mode/<loramode>/', methods=['GET'])
 def setLoraMode(loramode):
     if loramode == "RECEIVER" or loramode == "REPEATER" or loramode == "SENDER":
         sd = DatabaseHelper.get_setting_by_key('LoraMode')
@@ -809,6 +827,7 @@ def getWebServerUrl2():
 
 
 @app.route('/api/onewayreceive/', methods=['GET'])
+@app.route('/api/sportident/usb/onewayreceive/', methods=['GET'])
 def getOneWayReceive():
     sett = DatabaseHelper.get_setting_by_key('OneWayReceive')
     oneWayReceive = '0'
@@ -820,6 +839,7 @@ def getOneWayReceive():
 
 
 @app.route('/api/onewayreceive/<enabled>/', methods=['GET'])
+@app.route('/api/sportident/usb/onewayreceive/<enabled>/', methods=['GET'])
 def setOneWayReceive(enabled):
     sd = DatabaseHelper.get_setting_by_key('OneWayReceive')
     if sd is None:
@@ -834,6 +854,7 @@ def setOneWayReceive(enabled):
 
 
 @app.route('/api/force4800baudrate/', methods=['GET'])
+@app.route('/api/sportident/usb/force4800baudrate/', methods=['GET'])
 def getForce4800BaudRate():
     sett = DatabaseHelper.get_setting_by_key('Force4800BaudRate')
     force4800BaudRate = '0'
@@ -845,6 +866,7 @@ def getForce4800BaudRate():
 
 
 @app.route('/api/force4800baudrate/<enabled>/', methods=['GET'])
+@app.route('/api/sportident/usb/force4800baudrate/<enabled>/', methods=['GET'])
 def SetForce4800BaudRateEnabled(enabled):
     sd = DatabaseHelper.get_setting_by_key('Force4800BaudRate')
     if sd is None:
@@ -859,6 +881,7 @@ def SetForce4800BaudRateEnabled(enabled):
 
 
 @app.route('/api/rs232mode/', methods=['GET'])
+@app.route('/api/sportident/rs232/mode/', methods=['GET'])
 def getRS232Mode():
     sett = DatabaseHelper.get_setting_by_key('RS232Mode')
     rs232Mode = "RECEIVE"
@@ -870,6 +893,7 @@ def getRS232Mode():
 
 
 @app.route('/api/rs232mode/<mode>/', methods=['GET'])
+@app.route('/api/sportident/rs232/mode/<mode>/', methods=['GET'])
 def setRS232Mode(mode):
     sd = DatabaseHelper.get_setting_by_key('RS232Mode')
     if sd is None:
@@ -884,6 +908,7 @@ def setRS232Mode(mode):
 
 
 @app.route('/api/rs232onewayreceive/', methods=['GET'])
+@app.route('/api/sportident/rs232/onewayreceive/', methods=['GET'])
 def getRS232OneWayReceive():
     sett = DatabaseHelper.get_setting_by_key('RS232OneWayReceive')
     oneWayReceive = '0'
@@ -895,6 +920,7 @@ def getRS232OneWayReceive():
 
 
 @app.route('/api/rs232onewayreceive/<enabled>/', methods=['GET'])
+@app.route('/api/sportident/rs232/onewayreceive/<enabled>/', methods=['GET'])
 def setRS232OneWayReceive(enabled):
     sd = DatabaseHelper.get_setting_by_key('RS232OneWayReceive')
     if sd is None:
@@ -909,6 +935,7 @@ def setRS232OneWayReceive(enabled):
 
 
 @app.route('/api/forcers2324800baudrate/', methods=['GET'])
+@app.route('/api/sportident/rs232/force4800baudrate/', methods=['GET'])
 def getForceRS2324800BaudRate():
     sett = DatabaseHelper.get_setting_by_key('ForceRS2324800BaudRate')
     force4800BaudRate = '0'
@@ -920,6 +947,7 @@ def getForceRS2324800BaudRate():
 
 
 @app.route('/api/forcers2324800baudrate/<enabled>/', methods=['GET'])
+@app.route('/api/sportident/rs232/force4800baudrate/<enabled>/', methods=['GET'])
 def setForceRS2324800BaudRateEnabled(enabled):
     sd = DatabaseHelper.get_setting_by_key('ForceRS2324800BaudRate')
     if sd is None:
@@ -934,6 +962,7 @@ def setForceRS2324800BaudRateEnabled(enabled):
 
 
 @app.route('/api/btserialonewayreceive/', methods=['GET'])
+@app.route('/api/btserial/onewayreceive/', methods=['GET'])
 def getBTSerialOneWayReceive():
     sett = DatabaseHelper.get_setting_by_key('BTSerialOneWayReceive')
     oneWayReceive = '0'
@@ -945,6 +974,7 @@ def getBTSerialOneWayReceive():
 
 
 @app.route('/api/btserialonewayreceive/<enabled>/', methods=['GET'])
+@app.route('/api/btserial/onewayreceive/<enabled>/', methods=['GET'])
 def setBTSerialOneWayReceive(enabled):
     sd = DatabaseHelper.get_setting_by_key('BTSerialOneWayReceive')
     if sd is None:
@@ -959,6 +989,7 @@ def setBTSerialOneWayReceive(enabled):
 
 
 @app.route('/api/forcebtserial4800baudrate/', methods=['GET'])
+@app.route('/api/btserial/force4800baudrate/', methods=['GET'])
 def getForceBTSerial4800BaudRate():
     sett = DatabaseHelper.get_setting_by_key('ForceBTSerial4800BaudRate')
     force4800BaudRate = '0'
@@ -970,6 +1001,7 @@ def getForceBTSerial4800BaudRate():
 
 
 @app.route('/api/forcebtserial4800baudrate/<enabled>/', methods=['GET'])
+@app.route('/api/btserial/force4800baudrate/<enabled>/', methods=['GET'])
 def setForceBTSerial4800BaudRateEnabled(enabled):
     sd = DatabaseHelper.get_setting_by_key('ForceBTSerial4800BaudRate')
     if sd is None:
@@ -1243,6 +1275,7 @@ def getWifiIP():
         return jsonpickle.encode(MicroMock(Value=ipAddresses[0]))
 
 @app.route('/api/usbethernetip/', methods=['GET'])
+@app.route('/api/network/usbethernetip/', methods=['GET'])
 def getUSBEthernetIP():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -1272,6 +1305,7 @@ def getNetworkInterfaces():
     return jsonpickle.encode(MicroMock(Value=allIfaces))
 
 @app.route('/api/renewip/<ifaceNetType>/', methods=['GET'])
+@app.route('/api/network/renewip/<ifaceNetType>/', methods=['GET'])
 def renewIP(ifaceNetType):
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -1344,6 +1378,7 @@ def getZipFilePath(btAddress, date):
 
 
 @app.route('/api/listwifi/', methods=['GET'])
+@app.route('/api/network/listwifi/', methods=['GET'])
 def getListWifi():
     # Get new wifi list
     result = subprocess.run(['nmcli', '-m', 'multiline', '-f', 'ssid,active,signal', 'device', 'wifi', 'list'], stdout=subprocess.PIPE)
@@ -1360,6 +1395,7 @@ def getListWifi():
 
 
 @app.route('/api/connectwifi/<wifiName>/<wifiPassword>/', methods=['GET'])
+@app.route('/api/network/connectwifi/<wifiName>/<wifiPassword>/', methods=['GET'])
 def connectWifi(wifiName, wifiPassword):
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -1376,6 +1412,7 @@ def connectWifi(wifiName, wifiPassword):
 
 
 @app.route('/api/disconnectwifi/', methods=['GET'])
+@app.route('/api/network/disconnectwifi/', methods=['GET'])
 def disconnectWifi():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -1529,6 +1566,7 @@ def setHAMEnabled(enabled):
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 @app.route('/api/wifimesh/enabled/<enabled>/', methods=['GET'])
+@app.route('/api/network/wifimesh/enabled/<enabled>/', methods=['GET'])
 def SetWifiMeshEnabled(enabled):
     sd = DatabaseHelper.get_setting_by_key('WifiMeshEnabled')
     if sd is None:
@@ -1542,6 +1580,7 @@ def SetWifiMeshEnabled(enabled):
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 @app.route('/api/wifimesh/enabled/', methods=['GET'])
+@app.route('/api/network/wifimesh/enabled/', methods=['GET'])
 def GetWifiMeshEnabled():
     sett = DatabaseHelper.get_setting_by_key('WifiMeshEnabled')
     wifiMeshEnabled = '0'
@@ -1552,6 +1591,7 @@ def GetWifiMeshEnabled():
     return jsonpickle.encode(MicroMock(Value=wifiMeshEnabled))
 
 @app.route('/api/wifimesh/gateway/enabled/<enabled>/', methods=['GET'])
+@app.route('/api/network/wifimesh/gateway/enabled/<enabled>/', methods=['GET'])
 def SetWifiMeshGatewayEnabled(enabled):
     sd = DatabaseHelper.get_setting_by_key('WifiMeshGatewayEnabled')
     if sd is None:
@@ -1565,6 +1605,7 @@ def SetWifiMeshGatewayEnabled(enabled):
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 @app.route('/api/wifimesh/gateway/enabled/', methods=['GET'])
+@app.route('/api/network/wifimesh/gateway/enabled/', methods=['GET'])
 def GetWifiMeshGatewayEnabled():
     sett = DatabaseHelper.get_setting_by_key('WifiMeshGatewayEnabled')
     wifiMeshGatewayEnabled = '0'
@@ -1575,6 +1616,7 @@ def GetWifiMeshGatewayEnabled():
     return jsonpickle.encode(MicroMock(Value=wifiMeshGatewayEnabled))
 
 @app.route('/api/wifimesh/channel/<channel>/', methods=['GET'])
+@app.route('/api/network/wifimesh/channel/<channel>/', methods=['GET'])
 def SetWifiMeshChannel(channel):
     sd = DatabaseHelper.get_setting_by_key('WifiMeshChannel')
     if sd is None:
@@ -1588,6 +1630,7 @@ def SetWifiMeshChannel(channel):
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 @app.route('/api/wifimesh/channel/', methods=['GET'])
+@app.route('/api/network/wifimesh/channel/', methods=['GET'])
 def GetWifiMeshChannel():
     sett = DatabaseHelper.get_setting_by_key('WifiMeshChannel')
     channel = '6'
@@ -1598,6 +1641,7 @@ def GetWifiMeshChannel():
     return jsonpickle.encode(MicroMock(Value=channel))
 
 @app.route('/api/wifimesh/networknamenumber/<networknamenumber>/', methods=['GET'])
+@app.route('/api/network/wifimesh/networknamenumber/<networknamenumber>/', methods=['GET'])
 def SetWifiMeshNetworkNameNumber(networknumber):
     sd = DatabaseHelper.get_setting_by_key('WifiMeshNetworkNameNumber')
     if sd is None:
@@ -1611,6 +1655,7 @@ def SetWifiMeshNetworkNameNumber(networknumber):
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 @app.route('/api/wifimesh/networknamenumber/', methods=['GET'])
+@app.route('/api/network/wifimesh/networknamenumber/', methods=['GET'])
 def GetWifiMeshNetworkNameNumber():
     sett = DatabaseHelper.get_setting_by_key('WifiMeshNetworkNameNumber')
     networknamenumber = '0'
@@ -1621,6 +1666,7 @@ def GetWifiMeshNetworkNameNumber():
     return jsonpickle.encode(MicroMock(Value=networknamenumber))
 
 @app.route('/api/wifimesh/ipnetworknumber/<ipnetworknumber>/', methods=['GET'])
+@app.route('/api/network/wifimesh/ipnetworknumber/<ipnetworknumber>/', methods=['GET'])
 def SetWifiMeshIPNetworkNumber(ipnetworknumber):
     sd = DatabaseHelper.get_setting_by_key('WifiMeshIPNetworkNumber')
     if sd is None:
@@ -1634,6 +1680,7 @@ def SetWifiMeshIPNetworkNumber(ipnetworknumber):
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 @app.route('/api/wifimesh/ipnetworknumber/', methods=['GET'])
+@app.route('/api/network/wifimesh/ipnetworknumber/', methods=['GET'])
 def GetWifiMeshIPNetworkNumber():
     sett = DatabaseHelper.get_setting_by_key('WifiMeshIPNetworkNumber')
     ipnetworknumber = '25'
@@ -1644,6 +1691,7 @@ def GetWifiMeshIPNetworkNumber():
     return jsonpickle.encode(MicroMock(Value=ipnetworknumber))
 
 @app.route('/api/wifimesh/nodenumber/<nodenumber>/', methods=['GET'])
+@app.route('/api/network/wifimesh/nodenumber/<nodenumber>/', methods=['GET'])
 def SetWifiMeshNodeNumber(nodenumber):
     sd = DatabaseHelper.get_setting_by_key('WifiMeshNodeNumber')
     if sd is None:
@@ -1657,6 +1705,7 @@ def SetWifiMeshNodeNumber(nodenumber):
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 @app.route('/api/wifimesh/nodenumber/', methods=['GET'])
+@app.route('/api/network/wifimesh/nodenumber/', methods=['GET'])
 def GetWifiMeshNodeNumber():
     sett = DatabaseHelper.get_setting_by_key('WifiMeshNodeNumber')
     nodenumber = '2'
@@ -1667,6 +1716,7 @@ def GetWifiMeshNodeNumber():
     return jsonpickle.encode(MicroMock(Value=nodenumber))
 
 @app.route('/api/wifimesh/interfacecreated/', methods=['GET'])
+@app.route('/api/network/wifimesh/interfacecreated/', methods=['GET'])
 def GetWifiMeshInterfaceCreated():
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
@@ -1680,6 +1730,7 @@ def GetWifiMeshInterfaceCreated():
     return jsonpickle.encode(MicroMock(Value=meshInterfaceCreated))
 
 @app.route('/api/wifimesh/ipaddress/', methods=['GET'])
+@app.route('/api/network/wifimesh/ipaddress/', methods=['GET'])
 def GetWifiMeshIPAddress():
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
@@ -1694,6 +1745,7 @@ def GetWifiMeshIPAddress():
         return jsonpickle.encode(MicroMock(Value=''))
 
 @app.route('/api/wifimesh/mac/', methods=['GET'])
+@app.route('/api/network/wifimesh/mac/', methods=['GET'])
 def GetWifiMeshMAC():
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
@@ -1720,6 +1772,7 @@ class MeshPath:
     path_change: int
 
 @app.route('/api/wifimesh/mpath/', methods=['GET'])
+@app.route('/api/network/wifimesh/mpath/', methods=['GET'])
 def GetWifiMeshMPath():
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
@@ -1767,6 +1820,7 @@ def GetWifiMeshMPath():
     return jsonpickle.encode(MicroMock(Value=data))
 
 @app.route('/api/wifimesh/routetointerface/', methods=['GET'])
+@app.route('/api/network/wifimesh/routetointerface/', methods=['GET'])
 def getWifiMeshRouteToInterface():
     sett = DatabaseHelper.get_setting_by_key('WifiMeshRouteToInterface')
     interface = 'wlan0'
@@ -1777,6 +1831,7 @@ def getWifiMeshRouteToInterface():
     return jsonpickle.encode(MicroMock(Value=interface))
 
 @app.route('/api/wifimesh/routetointerface/<interface>/', methods=['GET'])
+@app.route('/api/network/wifimesh/routetointerface/<interface>/', methods=['GET'])
 def setWifiMeshRouteToInterface(interface):
     sd = DatabaseHelper.get_setting_by_key('WifiMeshRouteToInterface')
     if sd is None:

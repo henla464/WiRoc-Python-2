@@ -29,7 +29,39 @@ tags:
   - name: "Power"
     description: "Power management"
 paths:
-  /channel/:
+  /lora/enabled/:
+    get:
+      tags:
+        - "Radio"
+      summary: "Get if LORA radio is enabled"
+      operationId: "getLoraEnabled"
+      responses:
+        "200":
+          description: "0/1 depending on if LORA is enabled or not"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /lora/enabled/{enabled}/:
+    get:
+      tags:
+        - "Radio"
+      summary: "Enable/Disable LORA radio"
+      operationId: "setLoraEnabled"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/TrueFalse"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /lora/channel/:
     get:
       tags:
         - "Radio"
@@ -42,7 +74,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelObj"
-  /channel/{channel}:
+  /lora/channel/{channel}:
     get:
       tags:
         - "Radio"
@@ -61,7 +93,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelObj"
-  /lorarange/:
+  /lora/lorarange/:
     get:
       tags:
         - "Radio"
@@ -74,7 +106,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LoraRangeObj"
-  /lorarange/{lorarange}:
+  /lora/lorarange/{lorarange}:
     get:
       tags:
         - "Radio"
@@ -93,7 +125,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LoraRangeObj"
-  /acknowledgementrequested/:
+  /lora/acknowledgementrequested/:
     get:
       tags:
         - "Radio"
@@ -106,7 +138,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /acknowledgementrequested/{ackreq}:
+  /lora/acknowledgementrequested/{ackreq}:
     get:
       tags:
         - "Radio"
@@ -157,7 +189,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /power/:
+  /lora/power/:
     get:
       tags:
         - "Radio"
@@ -170,7 +202,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PowerObj"
-  /power/{power}:
+  /lora/power/{power}:
     get:
       tags:
         - "Radio"
@@ -215,7 +247,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /coderate/:
+  /lora/coderate/:
     get:
       tags:
         - "Radio"
@@ -228,7 +260,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CodeRateObj"
-  /coderate/{coderate}:
+  /lora/coderate/{coderate}:
     get:
       tags:
         - "Radio"
@@ -279,7 +311,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /rxgainenabled/:
+  /lora/rxgainenabled/:
     get:
       tags:
         - "Radio"
@@ -292,7 +324,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /rxgainenabled/{rxgainenabled}:
+  /lora/rxgainenabled/{rxgainenabled}:
     get:
       tags:
         - "Radio"
@@ -311,7 +343,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /sendtosirapenabled/:
+  /sirap/enabled/:
     get:
       tags:
         - "SIRAP"
@@ -324,14 +356,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /sendtosirapenabled/{sendtosirapenabled}:
+  /sirap/enabled/{enabled}:
     get:
       tags:
         - "SIRAP"
       summary: "Enable/Disable sending punches to SIRAP"
       operationId: "setSendToSirapEnabled"
       parameters:
-        - name: sendtosirapenabled
+        - name: enabled
           in: path
           required: true
           schema:
@@ -343,7 +375,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /sendtosirapip/:
+  /sirap/ip/:
     get:
       tags:
         - "SIRAP"
@@ -356,14 +388,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/IPAddressObj"
-  /sendtosirapip/{sendtosirapip}:
+  /sirap/ip/{ip}:
     get:
       tags:
         - "SIRAP"
       summary: "Set the IP address to send SIRAP messages to"
       operationId: "setSendToSirapIP"
       parameters:
-        - name: sendtosirapip
+        - name: ip
           in: path
           required: true
           schema:
@@ -375,7 +407,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/IPAddressObj"
-  /sendtosirapipport/:
+  /sirap/ipport/:
     get:
       tags:
         - "SIRAP"
@@ -388,14 +420,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyIntObj"
-  /sendtosirapipport/{sendtosirapipport}:
+  /sirap/ipport/{port}:
     get:
       tags:
         - "SIRAP"
       summary: "Set the TCP/IP port to send SIRAP messages to"
       operationId: "setSendToSirapIPPort"
       parameters:
-        - name: sendtosirapipport
+        - name: port
           in: path
           required: true
           schema:
@@ -504,7 +536,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /loramode/:
+  /lora/mode/:
     get:
       tags:
         - "Radio"
@@ -517,7 +549,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /loramode/{loramode}:
+  /lora/mode/{loramode}:
     get:
       tags:
         - "Radio"
@@ -532,6 +564,19 @@ paths:
       responses:
         "200":
           description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /lora/module/:
+    get:
+      tags:
+        - "Radio"
+      summary: "Get the LORA radio module type"
+      operationId: "getLoraModule"
+      responses:
+        "200":
+          description: "The LORA radio module name (e.g. DRF1268DS, RAK3172)"
           content:
             application/json:
               schema:
@@ -754,6 +799,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
+  /hashw/srr/:
+    get:
+      tags:
+        - "Status"
+      summary: "Get if the hardware supports an SRR radio"
+      operationId: "getHasHWSRR"
+      responses:
+        "200":
+          description: "0/1 depending on if SRR radio hardware support is available"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /hashw/rtc/:
+    get:
+      tags:
+        - "Status"
+      summary: "Get if the hardware supports an RTC chip"
+      operationId: "getHasHWRTC"
+      responses:
+        "200":
+          description: "0/1 depending on if RTC hardware is available"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /punches/:
     get:
       tags:
@@ -894,7 +965,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /onewayreceive/:
+  /sportident/usb/onewayreceive/:
     get:
       tags:
         - "SportIdent"
@@ -907,7 +978,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /onewayreceive/{onewayenabled}:
+  /sportident/usb/onewayreceive/{onewayenabled}:
     get:
       tags:
         - "SportIdent"
@@ -926,7 +997,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /force4800baudrate/:
+  /sportident/usb/force4800baudrate/:
     get:
       tags:
         - "SportIdent"
@@ -939,7 +1010,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /force4800baudrate/{forceenabled}:
+  /sportident/usb/force4800baudrate/{forceenabled}:
     get:
       tags:
         - "SportIdent"
@@ -958,7 +1029,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /rs232mode/:
+  /sportident/rs232/mode/:
     get:
       tags:
         - "SportIdent"
@@ -971,7 +1042,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /rs232mode/{rs232mode}:
+  /sportident/rs232/mode/{rs232mode}:
     get:
       tags:
         - "SportIdent"
@@ -990,7 +1061,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /rs232onewayreceive/:
+  /sportident/rs232/onewayreceive/:
     get:
       tags:
         - "SportIdent"
@@ -1003,7 +1074,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /rs232onewayreceive/{onewayenabled}:
+  /sportident/rs232/onewayreceive/{onewayenabled}:
     get:
       tags:
         - "SportIdent"
@@ -1022,7 +1093,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /forcers2324800baudrate/:
+  /sportident/rs232/force4800baudrate/:
     get:
       tags:
         - "SportIdent"
@@ -1035,7 +1106,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /forcers2324800baudrate/{forceenabled}:
+  /sportident/rs232/force4800baudrate/{forceenabled}:
     get:
       tags:
         - "SportIdent"
@@ -1054,7 +1125,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /btserialonewayreceive/:
+  /btserial/onewayreceive/:
     get:
       tags:
         - "SportIdent"
@@ -1067,7 +1138,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /btserialonewayreceive/{enabled}:
+  /btserial/onewayreceive/{enabled}:
     get:
       tags:
         - "SportIdent"
@@ -1086,7 +1157,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /forcebtserial4800baudrate/:
+  /btserial/force4800baudrate/:
     get:
       tags:
         - "SportIdent"
@@ -1099,7 +1170,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /forcebtserial4800baudrate/{enabled}:
+  /btserial/force4800baudrate/{enabled}:
     get:
       tags:
         - "SportIdent"
@@ -1406,7 +1477,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /usbethernetip/:
+  /network/usbethernetip/:
     get:
       tags:
         - "Network"
@@ -1432,7 +1503,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /renewip/{ifaceNetType}:
+  /network/renewip/{ifaceNetType}:
     get:
       tags:
         - "Network"
@@ -1464,7 +1535,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /listwifi/:
+  /network/listwifi/:
     get:
       tags:
         - "Network"
@@ -1477,7 +1548,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /connectwifi/{wifiName}/{wifiPassword}:
+  /network/connectwifi/{wifiName}/{wifiPassword}:
     get:
       tags:
         - "Network"
@@ -1501,7 +1572,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /disconnectwifi/:
+  /network/disconnectwifi/:
     get:
       tags:
         - "Network"
@@ -1687,7 +1758,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /wifimesh/enabled/:
+  /network/wifimesh/enabled/:
     get:
       tags:
         - "Network"
@@ -1700,7 +1771,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /wifimesh/enabled/{enabled}:
+  /network/wifimesh/enabled/{enabled}:
     get:
       tags:
         - "Network"
@@ -1719,7 +1790,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /wifimesh/gateway/enabled/:
+  /network/wifimesh/gateway/enabled/:
     get:
       tags:
         - "Network"
@@ -1732,7 +1803,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /wifimesh/gateway/enabled/{enabled}:
+  /network/wifimesh/gateway/enabled/{enabled}:
     get:
       tags:
         - "Network"
@@ -1751,7 +1822,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /wifimesh/channel/:
+  /network/wifimesh/channel/:
     get:
       tags:
         - "Network"
@@ -1764,7 +1835,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WifiMeshChannelObj"
-  /wifimesh/channel/{channel}:
+  /network/wifimesh/channel/{channel}:
     get:
       tags:
         - "Network"
@@ -1783,7 +1854,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WifiMeshChannelObj"
-  /wifimesh/networknamenumber/:
+  /network/wifimesh/networknamenumber/:
     get:
       tags:
         - "Network"
@@ -1796,7 +1867,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WifiMeshNetworkNameNumberObj"
-  /wifimesh/networknamenumber/{networknamenumber}:
+  /network/wifimesh/networknamenumber/{networknamenumber}:
     get:
       tags:
         - "Network"
@@ -1815,7 +1886,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WifiMeshNetworkNameNumberObj"
-  /wifimesh/ipnetworknumber/:
+  /network/wifimesh/ipnetworknumber/:
     get:
       tags:
         - "Network"
@@ -1828,7 +1899,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WifiMeshIPNetworkNumberObj"
-  /wifimesh/ipnetworknumber/{ipnetworknumber}:
+  /network/wifimesh/ipnetworknumber/{ipnetworknumber}:
     get:
       tags:
         - "Network"
@@ -1847,7 +1918,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WifiMeshIPNetworkNumberObj"
-  /wifimesh/nodenumber/:
+  /network/wifimesh/nodenumber/:
     get:
       tags:
         - "Network"
@@ -1860,7 +1931,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WifiMeshNodeNumberObj"
-  /wifimesh/nodenumber/{nodenumber}:
+  /network/wifimesh/nodenumber/{nodenumber}:
     get:
       tags:
         - "Network"
@@ -1879,7 +1950,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WifiMeshNodeNumberObj"
-  /wifimesh/interfacecreated/:
+  /network/wifimesh/interfacecreated/:
     get:
       tags:
         - "Network"
@@ -1892,7 +1963,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /wifimesh/ipaddress/:
+  /network/wifimesh/ipaddress/:
     get:
       tags:
         - "Network"
@@ -1905,7 +1976,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /wifimesh/mac/:
+  /network/wifimesh/mac/:
     get:
       tags:
         - "Network"
@@ -1918,7 +1989,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /wifimesh/mpath/:
+  /network/wifimesh/mpath/:
     get:
       tags:
         - "Network"
@@ -1931,7 +2002,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MeshPathList"
-  /wifimesh/routetointerface/:
+  /network/wifimesh/routetointerface/:
     get:
       tags:
         - "Network"
@@ -1944,7 +2015,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /wifimesh/routetointerface/{interface}:
+  /network/wifimesh/routetointerface/{interface}:
     get:
       tags:
         - "Network"
