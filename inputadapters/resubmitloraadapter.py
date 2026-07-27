@@ -121,7 +121,10 @@ class ResubmitLoraAdapter(object):
             self.WiRocLogger.debug(f"ResubmitLoraAdapter::GetData() set nextResubmitTime: {self._nextResubmitTime}")
 
             self.WiRocLogger.debug("ResubmitLoraAdapter::GetData() Data to fetch")
-            return {"MessageType": "DATA", "MessageSubTypeName": messageBoxArchiveData.MessageSubTypeName, "MessageSource": "Resumbmit", "TypeName": messageBoxArchiveData.MessageTypeName, "Data": messageBoxArchiveData.MessageData, "ChecksumOK": True}
+            return {"MessageType": "DATA", "MessageSubTypeName": messageBoxArchiveData.MessageSubTypeName, 
+                    "MessageSource": "Resumbmit", "TypeName": messageBoxArchiveData.MessageTypeName, 
+                    "Data": messageBoxArchiveData.MessageData, "ChecksumOK": True,
+                    "LimitToSubscriberTypeName": "LORA"}
         else:
             # Already submitted 4 times since last acked message so give up. Might be submitted again if a new message is acked.
             return None

@@ -162,6 +162,7 @@ class Main:
                     powerCycle = SettingsClass.GetPowerCycle()
                     messageData = inputData["Data"]
                     messageSubTypeName = inputData["MessageSubTypeName"]
+                    limitToSubscriberTypeName = inputData.get("LimitToSubscriberTypeName", None)
                     SIStationSerialNumber = inputData.get("SIStationSerialNumber", None)
                     if messageTypeName == "LORA" and SettingsClass.GetLoraMode() == "REPEATER":
                         # WiRoc is in repeater mode and received a LORA message
@@ -219,6 +220,11 @@ class Main:
 
                         subscriptions = DatabaseHelper.get_subscription_view_by_input_message_type(messageTypeName, messageSubTypeName)
                         for subscription in subscriptions:
+                            if subscription.SubscriberTypeName != limitToSubscriberTypeName:
+                                # resubmits should only resend to the destination that failed
+                                # (ResubmitLoraAdapter - only resend over Lora not to any other subscriber)
+                                continue
+                            
                             self.wirocLogger.debug("Start::handleInput() Subscription: " + subscription.SubscriberTypeName + " " + subscription.TransformName)
                             msgSubscription = MessageSubscriptionData()
 
