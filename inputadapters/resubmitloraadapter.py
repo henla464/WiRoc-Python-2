@@ -100,10 +100,6 @@ class ResubmitLoraAdapter(object):
         else:
             self.WiRocLogger.debug(f"ResubmitLoraAdapter::GetData() Airtime percentage is {toaPerc}")
 
-        if SettingsClass.GetLoraAirTimePercentage() > 20.0:
-            self.WiRocLogger.debug(f"ResubmitLoraAdapter::GetData() Skipping resubmit: airtime percentage {SettingsClass.GetLoraAirTimePercentage()} (too high)")
-            return None
-
         self.LastTimeFetched = currentTime
         endTime: datetime = datetime.now()
         startTime: datetime = endTime - timedelta(seconds=SettingsClass.GetResubmitLookbackSeconds())
