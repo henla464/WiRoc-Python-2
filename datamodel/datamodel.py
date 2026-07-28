@@ -92,7 +92,9 @@ class MessageBoxData(object):
     columns = [("MessageData", bytearray), ("PowerCycleCreated", int),
                ("MessageTypeName", str), 
                ("InstanceName", str),
-               ("MessageSubTypeName", str), ("MemoryAddress", int),
+               ("MessageSubTypeName", str), 
+               ("MessageSource", str), 
+               ("MemoryAddress", int),
                ("SICardNumber", str),
                ("SIStationSerialNumber", str), ("SportIdentHour", str),
                ("SportIdentMinute", str), ("SportIdentSecond", str),
@@ -105,7 +107,8 @@ class MessageBoxData(object):
                ("SIStationNumber2", str),
                ("LowBattery", str), ("RSSIValue", int),
                ("LinkQuality", int), ("Channel", int),
-               ("ChecksumOK", bool), ("CreatedDate", datetime)]
+               ("ChecksumOK", bool), ("CreatedDate", datetime),
+               ("PunchSequenceNumber1", int), ("PunchSequenceNumber2", int)]
 
     def __init__(self):
         self.id = None
@@ -114,6 +117,7 @@ class MessageBoxData(object):
         self.MessageTypeName = None
         self.InstanceName = None
         self.MessageSubTypeName = None
+        self.MessageSource = None
         self.MemoryAddress = None
         self.SICardNumber = None
         self.SIStationSerialNumber = None
@@ -134,12 +138,16 @@ class MessageBoxData(object):
         self.Channel = None
         self.ChecksumOK = None
         self.CreatedDate = None
+        self.PunchSequenceNumber1 = None
+        self.PunchSequenceNumber2 = None
 
 
 class MessageBoxArchiveData(object):
     columns = [("OrigId", int), ("MessageData", bytes), ("PowerCycleCreated", int),
                ("MessageTypeName", str), ("InstanceName", str),
-               ("MessageSubTypeName", str), ("MemoryAddress", int),
+               ("MessageSubTypeName", str), 
+               ("MessageSource", str), 
+               ("MemoryAddress", int),
                ("SICardNumber", str),
                ("SIStationSerialNumber", str), ("SportIdentHour", str),
                ("SportIdentMinute", str), ("SportIdentSecond", str),
@@ -152,8 +160,9 @@ class MessageBoxArchiveData(object):
                ("LowBattery", str), ("RSSIValue", int),
                ("LinkQuality", int), ("Channel", int),
                ("ChecksumOK", bool), ("CreatedDate", datetime),
-               ("Resubmitted", bool)]
-    
+               ("Resubmitted", bool),
+               ("PunchSequenceNumber1", int), ("PunchSequenceNumber2", int)]
+
     def __init__(self):
         self.id = None
         self.OrigId = None
@@ -162,6 +171,7 @@ class MessageBoxArchiveData(object):
         self.MessageTypeName = None
         self.InstanceName = None
         self.MessageSubTypeName = None
+        self.MessageSource = None
         self.MemoryAddress = None
         self.SICardNumber = None
         self.SIStationSerialNumber = None
@@ -183,6 +193,8 @@ class MessageBoxArchiveData(object):
         self.ChecksumOK = None
         self.CreatedDate = None
         self.Resubmitted: bool = False
+        self.PunchSequenceNumber1 = None
+        self.PunchSequenceNumber2 = None
 
 
 class RepeaterMessageBoxData(object):
@@ -940,3 +952,12 @@ class MessageSubscriptionBatch(object):
         self.TransformName = None
         self.FindAdapterTries = None
         self.MessageSubscriptionBatchItems = []
+
+
+class Sequences(object):
+    columns = [("Name", str), ("Value", int)]
+
+    def __init__(self):
+        self.id = None
+        self.Name = None
+        self.Value = None

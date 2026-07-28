@@ -5,6 +5,7 @@ from datamodel.datamodel import SIMessage, SRRMessage, SRRBoardPunch, AirPlusPun
 from datamodel.datamodel import MessageBoxData, RepeaterMessageBoxData
 from loraradio.LoraRadioMessageRS import LoraRadioMessagePunchDoubleReDCoSRS, LoraRadioMessagePunchReDCoSRS, LoraRadioMessageAckRS, LoraRadioMessageStatusRS, LoraRadioMessageStatus2RS
 from typing import Union
+from datamodel.db_helper import DatabaseHelper
 
 
 class MessageHelper:
@@ -86,6 +87,7 @@ class MessageHelper:
             mbd.SportIdentSecond = siMsg.GetSeconds()
             mbd.MemoryAddress = siMsg.GetBackupMemoryAddressAsInt()
             mbd.SIStationNumber = siMsg.GetStationNumber()
+            mbd.PunchSequenceNumber1 = DatabaseHelper.get_next_punch_sequence_number()
         if siPayloadData2 is not None:
             siMsg = SIMessage()
             siMsg.AddPayload(siPayloadData2)
@@ -94,6 +96,7 @@ class MessageHelper:
             mbd.SportIdentMinute2 = siMsg.GetMinute()
             mbd.SportIdentSecond2 = siMsg.GetSeconds()
             mbd.SIStationNumber2 = siMsg.GetStationNumber()
+            mbd.PunchSequenceNumber2 = DatabaseHelper.get_next_punch_sequence_number()
 
         if mbd.ChecksumOK is None:
             mbd.ChecksumOK = True

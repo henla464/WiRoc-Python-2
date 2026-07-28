@@ -59,6 +59,9 @@ class DatabaseHelper:
         db.ensure_table_created(table)
         table = TimeOnAirData()
         db.ensure_table_created(table)
+        table = Sequences()
+        db.ensure_table_created(table)
+     
 
     @classmethod
     def drop_all_tables(cls) -> None:
@@ -99,6 +102,10 @@ class DatabaseHelper:
         db.drop_table(table)
         table = BluetoothSerialPortData()
         db.drop_table(table)
+        table = TimeOnAirData()
+        db.drop_table(table)
+        table = Sequences()
+        db.drop_table(table)
 
     @classmethod
     def truncate_setup_tables(cls) -> None:
@@ -125,6 +132,19 @@ class DatabaseHelper:
         db.execute_SQL("DELETE FROM TestPunchData")
         db.execute_SQL("DELETE FROM RepeaterMessageBoxData")
         db.execute_SQL("DELETE FROM RepeaterMessageBoxArchiveData")
+
+    # Sequences
+    @classmethod
+    def get_next_punch_sequence_number(cls) -> int:
+        cls.init()
+        sql = "SELECT Value FROM Sequences WHERE Name = 'Punch'"
+        current = cls.db.get_scalar_by_SQL(sql)
+        if current is None:
+            cls.db.execute_SQL("INSERT INTO Sequences (Name, Value) VALUES ('Punch', 1)")
+            return 1
+        next_val = current + 1
+        cls.db.execute_SQL("UPDATE Sequences SET Value = ? WHERE Name = 'Punch'", (next_val,))
+        return next_val
 
     # Settings
     @classmethod
@@ -589,6 +609,7 @@ class DatabaseHelper:
 
     @classmethod
     def get_no_of_lora_messages_sent_not_acked(cls, startTime: datetime, endTime: datetime) -> int:
+        cls.init()
         selectSQL = ("select sum(NoOfSendTries) from "
                      "(select sum(CASE WHEN MessageSubscriptionArchiveData.SendFailedDate is not null THEN NoOfSendTries ELSE NoOfSendTries-1 END) as NoOfSendTries from MessageSubscriptionArchiveData "
                      "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
@@ -611,6 +632,7 @@ class DatabaseHelper:
 
     @classmethod
     def get_if_all_lora_punches_succeeded(cls, startTime: datetime, endTime: datetime) -> bool:
+        cls.init()
         # is there any messages that failed all retries?
         selectSQL = ("select count(*) from MessageSubscriptionArchiveData "
                      "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
@@ -748,7 +770,30 @@ class DatabaseHelper:
         return (count or 0) > 0
 
     @classmethod
+    def any_active_sirap_subscriptions(cls) -> bool:
+        """Check if there are any active (non-archived) SIRAP message subscriptions being sent."""
+        cls.init()
+        sql = ("SELECT COUNT(1) FROM MessageSubscriptionData "
+               "JOIN SubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
+               "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
+               "WHERE SubscriberData.TypeName = 'SIRAP' "
+               "AND MessageSubscriptionData.SentDate IS NOT NULL")
+        count = cls.db.get_scalar_by_SQL(sql)
+        return (count or 0) > 0
+
+    @classmethod
+    def last_sirap_subscription_failed(cls) -> bool:
+        """Check if the most recent SIRAP subscription in the archive has a SendFailedDate (i.e. failed)."""
+        cls.init()
+        sql = ("SELECT MessageSubscriptionArchiveData.SendFailedDate FROM MessageSubscriptionArchiveData "
+               "WHERE MessageSubscriptionArchiveData.SubscriberTypeName = 'SIRAP' "
+               "ORDER BY OrigId DESC LIMIT 1")
+        sendFailedDate = cls.db.get_scalar_by_SQL(sql)
+        return sendFailedDate is not None
+
+    @classmethod
     def get_failed_lora_messages(cls, startTime: datetime, endTime: datetime) -> list[MessageBoxArchiveData]:
+        cls.init()
         selectSQL = ("select MessageBoxArchiveData.* from MessageSubscriptionArchiveData "
                      "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
                      "where MessageSubscriptionArchiveData.SendFailedDate >= ? and MessageSubscriptionArchiveData.SendFailedDate < ? "
@@ -759,23 +804,68 @@ class DatabaseHelper:
         return messageBoxDatas
 
     @classmethod
+    def get_failed_sirap_messages(cls, startTime: datetime, endTime: datetime) -> list[MessageBoxArchiveData]:
+        cls.init()
+        selectSQL = ("select MessageBoxArchiveData.* from MessageSubscriptionArchiveData "
+                     "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
+                     "where MessageSubscriptionArchiveData.SendFailedDate >= ? and MessageSubscriptionArchiveData.SendFailedDate < ? "
+                     "and MessageSubscriptionArchiveData.SubscriberTypeName = 'SIRAP' "
+                     "and (MessageBoxArchiveData.Resubmitted = 0 or MessageBoxArchiveData.Resubmitted IS NULL)"
+                     "order by MessageSubscriptionArchiveData.SendFailedDate desc LIMIT 1;")
+        messageBoxDatas = cls.db.get_table_objects_by_SQL(MessageBoxArchiveData, selectSQL, (startTime,endTime))
+        return messageBoxDatas
+
+    @classmethod
+    def get_no_of_times_sirap_message_submitted_since_last_successful_sirap(cls, messageData: bytearray) -> int:
+        cls.init()
+        selectLastSuccessSQL = ("SELECT SentDate FROM MessageSubscriptionArchiveData "
+                                "WHERE MessageSubscriptionArchiveData.SubscriberTypeName = 'SIRAP' "
+                                "AND MessageSubscriptionArchiveData.SendFailedDate IS NULL "
+                                "ORDER BY id DESC LIMIT 1;")
+        lastSuccessDate = cls.db.get_scalar_by_SQL(selectLastSuccessSQL)
+        if lastSuccessDate is None:
+            # No successful SIRAP send yet, count all submissions
+            selectCountSQL = ("SELECT COUNT(MessageBoxArchiveData.OrigId) FROM MessageSubscriptionArchiveData "
+                              "JOIN MessageBoxArchiveData ON MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
+                              "WHERE MessageSubscriptionArchiveData.SubscriberTypeName = 'SIRAP' "
+                              "AND MessageBoxArchiveData.MessageData = ?;")
+            count = cls.db.get_scalar_by_SQL(selectCountSQL, (messageData,))
+        else:
+            selectCountSQL = ("SELECT COUNT(MessageBoxArchiveData.OrigId) FROM MessageSubscriptionArchiveData "
+                              "JOIN MessageBoxArchiveData ON MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
+                              "WHERE MessageSubscriptionArchiveData.SubscriberTypeName = 'SIRAP' "
+                              "AND MessageBoxArchiveData.MessageData = ? "
+                              "AND MessageSubscriptionArchiveData.SentDate > ?;")
+            count = cls.db.get_scalar_by_SQL(selectCountSQL, (messageData, lastSuccessDate))
+        return count or 0
+
+    @classmethod
     def get_no_of_times_message_data_submitted_since_last_acked_message(cls, messageData: bytearray) -> int:
+        cls.init()
         selectLastAckReceivedDateSQL = ("select MessageSubscriptionArchiveData.AckReceivedDate from MessageSubscriptionArchiveData "
                                         "where MessageSubscriptionArchiveData.SubscriberTypeName = 'LORA' "
                                         "order by MessageSubscriptionArchiveData.AckReceivedDate desc LIMIT 1;")
         lastAckReceivedDate = cls.db.get_scalar_by_SQL(selectLastAckReceivedDateSQL)
-        selectCountSQL = ("select count(MessageBoxArchiveData.OrigId) from MessageSubscriptionArchiveData "
-                          "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
-                          "where MessageSubscriptionArchiveData.SubscriberTypeName = 'LORA' "
-                          "and MessageBoxArchiveData.MessageData = ? "
-                          "and SendFailedDate > ?;")
-
-        noOfSubmits = cls.db.get_scalar_by_SQL(selectCountSQL, (messageData,lastAckReceivedDate))
-        return noOfSubmits
+        if lastAckReceivedDate is None:
+            # No acked message yet, count all submissions
+            selectCountSQL = ("select count(MessageBoxArchiveData.OrigId) from MessageSubscriptionArchiveData "
+                              "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
+                              "where MessageSubscriptionArchiveData.SubscriberTypeName = 'LORA' "
+                              "and MessageBoxArchiveData.MessageData = ?;")
+            count = cls.db.get_scalar_by_SQL(selectCountSQL, (messageData,))
+        else:
+            selectCountSQL = ("select count(MessageBoxArchiveData.OrigId) from MessageSubscriptionArchiveData "
+                              "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
+                              "where MessageSubscriptionArchiveData.SubscriberTypeName = 'LORA' "
+                              "and MessageBoxArchiveData.MessageData = ? "
+                              "and SendFailedDate > ?;")
+            count = cls.db.get_scalar_by_SQL(selectCountSQL, (messageData, lastAckReceivedDate))
+        return count or 0
 
 
     @classmethod
     def set_message_resubmitted(cls, messageBoxArchiveId: int):
+        cls.init()
         updateSQL = "update MessageBoxArchiveData set Resubmitted = 1 where MessageBoxArchiveData.id = ?"
         cls.db.execute_SQL(updateSQL, (messageBoxArchiveId,))
 
@@ -798,7 +888,7 @@ class DatabaseHelper:
     @classmethod
     def archive_repeater_message_after_added_to_message_box(cls, repeaterMessageBoxId: int):
         cls.init()
-        repeaterMessageBox = cls.db.get_table_object(RepeaterMessageBoxData, repeaterMessageBoxId)
+        repeaterMessageBox: RepeaterMessageBoxData = cls.db.get_table_object(RepeaterMessageBoxData, repeaterMessageBoxId)
         msa = RepeaterMessageBoxArchiveData()
         msa.OrigId = repeaterMessageBox.id
         msa.MessageData = repeaterMessageBox.MessageData
@@ -841,6 +931,7 @@ class DatabaseHelper:
 
     @classmethod
     def does_message_id_exist(cls, messageID: bytearray) -> bool:
+        cls.init()
         sql = ("SELECT MessageSubscriptionData.id "
                "FROM MessageSubscriptionData "
                "WHERE MessageSubscriptionData.MessageID = ?")
@@ -1102,16 +1193,18 @@ class DatabaseHelper:
     def archive_message_box(cls, msgBoxId: int):
         cls.init()
         sql = "INSERT INTO MessageBoxArchiveData (OrigId, MessageData," \
-              "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
+              "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MessageSource, MemoryAddress," \
               "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
               "SportIdentSecond, SIStationNumber," \
               "SICardNumber2, SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2," \
-              "LowBattery, RSSIValue, LinkQuality, Channel, ChecksumOK, CreatedDate) SELECT id, MessageData," \
-              "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
+              "LowBattery, RSSIValue, LinkQuality, Channel, ChecksumOK, CreatedDate," \
+              "PunchSequenceNumber1, PunchSequenceNumber2) SELECT id, MessageData," \
+              "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MessageSource, MemoryAddress," \
               "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
               "SportIdentSecond, SIStationNumber, " \
               "SICardNumber2, SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2," \
-              "LowBattery, RSSIValue, LinkQuality, Channel, ChecksumOK, CreatedDate FROM " \
+              "LowBattery, RSSIValue, LinkQuality, Channel, ChecksumOK, CreatedDate," \
+              "PunchSequenceNumber1, PunchSequenceNumber2 FROM " \
               "MessageBoxData WHERE Id = %s" % msgBoxId
 
         cls.db.execute_SQL(sql)
@@ -1121,16 +1214,18 @@ class DatabaseHelper:
     def archive_message_box_without_subscriptions(cls):
         cls.init()
         sql = "INSERT INTO MessageBoxArchiveData (OrigId, MessageData," \
-              "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
+              "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MessageSource, MemoryAddress," \
               "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
               "SportIdentSecond, SIStationNumber, " \
               "SICardNumber2, SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2," \
-              "LowBattery, RSSIValue, LinkQuality, Channel, ChecksumOK, CreatedDate) SELECT MessageBoxData.id, MessageData," \
-              "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MemoryAddress," \
+              "LowBattery, RSSIValue, LinkQuality, Channel, ChecksumOK, CreatedDate," \
+              "PunchSequenceNumber1, PunchSequenceNumber2) SELECT MessageBoxData.id, MessageData," \
+              "PowerCycleCreated, MessageTypeName, InstanceName, MessageSubTypeName, MessageSource, MemoryAddress," \
               "SICardNumber, SIStationSerialNumber, SportIdentHour, SportIdentMinute," \
               "SportIdentSecond, SIStationNumber, " \
               "SICardNumber2, SportIdentHour2, SportIdentMinute2, SportIdentSecond2, SIStationNumber2," \
-              "LowBattery, RSSIValue, LinkQuality, Channel, ChecksumOK, CreatedDate FROM " \
+              "LowBattery, RSSIValue, LinkQuality, Channel, ChecksumOK, CreatedDate," \
+              "PunchSequenceNumber1, PunchSequenceNumber2 FROM " \
               "MessageBoxData LEFT JOIN MessageSubscriptionData ON MessageBoxData.id = " \
               "MessageSubscriptionData.MessageboxId WHERE MessageSubscriptionData.id is null"
         cls.db.execute_SQL(sql)
@@ -1138,42 +1233,6 @@ class DatabaseHelper:
               "MessageBoxData LEFT JOIN MessageSubscriptionData ON MessageBoxData.id = " \
               "MessageSubscriptionData.MessageboxId WHERE MessageSubscriptionData.id IS NULL)"
         cls.db.execute_SQL(sql)
-
-    # RepeaterMessageBox
-    #@classmethod
-    #def create_repeater_message_box_data(cls, messageSource, messageTypeName, messageSubTypeName, instanceName, checksumOK,
-    #                                     powerCycle, serialNumber, lowBattery, ackRequested, repeater, siPayloadData,
-    #                                     messageID, data, rssiValue):
-    #    rmbd = RepeaterMessageBoxData()
-    #    rmbd.MessageData = data
-    #    rmbd.MessageTypeName = messageTypeName
-    #    rmbd.PowerCycleCreated = powerCycle
-    #    rmbd.ChecksumOK = checksumOK
-    #    rmbd.InstanceName = instanceName
-    #    rmbd.MessageSubTypeName = messageSubTypeName
-    #    rmbd.MessageSource = messageSource
-    #    rmbd.SIStationSerialNumber = serialNumber
-    #    rmbd.RSSIValue = rssiValue
-    #    rmbd.NoOfTimesSeen = 1
-    #    rmbd.NoOfTimesAckSeen = 0
-    #    rmbd.SIStationNumber = None
-    #    rmbd.SIStationSerialNumber = None
-    #    rmbd.MessageID = messageID
-    #    rmbd.LowBattery = lowBattery
-    #    rmbd.AckRequested = ackRequested
-    #    rmbd.RepeaterRequested = repeater
-
-    #    if siPayloadData is not None:
-    #        siMsg = SIMessage()
-    #        siMsg.AddPayload(siPayloadData)
-    #        rmbd.SICardNumber = siMsg.GetSICardNumber()
-    #        rmbd.SportIdentHour = siMsg.GetHour()
-    #        rmbd.SportIdentMinute = siMsg.GetMinute()
-    #        rmbd.SportIdentSecond = siMsg.GetSeconds()
-    #        rmbd.MemoryAddress = siMsg.GetBackupMemoryAddressAsInt()
-    #        rmbd.SIStationNumber = siMsg.GetStationNumber()
-
-    #    return rmbd
 
     @classmethod
     def save_repeater_message_box(cls, repeaterMessageBoxData):
@@ -1449,6 +1508,43 @@ class DatabaseHelper:
                 )
 
         return notFetchedPunches
+
+    # ROC punches
+    @classmethod
+    def get_roc_punches(cls, lastId: int) -> list[dict]:
+        cls.init()
+        sql = """
+        SELECT PunchSequenceNumber1 as Seq, SIStationNumber,
+               SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, CreatedDate
+        FROM MessageBoxData
+        WHERE PunchSequenceNumber1 IS NOT NULL AND PunchSequenceNumber1 > ?
+        UNION
+        SELECT PunchSequenceNumber2 as Seq, SIStationNumber2 as SIStationNumber,
+               SICardNumber2, SportIdentHour2, SportIdentMinute2, SportIdentSecond2, CreatedDate
+        FROM MessageBoxData
+        WHERE PunchSequenceNumber2 IS NOT NULL AND PunchSequenceNumber2 > ?
+        UNION
+        SELECT PunchSequenceNumber1 as Seq, SIStationNumber,
+               SICardNumber, SportIdentHour, SportIdentMinute, SportIdentSecond, CreatedDate
+        FROM MessageBoxArchiveData
+        WHERE PunchSequenceNumber1 IS NOT NULL AND PunchSequenceNumber1 > ?
+        UNION
+        SELECT PunchSequenceNumber2 as Seq, SIStationNumber2 as SIStationNumber,
+               SICardNumber2, SportIdentHour2, SportIdentMinute2, SportIdentSecond2, CreatedDate
+        FROM MessageBoxArchiveData
+        WHERE PunchSequenceNumber2 IS NOT NULL AND PunchSequenceNumber2 > ?
+        ORDER BY Seq ASC
+        """
+        conn = cls.db.openConnection()
+        try:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql, (lastId, lastId, lastId, lastId))
+                return cursor.fetchall()
+            finally:
+                cursor.close()
+        finally:
+            cls.db.closeConnection(conn)
 
 # MessageStatsData
     @classmethod

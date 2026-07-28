@@ -34,7 +34,7 @@ class ResubmitLoraAdapter(object):
 
     @staticmethod
     def GetTypeName():
-        return "RESUBMIT"
+        return "RESUBMITLORA"
 
     def __init__(self, instanceName):
         self.WiRocLogger = logging.getLogger('WiRoc.Input')
@@ -122,7 +122,7 @@ class ResubmitLoraAdapter(object):
 
             self.WiRocLogger.debug("ResubmitLoraAdapter::GetData() Data to fetch")
             return {"MessageType": "DATA", "MessageSubTypeName": messageBoxArchiveData.MessageSubTypeName, 
-                    "MessageSource": "Resumbmit", "TypeName": messageBoxArchiveData.MessageTypeName, 
+                    "MessageSource": "ResubmitLora", "TypeName": messageBoxArchiveData.MessageTypeName, 
                     "Data": messageBoxArchiveData.MessageData, "ChecksumOK": True,
                     "LimitToSubscriberTypeName": "LORA"}
         else:

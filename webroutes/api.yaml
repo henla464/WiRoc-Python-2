@@ -851,6 +851,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
+  /roc/:
+    get:
+      tags:
+        - "ROC"
+      summary: "Get punches in ROC protocol format for MeOS and other orienteering software"
+      operationId: "getRocPunches"
+      parameters:
+        - name: lastId
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: "Last imported punch sequence ID. Returns punches with higher IDs."
+        - name: unitId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Filter by unit id / event id (not used in this implementation)"
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Race date (YYYY-MM-DD)"
+        - name: time
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "from time"
+      responses:
+        "200":
+          description: "Semicolon-delimited punch lines: Seq;UnitId;SICardNumber;YYYY-MM-DD HH:MM:SS"
+          content:
+            text/plain:
+              schema:
+                type: string
   /dropalltables/:
     get:
       tags:

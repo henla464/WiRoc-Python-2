@@ -8,6 +8,7 @@ from datamodel.db_helper import DatabaseHelper
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from inputadapters.createhamcallsignmessageadapter import CreateHAMCallSignMessageAdapter
 from inputadapters.resubmitloraadapter import ResubmitLoraAdapter
+from inputadapters.resubmitsirapadapter import ResubmitSirapAdapter
 from subscriberadapters.sendloraadapter import SendLoraAdapter
 from subscriberadapters.sendmeshadapter import SendMeshAdapter
 from subscriberadapters.sendserialadapter import SendSerialAdapter
@@ -50,7 +51,7 @@ class Setup:
         inputObjects = []
         inputAdapterClasses = [CreateStatusAdapter, ReceiveLoraAdapter, ReceiveSIUSBSerialPort, ReceiveSIHWSerialPort,
                                     ReceiveSIBluetoothSP, ReceiveTestPunchesAdapter, ReceiveRepeaterMessagesAdapter,
-                               ReceiveSRRAdapter, ResubmitLoraAdapter, CreateHAMCallSignMessageAdapter]
+                               ReceiveSRRAdapter, ResubmitLoraAdapter, ResubmitSirapAdapter, CreateHAMCallSignMessageAdapter]
         inputAdapterChanged = False
         for inputAdpCls in inputAdapterClasses:
             if inputAdpCls.CreateInstances(HardwareAbstraction.Instance):

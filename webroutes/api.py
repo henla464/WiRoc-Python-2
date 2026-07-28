@@ -717,6 +717,50 @@ def deletePunches():
     return jsonpickle.encode(MicroMock(Value="OK"))
 
 
+@app.route('/api/roc/', methods=['GET'])
+def getRocPunches():
+    lastId = int(request.args.get('lastId', '0'))
+    date = request.args.get('date', '')
+    time = request.args.get('time', '')
+    filterDateTime = date + ' ' + time if date and time else (date + ' 00:00:00' if date else '')
+    filterTimeOnly = time if time and not date else ''
+
+    punches = DatabaseHelper.get_roc_punches(lastId)
+    lines = []
+    for p in punches:
+        hour = int(p['SportIdentHour'] or '0')
+        minute = int(p['SportIdentMinute'] or '0')
+        second = int(p['SportIdentSecond'] or '0')
+        created = p['CreatedDate']
+        """
+            ┌────────────────────────────────────────────────────┬─────────────────────────┐
+            │       Punch clock time vs server CreatedDate       │        Date used        │
+            ├────────────────────────────────────────────────────┼─────────────────────────┤
+            │ punchTime ≤ CreatedDate + 70min                    │ Same day as CreatedDate │
+            ├────────────────────────────────────────────────────┼─────────────────────────┤
+            │ punchTime > CreatedDate + 70min (crossed midnight) │ Previous day            │
+            └────────────────────────────────────────────────────┴─────────────────────────┘
+            """
+        if isinstance(created, str):
+            created = datetime.datetime.strptime(created, '%Y-%m-%d %H:%M:%S.%f')
+        punchTime = created.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(hours=hour, minutes=minute, seconds=second)
+        if punchTime <= created + datetime.timedelta(minutes=70):
+            punchDate = created.date()
+        else:
+            punchDate = (created - datetime.timedelta(days=1)).date()
+        timeStr = f"{hour:02d}:{minute:02d}:{second:02d}"
+        dtStr = f"{punchDate.strftime('%Y-%m-%d')} {timeStr}"
+        if filterDateTime and dtStr >= filterDateTime:
+            continue
+        if filterTimeOnly and timeStr >= filterTimeOnly:
+            continue
+        siStationNumber = p['SIStationNumber'] if p['SIStationNumber'] is not None else ''
+        sicard = p['SICardNumber'] if p['SICardNumber'] is not None else ''
+        line = f"{p['Seq']};{siStationNumber};{sicard};{dtStr}"
+        lines.append(line)
+    return '\n'.join(lines), 200, {'Content-Type': 'text/plain; charset=utf-8'}
+
+
 @app.route('/api/dropalltables/', methods=['GET'])
 def dropAllTables():
     DatabaseHelper.drop_all_tables()
