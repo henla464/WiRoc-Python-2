@@ -719,28 +719,9 @@ def deletePunches():
 
 @app.route('/api/roc/', methods=['GET'], strict_slashes=False)
 def getRocPunches():
-    Mmin = request.args.get('Mmin')
-    if Mmin is not None:
-        lastId = int(Mmin) - 1
-    else:
-        lastId = int(request.args.get('lastId', '0'))
+    lastId = int(request.args.get('lastId', '0'))
     date = request.args.get('date', '')
     time = request.args.get('time', '')
-
-    # If time contains a date ("YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD"), extract date.
-    # Also normalize time to HH:MM:SS (accepts HH:MM:SS, HH:MM, or HH).
-    if time:
-        timeParts = time.split(' ')
-        if len(timeParts) == 2:
-            # "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD HH:MM" or "YYYY-MM-DD HH"
-            if not date:
-                date = timeParts[0]
-            time = timeParts[1]
-        elif len(timeParts) == 1 and len(time) == 10 and time[4] == '-' and time[7] == '-':
-            # "YYYY-MM-DD" date pattern, no time
-            if not date:
-                date = time
-            time = ''
 
     if time:
         parts = time.split(':')
