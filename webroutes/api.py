@@ -722,10 +722,23 @@ def getRocPunches():
     lastId = int(request.args.get('lastId', '0'))
     date = request.args.get('date', '')
     time = request.args.get('time', '')
+
+    # Normalize time to HH:MM:SS (accepts HH:MM:SS, HH:MM, or HH)
+    if time:
+        parts = time.split(':')
+        if len(parts) == 1:
+            time = f"{int(parts[0]):02d}:00:00"
+        elif len(parts) == 2:
+            time = f"{int(parts[0]):02d}:{int(parts[1]):02d}:00"
+        elif len(parts) == 3:
+            time = f"{int(parts[0]):02d}:{int(parts[1]):02d}:{int(parts[2]):02d}"
+
     filterDateTime = date + ' ' + time if date and time else (date + ' 00:00:00' if date else '')
     filterTimeOnly = time if time and not date else ''
 
     punches = DatabaseHelper.get_roc_punches(lastId)
+    if not punches:
+        punches = DatabaseHelper.poll_for_roc_punches(lastId, 30)
     lines = []
     for p in punches:
         hour = int(p['SportIdentHour'] or '0')

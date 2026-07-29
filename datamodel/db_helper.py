@@ -1,6 +1,7 @@
 __author__ = 'henla464'
 
 from collections import defaultdict
+import time as _time
 
 from datamodel.datamodel import *
 from databaselib.db import DB
@@ -10,6 +11,7 @@ from datetime import timedelta, datetime
 
 class DatabaseHelper:
     db = DB("WiRoc.db", DataMapping())
+    WiRocLogger = logging.getLogger('WiRoc')
     WiRocLogger = logging.getLogger('WiRoc')
 
     @classmethod
@@ -1545,6 +1547,17 @@ class DatabaseHelper:
                 cursor.close()
         finally:
             cls.db.closeConnection(conn)
+
+    @classmethod
+    def poll_for_roc_punches(cls, lastId: int, timeout: float = 30.0) -> list:
+        cls.init()
+        deadline = _time.monotonic() + timeout
+        while _time.monotonic() < deadline:
+            currentMax = cls.db.get_scalar_by_SQL("SELECT Value FROM Sequences WHERE Name = 'Punch'")
+            if currentMax is not None and currentMax > lastId:
+                return cls.get_roc_punches(lastId)
+            _time.sleep(0.3)
+        return cls.get_roc_punches(lastId)
 
 # MessageStatsData
     @classmethod
