@@ -800,6 +800,7 @@ class DatabaseHelper:
                      "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
                      "where MessageSubscriptionArchiveData.SendFailedDate >= ? and MessageSubscriptionArchiveData.SendFailedDate < ? "
                      "and MessageSubscriptionArchiveData.AckReceivedDate IS NULL and MessageSubscriptionArchiveData.SubscriberTypeName = 'LORA' "
+                     "and MessageBoxArchiveData.MessageSubTypeName != 'Status' "
                      "and (MessageBoxArchiveData.Resubmitted = 0 or MessageBoxArchiveData.Resubmitted IS NULL)"
                      "order by MessageSubscriptionArchiveData.SendFailedDate desc LIMIT 1;")
         messageBoxDatas = cls.db.get_table_objects_by_SQL(MessageBoxArchiveData, selectSQL, (startTime,endTime))

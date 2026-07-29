@@ -4,8 +4,6 @@ from struct import pack
 from datetime import datetime
 import logging, os, random
 
-from datamodel.datamodel import SIMessage
-
 class Utils:
     WiRocLogger = logging.getLogger('WiRoc')
     CRC_POLYNOM = 0x8005
@@ -131,7 +129,8 @@ class Utils:
         return stationNumber
 
     @staticmethod
-    def GetSirapDataFromSIData(siMessage: SIMessage):
+    def GetSirapDataFromSIData(siMessage: 'SIMessage'):
+        from datamodel.datamodel import SIMessage
         punch = 0  # type of data
         codeDay = 0  # obsolete
         time = siMessage.GetTimeAsTenthOfSeconds()
