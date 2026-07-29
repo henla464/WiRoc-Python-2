@@ -717,13 +717,31 @@ def deletePunches():
     return jsonpickle.encode(MicroMock(Value="OK"))
 
 
-@app.route('/api/roc/', methods=['GET'])
+@app.route('/api/roc/', methods=['GET'], strict_slashes=False)
 def getRocPunches():
-    lastId = int(request.args.get('lastId', '0'))
+    Mmin = request.args.get('Mmin')
+    if Mmin is not None:
+        lastId = int(Mmin) - 1
+    else:
+        lastId = int(request.args.get('lastId', '0'))
     date = request.args.get('date', '')
     time = request.args.get('time', '')
 
-    # Normalize time to HH:MM:SS (accepts HH:MM:SS, HH:MM, or HH)
+    # If time contains a date ("YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD"), extract date.
+    # Also normalize time to HH:MM:SS (accepts HH:MM:SS, HH:MM, or HH).
+    if time:
+        timeParts = time.split(' ')
+        if len(timeParts) == 2:
+            # "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD HH:MM" or "YYYY-MM-DD HH"
+            if not date:
+                date = timeParts[0]
+            time = timeParts[1]
+        elif len(timeParts) == 1 and len(time) == 10 and time[4] == '-' and time[7] == '-':
+            # "YYYY-MM-DD" date pattern, no time
+            if not date:
+                date = time
+            time = ''
+
     if time:
         parts = time.split(':')
         if len(parts) == 1:
@@ -733,7 +751,7 @@ def getRocPunches():
         elif len(parts) == 3:
             time = f"{int(parts[0]):02d}:{int(parts[1]):02d}:{int(parts[2]):02d}"
 
-    filterDateTime = date + ' ' + time if date and time else (date + ' 00:00:00' if date else '')
+    filterAfter = date + ' ' + time if date and time else (date + ' 00:00:00' if date else '')
     filterTimeOnly = time if time and not date else ''
 
     punches = DatabaseHelper.get_roc_punches(lastId)
@@ -763,15 +781,15 @@ def getRocPunches():
             punchDate = (created - datetime.timedelta(days=1)).date()
         timeStr = f"{hour:02d}:{minute:02d}:{second:02d}"
         dtStr = f"{punchDate.strftime('%Y-%m-%d')} {timeStr}"
-        if filterDateTime and dtStr >= filterDateTime:
+        if filterAfter and dtStr < filterAfter:
             continue
-        if filterTimeOnly and timeStr >= filterTimeOnly:
+        if filterTimeOnly and timeStr < filterTimeOnly:
             continue
         siStationNumber = p['SIStationNumber'] if p['SIStationNumber'] is not None else ''
         sicard = p['SICardNumber'] if p['SICardNumber'] is not None else ''
         line = f"{p['Seq']};{siStationNumber};{sicard};{dtStr}"
         lines.append(line)
-    return '\n'.join(lines), 200, {'Content-Type': 'text/plain; charset=utf-8'}
+    return '\r\n'.join(lines) + '\r\n', 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
 
 @app.route('/api/dropalltables/', methods=['GET'])
