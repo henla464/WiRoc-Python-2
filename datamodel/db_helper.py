@@ -63,7 +63,34 @@ class DatabaseHelper:
         db.ensure_table_created(table)
         table = Sequences()
         db.ensure_table_created(table)
-     
+        cls.migrate_message_box_archive_resubmitted_columns()
+
+    @classmethod
+    def migrate_message_box_archive_resubmitted_columns(cls) -> None:
+        """Replace Resubmitted column with per-subscriber ResubmittedLora/ResubmittedSirap."""
+        cls.init()
+        # Check if migration already done
+        try:
+            cls.db.execute_SQL("SELECT ResubmittedLora FROM MessageBoxArchiveData LIMIT 1")
+            return  # already migrated
+        except:
+            pass
+        # Add new columns
+        for col in ['ResubmittedLora', 'ResubmittedSirap']:
+            try:
+                cls.db.execute_SQL(f"ALTER TABLE MessageBoxArchiveData ADD COLUMN {col} INT DEFAULT 0")
+            except:
+                pass
+        # Copy old Resubmitted values to ResubmittedLora (historically only LORA had resubmit)
+        try:
+            cls.db.execute_SQL("UPDATE MessageBoxArchiveData SET ResubmittedLora = Resubmitted WHERE Resubmitted = 1")
+        except:
+            pass
+        # Drop old column (SQLite doesn't support DROP COLUMN before 3.35, skip if it fails)
+        try:
+            cls.db.execute_SQL("ALTER TABLE MessageBoxArchiveData DROP COLUMN Resubmitted")
+        except:
+            pass
 
     @classmethod
     def drop_all_tables(cls) -> None:
@@ -801,7 +828,7 @@ class DatabaseHelper:
                      "where MessageSubscriptionArchiveData.SendFailedDate >= ? and MessageSubscriptionArchiveData.SendFailedDate < ? "
                      "and MessageSubscriptionArchiveData.AckReceivedDate IS NULL and MessageSubscriptionArchiveData.SubscriberTypeName = 'LORA' "
                      "and MessageBoxArchiveData.MessageSubTypeName != 'Status' "
-                     "and (MessageBoxArchiveData.Resubmitted = 0 or MessageBoxArchiveData.Resubmitted IS NULL)"
+                     "and (MessageBoxArchiveData.ResubmittedLora = 0 or MessageBoxArchiveData.ResubmittedLora IS NULL)"
                      "order by MessageSubscriptionArchiveData.SendFailedDate desc LIMIT 1;")
         messageBoxDatas = cls.db.get_table_objects_by_SQL(MessageBoxArchiveData, selectSQL, (startTime,endTime))
         return messageBoxDatas
@@ -813,7 +840,7 @@ class DatabaseHelper:
                      "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
                      "where MessageSubscriptionArchiveData.SendFailedDate >= ? and MessageSubscriptionArchiveData.SendFailedDate < ? "
                      "and MessageSubscriptionArchiveData.SubscriberTypeName = 'SIRAP' "
-                     "and (MessageBoxArchiveData.Resubmitted = 0 or MessageBoxArchiveData.Resubmitted IS NULL)"
+                     "and (MessageBoxArchiveData.ResubmittedSirap = 0 or MessageBoxArchiveData.ResubmittedSirap IS NULL)"
                      "order by MessageSubscriptionArchiveData.SendFailedDate desc LIMIT 1;")
         messageBoxDatas = cls.db.get_table_objects_by_SQL(MessageBoxArchiveData, selectSQL, (startTime,endTime))
         return messageBoxDatas
@@ -843,7 +870,7 @@ class DatabaseHelper:
         return count or 0
 
     @classmethod
-    def get_no_of_times_message_data_submitted_since_last_acked_message(cls, messageData: bytearray) -> int:
+    def get_no_of_times_lora_message_submitted_since_last_acked_message(cls, messageData: bytearray) -> int:
         cls.init()
         selectLastAckReceivedDateSQL = ("select MessageSubscriptionArchiveData.AckReceivedDate from MessageSubscriptionArchiveData "
                                         "where MessageSubscriptionArchiveData.SubscriberTypeName = 'LORA' "
@@ -867,9 +894,10 @@ class DatabaseHelper:
 
 
     @classmethod
-    def set_message_resubmitted(cls, messageBoxArchiveId: int):
+    def set_message_resubmitted(cls, messageBoxArchiveId: int, subscriberTypeName: str):
         cls.init()
-        updateSQL = "update MessageBoxArchiveData set Resubmitted = 1 where MessageBoxArchiveData.id = ?"
+        column = 'ResubmittedLora' if subscriberTypeName == 'LORA' else 'ResubmittedSirap'
+        updateSQL = f"update MessageBoxArchiveData set {column} = 1 where MessageBoxArchiveData.id = ?"
         cls.db.execute_SQL(updateSQL, (messageBoxArchiveId,))
 
     @classmethod

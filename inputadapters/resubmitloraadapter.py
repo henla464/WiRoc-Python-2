@@ -110,10 +110,10 @@ class ResubmitLoraAdapter(object):
             return None
         messageBoxArchiveData = messageBoxArchiveDatas[0]
 
-        noOfSubmitted = DatabaseHelper.get_no_of_times_message_data_submitted_since_last_acked_message(messageBoxArchiveData.MessageData)
+        noOfSubmitted = DatabaseHelper.get_no_of_times_lora_message_submitted_since_last_acked_message(messageBoxArchiveData.MessageData)
         if noOfSubmitted < 4:
             # need to mark as resubmitted so it is not picked up again
-            DatabaseHelper.set_message_resubmitted(messageBoxArchiveData.id)
+            DatabaseHelper.set_message_resubmitted(messageBoxArchiveData.id, 'LORA')
 
             # Schedule next resubmit after GetRetryDelay(1) so more failed messages
             # can be processed quickly without waiting for the next UpdateInfrequently cycle.

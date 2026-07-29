@@ -160,7 +160,7 @@ class MessageBoxArchiveData(object):
                ("LowBattery", str), ("RSSIValue", int),
                ("LinkQuality", int), ("Channel", int),
                ("ChecksumOK", bool), ("CreatedDate", datetime),
-               ("Resubmitted", bool),
+               ("ResubmittedLora", bool), ("ResubmittedSirap", bool),
                ("PunchSequenceNumber1", int), ("PunchSequenceNumber2", int)]
 
     def __init__(self):
@@ -192,7 +192,8 @@ class MessageBoxArchiveData(object):
         self.Channel = None
         self.ChecksumOK = None
         self.CreatedDate = None
-        self.Resubmitted: bool = False
+        self.ResubmittedLora: bool = False
+        self.ResubmittedSirap: bool = False
         self.PunchSequenceNumber1 = None
         self.PunchSequenceNumber2 = None
 

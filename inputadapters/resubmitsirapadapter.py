@@ -97,7 +97,7 @@ class ResubmitSirapAdapter(object):
         noOfSubmitted = DatabaseHelper.get_no_of_times_sirap_message_submitted_since_last_successful_sirap(messageBoxArchiveData.MessageData)
         if noOfSubmitted < 4:
             # need to mark as resubmitted so it is not picked up again
-            DatabaseHelper.set_message_resubmitted(messageBoxArchiveData.id)
+            DatabaseHelper.set_message_resubmitted(messageBoxArchiveData.id, 'SIRAP')
 
             self.WiRocLogger.debug("ResubmitSirapAdapter::GetData() Data to fetch")
             return {"MessageType": "DATA", "MessageSubTypeName": messageBoxArchiveData.MessageSubTypeName,
