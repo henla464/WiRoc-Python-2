@@ -126,7 +126,7 @@ class SendToSRRAdapter(object):
         return 0
 
     def GetRetryDelay(self, tryNo: int) -> float:
-        return 1
+        return 1000000  # 1 second in microseconds
 
     def SendData(self, messageData: tuple[bytearray], successCB, failureCB, notSentCB,
                  settingsDictionary: dict[str, any]) -> bool:

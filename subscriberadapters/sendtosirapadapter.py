@@ -53,7 +53,13 @@ class SendToSirapAdapter(object):
 
     @staticmethod
     def EnableDisableTransforms() -> None:
-        return None
+        if len(SendToSirapAdapter.Instances) > 0:
+            enableTransforms = SettingsClass.GetSendToSirapEnabled()
+            DatabaseHelper.set_transform_enabled(enableTransforms, "LoraSIMessageToSirapTransform")
+            DatabaseHelper.set_transform_enabled(enableTransforms, "SISIMessageToSirapTransform")
+            DatabaseHelper.set_transform_enabled(enableTransforms, "SITestTestToSirapTransform")
+            DatabaseHelper.set_transform_enabled(enableTransforms, "LoraSIMessageDoubleToSirapTransform")
+            DatabaseHelper.set_transform_enabled(enableTransforms, "SRRSRRMessageToSirapTransform")
 
     def __init__(self, instanceName):
         self.instanceName: str = instanceName
@@ -112,7 +118,7 @@ class SendToSirapAdapter(object):
         return 0
 
     def GetRetryDelay(self, tryNo: int) -> float:
-        return 1
+        return 1000000  # 1 second in microseconds
 
     def OpenConnection(self, failureCB, settingsDictionary: dict[str, any]) -> socket.socket | None:
         try:

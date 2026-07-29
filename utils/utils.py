@@ -4,6 +4,8 @@ from struct import pack
 from datetime import datetime
 import logging, os, random
 
+from datamodel.datamodel import SIMessage
+
 class Utils:
     WiRocLogger = logging.getLogger('WiRoc')
     CRC_POLYNOM = 0x8005
@@ -129,17 +131,10 @@ class Utils:
         return stationNumber
 
     @staticmethod
-    def GetSirapDataFromSIData(siMessage):
-        #if len(siPayloadData) < 12:
-        #    logging.error("Utils::GetSirapDataFromSIData() length siPayloadData less than 12")
-        #    return None
-        #punchData = PunchData(siPayloadData)
+    def GetSirapDataFromSIData(siMessage: SIMessage):
         punch = 0  # type of data
         codeDay = 0  # obsolete
-        #time = ((punchData.TwelveHourTimer[0] << 8) + punchData.TwelveHourTimer[1]) * 10 + punchData.SubSecond
         time = siMessage.GetTimeAsTenthOfSeconds()
-        #if punchData.TwentyFourHour == 1:
-        #    time += 36000 * 12
         byteArr = bytearray(pack("<cHIII", bytes([punch]), siMessage.GetStationNumber(), siMessage.GetSICardNumber(), codeDay, time))
         return byteArr
 

@@ -115,7 +115,7 @@ class SendStatusAdapter(object):
         return 0
 
     def GetRetryDelay(self, tryNo):
-        return 1
+        return 1000000  # 1 second in microseconds
 
     # messageData is a tuple of bytearrays
     def SendData(self, messageData, successCB, failureCB, notSentCB, settingsDictionary):

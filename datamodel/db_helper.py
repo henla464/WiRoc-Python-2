@@ -455,7 +455,7 @@ class DatabaseHelper:
         msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionId)
         msa.FindAdapterTryDate = datetime.now()
         msa.FindAdapterTries = msa.FindAdapterTries + 1
-        msa.FindAdpterRetryDelay = retryDelay
+        msa.FindAdapterRetryDelay = retryDelay
         cls.db.save_table_object(msa, False)
 
     @classmethod
@@ -1045,9 +1045,10 @@ class DatabaseHelper:
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
 
-                if messageSubscription.SentDate is not None and messageSubscription.SentDate < now < messageSubscription.SentDate + timedelta(microseconds=messageSubscription.RetryDelay):
+                lastSendDate = messageSubscription.SentDate if messageSubscription.SentDate is not None else messageSubscription.SendFailedDate
+                if lastSendDate is not None and lastSendDate < now < lastSendDate + timedelta(microseconds=messageSubscription.RetryDelay):
                     # has been sent, not yet passed the retry delay (may still be waiting for ack)
-                    #DatabaseHelper.WiRocLogger.debug(f"has been sent, not yet passed the retry delay (may still be waiting for ack). RetryDelay: {messageSubscription.RetryDelay} Delayed until: {messageSubscription.SentDate + timedelta(microseconds=messageSubscription.RetryDelay)}")
+                    #DatabaseHelper.WiRocLogger.debug(f"has been sent, not yet passed the retry delay (may still be waiting for ack). RetryDelay: {messageSubscription.RetryDelay} Delayed until: {lastSendDate + timedelta(microseconds=messageSubscription.RetryDelay)}")
                     adapterTypesAlreadyHandlingMessages.add(messageSubscription.SubscriberTypeName)
                     continue
 

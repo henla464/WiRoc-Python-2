@@ -220,7 +220,7 @@ class Main:
 
                         subscriptions = DatabaseHelper.get_subscription_view_by_input_message_type(messageTypeName, messageSubTypeName)
                         for subscription in subscriptions:
-                            if subscription.SubscriberTypeName != limitToSubscriberTypeName:
+                            if limitToSubscriberTypeName is not None and subscription.SubscriberTypeName != limitToSubscriberTypeName:
                                 # resubmits should only resend to the destination that failed
                                 # (ResubmitLoraAdapter - only resend over Lora not to any other subscriber)
                                 continue
