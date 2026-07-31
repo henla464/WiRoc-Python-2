@@ -12,6 +12,8 @@ tags:
     description: "LORA Radio settings"
   - name: "SIRAP"
     description: "SIRAP tcp/ip settings"
+  - name: "ROC"
+    description: "Radio Online Control settings"
   - name: "Status"
     description: ""
   - name: "Database"
@@ -439,6 +441,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyIntObj"
+  /roc/enabled/:
+    get:
+      tags:
+        - "ROC"
+      summary: "Get if sending punches to ROC is enabled"
+      operationId: "getRocEnabled"
+      responses:
+        "200":
+          description: "0/1 depending on if send to ROC is enabled or not"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /roc/enabled/{enabled}:
+    get:
+      tags:
+        - "ROC"
+      summary: "Enable/Disable sending punches to ROC server"
+      operationId: "setRocEnabled"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/TrueFalse"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /status/:
     get:
       tags:

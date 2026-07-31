@@ -24,22 +24,24 @@ class SendLoraAdapter(object):
     @staticmethod
     def CreateInstances(hardwareAbstraction: HardwareAbstraction):
         # check the number of lora radios and return an instance for each
-        serialPorts = ['/dev/ttyS1']
+        serialPorts: list[str] = ['/dev/ttyS1']
 
-        if len(serialPorts) > 0:
-            if len(SendLoraAdapter.Instances) > 0:
-                if SendLoraAdapter.Instances[0].GetSerialDevicePath() != serialPorts[0]:
-                    SendLoraAdapter.Instances[0] = SendLoraAdapter(1, serialPorts[0], hardwareAbstraction)
-                    return True
-                elif SendLoraAdapter.WiRocMode is None or SendLoraAdapter.WiRocMode != SettingsClass.GetLoraMode():
-                    return True
-            else:
-                SendLoraAdapter.Instances.append(SendLoraAdapter(1, serialPorts[0], hardwareAbstraction))
+        if len(SendLoraAdapter.Instances) > 0:
+            if SendLoraAdapter.Instances[0].GetSerialDevicePath() != serialPorts[0]:
+                SendLoraAdapter.Instances[0] = SendLoraAdapter(1, serialPorts[0], hardwareAbstraction)
+                return True
+            elif SendLoraAdapter.WiRocMode is None or SendLoraAdapter.WiRocMode != SettingsClass.GetLoraMode():
                 return True
         else:
-            if len(SendLoraAdapter.Instances) > 0:
-                SendLoraAdapter.Instances = []
-                return True
+            SendLoraAdapter.Instances.append(SendLoraAdapter(1, serialPorts[0], hardwareAbstraction))
+            return True
+
+        # check if enabled changed => let init/enabledisablesubscription run
+        enabled = SettingsClass.GetLoraEnabled()
+        isInitialized = SendLoraAdapter.Instances[0].GetIsInitialized()
+        subscriptionShouldBeEnabled = (isInitialized and enabled)
+        if SendLoraAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
+            return True
         return False
 
     @staticmethod
@@ -48,12 +50,15 @@ class SendLoraAdapter(object):
 
     @staticmethod
     def EnableDisableSubscription():
-        if len(SendLoraAdapter.Instances) > 0:
-            shouldSubscriptionBeEnabled = SendLoraAdapter.Instances[0].GetIsInitialized() and SendLoraAdapter.Instances[
-                0].GetIsEnabled()
+        loraEnabled = SettingsClass.GetLoraEnabled()
+        shouldSubscriptionBeEnabled = False
+        if loraEnabled and len(SendLoraAdapter.Instances) > 0:
+            shouldSubscriptionBeEnabled = (SendLoraAdapter.Instances[0].GetIsInitialized() and
+                                           SendLoraAdapter.Instances[0].GetIsEnabled())
+        if SendLoraAdapter.SubscriptionsEnabled != shouldSubscriptionBeEnabled:
+            SendLoraAdapter.SubscriptionsEnabled = shouldSubscriptionBeEnabled
             for name, transf in SendLoraAdapter.Instances[0].transforms.items():
-                if (SendLoraAdapter.SubscriptionsEnabled != shouldSubscriptionBeEnabled or
-                        transf.GetDeleteAfterSentChanged()):
+                if shouldSubscriptionBeEnabled or transf.GetDeleteAfterSentChanged():
                     deleteAfterSent = transf.GetDeleteAfterSent()
                     maxTries = transf.GetMaxTries()
                     SendLoraAdapter.WiRocLogger.info(
@@ -62,28 +67,30 @@ class SendLoraAdapter(object):
                         " maxTries: " + str(maxTries))
                     DatabaseHelper.update_subscription(shouldSubscriptionBeEnabled, deleteAfterSent,
                                                        SendLoraAdapter.GetTypeName(), name, maxTries)
-            SendLoraAdapter.SubscriptionsEnabled = shouldSubscriptionBeEnabled
 
     @staticmethod
     def EnableDisableTransforms():
-        if len(SendLoraAdapter.Instances) > 0:
-            if SendLoraAdapter.WiRocMode is None or SendLoraAdapter.WiRocMode != SettingsClass.GetLoraMode():
-                SendLoraAdapter.WiRocMode = SettingsClass.GetLoraMode()
-                enableSendTransforms = (
-                            SendLoraAdapter.WiRocMode == "SENDER" or SendLoraAdapter.WiRocMode == "REPEATER")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "SISIMessageToLoraTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "SRRSRRMessageToLoraTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestTestToLoraTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "StatusStatusToLoraTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "HAMCSHamcsToLoraTransform")
-                # For receiver: Sends schedules an ack for message received from sender when sender requested repeater
-                # (we don't send ack directly because repeater is expected to reply with ack directly)
-                DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraSIMessageToLoraAckTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraAckTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageDoubleToLoraAckTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageDoubleToLoraTransform")
-                DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterStatusToLoraTransform")
+        SendLoraAdapter.WiRocMode = SettingsClass.GetLoraMode()
+        loraEnabled = SettingsClass.GetLoraEnabled()
+        if not loraEnabled:
+            for name in SendLoraAdapter.Instances[0].transforms:
+                DatabaseHelper.set_transform_enabled(False, name)
+        else:
+            enableSendTransforms = (SettingsClass.GetLoraMode() == "SENDER" or
+                                    SettingsClass.GetLoraMode() == "REPEATER")
+            DatabaseHelper.set_transform_enabled(enableSendTransforms, "SISIMessageToLoraTransform")
+            DatabaseHelper.set_transform_enabled(enableSendTransforms, "SRRSRRMessageToLoraTransform")
+            DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestTestToLoraTransform")
+            DatabaseHelper.set_transform_enabled(enableSendTransforms, "StatusStatusToLoraTransform")
+            DatabaseHelper.set_transform_enabled(enableSendTransforms, "HAMCSHamcsToLoraTransform")
+            # For receiver: Sends schedules an ack for message received from sender when sender requested repeater
+            # (we don't send ack directly because repeater is expected to reply with ack directly)
+            DatabaseHelper.set_transform_enabled(not enableSendTransforms, "LoraSIMessageToLoraAckTransform")
+            DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraAckTransform")
+            DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageToLoraTransform")
+            DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageDoubleToLoraAckTransform")
+            DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterSIMessageDoubleToLoraTransform")
+            DatabaseHelper.set_transform_enabled(enableSendTransforms, "RepeaterStatusToLoraTransform")
 
     def __init__(self, instanceNumber, portName, hardwareAbstraction):
         self.instanceNumber = instanceNumber

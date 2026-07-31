@@ -22,11 +22,14 @@ class SendToRocAdapter(object):
 
     @staticmethod
     def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
-        if len(SendToRocAdapter.Instances) == 0 and SettingsClass.GetRocEnabled():
+        if len(SendToRocAdapter.Instances) == 0:
             SendToRocAdapter.Instances.append(SendToRocAdapter('roc1'))
             return True
-        elif len(SendToRocAdapter.Instances) > 0 and not SettingsClass.GetRocEnabled():
-            SendToRocAdapter.Instances.clear()
+        # check if enabled changed => let init/enabledisablesubscription run
+        isInitialized = SendToRocAdapter.Instances[0].GetIsInitialized()
+        enabled = SettingsClass.GetRocEnabled()
+        subscriptionShouldBeEnabled = (isInitialized and enabled)
+        if SendToRocAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
             return True
         return False
 
@@ -34,33 +37,29 @@ class SendToRocAdapter(object):
     def GetTypeName() -> str:
         return "ROC"
 
+    ROC_TRANSFORM_NAMES = ["LoraSIMessageToRocTransform", "SISIMessageToRocTransform",
+                           "SITestTestToRocTransform", "LoraSIMessageDoubleToRocTransform",
+                           "SRRSRRMessageToRocTransform"]
+
     @staticmethod
     def EnableDisableSubscription():
-        if len(SendToRocAdapter.Instances) > 0:
-            isInitialized = SendToRocAdapter.Instances[0].GetIsInitialized()
-            enabled = SettingsClass.GetRocEnabled()
-            subscriptionShouldBeEnabled = (isInitialized and enabled)
-            if SendToRocAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
-                SendToRocAdapter.SubscriptionsEnabled = subscriptionShouldBeEnabled
-                deleteAfterSent = SendToRocAdapter.GetDeleteAfterSent()
-                for name, transf in SendToRocAdapter.Instances[0].transforms.items():
-                    maxTries = transf.GetMaxTries()
-                    SendToRocAdapter.WiRocLogger.info(
-                        "SendToRocAdapter::EnableDisableSubscription() subscription set enabled: " + str(
-                            subscriptionShouldBeEnabled) + " name: " + name + " deleteAfterSent: " + str(deleteAfterSent) +
-                        " maxTries: " + str(maxTries))
-                    DatabaseHelper.update_subscription(subscriptionShouldBeEnabled, deleteAfterSent,
-                                                       SendToRocAdapter.GetTypeName(), name, maxTries)
+        enabled = SettingsClass.GetRocEnabled()
+        subscriptionShouldBeEnabled = enabled
+        if SendToRocAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
+            SendToRocAdapter.SubscriptionsEnabled = subscriptionShouldBeEnabled
+            deleteAfterSent = SendToRocAdapter.GetDeleteAfterSent()
+            for name in SendToRocAdapter.ROC_TRANSFORM_NAMES:
+                SendToRocAdapter.WiRocLogger.info(
+                    "SendToRocAdapter::EnableDisableSubscription() subscription set enabled: " + str(
+                        subscriptionShouldBeEnabled) + " name: " + name)
+                DatabaseHelper.update_subscription(subscriptionShouldBeEnabled, deleteAfterSent,
+                                                   SendToRocAdapter.GetTypeName(), name)
 
     @staticmethod
     def EnableDisableTransforms() -> None:
-        if len(SendToRocAdapter.Instances) > 0:
-            enableTransforms = SettingsClass.GetRocEnabled()
-            DatabaseHelper.set_transform_enabled(enableTransforms, "LoraSIMessageToRocTransform")
-            DatabaseHelper.set_transform_enabled(enableTransforms, "SISIMessageToRocTransform")
-            DatabaseHelper.set_transform_enabled(enableTransforms, "SITestTestToRocTransform")
-            DatabaseHelper.set_transform_enabled(enableTransforms, "LoraSIMessageDoubleToRocTransform")
-            DatabaseHelper.set_transform_enabled(enableTransforms, "SRRSRRMessageToRocTransform")
+        enableTransforms = SettingsClass.GetRocEnabled()
+        for name in SendToRocAdapter.ROC_TRANSFORM_NAMES:
+            DatabaseHelper.set_transform_enabled(enableTransforms, name)
 
     def __init__(self, instanceName):
         self.instanceName: str = instanceName

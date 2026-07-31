@@ -17,27 +17,25 @@ class SendToSRRAdapter(object):
     def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
         if hardwareAbstraction.HasSRR():
             if len(SendToSRRAdapter.Instances) == 0:
-
-                if SettingsClass.GetSRRMode() == "SEND" and (
-                        SettingsClass.GetSRRRedChannelEnabled() or SettingsClass.GetSRRBlueChannelEnabled()):
-
-                    srrRadio = SRRRadio.GetInstance(hardwareAbstraction)
-                    if srrRadio is not None:
-                        SendToSRRAdapter.Instances.append(
-                            SendToSRRAdapter("sndsrr1", srrRadio))
-                        return True
-                    return False
-                else:
-                    SendToSRRAdapter.Instances = []
-                    return False
-            else:
-                if SettingsClass.GetSRRMode() == "SEND" and (
-                        SettingsClass.GetSRRRedChannelEnabled() or SettingsClass.GetSRRBlueChannelEnabled()):
-                    return False
-                else:
-                    SendToSRRAdapter.Instances = []
+                srrRadio = SRRRadio.GetInstance(hardwareAbstraction)
+                if srrRadio is not None:
+                    SendToSRRAdapter.Instances.append(
+                        SendToSRRAdapter("sndsrr1", srrRadio))
                     return True
-        return False
+                return False
+            else:
+                # check if enabled changed => let init/enabledisablesubscription run
+                enabled = (SettingsClass.GetSRREnabled() and SettingsClass.GetSRRMode() == "SEND")
+                isInitialized = SendToSRRAdapter.Instances[0].GetIsInitialized()
+                subscriptionShouldBeEnabled = (isInitialized and enabled)
+                if SendToSRRAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
+                    return True
+                return False
+        else:
+            if len(SendToSRRAdapter.Instances) > 0:
+                SendToSRRAdapter.Instances = []
+                return True
+            return False
 
     @staticmethod
     def GetTypeName() -> str:
@@ -63,12 +61,10 @@ class SendToSRRAdapter(object):
 
     @staticmethod
     def EnableDisableTransforms() -> None:
+        enabled = (SettingsClass.GetSRREnabled() and SettingsClass.GetSRRMode() == "SEND")
         if len(SendToSRRAdapter.Instances) > 0:
-            enableSendTransforms = (SettingsClass.GetSRREnabled() and SettingsClass.GetSRRMode() == "SEND")
-            DatabaseHelper.set_transform_enabled(enableSendTransforms, "LoraSIMessageToSRRTransform")
-            DatabaseHelper.set_transform_enabled(enableSendTransforms, "SISIMessageToSRRTransform")
-            DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestTestToSRRTransform")
-            DatabaseHelper.set_transform_enabled(enableSendTransforms, "LoraSIMessageDoubleToSRRTransform")
+            for name in SendToSRRAdapter.Instances[0].transforms:
+                DatabaseHelper.set_transform_enabled(enabled, name)
 
     def __init__(self, instanceName: str, srrRadio: SRRRadio):
         self.instanceName: str = instanceName

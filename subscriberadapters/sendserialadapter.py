@@ -10,70 +10,65 @@ import threading
 class SendSerialAdapter(object):
     WiRocLogger = logging.getLogger('WiRoc.Output')
     Instances = []
-    SendSerialAdapterActive = None
+    SubscriptionsEnabled = None
 
     @staticmethod
     def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
-        serialPorts = []
+        serialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
 
-        if SettingsClass.GetRS232Mode() == "SEND":
-            hwSISerialPorts = HardwareAbstraction.Instance.GetSISerialPorts()
-            serialPorts.extend(hwSISerialPorts)
-
-        if len(serialPorts) > 0:
-            if len(SendSerialAdapter.Instances) > 0:
-                return not SendSerialAdapter.Instances[0].GetIsInitialized()
-            else:
-                SendSerialAdapter.Instances.append(SendSerialAdapter(1, serialPorts[0]))
-                return True
-        else:
+        if len(serialPorts) == 0:
             if len(SendSerialAdapter.Instances) > 0:
                 tempInstance = SendSerialAdapter.Instances[0]
                 SendSerialAdapter.Instances = []
-                SendSerialAdapter.EnableDisableSubscription()
                 try:
                     tempInstance.rs232Serial.close()
                 except Exception as ex:
                     SendSerialAdapter.WiRocLogger.debug("SendSerialAdapter:CreateInstances() Close serial failed ex: %s" % ex)
-
                 return True
-        return False
+            return False
 
-    @staticmethod
-    def EnableDisableSubscription():
-        # called before init
-        SendSerialAdapter.WiRocLogger.debug("SendSerialAdapter::EnableDisableSubscription()")
         if len(SendSerialAdapter.Instances) > 0:
-            if SendSerialAdapter.Instances[0].GetIsInitialized():
-                if SendSerialAdapter.SendSerialAdapterActive is None or not SendSerialAdapter.SendSerialAdapterActive:
-                    SendSerialAdapter.SendSerialAdapterActive = True
-                    deleteAfterSent = SendSerialAdapter.GetDeleteAfterSent()
-                    for name, transf in SendSerialAdapter.Instances[0].transforms.items():
-                        maxTries = transf.GetMaxTries()
-                        SendSerialAdapter.WiRocLogger.info("SendSerialAdapter::EnableDisableSubscription() update subscription enable name: " + name + " deleteAfterSent: " + str(deleteAfterSent) + " maxTries: " + str(maxTries))
-                        DatabaseHelper.update_subscription(True, deleteAfterSent, SendSerialAdapter.GetTypeName(), name, maxTries)
-                    SettingsClass.SetForceReconfigure(True)
-            else:
-                if SendSerialAdapter.SendSerialAdapterActive is None or SendSerialAdapter.SendSerialAdapterActive:
-                    SendSerialAdapter.SendSerialAdapterActive = False
-                    deleteAfterSent = SendSerialAdapter.GetDeleteAfterSent()
-                    for name, transf in SendSerialAdapter.Instances[0].transforms.items():
-                        maxTries = transf.GetMaxTries()
-                        SendSerialAdapter.WiRocLogger.info("SendSerialAdapter::EnableDisableSubscription() update subscription disable name: " + name + " deleteAfterSent: " + str(deleteAfterSent) + " maxTries: " + str(maxTries))
-                        DatabaseHelper.update_subscription(False, deleteAfterSent, SendSerialAdapter.GetTypeName(), name, maxTries)
-                    SettingsClass.SetForceReconfigure(True)
+            if SendSerialAdapter.Instances[0].GetSerialDevicePath() != serialPorts[0]:
+                SendSerialAdapter.Instances[0] = SendSerialAdapter(1, serialPorts[0])
+                return True
         else:
-            SendSerialAdapter.WiRocLogger.debug("SendSerialAdapter::EnableDisableSubscription() Setting SetSendSerialAdapterActive False 2")
-            SendSerialAdapter.SendSerialAdapterActive = False
-            SettingsClass.SetForceReconfigure(True)
+            SendSerialAdapter.Instances.append(SendSerialAdapter(1, serialPorts[0]))
+            return True
+
+        # check if enabled changed => let init/enabledisablesubscription run
+        enabled = SettingsClass.GetRS232Mode() == "SEND"
+        isInitialized = SendSerialAdapter.Instances[0].GetIsInitialized()
+        subscriptionShouldBeEnabled = (isInitialized and enabled)
+        if SendSerialAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
+            return True
+        return False
 
     @staticmethod
     def GetTypeName():
         return "SERIAL"
 
     @staticmethod
+    def EnableDisableSubscription():
+        enabled = SettingsClass.GetRS232Mode() == "SEND"
+        shouldSubscriptionBeEnabled = False
+        if enabled and len(SendSerialAdapter.Instances) > 0:
+            shouldSubscriptionBeEnabled = SendSerialAdapter.Instances[0].GetIsInitialized()
+        if SendSerialAdapter.SubscriptionsEnabled != shouldSubscriptionBeEnabled:
+            SendSerialAdapter.SubscriptionsEnabled = shouldSubscriptionBeEnabled
+            deleteAfterSent = SendSerialAdapter.GetDeleteAfterSent()
+            if len(SendSerialAdapter.Instances) > 0:
+                for name, transf in SendSerialAdapter.Instances[0].transforms.items():
+                    maxTries = transf.GetMaxTries()
+                    SendSerialAdapter.WiRocLogger.info("SendSerialAdapter::EnableDisableSubscription() update subscription enabled: " + str(shouldSubscriptionBeEnabled) + " name: " + name + " deleteAfterSent: " + str(deleteAfterSent) + " maxTries: " + str(maxTries))
+                    DatabaseHelper.update_subscription(shouldSubscriptionBeEnabled, deleteAfterSent, SendSerialAdapter.GetTypeName(), name, maxTries)
+            SettingsClass.SetSendSerialAdapterActive(shouldSubscriptionBeEnabled)
+
+    @staticmethod
     def EnableDisableTransforms():
-        return None
+        enabled = SettingsClass.GetRS232Mode() == "SEND"
+        if len(SendSerialAdapter.Instances) > 0:
+            for name in SendSerialAdapter.Instances[0].transforms:
+                DatabaseHelper.set_transform_enabled(enabled, name)
 
     def __init__(self, instanceNumber, portName):
         self.instanceNumber = instanceNumber

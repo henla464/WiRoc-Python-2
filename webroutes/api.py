@@ -378,6 +378,31 @@ def setSendToSirapIPPort(port):
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 
+@app.route('/api/roc/enabled/', methods=['GET'])
+def getRocEnabled():
+    setting = DatabaseHelper.get_setting_by_key('RocEnabled')
+    enabled = '0'
+    if setting is not None:
+        enabled = setting.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=enabled))
+
+
+@app.route('/api/roc/enabled/<enabled>/', methods=['GET'])
+def setRocEnabled(enabled):
+    sd = DatabaseHelper.get_setting_by_key('RocEnabled')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'RocEnabled'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
 @app.route('/api/status/', methods=['GET'])
 def getStatus():
     subscribersView = DatabaseHelper.get_subscribers()
