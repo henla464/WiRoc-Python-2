@@ -1,7 +1,9 @@
 import time
 import traceback
+import subprocess
 
 from battery import Battery
+from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from datamodel.db_helper import DatabaseHelper
 from settings.settings import SettingsClass
 import requests
@@ -32,6 +34,8 @@ class BackgroundTasks(object):
 
         self.doInfrequentHTTPTasksBackgroundProcess: Process | None = None
         self.doInfrequentDatabaseTasksBackgroundProcess: Process | None = None
+        self.rocCallHomeBackgroundProcess: Process | None = None
+        self.rocCallHomeQueueCommands = Queue()
 
     def SendDataToInfrequentHTTPTaskProcess(self):
         batteryIsLow = Battery.GetIsBatteryLow()
@@ -305,6 +309,161 @@ class BackgroundTasks(object):
                 "BackgroundTasks::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(
                     msgSub.id))
             DatabaseHelper.archive_message_subscription_view_not_sent(msgSub.id)
+
+    # ############### ROC CallHome / MiniCallHome #############
+    ROC_VERSION = "dev6.4"
+
+    def StartRocCallHome(self):
+        try:
+            if self.rocCallHomeBackgroundProcess is None:
+                self.rocCallHomeBackgroundProcess = Process(
+                    target=BackgroundTasks.DoRocCallHomeBackground,
+                    args=(self.rocCallHomeQueueCommands,),
+                    daemon=True)
+                self.rocCallHomeBackgroundProcess.start()
+            try:
+                self.rocCallHomeQueueCommands.put("START", False)
+            except Full as fex:
+                BackgroundTasks.WiRocLogger.error(
+                    f"BackgroundTasks::StartRocCallHome() rocCallHomeQueueCommands FULL Exception: {fex}")
+        except Exception as ex:
+            tb = traceback.format_exc()
+            BackgroundTasks.WiRocLogger.error(f"BackgroundTasks::StartRocCallHome() Exception: {ex} StackTrace: {tb}")
+
+    @staticmethod
+    def _get_local_ip() -> str:
+        """Get the local IP address. Priority: ethernet → USB ethernet → WiFi → mesh → mobile USB.
+        Creates a HardwareAbstraction instance if needed (the subprocess won't have one)."""
+        try:
+            if HardwareAbstraction.Instance is None:
+                HardwareAbstraction.Instance = HardwareAbstraction()
+
+            candidates = []
+
+            eth = HardwareAbstraction.Instance.GetBuiltinEthernetInterfaceName()
+            if eth and HardwareAbstraction.Instance.DoesInterfaceExist(eth):
+                candidates.append(eth)
+
+            usbEths = HardwareAbstraction.Instance.GetUSBEthernetInterfaces()
+            for iface in usbEths:
+                candidates.append(iface)
+
+            wifi = HardwareAbstraction.Instance.GetBuiltinWifiInterfaceName()
+            if wifi and HardwareAbstraction.Instance.DoesInterfaceExist(wifi):
+                candidates.append(wifi)
+
+            mesh = HardwareAbstraction.Instance.GetMeshInterfaceName()
+            if mesh and HardwareAbstraction.Instance.DoesInterfaceExist(mesh):
+                candidates.append(mesh)
+
+            # Look for mobile USB stick interfaces (wwan, usb)
+            try:
+                result = subprocess.run(["ls", "/sys/class/net/"], capture_output=True, text=True, timeout=1)
+                all_ifaces = result.stdout.strip().split('\n')
+                mobile_patterns = ['wwan', 'wwp', 'usb']
+                for iface in all_ifaces:
+                    if any(p in iface.lower() for p in mobile_patterns) and iface not in candidates:
+                        if HardwareAbstraction.Instance.DoesInterfaceExist(iface):
+                            candidates.append(iface)
+            except Exception:
+                pass
+
+            for iface in candidates:
+                ips = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(iface)
+                if ips and len(ips) > 0:
+                    return ips[0]
+
+            return '0.0.0.0'
+        except Exception:
+            return '0.0.0.0'
+
+    @staticmethod
+    def DoRocCallHomeBackground(rocCallHomeQueueCommands: Queue):
+        BackgroundTasks.WiRocLogger.debug("BackgroundTasks::DoRocCallHomeBackground() begin")
+        import requests
+        failedCallHomes = 0
+        callHomeSent = False
+        while True:
+            try:
+                cmd = "START"
+                while not rocCallHomeQueueCommands.empty():
+                    try:
+                        cmd = rocCallHomeQueueCommands.get(False)
+                    except Empty:
+                        time.sleep(1)
+                        continue
+
+                if cmd == "EXIT":
+                    return
+                elif cmd != "START":
+                    time.sleep(5)
+                    continue
+
+                rocEnabled = SettingsClass.GetRocEnabled()
+                if not rocEnabled:
+                    callHomeSent = False
+                    failedCallHomes = 0
+                    time.sleep(SettingsClass.GetRocMiniCallHomeInterval())
+                    continue
+
+                rocServerUrl = SettingsClass.GetRocServerUrl()
+                unitId = SettingsClass.GetBTAddress()
+                rocVersion = BackgroundTasks.ROC_VERSION
+                localIp = BackgroundTasks._get_local_ip()
+                stationCode = f"{SettingsClass.GetSIStationNumber()}-?"
+                deviceName = SettingsClass.GetWiRocDeviceName() or "WiRoc Device"
+
+                if not callHomeSent:
+                    # Send CallHome
+                    URL = (f"{rocServerUrl}/{rocVersion}/receivedata.php"
+                           f"?function=callhome&command=set"
+                           f"&computername={deviceName}"
+                           f"&macaddr={unitId}"
+                           f"&signalstrength=0"
+                           f"&rocversion={rocVersion}"
+                           f"&timetoonline=0"
+                           f"&localipaddress={localIp}")
+                    try:
+                        resp = requests.get(url=URL, timeout=10, verify=False)
+                        if resp.status_code == 200:
+                            BackgroundTasks.WiRocLogger.info(
+                                f"BackgroundTasks::DoRocCallHomeBackground() CallHome OK, unitId: {unitId}")
+                            callHomeSent = True
+                        else:
+                            BackgroundTasks.WiRocLogger.warning(
+                                f"BackgroundTasks::DoRocCallHomeBackground() CallHome failed: {resp.status_code}")
+                    except Exception as ex:
+                        BackgroundTasks.WiRocLogger.warning(
+                            f"BackgroundTasks::DoRocCallHomeBackground() CallHome exception: {ex}")
+                else:
+                    # Send MiniCallHome
+                    URL = (f"{rocServerUrl}/{rocVersion}/receivedata.php"
+                           f"?function=callhome&command=setmini"
+                           f"&macaddr={unitId}"
+                           f"&codes={stationCode}"
+                           f"&totaldatatx=0"
+                           f"&totaldatarx=0"
+                           f"&failedcallhomes={failedCallHomes}"
+                           f"&localipaddress={localIp}")
+                    try:
+                        resp = requests.get(url=URL, timeout=10, verify=False)
+                        if resp.status_code == 200:
+                            failedCallHomes = 0
+                            BackgroundTasks.WiRocLogger.debug(
+                                f"BackgroundTasks::DoRocCallHomeBackground() MiniCallHome OK")
+                        else:
+                            failedCallHomes += 1
+                            BackgroundTasks.WiRocLogger.warning(
+                                f"BackgroundTasks::DoRocCallHomeBackground() MiniCallHome failed: {resp.status_code}")
+                    except Exception as ex:
+                        failedCallHomes += 1
+                        BackgroundTasks.WiRocLogger.warning(
+                            f"BackgroundTasks::DoRocCallHomeBackground() MiniCallHome exception: {ex}")
+
+                time.sleep(SettingsClass.GetRocMiniCallHomeInterval())
+            except Exception as ex:
+                BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::DoRocCallHomeBackground() exception: {ex}")
+                time.sleep(5)
 
     # ############### message stats #############
     def StartMessageStats(self):

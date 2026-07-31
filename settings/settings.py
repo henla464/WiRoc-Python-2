@@ -1022,3 +1022,30 @@ class SettingsClass(object):
             SettingsClass.SetSetting("WifiMeshRouteToInterface", "wlan0")
             return 'wlan0'
         return sett.Value
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetRocEnabled'), lock=rlock)
+    def GetRocEnabled() -> bool:
+        sett = DatabaseHelper.get_setting_by_key('RocEnabled')
+        if sett is None:
+            SettingsClass.SetSetting("RocEnabled", "0")
+            return False
+        return sett.Value == "1"
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetRocServerUrl'), lock=rlock)
+    def GetRocServerUrl() -> str:
+        sett = DatabaseHelper.get_setting_by_key('RocServerUrl')
+        if sett is None:
+            SettingsClass.SetSetting("RocServerUrl", "https://roc.olresultat.se")
+            return "https://roc.olresultat.se"
+        return sett.Value
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetRocMiniCallHomeInterval'), lock=rlock)
+    def GetRocMiniCallHomeInterval() -> int:
+        sett = DatabaseHelper.get_setting_by_key('RocMiniCallHomeInterval')
+        if sett is None:
+            SettingsClass.SetSetting("RocMiniCallHomeInterval", "20")
+            return 20
+        return int(sett.Value)

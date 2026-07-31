@@ -16,6 +16,7 @@ from subscriberadapters.sendtoblenoadapter import SendToBlenoAdapter
 from subscriberadapters.sendtosirapadapter import SendToSirapAdapter
 from subscriberadapters.sendstatusadapter import SendStatusAdapter
 from subscriberadapters.sendtosrradapter import SendToSRRAdapter
+from subscriberadapters.sendtorocadapter import SendToRocAdapter
 from inputadapters.createstatusadapter import CreateStatusAdapter
 from inputadapters.receiveloraadapter import ReceiveLoraAdapter
 from inputadapters.receivesiadapter import ReceiveSIAdapter
@@ -39,7 +40,7 @@ class Setup:
     @staticmethod
     def SetupAdapters() -> bool:
         subscriberObjects = []
-        subscriberAdapterClasses = [SendLoraAdapter, SendSerialAdapter, SendToBlenoAdapter, SendToSirapAdapter, SendStatusAdapter, SendMeshAdapter, SendToSRRAdapter]
+        subscriberAdapterClasses = [SendLoraAdapter, SendSerialAdapter, SendToBlenoAdapter, SendToSirapAdapter, SendStatusAdapter, SendMeshAdapter, SendToSRRAdapter, SendToRocAdapter]
         subscriberAdapterChanged = False
         for subAdpCls in subscriberAdapterClasses:
             if subAdpCls.CreateInstances(HardwareAbstraction.Instance):

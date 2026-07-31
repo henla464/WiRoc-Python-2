@@ -698,6 +698,9 @@ class SIMessage(object):
     def GetSubSecondAsTenthOfSeconds(self):
         return int(self.MessageData[12] // 25.6)
 
+    def GetSubSecondAsMilliSeconds(self):
+        return int(self.MessageData[12] * 1000 / 256)
+
     def GetTimeAsTenthOfSeconds(self):
         time = ((self.GetTwelveHourTimer()[0] << 8) + self.GetTwelveHourTimer()[1]) * 10 + self.GetSubSecondAsTenthOfSeconds()
         if self.GetTwentyFourHour() == 1:

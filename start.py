@@ -427,6 +427,7 @@ class Main:
         self.backgroundTasks.StartUpdateWebServerUp()
         self.backgroundTasks.StartInfrequentHTTPTasks()
         self.backgroundTasks.StartInfrequentDatabaseTasks()
+        self.backgroundTasks.StartRocCallHome()
 
         self.activeInputAdapters = [inputAdapter for inputAdapter in self.inputAdapters
                                     if inputAdapter.UpdateInfrequently() and inputAdapter.GetIsInitialized()]

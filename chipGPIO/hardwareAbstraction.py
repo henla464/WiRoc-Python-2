@@ -226,7 +226,7 @@ class HardwareAbstraction(object):
         return "wlan0"
 
     def GetBuiltinEthernetInterfaceName(self) -> str:
-        return ""
+        return "end0"
 
     def GetMeshInterfacePhy(self) -> str | None:
         mesh_phys = []
