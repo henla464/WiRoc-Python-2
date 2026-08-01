@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from urllib.parse import quote
 
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from settings.settings import SettingsClass
@@ -17,7 +18,7 @@ class SendToRocAdapter(object):
     Instances: list[SendToRocAdapter] = []
     SubscriptionsEnabled: bool = False
 
-    ROC_VERSION = "dev6.4"
+    ROC_VERSION = "ver7.3"
     MAX_PUNCHES_PER_CALL = 10
 
     @staticmethod
@@ -48,12 +49,14 @@ class SendToRocAdapter(object):
         if SendToRocAdapter.SubscriptionsEnabled != subscriptionShouldBeEnabled:
             SendToRocAdapter.SubscriptionsEnabled = subscriptionShouldBeEnabled
             deleteAfterSent = SendToRocAdapter.GetDeleteAfterSent()
-            for name in SendToRocAdapter.ROC_TRANSFORM_NAMES:
+            for name, transf in SendToRocAdapter.Instances[0].transforms.items():
+                maxTries = transf.GetMaxTries()
                 SendToRocAdapter.WiRocLogger.info(
                     "SendToRocAdapter::EnableDisableSubscription() subscription set enabled: " + str(
-                        subscriptionShouldBeEnabled) + " name: " + name)
+                        subscriptionShouldBeEnabled) + " name: " + name + " deleteAfterSent: " + str(deleteAfterSent) +
+                        " maxTries: " + str(maxTries))
                 DatabaseHelper.update_subscription(subscriptionShouldBeEnabled, deleteAfterSent,
-                                                   SendToRocAdapter.GetTypeName(), name)
+                                                   SendToRocAdapter.GetTypeName(), name, maxTries)
 
     @staticmethod
     def EnableDisableTransforms() -> None:
@@ -145,7 +148,7 @@ class SendToRocAdapter(object):
     def SendData(self, messageData: tuple, successCB, failureCB, notSentCB, settingsDictionary: dict[str, any]) -> bool:
         """messageData is a tuple of punch dicts from the transform."""
         try:
-            unitId = SettingsClass.GetBTAddress()
+            unitId = SettingsClass.GetBTAddress().replace(':', '').lower()
             rocServerUrl = SettingsClass.GetRocServerUrl()
             rocVersion = SendToRocAdapter.ROC_VERSION
 
@@ -162,12 +165,8 @@ class SendToRocAdapter(object):
                 failureCB()
                 return False
 
-            # Build URL parameters
-            params = {
-                "macaddr": unitId,
-            }
-
-            # Build the punch data parameters
+            # Build per-punch params first to compute totalLength
+            punchParams = []
             totalLength = 0
             for i, punch in enumerate(punches, start=1):
                 twentyFourHour = punch.get("twentyFourHour", 0)
@@ -184,25 +183,28 @@ class SendToRocAdapter(object):
                 rawPunchData = punch.get("rawPunchData", "")
 
                 fileValue = f"punch{i}.txt"
-                params[str(i)] = fileValue
-                params[f"punchdata{i}"] = rawPunchData
-                params[f"control{i}"] = stationNumber
-                params[f"sinumber{i}"] = cardNumber
-                params[f"date{i}"] = date
-                params[f"sitime{i}"] = timeStr
-                params[f"ms{i}"] = ms
+                punchParams.append((str(i), fileValue))
+                punchParams.append((f"punchdata{i}", rawPunchData))
+                punchParams.append((f"control{i}", stationNumber))
+                punchParams.append((f"sinumber{i}", cardNumber))
+                punchParams.append((f"date{i}", date))
+                punchParams.append((f"sitime{i}", timeStr))
+                punchParams.append((f"ms{i}", ms))
 
                 totalLength += len(
-                    f"&{i}={fileValue}&punchdata{i}={rawPunchData}&control{i}={stationNumber}"
-                    f"&sinumber{i}={cardNumber}&date{i}={date}&sitime{i}={timeStr}&ms{i}={ms}"
+                    f"&{i}={quote(fileValue)}&punchdata{i}={quote(rawPunchData)}&control{i}={quote(str(stationNumber))}"
+                    f"&sinumber{i}={quote(str(cardNumber))}&date{i}={quote(date)}&sitime{i}={quote(timeStr)}&ms{i}={quote(ms)}"
                 )
 
-
-            params["length"] = totalLength
+            # Build ordered params: macaddr, length, then per-punch params
+            params = [("macaddr", unitId)]
+            params.append(("length", str(totalLength)))
+            for pp in punchParams:
+                params.append(pp)
 
             URL = f"{rocServerUrl}/{rocVersion}/sendpunches_v2.php"
-            SendToRocAdapter.WiRocLogger.debug(f"SendToRocAdapter::SendData() URL: {URL}")
-            SendToRocAdapter.WiRocLogger.debug(f"SendToRocAdapter::SendData() Sending {noOfPunches} punch(es)")
+            fullURL = requests.Request('GET', URL, params=params).prepare().url
+            SendToRocAdapter.WiRocLogger.debug(f"SendToRocAdapter::SendData() Full URL: {fullURL}")
 
             resp = requests.get(url=URL, params=params, timeout=10, verify=False)
 

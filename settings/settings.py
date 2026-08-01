@@ -43,6 +43,7 @@ class SettingsClass(object):
     SRRMessageAvailable = False
     NewErrorCode = False
     webServerUp = False
+    _lastCachedSettingsVersion = 0
 
     #####
     # Static/class settings
@@ -131,13 +132,22 @@ class SettingsClass(object):
             SettingsClass.timeConnectedComputerIsWiRocDeviceChanged = None
             SettingsClass.connectedComputerIsWiRocDevice = False
 
-        # Clear cache if settings has been updated from webservices
-        sett = DatabaseHelper.get_setting_by_key('SettingUpdatedByWebService')
+        SettingsClass.InvalidateCachesIfSettingsUpdated()
+
+    @staticmethod
+    def InvalidateCachesIfSettingsUpdated():
+        """Clear all caches if settings have been updated by webservices.
+        Uses a monotonically increasing version counter so that multiple processes
+        can independently detect changes without consuming a shared flag."""
+        sett = DatabaseHelper.get_setting_by_key('SettingUpdatedVersion')
         if sett is None:
             return
-        if sett.Value == "1":
-            SettingsClass.ClearSettingUpdatedByWebService()
+        version = int(sett.Value)
+        if version > SettingsClass._lastCachedSettingsVersion:
+            SettingsClass._lastCachedSettingsVersion = version
             cache.clear()
+            cacheForEver.clear()
+            cacheUntilChangedByProcess.clear()
 
     @staticmethod
     def SetSIStationNumber(stationNumber):
@@ -199,11 +209,12 @@ class SettingsClass(object):
     #####
     @staticmethod
     def SetSettingUpdatedByWebService():
-        SettingsClass.SetSetting("SettingUpdatedByWebService", "1")
-
-    @staticmethod
-    def ClearSettingUpdatedByWebService():
-        SettingsClass.SetSetting("SettingUpdatedByWebService", "0")
+        sett = DatabaseHelper.get_setting_by_key('SettingUpdatedVersion')
+        if sett is None:
+            version = 1
+        else:
+            version = int(sett.Value) + 1
+        SettingsClass.SetSetting("SettingUpdatedVersion", str(version))
 
     @staticmethod
     def IncrementPowerCycle():

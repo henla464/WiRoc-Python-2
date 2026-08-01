@@ -7,7 +7,6 @@ from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from datamodel.db_helper import DatabaseHelper
 from settings.settings import SettingsClass
 import requests
-import threading
 import yaml
 import logging
 from multiprocessing import Process, Queue
@@ -111,6 +110,7 @@ class BackgroundTasks(object):
         webServerUp = True
         while True:
             try:
+                SettingsClass.InvalidateCachesIfSettingsUpdated()
                 cmd = "START"
                 if not doInfrequentHTTPTasksQueueCommands.empty():
                     try:
@@ -311,7 +311,7 @@ class BackgroundTasks(object):
             DatabaseHelper.archive_message_subscription_view_not_sent(msgSub.id)
 
     # ############### ROC CallHome / MiniCallHome #############
-    ROC_VERSION = "dev6.4"
+    ROC_VERSION = "ver7.3"
 
     def StartRocCallHome(self):
         try:
@@ -397,9 +397,12 @@ class BackgroundTasks(object):
                     return
                 elif cmd != "START":
                     time.sleep(5)
+                    BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::DoRocCallHomeBackground() not start")
                     continue
-
+                BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::DoRocCallHomeBackground() START!")
+                SettingsClass.InvalidateCachesIfSettingsUpdated()
                 rocEnabled = SettingsClass.GetRocEnabled()
+                BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::DoRocCallHomeBackground() {rocEnabled}!")
                 if not rocEnabled:
                     callHomeSent = False
                     failedCallHomes = 0
@@ -407,11 +410,11 @@ class BackgroundTasks(object):
                     continue
 
                 rocServerUrl = SettingsClass.GetRocServerUrl()
-                unitId = SettingsClass.GetBTAddress()
+                unitId = SettingsClass.GetBTAddress().replace(':', '').lower()
                 rocVersion = BackgroundTasks.ROC_VERSION
                 localIp = BackgroundTasks._get_local_ip()
                 stationCode = f"{SettingsClass.GetSIStationNumber()}-?"
-                deviceName = SettingsClass.GetWiRocDeviceName() or "WiRoc Device"
+                deviceName = "WiRoc: " + (SettingsClass.GetWiRocDeviceName() or "WiRoc Device")
 
                 if not callHomeSent:
                     # Send CallHome
@@ -421,8 +424,12 @@ class BackgroundTasks(object):
                            f"&macaddr={unitId}"
                            f"&signalstrength=0"
                            f"&rocversion={rocVersion}"
+                           f"&rocrevision=1"
                            f"&timetoonline=0"
-                           f"&localipaddress={localIp}")
+                           f"&localipaddress={localIp}"
+                           f"&rasphardware=1")
+                    BackgroundTasks.WiRocLogger.debug(
+                        f"BackgroundTasks::DoRocCallHomeBackground() CallHome URL: {URL}")
                     try:
                         resp = requests.get(url=URL, timeout=10, verify=False)
                         if resp.status_code == 200:
@@ -431,20 +438,22 @@ class BackgroundTasks(object):
                             callHomeSent = True
                         else:
                             BackgroundTasks.WiRocLogger.warning(
-                                f"BackgroundTasks::DoRocCallHomeBackground() CallHome failed: {resp.status_code}")
+                                f"BackgroundTasks::DoRocCallHomeBackground() CallHome failed: {resp.status_code}, response: {resp.text[:500]}")
                     except Exception as ex:
                         BackgroundTasks.WiRocLogger.warning(
                             f"BackgroundTasks::DoRocCallHomeBackground() CallHome exception: {ex}")
                 else:
                     # Send MiniCallHome
-                    URL = (f"{rocServerUrl}/{rocVersion}/receivedata.php"
-                           f"?function=callhome&command=setmini"
-                           f"&macaddr={unitId}"
+                    # https://roc.olresultat.se/ver7.3/mch.php?unitid=<macaddr>&codes=32-Co,99-Co,3-St&totaldatatx=12,4MB&totaldatarx=5,1MB&failedcallhomes=2&localipaddress=192.168.1.50&signaldbm=-73&networktype=19&temperature=52.3&volts=1.20&minfreq=600&maxfreq=1200&freq=900&vpnip=10.255.255.2
+                    URL = (f"{rocServerUrl}/{rocVersion}/mch.php"
+                           f"?unitid={unitId}"
                            f"&codes={stationCode}"
                            f"&totaldatatx=0"
                            f"&totaldatarx=0"
                            f"&failedcallhomes={failedCallHomes}"
                            f"&localipaddress={localIp}")
+                    BackgroundTasks.WiRocLogger.debug(
+                        f"BackgroundTasks::DoRocCallHomeBackground() MiniCallHome URL: {URL}")
                     try:
                         resp = requests.get(url=URL, timeout=10, verify=False)
                         if resp.status_code == 200:
@@ -454,7 +463,7 @@ class BackgroundTasks(object):
                         else:
                             failedCallHomes += 1
                             BackgroundTasks.WiRocLogger.warning(
-                                f"BackgroundTasks::DoRocCallHomeBackground() MiniCallHome failed: {resp.status_code}")
+                                f"BackgroundTasks::DoRocCallHomeBackground() MiniCallHome failed: {resp.status_code}, response: {resp.text[:500]}")
                     except Exception as ex:
                         failedCallHomes += 1
                         BackgroundTasks.WiRocLogger.warning(
@@ -462,7 +471,7 @@ class BackgroundTasks(object):
 
                 time.sleep(SettingsClass.GetRocMiniCallHomeInterval())
             except Exception as ex:
-                BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::DoRocCallHomeBackground() exception: {ex}")
+                BackgroundTasks.WiRocLogger.error(f"BackgroundTasks::DoRocCallHomeBackground() exception: {ex}")
                 time.sleep(5)
 
     # ############### message stats #############
@@ -485,6 +494,7 @@ class BackgroundTasks(object):
         BackgroundTasks.WiRocLogger.debug("BackgroundTasks::SendMessageStatsBackground() begin")
         while True:
             try:
+                SettingsClass.InvalidateCachesIfSettingsUpdated()
                 cmd = "START"
                 while not messageStatQueueCommands.empty():
                     try:

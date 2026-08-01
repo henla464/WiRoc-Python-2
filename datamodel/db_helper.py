@@ -350,8 +350,6 @@ class DatabaseHelper:
         maxTriesSQL = ""
         if maxTries is not None:
             maxTriesSQL = ", MaxTries = " + str(maxTries)
-        else:
-            maxTriesSQL = ", MaxTries = NULL"
         sql = ("UPDATE SubscriptionData SET Enabled = " + str(1 if enabled else 0) + ", "
                "DeleteAfterSent = " + str(1 if deleteAfterSent else 0) +
                maxTriesSQL + " WHERE SubscriberId IN "
