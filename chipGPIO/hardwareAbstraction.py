@@ -43,6 +43,8 @@ class HardwareAbstraction(object):
         self.wirocHWVersionNumber: int = int(self.wirocHWVersion.split("Rev")[0][1:])
         self.wirocHWRevisionNumber: int = int(self.wirocHWVersion.split("Rev")[1])
 
+        self.bluetoothAddress: str = settings.get('BluetoothAddress', 'NoBTAddress')
+
         self.EnablePEKShortAndLong()
 
     def SetupPins(self):
@@ -307,6 +309,9 @@ class HardwareAbstraction(object):
             HardwareAbstraction.WiRocLogger.error(
                 f"HardwareAbstraction::GetInterfaceMAC() getting MAC of interface {interface} failed {e}")
             return ""
+
+    def GetBTAddress(self) -> str:
+        return self.bluetoothAddress
 
     def DoesInterfaceExist(self, interface:str) -> bool:
         result = subprocess.run(

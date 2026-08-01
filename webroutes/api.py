@@ -1456,18 +1456,8 @@ def getServices():
 
 
 def getBTAddress():
-    result = subprocess.run(['hcitool', 'dev'], capture_output=True)
-    if result.returncode != 0:
-        errStr = result.stderr.decode('utf-8')
-        raise Exception("Error: " + errStr)
-
-    stdout = result.stdout.decode('utf-8').replace("Devices:", "")
-    stdout = stdout.strip()
-    btAddress = "NoBTAddress"
-    stdoutWords = stdout.split("\t")
-    if len(stdoutWords) > 1 and len(stdoutWords[1]) == 17:
-        btAddress = stdoutWords[1]
-    return btAddress
+    from settings.settings import SettingsClass
+    return SettingsClass.GetBTAddress()
 
 
 def uploadLogArchiveToServer(apiKey, filePath, webServerUrl):

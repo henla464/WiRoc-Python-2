@@ -152,18 +152,7 @@ class SendMeshAdapter(object):
 
     @staticmethod
     def SetupIPForwarding():
-        # Enable IP forwarding
-        result = subprocess.run(
-            f"sysctl -w net.ipv4.ip_forward=1",
-            shell=True,
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        if result.returncode != 0:
-            SendMeshAdapter.WiRocLogger.error(
-                f"SendMeshAdapter::SetupIPForwarding() setup ip forwarding failed: {result.stderr}")
-            return False
+        # IP forwarding is enabled permanently via net.ipv4.ip_forward=1 in /etc/sysctl.conf (set by install.sh)
         return True
 
     @staticmethod

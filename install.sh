@@ -153,6 +153,15 @@ apt-get -y install firmware-ath9k-htc
 apt-get -y install dhcpcd
 
 echo "###################################"
+echo "Enable IP forwarding for wifi mesh and tailscale"
+echo "###################################"
+if ! grep -q "net.ipv4.ip_forward" /etc/sysctl.conf; then
+    echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+fi
+# load the setting without reboot
+sysctl -p
+
+echo "###################################"
 echo "Relink dbus bindings (for BLE)"
 echo "###################################"
 ln -s /usr/lib/python3/dist-packages/_dbus_bindings.cpython-312-arm-linux-gnueabihf.so /usr/lib/python3/dist-packages/_dbus_bindings.so
