@@ -384,3 +384,26 @@ if [[ $hwOption < 8 ]]; then
 fi
 
 
+echo "###################################"
+echo "Install tailscale VPN"
+echo "###################################"
+
+# Create the standard directory for APT repository signing keys.
+mkdir -p --mode=0755 /usr/share/keyrings
+
+# Download Tailscale's public signing key.
+curl -fsSL https://pkgs.tailscale.com/stable/debian/trixie.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+
+# Add the Tailscale repository to APT's list of package sources
+curl -fsSL https://pkgs.tailscale.com/stable/debian/trixie.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d/tailscale.list
+
+apt-get update
+apt-get install tailscale
+
+# Script that starts tailscaled with parameters to advertise local ips and accept routes
+wget -O /usr/local/sbin/tailscale-auto-route.sh https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/tailscale-auto-route.sh
+wget -O /etc/systemd/system/tailscale-auto-route.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/tailscale-auto-route.service
+
+# update when interface changes
+wget -O /etc/NetworkManager/dispatcher.d/90-tailscale-auto-route https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/90-tailscale-auto-route
+

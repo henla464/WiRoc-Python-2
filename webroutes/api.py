@@ -442,6 +442,7 @@ def getSettings():
     return jsonpickle.encode(MicroMock(Value=json_data))
 
 @app.route('/api/setting/<key>/<value>/', methods=['GET'])
+@app.route('/api/settings/<key>/<value>/', methods=['GET'])
 def setSetting(key, value):
     settingData = None
     settingData = SettingData()
@@ -473,6 +474,7 @@ def getErrorCodes():
     return jsonpickle.encode(MicroMock(Value=json_data))
 
 @app.route('/api/wirocdevicename/', methods=['GET'])
+@app.route('/api/device/name/', methods=['GET'])
 def getWiRocDeviceName():
     f = open("../settings.yaml", "r")
     settings = yaml.load(f, Loader=yaml.BaseLoader)
@@ -483,6 +485,7 @@ def getWiRocDeviceName():
 
 
 @app.route('/api/wirocdevicename/<deviceName>/', methods=['GET'])
+@app.route('/api/device/name/<deviceName>/', methods=['GET'])
 def setWiRocDeviceName(deviceName):
     f = open("../settings.yaml", "r")
     settings = yaml.load(f, Loader=yaml.BaseLoader)
@@ -866,6 +869,7 @@ def addTestPunch(testBatchGuid, SINo):
 
 
 @app.route('/api/ischarging/', methods=['GET'])
+@app.route('/api/power/charging/', methods=['GET'])
 def getIsCharging():
     isCharging = Battery.IsCharging()
     jsonpickle.set_preferred_backend('json')
@@ -879,6 +883,7 @@ def getBatteryLevel():
 
 
 @app.route('/api/batterylevel/', methods=['GET'])
+@app.route('/api/power/battery/', methods=['GET'])
 def getBatteryLevel2():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -1097,6 +1102,7 @@ def setForceBTSerial4800BaudRateEnabled(enabled):
 
 
 @app.route('/api/sendtoblenoenabled/', methods=['GET'])
+@app.route('/api/ble/enabled/', methods=['GET'])
 def getSendToBlenoEnabled():
     sett = DatabaseHelper.get_setting_by_key('SendToBlenoEnabled')
     sendToBlenoEnabled = '0'
@@ -1108,6 +1114,7 @@ def getSendToBlenoEnabled():
 
 
 @app.route('/api/sendtoblenoenabled/<enabled>/', methods=['GET'])
+@app.route('/api/ble/enabled/<enabled>/', methods=['GET'])
 def setSendToBlenoEnabled(enabled):
     sd = DatabaseHelper.get_setting_by_key('SendToBlenoEnabled')
     if sd is None:
@@ -1122,6 +1129,7 @@ def setSendToBlenoEnabled(enabled):
 
 
 @app.route('/api/logtoserver/', methods=['GET'])
+@app.route('/api/logging/server/enabled/', methods=['GET'])
 def getLogToServer():
     sett = DatabaseHelper.get_setting_by_key('LogToServer')
     logToServer = '0'
@@ -1133,6 +1141,7 @@ def getLogToServer():
 
 
 @app.route('/api/logtoserver/<enabled>/', methods=['GET'])
+@app.route('/api/logging/server/enabled/<enabled>/', methods=['GET'])
 def setLogToServerEnabled(enabled):
     sd = DatabaseHelper.get_setting_by_key('LogToServer')
     if sd is None:
@@ -1147,6 +1156,7 @@ def setLogToServerEnabled(enabled):
 
 
 @app.route('/api/loggingserverhost/', methods=['GET'])
+@app.route('/api/logging/server/host/', methods=['GET'])
 def getLoggingServerHost():
     sett = DatabaseHelper.get_setting_by_key('LoggingServerHost')
     loggingServerHost = ""
@@ -1158,6 +1168,7 @@ def getLoggingServerHost():
 
 
 @app.route('/api/loggingserverhost/<host>/', methods=['GET'])
+@app.route('/api/logging/server/host/<host>/', methods=['GET'])
 def SetLoggingServerHost(host):
     sd = DatabaseHelper.get_setting_by_key('LoggingServerHost')
     if sd is None:
@@ -1172,6 +1183,7 @@ def SetLoggingServerHost(host):
 
 
 @app.route('/api/loggingserverport/', methods=['GET'])
+@app.route('/api/logging/server/port/', methods=['GET'])
 def getLoggingServerPort():
     sett = DatabaseHelper.get_setting_by_key('LoggingServerPort')
     loggingServerPort = ""
@@ -1183,6 +1195,7 @@ def getLoggingServerPort():
 
 
 @app.route('/api/loggingserverport/<port>/', methods=['GET'])
+@app.route('/api/logging/server/port/<port>/', methods=['GET'])
 def setLoggingServerPort(port):
     sd = DatabaseHelper.get_setting_by_key('LoggingServerPort')
     if sd is None:
@@ -1197,6 +1210,7 @@ def setLoggingServerPort(port):
 
 
 @app.route('/api/wirocpythonversion/', methods=['GET'])
+@app.route('/api/device/version/wirocpython/', methods=['GET'])
 def getWiRocPythonVersion():
     with open("../settings.yaml", "r") as f:
         settings = yaml.load(f, Loader=yaml.BaseLoader)
@@ -1210,6 +1224,7 @@ def getWiRocPythonVersion():
 
 
 @app.route('/api/wirocbleversion/', methods=['GET'])
+@app.route('/api/device/version/wirocble/', methods=['GET'])
 def getWiRocBLEVersion():
     with open("../settings.yaml", "r") as f:
         settings = yaml.load(f, Loader=yaml.BaseLoader)
@@ -1222,6 +1237,7 @@ def getWiRocBLEVersion():
 
 
 @app.route('/api/wirocbleapiversion/', methods=['GET'])
+@app.route('/api/device/version/wirocbleapi/', methods=['GET'])
 def getWiRocBLEAPIVersion():
     with open("../settings.yaml", "r") as f:
         settings = yaml.load(f, Loader=yaml.BaseLoader)
@@ -1234,6 +1250,7 @@ def getWiRocBLEAPIVersion():
 
 
 @app.route('/api/wirochwversion/', methods=['GET'])
+@app.route('/api/device/version/wirochw/', methods=['GET'])
 def getWiRocHWVersion():
     f = open("../settings.yaml", "r")
     settings = yaml.load(f, Loader=yaml.BaseLoader)
@@ -1246,6 +1263,7 @@ def getWiRocHWVersion():
     return jsonpickle.encode(MicroMock(Value=wirocHWVersion))
 
 @app.route('/api/scanbtaddresses/', methods=['GET'])
+@app.route('/api/bluetooth/scan/', methods=['GET'])
 def getBTAddresses():
     result = subprocess.run(['hcitool', 'scan'], stdout=subprocess.PIPE, check=True)
     btaddresses = result.stdout.decode('utf-8').strip()
@@ -1276,6 +1294,7 @@ def getBTAddresses():
 
 
 @app.route('/api/bindrfcomm/<btAddress>/<btName>/', methods=['GET'])
+@app.route('/api/bluetooth/rfcomm/bind/<btAddress>/<btName>/', methods=['GET'])
 def bindRFComm(btAddress, btName):
     btSerialPortDatas = DatabaseHelper.get_bluetooth_serial_port(btAddress)
     if len(btSerialPortDatas) == 0:
@@ -1291,6 +1310,7 @@ def bindRFComm(btAddress, btName):
 
 
 @app.route('/api/releaserfcomm/<btAddress>/', methods=['GET'])
+@app.route('/api/bluetooth/rfcomm/release/<btAddress>/', methods=['GET'])
 def releaseRFComm(btAddress):
     DatabaseHelper.delete_bluetooth_serial_port(btAddress)
     btAddresses = getBTAddresses()
@@ -1300,6 +1320,7 @@ def releaseRFComm(btAddress):
 
 
 @app.route('/api/rfcomm/', methods=['GET'])
+@app.route('/api/bluetooth/rfcomm/', methods=['GET'])
 def getRFComm():
     btSerialPortDatas = DatabaseHelper.get_bluetooth_serial_ports()
     rfcommList = []
@@ -1339,12 +1360,14 @@ def zipLogArchive(zipFilePath):
 
 
 @app.route('/api/ip/', methods=['GET'])
+@app.route('/api/network/ip/', methods=['GET'])
 def getIP2():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=getIP()))
 
 @app.route('/api/wifiip/', methods=['GET'])
+@app.route('/api/network/wifiip/', methods=['GET'])
 def getWifiIP():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -1366,6 +1389,17 @@ def getUSBEthernetIP():
 
     # Assume only one USB ethernet
     ipAddresses = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(ifaces[0])
+    if len(ipAddresses) == 0:
+        return jsonpickle.encode(MicroMock(Value=''))
+    else:
+        return jsonpickle.encode(MicroMock(Value=ipAddresses[0]))
+
+@app.route('/api/network/ethernetip/', methods=['GET'])
+def getEthernetIP():
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    iface = HardwareAbstraction.Instance.GetBuiltinEthernetInterfaceName()
+    ipAddresses = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(iface)
     if len(ipAddresses) == 0:
         return jsonpickle.encode(MicroMock(Value=''))
     else:
@@ -1400,11 +1434,8 @@ def renewIP(ifaceNetType):
     ifaceNetworkTypes = devices[1::2]
     for iface, ifaceNetworkType in zip(ifaces, ifaceNetworkTypes):
         if ifaceNetType == ifaceNetworkType:
-            result2 = subprocess.run(['dhclient', '-v', '-1', iface], stdout=subprocess.PIPE, check=True)
-            if result2.returncode != 0:
-                errStr = result2.stderr.decode('utf-8')
-                raise Exception("Error: " + errStr)
-            resultStr = result2.stdout.decode('utf-8')
+            subprocess.run(['nmcli', 'device', 'disconnect', iface], stdout=subprocess.PIPE, check=True)
+            subprocess.run(['nmcli', 'device', 'connect', iface], stdout=subprocess.PIPE, check=True)
             return jsonpickle.encode(MicroMock(Value='OK'))
     return jsonpickle.encode(MicroMock(Value='Error: No matching iface'))
 

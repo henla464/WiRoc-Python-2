@@ -30,6 +30,14 @@ tags:
     description: "Amateur radio settings"
   - name: "Power"
     description: "Power management"
+  - name: "Device"
+    description: "Device information"
+  - name: "Logging"
+    description: "Logging settings"
+  - name: "Bluetooth"
+    description: "Classic Bluetooth settings"
+  - name: "BLE"
+    description: "Bluetooth Low Energy settings"
 paths:
   /lora/enabled/:
     get:
@@ -499,12 +507,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /setting/{key}/{value}:
+  /settings/{key}/{value}:
     get:
       tags:
         - "Status"
       summary: "Add or change a setting"
-      operationId: "setSetting"
+      operationId: "setSetting2"
       parameters:
         - name: key
           description: "The settings key name"
@@ -538,12 +546,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /wirocdevicename/:
+  /device/name/:
     get:
       tags:
-        - "Status"
+        - "Device"
       summary: "Get the device name"
-      operationId: "getWiRocDeviceName"
+      operationId: "getWiRocDeviceName2"
       responses:
         "200":
           description: "The device name"
@@ -551,12 +559,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /wirocdevicename/{devicename}:
+  /device/name/{devicename}:
     get:
       tags:
-        - "Status"
-      summary: "Set the WiRoc device name"
-      operationId: "setWiRocDeviceName"
+        - "Device"
+      summary: "Set the device name"
+      operationId: "setWiRocDeviceName2"
       parameters:
         - name: devicename
           in: path
@@ -985,12 +993,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /ischarging/:
+  /power/charging/:
     get:
       tags:
-        - "Status"
+        - "Power"
       summary: "Get if the device is charging now"
-      operationId: "getIsCharging"
+      operationId: "getIsCharging2"
       responses:
         "200":
           description: "1 if it is charging, 0 otherwise"
@@ -998,12 +1006,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /batterylevel/:
+  /power/battery/:
     get:
       tags:
-        - "Status"
+        - "Power"
       summary: "Get the current battery level percentage"
-      operationId: "getBatteryLevel"
+      operationId: "getBatteryLevel2"
       responses:
         "200":
           description: "Battery level in percentage"
@@ -1261,27 +1269,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /sendtoblenoenabled/:
+  /ble/enabled/:
     get:
       tags:
-        - "Punches"
-      summary: "Is sending punches to webservice enabled"
-      operationId: "getSendToBlenoEnabled"
+        - "BLE"
+      summary: "Is BLE enabled"
+      operationId: "getSendToBlenoEnabled2"
       responses:
         "200":
-          description: "0/1 depending on if sending punches to webservice is enabled"
+          description: "0/1 depending on if BLE is enabled"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /sendtoblenoenabled/{blenoenabled}:
+  /ble/enabled/{enabled}:
     get:
       tags:
-        - "Punches"
-      summary: "Enable/Disable one-way recieve from SportIdent master station"
-      operationId: "setSendToBlenoEnabled"
+        - "BLE"
+      summary: "Enable/Disable BLE"
+      operationId: "setSendToBlenoEnabled2"
       parameters:
-        - name: blenoenabled
+        - name: enabled
           in: path
           required: true
           schema:
@@ -1293,12 +1301,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /logtoserver/:
+  /logging/server/enabled/:
     get:
       tags:
-        - "Debug"
+        - "Logging"
       summary: "Is logging to server enabled"
-      operationId: "getLogToServer"
+      operationId: "getLogToServer2"
       responses:
         "200":
           description: "0/1 depending on if logging to server is enabled"
@@ -1306,14 +1314,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /logtoserver/{logtoserver}:
+  /logging/server/enabled/{enabled}:
     get:
       tags:
-        - "Debug"
+        - "Logging"
       summary: "Enable/Disable logging to server"
-      operationId: "setLogToServer"
+      operationId: "setLogToServer2"
       parameters:
-        - name: logtoserver
+        - name: enabled
           in: path
           required: true
           schema:
@@ -1325,31 +1333,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /loggingserverhost/:
+  /logging/server/host/:
     get:
       tags:
-        - "Debug"
+        - "Logging"
       summary: "Get the logging server host"
-      operationId: "getLoggingServerHost"
+      operationId: "getLoggingServerHost2"
       responses:
         "200":
-          description: "The host"
+          description: "successful operation"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /loggingserverhost/{host}:
+  /logging/server/host/{host}:
     get:
       tags:
-        - "Debug"
-      summary: "Set the logging server host"
-      operationId: "setLoggingServerHost"
+        - "Logging"
+      summary: "Set logging server host"
+      operationId: "SetLoggingServerHost2"
       parameters:
         - name: host
           in: path
           required: true
           schema:
-            $ref: "#/components/schemas/Property"
+            type: string
       responses:
         "200":
           description: "successful operation"
@@ -1357,31 +1365,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /loggingserverport/:
+  /logging/server/port/:
     get:
       tags:
-        - "Debug"
-      summary: "Get the TCP/IP port to send logging to"
-      operationId: "getLoggingServerPort"
+        - "Logging"
+      summary: "Get the logging server port"
+      operationId: "getLoggingServerPort2"
       responses:
         "200":
-          description: "SIRAP TCP/IP Port"
+          description: "successful operation"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyIntObj"
-  /loggingserverport/{port}:
+  /logging/server/port/{port}:
     get:
       tags:
-        - "Debug"
-      summary: "Set the TCP/IP port send logging to"
-      operationId: "setLoggingServerPort"
+        - "Logging"
+      summary: "Set logging server port"
+      operationId: "setLoggingServerPort2"
       parameters:
         - name: port
           in: path
           required: true
           schema:
-            type: integer
+            type: string
       responses:
         "200":
           description: "successful operation"
@@ -1389,12 +1397,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyIntObj"
-  /wirocpythonversion/:
+  /device/version/wirocpython/:
     get:
       tags:
-        - "Status"
+        - "Device"
       summary: "Get the WiRoc Python version"
-      operationId: "getWiRocPythonVersion"
+      operationId: "getWiRocPythonVersion2"
       responses:
         "200":
           description: "The version"
@@ -1402,12 +1410,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /wirocbleversion/:
+  /device/version/wirocble/:
     get:
       tags:
-        - "Status"
+        - "Device"
       summary: "Get the WiRoc BLE version"
-      operationId: "getWiRocBLEVersion"
+      operationId: "getWiRocBLEVersion2"
       responses:
         "200":
           description: "The version"
@@ -1415,12 +1423,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /wirocbleapiversion/:
+  /device/version/wirocbleapi/:
     get:
       tags:
-        - "Status"
+        - "Device"
       summary: "Get the WiRoc BLE API version"
-      operationId: "getWiRocBLEAPIVersion"
+      operationId: "getWiRocBLEAPIVersion2"
       responses:
         "200":
           description: "The version"
@@ -1428,12 +1436,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /wirochwversion/:
+  /device/version/wirochw/:
     get:
       tags:
-        - "Status"
+        - "Device"
       summary: "Get the WiRoc hardware version"
-      operationId: "getWiRocHWVersion"
+      operationId: "getWiRocHWVersion2"
       responses:
         "200":
           description: "The version"
@@ -1441,12 +1449,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /scanbtaddresses/:
+  /bluetooth/scan/:
     get:
       tags:
-        - "SportIdent"
+        - "Bluetooth"
       summary: "Gets a bluetooth devices"
-      operationId: "getBTAddresses"
+      operationId: "getBTAddresses2"
       responses:
         "200":
           description: "A list of bluetooth devices found"
@@ -1454,12 +1462,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /bindrfcomm/{btAddress}/{btName}:
+  /bluetooth/rfcomm/bind/{btAddress}/{btName}:
     get:
       tags:
-        - "SportIdent"
+        - "Bluetooth"
       summary: "Bind a serial port to the bluetooth address"
-      operationId: "bindRFComm"
+      operationId: "bindRFComm2"
       parameters:
         - name: btAddress
           in: path
@@ -1478,18 +1486,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /releaserfcomm/{portNumberUsed}:
+  /bluetooth/rfcomm/release/{btAddress}:
     get:
       tags:
-        - "SportIdent"
+        - "Bluetooth"
       summary: "Release a serial port from the bluetooth address"
-      operationId: "releaseRFComm"
+      operationId: "releaseRFComm2"
       parameters:
-        - name: portNumberUsed
+        - name: btAddress
           in: path
           required: true
           schema:
-            $ref: "#/components/schemas/PropertyObj"
+            type: string
       responses:
         "200":
           description: "successful operation"
@@ -1497,15 +1505,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /rfcomm/:
+  /bluetooth/rfcomm/:
     get:
       tags:
-        - "SportIdent"
-      summary: "Get all bound RFCOMM bluetooth serial ports"
-      operationId: "getRFComm"
+        - "Bluetooth"
+      summary: "Get all bound bluetooth serial ports"
+      operationId: "getRFComm2"
       responses:
         "200":
-          description: "JSON array of bound RFCOMM bluetooth serial ports with DeviceBTAddress, Name and Status"
+          description: "successful operation"
           content:
             application/json:
               schema:
@@ -1523,7 +1531,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
-  /ip/:
+  /network/ip/:
     get:
       tags:
         - "Network"
@@ -1536,7 +1544,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
-  /wifiip/:
+  /network/wifiip/:
     get:
       tags:
         - "Network"
@@ -1558,6 +1566,19 @@ paths:
       responses:
         "200":
           description: "The current ip address of the first USB ethernet adpater"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /network/ethernetip/:
+    get:
+      tags:
+        - "Network"
+      summary: "Gets the builtin ethernet ip"
+      operationId: "getEthernetIP"
+      responses:
+        "200":
+          description: "The current ip address of the builtin ethernet interface (end0)"
           content:
             application/json:
               schema:
