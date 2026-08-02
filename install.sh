@@ -155,11 +155,11 @@ apt-get -y install dhcpcd
 echo "###################################"
 echo "Enable IP forwarding for wifi mesh and tailscale"
 echo "###################################"
-if ! grep -q "net.ipv4.ip_forward" /etc/sysctl.conf; then
-    echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
-fi
-# load the setting without reboot
-sysctl -p
+cat << 'EOF' > /etc/sysctl.d/99-wiroc-ipforward.conf
+net.ipv4.ip_forward=1
+net.ipv6.conf.all.forwarding=1
+EOF
+sysctl -p /etc/sysctl.d/99-wiroc-ipforward.conf
 
 echo "###################################"
 echo "Relink dbus bindings (for BLE)"
@@ -411,6 +411,7 @@ apt-get install tailscale
 
 # Script that starts tailscaled with parameters to advertise local ips and accept routes
 wget -O /usr/local/sbin/tailscale-auto-route.sh https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/tailscale-auto-route.sh
+chmod +x /usr/local/sbin/tailscale-auto-route.sh
 wget -O /etc/systemd/system/tailscale-auto-route.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/tailscale-auto-route.service
 
 # update when interface changes

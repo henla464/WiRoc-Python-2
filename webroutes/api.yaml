@@ -2185,6 +2185,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
+  /network/tailscale/prefs/:
+    get:
+      tags:
+        - "Network"
+      summary: "Get Tailscale debug prefs"
+      operationId: "tailscalePrefs"
+      responses:
+        "200":
+          description: "Tailscale debug prefs output"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /uploadlogarchive/:
     get:
       tags:

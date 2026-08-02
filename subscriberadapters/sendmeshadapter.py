@@ -152,7 +152,7 @@ class SendMeshAdapter(object):
 
     @staticmethod
     def SetupIPForwarding():
-        # IP forwarding is enabled permanently via net.ipv4.ip_forward=1 in /etc/sysctl.conf (set by install.sh)
+        # IP forwarding is enabled permanently via /etc/sysctl.d/99-wiroc-ipforward.conf (set by install.sh)
         return True
 
     @staticmethod
