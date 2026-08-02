@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Any
-from urllib.parse import quote
 
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from settings.settings import SettingsClass
@@ -165,9 +164,10 @@ class SendToRocAdapter(object):
                 failureCB()
                 return False
 
-            # Build per-punch params first to compute totalLength
-            punchParams = []
-            totalLength = 0
+            # Build punch params and expected echo lines
+            roctime = f"{datetime.now():%H:%M:%S}.{datetime.now().microsecond // 1000:03d}"
+            punchBody = ""
+            expectedEchoLines = []
             for i, punch in enumerate(punches, start=1):
                 twentyFourHour = punch.get("twentyFourHour", 0)
                 hour = punch.get("hour", 0)
@@ -181,42 +181,65 @@ class SendToRocAdapter(object):
                 timeStr = SendToRocAdapter._computePunchTimeStr(hour, minute, second)
                 ms = f"{int(subSecondMs):03d}"
                 rawPunchData = punch.get("rawPunchData", "")
-
                 fileValue = f"punch{i}.txt"
-                punchParams.append((str(i), fileValue))
-                punchParams.append((f"punchdata{i}", rawPunchData))
-                punchParams.append((f"control{i}", stationNumber))
-                punchParams.append((f"sinumber{i}", cardNumber))
-                punchParams.append((f"date{i}", date))
-                punchParams.append((f"sitime{i}", timeStr))
-                punchParams.append((f"ms{i}", ms))
 
-                totalLength += len(
-                    f"&{i}={quote(fileValue)}&punchdata{i}={quote(rawPunchData)}&control{i}={quote(str(stationNumber))}"
-                    f"&sinumber{i}={quote(str(cardNumber))}&date{i}={quote(date)}&sitime{i}={quote(timeStr)}&ms{i}={quote(ms)}"
+                # Common punch data string (with index suffix for POST body)
+                punchDataStr = (f"&punchdata{i}={rawPunchData}&control{i}={stationNumber}"
+                                f"&sinumber{i}={cardNumber}&date{i}={date}"
+                                f"&sitime{i}={timeStr}&ms{i}={ms}&roctime{i}={roctime}&stationmode{i}=")
+
+                punchBody += f"&{i}={fileValue}{punchDataStr}"
+                # Strip index suffixes for echo comparison (server echoes back without them)
+                echoPunchDataStr = (f"&punchdata={rawPunchData}&control={stationNumber}"
+                                    f"&sinumber={cardNumber}&date={date}"
+                                    f"&sitime={timeStr}&ms={ms}&roctime={roctime}&stationmode=")
+                expectedEchoLines.append(
+                    f"File:{fileValue}:{echoPunchDataStr}"
                 )
 
-            # Build ordered params: macaddr, length, then per-punch params
-            params = [("macaddr", unitId)]
-            params.append(("length", str(totalLength)))
-            for pp in punchParams:
-                params.append(pp)
+            # Build full POST body: macaddr, length, then punch params
+            body = f"macaddr={unitId}&length={len(punchBody)}{punchBody}"
 
             URL = f"{rocServerUrl}/{rocVersion}/sendpunches_v2.php"
-            fullURL = requests.Request('GET', URL, params=params).prepare().url
-            SendToRocAdapter.WiRocLogger.debug(f"SendToRocAdapter::SendData() Full URL: {fullURL}")
+            SendToRocAdapter.WiRocLogger.debug(f"SendToRocAdapter::SendData() POST {URL} Body: {body[:200]}")
 
-            resp = requests.get(url=URL, params=params, timeout=10, verify=False)
+            resp = requests.post(url=URL, data=body,
+                                 headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                                 timeout=10, verify=False)
 
-            if resp.status_code == 200:
+            if resp.status_code != 200:
+                SendToRocAdapter.WiRocLogger.warning(
+                    f"SendToRocAdapter::SendData() ROC server returned status {resp.status_code}: {resp.text[:200]}")
+                failureCB()
+                return False
+
+            responseText = resp.text.replace('<BR>', '\n')
+            responseTextFlat = responseText.replace('\n', '').replace('\r', '')
+            SendToRocAdapter.WiRocLogger.debug(f"SendToRocAdapter::SendData() Response: {responseText[:500]}")
+
+            # Check for server-reported errors
+            if "Wrong length" in responseText or "Aborting" in responseText:
+                SendToRocAdapter.WiRocLogger.warning(
+                    f"SendToRocAdapter::SendData() Server error: {responseText[:200]}")
+                failureCB()
+                return False
+
+            # Verify each punch was echoed back correctly by the server
+            allOk = True
+            for i, expectedLine in enumerate(expectedEchoLines, start=1):
+                if expectedLine not in responseTextFlat:
+                    SendToRocAdapter.WiRocLogger.warning(
+                        f"SendToRocAdapter::SendData() Punch {i} mismatch! "
+                        f"Expected: '{expectedLine}'")
+                    allOk = False
+
+            if allOk:
                 SendToRocAdapter.WiRocLogger.info(
                     f"SendToRocAdapter::SendData() Sent {noOfPunches} punch(es) to ROC server successfully")
                 DatabaseHelper.add_message_stat(self.GetInstanceName(), "Punch", "Sent", noOfPunches)
                 successCB()
                 return True
             else:
-                SendToRocAdapter.WiRocLogger.warning(
-                    f"SendToRocAdapter::SendData() ROC server returned status {resp.status_code}: {resp.text}")
                 failureCB()
                 return False
 

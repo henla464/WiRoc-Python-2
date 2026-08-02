@@ -1,9 +1,7 @@
 WiRoc
 =====
 - SRR dongle often doesn't initialize correctly, doesn't respond in time to query, seem to get reply later
-
 - Should we change to not retry, or limit retries to configure SI-USB as two-way when it fails?
-- Option to set SRR as output
 - Send configurations to webbserver (srr setting already sent)
 - Send local ip address to webbserver ( add to devices )
 - Add cardno etc to database for SRRMessages
@@ -21,8 +19,6 @@ Add option to reconfigure remote wiroc
 
 App
 ===
-
-- Configure input / output for SRR
 
 
 
@@ -90,6 +86,9 @@ x measure power consumption of  SRR receiver: arount 51 mA, 3.3V
     -- Stop mode: 47mA so even then little difference...
 x Send hwversion to webbserver, software versions
 x Power optimization SRR
+x Configure input / output for SRR in app
+x Always use BT Address from settings
+x Option to set SRR as output
 
 
 possible HW enhancments
@@ -126,4 +125,6 @@ xIn startup script check AXP209 for bt address, then check settings.yaml and act
 x If AXP209 has address then use it and put it in settings
 x If AXP209 is empty but settings.yaml has then write it to AXP209 and use it
 x If both AXP209 and settings.yaml is empty then use the actual bt address and write it settings and axp209
- BUT if ForceBTAddress: true in settings.yaml then use that bt address and write it to AP209
+x BUT if ForceBTAddress: true in settings.yaml then use that bt address and write it to AP209
+
+
