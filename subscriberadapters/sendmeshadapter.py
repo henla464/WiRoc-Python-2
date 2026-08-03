@@ -62,6 +62,8 @@ class SendMeshAdapter(object):
         self.wifiMeshNodeNumber = None
         self.wifiMeshGatewayEnabled = None
         self.wifiMeshRouteToInterface = None
+        self.wifiMeshRestrictEnabled = None
+        self.wifiMeshAllowedIPs = None
 
     def GetInstanceName(self) -> str:
         return self.instanceName
@@ -102,6 +104,8 @@ class SendMeshAdapter(object):
              SettingsClass.GetWifiMeshIPNetworkNumber() == self.wifiMeshIPNetworkNumber and
              SettingsClass.GetWifiMeshNodeNumber() == self.wifiMeshNodeNumber and
              SettingsClass.GetWifiMeshRouteToInterface() == self.wifiMeshRouteToInterface and
+             SettingsClass.GetWifiMeshRestrictEnabled() == self.wifiMeshRestrictEnabled and
+             SettingsClass.GetWifiMeshAllowedIPs() == self.wifiMeshAllowedIPs and
              HardwareAbstraction.Instance.DoesInterfaceExist(HardwareAbstraction.Instance.GetMeshInterfaceName()) and
              self.IsMeshPoint(HardwareAbstraction.Instance.GetMeshInterfaceName()))
                 or
@@ -193,8 +197,8 @@ class SendMeshAdapter(object):
 
             # Forwarding rules
             # Tried to delete specific rules but can't get it to work. So now just deleting the two first
-            forward_delete1 = subprocess.run(['iptables', '-D', 'FORWARD', '1'], capture_output=True)
-            forward_delete2 = subprocess.run(['iptables', '-D', 'FORWARD', '1'], capture_output=True)
+            # forward_delete1 = subprocess.run(['iptables', '-D', 'FORWARD', '1'], capture_output=True)
+            # forward_delete2 = subprocess.run(['iptables', '-D', 'FORWARD', '1'], capture_output=True)
 
             # Mesh security: optionally restrict mesh access to local network
             restrictEnabled = SettingsClass.GetWifiMeshRestrictEnabled()
@@ -211,9 +215,16 @@ class SendMeshAdapter(object):
                     allowedIPs = SettingsClass.GetWifiMeshAllowedIPs()
                     SendMeshAdapter._meshSecurityAllowedIPs = allowedIPs
 
-                    # ACCEPT rules for each allowed IP:port (must come before DROP)
+                    # Insert DROP first at position 1 (blocks everything to local subnet)
+                    subprocess.run(['iptables', '-I', 'FORWARD', '1',
+                                   '-i', mesh_interface, '-o', internet_interface,
+                                   '-d', localSubnet, '-j', 'DROP'], check=True)
+                    SendMeshAdapter.WiRocLogger.info(
+                        f"SendMeshAdapter::SetupInternetSharing() Added mesh DROP rule for subnet: {localSubnet}")
+
+                    # Insert ACCEPT rules at position 1 (before DROP), so allowed IPs go through
                     for entry in allowedIPs:
-                        cmd = ['iptables', '-A', 'FORWARD', '-i', mesh_interface,
+                        cmd = ['iptables', '-I', 'FORWARD', '1', '-i', mesh_interface,
                                '-o', internet_interface, '-d', entry.get('ip', '')]
                         protocol = entry.get('protocol', '*')
                         if protocol != '*':
@@ -225,13 +236,6 @@ class SendMeshAdapter(object):
                         subprocess.run(cmd, check=True)
                         SendMeshAdapter.WiRocLogger.info(
                             f"SendMeshAdapter::SetupInternetSharing() Added mesh ACCEPT rule for {entry}")
-
-                    # DROP mesh -> local subnet (catch-all after allowed IPs)
-                    subprocess.run(['iptables', '-A', 'FORWARD',
-                                   '-i', mesh_interface, '-o', internet_interface,
-                                   '-d', localSubnet, '-j', 'DROP'], check=True)
-                    SendMeshAdapter.WiRocLogger.info(
-                        f"SendMeshAdapter::SetupInternetSharing() Added mesh DROP rule for subnet: {localSubnet}")
                 else:
                     SendMeshAdapter.WiRocLogger.warning(
                         "SendMeshAdapter::SetupInternetSharing() Could not determine local subnet, skipping mesh restriction")
@@ -673,10 +677,14 @@ class SendMeshAdapter(object):
             self.SetMaxSyncOffset(theMeshDevice)
             self.SetPLinkTimeout(theMeshDevice)
             if SettingsClass.GetWifiMeshGatewayEnabled():
+                # Tear down old rules first in case settings changed
+                self.TearDownInternetSharing(theMeshDevice, internetInterface)
                 self.SetupInternetSharing(theMeshDevice, internetInterface)
                 self.wifiMeshRouteToInterface = internetInterface
                 self.wifiMeshEnabled = True
                 self.wifiMeshGatewayEnabled = True
+                self.wifiMeshRestrictEnabled = SettingsClass.GetWifiMeshRestrictEnabled()
+                self.wifiMeshAllowedIPs = SettingsClass.GetWifiMeshAllowedIPs()
                 self.isInitialized = True
                 return True
             else:
@@ -686,6 +694,8 @@ class SendMeshAdapter(object):
                 self.wifiMeshRouteToInterface = internetInterface
                 self.wifiMeshEnabled = True
                 self.wifiMeshGatewayEnabled = False
+                self.wifiMeshRestrictEnabled = False
+                self.wifiMeshAllowedIPs = []
                 self.isInitialized = True
                 return True
         else:

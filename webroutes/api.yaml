@@ -2182,7 +2182,7 @@ paths:
         - name: allowedIPs
           in: path
           required: true
-          description: "URL-encoded JSON array, e.g. %5B%7B%22ip%22%3A%22192.168.1.10%22%2C%22port%22%3A80%2C%22protocol%22%3A%22tcp%22%7D%5D"
+          description: 'URL-encoded JSON array: [{"ip":"192.168.1.119","port":10000,"protocol":"tcp"}]'
           schema:
             type: string
       responses:
