@@ -63,38 +63,7 @@ class DatabaseHelper:
         db.ensure_table_created(table)
         table = Sequences()
         db.ensure_table_created(table)
-        cls.migrate_message_box_archive_resubmitted_columns()
 
-    @classmethod
-    def migrate_message_box_archive_resubmitted_columns(cls) -> None:
-        """Replace Resubmitted column with per-subscriber ResubmittedLora/ResubmittedSirap. Also add ResubmittedRoc."""
-        cls.init()
-        # Check if migration already done
-        try:
-            cls.db.execute_SQL("SELECT ResubmittedLora FROM MessageBoxArchiveData LIMIT 1")
-        except:
-            # Old migration: replace Resubmitted with ResubmittedLora/ResubmittedSirap
-            for col in ['ResubmittedLora', 'ResubmittedSirap']:
-                try:
-                    cls.db.execute_SQL(f"ALTER TABLE MessageBoxArchiveData ADD COLUMN {col} INT DEFAULT 0")
-                except:
-                    pass
-            try:
-                cls.db.execute_SQL("UPDATE MessageBoxArchiveData SET ResubmittedLora = Resubmitted WHERE Resubmitted = 1")
-            except:
-                pass
-            try:
-                cls.db.execute_SQL("ALTER TABLE MessageBoxArchiveData DROP COLUMN Resubmitted")
-            except:
-                pass
-        # Add ResubmittedRoc column if not already present
-        try:
-            cls.db.execute_SQL("SELECT ResubmittedRoc FROM MessageBoxArchiveData LIMIT 1")
-        except:
-            try:
-                cls.db.execute_SQL("ALTER TABLE MessageBoxArchiveData ADD COLUMN ResubmittedRoc INT DEFAULT 0")
-            except:
-                pass
 
     @classmethod
     def drop_all_tables(cls) -> None:
@@ -851,7 +820,7 @@ class DatabaseHelper:
         return cls.db.get_table_objects_by_SQL(MessageBoxArchiveData, selectSQL, (startTime, endTime, typeName))
 
     @classmethod
-    def get_no_of_times_message_submitted_since_last_sent(cls, messageData: bytearray, typeName: str) -> int:
+    def get_no_of_times_message_submitted_since_last_successful_send(cls, messageData: bytearray, typeName: str) -> int:
         """Count submissions of a message since the last successful send for a given subscriber type."""
         cls.init()
         selectLastSuccessSQL = ("SELECT SentDate FROM MessageSubscriptionArchiveData "
