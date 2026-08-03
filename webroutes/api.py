@@ -1537,13 +1537,21 @@ def disconnectWifi():
 
 @app.route('/api/rtc/datetime/', methods=['GET'])
 def getRTCDateTime():
-    # get from rtc
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
+    rtcDevice = HardwareAbstraction.Instance.GetPcf8563RtcDevice() or '/dev/rtc1'
     rtcDateTime: str = ''
-    if HardwareAbstraction.Instance.HasRTC():
-        rtcDateTime = HardwareAbstraction.Instance.GetRTCDateTime()
-    else:
+    try:
+        result = subprocess.run(['hwclock', '-f', rtcDevice, '-r'], capture_output=True, text=True)
+        if result.returncode == 0:
+            # hwclock output: "2026-08-03 17:19:00.000000+00:00"
+            hwclockOutput = result.stdout.strip()
+            # Take first 19 chars: "YYYY-MM-DD HH:MM:SS"
+            if len(hwclockOutput) >= 19:
+                rtcDateTime = hwclockOutput[:19]
+    except Exception:
+        pass
+    if not rtcDateTime:
         rtcDateTime = str(datetime.datetime.now())[0:19]
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
@@ -1551,19 +1559,26 @@ def getRTCDateTime():
 
 @app.route('/api/rtc/datetime/<dateAndTimeWithSeconds>/', methods=['GET'])
 def setRTCDateTime(dateAndTimeWithSeconds):
-    # write time to rtc
     if HardwareAbstraction.Instance is None:
         HardwareAbstraction.Instance = HardwareAbstraction()
-    if HardwareAbstraction.Instance.HasRTC():
-        HardwareAbstraction.Instance.SetRTCDateTime(dateAndTimeWithSeconds)
-        status = subprocess.check_output("hwclock -f /dev/rtc1 --hctosys", shell=True)
-    else:
+    rtcDevice = HardwareAbstraction.Instance.GetPcf8563RtcDevice() or '/dev/rtc1'
+    rtcExists = False
+    try:
+        result = subprocess.run(['hwclock', '-f', rtcDevice, '--set', '--date', dateAndTimeWithSeconds],
+                               capture_output=True, check=False)
+        if result.returncode == 0:
+            rtcExists = True
+            subprocess.run(['hwclock', '-f', rtcDevice, '--hctosys'], capture_output=True, check=False)
+    except Exception:
+        pass
+
+    if not rtcExists:
         year: int = int(dateAndTimeWithSeconds[0:4])
         month: int = int(dateAndTimeWithSeconds[5:7])
-        day: int= int(dateAndTimeWithSeconds[8:10])
-        hour: int= int(dateAndTimeWithSeconds[11:13])
-        minute: int= int(dateAndTimeWithSeconds[14:16])
-        second: int= int(dateAndTimeWithSeconds[17:19])
+        day: int = int(dateAndTimeWithSeconds[8:10])
+        hour: int = int(dateAndTimeWithSeconds[11:13])
+        minute: int = int(dateAndTimeWithSeconds[14:16])
+        second: int = int(dateAndTimeWithSeconds[17:19])
         Utils.SetDateTime(year, month, day, hour, minute, second)
 
     return getRTCDateTime()

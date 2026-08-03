@@ -122,8 +122,11 @@ class SendToRocAdapter(object):
     @staticmethod
     def _computePunchDate(twentyFourHour: int, hour: int, minute: int, second: int) -> str:
         """Compute punch date from SI 12-hour time + 24h flag.
-        Uses the 70-minute rule: if punch time is within 70 minutes ahead of now,
-        assume today; otherwise assume yesterday."""
+        Uses the 95-minute rule: if punch time is within 95 minutes ahead of now,
+        assume today; otherwise assume yesterday.
+        This covers DST changes (SI units running on time before DST change, WiRoc running on time after DST change) and
+        also covers the case of a punch being up to 30 minutes delayed (resubmit default is 30 minute cutoff) and a small 5
+        minute clock drift between SI unit and WiRoc margin."""
         now = datetime.now()
         # SportIdent time is in 12-hour format. 24h flag means PM if hour < 12.
         punchHour = hour
@@ -133,8 +136,8 @@ class SendToRocAdapter(object):
             punchHour = 0
 
         punchTime = now.replace(hour=punchHour, minute=minute, second=second, microsecond=0)
-        # If punch time is more than 70 minutes in the future, it must be from yesterday
-        if punchTime > now + timedelta(minutes=70):
+        # If punch time is more than 95 minutes in the future, it is assumed to be from yesterday
+        if punchTime > now + timedelta(minutes=95):
             punchTime = punchTime - timedelta(days=1)
 
         return punchTime.strftime("%Y-%m-%d")

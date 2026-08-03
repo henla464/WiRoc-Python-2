@@ -415,6 +415,22 @@ class HardwareAbstraction(object):
     def HasRTC(self):
         return self.wirocHWVersionNumber >= 7
 
+    def GetPcf8563RtcDevice(self) -> str:
+        """Find the battery-backed pcf8563 RTC by driver name. Returns "" if not found."""
+        try:
+            for entry in sorted(os.listdir("/sys/class/rtc")):
+                if not entry.startswith("rtc"):
+                    continue
+                try:
+                    with open("/sys/class/rtc/" + entry + "/name") as nameFile:
+                        if nameFile.read().strip().startswith("rtc-pcf8563"):
+                            return "/dev/" + entry
+                except OSError:
+                    continue
+        except OSError:
+            pass
+        return ""
+
     def HasSRR(self):
         # The version 6 had SRR but with flex cable that seem to only give problems.
         # So lets only enabled SRR when version >= 7
