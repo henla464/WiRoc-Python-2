@@ -215,7 +215,7 @@ class SendToRocAdapter(object):
 
             responseText = resp.text.replace('<BR>', '\n')
             responseTextFlat = responseText.replace('\n', '').replace('\r', '')
-            SendToRocAdapter.WiRocLogger.debug(f"SendToRocAdapter::SendData() Response: {responseText[:500]}")
+            
 
             # Check for server-reported errors
             if "Wrong length" in responseText or "Aborting" in responseText:
@@ -240,6 +240,7 @@ class SendToRocAdapter(object):
                 successCB()
                 return True
             else:
+                SendToRocAdapter.WiRocLogger.debug(f"SendToRocAdapter::SendData() Response: {responseText[:500]}")
                 failureCB()
                 return False
 

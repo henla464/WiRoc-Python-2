@@ -321,10 +321,9 @@ class HardwareAbstraction(object):
             text=True,
             check=False
         )
-        meshInterfaceCreated = '1'
         if result.returncode != 0:
             HardwareAbstraction.WiRocLogger.error(
-                f"HardwareAbstraction::DoesInterfaceExist({interface}): {result.stderr}")
+                f"HardwareAbstraction::DoesInterfaceExist({interface}): {result.stderr.strip()}")
             return False
         return True
 

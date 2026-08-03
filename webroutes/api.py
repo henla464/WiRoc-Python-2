@@ -1414,10 +1414,14 @@ def getNetworkInterfaces():
     ifaceWifi = HardwareAbstraction.Instance.GetBuiltinWifiInterfaceName()
     ifaceUSBEthernet = HardwareAbstraction.Instance.GetUSBEthernetInterfaces()
     ifaceMesh = HardwareAbstraction.Instance.GetMeshInterfaceName()
+    ifaceBuiltInEthernet = HardwareAbstraction.Instance.GetBuiltinEthernetInterfaceName()
     allIfaces = []
     allIfaces.append(ifaceWifi)
     allIfaces.append(ifaceMesh)
-    allIfaces += ifaceUSBEthernet
+    if ifaceUSBEthernet:
+        allIfaces.append(ifaceUSBEthernet)
+    if ifaceBuiltInEthernet:
+        allIfaces.append(ifaceBuiltInEthernet)
 
     return jsonpickle.encode(MicroMock(Value=allIfaces))
 
@@ -1942,6 +1946,53 @@ def setWifiMeshRouteToInterface(interface):
         sd = SettingData()
         sd.Key = 'WifiMeshRouteToInterface'
     sd.Value = interface
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/network/wifimesh/restrictenabled/', methods=['GET'])
+def GetWifiMeshRestrictEnabled():
+    sett = DatabaseHelper.get_setting_by_key('WifiMeshRestrictEnabled')
+    restrictEnabled = '0'
+    if sett is not None:
+        restrictEnabled = sett.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=restrictEnabled))
+
+@app.route('/api/network/wifimesh/restrictenabled/<enabled>/', methods=['GET'])
+def SetWifiMeshRestrictEnabled(enabled):
+    sd = DatabaseHelper.get_setting_by_key('WifiMeshRestrictEnabled')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'WifiMeshRestrictEnabled'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/network/wifimesh/allowedips/', methods=['GET'])
+def GetWifiMeshAllowedIPs():
+    allowedIPs = SettingsClass.GetWifiMeshAllowedIPs()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=json.dumps(allowedIPs)))
+
+@app.route('/api/network/wifimesh/allowedips/<path:allowedIPs>/', methods=['GET'])
+def SetWifiMeshAllowedIPs(allowedIPs):
+    try:
+        parsed = json.loads(allowedIPs)
+    except (json.JSONDecodeError, Exception):
+        return "Invalid JSON", 400
+    sd = DatabaseHelper.get_setting_by_key('WifiMeshAllowedIPs')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'WifiMeshAllowedIPs'
+    sd.Value = allowedIPs
     sd = DatabaseHelper.save_setting(sd)
     SettingsClass.SetSettingUpdatedByWebService()
     jsonpickle.set_preferred_backend('json')

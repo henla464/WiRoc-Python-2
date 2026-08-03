@@ -2127,6 +2127,71 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
+  /network/wifimesh/restrictenabled/:
+    get:
+      tags:
+        - "Network"
+      summary: "Get whether mesh access to local network is restricted"
+      operationId: "GetWifiMeshRestrictEnabled"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /network/wifimesh/restrictenabled/{enabled}:
+    get:
+      tags:
+        - "Network"
+      summary: "Enable/disable mesh access restriction to local network"
+      operationId: "SetWifiMeshRestrictEnabled"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/TrueFalse"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /network/wifimesh/allowedips/:
+    get:
+      tags:
+        - "Network"
+      summary: "Get the list of allowed IP:port pairs mesh can access on local network"
+      operationId: "GetWifiMeshAllowedIPs"
+      responses:
+        "200":
+          description: "JSON array of {ip, port, protocol} objects"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
+  /network/wifimesh/allowedips/{allowedIPs}:
+    get:
+      tags:
+        - "Network"
+      summary: "Set the list of allowed IP:port pairs mesh can access on local network"
+      operationId: "SetWifiMeshAllowedIPs"
+      parameters:
+        - name: allowedIPs
+          in: path
+          required: true
+          description: "URL-encoded JSON array, e.g. %5B%7B%22ip%22%3A%22192.168.1.10%22%2C%22port%22%3A80%2C%22protocol%22%3A%22tcp%22%7D%5D"
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyObj"
   /network/tailscale/enabled/:
     get:
       tags:

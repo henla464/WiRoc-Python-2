@@ -8,6 +8,7 @@ import time
 import math
 import random
 import os
+import json
 import yaml
 import logging
 from cachetools import cached, TTLCache
@@ -1055,3 +1056,26 @@ class SettingsClass(object):
             SettingsClass.SetSetting("RocMiniCallHomeInterval", "20")
             return 20
         return int(sett.Value)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWifiMeshRestrictEnabled'), lock=rlock)
+    def GetWifiMeshRestrictEnabled() -> bool:
+        sett = DatabaseHelper.get_setting_by_key('WifiMeshRestrictEnabled')
+        if sett is None:
+            SettingsClass.SetSetting("WifiMeshRestrictEnabled", "0")
+            return False
+        return sett.Value == "1"
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetWifiMeshAllowedIPs'), lock=rlock)
+    def GetWifiMeshAllowedIPs() -> list:
+        sett = DatabaseHelper.get_setting_by_key('WifiMeshAllowedIPs')
+        if sett is None:
+            SettingsClass.SetSetting("WifiMeshAllowedIPs", "[]")
+            return []
+        try:
+            return json.loads(sett.Value)
+        except (json.JSONDecodeError, Exception):
+            SettingsClass.WiRocLogger.warning(
+                f"SettingsClass::GetWifiMeshAllowedIPs() Failed to parse WifiMeshAllowedIPs JSON: {sett.Value}")
+            return []

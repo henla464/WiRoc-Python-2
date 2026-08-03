@@ -5,6 +5,7 @@ from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from settings.settings import SettingsClass
 import logging
 import subprocess
+import re
 
 
 # Virtual adapter that creates and configures a mesh network if a
@@ -12,6 +13,8 @@ import subprocess
 class SendMeshAdapter(object):
     WiRocLogger: logging.Logger = logging.getLogger('WiRoc.Output')
     Instances: list[SendMeshAdapter] = []
+    _meshSecurityLocalSubnet: str | None = None
+    _meshSecurityAllowedIPs: list | None = None
 
     @staticmethod
     def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
@@ -193,13 +196,66 @@ class SendMeshAdapter(object):
             forward_delete1 = subprocess.run(['iptables', '-D', 'FORWARD', '1'], capture_output=True)
             forward_delete2 = subprocess.run(['iptables', '-D', 'FORWARD', '1'], capture_output=True)
 
+            # Mesh security: optionally restrict mesh access to local network
+            restrictEnabled = SettingsClass.GetWifiMeshRestrictEnabled()
+            if restrictEnabled:
+                # Get local subnet from internet interface
+                result = subprocess.run(['ip', '-4', '-o', 'addr', 'show', internet_interface],
+                                       capture_output=True, text=True)
+                match = re.search(r'inet (\d+\.\d+\.\d+\.\d+/\d+)', result.stdout)
+                if match:
+                    localSubnet = match.group(1)
+                    SendMeshAdapter._meshSecurityLocalSubnet = localSubnet
+
+                    # Get allowed IPs
+                    allowedIPs = SettingsClass.GetWifiMeshAllowedIPs()
+                    SendMeshAdapter._meshSecurityAllowedIPs = allowedIPs
+
+                    # ACCEPT rules for each allowed IP:port (must come before DROP)
+                    for entry in allowedIPs:
+                        cmd = ['iptables', '-A', 'FORWARD', '-i', mesh_interface,
+                               '-o', internet_interface, '-d', entry.get('ip', '')]
+                        protocol = entry.get('protocol', '*')
+                        if protocol != '*':
+                            cmd.extend(['-p', protocol])
+                        port = entry.get('port', '*')
+                        if port != '*':
+                            cmd.extend(['--dport', str(port)])
+                        cmd.extend(['-j', 'ACCEPT'])
+                        subprocess.run(cmd, check=True)
+                        SendMeshAdapter.WiRocLogger.info(
+                            f"SendMeshAdapter::SetupInternetSharing() Added mesh ACCEPT rule for {entry}")
+
+                    # DROP mesh -> local subnet (catch-all after allowed IPs)
+                    subprocess.run(['iptables', '-A', 'FORWARD',
+                                   '-i', mesh_interface, '-o', internet_interface,
+                                   '-d', localSubnet, '-j', 'DROP'], check=True)
+                    SendMeshAdapter.WiRocLogger.info(
+                        f"SendMeshAdapter::SetupInternetSharing() Added mesh DROP rule for subnet: {localSubnet}")
+                else:
+                    SendMeshAdapter.WiRocLogger.warning(
+                        "SendMeshAdapter::SetupInternetSharing() Could not determine local subnet, skipping mesh restriction")
+                    SendMeshAdapter._meshSecurityLocalSubnet = None
+                    SendMeshAdapter._meshSecurityAllowedIPs = []
+            else:
+                SendMeshAdapter._meshSecurityLocalSubnet = None
+                SendMeshAdapter._meshSecurityAllowedIPs = []
+
+            # Generic mesh -> internet ACCEPT (everything not matched by security rules above)
             subprocess.run(
                 ['iptables', '-A', 'FORWARD', '-i', mesh_interface, '-o', internet_interface, '-j', 'ACCEPT'],
                 check=True)
 
+            # Reply traffic: internet -> mesh
             subprocess.run(['iptables', '-A', 'FORWARD',
                             '-i', internet_interface, '-o', mesh_interface,
                             '-m', 'state', '--state', 'RELATED,ESTABLISHED', '-j', 'ACCEPT'], check=True)
+
+            # Normal network can initiate connections to mesh devices
+            subprocess.run(['iptables', '-A', 'FORWARD',
+                            '-i', internet_interface, '-o', mesh_interface, '-j', 'ACCEPT'], check=True)
+            SendMeshAdapter.WiRocLogger.info(
+                "SendMeshAdapter::SetupInternetSharing() Added normal->mesh ACCEPT rule")
 
             # Set this as the root node and announce
             subprocess.run(
@@ -232,7 +288,16 @@ class SendMeshAdapter(object):
                 f"SendMeshAdapter::TearDownInternetSharing() Removing internet sharing from {internet_interface} to {mesh_interface}...")
 
             # Remove iptables rules in reverse order
-            # First, remove FORWARD rules
+            # First, remove normal->mesh ACCEPT rule (added last in Setup)
+            try:
+                subprocess.run(['iptables', '-D', 'FORWARD',
+                                '-i', internet_interface, '-o', mesh_interface, '-j', 'ACCEPT'],
+                               capture_output=True, check=False)
+            except Exception as e:
+                SendMeshAdapter.WiRocLogger.debug(
+                    f"SendMeshAdapter::TearDownInternetSharing() normal->mesh ACCEPT rule may not exist: {e}")
+
+            # Remove RELATED,ESTABLISHED rule
             try:
                 subprocess.run(['iptables', '-D', 'FORWARD',
                                 '-i', internet_interface, '-o', mesh_interface,
@@ -240,15 +305,51 @@ class SendMeshAdapter(object):
                                capture_output=True, check=False)
             except Exception as e:
                 SendMeshAdapter.WiRocLogger.debug(
-                    f"SendMeshAdapter::TearDownInternetSharing() Rule 1 may not exist: {e}")
+                    f"SendMeshAdapter::TearDownInternetSharing() REL,EST rule may not exist: {e}")
 
+            # Remove generic mesh->internet ACCEPT rule
             try:
                 subprocess.run(['iptables', '-D', 'FORWARD',
                                 '-i', mesh_interface, '-o', internet_interface, '-j', 'ACCEPT'],
                                capture_output=True, check=False)
             except Exception as e:
                 SendMeshAdapter.WiRocLogger.debug(
-                    f"SendMeshAdapter::TearDownInternetSharing() Rule 2 may not exist: {e}")
+                    f"SendMeshAdapter::TearDownInternetSharing() mesh->internet ACCEPT rule may not exist: {e}")
+
+            # Remove mesh security rules (if any were added)
+            localSubnet = SendMeshAdapter._meshSecurityLocalSubnet
+            allowedIPs = SendMeshAdapter._meshSecurityAllowedIPs
+            if localSubnet and allowedIPs is not None:
+                # Remove DROP rule for mesh->local subnet
+                try:
+                    subprocess.run(['iptables', '-D', 'FORWARD',
+                                    '-i', mesh_interface, '-o', internet_interface,
+                                    '-d', localSubnet, '-j', 'DROP'],
+                                   capture_output=True, check=False)
+                except Exception as e:
+                    SendMeshAdapter.WiRocLogger.debug(
+                        f"SendMeshAdapter::TearDownInternetSharing() mesh DROP rule may not exist: {e}")
+
+                # Remove ACCEPT rules for each allowed IP (reverse order)
+                for entry in reversed(allowedIPs):
+                    try:
+                        cmd = ['iptables', '-D', 'FORWARD', '-i', mesh_interface,
+                               '-o', internet_interface, '-d', entry.get('ip', '')]
+                        protocol = entry.get('protocol', '*')
+                        if protocol != '*':
+                            cmd.extend(['-p', protocol])
+                        port = entry.get('port', '*')
+                        if port != '*':
+                            cmd.extend(['--dport', str(port)])
+                        cmd.extend(['-j', 'ACCEPT'])
+                        subprocess.run(cmd, capture_output=True, check=False)
+                    except Exception as e:
+                        SendMeshAdapter.WiRocLogger.debug(
+                            f"SendMeshAdapter::TearDownInternetSharing() allowed IP rule may not exist: {e}")
+
+            # Clear security rules state
+            SendMeshAdapter._meshSecurityLocalSubnet = None
+            SendMeshAdapter._meshSecurityAllowedIPs = None
 
             # Remove NAT masquerade rule
             try:
