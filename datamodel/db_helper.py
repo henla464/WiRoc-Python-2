@@ -67,30 +67,34 @@ class DatabaseHelper:
 
     @classmethod
     def migrate_message_box_archive_resubmitted_columns(cls) -> None:
-        """Replace Resubmitted column with per-subscriber ResubmittedLora/ResubmittedSirap."""
+        """Replace Resubmitted column with per-subscriber ResubmittedLora/ResubmittedSirap. Also add ResubmittedRoc."""
         cls.init()
         # Check if migration already done
         try:
             cls.db.execute_SQL("SELECT ResubmittedLora FROM MessageBoxArchiveData LIMIT 1")
-            return  # already migrated
         except:
-            pass
-        # Add new columns
-        for col in ['ResubmittedLora', 'ResubmittedSirap']:
+            # Old migration: replace Resubmitted with ResubmittedLora/ResubmittedSirap
+            for col in ['ResubmittedLora', 'ResubmittedSirap']:
+                try:
+                    cls.db.execute_SQL(f"ALTER TABLE MessageBoxArchiveData ADD COLUMN {col} INT DEFAULT 0")
+                except:
+                    pass
             try:
-                cls.db.execute_SQL(f"ALTER TABLE MessageBoxArchiveData ADD COLUMN {col} INT DEFAULT 0")
+                cls.db.execute_SQL("UPDATE MessageBoxArchiveData SET ResubmittedLora = Resubmitted WHERE Resubmitted = 1")
             except:
                 pass
-        # Copy old Resubmitted values to ResubmittedLora (historically only LORA had resubmit)
+            try:
+                cls.db.execute_SQL("ALTER TABLE MessageBoxArchiveData DROP COLUMN Resubmitted")
+            except:
+                pass
+        # Add ResubmittedRoc column if not already present
         try:
-            cls.db.execute_SQL("UPDATE MessageBoxArchiveData SET ResubmittedLora = Resubmitted WHERE Resubmitted = 1")
+            cls.db.execute_SQL("SELECT ResubmittedRoc FROM MessageBoxArchiveData LIMIT 1")
         except:
-            pass
-        # Drop old column (SQLite doesn't support DROP COLUMN before 3.35, skip if it fails)
-        try:
-            cls.db.execute_SQL("ALTER TABLE MessageBoxArchiveData DROP COLUMN Resubmitted")
-        except:
-            pass
+            try:
+                cls.db.execute_SQL("ALTER TABLE MessageBoxArchiveData ADD COLUMN ResubmittedRoc INT DEFAULT 0")
+            except:
+                pass
 
     @classmethod
     def drop_all_tables(cls) -> None:
@@ -784,9 +788,11 @@ class DatabaseHelper:
 
         return (activeCount or 0) + (archiveCount or 0)
 
+    _resubmitColMap = {'LORA': 'ResubmittedLora', 'SIRAP': 'ResubmittedSirap', 'ROC': 'ResubmittedRoc'}
+
     @classmethod
     def any_active_lora_subscriptions_not_acked(cls) -> bool:
-        """Check if there are any active (non-archived) LORA message subscriptions that not yet been acked."""
+        """Check if there are any active LORA message subscriptions not yet acked. LORA uses AckReceivedDate."""
         cls.init()
         sql = ("SELECT COUNT(1) FROM MessageSubscriptionData "
                "JOIN SubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
@@ -797,15 +803,15 @@ class DatabaseHelper:
         return (count or 0) > 0
 
     @classmethod
-    def any_active_sirap_subscriptions(cls) -> bool:
-        """Check if there are any active (non-archived) SIRAP message subscriptions being sent."""
+    def any_active_sent_subscriptions(cls, typeName: str) -> bool:
+        """Check if there are any active subscriptions being sent for a given subscriber type (SIRAP, ROC, etc.)."""
         cls.init()
         sql = ("SELECT COUNT(1) FROM MessageSubscriptionData "
                "JOIN SubscriptionData ON MessageSubscriptionData.SubscriptionId = SubscriptionData.id "
                "JOIN SubscriberData ON SubscriberData.id = SubscriptionData.SubscriberId "
-               "WHERE SubscriberData.TypeName = 'SIRAP' "
+               "WHERE SubscriberData.TypeName = ? "
                "AND MessageSubscriptionData.SentDate IS NOT NULL")
-        count = cls.db.get_scalar_by_SQL(sql)
+        count = cls.db.get_scalar_by_SQL(sql, (typeName,))
         return (count or 0) > 0
 
     @classmethod
@@ -820,6 +826,7 @@ class DatabaseHelper:
 
     @classmethod
     def get_failed_lora_messages(cls, startTime: datetime, endTime: datetime) -> list[MessageBoxArchiveData]:
+        """Get failed LORA messages for resubmit. LORA has extra conditions (ack not received, not Status)."""
         cls.init()
         selectSQL = ("select MessageBoxArchiveData.* from MessageSubscriptionArchiveData "
                      "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
@@ -828,43 +835,43 @@ class DatabaseHelper:
                      "and MessageBoxArchiveData.MessageSubTypeName != 'Status' "
                      "and (MessageBoxArchiveData.ResubmittedLora = 0 or MessageBoxArchiveData.ResubmittedLora IS NULL)"
                      "order by MessageSubscriptionArchiveData.SendFailedDate desc LIMIT 1;")
-        messageBoxDatas = cls.db.get_table_objects_by_SQL(MessageBoxArchiveData, selectSQL, (startTime,endTime))
-        return messageBoxDatas
+        return cls.db.get_table_objects_by_SQL(MessageBoxArchiveData, selectSQL, (startTime, endTime))
 
     @classmethod
-    def get_failed_sirap_messages(cls, startTime: datetime, endTime: datetime) -> list[MessageBoxArchiveData]:
+    def get_failed_messages(cls, startTime: datetime, endTime: datetime, typeName: str) -> list[MessageBoxArchiveData]:
+        """Get failed messages for a given subscriber type (SIRAP, ROC)."""
         cls.init()
-        selectSQL = ("select MessageBoxArchiveData.* from MessageSubscriptionArchiveData "
+        resubmitCol = cls._resubmitColMap.get(typeName, 'ResubmittedSirap')
+        selectSQL = (f"select MessageBoxArchiveData.* from MessageSubscriptionArchiveData "
                      "join MessageBoxArchiveData on MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
                      "where MessageSubscriptionArchiveData.SendFailedDate >= ? and MessageSubscriptionArchiveData.SendFailedDate < ? "
-                     "and MessageSubscriptionArchiveData.SubscriberTypeName = 'SIRAP' "
-                     "and (MessageBoxArchiveData.ResubmittedSirap = 0 or MessageBoxArchiveData.ResubmittedSirap IS NULL)"
+                     f"and MessageSubscriptionArchiveData.SubscriberTypeName = ? "
+                     f"and (MessageBoxArchiveData.{resubmitCol} = 0 or MessageBoxArchiveData.{resubmitCol} IS NULL) "
                      "order by MessageSubscriptionArchiveData.SendFailedDate desc LIMIT 1;")
-        messageBoxDatas = cls.db.get_table_objects_by_SQL(MessageBoxArchiveData, selectSQL, (startTime,endTime))
-        return messageBoxDatas
+        return cls.db.get_table_objects_by_SQL(MessageBoxArchiveData, selectSQL, (startTime, endTime, typeName))
 
     @classmethod
-    def get_no_of_times_sirap_message_submitted_since_last_successful_sirap(cls, messageData: bytearray) -> int:
+    def get_no_of_times_message_submitted_since_last_sent(cls, messageData: bytearray, typeName: str) -> int:
+        """Count submissions of a message since the last successful send for a given subscriber type."""
         cls.init()
         selectLastSuccessSQL = ("SELECT SentDate FROM MessageSubscriptionArchiveData "
-                                "WHERE MessageSubscriptionArchiveData.SubscriberTypeName = 'SIRAP' "
+                                "WHERE MessageSubscriptionArchiveData.SubscriberTypeName = ? "
                                 "AND MessageSubscriptionArchiveData.SendFailedDate IS NULL "
                                 "ORDER BY id DESC LIMIT 1;")
-        lastSuccessDate = cls.db.get_scalar_by_SQL(selectLastSuccessSQL)
+        lastSuccessDate = cls.db.get_scalar_by_SQL(selectLastSuccessSQL, (typeName,))
         if lastSuccessDate is None:
-            # No successful SIRAP send yet, count all submissions
             selectCountSQL = ("SELECT COUNT(MessageBoxArchiveData.OrigId) FROM MessageSubscriptionArchiveData "
                               "JOIN MessageBoxArchiveData ON MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
-                              "WHERE MessageSubscriptionArchiveData.SubscriberTypeName = 'SIRAP' "
+                              "WHERE MessageSubscriptionArchiveData.SubscriberTypeName = ? "
                               "AND MessageBoxArchiveData.MessageData = ?;")
-            count = cls.db.get_scalar_by_SQL(selectCountSQL, (messageData,))
+            count = cls.db.get_scalar_by_SQL(selectCountSQL, (typeName, messageData))
         else:
             selectCountSQL = ("SELECT COUNT(MessageBoxArchiveData.OrigId) FROM MessageSubscriptionArchiveData "
                               "JOIN MessageBoxArchiveData ON MessageSubscriptionArchiveData.MessageBoxId = MessageBoxArchiveData.OrigId "
-                              "WHERE MessageSubscriptionArchiveData.SubscriberTypeName = 'SIRAP' "
+                              "WHERE MessageSubscriptionArchiveData.SubscriberTypeName = ? "
                               "AND MessageBoxArchiveData.MessageData = ? "
                               "AND MessageSubscriptionArchiveData.SentDate > ?;")
-            count = cls.db.get_scalar_by_SQL(selectCountSQL, (messageData, lastSuccessDate))
+            count = cls.db.get_scalar_by_SQL(selectCountSQL, (typeName, messageData, lastSuccessDate))
         return count or 0
 
     @classmethod
@@ -894,7 +901,7 @@ class DatabaseHelper:
     @classmethod
     def set_message_resubmitted(cls, messageBoxArchiveId: int, subscriberTypeName: str):
         cls.init()
-        column = 'ResubmittedLora' if subscriberTypeName == 'LORA' else 'ResubmittedSirap'
+        column = cls._resubmitColMap.get(subscriberTypeName, 'ResubmittedSirap')
         updateSQL = f"update MessageBoxArchiveData set {column} = 1 where MessageBoxArchiveData.id = ?"
         cls.db.execute_SQL(updateSQL, (messageBoxArchiveId,))
 

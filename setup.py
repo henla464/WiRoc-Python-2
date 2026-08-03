@@ -9,6 +9,7 @@ from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from inputadapters.createhamcallsignmessageadapter import CreateHAMCallSignMessageAdapter
 from inputadapters.resubmitloraadapter import ResubmitLoraAdapter
 from inputadapters.resubmitsirapadapter import ResubmitSirapAdapter
+from inputadapters.resubmitrocadapter import ResubmitRocAdapter
 from subscriberadapters.sendloraadapter import SendLoraAdapter
 from subscriberadapters.sendmeshadapter import SendMeshAdapter
 from subscriberadapters.sendserialadapter import SendSerialAdapter
@@ -52,7 +53,7 @@ class Setup:
         inputObjects = []
         inputAdapterClasses = [CreateStatusAdapter, ReceiveLoraAdapter, ReceiveSIUSBSerialPort, ReceiveSIHWSerialPort,
                                     ReceiveSIBluetoothSP, ReceiveTestPunchesAdapter, ReceiveRepeaterMessagesAdapter,
-                               ReceiveSRRAdapter, ResubmitLoraAdapter, ResubmitSirapAdapter, CreateHAMCallSignMessageAdapter]
+                               ReceiveSRRAdapter, ResubmitLoraAdapter, ResubmitSirapAdapter, ResubmitRocAdapter, CreateHAMCallSignMessageAdapter]
         inputAdapterChanged = False
         for inputAdpCls in inputAdapterClasses:
             if inputAdpCls.CreateInstances(HardwareAbstraction.Instance):
