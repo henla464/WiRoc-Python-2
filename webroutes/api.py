@@ -443,8 +443,8 @@ def getSettings():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=json_data))
 
-@app.route('/api/setting/<key>/<value>/', methods=['GET'])
-@app.route('/api/settings/<key>/<value>/', methods=['GET'])
+@app.route('/api/setting/<key>/<path:value>/', methods=['GET'])
+@app.route('/api/settings/<key>/<path:value>/', methods=['GET'])
 def setSetting(key, value):
     settingData = None
     settingData = SettingData()
