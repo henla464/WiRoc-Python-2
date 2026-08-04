@@ -155,11 +155,13 @@ apt-get -y install dhcpcd
 echo "###################################"
 echo "Enable IP forwarding for wifi mesh and tailscale"
 echo "###################################"
-cat << 'EOF' > /etc/sysctl.d/99-wiroc-ipforward.conf
-net.ipv4.ip_forward=1
-net.ipv6.conf.all.forwarding=1
+
+cat > /etc/sysctl.d/99-ipforward.conf <<EOF
+net.ipv4.ip_forward = 1
+net.ipv6.conf.all.forwarding = 1
 EOF
-sysctl -p /etc/sysctl.d/99-wiroc-ipforward.conf
+
+sysctl --system
 
 echo "###################################"
 echo "Relink dbus bindings (for BLE)"
@@ -360,10 +362,21 @@ else
   fi
 
   if [ ! -f /usr/lib/udev/rules.d/51-udev-rtc.rules ]; then
-    echo "Make symlink to rtc1 which probably is the pcf8563"
-    echo 'SUBSYSTEM=="rtc", KERNEL=="rtc1", SYMLINK+="rtc", OPTIONS+="link_priority=-100"' >> /usr/lib/udev/rules.d/51-udev-rtc.rules
+    echo "Find pcf8563 RTC device"
+    RTC_DEV="rtc1"  # fallback if not found
+    for entry in /sys/class/rtc/rtc*; do
+      if [ -f "$entry/name" ]; then
+        if grep -q "^rtc-pcf8563" "$entry/name"; then
+          RTC_DEV=$(basename "$entry")
+          echo "Found pcf8563 at $RTC_DEV"
+          break
+        fi
+      fi
+    done
+    echo "Make symlink to $RTC_DEV which is the pcf8563"
+    echo "SUBSYSTEM==\"rtc\", KERNEL==\"$RTC_DEV\", SYMLINK+=\"rtc\", OPTIONS+=\"link_priority=-100\"" >> /usr/lib/udev/rules.d/51-udev-rtc.rules
   fi
-  systemctl disable chrony
+  
 fi
 
 echo "###################################"
