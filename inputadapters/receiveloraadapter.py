@@ -1,5 +1,6 @@
 import traceback
 from loraradio.LoraRadioDRF1268DS_RS import LoraRadioDRF1268DS_RS
+from loraradio.ReturnStatus import ReturnStatus
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
 import serial
@@ -108,13 +109,19 @@ class ReceiveLoraAdapter(object):
 
     def TrySendData(self, messageData):
         startTrySendTime = time.monotonic()
-        dataSentOK = False
+        dataSentStatus: ReturnStatus = ReturnStatus.NOREPLY
         if self.loraRadio.IsReadyToSend():
-            dataSentOK = self.loraRadio.SendData(messageData)
-        while not dataSentOK:
+            dataSentStatus = self.loraRadio.SendData(messageData)
+            ReceiveLoraAdapter.WiRocLogger.error(
+                "ReceiveLoraAdapter::TrySendData() MessageData: " + Utils.GetDataInHex(messageData, logging.DEBUG))
+        # DRF1268DS modules can get stuck and not recieve messages. I think it gets stuck in TX mode.
+        # This has happened when sending ack and getting "busy" response. There should not have been any channel activity
+        # when it happened so probably some other condition caused the busy response. Maybe we send ack to early, it seemed a
+        # delay solve it also. Just resending gets it unstuck.
+        while not dataSentStatus == ReturnStatus.SENT:
             time.sleep(0.01)
             if self.loraRadio.IsReadyToSend():
-                dataSentOK = self.loraRadio.SendData(messageData)
+                dataSentStatus = self.loraRadio.SendData(messageData)
             if time.monotonic() - startTrySendTime > (SettingsClass.GetRetryDelay(1) / 2000000):
                 # Wait half of a first retrydelay (GetRetryDelay returns in microseconds)
                 ReceiveLoraAdapter.WiRocLogger.error("ReceiveLoraAdapter::TrySendData() Wasn't able to send ack (busy response)")

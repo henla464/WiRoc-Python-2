@@ -8,20 +8,13 @@ import logging
 from datamodel.db_helper import DatabaseHelper, ErrorCodeData, ChannelData
 from loraradio.LoraRadioMessageRS import (LoraRadioMessageAckRS, LoraRadioMessageStatusRS, LoraRadioMessageStatus2RS,
                                           LoraRadioMessagePunchReDCoSRS, LoraRadioMessagePunchDoubleReDCoSRS)
+from loraradio.ReturnStatus import ReturnStatus
 from utils.utils import Utils
 from loraradio.loraparameters import LoraParameters
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 import struct
 import errno
-from enum import Enum
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
-
-
-class ReturnStatus(Enum):
-    SENT = 1
-    BUSY = 2
-    NOREPLY = 3
-    OTHER = 4
 
 class LoraRadioDRF1268DS_RS:
     Instances = []
