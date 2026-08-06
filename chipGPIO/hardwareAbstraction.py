@@ -445,7 +445,6 @@ class HardwareAbstraction(object):
         try:
             SRR_HARDWAREFEATURESREGADDR = 0x01
             hardwareFeatures = self.i2cBus.read_byte_data(self.srrAddress, SRR_HARDWAREFEATURESREGADDR)
-            self.i2cBus.close()
             return hardwareFeatures
         except Exception as e:
             HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::GetSRRHardwareFeatures() Exception: {e}")
