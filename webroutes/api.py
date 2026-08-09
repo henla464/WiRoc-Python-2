@@ -778,15 +778,15 @@ def getRocPunches():
             ┌────────────────────────────────────────────────────┬─────────────────────────┐
             │       Punch clock time vs server CreatedDate       │        Date used        │
             ├────────────────────────────────────────────────────┼─────────────────────────┤
-            │ punchTime ≤ CreatedDate + 70min                    │ Same day as CreatedDate │
+            │ punchTime ≤ CreatedDate + 95min                    │ Same day as CreatedDate │
             ├────────────────────────────────────────────────────┼─────────────────────────┤
-            │ punchTime > CreatedDate + 70min (crossed midnight) │ Previous day            │
+            │ punchTime > CreatedDate + 95min (crossed midnight) │ Previous day            │
             └────────────────────────────────────────────────────┴─────────────────────────┘
             """
         if isinstance(created, str):
             created = datetime.datetime.strptime(created, '%Y-%m-%d %H:%M:%S.%f')
         punchTime = created.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(hours=hour, minutes=minute, seconds=second)
-        if punchTime <= created + datetime.timedelta(minutes=70):
+        if punchTime <= created + datetime.timedelta(minutes=95):
             punchDate = created.date()
         else:
             punchDate = (created - datetime.timedelta(days=1)).date()
