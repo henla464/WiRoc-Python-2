@@ -20,6 +20,12 @@ class HardwareAbstraction(object):
     SRR_TEST_MODE_BIT: int = 0x40
     SRR_TEST_MODE_ENABLED_BIT: int = 0x40
     SRR_TESTMODE_REGADDR: int = 0x07
+    SRR_OUTGOINGQUEUECOUNT_REGADDR: int = 0x08
+    SRR_MESSAGESSENT_REGADDR: int = 0x09
+    SRR_MESSAGESACKED_REGADDR: int = 0x0A
+    SRR_TESTMODE3DELAY_REGADDR: int = 0x0B
+    SRR_TESTMODE3PUNCHCOUNT_REGADDR: int = 0x0C
+    SRR_TESTMODE3INITIALDELAY_REGADDR: int = 0x0D
 
     def __init__(self):
         HardwareAbstraction.WiRocLogger.info("HardwareAbstraction::Init start")
@@ -506,6 +512,94 @@ class HardwareAbstraction(object):
             return True
         except Exception as e:
             HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::SetSRRTestModeEnabled() Exception: {e}")
+            return False
+
+    def GetSRROutgoingQueueCount(self) -> int:
+        if not self.HasSRR():
+            return -1
+        try:
+            return self.i2cBus.read_byte_data(self.srrAddress, self.SRR_OUTGOINGQUEUECOUNT_REGADDR)
+        except Exception as e:
+            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::GetSRROutgoingQueueCount() Exception: {e}")
+            return -1
+
+    def GetSRRMessagesSent(self) -> int:
+        if not self.HasSRR():
+            return -1
+        try:
+            data = self.i2cBus.read_i2c_block_data(self.srrAddress, self.SRR_MESSAGESSENT_REGADDR, 2)
+            return data[0] | (data[1] << 8)
+        except Exception as e:
+            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::GetSRRMessagesSent() Exception: {e}")
+            return -1
+
+    def GetSRRMessagesAcked(self) -> int:
+        if not self.HasSRR():
+            return -1
+        try:
+            data = self.i2cBus.read_i2c_block_data(self.srrAddress, self.SRR_MESSAGESACKED_REGADDR, 2)
+            return data[0] | (data[1] << 8)
+        except Exception as e:
+            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::GetSRRMessagesAcked() Exception: {e}")
+            return -1
+
+    def GetSRRTestMode3Delay(self) -> int:
+        if not self.GetSRRHasTestMode():
+            return -1
+        try:
+            return self.i2cBus.read_byte_data(self.srrAddress, self.SRR_TESTMODE3DELAY_REGADDR)
+        except Exception as e:
+            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::GetSRRTestMode3Delay() Exception: {e}")
+            return -1
+
+    def SetSRRTestMode3Delay(self, delayTenths: int) -> bool:
+        if not self.GetSRRHasTestMode():
+            return False
+        try:
+            self.i2cBus.write_byte_data(self.srrAddress, self.SRR_TESTMODE3DELAY_REGADDR, delayTenths)
+            return True
+        except Exception as e:
+            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::SetSRRTestMode3Delay() Exception: {e}")
+            return False
+
+    def GetSRRTestMode3PunchCount(self) -> int:
+        if not self.GetSRRHasTestMode():
+            return -1
+        try:
+            data = self.i2cBus.read_i2c_block_data(self.srrAddress, self.SRR_TESTMODE3PUNCHCOUNT_REGADDR, 2)
+            return data[0] | (data[1] << 8)
+        except Exception as e:
+            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::GetSRRTestMode3PunchCount() Exception: {e}")
+            return -1
+
+    def SetSRRTestMode3PunchCount(self, punchCount: int) -> bool:
+        if not self.GetSRRHasTestMode():
+            return False
+        try:
+            data = [punchCount & 0xFF, (punchCount >> 8) & 0xFF]
+            self.i2cBus.write_i2c_block_data(self.srrAddress, self.SRR_TESTMODE3PUNCHCOUNT_REGADDR, data)
+            return True
+        except Exception as e:
+            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::SetSRRTestMode3PunchCount() Exception: {e}")
+            return False
+
+    def GetSRRTestMode3InitialDelay(self) -> int:
+        if not self.GetSRRHasTestMode():
+            return -1
+        try:
+            return self.i2cBus.read_byte_data(self.srrAddress, self.SRR_TESTMODE3INITIALDELAY_REGADDR)
+        except Exception as e:
+            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::GetSRRTestMode3InitialDelay() Exception: {e}")
+            return -1
+
+    def SetSRRTestMode3InitialDelay(self, delaySeconds: int) -> bool:
+        if not self.GetSRRHasTestMode():
+            return False
+        try:
+            self.i2cBus.write_byte_data(self.srrAddress, self.SRR_TESTMODE3INITIALDELAY_REGADDR, delaySeconds)
+            return True
+        except Exception as e:
+            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::SetSRRTestMode3InitialDelay() Exception: {e}")
             return False
 
     def GetRTCDateTime(self) -> str:

@@ -40,6 +40,7 @@ class SRRRadio(object):
     RED_CHANNEL_LISTENONLY_BIT = 0x08
     BLUE_CHANNEL_LISTENONLY_BIT = 0x10
     SEND_MODE_BIT = 0x20
+    TEST_MODE_BIT = 0x40
 
     # Status register bits
     STATUS_PUNCH_MESSAGE_BIT = 0x01
@@ -86,23 +87,28 @@ class SRRRadio(object):
         self.redChannelListenOnly: bool | None = None
         self.blueChannelEnabled: bool | None = None
         self.blueChannelListenOnly: bool | None = None
-
+        self.testModeEnabled: bool | None = None
+        
     def GetIsInitialized(self, srrEnabled: bool, srrMode: str,
                          redChannelEnabled: bool, redChannelListenOnly: bool,
-                         blueChannelEnabled: bool, blueChannelListenOnly: bool) -> bool:
+                         blueChannelEnabled: bool, blueChannelListenOnly: bool,
+                         testModeEnabled: bool) -> bool:
         return self.isInitialized and srrEnabled == self.srrEnabled \
             and srrMode == self.srrMode and redChannelEnabled == self.redChannelEnabled \
             and redChannelListenOnly == self.redChannelListenOnly and blueChannelEnabled == self.blueChannelEnabled \
-            and blueChannelListenOnly == self.blueChannelListenOnly
+            and blueChannelListenOnly == self.blueChannelListenOnly \
+            and testModeEnabled == self.testModeEnabled
 
     def Init(self, srrEnabled: bool, srrMode: str,
              redChannelEnabled: bool, redChannelListenOnly: bool,
-             blueChannelEnabled: bool, blueChannelListenOnly: bool) -> bool:
+             blueChannelEnabled: bool, blueChannelListenOnly: bool,
+             testModeEnabled: bool) -> bool:
         """Initialize the SRR radio with the given settings."""
 
         if self.GetIsInitialized(srrEnabled, srrMode,
                                   redChannelEnabled, redChannelListenOnly,
-                                  blueChannelEnabled, blueChannelListenOnly):
+                                  blueChannelEnabled, blueChannelListenOnly,
+                                  testModeEnabled, testMode):
             return True
 
         self.hardwareAbstraction.DisableSRR()
@@ -121,7 +127,7 @@ class SRRRadio(object):
             srrSerialNoByte3 = int(btAddress[6:8], 16)
             srrSerialNo: list[int] = [srrSerialNoByte3, srrSerialNoByte2, srrSerialNoByte1, srrSerialNoByte0]
 
-            self.i2cBus.write_i2c_block_data(self.i2cAddress, SRRRadio.SERIALNOREGADDR, srrSerialNo)
+            self.i2cBus.write_block_data(self.i2cAddress, SRRRadio.SERIALNOREGADDR, srrSerialNo)
 
             # Enable/Disable features
             featuresEnabledDisabled: int = self.i2cBus.read_byte_data(
@@ -163,10 +169,18 @@ class SRRRadio(object):
                 else:
                     newFeaturesEnabledDisabled = newFeaturesEnabledDisabled & ~SRRRadio.SEND_MODE_BIT
 
+            if ((featuresEnabledDisabled & SRRRadio.TEST_MODE_BIT) > 0) != testModeEnabled:
+                if testModeEnabled:
+                    newFeaturesEnabledDisabled = newFeaturesEnabledDisabled | SRRRadio.TEST_MODE_BIT
+                else:
+                    newFeaturesEnabledDisabled = newFeaturesEnabledDisabled & ~SRRRadio.TEST_MODE_BIT
+
+
             SRRRadio.WiRocLogger.info(
                 f"SRRRadio::Init() srrEnabled: {srrEnabled} redChannelEnabled: {redChannelEnabled} "
                 f"redChannelListenOnly: {redChannelListenOnly} blueChannelEnabled: {blueChannelEnabled} "
-                f"blueChannelListenOnly: {blueChannelListenOnly} srrMode: {srrMode}")
+                f"blueChannelListenOnly: {blueChannelListenOnly} srrMode: {srrMode}"
+                f" testModeEnabled: {testModeEnabled}")
             SRRRadio.WiRocLogger.info(
                 f"SRRRadio::Init() newFeaturesEnabledDisabled {newFeaturesEnabledDisabled:>08b}")
 
@@ -239,8 +253,8 @@ class SRRRadio(object):
         if len(data) > 15:
             raise ValueError(f"Data length {len(data)} exceeds maximum allowed (15 bytes)")
 
-        total_length = len(data) + 1
-        full_message = bytearray([total_length]) + data
+        payload_length = len(data)
+        full_message = bytearray([payload_length]) + data
         self.i2cBus.write_i2c_block_data(self.i2cAddress, SRRRadio.PUNCHREGADDR, list(full_message))
         SRRRadio.WiRocLogger.debug(
             f"SRRRadio::SendData: Sent {len(full_message)} bytes: "

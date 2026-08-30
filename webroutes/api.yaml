@@ -675,7 +675,7 @@ paths:
       summary: "Set the SRR mode (RECEIVE, SEND)"
       operationId: "setSRRMode"
       parameters:
-        - name: srrmode
+        - name: mode
           in: path
           required: true
           schema:
@@ -918,6 +918,141 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
+  /srr/outgoingqueuecount/:
+    get:
+      tags:
+        - "SRR"
+      summary: "Get the number of items in the outgoing TX punch queue"
+      operationId: "getSRROutgoingQueueCount"
+      responses:
+        "200":
+          description: "Number of items in the outgoing TX punch queue"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyIntObj"
+  /srr/messagessent/:
+    get:
+      tags:
+        - "SRR"
+      summary: "Get the number of messages sent (CC2500 TX attempts incl. retries)"
+      operationId: "getSRRMessagesSent"
+      responses:
+        "200":
+          description: "Number of messages sent"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyIntObj"
+  /srr/messagesacked/:
+    get:
+      tags:
+        - "SRR"
+      summary: "Get the number of messages ACKed"
+      operationId: "getSRRMessagesAcked"
+      responses:
+        "200":
+          description: "Number of messages ACKed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyIntObj"
+  /srr/testmode3delay/:
+    get:
+      tags:
+        - "SRR"
+      summary: "Get the delay between test mode 3 punches, in tenths of a second"
+      operationId: "getSRRTestMode3Delay"
+      responses:
+        "200":
+          description: "Delay between test mode 3 punches, in tenths of a second"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyIntObj"
+  /srr/testmode3delay/{delayTenths}:
+    get:
+      tags:
+        - "SRR"
+      summary: "Set the delay between test mode 3 punches, in tenths of a second"
+      operationId: "setSRRTestMode3Delay"
+      parameters:
+        - name: delayTenths
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/PropertyInt"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyIntObj"
+  /srr/testmode3punchcount/:
+    get:
+      tags:
+        - "SRR"
+      summary: "Get the number of punches to send in test mode 3 (0 = unlimited)"
+      operationId: "getSRRTestMode3PunchCount"
+      responses:
+        "200":
+          description: "Number of punches to send in test mode 3 (0 = unlimited)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyIntObj"
+  /srr/testmode3punchcount/{punchCount}:
+    get:
+      tags:
+        - "SRR"
+      summary: "Set the number of punches to send in test mode 3 (0 = unlimited)"
+      operationId: "setSRRTestMode3PunchCount"
+      parameters:
+        - name: punchCount
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/PropertyInt"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyIntObj"
+  /srr/testmode3initialdelay/:
+    get:
+      tags:
+        - "SRR"
+      summary: "Get the delay in seconds before enqueuing the first test mode 3 punch"
+      operationId: "getSRRTestMode3InitialDelay"
+      responses:
+        "200":
+          description: "Delay in seconds before the first test mode 3 punch"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyIntObj"
+  /srr/testmode3initialdelay/{delaySeconds}:
+    get:
+      tags:
+        - "SRR"
+      summary: "Set the delay in seconds before enqueuing the first test mode 3 punch"
+      operationId: "setSRRTestMode3InitialDelay"
+      parameters:
+        - name: delaySeconds
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/PropertyInt"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyIntObj"
   /hashw/srr/:
     get:
       tags:

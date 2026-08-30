@@ -7,7 +7,7 @@ class SITestTestToSRRTransform(object):
 
     @staticmethod
     def GetInputMessageType() -> str:
-        return "TEST"
+        return "SITEST"
 
     @staticmethod
     def GetInputMessageSubType() -> str:

@@ -559,7 +559,7 @@ def getSRRMode():
     sett = DatabaseHelper.get_setting_by_key('SRRMode')
     SRRMode = "RECEIVE"
     if sett is not None:
-        rs232Mode = sett.Value
+        SRRMode = sett.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=SRRMode))
@@ -735,24 +735,126 @@ def setSRRTestMode(testMode):
 
 @app.route('/api/srr/testmodeenabled/', methods=['GET'])
 def getSRRTestModeEnabled():
-    if HardwareAbstraction.Instance is None:
-        HardwareAbstraction.Instance = HardwareAbstraction()
-    testModeEnabled = HardwareAbstraction.Instance.GetSRRTestModeEnabled()
+    sett = DatabaseHelper.get_setting_by_key('SRRTestModeEnabled')
+    SRRTestModeEnabled = '0'
+    if sett is not None:
+        SRRTestModeEnabled = sett.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value='1' if testModeEnabled else '0'))
+    return jsonpickle.encode(MicroMock(Value=SRRTestModeEnabled))
 
 
 @app.route('/api/srr/testmodeenabled/<enabled>/', methods=['GET'])
 def setSRRTestModeEnabled(enabled):
-    if HardwareAbstraction.Instance is None:
-        HardwareAbstraction.Instance = HardwareAbstraction()
-    enabledBool = enabled.lower() == 'true' or enabled.lower() == '1'
-    if not HardwareAbstraction.Instance.SetSRRTestModeEnabled(enabledBool):
-        raise Exception("Error: SRR testmode enable not supported")
+    sd = DatabaseHelper.get_setting_by_key('SRRTestModeEnabled')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SRRTestModeEnabled'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value='1' if enabledBool else '0'))
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+@app.route('/api/srr/outgoingqueuecount/', methods=['GET'])
+def getSRROutgoingQueueCount():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    queueCount = HardwareAbstraction.Instance.GetSRROutgoingQueueCount()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=queueCount))
+
+
+@app.route('/api/srr/messagessent/', methods=['GET'])
+def getSRRMessagesSent():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    messagesSent = HardwareAbstraction.Instance.GetSRRMessagesSent()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=messagesSent))
+
+
+@app.route('/api/srr/messagesacked/', methods=['GET'])
+def getSRRMessagesAcked():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    messagesAcked = HardwareAbstraction.Instance.GetSRRMessagesAcked()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=messagesAcked))
+
+
+@app.route('/api/srr/testmode3delay/', methods=['GET'])
+def getSRRTestMode3Delay():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    delayTenths = HardwareAbstraction.Instance.GetSRRTestMode3Delay()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=delayTenths))
+
+
+@app.route('/api/srr/testmode3delay/<int:delayTenths>/', methods=['GET'])
+def setSRRTestMode3Delay(delayTenths):
+    if delayTenths < 0 or delayTenths > 255:
+        raise Exception("Error: not a valid SRR test mode 3 delay")
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    if not HardwareAbstraction.Instance.SetSRRTestMode3Delay(delayTenths):
+        raise Exception("Error: SRR test mode 3 delay not supported")
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=delayTenths))
+
+
+@app.route('/api/srr/testmode3punchcount/', methods=['GET'])
+def getSRRTestMode3PunchCount():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    punchCount = HardwareAbstraction.Instance.GetSRRTestMode3PunchCount()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=punchCount))
+
+
+@app.route('/api/srr/testmode3punchcount/<int:punchCount>/', methods=['GET'])
+def setSRRTestMode3PunchCount(punchCount):
+    if punchCount < 0 or punchCount > 65535:
+        raise Exception("Error: not a valid SRR test mode 3 punch count")
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    if not HardwareAbstraction.Instance.SetSRRTestMode3PunchCount(punchCount):
+        raise Exception("Error: SRR test mode 3 punch count not supported")
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=punchCount))
+
+
+@app.route('/api/srr/testmode3initialdelay/', methods=['GET'])
+def getSRRTestMode3InitialDelay():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    delaySeconds = HardwareAbstraction.Instance.GetSRRTestMode3InitialDelay()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=delaySeconds))
+
+
+@app.route('/api/srr/testmode3initialdelay/<int:delaySeconds>/', methods=['GET'])
+def setSRRTestMode3InitialDelay(delaySeconds):
+    if delaySeconds < 0 or delaySeconds > 255:
+        raise Exception("Error: not a valid SRR test mode 3 initial delay")
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    if not HardwareAbstraction.Instance.SetSRRTestMode3InitialDelay(delaySeconds):
+        raise Exception("Error: SRR test mode 3 initial delay not supported")
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=delaySeconds))
+
 
 @app.route('/api/hashw/rtc/', methods=['GET'])
 def getHasHWRTC():

@@ -524,6 +524,15 @@ class SettingsClass(object):
         return sett.Value == "1"
 
     @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSRRTestModeEnabled'), lock=rlock)
+    def GetSRRTestModeEnabled() -> bool:
+        sett = DatabaseHelper.get_setting_by_key('SRRTestModeEnabled')
+        if sett is None:
+            SettingsClass.SetSetting("SRRTestModeEnabled", "0")
+            return False
+        return sett.Value == "1"
+
+    @staticmethod
     @cached(cache, key=partial(hashkey, 'GetWebServerUrl'), lock=rlock)
     def GetWebServerUrl():
         sett = DatabaseHelper.get_setting_by_key('WebServerUrl')
