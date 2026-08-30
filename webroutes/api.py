@@ -702,6 +702,58 @@ def getSRRHasSendMode():
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value='1' if hasSendMode else '0'))
 
+@app.route('/api/srr/hastestmode/', methods=['GET'])
+def getSRRHasTestMode():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    hasTestMode = HardwareAbstraction.Instance.GetSRRHasTestMode()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value='1' if hasTestMode else '0'))
+
+@app.route('/api/srr/testmode/', methods=['GET'])
+def getSRRTestMode():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    testMode = HardwareAbstraction.Instance.GetSRRTestMode()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=testMode))
+
+
+@app.route('/api/srr/testmode/<int:testMode>/', methods=['GET'])
+def setSRRTestMode(testMode):
+    if testMode < 0 or testMode > 3:
+        raise Exception("Error: not a valid SRR testmode")
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    if not HardwareAbstraction.Instance.SetSRRTestMode(testMode):
+        raise Exception("Error: SRR testmode not supported")
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=testMode))
+
+@app.route('/api/srr/testmodeenabled/', methods=['GET'])
+def getSRRTestModeEnabled():
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    testModeEnabled = HardwareAbstraction.Instance.GetSRRTestModeEnabled()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value='1' if testModeEnabled else '0'))
+
+
+@app.route('/api/srr/testmodeenabled/<enabled>/', methods=['GET'])
+def setSRRTestModeEnabled(enabled):
+    if HardwareAbstraction.Instance is None:
+        HardwareAbstraction.Instance = HardwareAbstraction()
+    enabledBool = enabled.lower() == 'true' or enabled.lower() == '1'
+    if not HardwareAbstraction.Instance.SetSRRTestModeEnabled(enabledBool):
+        raise Exception("Error: SRR testmode enable not supported")
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value='1' if enabledBool else '0'))
+
 @app.route('/api/hashw/rtc/', methods=['GET'])
 def getHasHWRTC():
     if HardwareAbstraction.Instance is None:

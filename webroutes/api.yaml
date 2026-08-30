@@ -841,6 +841,83 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
+  /srr/hastestmode/:
+    get:
+      tags:
+        - "SRR"
+      summary: "Get if the connected SRR device has test mode capability"
+      operationId: "getSRRHasTestMode"
+      responses:
+        "200":
+          description: "0/1 depending on if SRR device supports test mode"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /srr/testmode/:
+    get:
+      tags:
+        - "SRR"
+      summary: "Get the test mode of the SRR radio (0-3)"
+      operationId: "getSRRTestMode"
+      responses:
+        "200":
+          description: "The SRR test mode (0-3)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyIntObj"
+  /srr/testmode/{testMode}:
+    get:
+      tags:
+        - "SRR"
+      summary: "Set the test mode of the SRR radio (0-3)"
+      operationId: "setSRRTestMode"
+      parameters:
+        - name: testMode
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/PropertyInt"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyIntObj"
+  /srr/testmodeenabled/:
+    get:
+      tags:
+        - "SRR"
+      summary: "Get if the SRR test mode is enabled"
+      operationId: "getSRRTestModeEnabled"
+      responses:
+        "200":
+          description: "0/1 depending on if SRR test mode is enabled or not"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /srr/testmodeenabled/{enabled}:
+    get:
+      tags:
+        - "SRR"
+      summary: "Enable/Disable the SRR test mode"
+      operationId: "setSRRTestModeEnabled"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/TrueFalse"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /hashw/srr/:
     get:
       tags:

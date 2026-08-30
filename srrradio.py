@@ -121,7 +121,7 @@ class SRRRadio(object):
             srrSerialNoByte3 = int(btAddress[6:8], 16)
             srrSerialNo: list[int] = [srrSerialNoByte3, srrSerialNoByte2, srrSerialNoByte1, srrSerialNoByte0]
 
-            self.i2cBus.write_block_data(self.i2cAddress, SRRRadio.SERIALNOREGADDR, srrSerialNo)
+            self.i2cBus.write_i2c_block_data(self.i2cAddress, SRRRadio.SERIALNOREGADDR, srrSerialNo)
 
             # Enable/Disable features
             featuresEnabledDisabled: int = self.i2cBus.read_byte_data(

@@ -71,12 +71,6 @@ else
 
   read hwOption
   WiRocHWVersion="v3Rev2"
-  if [[ $hwOption = 1 ]]; then
-    WiRocHWVersion="v2Rev1"
-  fi
-  if [[ $hwOption = 2 ]]; then
-    WiRocHWVersion="v2Rev2"
-  fi
   if [[ $hwOption = 3 ]]; then
     WiRocHWVersion="v3Rev2"
   fi
@@ -140,17 +134,9 @@ apt-get -y install libsqlite3-dev
 apt-get -y install sqlite3
 
 echo "###################################"
-echo "dhcp server for use with wifi mesh"
-echo "###################################"
-apt-get -y install dnsmasq
-
-echo "###################################"
 echo "Firmware for ath9k"
 echo "###################################"
 apt-get -y install firmware-ath9k-htc
-
-
-apt-get -y install dhcpcd
 
 echo "###################################"
 echo "Enable IP forwarding for wifi mesh and tailscale"
@@ -183,7 +169,7 @@ echo "Used by install scripts"
 echo "###################################"
 # needed for install scripts
 #apt-get -y install python3-pip
-apt-get -y install python3-venva
+apt-get -y install python3-venv
 apt-get -y install python3-requests
 
 echo "###################################"
@@ -317,21 +303,19 @@ echo "###################################"
 echo "update armbianEnv.txt"
 echo "###################################"
 
-if [ "$hwVersion" = "v1Rev1" ] || [ "$hwVersion" = "v2Rev1" ] || [ "$hwVersion" = "v3Rev1" ] || [ "$hwVersion" = "v3Rev2" ]
+if [ "$WiRocHWVersion" = "v3Rev2" ]
 then
-   if ! grep -Fxq "overlays=uart1 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
+   if ! grep -Fxq "overlays=uart1 bt-uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
    then
        echo "Change overlays"
-       sed -i -E "s/(overlays=).*/overlays=uart1 uart3 usbhost1 usbhost2 usbhost3 i2c0/" /boot/armbianEnv.txt
+       sed -i -E "s/(overlays=).*/overlays=uart1 bt-uart3 usbhost1 usbhost2 usbhost3 i2c0/" /boot/armbianEnv.txt
    fi
-fi
-
-if [ "$hwVersion" = "v4Rev1" ] || [ "$hwVersion" = "v6Rev1" ] || [ "$hwVersion" = "v7Rev1" ] || [ "$hwVersion" = "v7Rev2" ]
+elif [ "$WiRocHWVersion" = "v4Rev1" ] || [ "$WiRocHWVersion" = "v6Rev1" ] || [ "$WiRocHWVersion" = "v7Rev1" ] || [ "$WiRocHWVersion" = "v7Rev2" ]
 then
-   if ! grep -Fxq "overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
+   if ! grep -Fxq "overlays=uart1 uart2 bt-uart3 usbhost1 usbhost2 usbhost3 i2c0" /boot/armbianEnv.txt
    then
        echo "Change overlays"
-       sed -i -E "s/(overlays=).*/overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0/" /boot/armbianEnv.txt
+       sed -i -E "s/(overlays=).*/overlays=uart1 uart2 bt-uart3 usbhost1 usbhost2 usbhost3 i2c0/" /boot/armbianEnv.txt
    fi
 else
    if ! grep -Fxq "overlays=uart1 uart2 uart3 usbhost1 usbhost2 usbhost3 i2c0 spi-enable" /boot/armbianEnv.txt
@@ -348,7 +332,7 @@ then
     sed -i '$a param_uart3_rtscts=1' /boot/armbianEnv.txt
 fi
 
-if [ "$hwVersion" = "v1Rev1" ] || [ "$hwVersion" = "v2Rev1" ] || [ "$hwVersion" = "v3Rev1" ] || [ "$hwVersion" = "v3Rev2" ] || [ "$hwVersion" = "v4Rev1" ] || [ "$hwVersion" = "v5Rev1" ] || [ "$hwVersion" = "v6Rev1" ]
+if [ "$WiRocHWVersion" = "v3Rev2" ] || [ "$WiRocHWVersion" = "v4Rev1" ] || [ "$WiRocHWVersion" = "v6Rev1" ]
 then
    :
 else
@@ -393,7 +377,8 @@ else
     echo "compat"
 fi
 
-if [[ $hwOption < 8 ]]; then
+if [ "$WiRocHWVersion" = "v3Rev2" ] || [ "$WiRocHWVersion" = "v4Rev1" ] || [ "$WiRocHWVersion" = "v6Rev1" ]
+then
     echo "Add SP service"
     if ! grep -Fxq 'ExecStartPost=/usr/bin/sdptool add SP' /usr/lib/systemd/system/bluetooth.service
     then
@@ -414,10 +399,10 @@ echo "###################################"
 mkdir -p --mode=0755 /usr/share/keyrings
 
 # Download Tailscale's public signing key.
-curl -fsSL https://pkgs.tailscale.com/stable/debian/trixie.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+curl -fsSL https://pkgs.tailscale.com/stable/debian/trixie.noarmor.gpg | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
 
 # Add the Tailscale repository to APT's list of package sources
-curl -fsSL https://pkgs.tailscale.com/stable/debian/trixie.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d/tailscale.list
+curl -fsSL https://pkgs.tailscale.com/stable/debian/trixie.tailscale-keyring.list | tee /etc/apt/sources.list.d/tailscale.list
 
 apt-get update
 apt-get install tailscale
