@@ -108,7 +108,7 @@ class SRRRadio(object):
         if self.GetIsInitialized(srrEnabled, srrMode,
                                   redChannelEnabled, redChannelListenOnly,
                                   blueChannelEnabled, blueChannelListenOnly,
-                                  testModeEnabled, testMode):
+                                  testModeEnabled):
             return True
 
         self.hardwareAbstraction.DisableSRR()

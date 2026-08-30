@@ -70,7 +70,8 @@ class ReceiveSRRAdapter(object):
         return self.srrRadio.GetIsInitialized(
             SettingsClass.GetSRREnabled(), SettingsClass.GetSRRMode(),
             SettingsClass.GetSRRRedChannelEnabled(), SettingsClass.GetSRRRedChannelListenOnly(),
-            SettingsClass.GetSRRBlueChannelEnabled(), SettingsClass.GetSRRBlueChannelListenOnly())
+            SettingsClass.GetSRRBlueChannelEnabled(), SettingsClass.GetSRRBlueChannelListenOnly(),
+            SettingsClass.GetSRRTestModeEnabled())
 
     def ShouldBeInitialized(self) -> bool:
         return not self.GetIsInitialized()
@@ -79,7 +80,8 @@ class ReceiveSRRAdapter(object):
         return self.srrRadio.Init(
             SettingsClass.GetSRREnabled(), SettingsClass.GetSRRMode(),
             SettingsClass.GetSRRRedChannelEnabled(), SettingsClass.GetSRRRedChannelListenOnly(),
-            SettingsClass.GetSRRBlueChannelEnabled(), SettingsClass.GetSRRBlueChannelListenOnly())
+            SettingsClass.GetSRRBlueChannelEnabled(), SettingsClass.GetSRRBlueChannelListenOnly(),
+            SettingsClass.GetSRRTestModeEnabled())
 
     def UpdateInfrequently(self) -> bool:
         return True
