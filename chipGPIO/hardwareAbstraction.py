@@ -468,25 +468,6 @@ class HardwareAbstraction(object):
         hardwareFeatures = self.GetSRRHardwareFeatures()
         return (hardwareFeatures & self.SRR_TEST_MODE_BIT) != 0
 
-    def GetSRRTestMode(self) -> int:
-        if not self.GetSRRHasTestMode():
-            return -1
-        try:
-            return self.i2cBus.read_byte_data(self.srrAddress, self.SRR_TESTMODE_REGADDR)
-        except Exception as e:
-            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::GetSRRTestMode() Exception: {e}")
-            return -1
-
-    def SetSRRTestMode(self, testMode: int) -> bool:
-        if not self.GetSRRHasTestMode():
-            return False
-        try:
-            self.i2cBus.write_byte_data(self.srrAddress, self.SRR_TESTMODE_REGADDR, testMode)
-            return True
-        except Exception as e:
-            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::SetSRRTestMode() Exception: {e}")
-            return False
-
     def GetSRROutgoingQueueCount(self) -> int:
         if not self.HasSRR():
             return -1
@@ -515,65 +496,6 @@ class HardwareAbstraction(object):
         except Exception as e:
             HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::GetSRRMessagesAcked() Exception: {e}")
             return -1
-
-    def GetSRRTestMode3Delay(self) -> int:
-        if not self.GetSRRHasTestMode():
-            return -1
-        try:
-            return self.i2cBus.read_byte_data(self.srrAddress, self.SRR_TESTMODE3DELAY_REGADDR)
-        except Exception as e:
-            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::GetSRRTestMode3Delay() Exception: {e}")
-            return -1
-
-    def SetSRRTestMode3Delay(self, delayTenths: int) -> bool:
-        if not self.GetSRRHasTestMode():
-            return False
-        try:
-            self.i2cBus.write_byte_data(self.srrAddress, self.SRR_TESTMODE3DELAY_REGADDR, delayTenths)
-            return True
-        except Exception as e:
-            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::SetSRRTestMode3Delay() Exception: {e}")
-            return False
-
-    def GetSRRTestMode3PunchCount(self) -> int:
-        if not self.GetSRRHasTestMode():
-            return -1
-        try:
-            data = self.i2cBus.read_i2c_block_data(self.srrAddress, self.SRR_TESTMODE3PUNCHCOUNT_REGADDR, 2)
-            return data[0] | (data[1] << 8)
-        except Exception as e:
-            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::GetSRRTestMode3PunchCount() Exception: {e}")
-            return -1
-
-    def SetSRRTestMode3PunchCount(self, punchCount: int) -> bool:
-        if not self.GetSRRHasTestMode():
-            return False
-        try:
-            data = [punchCount & 0xFF, (punchCount >> 8) & 0xFF]
-            self.i2cBus.write_i2c_block_data(self.srrAddress, self.SRR_TESTMODE3PUNCHCOUNT_REGADDR, data)
-            return True
-        except Exception as e:
-            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::SetSRRTestMode3PunchCount() Exception: {e}")
-            return False
-
-    def GetSRRTestMode3InitialDelay(self) -> int:
-        if not self.GetSRRHasTestMode():
-            return -1
-        try:
-            return self.i2cBus.read_byte_data(self.srrAddress, self.SRR_TESTMODE3INITIALDELAY_REGADDR)
-        except Exception as e:
-            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::GetSRRTestMode3InitialDelay() Exception: {e}")
-            return -1
-
-    def SetSRRTestMode3InitialDelay(self, delaySeconds: int) -> bool:
-        if not self.GetSRRHasTestMode():
-            return False
-        try:
-            self.i2cBus.write_byte_data(self.srrAddress, self.SRR_TESTMODE3INITIALDELAY_REGADDR, delaySeconds)
-            return True
-        except Exception as e:
-            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::SetSRRTestMode3InitialDelay() Exception: {e}")
-            return False
 
     def GetRTCDateTime(self) -> str:
         HardwareAbstraction.WiRocLogger.debug("HardwareAbstraction::GetRTCDateTime")
