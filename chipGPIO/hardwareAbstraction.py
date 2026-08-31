@@ -487,33 +487,6 @@ class HardwareAbstraction(object):
             HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::SetSRRTestMode() Exception: {e}")
             return False
 
-    def GetSRRTestModeEnabled(self) -> bool:
-        if not self.HasSRR():
-            return False
-        try:
-            SRR_HARDWAREFEATURESENABLEDISABLEREGADDR = 0x06
-            featuresEnabledDisabled = self.i2cBus.read_byte_data(self.srrAddress, SRR_HARDWAREFEATURESENABLEDISABLEREGADDR)
-            return (featuresEnabledDisabled & self.SRR_TEST_MODE_ENABLED_BIT) != 0
-        except Exception as e:
-            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::GetSRRTestModeEnabled() Exception: {e}")
-            return False
-
-    def SetSRRTestModeEnabled(self, enabled: bool) -> bool:
-        if not self.HasSRR():
-            return False
-        try:
-            SRR_HARDWAREFEATURESENABLEDISABLEREGADDR = 0x06
-            featuresEnabledDisabled = self.i2cBus.read_byte_data(self.srrAddress, SRR_HARDWAREFEATURESENABLEDISABLEREGADDR)
-            if enabled:
-                featuresEnabledDisabled = featuresEnabledDisabled | self.SRR_TEST_MODE_ENABLED_BIT
-            else:
-                featuresEnabledDisabled = featuresEnabledDisabled & ~self.SRR_TEST_MODE_ENABLED_BIT
-            self.i2cBus.write_byte_data(self.srrAddress, SRR_HARDWAREFEATURESENABLEDISABLEREGADDR, featuresEnabledDisabled)
-            return True
-        except Exception as e:
-            HardwareAbstraction.WiRocLogger.error(f"HardwareAbstraction::SetSRRTestModeEnabled() Exception: {e}")
-            return False
-
     def GetSRROutgoingQueueCount(self) -> int:
         if not self.HasSRR():
             return -1

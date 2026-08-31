@@ -24,6 +24,10 @@ class SRRRadio(object):
     STATUSREGADDR = 0x04
     SETDATAINDEXREGADDR = 0x05
     HARDWAREFEATURESENABLEDISABLEREGADDR = 0x06
+    TESTMODEREGADDR = 0x07
+    TESTMODE3DELAYREGADDR = 0x0B
+    TESTMODE3PUNCHCOUNTREGADDR = 0x0C
+    TESTMODE3INITIALDELAYREGADDR = 0x0D
 
     # Length registers
     PUNCHLENGTHREGADDR = 0x20
@@ -88,27 +92,39 @@ class SRRRadio(object):
         self.blueChannelEnabled: bool | None = None
         self.blueChannelListenOnly: bool | None = None
         self.testModeEnabled: bool | None = None
-        
+        self.testMode: int | None = None
+        self.testMode3Delay: int | None = None
+        self.testMode3PunchCount: int | None = None
+        self.testMode3InitialDelay: int | None = None
+
     def GetIsInitialized(self, srrEnabled: bool, srrMode: str,
                          redChannelEnabled: bool, redChannelListenOnly: bool,
                          blueChannelEnabled: bool, blueChannelListenOnly: bool,
-                         testModeEnabled: bool) -> bool:
+                         testModeEnabled: bool, testMode: int,
+                         testMode3Delay: int, testMode3PunchCount: int,
+                         testMode3InitialDelay: int) -> bool:
         return self.isInitialized and srrEnabled == self.srrEnabled \
             and srrMode == self.srrMode and redChannelEnabled == self.redChannelEnabled \
             and redChannelListenOnly == self.redChannelListenOnly and blueChannelEnabled == self.blueChannelEnabled \
             and blueChannelListenOnly == self.blueChannelListenOnly \
-            and testModeEnabled == self.testModeEnabled
+            and testModeEnabled == self.testModeEnabled and testMode == self.testMode \
+            and testMode3Delay == self.testMode3Delay and testMode3PunchCount == self.testMode3PunchCount \
+            and testMode3InitialDelay == self.testMode3InitialDelay
 
     def Init(self, srrEnabled: bool, srrMode: str,
              redChannelEnabled: bool, redChannelListenOnly: bool,
              blueChannelEnabled: bool, blueChannelListenOnly: bool,
-             testModeEnabled: bool) -> bool:
+             testModeEnabled: bool, testMode: int,
+             testMode3Delay: int, testMode3PunchCount: int,
+             testMode3InitialDelay: int) -> bool:
         """Initialize the SRR radio with the given settings."""
 
         if self.GetIsInitialized(srrEnabled, srrMode,
                                   redChannelEnabled, redChannelListenOnly,
                                   blueChannelEnabled, blueChannelListenOnly,
-                                  testModeEnabled):
+                                  testModeEnabled, testMode,
+                                  testMode3Delay, testMode3PunchCount,
+                                  testMode3InitialDelay):
             return True
 
         self.hardwareAbstraction.DisableSRR()
@@ -127,7 +143,7 @@ class SRRRadio(object):
             srrSerialNoByte3 = int(btAddress[6:8], 16)
             srrSerialNo: list[int] = [srrSerialNoByte3, srrSerialNoByte2, srrSerialNoByte1, srrSerialNoByte0]
 
-            self.i2cBus.write_block_data(self.i2cAddress, SRRRadio.SERIALNOREGADDR, srrSerialNo)
+            self.i2cBus.write_i2c_block_data(self.i2cAddress, SRRRadio.SERIALNOREGADDR, srrSerialNo)
 
             # Enable/Disable features
             featuresEnabledDisabled: int = self.i2cBus.read_byte_data(
@@ -192,11 +208,29 @@ class SRRRadio(object):
             SRRRadio.WiRocLogger.info(
                 f"SRRRadio::Init() newFeaturesEnabledDisabled2 read back {featuresEnabledDisabled2:>08b}")
 
+            # Configure test mode registers (only present when the firmware supports test modes)
+            if (self.hardwareFeatures & SRRRadio.TEST_MODE_BIT) != 0:
+                self.i2cBus.write_byte_data(self.i2cAddress, SRRRadio.TESTMODEREGADDR, testMode)
+                self.i2cBus.write_byte_data(self.i2cAddress, SRRRadio.TESTMODE3DELAYREGADDR, testMode3Delay)
+                self.i2cBus.write_i2c_block_data(
+                    self.i2cAddress, SRRRadio.TESTMODE3PUNCHCOUNTREGADDR,
+                    [testMode3PunchCount & 0xFF, (testMode3PunchCount >> 8) & 0xFF])
+                self.i2cBus.write_byte_data(self.i2cAddress, SRRRadio.TESTMODE3INITIALDELAYREGADDR,
+                                            testMode3InitialDelay)
+                SRRRadio.WiRocLogger.info(
+                    f"SRRRadio::Init() testMode: {testMode} testMode3Delay: {testMode3Delay} "
+                    f"testMode3PunchCount: {testMode3PunchCount} testMode3InitialDelay: {testMode3InitialDelay}")
+
             self.srrEnabled = srrEnabled
             self.redChannelEnabled = redChannelEnabled
             self.redChannelListenOnly = redChannelListenOnly
             self.blueChannelEnabled = blueChannelEnabled
             self.blueChannelListenOnly = blueChannelListenOnly
+            self.testModeEnabled = testModeEnabled
+            self.testMode = testMode
+            self.testMode3Delay = testMode3Delay
+            self.testMode3PunchCount = testMode3PunchCount
+            self.testMode3InitialDelay = testMode3InitialDelay
             self.srrMode = srrMode
             self.isInitialized = True
         except Exception as ex:

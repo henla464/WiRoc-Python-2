@@ -533,6 +533,42 @@ class SettingsClass(object):
         return sett.Value == "1"
 
     @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSRRTestMode'), lock=rlock)
+    def GetSRRTestMode() -> int:
+        sett = DatabaseHelper.get_setting_by_key('SRRTestMode')
+        if sett is None:
+            SettingsClass.SetSetting("SRRTestMode", "1")
+            return 1
+        return int(sett.Value)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSRRTestMode3Delay'), lock=rlock)
+    def GetSRRTestMode3Delay() -> int:
+        sett = DatabaseHelper.get_setting_by_key('SRRTestMode3Delay')
+        if sett is None:
+            SettingsClass.SetSetting("SRRTestMode3Delay", "50")
+            return 50
+        return int(sett.Value)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSRRTestMode3PunchCount'), lock=rlock)
+    def GetSRRTestMode3PunchCount() -> int:
+        sett = DatabaseHelper.get_setting_by_key('SRRTestMode3PunchCount')
+        if sett is None:
+            SettingsClass.SetSetting("SRRTestMode3PunchCount", "0")
+            return 0
+        return int(sett.Value)
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSRRTestMode3InitialDelay'), lock=rlock)
+    def GetSRRTestMode3InitialDelay() -> int:
+        sett = DatabaseHelper.get_setting_by_key('SRRTestMode3InitialDelay')
+        if sett is None:
+            SettingsClass.SetSetting("SRRTestMode3InitialDelay", "0")
+            return 0
+        return int(sett.Value)
+
+    @staticmethod
     @cached(cache, key=partial(hashkey, 'GetWebServerUrl'), lock=rlock)
     def GetWebServerUrl():
         sett = DatabaseHelper.get_setting_by_key('WebServerUrl')

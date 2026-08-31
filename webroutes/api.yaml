@@ -858,11 +858,11 @@ paths:
     get:
       tags:
         - "SRR"
-      summary: "Get the test mode of the SRR radio (0-3)"
+      summary: "Get the test mode of the SRR radio (1-3)"
       operationId: "getSRRTestMode"
       responses:
         "200":
-          description: "The SRR test mode (0-3)"
+          description: "The SRR test mode (1-3)"
           content:
             application/json:
               schema:
@@ -871,7 +871,7 @@ paths:
     get:
       tags:
         - "SRR"
-      summary: "Set the test mode of the SRR radio (0-3)"
+      summary: "Set the test mode of the SRR radio (1-3)"
       operationId: "setSRRTestMode"
       parameters:
         - name: testMode

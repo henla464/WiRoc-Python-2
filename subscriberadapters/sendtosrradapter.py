@@ -88,7 +88,9 @@ class SendToSRRAdapter(object):
             SettingsClass.GetSRREnabled(), SettingsClass.GetSRRMode(),
             SettingsClass.GetSRRRedChannelEnabled(), SettingsClass.GetSRRRedChannelListenOnly(),
             SettingsClass.GetSRRBlueChannelEnabled(), SettingsClass.GetSRRBlueChannelListenOnly(),
-            SettingsClass.GetSRRTestModeEnabled())
+            SettingsClass.GetSRRTestModeEnabled(), SettingsClass.GetSRRTestMode(),
+            SettingsClass.GetSRRTestMode3Delay(), SettingsClass.GetSRRTestMode3PunchCount(),
+            SettingsClass.GetSRRTestMode3InitialDelay())
 
     def ShouldBeInitialized(self) -> bool:
         return not self.GetIsInitialized()
@@ -114,7 +116,9 @@ class SendToSRRAdapter(object):
             SettingsClass.GetSRREnabled(), SettingsClass.GetSRRMode(),
             SettingsClass.GetSRRRedChannelEnabled(), SettingsClass.GetSRRRedChannelListenOnly(),
             SettingsClass.GetSRRBlueChannelEnabled(), SettingsClass.GetSRRBlueChannelListenOnly(),
-            SettingsClass.GetSRRTestModeEnabled())
+            SettingsClass.GetSRRTestModeEnabled(), SettingsClass.GetSRRTestMode(),
+            SettingsClass.GetSRRTestMode3Delay(), SettingsClass.GetSRRTestMode3PunchCount(),
+            SettingsClass.GetSRRTestMode3InitialDelay())
 
     def IsReadyToSend(self) -> bool:
         return True

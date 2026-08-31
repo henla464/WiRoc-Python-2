@@ -713,9 +713,10 @@ def getSRRHasTestMode():
 
 @app.route('/api/srr/testmode/', methods=['GET'])
 def getSRRTestMode():
-    if HardwareAbstraction.Instance is None:
-        HardwareAbstraction.Instance = HardwareAbstraction()
-    testMode = HardwareAbstraction.Instance.GetSRRTestMode()
+    sett = DatabaseHelper.get_setting_by_key('SRRTestMode')
+    testMode = 1
+    if sett is not None:
+        testMode = int(sett.Value)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=testMode))
@@ -723,12 +724,15 @@ def getSRRTestMode():
 
 @app.route('/api/srr/testmode/<int:testMode>/', methods=['GET'])
 def setSRRTestMode(testMode):
-    if testMode < 0 or testMode > 3:
+    if testMode < 1 or testMode > 3:
         raise Exception("Error: not a valid SRR testmode")
-    if HardwareAbstraction.Instance is None:
-        HardwareAbstraction.Instance = HardwareAbstraction()
-    if not HardwareAbstraction.Instance.SetSRRTestMode(testMode):
-        raise Exception("Error: SRR testmode not supported")
+    sd = DatabaseHelper.get_setting_by_key('SRRTestMode')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SRRTestMode'
+    sd.Value = str(testMode)
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=testMode))
@@ -789,9 +793,10 @@ def getSRRMessagesAcked():
 
 @app.route('/api/srr/testmode3delay/', methods=['GET'])
 def getSRRTestMode3Delay():
-    if HardwareAbstraction.Instance is None:
-        HardwareAbstraction.Instance = HardwareAbstraction()
-    delayTenths = HardwareAbstraction.Instance.GetSRRTestMode3Delay()
+    sett = DatabaseHelper.get_setting_by_key('SRRTestMode3Delay')
+    delayTenths = 50
+    if sett is not None:
+        delayTenths = int(sett.Value)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=delayTenths))
@@ -801,10 +806,13 @@ def getSRRTestMode3Delay():
 def setSRRTestMode3Delay(delayTenths):
     if delayTenths < 0 or delayTenths > 255:
         raise Exception("Error: not a valid SRR test mode 3 delay")
-    if HardwareAbstraction.Instance is None:
-        HardwareAbstraction.Instance = HardwareAbstraction()
-    if not HardwareAbstraction.Instance.SetSRRTestMode3Delay(delayTenths):
-        raise Exception("Error: SRR test mode 3 delay not supported")
+    sd = DatabaseHelper.get_setting_by_key('SRRTestMode3Delay')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SRRTestMode3Delay'
+    sd.Value = str(delayTenths)
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=delayTenths))
@@ -812,9 +820,10 @@ def setSRRTestMode3Delay(delayTenths):
 
 @app.route('/api/srr/testmode3punchcount/', methods=['GET'])
 def getSRRTestMode3PunchCount():
-    if HardwareAbstraction.Instance is None:
-        HardwareAbstraction.Instance = HardwareAbstraction()
-    punchCount = HardwareAbstraction.Instance.GetSRRTestMode3PunchCount()
+    sett = DatabaseHelper.get_setting_by_key('SRRTestMode3PunchCount')
+    punchCount = 0
+    if sett is not None:
+        punchCount = int(sett.Value)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=punchCount))
@@ -824,10 +833,13 @@ def getSRRTestMode3PunchCount():
 def setSRRTestMode3PunchCount(punchCount):
     if punchCount < 0 or punchCount > 65535:
         raise Exception("Error: not a valid SRR test mode 3 punch count")
-    if HardwareAbstraction.Instance is None:
-        HardwareAbstraction.Instance = HardwareAbstraction()
-    if not HardwareAbstraction.Instance.SetSRRTestMode3PunchCount(punchCount):
-        raise Exception("Error: SRR test mode 3 punch count not supported")
+    sd = DatabaseHelper.get_setting_by_key('SRRTestMode3PunchCount')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SRRTestMode3PunchCount'
+    sd.Value = str(punchCount)
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=punchCount))
@@ -835,9 +847,10 @@ def setSRRTestMode3PunchCount(punchCount):
 
 @app.route('/api/srr/testmode3initialdelay/', methods=['GET'])
 def getSRRTestMode3InitialDelay():
-    if HardwareAbstraction.Instance is None:
-        HardwareAbstraction.Instance = HardwareAbstraction()
-    delaySeconds = HardwareAbstraction.Instance.GetSRRTestMode3InitialDelay()
+    sett = DatabaseHelper.get_setting_by_key('SRRTestMode3InitialDelay')
+    delaySeconds = 0
+    if sett is not None:
+        delaySeconds = int(sett.Value)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=delaySeconds))
@@ -847,10 +860,13 @@ def getSRRTestMode3InitialDelay():
 def setSRRTestMode3InitialDelay(delaySeconds):
     if delaySeconds < 0 or delaySeconds > 255:
         raise Exception("Error: not a valid SRR test mode 3 initial delay")
-    if HardwareAbstraction.Instance is None:
-        HardwareAbstraction.Instance = HardwareAbstraction()
-    if not HardwareAbstraction.Instance.SetSRRTestMode3InitialDelay(delaySeconds):
-        raise Exception("Error: SRR test mode 3 initial delay not supported")
+    sd = DatabaseHelper.get_setting_by_key('SRRTestMode3InitialDelay')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SRRTestMode3InitialDelay'
+    sd.Value = str(delaySeconds)
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=delaySeconds))
