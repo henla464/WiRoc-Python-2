@@ -570,6 +570,15 @@ class MessageStatsData(object):
         self.CreatedDate = None
 
 
+class ReceivedLoraMessageData(object):
+    columns = [("MessageSubTypeName", str), ("CreatedDate", datetime)]
+
+    def __init__(self, MessageSubTypeName=None):
+        self.id = None
+        self.MessageSubTypeName = MessageSubTypeName
+        self.CreatedDate = None
+
+
 class BluetoothSerialPortData(object):
     columns = [("DeviceBTAddress", str),  ("Name", str), ("Status", str)]
 

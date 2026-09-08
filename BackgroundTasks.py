@@ -290,6 +290,7 @@ class BackgroundTasks(object):
                 if cmd == "START":
                     BackgroundTasks.ArchiveFailedMessagesBackground()
                     BackgroundTasks.ArchiveOldRepeaterMessagesBackground()
+                    BackgroundTasks.PruneReceivedLoraMessagesBackground()
                 elif cmd == "EXIT":
                     return
                 time.sleep(20)
@@ -309,6 +310,10 @@ class BackgroundTasks(object):
                 "BackgroundTasks::archiveFailedMessages() subscription reached max tries: " + msgSub.SubscriberInstanceName + " Transform: " + msgSub.TransformName + " msgSubId: " + str(
                     msgSub.id))
             DatabaseHelper.archive_message_subscription_view_not_sent(msgSub.id)
+
+    @staticmethod
+    def PruneReceivedLoraMessagesBackground():
+        DatabaseHelper.prune_received_lora_messages()
 
     # ############### ROC CallHome / MiniCallHome #############
     ROC_VERSION = "ver7.3"

@@ -6,6 +6,7 @@ WiRoc
 - Send local ip address to webbserver ( add to devices )
 - Add cardno etc to database for SRRMessages
 
+    
 
 SRR code
 ========
@@ -89,6 +90,9 @@ x Power optimization SRR
 x Configure input / output for SRR in app
 x Always use BT Address from settings
 x Option to set SRR as output
+x When sirap is enabled then also LoraSIMessageToSirapTransform is enabled. If Lora is sender and it receives a lora message, it is still added to database as message. 
+x    And since LoraSIMessageToSirapTransform is enabled a message subscription is created. Should the messages be added to messagebox? [No changed now!]
+
 
 
 possible HW enhancments

@@ -164,6 +164,13 @@ class Main:
                     messageSubTypeName = inputData["MessageSubTypeName"]
                     limitToSubscriberTypeName = inputData.get("LimitToSubscriberTypeName", None)
                     SIStationSerialNumber = inputData.get("SIStationSerialNumber", None)
+                    if messageTypeName == "LORA":
+                        # Count every received LoRa message for the TOA (airtime) calculation.
+                        DatabaseHelper.add_received_lora_message(messageSubTypeName)
+                        if SettingsClass.GetLoraMode() == "SENDER":
+                            # In sender mode we don't forward received LoRa messages, so skip
+                            # adding them to the messagebox and creating subscriptions.
+                            continue
                     if messageTypeName == "LORA" and SettingsClass.GetLoraMode() == "REPEATER":
                         # WiRoc is in repeater mode and received a LORA message
                         self.wirocLogger.info("Start::handleInput() In repeater mode")

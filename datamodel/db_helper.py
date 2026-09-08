@@ -33,6 +33,8 @@ class DatabaseHelper:
         db.ensure_table_created(table)
         table = MessageBoxArchiveData()
         db.ensure_table_created(table)
+        db.execute_SQL("CREATE INDEX IF NOT EXISTS idx_MessageBoxArchiveData_origid "
+                       "ON MessageBoxArchiveData (OrigId)")
         table = SubscriberData()
         db.ensure_table_created(table)
         table = MessageTypeData()
@@ -43,8 +45,20 @@ class DatabaseHelper:
         db.ensure_table_created(table)
         table = MessageSubscriptionData()
         db.ensure_table_created(table)
+        db.execute_SQL("CREATE INDEX IF NOT EXISTS idx_MessageSubscriptionData_subscriptionid "
+                       "ON MessageSubscriptionData (SubscriptionId)")
+        db.execute_SQL("CREATE INDEX IF NOT EXISTS idx_MessageSubscriptionData_messageboxid "
+                       "ON MessageSubscriptionData (MessageBoxId)")
         table = MessageSubscriptionArchiveData()
         db.ensure_table_created(table)
+        db.execute_SQL("CREATE INDEX IF NOT EXISTS idx_MessageSubscriptionArchiveData_messageboxid "
+                       "ON MessageSubscriptionArchiveData (MessageBoxId)")
+        db.execute_SQL("CREATE INDEX IF NOT EXISTS idx_MessageSubscriptionArchiveData_subscribertype "
+                       "ON MessageSubscriptionArchiveData (SubscriberTypeName)")
+        db.execute_SQL("CREATE INDEX IF NOT EXISTS idx_MessageSubscriptionArchiveData_sentdate "
+                       "ON MessageSubscriptionArchiveData (SentDate)")
+        db.execute_SQL("CREATE INDEX IF NOT EXISTS idx_MessageSubscriptionArchiveData_sendfaileddate "
+                       "ON MessageSubscriptionArchiveData (SendFailedDate)")
         table = InputAdapterInstances()
         db.ensure_table_created(table)
         table = BlenoPunchData()
@@ -53,10 +67,18 @@ class DatabaseHelper:
         db.ensure_table_created(table)
         table = RepeaterMessageBoxData()
         db.ensure_table_created(table)
+        db.execute_SQL("CREATE INDEX IF NOT EXISTS idx_RepeaterMessageBoxData_messageid "
+                       "ON RepeaterMessageBoxData (MessageID)")
+        db.execute_SQL("CREATE INDEX IF NOT EXISTS idx_RepeaterMessageBoxData_lastseentime "
+                       "ON RepeaterMessageBoxData (LastSeenTime)")
         table = RepeaterMessageBoxArchiveData()
         db.ensure_table_created(table)
         table = MessageStatsData()
         db.ensure_table_created(table)
+        table = ReceivedLoraMessageData()
+        db.ensure_table_created(table)
+        db.execute_SQL("CREATE INDEX IF NOT EXISTS idx_ReceivedLoraMessageData_subtype_created "
+                       "ON ReceivedLoraMessageData (MessageSubTypeName, CreatedDate)")
         table = BluetoothSerialPortData()
         db.ensure_table_created(table)
         table = TimeOnAirData()
@@ -103,6 +125,8 @@ class DatabaseHelper:
         table = RepeaterMessageBoxArchiveData()
         db.drop_table(table)
         table = BluetoothSerialPortData()
+        db.drop_table(table)
+        table = ReceivedLoraMessageData()
         db.drop_table(table)
         table = TimeOnAirData()
         db.drop_table(table)
@@ -643,48 +667,24 @@ class DatabaseHelper:
     @classmethod
     def get_no_of_received_lora_single_punch_messages(cls, startTime: datetime, endTime: datetime) -> int:
         cls.init()
-        activeSQL = ("SELECT COUNT(1) FROM MessageBoxData "
-                     "WHERE MessageTypeName = 'LORA' AND MessageSubTypeName = 'SIMessage' "
-                     "AND CreatedDate >= ? AND CreatedDate < ?")
-        activeCount = cls.db.get_scalar_by_SQL(activeSQL, (startTime, endTime))
-
-        archiveSQL = ("SELECT COUNT(1) FROM MessageBoxArchiveData "
-                      "WHERE MessageTypeName = 'LORA' AND MessageSubTypeName = 'SIMessage' "
-                      "AND CreatedDate >= ? AND CreatedDate < ?")
-        archiveCount = cls.db.get_scalar_by_SQL(archiveSQL, (startTime, endTime))
-
-        return (activeCount or 0) + (archiveCount or 0)
+        sql = ("SELECT COUNT(1) FROM ReceivedLoraMessageData "
+               "WHERE MessageSubTypeName = 'SIMessage' AND CreatedDate >= ? AND CreatedDate < ?")
+        return cls.db.get_scalar_by_SQL(sql, (startTime, endTime)) or 0
 
     @classmethod
     def get_no_of_received_lora_double_punch_messages(cls, startTime: datetime, endTime: datetime) -> int:
         cls.init()
-        activeSQL = ("SELECT COUNT(1) FROM MessageBoxData "
-                     "WHERE MessageTypeName = 'LORA' AND MessageSubTypeName = 'SIMessageDouble' "
-                     "AND CreatedDate >= ? AND CreatedDate < ?")
-        activeCount = cls.db.get_scalar_by_SQL(activeSQL, (startTime, endTime))
-
-        archiveSQL = ("SELECT COUNT(1) FROM MessageBoxArchiveData "
-                      "WHERE MessageTypeName = 'LORA' AND MessageSubTypeName = 'SIMessageDouble' "
-                      "AND CreatedDate >= ? AND CreatedDate < ?")
-        archiveCount = cls.db.get_scalar_by_SQL(archiveSQL, (startTime, endTime))
-
-        return (activeCount or 0) + (archiveCount or 0)
+        sql = ("SELECT COUNT(1) FROM ReceivedLoraMessageData "
+               "WHERE MessageSubTypeName = 'SIMessageDouble' AND CreatedDate >= ? AND CreatedDate < ?")
+        return cls.db.get_scalar_by_SQL(sql, (startTime, endTime)) or 0
 
     @classmethod
     def get_no_of_received_lora_status_messages(cls, startTime: datetime, endTime: datetime) -> int:
         cls.init()
-        activeSQL = ("SELECT COUNT(1) FROM MessageBoxData "
-                     "WHERE MessageTypeName = 'LORA' AND MessageSubTypeName = 'Status' "
-                     "AND CreatedDate >= ? AND CreatedDate < ?")
-        activeCount = cls.db.get_scalar_by_SQL(activeSQL, (startTime, endTime))
+        sql = ("SELECT COUNT(1) FROM ReceivedLoraMessageData "
+               "WHERE MessageSubTypeName IN ('Status', 'Status2') AND CreatedDate >= ? AND CreatedDate < ?")
+        return cls.db.get_scalar_by_SQL(sql, (startTime, endTime)) or 0
 
-        archiveSQL = ("SELECT COUNT(1) FROM MessageBoxArchiveData "
-                      "WHERE MessageTypeName = 'LORA' AND MessageSubTypeName = 'Status' "
-                      "AND CreatedDate >= ? AND CreatedDate < ?")
-        archiveCount = cls.db.get_scalar_by_SQL(archiveSQL, (startTime, endTime))
-
-        return (activeCount or 0) + (archiveCount or 0)
-    
     @classmethod
     def get_no_of_sent_lora_single_punch_messages(cls, startTime: datetime, endTime: datetime) -> int:
         # NOTE: SentDate is only the timestamp of the last send attempt. Earlier retries may have
@@ -1593,6 +1593,21 @@ class DatabaseHelper:
         cls.init()
         sql = "UPDATE MessageStatsData SET Uploaded = 1 WHERE Id = " + str(messageStatId)
         cls.db.execute_SQL(sql)
+
+    # ReceivedLoraMessageData
+    @classmethod
+    def add_received_lora_message(cls, messageSubTypeName: str) -> None:
+        cls.init()
+        row = ReceivedLoraMessageData()
+        row.MessageSubTypeName = messageSubTypeName
+        cls.db.save_table_object(row, False)
+
+    @classmethod
+    def prune_received_lora_messages(cls, retainDays: int = 7) -> None:
+        cls.init()
+        cutoff = datetime.now() - timedelta(days=retainDays)
+        sql = "DELETE FROM ReceivedLoraMessageData WHERE CreatedDate < ?"
+        cls.db.execute_SQL(sql, (cutoff,))
 
     # Channels
     @classmethod
