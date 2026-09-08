@@ -1,5 +1,6 @@
 __author__ = 'henla464'
 
+import atexit
 import os
 import sqlite3 as lite
 import datetime
@@ -26,34 +27,60 @@ class DB:
             self.check_same_thread = True
         self.dbFilePath = database_file_path
         self.data_mapping = data_mapping
+        self._local = threading.local()
+        atexit.register(self.close)
 
     def openConnection(self) -> Connection | None:
-        #self.WiRocLogger.debug(f"DB::openConnection() PID: {os.getpid()} {threading.get_ident()}")
+        # Reuse a single connection per thread (and per process) instead of opening and
+        # closing a new SQLite connection for every query. This removes per-query connect,
+        # PRAGMA and close overhead (a large CPU/IO cost on embedded hardware).
+        pid = os.getpid()
+        connection = getattr(self._local, 'connection', None)
+        if connection is not None and getattr(self._local, 'pid', None) == pid:
+            return connection
+
+        if connection is not None:
+            # A forked child process inherited the parent's connection object; discard it
+            # and open a fresh one for this process.
+            try:
+                connection.close()
+            except Exception:
+                pass
+
         connection = lite.connect(self.dbFilePath, timeout=10, check_same_thread=self.check_same_thread, isolation_level=None)
         try:
-            #DB.opened = DB.opened + 1
             connection.row_factory = lite.Row
+            # One-time connection setup.
+            # journal_mode is persistent per database file; the rest are per-connection.
             connection.execute("PRAGMA journal_mode=WAL")
-            connection.commit()
+            connection.execute("PRAGMA synchronous=NORMAL")
+            connection.execute("PRAGMA busy_timeout=10000")
+            connection.execute("PRAGMA cache_size=-8000")
+            self._local.connection = connection
+            self._local.pid = pid
             return connection
         except Exception as ex:
             self.WiRocLogger.exception(f"DB::openConnection() exception: {ex} {threading.get_ident()}")
             connection.close()
-            #DB.closed = DB.closed + 1
             return None
 
     def closeConnection(self, connection: Connection):
-        if connection is not None:
-            connection.commit()
-            connection.close()
-            # we could open multiple connections so number of open and close is not always same, only most of the time.
-            # So opened != closed temporarily now and then is ok.
-            #DB.closed = DB.closed + 1
-            #if DB.closed != DB.opened:
-            #    stackTraceString: str = ''.join(traceback.format_stack())
-            #    self.WiRocLogger.error(f"DB::closeConnection() DB opned {DB.opened} and DB closed {DB.closed} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! {stackTraceString}")
-        else:
+        # Connections are reused per thread, so they are intentionally not closed here.
+        # With isolation_level=None the connection runs in autocommit mode and every
+        # statement is committed immediately, so no explicit commit is needed either.
+        if connection is None:
             self.WiRocLogger.error(f"DB::closeConnection() connection null PID: {os.getpid()}")
+
+    def close(self) -> None:
+        """Close this thread's connection (used for clean shutdown)."""
+        connection = getattr(self._local, 'connection', None)
+        if connection is not None:
+            try:
+                connection.close()
+            except Exception:
+                pass
+            self._local.connection = None
+            self._local.pid = None
 
     @staticmethod
     def _get_python_type(table_object, column_name: str):

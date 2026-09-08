@@ -14,6 +14,8 @@ from subscriberadapters.sendstatusadapter import SendStatusAdapter
 from setup import Setup
 import time
 import logging, logging.handlers
+import signal
+import sys
 from datetime import datetime, timedelta
 from datamodel.db_helper import DatabaseHelper
 from datamodel.MessageHelper import MessageHelper
@@ -499,7 +501,18 @@ def run():
     main.Run()
 
 
+def handle_shutdown_signal(signum, frame):
+    """Close the database cleanly and exit on SIGTERM/SIGINT (systemd stop / Ctrl+C)."""
+    try:
+        DatabaseHelper.db.close()
+    except Exception:
+        pass
+    sys.exit(0)
+
+
 def startMain():
+    signal.signal(signal.SIGTERM, handle_shutdown_signal)
+    signal.signal(signal.SIGINT, handle_shutdown_signal)
     main()
     run()
     # cProfile.run('run()')
