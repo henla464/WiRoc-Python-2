@@ -121,7 +121,7 @@ class ReceiveLoraAdapter(object):
         dataSentStatus: ReturnStatus = ReturnStatus.NOREPLY
         if self.loraRadio.IsReadyToSend():
             dataSentStatus = self.loraRadio.SendData(messageData)
-            ReceiveLoraAdapter.WiRocLogger.error(
+            ReceiveLoraAdapter.WiRocLogger.debug(
                 "ReceiveLoraAdapter::TrySendData() MessageData: " + Utils.GetDataInHex(messageData, logging.DEBUG))
         # DRF1268DS modules can get stuck and not recieve messages. I think it gets stuck in TX mode.
         # This has happened when sending ack and getting "busy" response. There should not have been any channel activity
