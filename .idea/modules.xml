@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/RadioBaseUnit.iml" filepath="$PROJECT_DIR$/.idea/RadioBaseUnit.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/reedsolo.iml" filepath="$PROJECT_DIR$/.idea/reedsolo.iml" />
     </modules>
   </component>
 </project>

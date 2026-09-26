@@ -440,7 +440,7 @@ class SettingsClass(object):
         sett = DatabaseHelper.get_setting_by_key('LoraListenOnly')
         if sett is None:
             SettingsClass.SetSetting("LoraListenOnly", "0")
-            return True
+            return False
         return sett.Value == "1"
 
     @staticmethod
