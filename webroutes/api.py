@@ -245,6 +245,31 @@ def setDRF1268DSCompatMode(enabled):
     return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 
+@app.route('/api/lora/sendsubsecond/', methods=['GET'])
+def getSendSubSecond():
+    setting = DatabaseHelper.get_setting_by_key('SendSubSecond')
+    enabled = '0'
+    if setting is not None:
+        enabled = setting.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=enabled))
+
+
+@app.route('/api/lora/sendsubsecond/<enabled>/', methods=['GET'])
+def setSendSubSecond(enabled):
+    sd = DatabaseHelper.get_setting_by_key('SendSubSecond')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'SendSubSecond'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
 @app.route('/api/coderate/', methods=['GET'])
 @app.route('/api/lora/coderate/', methods=['GET'])
 def getCodeRate():

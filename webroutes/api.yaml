@@ -321,6 +321,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
+  /lora/sendsubsecond/:
+    get:
+      tags:
+        - "Radio"
+      summary: "Get if punches are sent with the sub second message types"
+      operationId: "getSendSubSecond"
+      responses:
+        "200":
+          description: "0/1 depending on if the sub second message types are used"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /lora/sendsubsecond/{enabled}:
+    get:
+      tags:
+        - "Radio"
+      summary: "Enable/Disable sending punches with the sub second message types"
+      operationId: "setSendSubSecond"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/TrueFalse"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /lora/rxgainenabled/:
     get:
       tags:

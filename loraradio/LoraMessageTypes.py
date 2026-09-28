@@ -13,3 +13,5 @@ class LoraMessageTypes:
     MessageTypeSIPunchDoubleReDCoS: int = 8
     MessageTypeHAMCallSign: int = 9
     MessageTypeStatus2: int = 10
+    MessageTypeSIPunchSubSecond: int = 11
+    MessageTypeSIPunchDoubleSubSecond: int = 12

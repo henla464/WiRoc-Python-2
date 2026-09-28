@@ -4,7 +4,8 @@ import logging
 from utils.utils import Utils
 from loraradio.LoraRadioMessageRS import LoraRadioMessageAckRS, \
     LoraRadioMessageStatusRS, LoraRadioMessageStatus2RS, LoraRadioMessagePunchReDCoSRS, \
-    LoraRadioMessagePunchDoubleReDCoSRS, LoraRadioMessageRS, LoraRadioMessageHAMCallSignRS
+    LoraRadioMessagePunchDoubleReDCoSRS, LoraRadioMessageRS, LoraRadioMessageHAMCallSignRS, \
+    LoraRadioMessagePunchSubSecondRS, LoraRadioMessagePunchDoubleSubSecondRS
 
 
 class LoraRadioMessageCreator(object):
@@ -161,3 +162,91 @@ class LoraRadioMessageCreator(object):
     def GetHAMCallSignMessage(HAMCallSign: str) -> LoraRadioMessageHAMCallSignRS:
         loraHamMessage = LoraRadioMessageHAMCallSignRS(HAMCallSign)
         return loraHamMessage
+
+    @staticmethod
+    def GetPunchSubSecondMessage(batteryLow: bool, ackReq: bool,
+                                 payload: bytearray = None) -> LoraRadioMessagePunchSubSecondRS:
+        loraPunchMessage = LoraRadioMessagePunchSubSecondRS()
+        loraPunchMessage.SetBatteryLow(batteryLow)
+        loraPunchMessage.SetAckRequested(ackReq)
+        if payload is not None:
+            loraPunchMessage.AddPayload(payload)
+            loraPunchMessage.GenerateAndAddRSCode()
+            loraPunchMessage.GenerateAndAddCRC()
+        return loraPunchMessage
+
+    @staticmethod
+    def GetPunchSubSecondMessageByFullMessageData(fullMessageDataDeinterleaved: bytearray,
+                                                  rssiValue: int = None,
+                                                  snrValue: int = None,
+                                                  statusValue: int = None) -> LoraRadioMessagePunchSubSecondRS:
+        if len(fullMessageDataDeinterleaved) < LoraRadioMessageRS.MessageLengths[LoraRadioMessageRS.MessageTypeSIPunchSubSecond]:
+            raise Exception('Message data too short for a LoraRadioMessagePunchSubSecondRS message')
+        loraPunchMessage = LoraRadioMessagePunchSubSecondRS()
+        loraPunchMessage.SetHeader(fullMessageDataDeinterleaved[0:1])
+        loraPunchMessage.AddPayload(fullMessageDataDeinterleaved[
+                                        1:-LoraRadioMessagePunchSubSecondRS.NoOfECCBytes - LoraRadioMessagePunchSubSecondRS.NoOfCRCBytes])
+        loraPunchMessage.AddRSCode(fullMessageDataDeinterleaved[
+                                       -LoraRadioMessagePunchSubSecondRS.NoOfECCBytes - LoraRadioMessagePunchSubSecondRS.NoOfCRCBytes:-LoraRadioMessagePunchSubSecondRS.NoOfCRCBytes])
+        loraPunchMessage.AddCRC(fullMessageDataDeinterleaved[-LoraRadioMessagePunchSubSecondRS.NoOfCRCBytes:])
+        loraPunchMessage.SetRSSIValue(rssiValue)
+        loraPunchMessage.SetSNRValue(snrValue)
+        loraPunchMessage.SetStatusValue(statusValue)
+        return loraPunchMessage
+
+    @staticmethod
+    def GetPunchDoubleSubSecondMessage(batteryLow: bool, ackReq: bool,
+                                       payload: bytearray = None,
+                                       snrValue: int = None,
+                                       statusValue: int = None) -> LoraRadioMessagePunchDoubleSubSecondRS:
+        loraPunchDoubleMessage = LoraRadioMessagePunchDoubleSubSecondRS()
+        loraPunchDoubleMessage.SetBatteryLow(batteryLow)
+        loraPunchDoubleMessage.SetAckRequested(ackReq)
+        if payload is not None:
+            loraPunchDoubleMessage.AddPayload(payload)
+            loraPunchDoubleMessage.GenerateAndAddRSCode()
+            loraPunchDoubleMessage.GenerateAndAddCRC()
+        return loraPunchDoubleMessage
+
+    @staticmethod
+    def GetPunchDoubleSubSecondMessageByFullMessageData(fullMessageDataDeinterleaved: bytearray,
+                                                        rssiValue: int = None,
+                                                        snrValue: int = None,
+                                                        statusValue: int = None) -> LoraRadioMessagePunchDoubleSubSecondRS:
+        loraPunchDoubleMessage = LoraRadioMessagePunchDoubleSubSecondRS()
+        loraPunchDoubleMessage.SetHeader(fullMessageDataDeinterleaved[0:1])
+        loraPunchDoubleMessage.AddPayload(fullMessageDataDeinterleaved[
+                                              1:-LoraRadioMessagePunchDoubleSubSecondRS.NoOfECCBytes - LoraRadioMessagePunchDoubleSubSecondRS.NoOfCRCBytes])
+        loraPunchDoubleMessage.AddRSCode(fullMessageDataDeinterleaved[
+                                             -LoraRadioMessagePunchDoubleSubSecondRS.NoOfECCBytes - LoraRadioMessagePunchDoubleSubSecondRS.NoOfCRCBytes:-LoraRadioMessagePunchDoubleSubSecondRS.NoOfCRCBytes])
+        loraPunchDoubleMessage.AddCRC(fullMessageDataDeinterleaved[-LoraRadioMessagePunchDoubleSubSecondRS.NoOfCRCBytes:])
+        loraPunchDoubleMessage.SetRSSIValue(rssiValue)
+        loraPunchDoubleMessage.SetSNRValue(snrValue)
+        loraPunchDoubleMessage.SetStatusValue(statusValue)
+        return loraPunchDoubleMessage
+
+    # The two methods below pick the punch class from the message type in the header, so that
+    # callers that only have the raw message data do not need to know which variant they hold.
+    @staticmethod
+    def GetPunchMessageByFullMessageData(fullMessageDataDeinterleaved: bytearray,
+                                         rssiValue: int = None,
+                                         snrValue: int = None,
+                                         statusValue: int = None):
+        messageType = fullMessageDataDeinterleaved[0] & LoraRadioMessageRS.MessageTypeBitMask
+        if messageType == LoraRadioMessageRS.MessageTypeSIPunchSubSecond:
+            return LoraRadioMessageCreator.GetPunchSubSecondMessageByFullMessageData(
+                fullMessageDataDeinterleaved, rssiValue, snrValue, statusValue)
+        return LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
+            fullMessageDataDeinterleaved, rssiValue, snrValue, statusValue)
+
+    @staticmethod
+    def GetPunchDoubleMessageByFullMessageData(fullMessageDataDeinterleaved: bytearray,
+                                               rssiValue: int = None,
+                                               snrValue: int = None,
+                                               statusValue: int = None):
+        messageType = fullMessageDataDeinterleaved[0] & LoraRadioMessageRS.MessageTypeBitMask
+        if messageType == LoraRadioMessageRS.MessageTypeSIPunchDoubleSubSecond:
+            return LoraRadioMessageCreator.GetPunchDoubleSubSecondMessageByFullMessageData(
+                fullMessageDataDeinterleaved, rssiValue, snrValue, statusValue)
+        return LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(
+            fullMessageDataDeinterleaved, rssiValue, snrValue, statusValue)
