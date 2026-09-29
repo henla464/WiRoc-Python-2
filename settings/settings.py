@@ -413,7 +413,7 @@ class SettingsClass(object):
         sett = DatabaseHelper.get_setting_by_key('RxGainEnabled')
         if sett is None:
             SettingsClass.SetSetting("RxGainEnabled", "1")
-            return False
+            return True
         return sett.Value == "1"
 
     @staticmethod
@@ -422,7 +422,7 @@ class SettingsClass(object):
         sett = DatabaseHelper.get_setting_by_key('DRF1268DSCompatModeEnabled')
         if sett is None:
             SettingsClass.SetSetting("DRF1268DSCompatModeEnabled", "1")
-            return False
+            return True
         return sett.Value == "1"
 
     @staticmethod

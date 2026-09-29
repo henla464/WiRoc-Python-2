@@ -153,7 +153,7 @@ def setAcknowledgementRequested(ack):
 def getLoraListenOnly():
     setting = DatabaseHelper.get_setting_by_key('LoraListenOnly')
     listenOnly = '0'
-    if setting is not None or settings.Value is not None:
+    if setting is not None and setting.Value is not None:
         listenOnly = setting.Value
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
