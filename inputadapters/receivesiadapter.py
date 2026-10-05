@@ -448,6 +448,8 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
         super().__init__(instanceName, instanceNumber, portName)
         self.siSerial = serial.Serial()  # not for SIBTSP
         self.siSerial.baudrate = 38400
+        # Baudrate that DetectBaudRate() successfully verified, None until it succeeds.
+        self.detectedBaudRate: int | None = None
 
     def writeData(self, dataToWrite: bytes) -> bool:
         self.siSerial.write(dataToWrite)
@@ -513,6 +515,7 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
         return False
 
     def DetectBaudRate(self) -> bool:
+        self.detectedBaudRate = None
         self.siSerial.baudrate = 38400
         try:
             if self.siSerial.baudrate != 38400:
@@ -581,6 +584,8 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
                 else:
                     ReceiveSIAdapter.WiRocLogger.info(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: SI Station 38400 kbit/s works")
 
+                # DetectBaudRate succeeded, so the baudrate the port is open with is trusted.
+                self.detectedBaudRate = self.siSerial.baudrate
                 return True
             except Exception as ex2:
                 ReceiveSIAdapter.WiRocLogger.error(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: exception:")
@@ -717,8 +722,11 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
                 if self.InitTwoWay(skipDetectBaudRate=False):
                     return True
                 else:
-                    # better with init one way if two-way is not working than aborting
-                    success = self.InitOneWay(baudrate)
+                    # better with init one way if two-way is not working than aborting.
+                    # Only trust the baudrate DetectBaudRate settled on if it succeeded,
+                    # otherwise 38400 is the safe choice.
+                    fallbackBaudRate = self.detectedBaudRate if self.detectedBaudRate is not None else 38400
+                    success = self.InitOneWay(fallbackBaudRate)
                     if success:
                         self.oneWayFallbackTryReInitWhenDataReceived = True  # reinitialization risks losing messages that arrive at the same time
                         self.oneWayFallbackShouldNotTriggerReInit = False
@@ -857,7 +865,10 @@ class ReceiveSIUSBSerialPort(ReceiveSISerialPort):
                         if successTwoWay:
                             return True
                         else:  # better with init one way if two way is not working than aborting
-                            successOneWay = self.InitOneWay(baudrate)
+                            # Only trust the baudrate DetectBaudRate settled on if it succeeded,
+                            # otherwise 38400 is the safe choice.
+                            fallbackBaudRate = self.detectedBaudRate if self.detectedBaudRate is not None else 38400
+                            successOneWay = self.InitOneWay(fallbackBaudRate)
                             if successOneWay:
                                 self.oneWayFallbackTryReInitWhenDataReceived = False  # reinitialization risks losing messages that arrive at the same time
                                 self.oneWayFallbackShouldNotTriggerReInit = True # reinitialization risks losing messages that arrive at the same time
