@@ -76,6 +76,7 @@ class SendSerialAdapter(object):
         self.transforms = {}
         self.isDBInitialized = False
         self.isInitialized = False
+        self.enabled = False
         self.rs232Serial = serial.Serial()
         self.serialLock: threading.Lock = threading.Lock()
 
@@ -115,7 +116,8 @@ class SendSerialAdapter(object):
 
     # TOOD. should return true when baudrate changed
     def ShouldBeInitialized(self):
-        return not self.isInitialized and SettingsClass.GetRS232Mode == "SEND"
+        shouldBeEnabled = SettingsClass.GetRS232Mode() == "SEND"
+        return not self.isInitialized or self.enabled != shouldBeEnabled
 
     # has adapter, transforms, subscriptions etc been added to database?
     def GetIsDBInitialized(self):
@@ -125,6 +127,16 @@ class SendSerialAdapter(object):
         self.isDBInitialized = val
 
     def Init(self):
+        self.enabled = SettingsClass.GetRS232Mode() == "SEND"
+        if not self.enabled:
+            # We only send on this port in SEND mode. In RECEIVE mode it belongs to
+            # ReceiveSIHWSerialPort, and opening it here sets the baud rate on the
+            # same tty, which breaks the station that adapter is reading.
+            if self.rs232Serial.is_open:
+                self.rs232Serial.close()
+            self.isInitialized = True
+            return True
+
         if SettingsClass.GetForceRS2324800BaudRateFromSIStation():
             self.rs232Serial.baudrate = 4800
         else:
@@ -140,7 +152,7 @@ class SendSerialAdapter(object):
         return True
 
     def IsReadyToSend(self):
-        return self.GetIsInitialized()
+        return self.GetIsInitialized() and self.enabled
 
     @staticmethod
     def GetDelayAfterMessageSent():
