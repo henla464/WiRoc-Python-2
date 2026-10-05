@@ -552,11 +552,12 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
                 if not self.isCorrectMSModeDirectResponse(response):
                     ReceiveSIAdapter.WiRocLogger.info(f"ReceiveSIAdapter::DetectBaudRate: {self.instanceName}: not correct msmodedirectresponse: " + str(response))
 
-                    # something wrong, try other baudrate
-                    self.siSerial.close()
-                    self.siSerial.port = self.portName
+                    # Something wrong, try the other baud rate. Change it in place
+                    # rather than closing and reopening. pyserial applies a new baud
+                    # rate to an already open port through _reconfigure_port(). With
+                    # nothing else holding the port open, the close and reopen here
+                    # was followed by every later read failing with EIO.
                     self.siSerial.baudrate = 4800
-                    self.siSerial.open()
                     self.siSerial.reset_input_buffer()
                     self.siSerial.reset_output_buffer()
 
