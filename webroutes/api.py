@@ -496,6 +496,7 @@ def setWiRocDeviceName(deviceName):
     settings['WiRocDeviceName'] = deviceName
     f2 = open('../settings.yaml', 'w')
     yaml.dump(settings, f2)  # Write a YAML representation of data to 'settings.yaml'.
+    Utils.SetHostnameFromDeviceName(deviceName)
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=deviceName))
