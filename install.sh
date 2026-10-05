@@ -360,6 +360,15 @@ else
     echo "Make symlink to $RTC_DEV which is the pcf8563"
     echo "SUBSYSTEM==\"rtc\", KERNEL==\"$RTC_DEV\", SYMLINK+=\"rtc\", OPTIONS+=\"link_priority=-100\"" >> /usr/lib/udev/rules.d/51-udev-rtc.rules
   fi
+
+  # RTC write-back: copy an NTP-synced system clock into the pcf8563 a minute
+  # after boot and every 15 minutes, so it keeps the right time through a
+  # power-off. The script does nothing unless the clock is synchronised.
+  wget -O /home/chip/WiRoc-StartupScripts/wiroc-rtc-writeback.sh https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/wiroc-rtc-writeback.sh
+  chmod +x /home/chip/WiRoc-StartupScripts/wiroc-rtc-writeback.sh
+  wget -O /etc/systemd/system/wiroc-rtc-writeback.service https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/wiroc-rtc-writeback.service
+  wget -O /etc/systemd/system/wiroc-rtc-writeback.timer https://raw.githubusercontent.com/henla464/WiRoc-StartupScripts/master/wiroc-rtc-writeback.timer
+  systemctl enable /etc/systemd/system/wiroc-rtc-writeback.timer
   
 fi
 
