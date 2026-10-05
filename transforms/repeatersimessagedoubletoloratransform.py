@@ -64,12 +64,12 @@ class RepeaterSIMessageDoubleToLoraTransform(object):
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         RepeaterSIMessageDoubleToLoraTransform.WiRocLogger.debug("RepeaterSIMessageDoubleToLoraTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-        loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(payloadData)
+        loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(payloadData)
         batteryLow = Battery.GetIsBatteryLow() or loraPunchDoubleMsg.GetBatteryLow()
         ackReq = SettingsClass.GetAcknowledgementRequested()
         loraPunchDoubleMsg.SetAckRequested(ackReq)
         loraPunchDoubleMsg.SetBatteryLow(batteryLow)
         loraPunchDoubleMsg.SetRepeater(False)
         loraPunchDoubleMsg.GenerateAndAddRSCode()
-        interleavedMessageData = LoraRadioMessagePunchDoubleReDCoSRS.InterleaveToAirOrder(loraPunchDoubleMsg.GetByteArray())
+        interleavedMessageData = loraPunchDoubleMsg.__class__.InterleaveToAirOrder(loraPunchDoubleMsg.GetByteArray())
         return {"Data": (interleavedMessageData,), "MessageID": loraPunchDoubleMsg.GetHash()}

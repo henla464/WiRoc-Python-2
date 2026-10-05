@@ -66,7 +66,7 @@ class LoraSIMessageDoubleToRocTransform(object):
         LoraSIMessageDoubleToRocTransform.WiRocLogger.debug("LoraSIMessageDoubleToRocTransform::Transform()")
         data = []
         for item in msgSubBatch.MessageSubscriptionBatchItems:
-            msg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(item.MessageData, rssiValue=None)
+            msg = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(item.MessageData, rssiValue=None)
             if msg is None:
                 continue
             siPayloadTuple = msg.GetSIMessageByteTuple()

@@ -173,7 +173,8 @@ class ReceiveLoraAdapter(object):
                     messageIDToReturn = loraMessage.GetMessageIDThatIsAcked()
                     self.loraRadio.SetAckReceivedMatchingLastSentMessage(SettingsClass.GetMessageIDOfLastLoraMessageSent() == messageIDToReturn)
             elif messageType == LoraRadioMessageRS.MessageTypeStatus or messageType == LoraRadioMessageRS.MessageTypeStatus2 or \
-                    messageType == LoraRadioMessageRS.MessageTypeSIPunchReDCoS or messageType == LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS:
+                    messageType == LoraRadioMessageRS.MessageTypeSIPunchReDCoS or messageType == LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS or \
+                    messageType == LoraRadioMessageRS.MessageTypeSIPunchSubSecond or messageType == LoraRadioMessageRS.MessageTypeSIPunchDoubleSubSecond:
                 if loraMessage.GetBatteryLow():
                     SettingsClass.SetBatteryIsLowReceived(True)
 
@@ -205,7 +206,8 @@ class ReceiveLoraAdapter(object):
                         ReceiveLoraAdapter.WiRocLogger.error(
                             "ReceiveLoraAdapter::GetData() Error sending ack: " + str(ex2))
 
-                if messageType == LoraRadioMessageRS.MessageTypeSIPunchReDCoS or messageType == LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS:
+                if messageType in (LoraRadioMessageRS.MessageTypeSIPunchReDCoS, LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS,
+                                   LoraRadioMessageRS.MessageTypeSIPunchSubSecond, LoraRadioMessageRS.MessageTypeSIPunchDoubleSubSecond):
                     try:
                         DatabaseHelper.add_message_stat(self.GetInstanceName(), "SIMessage", "Received", 1)
                     except Exception as ex:

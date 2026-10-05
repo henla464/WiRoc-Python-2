@@ -58,9 +58,9 @@ class ReceiveRepeaterMessagesAdapter(object):
             ReceiveRepeaterMessagesAdapter.WiRocLogger.debug("ReceiveRepeaterMessagesAdapter::GetData() Data to fetch: " + Utils.GetDataInHex(messageToAdd.MessageData, logging.DEBUG))
             loraMessage = None
             if messageToAdd.MessageSubTypeName == "SIMessage":
-                loraMessage = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(messageToAdd.MessageData, messageToAdd.RSSIValue)
+                loraMessage = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(messageToAdd.MessageData, messageToAdd.RSSIValue)
             elif messageToAdd.MessageSubTypeName == "SIMessageDouble":
-                loraMessage = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessageByFullMessageData(messageToAdd.MessageData, messageToAdd.RSSIValue)
+                loraMessage = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(messageToAdd.MessageData, messageToAdd.RSSIValue)
             elif messageToAdd.MessageSubTypeName == "Status":
                 messageType = messageToAdd.MessageData[0] & 0x1F
                 if messageType == LoraRadioMessageRS.MessageTypeStatus:

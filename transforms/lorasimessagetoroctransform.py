@@ -48,7 +48,7 @@ class LoraSIMessageToRocTransform(object):
 
     @staticmethod
     def _extractPunchData(payloadData: bytearray) -> dict | None:
-        msg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(payloadData, rssiValue=None)
+        msg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(payloadData, rssiValue=None)
         if msg is None:
             return None
         siPayloadData = msg.GetSIMessageByteArray()

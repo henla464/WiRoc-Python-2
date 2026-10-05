@@ -435,6 +435,17 @@ class SettingsClass(object):
         return sett.Value == "1"
 
     @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetSendSubSecond'), lock=rlock)
+    def GetSendSubSecond():
+        # When enabled, punches are sent over lora using the sub second message types
+        # (0x0B / 0x0C) which carry the SI sub second. Both ends must support them.
+        sett = DatabaseHelper.get_setting_by_key('SendSubSecond')
+        if sett is None:
+            SettingsClass.SetSetting("SendSubSecond", "0")
+            return False
+        return sett.Value == "1"
+
+    @staticmethod
     @cached(cache, key=partial(hashkey, 'GetLoraListenOnly'), lock=rlock)
     def GetLoraListenOnly():
         sett = DatabaseHelper.get_setting_by_key('LoraListenOnly')
@@ -675,9 +686,14 @@ class SettingsClass(object):
         MessageTypeHAMCallSign: int = 9
         MessageTypeStatus2: int = 10
         MessageTypeStatus: int = 4
-        if MessageTypeSIPunchReDCoS == messageType:
+        MessageTypeSIPunchSubSecond: int = 11
+        MessageTypeSIPunchDoubleSubSecond: int = 12
+        # The sub second messages are one byte longer than the ReDCoS messages (two for the
+        # double). Lora rounds the payload up to whole symbol blocks so in most modes this is
+        # the same time on air; where it is not, the punch figure is the closer estimate.
+        if MessageTypeSIPunchReDCoS == messageType or MessageTypeSIPunchSubSecond == messageType:
             return SettingsClass.timeOnAirData.PunchTOA
-        elif MessageTypeSIPunchDoubleReDCoS == messageType:
+        elif MessageTypeSIPunchDoubleReDCoS == messageType or MessageTypeSIPunchDoubleSubSecond == messageType:
             return SettingsClass.timeOnAirData.DoublePunchTOA
         elif MessageTypeLoraAck == messageType:
             return SettingsClass.timeOnAirData.AckTOA

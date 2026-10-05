@@ -51,7 +51,7 @@ class LoraSIMessageToSRRTransform(object):
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         LoraSIMessageToSRRTransform.WiRocLogger.debug("LoraSIMessageToSRRTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-        loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(payloadData)
+        loraMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(payloadData)
         siMsgByteArray = loraMsg.GetSIMessageByteArray()
         # Extract the 15-byte SI punch payload (skip STX header, include MsgType, Length and data)
         siPayload = siMsgByteArray[1:16]

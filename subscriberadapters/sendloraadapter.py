@@ -384,8 +384,10 @@ class SendLoraAdapter(object):
             if headerMessageType == LoraRadioMessageRS.MessageTypeLoraAck:
                 statMessageType = "Ack"
 
-            if headerMessageType == LoraRadioMessageRS.MessageTypeSIPunchReDCoS or \
-                    headerMessageType == LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS:
+            if headerMessageType in (LoraRadioMessageRS.MessageTypeSIPunchReDCoS,
+                                    LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS,
+                                    LoraRadioMessageRS.MessageTypeSIPunchSubSecond,
+                                    LoraRadioMessageRS.MessageTypeSIPunchDoubleSubSecond):
                 SettingsClass.SetTimeOfLastPunchMessageSentToLora()
                 statMessageType = "Punch"
                 SettingsClass.SetMessageIDOfLastLoraMessageSent(settingsDictionary["MessageID"])
