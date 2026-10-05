@@ -105,3 +105,6 @@ apikey.txt
 
 reedsolomon/
 
+
+# JetBrains per-user workspace file (the rest of .idea stays tracked)
+.idea/workspace.xml
