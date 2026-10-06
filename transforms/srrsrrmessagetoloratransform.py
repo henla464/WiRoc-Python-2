@@ -63,6 +63,7 @@ class SRRSRRMessageToLoraTransform(object):
         ackReq = SettingsClass.GetAcknowledgementRequested()
         reqRepeater = subscriberAdapter.GetShouldRequestRepeater()
         batteryLow = Battery.GetIsBatteryLow()
+        sendSubSecond = SettingsClass.GetSendSubSecond()
 
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
         siMsg: SIMessage = SRRMessage.GetSIMsg(payloadData)
@@ -72,12 +73,15 @@ class SRRSRRMessageToLoraTransform(object):
         siMsgPayload = siMsg.GetByteArray()
 
         if len(msgSubBatch.MessageSubscriptionBatchItems) == 1:
-            loraPunchMsg = LoraRadioMessageCreator.GetPunchReDCoSMessage(batteryLow, ackReq, None)
+            if sendSubSecond:
+                loraPunchMsg = LoraRadioMessageCreator.GetPunchSubSecondMessage(batteryLow, ackReq, None)
+            else:
+                loraPunchMsg = LoraRadioMessageCreator.GetPunchReDCoSMessage(batteryLow, ackReq, None)
             loraPunchMsg.SetSIMessageByteArray(siMsgPayload)
             loraPunchMsg.SetRepeater(reqRepeater)
             loraPunchMsg.GenerateAndAddRSCode()
             loraPunchMsg.GenerateAndAddCRC()
-            interleavedMessageData = LoraRadioMessagePunchReDCoSRS.InterleaveToAirOrder(
+            interleavedMessageData = loraPunchMsg.__class__.InterleaveToAirOrder(
                 loraPunchMsg.GetByteArray())
             return {"Data": (interleavedMessageData,), "MessageID": loraPunchMsg.GetHash()}
         elif len(msgSubBatch.MessageSubscriptionBatchItems) == 2:
@@ -89,13 +93,16 @@ class SRRSRRMessageToLoraTransform(object):
                         payloadData2, logging.ERROR))
                 return None
 
-            loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(batteryLow, ackReq, None)
+            if sendSubSecond:
+                loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleSubSecondMessage(batteryLow, ackReq, None)
+            else:
+                loraPunchDoubleMsg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(batteryLow, ackReq, None)
             siMsgPayload2 = siMsg2.GetByteArray()
             loraPunchDoubleMsg.SetSIMessageByteArrays(siMsgPayload, siMsgPayload2)
             loraPunchDoubleMsg.SetRepeater(reqRepeater)
             loraPunchDoubleMsg.GenerateAndAddRSCode()
             loraPunchDoubleMsg.GenerateAndAddCRC()
-            interleavedMessageData = LoraRadioMessagePunchDoubleReDCoSRS.InterleaveToAirOrder(
+            interleavedMessageData = loraPunchDoubleMsg.__class__.InterleaveToAirOrder(
                 loraPunchDoubleMsg.GetByteArray())
             return {"Data": (interleavedMessageData,), "MessageID": loraPunchDoubleMsg.GetHash()}
         return None
