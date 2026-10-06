@@ -2,7 +2,7 @@ __author__ = 'henla464'
 
 from struct import pack
 from datetime import datetime
-import logging, os, random
+import logging, os, random, re, socket, subprocess, unicodedata
 
 class Utils:
     WiRocLogger = logging.getLogger('WiRoc')
@@ -229,3 +229,64 @@ class Utils:
     def GetShouldDropMessage(dropPercentage):
         return random.choices([True, False], weights=[dropPercentage, 100-dropPercentage], k=1)[0]
 
+    @staticmethod
+    def DeviceNameToHostname(deviceName: str | None) -> str | None:
+        # A hostname can only have letters, digits and hyphens, up to 63
+        # characters, and can't start or end with a hyphen. Accents are dropped
+        # (Å becomes A) and anything else becomes a hyphen, so "PFO BC S4" gives
+        # "pfo-bc-s4".
+        if deviceName is None:
+            return None
+        asciiName = unicodedata.normalize('NFKD', deviceName).encode('ascii', 'ignore').decode('ascii')
+        hostname = re.sub(r'[^a-z0-9-]+', '-', asciiName.strip().lower())
+        hostname = re.sub(r'-{2,}', '-', hostname)[:63].strip('-')
+        return hostname if hostname != "" else None
+
+    @staticmethod
+    def SetHostnameFromDeviceName(deviceName: str | None) -> bool:
+        # Every unit starts as "WiRoc Device", so leave the hostname alone until
+        # the unit has been given its own name.
+        if deviceName is None or deviceName.strip() in ("", "WiRoc Device"):
+            return False
+        newHostname = Utils.DeviceNameToHostname(deviceName)
+        if newHostname is None:
+            Utils.WiRocLogger.warning(f"Utils::SetHostnameFromDeviceName() no valid hostname from device name: {deviceName}")
+            return False
+        oldHostname = socket.gethostname()
+        if oldHostname == newHostname:
+            return True
+        try:
+            subprocess.run(["hostnamectl", "set-hostname", newHostname], check=True, capture_output=True, timeout=10)
+        except Exception as ex:
+            Utils.WiRocLogger.error(f"Utils::SetHostnameFromDeviceName() could not set hostname {newHostname}: {ex}")
+            return False
+        Utils.UpdateEtcHosts(oldHostname, newHostname)
+        Utils.WiRocLogger.info(f"Utils::SetHostnameFromDeviceName() hostname changed from {oldHostname} to {newHostname}")
+        return True
+
+    @staticmethod
+    def UpdateEtcHosts(oldHostname: str, newHostname: str, path: str = "/etc/hosts") -> None:
+        # Keep the hostname resolvable locally, otherwise sudo and others
+        # complain that they can't resolve it.
+        try:
+            with open(path) as f:
+                lines = f.readlines()
+            found = False
+            newLines = []
+            for line in lines:
+                fields = line.split()
+                if len(fields) > 1 and not fields[0].startswith('#'):
+                    if oldHostname in fields[1:]:
+                        fields = [newHostname if field == oldHostname else field for field in fields]
+                        line = fields[0] + "   " + " ".join(fields[1:]) + "\n"
+                    if newHostname in fields[1:]:
+                        found = True
+                newLines.append(line)
+            if not found:
+                newLines.append(f"127.0.1.1   {newHostname}\n")
+            tmpPath = path + ".wiroc-tmp"
+            with open(tmpPath, "w") as f:
+                f.writelines(newLines)
+            os.replace(tmpPath, path)
+        except Exception as ex:
+            Utils.WiRocLogger.error(f"Utils::UpdateEtcHosts() could not update {path}: {ex}")

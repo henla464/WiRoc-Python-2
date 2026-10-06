@@ -65,6 +65,7 @@ class Main:
         DatabaseHelper.change_future_created_dates()
         DatabaseHelper.change_future_sent_dates()
         SettingsClass.IncrementPowerCycle()
+        Utils.SetHostnameFromDeviceName(SettingsClass.GetWiRocDeviceName())
         SettingsClass.SetReceiveSIAdapterActive(False)
         Setup.AddMessageTypes()
         self.doUpdateDisplayBackground()
