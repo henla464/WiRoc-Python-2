@@ -1689,7 +1689,7 @@ class DatabaseHelper:
                         ChannelData('5', 3906, 'UF', 439912500, 5, 5, True, True, 8, "DRF1268DS"),
                         ChannelData('6', 3906, 'UF', 439962500, 5, 5, True, True, 8, "DRF1268DS"),
 
-                        ChannelData('HAM1', 73, 'UL', 439712500, 12, 5, True, True, 8, "DRF1268DS"),
+                        ChannelData('HAM1', 73, 'UL', 433737500, 12, 5, True, True, 8, "DRF1268DS"),
                         ChannelData('HAM2', 73, 'UL', 433787500, 12, 5, True, True, 8, "DRF1268DS"),
                         ChannelData('HAM3', 73, 'UL', 433837500, 12, 5, True, True, 8, "DRF1268DS"),
                         ChannelData('HAM4', 73, 'UL', 433887500, 12, 5, True, True, 8, "DRF1268DS"),
@@ -1786,7 +1786,7 @@ class DatabaseHelper:
                         ChannelData('5', 3906, 'UF', 439912500, 5, 7, False, True, 8,"RAK3172"),
                         ChannelData('6', 3906, 'UF', 439962500, 5, 7, False, True, 8,"RAK3172"),
 
-                        ChannelData('HAM1', 73, 'UL', 439712500, 12, 7, False, True, 8,"RAK3172"),
+                        ChannelData('HAM1', 73, 'UL', 433737500, 12, 7, False, True, 8,"RAK3172"),
                         ChannelData('HAM2', 73, 'UL', 433787500, 12, 7, False, True, 8,"RAK3172"),
                         ChannelData('HAM3', 73, 'UL', 433837500, 12, 7, False, True, 8,"RAK3172"),
                         ChannelData('HAM4', 73, 'UL', 433887500, 12, 7, False, True, 8,"RAK3172"),
@@ -1913,7 +1913,7 @@ class DatabaseHelper:
                         ChannelData('6A', 1367, 'F', 439950000, 5, 4, False, False, 8,"RAK3172"),
                         ChannelData('6B', 1367, 'F', 439975000, 5, 4, False, False, 8,"RAK3172"),
 
-                        ChannelData('HAM1', 73, 'UL', 439712500, 10, 4, False, True, 8,"RAK3172"),
+                        ChannelData('HAM1', 73, 'UL', 433737500, 10, 4, False, True, 8,"RAK3172"),
                         ChannelData('HAM2', 73, 'UL', 433787500, 10, 4, False, True, 8,"RAK3172"),
                         ChannelData('HAM3', 73, 'UL', 433837500, 10, 4, False, True, 8,"RAK3172"),
                         ChannelData('HAM4', 73, 'UL', 433887500, 10, 4, False, True, 8,"RAK3172"),
