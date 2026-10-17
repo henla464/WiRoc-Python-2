@@ -63,7 +63,7 @@ class RepeaterStatusToLoraTransform(object):
     def Transform(msgSubBatch: MessageSubscriptionBatch, subscriberAdapter):
         RepeaterStatusToLoraTransform.WiRocLogger.debug("RepeaterStatusToLoraTransform::Transform()")
         payloadData = msgSubBatch.MessageSubscriptionBatchItems[0].MessageData
-        messageType = payloadData & 0x1F
+        messageType = LoraRadioDataHandler.GetHeaderMessageType(payloadData)
         if messageType == LoraRadioMessageRS.MessageTypeStatus:
             loraStatusMsg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(payloadData)
             loraStatusMsg.SetAckRequested(SettingsClass.GetStatusAcknowledgementRequested())
