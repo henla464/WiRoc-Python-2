@@ -347,6 +347,32 @@ class ReceiveSIAdapter(object):
                 self.fetchToBackupAddress = curAddr
                 self.fetchFromBackup = True
 
+    def fetchLastPunchFromBackup(self) -> None:
+        # The record before the station's next free backup address is its last punch.
+        # getBackupPunch() fetches fetchFromBackupAddress + 8 up to fetchToBackupAddress (exclusive).
+        getBackupPointerCmd = bytes([0xFF, 0x02, 0x02, 0x83, 0x02, 0x1C, 0x07, 0x74, 0x06, 0x03])
+        response = self.sendCommand(getBackupPointerCmd, printLog=False)
+        if response is None:
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::fetchLastPunchFromBackup sendCommand returned None")
+            return None
+        SIMsg = SIMessage()
+        SIMsg.AddPayload(response)
+        if not SIMsg.GetIsChecksumOK():
+            ReceiveSIAdapter.WiRocLogger.error("ReceiveSIAdapter::fetchLastPunchFromBackup getBackupPointerCmd returned invalid checksum")
+            return None
+        curAddr = (response[7] << 16) | (response[11] << 8) | response[12]  # next free memory address
+        if curAddr < 16 or self.serialNumber is None:
+            return None
+        # getBackupPunch() keeps AddressOfLastPunch up to date and expects this station in it;
+        # from here on, gaps after this punch are detected as usual
+        ReceiveSIAdapter.AddressOfLastPunch[self.serialNumber] = curAddr - 16
+        ReceiveSIAdapter.WiRocLogger.info(
+            "ReceiveSIAdapter::fetchLastPunchFromBackup reinit after corrupted data, fetching the last punch, curAddr: " + str(curAddr))
+        self.fetchFromBackupAddress = curAddr - 16
+        self.fetchToBackupAddress = curAddr
+        self.fetchFromBackup = True
+        return None
+
     def detectMissedPunches(self, siMsg : SIMessage) -> bool:
         ReceiveSIAdapter.WiRocLogger.debug("ReceiveSIAdapter::detectMissedPunches enter")
         if self.serialNumber is None:
@@ -450,6 +476,12 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
         self.siSerial.baudrate = 38400
         # Baudrate that DetectBaudRate() successfully verified, None until it succeeds.
         self.detectedBaudRate: int | None = None
+        # Backup memory address of a punch heard in one-way fallback, handed to the
+        # next InitTwoWay so punches during the switch to two-way are fetched from backup.
+        self.pendingBackupAddress: int | None = None
+        # Set when corrupted data (most likely a punch at the other baudrate) triggered the
+        # reinit: once two-way, fetch the station's last punch from its backup memory.
+        self.fetchLastPunchAfterReinit: bool = False
 
     def writeData(self, dataToWrite: bytes) -> bool:
         self.siSerial.write(dataToWrite)
@@ -607,7 +639,20 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
                 self.updateSiStationNumber()
                 self.setAutosendAndExtendedProtocol()
                 self.serialNumber = self.getSerialNumberSystemValue()
+                if self.pendingBackupAddress is not None and self.serialNumber is not None:
+                    # Last punch was heard in one-way fallback, where addresses aren't tracked
+                    ReceiveSIAdapter.AddressOfLastPunch[self.serialNumber] = self.pendingBackupAddress
+                    self.pendingBackupAddress = None
                 self.detectMissedPunchesDuringInit()
+                if self.fetchLastPunchAfterReinit:
+                    self.fetchLastPunchAfterReinit = False
+                    # A known last address already brings back everything since it, the
+                    # corrupted punch included. Without one, fetch the station's last punch.
+                    # Only ever once per station: fetchLastPunchFromBackup() records its
+                    # address, so noise causing reinit after reinit (a bad cable) never
+                    # sends the same punch again.
+                    if self.serialNumber not in ReceiveSIAdapter.AddressOfLastPunch and not self.fetchFromBackup:
+                        self.fetchLastPunchFromBackup()
 
                 self.isInitialized = True
                 self.oneWay = False
@@ -635,7 +680,20 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
             # received some data but it was not correct
             if self.oneWayFallbackTryReInitWhenDataReceived and not self.oneWayFallbackShouldNotTriggerReInit:
                 self.shouldReinitialize = True
+                self.fetchLastPunchAfterReinit = True
             return None
+        if (self.oneWay and self.oneWayFallbackTryReInitWhenDataReceived
+                and not self.oneWayFallbackShouldNotTriggerReInit
+                and data.get("MessageSubTypeName") == "SIMessage"):
+            # One-way fallback (the station didn't answer at init, e.g. plugged in after
+            # boot) and now a good punch: the station is there, so go two-way to get
+            # missed punch recovery back. This punch is delivered as normal. Its backup
+            # memory address goes to InitTwoWay, so anything punched during the switch
+            # is fetched from the station's backup memory rather than lost.
+            siMsg = SIMessage()
+            siMsg.AddPayload(data["Data"])
+            self.pendingBackupAddress = siMsg.GetBackupMemoryAddressAsInt()
+            self.shouldReinitialize = True
         return data
 
 
@@ -719,13 +777,21 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
                 success = self.InitOneWay(baudrate)
                 return success
             else:
-                if self.InitTwoWay(skipDetectBaudRate=False):
+                twoWayOK = self.InitTwoWay(skipDetectBaudRate=False)
+                if self.detectedBaudRate is not None:
+                    SettingsClass.SetLastDetectedRS232BaudRate(self.detectedBaudRate)
+                if twoWayOK:
                     return True
                 else:
                     # better with init one way if two-way is not working than aborting.
-                    # Only trust the baudrate DetectBaudRate settled on if it succeeded,
-                    # otherwise 38400 is the safe choice.
-                    fallbackBaudRate = self.detectedBaudRate if self.detectedBaudRate is not None else 38400
+                    # Only trust the baudrate DetectBaudRate settled on if it succeeded.
+                    # Otherwise use the baudrate last detected on this port: the station
+                    # normally plugged into this WiRoc (a BSM7 is often 38400, a BSF7-P
+                    # printout station 4800). With nothing remembered, 38400 as before.
+                    fallbackBaudRate = (self.detectedBaudRate
+                                        or SettingsClass.GetLastDetectedRS232BaudRate()
+                                        or 38400)
+                    ReceiveSIAdapter.WiRocLogger.info(f"ReceiveSIHWSerialPort::Init: {self.instanceName}: two-way failed, one-way at {fallbackBaudRate}")
                     success = self.InitOneWay(fallbackBaudRate)
                     if success:
                         self.oneWayFallbackTryReInitWhenDataReceived = True  # reinitialization risks losing messages that arrive at the same time

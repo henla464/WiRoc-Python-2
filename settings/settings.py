@@ -888,6 +888,20 @@ class SettingsClass(object):
         return sett.Value == "1"
 
     @staticmethod
+    def GetLastDetectedRS232BaudRate() -> int | None:
+        # The baud rate DetectBaudRate last verified on the RS232 port, kept across
+        # restarts. Not cached: it is only read when the port is initialised.
+        sett = DatabaseHelper.get_setting_by_key('LastDetectedRS232BaudRate')
+        if sett is None or sett.Value not in ("4800", "38400"):
+            return None
+        return int(sett.Value)
+
+    @staticmethod
+    def SetLastDetectedRS232BaudRate(baudRate: int) -> None:
+        if SettingsClass.GetLastDetectedRS232BaudRate() != baudRate:
+            SettingsClass.SetSetting('LastDetectedRS232BaudRate', str(baudRate))
+
+    @staticmethod
     @cached(cache, key=partial(hashkey, 'GetRS232Mode'), lock=rlock)
     def GetRS232Mode():
         sett = DatabaseHelper.get_setting_by_key('RS232Mode')
