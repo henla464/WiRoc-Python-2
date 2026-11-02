@@ -453,6 +453,9 @@ class DatabaseHelper:
     def clear_fetched_for_sending(cls, messageSubscriptionId: int) -> None:
         cls.init()
         msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionId)
+        if msa is None:
+            # row can be deleted by the background archive process while it is fetched here
+            return None
         msa.FetchedForSending = None
         cls.db.save_table_object(msa, False)
 
@@ -475,6 +478,8 @@ class DatabaseHelper:
     def increment_find_adapter_tries_and_set_find_adapter_try_date(cls, messageSubscriptionId: int, retryDelay: float) -> None:
         cls.init()
         msa = cls.db.get_table_object(MessageSubscriptionData, messageSubscriptionId)
+        if msa is None:
+            return None
         msa.FindAdapterTryDate = datetime.now()
         msa.FindAdapterTries = msa.FindAdapterTries + 1
         msa.FindAdapterRetryDelay = retryDelay
@@ -1119,6 +1124,8 @@ class DatabaseHelper:
             # only archive messages that it is longer than 15 seconds ago they were sent
             # assume 15 seconds is long enough for all datarate settings
             fifteenSecondsAgo: datetime = datetime.now() - timedelta(seconds=15)
+            # the main process marks rows it is currently sending, leave those alone
+            twelveSecondsAgo: datetime = datetime.now() - timedelta(seconds=12)
             sql = ("SELECT MessageSubscriptionData.id, "
                    "MessageSubscriptionData.MessageID, "
                    "MessageSubscriptionData.AckReceivedFromReceiver, "
@@ -1150,10 +1157,11 @@ class DatabaseHelper:
                    "JOIN MessageBoxData ON MessageBoxData.id = MessageSubscriptionData.MessageBoxId "
                    "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
                    "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
-                   "((MessageSubscriptionData.NoOfSendTries >= SubscriptionData.MaxTries AND (MessageSubscriptionData.SentDate < ? or MessageSubscriptionData.SendFailedDate < ?)) or MessageSubscriptionData.FindAdapterTries >= 5) "
+                   "((MessageSubscriptionData.NoOfSendTries >= SubscriptionData.MaxTries AND (MessageSubscriptionData.SentDate < ? or MessageSubscriptionData.SendFailedDate < ?)) or MessageSubscriptionData.FindAdapterTries >= 5) AND "
+                   "(MessageSubscriptionData.FetchedForSending IS NULL OR MessageSubscriptionData.FetchedForSending < ?) "
                    "ORDER BY MessageBoxData.CreatedDate desc "
                    "LIMIT %s") % limit
-            return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql, (fifteenSecondsAgo, fifteenSecondsAgo))
+            return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql, (fifteenSecondsAgo, fifteenSecondsAgo, twelveSecondsAgo))
         return []
 
     @classmethod
