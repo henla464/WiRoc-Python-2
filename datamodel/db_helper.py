@@ -1124,8 +1124,6 @@ class DatabaseHelper:
             # only archive messages that it is longer than 15 seconds ago they were sent
             # assume 15 seconds is long enough for all datarate settings
             fifteenSecondsAgo: datetime = datetime.now() - timedelta(seconds=15)
-            # the main process marks rows it is currently sending, leave those alone
-            twelveSecondsAgo: datetime = datetime.now() - timedelta(seconds=12)
             sql = ("SELECT MessageSubscriptionData.id, "
                    "MessageSubscriptionData.MessageID, "
                    "MessageSubscriptionData.AckReceivedFromReceiver, "
@@ -1158,10 +1156,11 @@ class DatabaseHelper:
                    "WHERE SubscriptionData.Enabled IS NOT NULL AND SubscriptionData.Enabled = 1 AND "
                    "TransformData.Enabled IS NOT NULL AND TransformData.Enabled = 1 AND "
                    "((MessageSubscriptionData.NoOfSendTries >= SubscriptionData.MaxTries AND (MessageSubscriptionData.SentDate < ? or MessageSubscriptionData.SendFailedDate < ?)) or MessageSubscriptionData.FindAdapterTries >= 5) AND "
+                   # the main process marks rows it fetched for sending, leave those alone
                    "(MessageSubscriptionData.FetchedForSending IS NULL OR MessageSubscriptionData.FetchedForSending < ?) "
                    "ORDER BY MessageBoxData.CreatedDate desc "
                    "LIMIT %s") % limit
-            return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql, (fifteenSecondsAgo, fifteenSecondsAgo, twelveSecondsAgo))
+            return cls.db.get_table_objects_by_SQL(MessageSubscriptionView, sql, (fifteenSecondsAgo, fifteenSecondsAgo, fifteenSecondsAgo))
         return []
 
     @classmethod
