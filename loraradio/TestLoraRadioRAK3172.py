@@ -24,12 +24,12 @@ class TestLoraRadioRAK3172(unittest.TestCase):
         radio.staleBusyLogged = False
         with mock.patch("loraradio.LoraRadioRAK3172.time.monotonic", return_value=100.0):
             self.assertFalse(radio.IsReadyToSend())  # AUX goes low, clock starts
-        with mock.patch("loraradio.LoraRadioRAK3172.time.monotonic", return_value=129.0):
+        with mock.patch("loraradio.LoraRadioRAK3172.time.monotonic", return_value=108.0):
             self.assertFalse(radio.IsReadyToSend())  # still within the worst-case airtime
-        with mock.patch("loraradio.LoraRadioRAK3172.time.monotonic", return_value=131.0):
+        with mock.patch("loraradio.LoraRadioRAK3172.time.monotonic", return_value=113.0):
             with self.assertLogs("WiRoc", level="ERROR"):
                 self.assertTrue(radio.IsReadyToSend())  # stale flag, send allowed and logged
-        with mock.patch("loraradio.LoraRadioRAK3172.time.monotonic", return_value=132.0):
+        with mock.patch("loraradio.LoraRadioRAK3172.time.monotonic", return_value=114.0):
             with self.assertNoLogs("WiRoc", level="ERROR"):
                 self.assertTrue(radio.IsReadyToSend())  # logged once per episode
         hw.busy = False

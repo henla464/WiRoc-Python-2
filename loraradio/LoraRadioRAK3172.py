@@ -21,8 +21,9 @@ class LoraRadioRAK3172:
 
     LoraModuleParameters: LoraParametersRAK3172 = None
 
-    # above the worst-case airtime (~24 s at SF12 and 10.4 kHz) so a real transmission is never cut short
-    StaleBusyTimeoutS: float = 30.0
+    # Above the worst-case RAK3172 airtime in TimeOnAirData (8950 ms, SF12/bw7/cr4 double punch)
+    # so a real transmission is never cut short.
+    StaleBusyTimeoutS: float = 12.0
 
     # Send Data
     SendLORADataCmd = "ATC+SEND={data}\r"
@@ -363,7 +364,7 @@ class LoraRadioRAK3172:
         elif now - self.busySince > LoraRadioRAK3172.StaleBusyTimeoutS:
             # The module raises AUX from the TX-done callback, so a TX aborted by a P2PM write or a
             # lost TxDone IRQ leaves AUX low forever and the host would never send again. Longer than
-            # the worst-case airtime (~24 s at SF12/narrowband), so a real TX is never cut short; the
+            # the worst-case airtime in TimeOnAirData (8950 ms), so a real TX is never cut short; the
             # send that clears it completes normally and raises AUX again.
             if not self.staleBusyLogged:
                 self.staleBusyLogged = True
