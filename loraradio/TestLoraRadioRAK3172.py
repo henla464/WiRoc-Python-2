@@ -52,6 +52,15 @@ class TestLoraRadioRAK3172(unittest.TestCase):
         self.assertEqual("0", fields[14])  # active root
         self.assertEqual("1", fields[15])  # standby root
 
+    def test_BuildLORAP2PParametersCmd_stripsInvalidDeviceID(self):
+        # a bad setting must not inject extra separators/commands into the AT command
+        cmd = LoraRadioRAK3172.BuildLORAP2PParametersCmd(self.getChannelData(), 0x16, 1, True, True, True, 8,
+                                                         True, True, "AA:BB\rATC+RESET")
+        self.assertNotIn("\r", cmd.rstrip("\r"))
+        fields = cmd.split("=", 1)[1].rstrip("\r").split(':')
+        self.assertEqual(17, len(fields))
+        self.assertEqual("", fields[16])
+
     def test_GetEffectiveMeshFlags(self):
         # A promoted standby (module is root) survives an incidental re-init
         self.assertEqual((True, False), LoraRadioRAK3172.GetEffectiveMeshFlags(False, True, True, False))

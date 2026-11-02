@@ -193,6 +193,9 @@ class LoraRadioRAK3172:
                                  rxGain: bool, drf1268dsCompatMode: bool, sendAck: bool, preambleLength: int,
                                  meshEnabled: bool = False, meshActiveRoot: bool = False,
                                  meshDeviceID: str = "", meshStandbyRoot: bool = False) -> str:
+        if len(meshDeviceID) != 12 or not all(c in '0123456789abcdefABCDEF' for c in meshDeviceID):
+            # a config value must never inject extra AT command separators
+            meshDeviceID = ""
         # Mesh framing is incompatible with the DRF1268DS netid prefix, so compat mode is forced off
         # while mesh is enabled. sendack is passed through; the mesh firmware ignores it (its acks
         # are link-layer and never reach the host).

@@ -489,7 +489,7 @@ class SettingsClass(object):
     @cached(cacheForEver, key=partial(hashkey, 'GetMeshDeviceID'), lock=rlock)
     def GetMeshDeviceID() -> str:
         sett = DatabaseHelper.get_setting_by_key('MeshDeviceID')
-        if sett is not None and len(sett.Value) == 12:
+        if sett is not None and len(sett.Value) == 12 and all(c in '0123456789ABCDEFabcdef' for c in sett.Value):
             return sett.Value
         # Prefer the radios own BT address so a replaced SBC keeps a unique node id
         btAddress = SettingsClass.GetBTAddress()
