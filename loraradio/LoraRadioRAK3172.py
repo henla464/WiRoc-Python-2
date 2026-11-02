@@ -21,6 +21,9 @@ class LoraRadioRAK3172:
 
     LoraModuleParameters: LoraParametersRAK3172 = None
 
+    # above the worst-case airtime (~24 s at SF12 and 10.4 kHz) so a real transmission is never cut short
+    StaleBusyTimeoutS: float = 30.0
+
     # Send Data
     SendLORADataCmd = "ATC+SEND={data}\r"
     SendLORADataCmd_ExpectedResponseStart1 = "OK"
@@ -85,6 +88,8 @@ class LoraRadioRAK3172:
         self.loraRadioDataHandler: LoraRadioDataHandler = LoraRadioDataHandler(2, 1, 1)
         self.ackReceivedMatchingLastSentMessage: bool = True
         self.serialLock: threading.Lock = threading.Lock()
+        self.busySince: float | None = None
+        self.staleBusyLogged: bool = False
 
     def GetIsInitialized(self, channel: str, loraRange: str, loraPower: int, codeRate: int, rxGain: bool,
                          drf1268dsCompatMode: bool, sendAck: bool, enabled: bool) -> bool:
@@ -348,9 +353,25 @@ class LoraRadioRAK3172:
 
     # delay sending next message if Lora module aux indicates transmit or receiving already
     def IsReadyToSend(self) -> bool:
-        if self.hardwareAbstraction.GetIsTransmittingReceiving():
-            return False
-        return True
+        if not self.hardwareAbstraction.GetIsTransmittingReceiving():
+            self.busySince = None
+            self.staleBusyLogged = False
+            return True
+        now = time.monotonic()
+        if self.busySince is None:
+            self.busySince = now
+        elif now - self.busySince > LoraRadioRAK3172.StaleBusyTimeoutS:
+            # The module raises AUX from the TX-done callback, so a TX aborted by a P2PM write or a
+            # lost TxDone IRQ leaves AUX low forever and the host would never send again. Longer than
+            # the worst-case airtime (~24 s at SF12/narrowband), so a real TX is never cut short; the
+            # send that clears it completes normally and raises AUX again.
+            if not self.staleBusyLogged:
+                self.staleBusyLogged = True
+                LoraRadioRAK3172.WiRocLogger.error(
+                    f"LoraRadioRAK3172::IsReadyToSend() AUX low for more than {LoraRadioRAK3172.StaleBusyTimeoutS}s, "
+                    "assuming the module's TX-done callback never ran (aborted TX), allowing a send to clear it")
+            return True
+        return False
 
     def SendData(self, messageData: bytearray) -> ReturnStatus:
         self.serialLock.acquire()
