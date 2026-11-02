@@ -23,11 +23,11 @@ class ResubmitLoraAdapter(object):
 
     @staticmethod
     def CreateInstances(hardwareAbstraction: HardwareAbstraction) -> bool:
-        if len(ResubmitLoraAdapter.Instances) == 0 and (SettingsClass.GetLoraMode() == "SENDER" or SettingsClass.GetLoraMode() == "REPEATER"):
+        if len(ResubmitLoraAdapter.Instances) == 0 and SettingsClass.IsSenderRole():
             ResubmitLoraAdapter.Instances.append(ResubmitLoraAdapter("resubmit1"))
             return True
         else:
-            if len(ResubmitLoraAdapter.Instances) > 0 and (SettingsClass.GetLoraMode() == "RECEIVER"):
+            if len(ResubmitLoraAdapter.Instances) > 0 and SettingsClass.IsReceiverRole():
                 ResubmitLoraAdapter.Instances.clear()
                 return True
         return False

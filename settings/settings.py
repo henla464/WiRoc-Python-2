@@ -44,6 +44,7 @@ class SettingsClass(object):
     SRRMessageAvailable = False
     NewErrorCode = False
     webServerUp = False
+    meshPromoted = False  # set from ATC+MESHSTATE, true once a standby root has been promoted
     _lastCachedSettingsVersion = 0
 
     #####
@@ -424,6 +425,80 @@ class SettingsClass(object):
             SettingsClass.SetSetting("DRF1268DSCompatModeEnabled", "1")
             return True
         return sett.Value == "1"
+
+    @staticmethod
+    def GetMeshFirmwareSupported() -> bool | None:
+        # Written by the radio driver from the ATC+FEATURES query, None until the radio has initialized once
+        sett = DatabaseHelper.get_setting_by_key('RAK3172MeshFirmware')
+        if sett is None or sett.Value not in ('0', '1'):
+            return None
+        return sett.Value == '1'
+
+    @staticmethod
+    def IsLoraMeshSupported() -> bool:
+        if HardwareAbstraction.Instance is None:
+            HardwareAbstraction.Instance = HardwareAbstraction()
+        return HardwareAbstraction.Instance.GetLoraModule() == "RAK3172" and \
+            SettingsClass.GetMeshFirmwareSupported() is not False
+
+    @staticmethod
+    def IsMeshCompatibleLoraRange(loraRange: str) -> bool:
+        # Mesh only runs on the faster data rates (any channel in these ranges)
+        return loraRange in ('MF', 'F', 'XF', 'UF')
+
+    @staticmethod
+    def IsMeshLoraMode() -> bool:
+        return SettingsClass.GetLoraMode() in ('MESHROOT', 'MESHNODE', 'MESHSTANDBYROOT')
+
+    @staticmethod
+    def IsReceiverRole() -> bool:
+        # The mesh roots are the end point of the mesh and receive like a normal receiver
+        return SettingsClass.GetLoraMode() in ('RECEIVER', 'MESHROOT', 'MESHSTANDBYROOT')
+
+    @staticmethod
+    def IsSenderRole() -> bool:
+        # In a mesh all nodes except the root send towards the root
+        return SettingsClass.GetLoraMode() in ('SENDER', 'REPEATER', 'MESHNODE')
+
+    @staticmethod
+    def IsMeshPassive() -> bool:
+        # A standby root can't send anything (AT_BUSY_ERROR) until the firmware promotes it
+        return SettingsClass.GetMeshStandbyRoot() and not SettingsClass.meshPromoted
+
+    @staticmethod
+    def SetMeshPromoted(promoted: bool):
+        SettingsClass.meshPromoted = promoted
+
+    @staticmethod
+    def GetMeshPromoted() -> bool:
+        return SettingsClass.meshPromoted
+
+    @staticmethod
+    def GetMeshEnabled() -> bool:
+        return SettingsClass.IsMeshLoraMode()
+
+    @staticmethod
+    def GetMeshRoot() -> bool:
+        return SettingsClass.GetLoraMode() == 'MESHROOT'
+
+    @staticmethod
+    def GetMeshStandbyRoot() -> bool:
+        return SettingsClass.GetLoraMode() == 'MESHSTANDBYROOT'
+
+    @staticmethod
+    @cached(cacheForEver, key=partial(hashkey, 'GetMeshDeviceID'), lock=rlock)
+    def GetMeshDeviceID() -> str:
+        sett = DatabaseHelper.get_setting_by_key('MeshDeviceID')
+        if sett is not None and len(sett.Value) == 12:
+            return sett.Value
+        # Prefer the radios own BT address so a replaced SBC keeps a unique node id
+        btAddress = SettingsClass.GetBTAddress()
+        if btAddress != "NoBTAddress" and len(btAddress.replace(':', '')) == 12:
+            meshDeviceID = btAddress.replace(':', '').upper()
+        else:
+            meshDeviceID = ''.join(random.choice('0123456789ABCDEF') for _ in range(12))
+        SettingsClass.SetSetting("MeshDeviceID", meshDeviceID)
+        return meshDeviceID
 
     @staticmethod
     @cached(cache, key=partial(hashkey, 'GetAcknowledgementRequested'), lock=rlock)

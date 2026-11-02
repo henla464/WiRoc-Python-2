@@ -169,7 +169,9 @@ class LoraRadioDRF1268DS_RS:
         self.ackReceivedMatchingLastSentMessage: bool = True
         self.serialLock: threading.Lock = threading.Lock()
 
-    def GetIsInitialized(self, channel: str, loraRange: str, loraPower: int, codeRate: int, rxGain: bool, drf1268dsCompatModeEnabled: bool, sendAck: bool, enabled: bool) -> bool:
+    def GetIsInitialized(self, channel: str, loraRange: str, loraPower: int, codeRate: int, rxGain: bool, drf1268dsCompatModeEnabled: bool, sendAck: bool, enabled: bool,
+                         meshEnabled: bool = False, meshActiveRoot: bool = False, meshDeviceID: str = "",
+                         meshStandbyRoot: bool = False) -> bool:
         return self.isInitialized and \
                 channel == self.channel and \
                 loraPower == self.loraPower and \
@@ -373,7 +375,9 @@ class LoraRadioDRF1268DS_RS:
         # clear any lora config error code
         self.SetErrorCode(code, "")
 
-    def Init(self, channel: str, loraRange: str, loraPower: int, codeRate: int, rxGain: bool, drf1268dsCompatModeEnabled: bool, sendAck: bool, enabled: bool):
+    def Init(self, channel: str, loraRange: str, loraPower: int, codeRate: int, rxGain: bool, drf1268dsCompatModeEnabled: bool, sendAck: bool, enabled: bool,
+             meshEnabled: bool = False, meshActiveRoot: bool = False, meshDeviceID: str = "",
+             meshStandbyRoot: bool = False):
         LoraRadioDRF1268DS_RS.WiRocLogger.info(
             f"LoraRadioDRF1268DS_RS::Init() Port name: {self.portName} Channel: {channel} "
             f"LoraRange {loraRange} LoraPower: {loraPower} CodeRate: {codeRate} "
@@ -493,7 +497,15 @@ class LoraRadioDRF1268DS_RS:
             return False
         return True
 
-    def SendData(self, messageData: bytearray) -> ReturnStatus:
+    def GetLastReceivedSrcAddr(self) -> int:
+        # only used for mesh downlinks, which this module does not support
+        return 0
+
+    def GetMeshState(self) -> dict | None:
+        # mesh is only supported on the RAK3172
+        return None
+
+    def SendData(self, messageData: bytearray, destAddr: int = 0) -> ReturnStatus:
         self.serialLock.acquire()
         try:
             LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::SendData() send data: " + Utils.GetDataInHex(messageData, logging.DEBUG))

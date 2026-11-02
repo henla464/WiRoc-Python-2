@@ -16,3 +16,7 @@ class LoraParametersRAK3172(object):
         self.Drf1268dsCompatMode: bool | None = None
         self.SendAck: bool | None = None
         self.PayloadLength: int|None = None
+        self.MeshEnabled: bool | None = None
+        self.ActiveRoot: bool | None = None
+        self.StandbyRoot: bool | None = None
+        self.NodeDeviceID: str | None = None

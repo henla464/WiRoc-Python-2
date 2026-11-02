@@ -618,7 +618,7 @@ paths:
       operationId: "getLoraMode"
       responses:
         "200":
-          description: "The lora mode (RECEIVER, REPEATER, SENDER)"
+          description: "The lora mode (RECEIVER, REPEATER, SENDER, MESHNODE, MESHROOT, MESHSTANDBYROOT). MESHROOT is the destination node of a LoRa P2P mesh, MESHNODE the other nodes. MESHSTANDBYROOT is a second root that stays silent until the active root goes dark and the module promotes it."
           content:
             application/json:
               schema:
@@ -627,7 +627,7 @@ paths:
     get:
       tags:
         - "Radio"
-      summary: "Set the Lora mode (RECEIVER, REPEATER, SENDER)"
+      summary: "Set the Lora mode (RECEIVER, REPEATER, SENDER, MESHNODE, MESHROOT, MESHSTANDBYROOT) (mesh modes require a RAK3172 module and a fast data rate)"
       operationId: "setLoraMode"
       parameters:
         - name: loramode
@@ -655,6 +655,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
+  /lora/meshsupported/:
+    get:
+      tags:
+        - "Radio"
+      summary: "Get if the LoRa radio supports mesh"
+      description: "1 when the module is a RAK3172 whose firmware reports the mesh feature via ATC+FEATURES. 0 otherwise, e.g. a RAK3172 with the old main/master firmware (no ATC+FEATURES, assumed mesh-less) or a DRF1268DS module."
+      operationId: "getMeshSupported"
+      responses:
+        "200":
+          description: "0/1 depending on if LoRa mesh is supported"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /srr/enabled/:
     get:
       tags:

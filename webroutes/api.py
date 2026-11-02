@@ -106,10 +106,22 @@ def getLoraModule():
     return jsonpickle.encode(MicroMock(Value=loraModule))
 
 
+@app.route('/api/lora/meshsupported/', methods=['GET'])
+def getMeshSupported():
+    # 0 when the module is not a RAK3172 or it runs firmware without the mesh (ATC+P2PM) support
+    supported = '1' if SettingsClass.IsLoraMeshSupported() else '0'
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=supported))
+
+
 @app.route('/api/lorarange/<lorarange>/', methods=['GET'])
 @app.route('/api/lora/lorarange/<lorarange>/', methods=['GET'])
 def setLoraRange(lorarange):
     loraRange = _LORARANGE_FROM_OLD.get(lorarange, lorarange)
+    if SettingsClass.IsMeshLoraMode() and not SettingsClass.IsMeshCompatibleLoraRange(loraRange):
+        # Mesh is enabled, it only runs on fast data rates
+        raise Exception("Error: not a valid LoraRange while a mesh mode is selected (the data rate is too slow)")
     sd = DatabaseHelper.get_setting_by_key('LoraRange')
     if sd is None:
         sd = SettingData()
@@ -530,10 +542,7 @@ def setWiRocDeviceName(deviceName):
 @app.route('/api/loramode/', methods=['GET'])
 @app.route('/api/lora/mode/', methods=['GET'])
 def getLoraMode():
-    loramode = "RECEIVER"
-    setting = DatabaseHelper.get_setting_by_key('LoraMode')
-    if setting is not None:
-        loramode = setting.Value
+    loramode = SettingsClass.GetLoraMode()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=loramode))
@@ -542,7 +551,11 @@ def getLoraMode():
 @app.route('/api/loramode/<loramode>/', methods=['GET'])
 @app.route('/api/lora/mode/<loramode>/', methods=['GET'])
 def setLoraMode(loramode):
-    if loramode == "RECEIVER" or loramode == "REPEATER" or loramode == "SENDER":
+    if loramode in ("MESHROOT", "MESHNODE", "MESHSTANDBYROOT"):
+        # Mesh only runs on the RAK3172 and on the fast data rates
+        if not SettingsClass.IsLoraMeshSupported() or not SettingsClass.IsMeshCompatibleLoraRange(SettingsClass.GetLoraRange()):
+            raise Exception("Error: mesh mode requires a RAK3172 module with mesh firmware and a LoraRange of MF, F, XF or UF")
+    if loramode in ("RECEIVER", "REPEATER", "SENDER", "MESHROOT", "MESHNODE", "MESHSTANDBYROOT"):
         sd = DatabaseHelper.get_setting_by_key('LoraMode')
         if sd is None:
             sd = SettingData()

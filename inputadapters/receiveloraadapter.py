@@ -65,6 +65,7 @@ class ReceiveLoraAdapter(object):
         else:
             self.loraRadio: LoraRadioRAK3172 = LoraRadioRAK3172.GetInstance(portName, hardwareAbstraction)
         self.hardwareAbstraction = hardwareAbstraction
+        self.lastMeshStatePollTime = 0.0
 
     def GetInstanceNumber(self) -> int:
         return self.instanceNumber
@@ -86,8 +87,11 @@ class ReceiveLoraAdapter(object):
         codeRate = SettingsClass.GetCodeRate()
         rxGain = SettingsClass.GetRxGainEnabled()
         drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268DSCompatModeEnabled()
-        sendAck = SettingsClass.GetLoraMode() == "RECEIVER"  # only for RAK3172
-        return self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled)
+        sendAck = SettingsClass.IsReceiverRole()  # only used by the RAK3172 driver
+        meshEnabled = SettingsClass.GetMeshEnabled()
+        return self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled,
+                                                meshEnabled, SettingsClass.GetMeshRoot() if meshEnabled else False,
+                                                SettingsClass.GetMeshDeviceID(), SettingsClass.GetMeshStandbyRoot() if meshEnabled else False)
 
     def ShouldBeInitialized(self) -> bool:
         enabled: bool = SettingsClass.GetLoraEnabled()
@@ -97,8 +101,11 @@ class ReceiveLoraAdapter(object):
         codeRate: int = SettingsClass.GetCodeRate()
         rxGain: bool = SettingsClass.GetRxGainEnabled()
         drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268DSCompatModeEnabled()
-        sendAck = SettingsClass.GetLoraMode() == "RECEIVER"  # only for RAK3172
-        return not self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled)
+        sendAck = SettingsClass.IsReceiverRole()  # only used by the RAK3172 driver
+        meshEnabled = SettingsClass.GetMeshEnabled()
+        return not self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled,
+                                                    meshEnabled, SettingsClass.GetMeshRoot() if meshEnabled else False,
+                                                    SettingsClass.GetMeshDeviceID(), SettingsClass.GetMeshStandbyRoot() if meshEnabled else False)
 
     def Init(self) -> bool:
         enabled: bool = SettingsClass.GetLoraEnabled()
@@ -108,19 +115,27 @@ class ReceiveLoraAdapter(object):
         codeRate: int = SettingsClass.GetCodeRate()
         rxGain: bool = SettingsClass.GetRxGainEnabled()
         drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268DSCompatModeEnabled()
-        sendAck = SettingsClass.GetLoraMode() == "RECEIVER"  # only for RAK3172
-        if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled):
+        sendAck = SettingsClass.IsReceiverRole()  # only used by the RAK3172 driver
+        meshEnabled = SettingsClass.GetMeshEnabled()
+        meshRoot = SettingsClass.GetMeshRoot() if meshEnabled else False
+        meshStandbyRoot = SettingsClass.GetMeshStandbyRoot() if meshEnabled else False
+        meshDeviceID = SettingsClass.GetMeshDeviceID()
+        if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled,
+                                           meshEnabled, meshRoot, meshDeviceID, meshStandbyRoot):
             return True
-        return self.loraRadio.Init(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled)
+        return self.loraRadio.Init(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled,
+                                   meshEnabled, meshRoot, meshDeviceID, meshStandbyRoot)
 
     def UpdateInfrequently(self):
         return True
 
     def TrySendData(self, messageData):
+        # In mesh a root's app ack has to be a downlink to the node that sent the message
+        destAddr = self.loraRadio.GetLastReceivedSrcAddr() if SettingsClass.GetMeshEnabled() else 0
         startTrySendTime = time.monotonic()
         dataSentStatus: ReturnStatus = ReturnStatus.NOREPLY
         if self.loraRadio.IsReadyToSend():
-            dataSentStatus = self.loraRadio.SendData(messageData)
+            dataSentStatus = self.loraRadio.SendData(messageData, destAddr)
             ReceiveLoraAdapter.WiRocLogger.debug(
                 "ReceiveLoraAdapter::TrySendData() MessageData: " + Utils.GetDataInHex(messageData, logging.DEBUG))
         # DRF1268DS modules can get stuck and not recieve messages. I think it gets stuck in TX mode.
@@ -130,12 +145,32 @@ class ReceiveLoraAdapter(object):
         while not dataSentStatus == ReturnStatus.SENT:
             time.sleep(0.01)
             if self.loraRadio.IsReadyToSend():
-                dataSentStatus = self.loraRadio.SendData(messageData)
+                dataSentStatus = self.loraRadio.SendData(messageData, destAddr)
             if time.monotonic() - startTrySendTime > (SettingsClass.GetRetryDelay(1) / 2000000):
                 # Wait half of a first retrydelay (GetRetryDelay returns in microseconds)
                 ReceiveLoraAdapter.WiRocLogger.error("ReceiveLoraAdapter::TrySendData() Wasn't able to send ack (busy response)")
                 return False
         return True
+
+    def UpdateMeshPromotedState(self, receivedMessage: bool):
+        # A standby root is silent until the firmware promotes it, then it has to send the app acks
+        if not SettingsClass.GetMeshStandbyRoot():
+            SettingsClass.SetMeshPromoted(False)
+            return
+        now = time.monotonic()
+        if receivedMessage or now - self.lastMeshStatePollTime < 2.0:
+            return
+        if self.hardwareAbstraction.GetLORAIRQValue():
+            return
+        self.lastMeshStatePollTime = now
+        state = self.loraRadio.GetMeshState()
+        if state is None:
+            return
+        promoted = state["isroot"] == 1
+        if promoted != SettingsClass.GetMeshPromoted():
+            SettingsClass.SetMeshPromoted(promoted)
+            ReceiveLoraAdapter.WiRocLogger.info(
+                "ReceiveLoraAdapter::UpdateMeshPromotedState() Mesh standby root promoted: " + str(promoted))
 
     # messageData is a bytearray
     def GetData(self):
@@ -146,6 +181,7 @@ class ReceiveLoraAdapter(object):
             ReceiveLoraAdapter.WiRocLogger.error(
                 "ReceiveLoraAdapter::GetData() Error reading from lora " + traceback.format_exc())
             time.sleep(0.5)
+        self.UpdateMeshPromotedState(loraMessage is not None)
 
         if loraMessage is not None:
             receivedData = loraMessage.GetByteArray()
@@ -169,7 +205,7 @@ class ReceiveLoraAdapter(object):
             if messageType == LoraRadioMessageRS.MessageTypeLoraAck:
                 if repeaterRequested:
                     SettingsClass.SetHasReceivedMessageFromRepeater()
-                if SettingsClass.GetLoraMode() == "SENDER" or SettingsClass.GetLoraMode() == "REPEATER":
+                if SettingsClass.IsSenderRole():
                     messageIDToReturn = loraMessage.GetMessageIDThatIsAcked()
                     self.loraRadio.SetAckReceivedMatchingLastSentMessage(SettingsClass.GetMessageIDOfLastLoraMessageSent() == messageIDToReturn)
             elif messageType == LoraRadioMessageRS.MessageTypeStatus or messageType == LoraRadioMessageRS.MessageTypeStatus2 or \
@@ -186,17 +222,20 @@ class ReceiveLoraAdapter(object):
                 ackRequested = loraMessage.GetAckRequested()
                 ackAlreadySent = loraMessage.GetAckAlreadySent()
                 loraListenOnly = SettingsClass.GetLoraListenOnly()
+                # Mesh has no app level repeaters, the root always acks directly so the ack can be sent downlink
+                effectiveRepeaterRequested = repeaterRequested and not SettingsClass.GetMeshEnabled()
                 ReceiveLoraAdapter.WiRocLogger.debug("ReceiveLoraAdapter::GetData() Lora message received: ackRequested: " +str(ackRequested)+ " ackAlreadySent: " +str(ackAlreadySent)+ " loraListenOnly: " +str(loraListenOnly)+ " WiRocMode: " + SettingsClass.GetLoraMode())
                 if ackAlreadySent:
                     ReceiveLoraAdapter.WiRocLogger.debug("ReceiveLoraAdapter::GetData() Lora message received, ack already sent by lora module. WiRocMode: " + SettingsClass.GetLoraMode())
                 elif ackRequested and \
-                        ((SettingsClass.GetLoraMode() == "RECEIVER" and not repeaterRequested and not loraListenOnly)
-                         or (SettingsClass.GetLoraMode() == "REPEATER" and repeaterRequested)):
+                        ((SettingsClass.IsReceiverRole() and not effectiveRepeaterRequested and not loraListenOnly
+                          and not SettingsClass.IsMeshPassive())
+                         or (SettingsClass.GetLoraMode() == "REPEATER" and effectiveRepeaterRequested)):
                     ReceiveLoraAdapter.WiRocLogger.debug(
                         "ReceiveLoraAdapter::GetData() Lora message received, send ack. WiRocMode: " + SettingsClass.GetLoraMode() + " Repeater requested: " + str(
                             repeaterRequested))
                     ackMsg = LoraRadioMessageCreator.GetAckMessage(messageID)
-                    if SettingsClass.GetLoraMode() == "RECEIVER":
+                    if SettingsClass.IsReceiverRole():
                         ackMsg.SetAckRequested(True)  # indicate this is receiver acking
                     if SettingsClass.GetLoraMode() == "REPEATER":
                         ackMsg.SetRepeater(True)  # indicate this is repeater acking

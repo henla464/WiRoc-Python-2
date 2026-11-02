@@ -170,7 +170,7 @@ class Main:
                     if messageTypeName == "LORA":
                         # Count every received LoRa message for the TOA (airtime) calculation.
                         DatabaseHelper.add_received_lora_message(messageSubTypeName)
-                        if SettingsClass.GetLoraMode() == "SENDER":
+                        if SettingsClass.GetLoraMode() in ("SENDER", "MESHNODE"):
                             # In sender mode we don't forward received LoRa messages, so skip
                             # adding them to the messagebox and creating subscriptions.
                             continue
@@ -207,7 +207,7 @@ class Main:
                             self.wirocLogger.debug(
                                 "Start::handleInput() MessageType: " + messageTypeName + " MessageSubtypeName: " + messageSubTypeName + " WiRocMode: " + SettingsClass.GetLoraMode() + " RepeaterBit: " + str(
                                     loraMessage.GetRepeater()))
-                            if SettingsClass.GetLoraMode() == "RECEIVER":
+                            if SettingsClass.IsReceiverRole():
                                 if not loraMessage.GetRepeater():
                                     # Message received that might come from repeater (repeater (request repeater) is set to false when sent from repeater).
                                     # Archive any already scheduled ack message from previously received message (directly from sender)

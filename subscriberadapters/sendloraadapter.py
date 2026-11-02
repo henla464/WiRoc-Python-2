@@ -76,8 +76,7 @@ class SendLoraAdapter(object):
             for name in SendLoraAdapter.Instances[0].transforms:
                 DatabaseHelper.set_transform_enabled(False, name)
         else:
-            enableSendTransforms = (SettingsClass.GetLoraMode() == "SENDER" or
-                                    SettingsClass.GetLoraMode() == "REPEATER")
+            enableSendTransforms = SettingsClass.IsSenderRole()
             DatabaseHelper.set_transform_enabled(enableSendTransforms, "SISIMessageToLoraTransform")
             DatabaseHelper.set_transform_enabled(enableSendTransforms, "SRRSRRMessageToLoraTransform")
             DatabaseHelper.set_transform_enabled(enableSendTransforms, "SITestTestToLoraTransform")
@@ -163,8 +162,11 @@ class SendLoraAdapter(object):
         codeRate = SettingsClass.GetCodeRate()
         rxGain = SettingsClass.GetRxGainEnabled()
         drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268DSCompatModeEnabled()  # only for RAK3172
-        sendAck = SettingsClass.GetLoraMode == "RECEIVER"  # only for RAK3172
-        return self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled)
+        sendAck = SettingsClass.IsReceiverRole()  # only used by the RAK3172 driver
+        meshEnabled = SettingsClass.GetMeshEnabled()
+        return self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled,
+                                               meshEnabled, SettingsClass.GetMeshRoot() if meshEnabled else False,
+                                               SettingsClass.GetMeshDeviceID(), SettingsClass.GetMeshStandbyRoot() if meshEnabled else False)
 
     def ShouldBeInitialized(self):
         enabled: bool = SettingsClass.GetLoraEnabled()
@@ -174,8 +176,11 @@ class SendLoraAdapter(object):
         codeRate = SettingsClass.GetCodeRate()
         rxGain = SettingsClass.GetRxGainEnabled()
         drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268DSCompatModeEnabled()  # only for RAK3172
-        sendAck = SettingsClass.GetLoraMode() == "RECEIVER"  # only for RAK3172
-        loraRadioInitialized = self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled)
+        sendAck = SettingsClass.IsReceiverRole()  # only used by the RAK3172 driver
+        meshEnabled = SettingsClass.GetMeshEnabled()
+        loraRadioInitialized = self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled,
+                                                               meshEnabled, SettingsClass.GetMeshRoot() if meshEnabled else False,
+                                                               SettingsClass.GetMeshDeviceID(), SettingsClass.GetMeshStandbyRoot() if meshEnabled else False)
         SendLoraAdapter.WiRocLogger.debug(f"SendLoraAdapter::ShouldBeInitialized() loraRadioInitialized {loraRadioInitialized}")
         SendLoraAdapter.WiRocLogger.debug(
             f"SendLoraAdapter::ShouldBeInitialized() loraRadioInitialized SendLoraAdapter.Instances[0].AdapterInitialized {SendLoraAdapter.Instances[0].AdapterInitialized}")
@@ -197,14 +202,20 @@ class SendLoraAdapter(object):
         codeRate = SettingsClass.GetCodeRate()
         rxGain = SettingsClass.GetRxGainEnabled()
         drf1268dsCompatModeEnabled = SettingsClass.GetDRF1268DSCompatModeEnabled()
-        sendAck = SettingsClass.GetLoraMode() == "RECEIVER"
+        sendAck = SettingsClass.IsReceiverRole()  # only used by the RAK3172 driver
+        meshEnabled = SettingsClass.GetMeshEnabled()
+        meshRoot = SettingsClass.GetMeshRoot() if meshEnabled else False
+        meshStandbyRoot = SettingsClass.GetMeshStandbyRoot() if meshEnabled else False
+        meshDeviceID = SettingsClass.GetMeshDeviceID()
         # set the AdapterInitialized to same value as loraRadios initialized
         # if loraRadio changes initialize value later we can detect this.
-        if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled):
+        if self.loraRadio.GetIsInitialized(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled,
+                                           meshEnabled, meshRoot, meshDeviceID, meshStandbyRoot):
             SendLoraAdapter.Instances[0].AdapterInitialized = True
             return True
 
-        loraInitialized = self.loraRadio.Init(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled)
+        loraInitialized = self.loraRadio.Init(channel, loraRange, loraPower, codeRate, rxGain, drf1268dsCompatModeEnabled, sendAck, enabled,
+                                              meshEnabled, meshRoot, meshDeviceID, meshStandbyRoot)
         SendLoraAdapter.Instances[0].AdapterInitialized = loraInitialized
         return loraInitialized
 
