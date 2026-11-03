@@ -1473,10 +1473,12 @@ class LoraRadioDataHandler(object):
         messageTypes = []
         # Adds the message type in the header if that message type fits within the received data
         headerMessageType = LoraRadioDataHandler.GetHeaderMessageType(self.DataReceived)
+        headerTypeMatchesLength = False
         if headerMessageType in LoraRadioDataHandler.MessageTypesExpected:
             expectedMessageLength = LoraRadioMessageRS.MessageLengths[headerMessageType] + self.rssiByteCount + self.SNRByteCount + self.StatusByteCount
             if len(self.DataReceived) == expectedMessageLength:
                 messageTypes.append(headerMessageType)
+                headerTypeMatchesLength = True
             elif len(self.DataReceived) > expectedMessageLength:
                 messageTypes.append(headerMessageType)
 
@@ -1484,8 +1486,15 @@ class LoraRadioDataHandler(object):
         messageTypesByLength = self._GetMessageTypesByLength()
         for messageTypeByLength in messageTypesByLength:
             if messageTypeByLength not in messageTypes:
-                # try the one that matches by length first if there is also another that matches only by message type in header
-                messageTypes.insert(0, messageTypeByLength)
+                if headerTypeMatchesLength:
+                    # The header's type has exactly this length too (a sub second punch and a Status2 are
+                    # both 16 bytes): try the header's type first. Trying the other type first can let
+                    # Reed-Solomon "correct" a good message into a valid message of the wrong type, and the
+                    # same bytes are then misread on every retry.
+                    messageTypes.append(messageTypeByLength)
+                else:
+                    # try the one that matches by length first if there is also another that matches only by message type in header
+                    messageTypes.insert(0, messageTypeByLength)
 
         return messageTypes
 
