@@ -482,6 +482,12 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
         # Set when corrupted data (most likely a punch at the other baudrate) triggered the
         # reinit: once two-way, fetch the station's last punch from its backup memory.
         self.fetchLastPunchAfterReinit: bool = False
+        # One-way fallback: the baudrate that gave corrupted data, so the next fallback tries the
+        # other one; and whether a good punch has already been used to try two-way again. A device
+        # that never answers commands (a samlingsbox, a WiRoc in RS232 send mode) would otherwise
+        # be reinitialised on every punch.
+        self.corruptedAtBaudRate: int | None = None
+        self.triedTwoWayAfterGoodPunch: bool = False
 
     def writeData(self, dataToWrite: bytes) -> bool:
         self.siSerial.write(dataToWrite)
@@ -681,18 +687,26 @@ class ReceiveSISerialPort(ReceiveSIAdapter):
             if self.oneWayFallbackTryReInitWhenDataReceived and not self.oneWayFallbackShouldNotTriggerReInit:
                 self.shouldReinitialize = True
                 self.fetchLastPunchAfterReinit = True
+                self.corruptedAtBaudRate = self.siSerial.baudrate
+                # Something changed (another device, or the other baudrate): a good punch at the
+                # new baudrate may try two-way once more.
+                self.triedTwoWayAfterGoodPunch = False
             return None
         if (self.oneWay and self.oneWayFallbackTryReInitWhenDataReceived
                 and not self.oneWayFallbackShouldNotTriggerReInit
+                and not self.triedTwoWayAfterGoodPunch
                 and data.get("MessageSubTypeName") == "SIMessage"):
             # One-way fallback (the station didn't answer at init, e.g. plugged in after
             # boot) and now a good punch: the station is there, so go two-way to get
             # missed punch recovery back. This punch is delivered as normal. Its backup
             # memory address goes to InitTwoWay, so anything punched during the switch
             # is fetched from the station's backup memory rather than lost.
+            # Only once: if two-way still fails, the device doesn't answer commands, so stay
+            # one-way rather than reinitialising on every punch.
             siMsg = SIMessage()
             siMsg.AddPayload(data["Data"])
             self.pendingBackupAddress = siMsg.GetBackupMemoryAddressAsInt()
+            self.triedTwoWayAfterGoodPunch = True
             self.shouldReinitialize = True
         return data
 
@@ -778,19 +792,24 @@ class ReceiveSIHWSerialPort(ReceiveSISerialPort):
                 return success
             else:
                 twoWayOK = self.InitTwoWay(skipDetectBaudRate=False)
-                if self.detectedBaudRate is not None:
-                    SettingsClass.SetLastDetectedRS232BaudRate(self.detectedBaudRate)
                 if twoWayOK:
+                    self.triedTwoWayAfterGoodPunch = False
+                    self.corruptedAtBaudRate = None
                     return True
                 else:
                     # better with init one way if two-way is not working than aborting.
                     # Only trust the baudrate DetectBaudRate settled on if it succeeded.
-                    # Otherwise use the baudrate last detected on this port: the station
-                    # normally plugged into this WiRoc (a BSM7 is often 38400, a BSF7-P
-                    # printout station 4800). With nothing remembered, 38400 as before.
-                    fallbackBaudRate = (self.detectedBaudRate
-                                        or SettingsClass.GetLastDetectedRS232BaudRate()
-                                        or 38400)
+                    # After corrupted data, try the other baudrate, toggling for as long as
+                    # the data stays corrupted. Otherwise 38400 as before. A device that never
+                    # answers commands (a samlingsbox) is better set to one-way, with 4800 if
+                    # it needs it; this is only a safety net.
+                    if self.detectedBaudRate is not None:
+                        fallbackBaudRate = self.detectedBaudRate
+                    elif self.corruptedAtBaudRate is not None:
+                        fallbackBaudRate = 4800 if self.corruptedAtBaudRate == 38400 else 38400
+                    else:
+                        fallbackBaudRate = 38400
+                    self.corruptedAtBaudRate = None
                     ReceiveSIAdapter.WiRocLogger.info(f"ReceiveSIHWSerialPort::Init: {self.instanceName}: two-way failed, one-way at {fallbackBaudRate}")
                     success = self.InitOneWay(fallbackBaudRate)
                     if success:
