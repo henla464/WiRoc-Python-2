@@ -1,6 +1,7 @@
 import time
 import traceback
 import subprocess
+import json
 
 from battery import Battery
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
@@ -107,6 +108,7 @@ class BackgroundTasks(object):
         lastWiRocDeviceNameSentToServer: str | None = None
         lastBatteryIsLow: bool | None = None
         lastBatteryIsLowReceived: bool | None = None
+        meshUploadState = {"meshState": None, "topology": None, "stateSent": 0.0, "topologySent": 0.0}
         webServerUp = True
         while True:
             try:
@@ -142,6 +144,8 @@ class BackgroundTasks(object):
                             lastBatteryIsLow = BackgroundTasks.UpdateBatteryIsLowBackground(batteryIsLow, webServerUrl, apiKey,
                                                                                             btAddress, lastBatteryIsLow)
                             BackgroundTasks.SendSetConnectedToInternetBackground(webServerUrl, apiKey, btAddress)
+                            meshUploadState = BackgroundTasks.SendMeshSnapshotBackground(
+                                webServerUrl, apiKey, btAddress, meshUploadState)
 
                             if updateWiRocDevice:
                                 lastWiRocDeviceNameSentToServer = wiRocDeviceName
@@ -254,6 +258,57 @@ class BackgroundTasks(object):
             BackgroundTasks.WiRocLogger.warning(
                 "BackgroundTasks::AddDeviceBackground error creating device on webserver")
             BackgroundTasks.WiRocLogger.warning("BackgroundTasks::AddDeviceBackground " + str(ex))
+
+    @staticmethod
+    def SendMeshSnapshotBackground(webServerUrl, apiKey, btAddress, uploadState) -> dict:
+        try:
+            sett = DatabaseHelper.get_setting_by_key('MeshSnapshot')
+            if sett is None or not sett.Value:
+                return uploadState
+            snapshot = json.loads(sett.Value)
+            snapshotTime = snapshot["snapshotTime"]
+            if time.time() - snapshotTime > 900:
+                # mesh disabled or the radio stopped answering; let the server's freshness gate take over
+                return uploadState
+            meshState = snapshot["meshState"]
+            headers = {'X-Authorization': apiKey}
+            stateBody = {"BTAddress": btAddress, "snapshotTime": snapshotTime, "isRoot": snapshot["isRoot"],
+                         "addr": meshState["ownaddr"], "state": meshState["state"],
+                         "parentAddr": meshState["parent"], "hopCount": meshState["hops"],
+                         "pathCost": meshState["cost"], "neighbourCount": meshState["neighbours"],
+                         "transmitQueue": meshState["txq"], "allocatedAddresses": meshState["alloc"],
+                         "epoch": meshState["epoch"], "overheadPercent": meshState["overhead"],
+                         "ackTimeoutMs": meshState["ackms"], "standby": meshState["standby"] == 1}
+            if meshState != uploadState["meshState"] or time.monotonic() - uploadState["stateSent"] >= 300:
+                url = webServerUrl + "/api/v1/Devices/" + btAddress + "/MeshState"
+                if BackgroundTasks.PostMeshJson(url, stateBody, headers):
+                    uploadState["meshState"] = meshState
+                    uploadState["stateSent"] = time.monotonic()
+            nodes = snapshot.get("topology")
+            if snapshot["isRoot"] and nodes:
+                topologyBody = {"BTAddress": btAddress, "snapshotTime": snapshotTime, "isRoot": True,
+                                "nodes": nodes}
+                if nodes != uploadState["topology"] or time.monotonic() - uploadState["topologySent"] >= 300:
+                    url = webServerUrl + "/api/v1/Devices/" + btAddress + "/MeshTopology"
+                    if BackgroundTasks.PostMeshJson(url, topologyBody, headers):
+                        uploadState["topology"] = nodes
+                        uploadState["topologySent"] = time.monotonic()
+        except Exception as ex:
+            BackgroundTasks.WiRocLogger.error(
+                "BackgroundTasks::SendMeshSnapshotBackground() Exception: " + str(ex))
+        return uploadState
+
+    @staticmethod
+    def PostMeshJson(url, body, headers) -> bool:
+        try:
+            resp = requests.post(url=url, json=body, timeout=2, headers=headers, verify=False)
+            if resp.status_code in (200, 303):
+                return True
+            BackgroundTasks.WiRocLogger.error(
+                f"BackgroundTasks::PostMeshJson() {url} status {resp.status_code} {resp.text}")
+        except Exception as ex:
+            BackgroundTasks.WiRocLogger.error("BackgroundTasks::PostMeshJson() Exception: " + str(ex))
+        return False
 
     # ################## Database tasks ##############
     def StartInfrequentDatabaseTasks(self):

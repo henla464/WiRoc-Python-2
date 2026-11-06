@@ -505,6 +505,10 @@ class LoraRadioDRF1268DS_RS:
         # mesh is only supported on the RAK3172
         return None
 
+    def GetMeshTopology(self) -> list[dict] | None:
+        # mesh is only supported on the RAK3172
+        return None
+
     def SendData(self, messageData: bytearray, destAddr: int = 0) -> ReturnStatus:
         self.serialLock.acquire()
         try:

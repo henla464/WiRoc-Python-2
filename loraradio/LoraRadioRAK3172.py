@@ -37,6 +37,10 @@ class LoraRadioRAK3172:
     ViewMeshStateCmd = "ATC+MESHSTATE=?\r"
     ViewMeshStateCmd_ExpectedResponseStart = "ATC+MESHSTATE="
 
+    # Mesh topology: addr:parent:deviceId[:neigh=cost,...] rows joined by |
+    ViewMeshTopologyCmd = "ATC+MESHTOPO=?\r"
+    ViewMeshTopologyCmd_ExpectedResponseStart = "ATC+MESHTOPO="
+
     # Receive Data
     ReceiveLORADataCmd = "ATC+REC=?\r"
     ReceiveLORADataCmd_ExpectedResponseStart1 = "OK"
@@ -430,6 +434,60 @@ class LoraRadioRAK3172:
             respStr = data.decode('ascii', errors='replace').strip()
             LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::GetMeshState() got: " + respStr)
             return LoraRadioRAK3172.ParseMeshStateResponse(respStr)
+        finally:
+            self.serialLock.release()
+
+    @staticmethod
+    def ParseMeshTopologyResponse(respStr: str) -> list[dict] | None:
+        # Reply: ATC+MESHTOPO=<addr>:<parent>:<deviceId>[:<neighbour>=<cost>,...]|...
+        prefix = LoraRadioRAK3172.ViewMeshTopologyCmd_ExpectedResponseStart
+        if not respStr.startswith(prefix):
+            return None
+        payload = respStr[len(prefix):].strip()
+        if payload == "":
+            return []
+        rows = []
+        for row in payload.split('|'):
+            fields = row.split(':')
+            if len(fields) < 3:
+                return None
+            deviceID = fields[2]
+            if len(deviceID) != 12 or not all(c in '0123456789abcdefABCDEF' for c in deviceID):
+                return None
+            neighbours = []
+            try:
+                if len(fields) >= 4 and fields[3] != "":
+                    for neighbour in fields[3].split(','):
+                        pair = neighbour.split('=')
+                        if len(pair) != 2:
+                            return None
+                        neighbours.append({"addr": int(pair[0]), "cost": int(pair[1])})
+                rows.append({"addr": int(fields[0]), "parent": int(fields[1]),
+                             "deviceId": deviceID, "neighbours": neighbours})
+            except ValueError:
+                return None
+        return rows
+
+    def GetMeshTopology(self) -> list[dict] | None:
+        self.serialLock.acquire()
+        try:
+            if not self.radioSerial.is_open:
+                return None
+            while self.radioSerial.in_waiting > 0:
+                self.radioSerial.read(1)
+            self.radioSerial.write(LoraRadioRAK3172.ViewMeshTopologyCmd.encode('ascii'))
+            self.radioSerial.flush()
+            # A full 15-row reply is ~1 KB, nearly 0.1 s at 115200 baud
+            data = bytearray()
+            deadline = time.time() + 0.5
+            while time.time() < deadline and not data.endswith(b'\n'):
+                if self.radioSerial.in_waiting > 0:
+                    data.append(self.radioSerial.read(1)[0])
+                else:
+                    time.sleep(0.01)
+            respStr = data.decode('ascii', errors='replace').strip()
+            LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::GetMeshTopology() got: " + respStr)
+            return LoraRadioRAK3172.ParseMeshTopologyResponse(respStr)
         finally:
             self.serialLock.release()
 

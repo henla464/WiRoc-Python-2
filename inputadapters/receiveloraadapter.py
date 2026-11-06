@@ -1,3 +1,4 @@
+import json
 import traceback
 from loraradio.LoraRadioDRF1268DS_RS import LoraRadioDRF1268DS_RS
 from loraradio.LoraRadioRAK3172 import LoraRadioRAK3172
@@ -66,6 +67,7 @@ class ReceiveLoraAdapter(object):
             self.loraRadio: LoraRadioRAK3172 = LoraRadioRAK3172.GetInstance(portName, hardwareAbstraction)
         self.hardwareAbstraction = hardwareAbstraction
         self.lastMeshStatePollTime = 0.0
+        self.lastMeshSnapshotTime = 0.0
 
     def GetInstanceNumber(self) -> int:
         return self.instanceNumber
@@ -172,6 +174,25 @@ class ReceiveLoraAdapter(object):
             ReceiveLoraAdapter.WiRocLogger.info(
                 "ReceiveLoraAdapter::UpdateMeshPromotedState() Mesh standby root promoted: " + str(promoted))
 
+    def UpdateMeshSnapshot(self, receivedMessage: bool):
+        # Stored in the DB for the background process (a different process without serial access) that
+        # uploads it to the public server.
+        if not SettingsClass.GetMeshEnabled():
+            return
+        now = time.monotonic()
+        if receivedMessage or now - self.lastMeshSnapshotTime < 60.0:
+            return
+        if self.hardwareAbstraction.GetLORAIRQValue():
+            return
+        self.lastMeshSnapshotTime = now
+        state = self.loraRadio.GetMeshState()
+        if state is None:
+            return
+        snapshot = {"BTAddress": SettingsClass.GetBTAddress(), "snapshotTime": int(time.time()),
+                    "isRoot": state["isroot"] == 1, "meshState": state,
+                    "topology": self.loraRadio.GetMeshTopology()}
+        SettingsClass.SetSetting('MeshSnapshot', json.dumps(snapshot))
+
     # messageData is a bytearray
     def GetData(self):
         loraMessage = None
@@ -182,6 +203,7 @@ class ReceiveLoraAdapter(object):
                 "ReceiveLoraAdapter::GetData() Error reading from lora " + traceback.format_exc())
             time.sleep(0.5)
         self.UpdateMeshPromotedState(loraMessage is not None)
+        self.UpdateMeshSnapshot(loraMessage is not None)
 
         if loraMessage is not None:
             receivedData = loraMessage.GetByteArray()

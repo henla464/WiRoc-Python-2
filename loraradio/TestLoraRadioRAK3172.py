@@ -155,5 +155,22 @@ class TestLoraRadioRAK3172(unittest.TestCase):
         self.assertIsNone(LoraRadioRAK3172.ParseMeshStateResponse("ATC+MESHSTATE=1:0:5:x:2:0:3:2:5:3:3:7:806:0"))
 
 
+    def test_ParseMeshTopology(self):
+        rows = LoraRadioRAK3172.ParseMeshTopologyResponse(
+            "ATC+MESHTOPO=1:0:AABBCCDDEEFF:2=1,3=2|2:1:AABBCCDDEE01:1=1|3:1:AABBCCDDEE02")
+        self.assertEqual(3, len(rows))
+        self.assertEqual({"addr": 1, "parent": 0, "deviceId": "AABBCCDDEEFF",
+                          "neighbours": [{"addr": 2, "cost": 1}, {"addr": 3, "cost": 2}]}, rows[0])
+        self.assertEqual({"addr": 2, "parent": 1, "deviceId": "AABBCCDDEE01",
+                          "neighbours": [{"addr": 1, "cost": 1}]}, rows[1])
+        self.assertEqual([], rows[2]["neighbours"])
+        self.assertEqual([], LoraRadioRAK3172.ParseMeshTopologyResponse("ATC+MESHTOPO="))
+        self.assertIsNone(LoraRadioRAK3172.ParseMeshTopologyResponse("AT_COMMAND_NOT_FOUND"))
+        self.assertIsNone(LoraRadioRAK3172.ParseMeshTopologyResponse("AT_PARAM_ERROR"))
+        self.assertIsNone(LoraRadioRAK3172.ParseMeshTopologyResponse("ATC+MESHTOPO=1:0:XYZ"))
+        self.assertIsNone(LoraRadioRAK3172.ParseMeshTopologyResponse("ATC+MESHTOPO=1:0:AABBCCDDEEFF:2=x"))
+        self.assertIsNone(LoraRadioRAK3172.ParseMeshTopologyResponse("ATC+MESHTOPO=1:0:AABBCCDDEEFF:2=1|2:1"))
+
+
 if __name__ == '__main__':
     unittest.main()
