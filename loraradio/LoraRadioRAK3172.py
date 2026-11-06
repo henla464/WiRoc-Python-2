@@ -415,6 +415,8 @@ class LoraRadioRAK3172:
         return dict(zip(names, values))
 
     def GetMeshState(self) -> dict | None:
+        if self.meshFirmwareSupported is False:
+            return None
         self.serialLock.acquire()
         try:
             if not self.radioSerial.is_open:
@@ -469,6 +471,8 @@ class LoraRadioRAK3172:
         return rows
 
     def GetMeshTopology(self) -> list[dict] | None:
+        if self.meshFirmwareSupported is False:
+            return None
         self.serialLock.acquire()
         try:
             if not self.radioSerial.is_open:
