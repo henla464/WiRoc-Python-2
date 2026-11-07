@@ -927,6 +927,23 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler.DataReceived = bytearray()
         SettingsClass.SetMessageIDOfLastLoraMessageSent(None)
 
+    # A sub second punch received at a finish (1 Nov 2026), in air order, without the RSSI byte. Status2 is
+    # also 16 bytes, and when it was tried first Reed-Solomon "corrected" this good punch into a valid Status2.
+    # The receiver acked it as a status message, so the sender retried the same bytes 63 times in 10 minutes.
+    SubSecondPunch_StatusLookalike_AirOrder = Hex("8b 59 80 62 04 34 0f be 00 49 40 d5 01 17 22 26")
+
+    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_SubSecondPunchNotTakenForStatus2
+    def test_SubSecondPunchNotTakenForStatus2(self):
+        print("=== START test_SubSecondPunchNotTakenForStatus2 ===")
+        data = TestLoraRadioDataHandler.SubSecondPunch_StatusLookalike_AirOrder
+        for i in range(0, len(data)):
+            self.dataHandler.AddData(data[i:i + 1])
+        self.assertEqual(self.dataHandler._GetLikelyMessageTypes()[0], LoraRadioMessageRS.MessageTypeSIPunchSubSecond)
+        msg = self.dataHandler._TryGetMessage()
+        self.assertIsNotNone(msg)
+        self.assertEqual(msg.GetMessageType(), LoraRadioMessageRS.MessageTypeSIPunchSubSecond)
+        print("=== END test_SubSecondPunchNotTakenForStatus2 ===")
+
     # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_AddData
     def test_AddData(self):
         print("============================================================================================== START test_AddData ==============================================================================================")
