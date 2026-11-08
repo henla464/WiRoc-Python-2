@@ -1,6 +1,6 @@
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
-from loraradio.LoraRadioMessageRS import LoraRadioMessageStatus2RS, LoraRadioMessageRS, LoraRadioMessageStatusRS
+from loraradio.LoraRadioMessageRS import LoraRadioMessageStatus2RS, LoraRadioMessageRS
 from settings.settings import SettingsClass
 from datamodel.db_helper import DatabaseHelper
 from battery import Battery
@@ -132,79 +132,7 @@ class SendStatusAdapter(object):
             returnSuccess = True
             for data in messageData:
                 messageType = data[0] & 0x1F
-                if messageType == LoraRadioMessageRS.MessageTypeStatus:
-                    # Old status type
-                    # Add/Update device
-                    loraStatusMsg: LoraRadioMessageStatusRS = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(data)
-                    relayPathNo: int = loraStatusMsg.GetRelayPathNo()
-                    btAddress = loraStatusMsg.GetBTAddress()
-                    device = {"BTAddress": btAddress, "headBTAddress": thisWiRocBtAddress, "relayPathNo": relayPathNo}
-                    URL = settingsDictionary["WebServerUrl"] + "/api/v1/Devices"
-                    resp = requests.post(url=URL, json=device, timeout=1, headers=headers, verify=False)
-                    if resp.status_code == 200:
-                        retDevice = resp.json()
-                        SendStatusAdapter.WiRocLogger.debug(f"SendStatusAdapter::SendData URL: {URL}")
-                        SendStatusAdapter.WiRocLogger.debug(
-                            f"SendStatusAdapter::SendData Headers: {json.dumps(headers)}")
-                        SendStatusAdapter.WiRocLogger.debug(f"SendStatusAdapter::SendData json: {json.dumps(device)}")
-                        SendStatusAdapter.WiRocLogger.debug(
-                            f"SendStatusAdapter::SendData Response: {json.dumps(retDevice)}")
-                    else:
-                        SendStatusAdapter.WiRocLogger.error(f"SendStatusAdapter::SendData URL: {URL}")
-                        SendStatusAdapter.WiRocLogger.error(
-                            f"SendStatusAdapter::SendData Headers: {json.dumps(headers)}")
-                        SendStatusAdapter.WiRocLogger.error(f"SendStatusAdapter::SendData json: {json.dumps(device)}")
-                        returnSuccess = False
-
-                    # Set the device name
-                    if thisWiRocBtAddress == btAddress:
-                        thisWiRocDeviceName = settingsDictionary["WiRocDeviceName"]
-                        URL2 = settingsDictionary[
-                                   "WebServerUrl"] + "/api/v1/Devices/" + thisWiRocBtAddress + "/UpdateDeviceName/" + thisWiRocDeviceName
-                        resp = requests.get(url=URL2, timeout=1, headers=headers, verify=False)
-                        if resp.status_code == 200:
-                            retDevice = resp.json()
-                            SendStatusAdapter.WiRocLogger.debug(f"SendStatusAdapter::SendData URL: {URL2}")
-                            SendStatusAdapter.WiRocLogger.debug(
-                                f"SendStatusAdapter::SendData Headers: {json.dumps(headers)}")
-                            SendStatusAdapter.WiRocLogger.debug(
-                                f"SendStatusAdapter::SendData Response: {json.dumps(retDevice)}")
-                        else:
-                            SendStatusAdapter.WiRocLogger.error(f"SendStatusAdapter::SendData URL: {URL2}")
-                            SendStatusAdapter.WiRocLogger.error(
-                                f"SendStatusAdapter::SendData Headers: {json.dumps(headers)}")
-                            returnSuccess = False
-
-                    # Add new status
-                    batteryLevel: int = loraStatusMsg.GetBatteryPercent()
-                    siStationNumber: int = loraStatusMsg.GetSIStationNumber()
-                    allLoraPunchesSentOK: bool = loraStatusMsg.GetAllLoraPunchesSentOK()
-                    noOfLoraMsgSentNotAcked: int = loraStatusMsg.GetNoOfLoraMsgSentNotAcked()
-
-                    URL3 = settingsDictionary["WebServerUrl"] + "/api/v1/DeviceStatuses"
-                    deviceStatus = {"BTAddress": btAddress, "batteryLevel": batteryLevel,
-                                    "siStationNumber": siStationNumber,
-                                    "allLoraPunchesSentOK": allLoraPunchesSentOK,
-                                    "noOfLoraMsgSentNotAcked": noOfLoraMsgSentNotAcked,
-                                    }
-                    resp = requests.post(url=URL3, json=deviceStatus, timeout=1, headers=headers, verify=False)
-                    if resp.status_code == 200:
-                        retDevice = resp.json()
-                        SendStatusAdapter.WiRocLogger.debug(f"SendStatusAdapter::SendData URL: {URL3}")
-                        SendStatusAdapter.WiRocLogger.debug(
-                            f"SendStatusAdapter::SendData Headers: {json.dumps(headers)}")
-                        SendStatusAdapter.WiRocLogger.debug(
-                            f"SendStatusAdapter::SendData json: {json.dumps(deviceStatus)}")
-                        SendStatusAdapter.WiRocLogger.debug(
-                            f"SendStatusAdapter::SendData Response: {json.dumps(retDevice)}")
-                    else:
-                        SendStatusAdapter.WiRocLogger.error(f"SendStatusAdapter::SendData URL: {URL3}")
-                        SendStatusAdapter.WiRocLogger.error(
-                            f"SendStatusAdapter::SendData Headers: {json.dumps(headers)}")
-                        SendStatusAdapter.WiRocLogger.error(
-                            f"SendStatusAdapter::SendData json: {json.dumps(deviceStatus)}")
-                        returnSuccess = False
-                else:
+                if messageType == LoraRadioMessageRS.MessageTypeStatus2:
                     # Add/Update device
                     loraStatusMsg: LoraRadioMessageStatus2RS = LoraRadioMessageCreator.GetStatus2MessageByFullMessageData(data)
                     relayPathNo: int = loraStatusMsg.GetRelayPathNo()

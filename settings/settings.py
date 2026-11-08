@@ -762,7 +762,6 @@ class SettingsClass(object):
         MessageTypeSIPunchDoubleReDCoS: int = 8
         MessageTypeHAMCallSign: int = 9
         MessageTypeStatus2: int = 10
-        MessageTypeStatus: int = 4
         MessageTypeSIPunchSubSecond: int = 11
         MessageTypeSIPunchDoubleSubSecond: int = 12
         # The sub second messages are one byte longer than the ReDCoS messages (two for the
@@ -779,7 +778,7 @@ class SettingsClass(object):
             return SettingsClass.timeOnAirData.AckTOA
         elif MessageTypeHAMCallSign == messageType:
             return SettingsClass.timeOnAirData.HAMCallSignTOA
-        elif MessageTypeStatus2 == messageType or MessageTypeStatus == messageType:
+        elif MessageTypeStatus2 == messageType:
             return SettingsClass.timeOnAirData.StatusTOA
         return None
 

@@ -403,9 +403,6 @@ class SendLoraAdapter(object):
                 statMessageType = "Punch"
                 SettingsClass.SetMessageIDOfLastLoraMessageSent(settingsDictionary["MessageID"])
 
-            if headerMessageType == LoraRadioMessageRS.MessageTypeStatus:
-                statMessageType = "Status"
-
             delayS = settingsDictionary["DelayAfterMessageSent"]
             self.BlockSendingUntilMessageSentAndAckReceived(delayS)
             status = self.loraRadio.SendData(data)

@@ -231,12 +231,6 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     # --
 
     # ---
-    Case17_StatusMsg_Previous_AirOrder_WithRS =               bytearray([0x04, 0x45, 0x00, 0x00, 0xb0, 0x02, 0x47, 0x00, 0xd7, 0x6d, 0x89, 0xbd, 0x6a, 0x50])
-    Case17_StatusMsg_Correct_AirOrder_WithRS =                bytearray([0x04, 0x45, 0x00, 0x00, 0xb0, 0x02, 0x47, 0x00, 0xd7, 0x6d, 0x89, 0xbd, 0x6a, 0x50])
-    Case17_StatusMsg_Corrupted_AirOrder_WithRS =              bytearray([0xc4, 0xcd, 0x40, 0x04, 0xd8, 0x20, 0x17, 0x07, 0xd5, 0x6d, 0x89, 0xbd, 0x6a, 0x50])
-    # --
-
-    # ---
     Case18_PunchMsg_Previous_AirOrder_WithRS =               bytearray([0x88, 0xc3, 0x0f, 0x42, 0x3f, 0xff, 0x7d, 0x88, 0x0f, 0x42, 0x00, 0x3f, 0x7d, 0x89, 0x41, 0x14, 0x17, 0x47, 0xff, 0xcb, 0x48, 0x58, 0x00, 0xd1, 0xc7, 0x41, 0xfa])
     Case18_PunchMsg_Correct_AirOrder_WithRS =                bytearray([0x87, 0x27, 0x0f, 0x42, 0xff, 0x3f, 0x7d, 0x9f, 0x00, 0xc0, 0xaf, 0x41, 0x3c, 0xfa, 0xa1])
     Case18_PunchMsg_Corrupted_AirOrder_WithRS =              bytearray([0x87, 0x36, 0x0f, 0x42, 0xfe, 0x3f, 0x7d, 0x9f, 0x00, 0xc0, 0xaf, 0x41, 0x7c, 0xba, 0xe5])
@@ -338,7 +332,6 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     # Total no of
 
     PunchMsg_Correct_HighestTHTL =                    bytearray(bytes([0x87, 0x1F, 0x00, 0x00, 0x00, 0xFF, 0x00, 0XA8, 0xC0, 0x69, 0xe7, 0x82, 0x03, 0xbf, 0x2b]))
-    StatusMsg_Correct_WithRS =                        bytearray(bytes([0x04, 0x60, 0x10, 0x00, 0xd4, 0x12, 0x43, 0x24, 0x6a, 0x0c, 0x47, 0x32, 0x63, 0xa5]))
 
     dataHandler = LoraRadioDataHandler(False)
 
@@ -438,9 +431,6 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case2_FindPunchErasuresDoubleMessage
     def test_Case2_FindPunchErasuresDoubleMessage(self):
         print("============================================================================================== START test_Case2_FindPunchErasuresDoubleMessage ==============================================================================================")
-        msg = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(self.StatusMsg_Correct_WithRS)
-        msg.GenerateAndAddRSCode()
-        print("Message: " + Utils.GetDataInHex(msg.GetByteArray()[-4:], logging.DEBUG))
         msg = LoraRadioMessageCreator.GetPunchDoubleReDCoSMessage(False, True,
                                                                   self.PunchDoubleMsg_Correct_1[0:10])
         print("Message: " + Utils.GetDataInHex(msg.GetByteArray()[-10:], logging.DEBUG))
@@ -1116,28 +1106,6 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertEqual(ackMsg.GetByteArray()[1:], TestLoraRadioDataHandler.Case16_AckMsg_Correct_AirOrder_WithRS[1:])
         print("=== END test_Case16_GetAckMessage ===")
 
-    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case17_GetStatusMessage
-    def test_Case17_GetStatusMessage(self):
-        print("============================================================================================== START test_Case17_GetStatusMessage ==============================================================================================")
-        SettingsClass.SetSetting("LoraRange", 'L')
-        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
-
-        prevStatusMsgArr = TestLoraRadioDataHandler.Case17_StatusMsg_Previous_AirOrder_WithRS[:]
-        for i in range(0, len(prevStatusMsgArr)):
-            self.dataHandler.AddData(prevStatusMsgArr[i:i + 1])
-        prevStatusMsg = self.dataHandler.GetMessage()
-
-        recStatusMsg = TestLoraRadioDataHandler.Case17_StatusMsg_Corrupted_AirOrder_WithRS[:]
-        for i in range(0, len(recStatusMsg)):
-            self.dataHandler.AddData(recStatusMsg[i:i + 1])
-        statusMsg = self.dataHandler.GetMessage()
-
-        print("Corrupted message: " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case17_StatusMsg_Corrupted_AirOrder_WithRS[:], logging.DEBUG))
-        print("Correct message:   " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case17_StatusMsg_Correct_AirOrder_WithRS, logging.DEBUG))
-        self.assertIsNotNone(statusMsg)
-        self.assertEqual(statusMsg.GetByteArray(), TestLoraRadioDataHandler.Case17_StatusMsg_Correct_AirOrder_WithRS)
-        print("=== END test_Case17_GetStatusMessage ===")
-
     # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case18_GetPunchMessage
     def test_Case18_GetPunchMessage(self):
         print("============================================================================================== START test_Case18_GetPunchMessage ==============================================================================================")
@@ -1542,21 +1510,6 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNotNone(msg2, "Message should be decodable with alternatives")
 
         print("=== END test_GetMessage_PunchDoubleMessage ===")
-
-    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetMessage_Status
-    def test_GetMessage_Status(self):
-        print("============================================================================================== START test_GetMessage_Status ==============================================================================================")
-        for i in range(0, len(TestLoraRadioDataHandler.StatusMsg_Correct_WithRS)):
-            self.dataHandler.AddData(TestLoraRadioDataHandler.StatusMsg_Correct_WithRS[i:i + 1])
-
-        msg = self.dataHandler.GetMessage()
-        self.assertIsNotNone(msg, "Expected to receive the message back")
-        self.assertEqual(TestLoraRadioDataHandler.StatusMsg_Correct_WithRS, msg.GetByteArray(),
-                         "Didn't receive the same bytes back")
-        self.assertEqual(msg.GetMessageCategory(), "DATA")
-        self.assertTrue(isinstance(msg, LoraRadioMessageRS))
-        print("=== END test_GetMessage_Status ===")
-        # self.assertEqual(TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes, msg2.GetByteArray(), "Didn't receive a corrected message")
 
     # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetAlternatives
     def test_GetAlternatives(self):

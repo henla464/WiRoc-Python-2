@@ -3,7 +3,7 @@ __author__ = 'henla464'
 import logging
 from utils.utils import Utils
 from loraradio.LoraRadioMessageRS import LoraRadioMessageAckRS, \
-    LoraRadioMessageStatusRS, LoraRadioMessageStatus2RS, LoraRadioMessagePunchReDCoSRS, \
+    LoraRadioMessageStatus2RS, LoraRadioMessagePunchReDCoSRS, \
     LoraRadioMessagePunchDoubleReDCoSRS, LoraRadioMessageRS, LoraRadioMessageHAMCallSignRS, \
     LoraRadioMessagePunchSubSecondRS, LoraRadioMessagePunchDoubleSubSecondRS
 
@@ -98,16 +98,6 @@ class LoraRadioMessageCreator(object):
         return loraPunchDoubleMessage
 
     @staticmethod
-    def GetStatusMessage(batteryLow: bool, noOfLoraMsgSentNotAcked: int,
-                         allLoraPunchesSucceded: bool) -> LoraRadioMessageStatusRS:
-        loraStatusMessage = LoraRadioMessageStatusRS(noOfLoraMsgSentNotAcked, allLoraPunchesSucceded)
-        loraStatusMessage.SetBatteryLow(batteryLow)
-        loraStatusMessage.SetAckRequested(False)
-        loraStatusMessage.SetRepeater(False)
-        loraStatusMessage.GenerateAndAddRSCode()
-        return loraStatusMessage
-
-    @staticmethod
     def GetStatus2Message(batteryLow: bool, noOfLoraMsgSentNotAcked: int, allLoraPunchesSucceded: bool,
                           SRRDongleRedFound: bool, SRRDongleRedAck: bool,
                           SRRDongleBlueFound: bool, SRRDongleBlueAck: bool,
@@ -130,19 +120,6 @@ class LoraRadioMessageCreator(object):
         loraStatus2Message.SetRepeater(False)
         loraStatus2Message.GenerateAndAddRSCode()
         return loraStatus2Message
-
-    @staticmethod
-    def GetStatusMessageByFullMessageData(fullMessageData: bytearray, rssiValue: int = None,
-                                           snrValue: int = None,
-                                           statusValue: int = None) -> LoraRadioMessageStatusRS:
-        loraStatusMessage = LoraRadioMessageStatusRS()
-        loraStatusMessage.SetHeader(fullMessageData[0:1])
-        loraStatusMessage.SetPayload(fullMessageData[1:-LoraRadioMessageStatusRS.NoOfECCBytes])
-        loraStatusMessage.AddRSCode(fullMessageData[-LoraRadioMessageStatusRS.NoOfECCBytes:])
-        loraStatusMessage.SetRSSIValue(rssiValue)
-        loraStatusMessage.SetSNRValue(snrValue)
-        loraStatusMessage.SetStatusValue(statusValue)
-        return loraStatusMessage
 
     @staticmethod
     def GetStatus2MessageByFullMessageData(fullMessageData: bytearray,

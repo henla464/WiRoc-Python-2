@@ -12,7 +12,7 @@ import loraradio
 from loraradio.LoraRadioDataHandler import LoraRadioDataHandler
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from loraradio.LoraRadioMessageRS import LoraRadioMessageRS, LoraRadioMessagePunchDoubleReDCoSRS, \
-    LoraRadioMessagePunchReDCoSRS, LoraRadioMessageAckRS, LoraRadioMessageStatusRS
+    LoraRadioMessagePunchReDCoSRS, LoraRadioMessagePunchSubSecondRS, LoraRadioMessageAckRS
 from loraradio.RSCoderLora import RSCoderLora
 
 # Run with sudo env/bin/python3 -m unittest loraradio/TestLoraRadioDataHandler_Minimal.py
@@ -63,13 +63,29 @@ def _FieldNamesInOrder(msg_cls, length: int, air_order: bool = False) -> tuple:
 
 
 def _NamedMessage(msg_cls, length: int, air_order: bool = False):
-    order = _FieldNamesInOrder(msg_cls, length, air_order)
+    # Field order (and coding) is read from the message class. For a full-length message the
+    # ECC/CRC bytes are regenerated from the payload fields, so the vectors follow the current
+    # wire format; the literal ECC/CRC values passed in the vectors are left-overs from the
+    # captures and are ignored.
+    order = _FieldNamesInOrder(msg_cls, length)
+    fullLength = msg_cls.MessageLengths[msg_cls().messageType] if hasattr(msg_cls, "InterleavingInAirOrder") else None
 
     def NamedMessage(**values):
         unknown = set(values) - set(order)
         if unknown:
             raise TypeError(f"{msg_cls.__name__}: unknown fields {sorted(unknown)}")
-        return bytearray(values[name] for name in order)
+        # ECC/CRC may be omitted: they are recomputed below for full-length messages.
+        data = bytearray(values[name] if name in values else 0 for name in order)
+        if length == fullLength:
+            eccCount, crcCount = msg_cls.NoOfECCBytes, msg_cls.NoOfCRCBytes
+            codedLength = length - crcCount
+            encoder = RSCoderLora.encodeLong if eccCount == 8 else RSCoderLora.encode
+            ecc = encoder(data[:codedLength - eccCount])
+            data[codedLength - eccCount:codedLength] = ecc
+            data[codedLength:] = hashlib.shake_128(data[1:codedLength - eccCount] + ecc).digest(2)
+        if air_order:
+            data = msg_cls.InterleaveToAirOrder(data)
+        return data
     return NamedMessage
 
 
@@ -87,14 +103,13 @@ def Corrupted(base: bytearray, air_order: bool = False, **fields) -> bytearray:
     return data
 
 
-PunchMsg = _NamedMessage(LoraRadioMessagePunchReDCoSRS, 15)
-PunchMsgAirOrder = _NamedMessage(LoraRadioMessagePunchReDCoSRS, 15, air_order=True)
-PunchDoubleMsg = _NamedMessage(LoraRadioMessagePunchDoubleReDCoSRS, 27)
-PunchDoubleMsgAirOrder = _NamedMessage(LoraRadioMessagePunchDoubleReDCoSRS, 27, air_order=True)
-PunchPayload = _NamedMessage(LoraRadioMessagePunchReDCoSRS, 9)          # header + payload, before ECC/CRC
-PunchDoublePayload = _NamedMessage(LoraRadioMessagePunchDoubleReDCoSRS, 17)
+PunchMsg = _NamedMessage(LoraRadioMessagePunchReDCoSRS, 14)
+PunchMsgAirOrder = _NamedMessage(LoraRadioMessagePunchReDCoSRS, 14, air_order=True)
+PunchDoubleMsg = _NamedMessage(LoraRadioMessagePunchDoubleReDCoSRS, 25)
+PunchDoubleMsgAirOrder = _NamedMessage(LoraRadioMessagePunchDoubleReDCoSRS, 25, air_order=True)
+PunchPayload = _NamedMessage(LoraRadioMessagePunchReDCoSRS, 8)          # header + payload, before ECC/CRC
+PunchDoublePayload = _NamedMessage(LoraRadioMessagePunchDoubleReDCoSRS, 15)
 AckMsg = _NamedMessage(LoraRadioMessageAckRS, 7)
-StatusMsg = _NamedMessage(LoraRadioMessageStatusRS, 14)
 
 
 def Feed(handler, data):
@@ -118,7 +133,6 @@ def Corrupt(data: bytearray, offsets: dict[int, int]) -> bytearray:
 
 _MESSAGE_CLASSES_BY_TYPE = {
     LoraRadioMessageRS.MessageTypeLoraAck: LoraRadioMessageAckRS,
-    LoraRadioMessageRS.MessageTypeStatus: LoraRadioMessageStatusRS,
     LoraRadioMessageRS.MessageTypeSIPunchReDCoS: LoraRadioMessagePunchReDCoSRS,
     LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS: LoraRadioMessagePunchDoubleReDCoSRS,
 }
@@ -159,46 +173,46 @@ class TestLoraRadioDataHandler(unittest.TestCase):
                                         # stx         31                            37800=>10:30
 
     PunchMsg_Correct_1 = PunchMsg(
-        H=0x87, CN0=0x1f, SN3=0x00, SN2=0x00, SN1=0x00, SN0=0xff, CN1Plus=0x00, TH=0x93, TL=0xa8,
+        H=0x87, CN0=0x1f , SN2=0x00, SN1=0x00, SN0=0xff, CN1Plus=0x00, TH=0x93, TL=0xa8,
         ECC0=0x13, ECC1=0x95, ECC2=0xfe, ECC3=0x24, CRC0=0xba, CRC1=0xb2)
     PunchMsg_Corrupted_1 = Corrupted(
         PunchMsg_Correct_1, H=0x88, CN0=0x10, SN1=0x01, CN1Plus=0x01)
 
     PunchDoubleMsg_Correct_1 = PunchDoubleMsg(
-        H=0x88, CN0=0xff, SN3=0x00, SN2=0x00, SN1=0x63, SN0=0x67, CN1Plus=0x00, TH=0x03, TL=0x86,
-        CN0_2=0xff, SN3_2=0x00, SN2_2=0x00, SN1_2=0x63, SN0_2=0x67, CN1Plus_2=0x40, TH_2=0x00,
+        H=0x88, CN0=0xff , SN2=0x00, SN1=0x63, SN0=0x67, CN1Plus=0x00, TH=0x03, TL=0x86,
+        CN0_2=0xff , SN2_2=0x00, SN1_2=0x63, SN0_2=0x67, CN1Plus_2=0x40, TH_2=0x00,
         TL_2=0x0c, ECC0=0xa6, ECC1=0x3a, ECC2=0x82, ECC3=0x3d, ECC4=0x4e, ECC5=0x6f, ECC6=0x19,
         ECC7=0x5a, CRC0=0xc5, CRC1=0x86)
     PunchDoubleMsg_Corrupted_1 = Corrupted(
-        PunchDoubleMsg_Correct_1, SN3=0x01, SN2=0x01, CN1Plus=0x01, SN3_2=0x01, SN2_2=0x01,
+        PunchDoubleMsg_Correct_1 , SN2=0x01, CN1Plus=0x01 , SN2_2=0x01,
         TH_2=0x01)
                                                                     #             2    3                  6                      10,   11                     15
     PunchReDCoSMsg_Correct_1_WithoutRS_CS = PunchPayload(
-        H=0x87, CN0=0x1f, SN3=0x00, SN2=0x00, SN1=0x00, SN0=0xff, CN1Plus=0x00, TH=0x93, TL=0xa8)
+        H=0x87, CN0=0x1f , SN2=0x00, SN1=0x00, SN0=0xff, CN1Plus=0x00, TH=0x93, TL=0xa8)
     PunchReDCoSMsg_Correct_2_WithoutRS_CS = PunchPayload(
-        H=0x87, CN0=0x1e, SN3=0x01, SN2=0x00, SN1=0x00, SN0=0xff, CN1Plus=0x01, TH=0x93, TL=0xb8)
+        H=0x87, CN0=0x1e , SN2=0x00, SN1=0x00, SN0=0xff, CN1Plus=0x01, TH=0x93, TL=0xb8)
     PunchDoubleReDCoSMsg_Correct_1_WithoutRS_CS = PunchDoublePayload(
-        H=0x88, CN0=0xff, SN3=0x00, SN2=0x00, SN1=0x63, SN0=0x67, CN1Plus=0x00, TH=0x03, TL=0x86,
-        CN0_2=0xff, SN3_2=0x00, SN2_2=0x00, SN1_2=0x63, SN0_2=0x67, CN1Plus_2=0x00, TH_2=0x03,
+        H=0x88, CN0=0xff , SN2=0x00, SN1=0x63, SN0=0x67, CN1Plus=0x00, TH=0x03, TL=0x86,
+        CN0_2=0xff , SN2_2=0x00, SN1_2=0x63, SN0_2=0x67, CN1Plus_2=0x00, TH_2=0x03,
         TL_2=0x9d)
     PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS = PunchDoublePayload(
-        H=0x88, CN0=0xfe, SN3=0x00, SN2=0x00, SN1=0x63, SN0=0x67, CN1Plus=0x00, TH=0x03, TL=0x86,
-        CN0_2=0xff, SN3_2=0x0f, SN2_2=0x00, SN1_2=0x63, SN0_2=0x67, CN1Plus_2=0x00, TH_2=0x03,
+        H=0x88, CN0=0xfe , SN2=0x00, SN1=0x63, SN0=0x67, CN1Plus=0x00, TH=0x03, TL=0x86,
+        CN0_2=0xff , SN2_2=0x00, SN1_2=0x63, SN0_2=0x67, CN1Plus_2=0x00, TH_2=0x03,
         TL_2=0x9d)
 
     # ---
     Case1_PunchDoubleMsg_Previous_WithRS = PunchDoubleMsg(
-        H=0x88, CN0=0xe7, SN3=0x00, SN2=0x0f, SN1=0x42, SN0=0x3f, CN1Plus=0x40, TH=0x8f, TL=0xe1,
-        CN0_2=0xe7, SN3_2=0x00, SN2_2=0x0f, SN1_2=0x42, SN0_2=0x3f, CN1Plus_2=0x40, TH_2=0x8f,
+        H=0x88, CN0=0xe7 , SN2=0x0f, SN1=0x42, SN0=0x3f, CN1Plus=0x40, TH=0x8f, TL=0xe1,
+        CN0_2=0xe7 , SN2_2=0x0f, SN1_2=0x42, SN0_2=0x3f, CN1Plus_2=0x40, TH_2=0x8f,
         TL_2=0xbe, ECC0=0x9c, ECC1=0xad, ECC2=0xe8, ECC3=0xdd, ECC4=0x4b, ECC5=0x8f, ECC6=0x17,
         ECC7=0x00, CRC0=0xed, CRC1=0xf2)
     Case1_PunchDoubleMsg_Correct_WithRS = PunchDoubleMsg(
-        H=0x88, CN0=0xe7, SN3=0x00, SN2=0x0f, SN1=0x42, SN0=0x3f, CN1Plus=0x40, TH=0x8f, TL=0xe2,
-        CN0_2=0xe7, SN3_2=0x00, SN2_2=0x0f, SN1_2=0x42, SN0_2=0x3f, CN1Plus_2=0x40, TH_2=0x8f,
+        H=0x88, CN0=0xe7 , SN2=0x0f, SN1=0x42, SN0=0x3f, CN1Plus=0x40, TH=0x8f, TL=0xe2,
+        CN0_2=0xe7 , SN2_2=0x0f, SN1_2=0x42, SN0_2=0x3f, CN1Plus_2=0x40, TH_2=0x8f,
         TL_2=0xe3, ECC0=0x94, ECC1=0x55, ECC2=0xbc, ECC3=0x52, ECC4=0x89, ECC5=0xf1, ECC6=0x0e,
         ECC7=0xd0, CRC0=0x6a, CRC1=0xca)
     Case1_PunchDoubleMsg_Corrupted_WithRS = Corrupted(
-        Case1_PunchDoubleMsg_Correct_WithRS, H=0x08, CN0=0x6f, SN3=0x08, SN2=0x07, SN0=0x95,
+        Case1_PunchDoubleMsg_Correct_WithRS, H=0x08, CN0=0x6f , SN2=0x07, SN0=0x95,
         CN1Plus=0x6a, TH=0x8d, TL=0xa2, SN2_2=0x0b, SN1_2=0x43, ECC0=0x4a, ECC1=0xf8, ECC2=0xa9,
         ECC3=0x53)
     # The correct message for the  (so wrong in positions: 0  1  2  3, 5, 6, 7, 8, 11, 12, 17, 18, 19, 20)
@@ -206,43 +220,43 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     # ---
     Case2_PunchDoubleMsg_Previous_WithRS = PunchDoubleMsg(
-        H=0x88, CN0=0x10, SN3=0x00, SN2=0x6a, SN1=0xe3, SN0=0xfc, CN1Plus=0x0c, TH=0xa2, TL=0xba,
-        CN0_2=0x10, SN3_2=0x00, SN2_2=0x15, SN1_2=0x66, SN0_2=0x05, CN1Plus_2=0x0c, TH_2=0xa2,
+        H=0x88, CN0=0x10 , SN2=0x6a, SN1=0xe3, SN0=0xfc, CN1Plus=0x0c, TH=0xa2, TL=0xba,
+        CN0_2=0x10 , SN2_2=0x15, SN1_2=0x66, SN0_2=0x05, CN1Plus_2=0x0c, TH_2=0xa2,
         TL_2=0xbf, ECC0=0xc9, ECC1=0x0e, ECC2=0x1c, ECC3=0xe6, ECC4=0x78, ECC5=0x52, ECC6=0x5a,
         ECC7=0xc3, CRC0=0x60, CRC1=0x6b)
     Case2_PunchDoubleMsg_Correct_WithRS = PunchDoubleMsg(
-        H=0x88, CN0=0x10, SN3=0x00, SN2=0x73, SN1=0xfb, SN0=0x1e, CN1Plus=0x0c, TH=0xa2, TL=0xca,
-        CN0_2=0x10, SN3_2=0x00, SN2_2=0x11, SN1_2=0x1a, SN0_2=0xf0, CN1Plus_2=0x0c, TH_2=0xa2,
+        H=0x88, CN0=0x10 , SN2=0x73, SN1=0xfb, SN0=0x1e, CN1Plus=0x0c, TH=0xa2, TL=0xca,
+        CN0_2=0x10 , SN2_2=0x11, SN1_2=0x1a, SN0_2=0xf0, CN1Plus_2=0x0c, TH_2=0xa2,
         TL_2=0xd3, ECC0=0x0d, ECC1=0x50, ECC2=0xda, ECC3=0xe4, ECC4=0xdd, ECC5=0x5a, ECC6=0x8a,
         ECC7=0x92, CRC0=0x17, CRC1=0xb2)
     Case2_PunchDoubleMsg_Corrupted_WithRS = Corrupted(
-        Case2_PunchDoubleMsg_Correct_WithRS, CN0=0xd8, SN3=0x08, SN2=0x3f, CN1Plus=0x1d, TH=0xa3,
+        Case2_PunchDoubleMsg_Correct_WithRS, CN0=0xd8 , SN2=0x3f, CN1Plus=0x1d, TH=0xa3,
         TL=0xdb, ECC4=0xde, ECC5=0x5b, ECC6=0x8b, ECC7=0x93)
     # Wrong in positions: [1,  2,  3, 6, 7, 8, 21, 22, 23, 24]
     # ---
 
     # ---
     Case3_PunchDoubleMsg_Previous_WithRS = PunchDoubleMsg(
-        H=0x88, CN0=0x10, SN3=0x00, SN2=0x97, SN1=0xae, SN0=0x8a, CN1Plus=0x0c, TH=0x02, TL=0x5a,
-        CN0_2=0x10, SN3_2=0x00, SN2_2=0x1d, SN1_2=0xfa, SN0_2=0xb5, CN1Plus_2=0x0c, TH_2=0x02,
+        H=0x88, CN0=0x10 , SN2=0x97, SN1=0xae, SN0=0x8a, CN1Plus=0x0c, TH=0x02, TL=0x5a,
+        CN0_2=0x10 , SN2_2=0x1d, SN1_2=0xfa, SN0_2=0xb5, CN1Plus_2=0x0c, TH_2=0x02,
         TL_2=0x5e, ECC0=0x60, ECC1=0x5d, ECC2=0xdd, ECC3=0x72, ECC4=0xed, ECC5=0x1a, ECC6=0x94,
         ECC7=0x9c, CRC0=0x06, CRC1=0x84)
     Case3_PunchDoubleMsg_Correct_WithRS = PunchDoubleMsg(
-        H=0x88, CN0=0x10, SN3=0x00, SN2=0x04, SN1=0xca, SN0=0x8e, CN1Plus=0x0d, TH=0x02, TL=0xe5,
-        CN0_2=0x10, SN3_2=0x00, SN2_2=0x10, SN1_2=0xc9, SN0_2=0x4a, CN1Plus_2=0x0d, TH_2=0x02,
+        H=0x88, CN0=0x10 , SN2=0x04, SN1=0xca, SN0=0x8e, CN1Plus=0x0d, TH=0x02, TL=0xe5,
+        CN0_2=0x10 , SN2_2=0x10, SN1_2=0xc9, SN0_2=0x4a, CN1Plus_2=0x0d, TH_2=0x02,
         TL_2=0xe7, ECC0=0xbe, ECC1=0xa2, ECC2=0xf0, ECC3=0x47, ECC4=0x60, ECC5=0xfa, ECC6=0x6e,
         ECC7=0x06, CRC0=0xee, CRC1=0x7f)
     Case3_PunchDoubleMsg_Corrupted_WithRS = Corrupted(
-        Case3_PunchDoubleMsg_Correct_WithRS, CN0_2=0x50, SN3_2=0x44, SN2_2=0x50, SN0_2=0x4e)
+        Case3_PunchDoubleMsg_Correct_WithRS, CN0_2=0x50 , SN2_2=0x50, SN0_2=0x4e)
     # ---  wrong in positions [9, 8, 10, 11, 16]
 
     # ---
     Case4_PunchDoubleMsg_Previous_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x1c, SN1=0x3e, SN0=0x21, CN1Plus=0x0d, TH=0x05, TL=0xbe,
+        H=0x87, CN0=0x10 , SN2=0x1c, SN1=0x3e, SN0=0x21, CN1Plus=0x0d, TH=0x05, TL=0xbe,
         ECC0=0xbf, ECC1=0x74, ECC2=0x29, ECC3=0xc0, CRC0=0x61, CRC1=0x20)
     Case4_PunchDoubleMsg_Correct_WithRS = PunchDoubleMsg(
-        H=0x88, CN0=0x10, SN3=0x00, SN2=0x1c, SN1=0x3e, SN0=0x21, CN1Plus=0x0d, TH=0x05, TL=0xbe,
-        CN0_2=0x10, SN3_2=0x00, SN2_2=0x0f, SN1_2=0x1a, SN0_2=0xca, CN1Plus_2=0x0d, TH_2=0x05,
+        H=0x88, CN0=0x10 , SN2=0x1c, SN1=0x3e, SN0=0x21, CN1Plus=0x0d, TH=0x05, TL=0xbe,
+        CN0_2=0x10 , SN2_2=0x0f, SN1_2=0x1a, SN0_2=0xca, CN1Plus_2=0x0d, TH_2=0x05,
         TL_2=0xc3, ECC0=0xdc, ECC1=0x06, ECC2=0xb0, ECC3=0x68, ECC4=0x0b, ECC5=0x2f, ECC6=0x72,
         ECC7=0x7d, CRC0=0xdb, CRC1=0x5c)
     Case4_PunchDoubleMsg_Corrupted_WithRS = Corrupted(
@@ -251,25 +265,25 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     # ---
     Case5_PunchDoubleMsg_Previous_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x1b, SN1=0xe7, SN0=0xdc, CN1Plus=0x0d, TH=0x06, TL=0x1d,
+        H=0x87, CN0=0x10 , SN2=0x1b, SN1=0xe7, SN0=0xdc, CN1Plus=0x0d, TH=0x06, TL=0x1d,
         ECC0=0x8f, ECC1=0xdf, ECC2=0xe1, ECC3=0x10, CRC0=0xb2, CRC1=0x20)
     Case5_PunchDoubleMsg_Correct_WithRS = PunchDoubleMsg(
-        H=0x88, CN0=0x10, SN3=0x00, SN2=0x0e, SN1=0x75, SN0=0x77, CN1Plus=0x0d, TH=0x06, TL=0x29,
-        CN0_2=0x10, SN3_2=0x00, SN2_2=0x04, SN1_2=0xca, SN0_2=0xda, CN1Plus_2=0x0d, TH_2=0x06,
+        H=0x88, CN0=0x10 , SN2=0x0e, SN1=0x75, SN0=0x77, CN1Plus=0x0d, TH=0x06, TL=0x29,
+        CN0_2=0x10 , SN2_2=0x04, SN1_2=0xca, SN0_2=0xda, CN1Plus_2=0x0d, TH_2=0x06,
         TL_2=0x2c, ECC0=0x1a, ECC1=0xe4, ECC2=0x84, ECC3=0xc1, ECC4=0x9e, ECC5=0x5f, ECC6=0x13,
         ECC7=0xfc, CRC0=0xe5, CRC1=0xc1)
     Case5_PunchDoubleMsg_Corrupted_WithRS = Corrupted(
-        Case5_PunchDoubleMsg_Correct_WithRS, CN0_2=0x90, SN3_2=0x80, SN2_2=0x84, SN1_2=0x4a,
+        Case5_PunchDoubleMsg_Correct_WithRS, CN0_2=0x90 , SN2_2=0x84, SN1_2=0x4a,
         SN0_2=0xd2, TL_2=0x1a)
     # --- wrong in positions [9,10,11,12,13,16]
 
     # ---
     Case6_PunchDoubleMsg_Previous_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x0f, SN1=0xbb, SN0=0x63, CN1Plus=0x0d, TH=0x0c, TL=0x67,
+        H=0x87, CN0=0x10 , SN2=0x0f, SN1=0xbb, SN0=0x63, CN1Plus=0x0d, TH=0x0c, TL=0x67,
         ECC0=0x76, ECC1=0x7a, ECC2=0x99, ECC3=0xb3, CRC0=0xf7, CRC1=0xbc)
     Case6_PunchDoubleMsg_Correct_WithRS = PunchDoubleMsg(
-        H=0x88, CN0=0x10, SN3=0x00, SN2=0x80, SN1=0x86, SN0=0x9e, CN1Plus=0x0d, TH=0x0c, TL=0xc3,
-        CN0_2=0x10, SN3_2=0x00, SN2_2=0x0f, SN1_2=0xe0, SN0_2=0xbf, CN1Plus_2=0x0d, TH_2=0x0c,
+        H=0x88, CN0=0x10 , SN2=0x80, SN1=0x86, SN0=0x9e, CN1Plus=0x0d, TH=0x0c, TL=0xc3,
+        CN0_2=0x10 , SN2_2=0x0f, SN1_2=0xe0, SN0_2=0xbf, CN1Plus_2=0x0d, TH_2=0x0c,
         TL_2=0xb0, ECC0=0x01, ECC1=0xff, ECC2=0xb2, ECC3=0x6f, ECC4=0x87, ECC5=0x81, ECC6=0xe3,
         ECC7=0xf5, CRC0=0x52, CRC1=0x27)
     Case6_PunchDoubleMsg_Corrupted_WithRS = Corrupted(
@@ -278,152 +292,151 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     # ---
     Case7_PunchDoubleMsg_Previous_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x00, SN1=0x77, SN0=0x0e, CN1Plus=0x0d, TH=0x0e, TL=0x30,
+        H=0x87, CN0=0x10 , SN2=0x00, SN1=0x77, SN0=0x0e, CN1Plus=0x0d, TH=0x0e, TL=0x30,
         ECC0=0x61, ECC1=0x8c, ECC2=0xa7, ECC3=0x97, CRC0=0xf6, CRC1=0x8c)
     Case7_PunchDoubleMsg_Correct_WithRS = PunchDoubleMsg(
-        H=0x88, CN0=0x10, SN3=0x00, SN2=0x00, SN1=0x6c, SN0=0x42, CN1Plus=0x0d, TH=0x0e, TL=0xa3,
-        CN0_2=0x10, SN3_2=0x00, SN2_2=0x1f, SN1_2=0x7d, SN0_2=0x8d, CN1Plus_2=0x0d, TH_2=0x0e,
+        H=0x88, CN0=0x10 , SN2=0x00, SN1=0x6c, SN0=0x42, CN1Plus=0x0d, TH=0x0e, TL=0xa3,
+        CN0_2=0x10 , SN2_2=0x1f, SN1_2=0x7d, SN0_2=0x8d, CN1Plus_2=0x0d, TH_2=0x0e,
         TL_2=0xb1, ECC0=0xf2, ECC1=0xa6, ECC2=0xbc, ECC3=0xbf, ECC4=0x23, ECC5=0x79, ECC6=0x6f,
         ECC7=0x39, CRC0=0x5d, CRC1=0xdd)
     Case7_PunchDoubleMsg_Corrupted_WithRS = Corrupted(
-        Case7_PunchDoubleMsg_Correct_WithRS, CN0=0x01, SN3=0x01, SN2=0x10, SN1=0x7d, SN0=0x43)
+        Case7_PunchDoubleMsg_Correct_WithRS, CN0=0x01 , SN2=0x10, SN1=0x7d, SN0=0x43)
     # ---
 
     # ---
     Case8_PunchDoubleMsg_Previous_AirOrder_WithRS = PunchMsgAirOrder(
-        H=0x87, CRC1=0xd1, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x06, TL=0xba, SN3=0x00,
+        H=0x87, CRC1=0xd1, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x06, TL=0xba ,
         ECC0=0xf3, ECC1=0xfb, CN1Plus=0x41, ECC2=0xf7, ECC3=0x08, CRC0=0xe2)
     Case8_PunchDoubleMsg_Correct_AirOrder_WithRS = PunchDoubleMsgAirOrder(
         H=0x88, CRC0=0xb2, SN2=0x0f, SN1=0x42, SN0=0x3f, CN0=0xff, TH=0x06, TL=0xba, SN2_2=0x0f,
-        SN1_2=0x42, SN3=0x00, SN0_2=0x3f, TH_2=0x06, TL_2=0xbb, CN1Plus=0x41, ECC0=0xf9, ECC1=0xe0,
-        ECC2=0x29, CN0_2=0xff, ECC3=0xf7, ECC4=0x6e, ECC5=0xe6, SN3_2=0x00, ECC6=0x1c, ECC7=0xda,
+        SN1_2=0x42 , SN0_2=0x3f, TH_2=0x06, TL_2=0xbb, CN1Plus=0x41, ECC0=0xf9, ECC1=0xe0,
+        ECC2=0x29, CN0_2=0xff, ECC3=0xf7, ECC4=0x6e, ECC5=0xe6 , ECC6=0x1c, ECC7=0xda,
         CN1Plus_2=0x41, CRC1=0xed)
     Case8_PunchDoubleMsg_Corrupted_AirOrder_WithRS = Corrupted(
         Case8_PunchDoubleMsg_Correct_AirOrder_WithRS, air_order=True, SN2_2=0x8f, SN1_2=0xc2,
-        SN3=0x80, SN0_2=0xbf, TH_2=0x0e, ECC4=0x2e, ECC5=0x88, SN3_2=0xcc, ECC6=0x30, ECC7=0xb8,
-        CN1Plus_2=0x53, CRC1=0xc8)
+        SN0_2=0xbf, TH_2=0x0e)
     # ---
 
     # ---
     Case9_PunchDoubleMsg_Previous_AirOrder_WithRS = PunchDoubleMsgAirOrder(
         H=0x88, CRC0=0xf9, SN2=0x0f, SN1=0x42, SN0=0x3f, CN0=0xff, TH=0x07, TL=0x01, SN2_2=0x0f,
-        SN1_2=0x42, SN3=0x00, SN0_2=0x3f, TH_2=0x07, TL_2=0x02, CN1Plus=0x41, ECC0=0x9e, ECC1=0x6a,
-        ECC2=0x77, CN0_2=0xff, ECC3=0x58, ECC4=0x70, ECC5=0x7d, SN3_2=0x00, ECC6=0x37, ECC7=0x6a,
+        SN1_2=0x42 , SN0_2=0x3f, TH_2=0x07, TL_2=0x02, CN1Plus=0x41, ECC0=0x9e, ECC1=0x6a,
+        ECC2=0x77, CN0_2=0xff, ECC3=0x58, ECC4=0x70, ECC5=0x7d , ECC6=0x37, ECC7=0x6a,
         CN1Plus_2=0x41, CRC1=0xff)
     Case9_PunchDoubleMsg_Correct_AirOrder_WithRS = PunchDoubleMsgAirOrder(
         H=0x88, CRC0=0x1c, SN2=0x0f, SN1=0x42, SN0=0x3f, CN0=0xff, TH=0x07, TL=0x02, SN2_2=0x0f,
-        SN1_2=0x42, SN3=0x00, SN0_2=0x3f, TH_2=0x07, TL_2=0x03, CN1Plus=0x41, ECC0=0x9c, ECC1=0xac,
-        ECC2=0x48, CN0_2=0xff, ECC3=0xe4, ECC4=0x11, ECC5=0x86, SN3_2=0x00, ECC6=0x4b, ECC7=0xc9,
+        SN1_2=0x42 , SN0_2=0x3f, TH_2=0x07, TL_2=0x03, CN1Plus=0x41, ECC0=0x9c, ECC1=0xac,
+        ECC2=0x48, CN0_2=0xff, ECC3=0xe4, ECC4=0x11, ECC5=0x86 , ECC6=0x4b, ECC7=0xc9,
         CN1Plus_2=0x41, CRC1=0x56)
     Case9_PunchDoubleMsg_Corrupted_AirOrder_WithRS = Corrupted(
         Case9_PunchDoubleMsg_Correct_AirOrder_WithRS, air_order=True, SN2=0x4d, SN0=0x39, SN2_2=0x4f,
-        SN3=0x04, SN0_2=0x3b, TH_2=0x03, ECC5=0x06, SN3_2=0x88, ECC6=0xc3, ECC7=0xc1, CRC1=0x57)
+        SN0_2=0x3b, TH_2=0x03, ECC5=0x06 , ECC6=0xc3, ECC7=0xc1, CRC1=0x57)
     # ---
 
     # ---
     Case10_PunchDoubleMsg_Previous_AirOrder_WithRS = PunchMsgAirOrder(
-        H=0x87, CRC1=0x54, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x07, TL=0x03, SN3=0x00,
+        H=0x87, CRC1=0x54, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x07, TL=0x03 ,
         ECC0=0x39, ECC1=0xfc, CN1Plus=0x41, ECC2=0x04, ECC3=0x8e, CRC0=0x5b)
     Case10_PunchDoubleMsg_Correct_AirOrder_WithRS = PunchDoubleMsgAirOrder(
         H=0x88, CRC0=0xcc, SN2=0x0f, SN1=0x42, SN0=0x3f, CN0=0xff, TH=0x07, TL=0x4d, SN2_2=0x0f,
-        SN1_2=0x42, SN3=0x00, SN0_2=0x3f, TH_2=0x07, TL_2=0x4d, CN1Plus=0x41, ECC0=0x7f, ECC1=0xf1,
-        ECC2=0x4d, CN0_2=0xff, ECC3=0x84, ECC4=0x40, ECC5=0x49, SN3_2=0x00, ECC6=0xe3, ECC7=0x25,
+        SN1_2=0x42 , SN0_2=0x3f, TH_2=0x07, TL_2=0x4d, CN1Plus=0x41, ECC0=0x7f, ECC1=0xf1,
+        ECC2=0x4d, CN0_2=0xff, ECC3=0x84, ECC4=0x40, ECC5=0x49 , ECC6=0xe3, ECC7=0x25,
         CN1Plus_2=0x41, CRC1=0xfe)
     Case10_PunchDoubleMsg_Corrupted_AirOrder_WithRS = Corrupted(
         Case10_PunchDoubleMsg_Correct_AirOrder_WithRS, air_order=True, H=0x98, CRC0=0xdd, SN2=0x1e,
-        SN1=0x52, SN0=0x3e, SN3_2=0x10, ECC6=0xf3)
+        SN1=0x52, SN0=0x3e , ECC6=0xf3)
     # --
 
     # ---
     Case11_PunchDoubleMsg_Previous_AirOrder_WithRS = PunchMsgAirOrder(
-        H=0x87, CRC1=0x5a, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x09, TL=0x0e, SN3=0x00,
+        H=0x87, CRC1=0x5a, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x09, TL=0x0e ,
         ECC0=0x1a, ECC1=0xd2, CN1Plus=0x41, ECC2=0x6e, ECC3=0xea, CRC0=0x19)
     Case11_PunchDoubleMsg_Correct_AirOrder_WithRS = PunchDoubleMsgAirOrder(
         H=0x88, CRC0=0x78, SN2=0x0f, SN1=0x42, SN0=0x3f, CN0=0xff, TH=0x09, TL=0x1a, SN2_2=0x0f,
-        SN1_2=0x42, SN3=0x00, SN0_2=0x3f, TH_2=0x09, TL_2=0x1b, CN1Plus=0x41, ECC0=0x0f, ECC1=0xfe,
-        ECC2=0x1b, CN0_2=0xff, ECC3=0xab, ECC4=0x88, ECC5=0x99, SN3_2=0x00, ECC6=0xd9, ECC7=0x00,
+        SN1_2=0x42 , SN0_2=0x3f, TH_2=0x09, TL_2=0x1b, CN1Plus=0x41, ECC0=0x0f, ECC1=0xfe,
+        ECC2=0x1b, CN0_2=0xff, ECC3=0xab, ECC4=0x88, ECC5=0x99 , ECC6=0xd9, ECC7=0x00,
         CN1Plus_2=0x41, CRC1=0x8e)
     Case11_PunchDoubleMsg_Corrupted_AirOrder_WithRS = Corrupted(
-        Case11_PunchDoubleMsg_Correct_AirOrder_WithRS, air_order=True, H=0xb8, CRC0=0x2d, SN2=0x6b,
-        SN1=0x20, SN0=0x18, CN0=0xdf, TH=0x1b, TL=0x2a, SN2_2=0x0e)
+        Case11_PunchDoubleMsg_Correct_AirOrder_WithRS, air_order=True, H=0xb8, SN2=0x6b, CN0=0xdf,
+        SN2_2=0x0e)
     # --
 
     # ---
     Case12_PunchDoubleMsg_Previous_AirOrder_WithRS = PunchDoubleMsgAirOrder(
         H=0x88, CRC0=0xc1, SN2=0x0f, SN1=0x42, SN0=0x3f, CN0=0xff, TH=0x09, TL=0x42, SN2_2=0x0f,
-        SN1_2=0x42, SN3=0x00, SN0_2=0x3f, TH_2=0x09, TL_2=0x43, CN1Plus=0x41, ECC0=0x0a, ECC1=0xd1,
-        ECC2=0x00, CN0_2=0xff, ECC3=0x84, ECC4=0x5f, ECC5=0x04, SN3_2=0x00, ECC6=0x70, ECC7=0xfd,
+        SN1_2=0x42 , SN0_2=0x3f, TH_2=0x09, TL_2=0x43, CN1Plus=0x41, ECC0=0x0a, ECC1=0xd1,
+        ECC2=0x00, CN0_2=0xff, ECC3=0x84, ECC4=0x5f, ECC5=0x04 , ECC6=0x70, ECC7=0xfd,
         CN1Plus_2=0x41, CRC1=0xff)
     Case12_PunchDoubleMsg_Correct_AirOrder_WithRS = PunchDoubleMsgAirOrder(
         H=0x88, CRC0=0x77, SN2=0x0f, SN1=0x42, SN0=0x3f, CN0=0xff, TH=0x09, TL=0x43, SN2_2=0x0f,
-        SN1_2=0x42, SN3=0x00, SN0_2=0x3f, TH_2=0x09, TL_2=0x44, CN1Plus=0x41, ECC0=0x6d, ECC1=0x50,
-        ECC2=0x7b, CN0_2=0xff, ECC3=0x8b, ECC4=0x92, ECC5=0x52, SN3_2=0x00, ECC6=0x5e, ECC7=0xdc,
+        SN1_2=0x42 , SN0_2=0x3f, TH_2=0x09, TL_2=0x44, CN1Plus=0x41, ECC0=0x6d, ECC1=0x50,
+        ECC2=0x7b, CN0_2=0xff, ECC3=0x8b, ECC4=0x92, ECC5=0x52 , ECC6=0x5e, ECC7=0xdc,
         CN1Plus_2=0x41, CRC1=0x89)
     Case12_PunchDoubleMsg_Corrupted_AirOrder_WithRS = Corrupted(
-        Case12_PunchDoubleMsg_Correct_AirOrder_WithRS, air_order=True, ECC5=0xd2, SN3_2=0x88,
+        Case12_PunchDoubleMsg_Correct_AirOrder_WithRS, air_order=True, ECC5=0xd2 ,
         ECC6=0xd6, ECC7=0xa4, CN1Plus_2=0x03, CRC1=0xb9)
     # --
 
     # ---
     Case13_PunchDoubleMsg_Previous_AirOrder_WithRS = PunchDoubleMsgAirOrder(
         H=0x88, CRC0=0x96, SN2=0x0f, SN1=0x42, SN0=0x3f, CN0=0xff, TH=0x8b, TL=0x14, SN2_2=0x0f,
-        SN1_2=0x42, SN3=0x00, SN0_2=0x3f, TH_2=0x8b, TL_2=0x15, CN1Plus=0x41, ECC0=0x45, ECC1=0xea,
-        ECC2=0x5e, CN0_2=0xff, ECC3=0xbd, ECC4=0xc5, ECC5=0x86, SN3_2=0x00, ECC6=0x22, ECC7=0xa4,
+        SN1_2=0x42 , SN0_2=0x3f, TH_2=0x8b, TL_2=0x15, CN1Plus=0x41, ECC0=0x45, ECC1=0xea,
+        ECC2=0x5e, CN0_2=0xff, ECC3=0xbd, ECC4=0xc5, ECC5=0x86 , ECC6=0x22, ECC7=0xa4,
         CN1Plus_2=0x41, CRC1=0x28)
     Case13_PunchDoubleMsg_Correct_AirOrder_WithRS = PunchDoubleMsgAirOrder(
         H=0x88, CRC0=0x96, SN2=0x0f, SN1=0x42, SN0=0x3f, CN0=0xff, TH=0x8b, TL=0x14, SN2_2=0x0f,
-        SN1_2=0x42, SN3=0x00, SN0_2=0x3f, TH_2=0x8b, TL_2=0x15, CN1Plus=0x41, ECC0=0x45, ECC1=0xea,
-        ECC2=0x5e, CN0_2=0xff, ECC3=0xbd, ECC4=0xc5, ECC5=0x86, SN3_2=0x00, ECC6=0x22, ECC7=0xa4,
+        SN1_2=0x42 , SN0_2=0x3f, TH_2=0x8b, TL_2=0x15, CN1Plus=0x41, ECC0=0x45, ECC1=0xea,
+        ECC2=0x5e, CN0_2=0xff, ECC3=0xbd, ECC4=0xc5, ECC5=0x86 , ECC6=0x22, ECC7=0xa4,
         CN1Plus_2=0x41, CRC1=0x28)
     Case13_PunchDoubleMsg_Corrupted_AirOrder_WithRS = Corrupted(
         Case13_PunchDoubleMsg_Correct_AirOrder_WithRS, air_order=True, H=0x98, CRC0=0xb7, SN2=0xb6,
-        SN1=0x13, SN0=0x33, CN0=0xfe, TL=0x15, SN2_2=0x4f, SN3=0x44, TH_2=0xdf, TL_2=0x51,
+        SN1=0x13, SN0=0x33, CN0=0xfe, TL=0x15, SN2_2=0x4f , TH_2=0xdf, TL_2=0x51,
         CN1Plus=0x54, ECC0=0x10, ECC1=0xef, ECC2=0x56, CN0_2=0xf7, ECC3=0x3d)
     # --
 
 
     # ---
     Case1_PunchMsg_Previous_WithRS = PunchMsg(
-        H=0x87, CN0=0xe7, SN3=0x00, SN2=0x0f, SN1=0x42, SN0=0x3f, CN1Plus=0x40, TH=0x91, TL=0x9e,
+        H=0x87, CN0=0xe7 , SN2=0x0f, SN1=0x42, SN0=0x3f, CN1Plus=0x40, TH=0x91, TL=0x9e,
         ECC0=0x0b, ECC1=0x47, ECC2=0x92, ECC3=0x83, CRC0=0xc0, CRC1=0x4e)
     Case1_PunchMsg_Correct_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x1f, SN1=0x15, SN0=0x8e, CN1Plus=0x0c, TH=0x91, TL=0xdf,
+        H=0x87, CN0=0x10 , SN2=0x1f, SN1=0x15, SN0=0x8e, CN1Plus=0x0c, TH=0x91, TL=0xdf,
         ECC0=0x6d, ECC1=0x70, ECC2=0x2e, ECC3=0x62, CRC0=0xc9, CRC1=0x68)
     Case1_PunchMsg_Corrupted_WithRS = Corrupted(
-        Case1_PunchMsg_Correct_WithRS, H=0x97, CN0=0x11, SN3=0x01, SN2=0x1e, SN1=0x14, TL=0x1f,
+        Case1_PunchMsg_Correct_WithRS, H=0x97, CN0=0x11 , SN2=0x1e, SN1=0x14, TL=0x1f,
         ECC0=0xa8, ECC1=0x55, ECC2=0xad, ECC3=0x1d)
     # -- wrong in positions 0, 1, 2, 3, 4, 8, 9, 10, 11, 12
 
     # ---
     Case2_PunchMsg_Previous_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x1f, SN1=0x15, SN0=0x8e, CN1Plus=0x0c, TH=0x9b, TL=0xe1,
+        H=0x87, CN0=0x10 , SN2=0x1f, SN1=0x15, SN0=0x8e, CN1Plus=0x0c, TH=0x9b, TL=0xe1,
         ECC0=0xc3, ECC1=0x8c, ECC2=0xcb, ECC3=0xe1, CRC0=0xa8, CRC1=0x4a)
     Case2_PunchMsg_Correct_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x1f, SN1=0x7d, SN0=0x9e, CN1Plus=0x0c, TH=0x9e, TL=0xb1,
+        H=0x87, CN0=0x10 , SN2=0x1f, SN1=0x7d, SN0=0x9e, CN1Plus=0x0c, TH=0x9e, TL=0xb1,
         ECC0=0xb5, ECC1=0x14, ECC2=0xfa, ECC3=0x13, CRC0=0x5c, CRC1=0xe0)
     Case2_PunchMsg_Corrupted_WithRS = Corrupted(
-        Case2_PunchMsg_Correct_WithRS, CN0=0x36, SN3=0x42, SN2=0x1b, SN1=0x37, SN0=0x60,
+        Case2_PunchMsg_Correct_WithRS, CN0=0x36 , SN2=0x1b, SN1=0x37, SN0=0x60,
         CN1Plus=0xc0, TH=0x01, TL=0x85, ECC0=0xfa, ECC1=0x44)
     # -- wrong in positions 1, 2, 3, 4, 5,6,7, 8, 9, 10
 
     # ---
     Case3_PunchMsg_Previous_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x04, SN1=0xc8, SN0=0x05, CN1Plus=0x0c, TH=0xa2, TL=0x71,
+        H=0x87, CN0=0x10 , SN2=0x04, SN1=0xc8, SN0=0x05, CN1Plus=0x0c, TH=0xa2, TL=0x71,
         ECC0=0xf8, ECC1=0x63, ECC2=0xee, ECC3=0xf4, CRC0=0x66, CRC1=0xe9)
     Case3_PunchMsg_Correct_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x6a, SN1=0xe3, SN0=0xfc, CN1Plus=0x0c, TH=0xa2, TL=0xba,
+        H=0x87, CN0=0x10 , SN2=0x6a, SN1=0xe3, SN0=0xfc, CN1Plus=0x0c, TH=0xa2, TL=0xba,
         ECC0=0xa3, ECC1=0xa6, ECC2=0xc5, ECC3=0x36, CRC0=0xa0, CRC1=0x4e)
     Case3_PunchMsg_Corrupted_WithRS = Corrupted(
-        Case3_PunchMsg_Correct_WithRS, H=0x97, CN0=0x00, SN3=0x41, SN2=0x3a, SN1=0xf2, CN1Plus=0x2e,
+        Case3_PunchMsg_Correct_WithRS, H=0x97, CN0=0x00 , SN2=0x3a, SN1=0xf2, CN1Plus=0x2e,
         TH=0x80, TL=0x8b)
     # -- wrong in positions 1, 2, 3, 4, 6,7, 8
 
     # ---
     Case4_PunchMsg_Previous_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x1f, SN1=0xb5, SN0=0x6e, CN1Plus=0x0c, TH=0xa6, TL=0x65,
+        H=0x87, CN0=0x10 , SN2=0x1f, SN1=0xb5, SN0=0x6e, CN1Plus=0x0c, TH=0xa6, TL=0x65,
         ECC0=0xe0, ECC1=0xee, ECC2=0xb2, ECC3=0x20, CRC0=0x5d, CRC1=0xa4)
     Case4_PunchMsg_Correct_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x00, SN1=0xab, SN0=0x13, CN1Plus=0x0c, TH=0xa6, TL=0x80,
+        H=0x87, CN0=0x10 , SN2=0x00, SN1=0xab, SN0=0x13, CN1Plus=0x0c, TH=0xa6, TL=0x80,
         ECC0=0xc3, ECC1=0x9a, ECC2=0xbb, ECC3=0xe7, CRC0=0xe4, CRC1=0x20)
     Case4_PunchMsg_Corrupted_WithRS = Corrupted(
         Case4_PunchMsg_Correct_WithRS, ECC0=0x69, ECC1=0xef, ECC2=0x5d, ECC3=0xe3, CRC0=0x00,
@@ -432,24 +445,24 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     # ---
     Case5_PunchMsg_Previous_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x1f, SN1=0x6b, SN0=0xa4, CN1Plus=0x0d, TH=0x05, TL=0x6f,
+        H=0x87, CN0=0x10 , SN2=0x1f, SN1=0x6b, SN0=0xa4, CN1Plus=0x0d, TH=0x05, TL=0x6f,
         ECC0=0x5a, ECC1=0x70, ECC2=0xe5, ECC3=0xef, CRC0=0xb3, CRC1=0x14)
     Case5_PunchMsg_Correct_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x03, SN1=0xc7, SN0=0x75, CN1Plus=0x0d, TH=0x05, TL=0x7c,
+        H=0x87, CN0=0x10 , SN2=0x03, SN1=0xc7, SN0=0x75, CN1Plus=0x0d, TH=0x05, TL=0x7c,
         ECC0=0x10, ECC1=0x1f, ECC2=0xab, ECC3=0xf6, CRC0=0xe7, CRC1=0xe3)
     Case5_PunchMsg_Corrupted_WithRS = Corrupted(
-        Case5_PunchMsg_Correct_WithRS, CN0=0x30, SN3=0x22, SN2=0x01, SN1=0xe7, SN0=0x57,
+        Case5_PunchMsg_Correct_WithRS, CN0=0x30 , SN2=0x01, SN1=0xe7, SN0=0x57,
         CN1Plus=0x07, TH=0xcf, TL=0x12, ECC0=0x21, ECC2=0x17, ECC3=0xc3)
     Case5_PunchMsg_Corrupted_WithRS2 = Corrupted(
-        Case5_PunchMsg_Correct_WithRS, CN0=0x29, SN3=0xe8, SN2=0x7c, SN1=0xa9, SN0=0x71)
+        Case5_PunchMsg_Correct_WithRS, CN0=0x29 , SN2=0x7c, SN1=0xa9, SN0=0x71)
     # --
 
     # ---
     Case6_PunchMsg_Previous_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x20, SN1=0x88, SN0=0x97, CN1Plus=0x0d, TH=0x05, TL=0xa4,
+        H=0x87, CN0=0x10 , SN2=0x20, SN1=0x88, SN0=0x97, CN1Plus=0x0d, TH=0x05, TL=0xa4,
         ECC0=0x27, ECC1=0x74, ECC2=0x3a, ECC3=0x6d, CRC0=0x8b, CRC1=0xf5)
     Case6_PunchMsg_Correct_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x1c, SN1=0x3e, SN0=0x21, CN1Plus=0x0d, TH=0x05, TL=0xbe,
+        H=0x87, CN0=0x10 , SN2=0x1c, SN1=0x3e, SN0=0x21, CN1Plus=0x0d, TH=0x05, TL=0xbe,
         ECC0=0xbf, ECC1=0x74, ECC2=0x29, ECC3=0xc0, CRC0=0x61, CRC1=0x20)
     Case6_PunchMsg_Corrupted_WithRS = Corrupted(
         Case6_PunchMsg_Correct_WithRS, SN0=0x31, CN1Plus=0x50, TH=0xa8, TL=0x22)
@@ -457,10 +470,10 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     # ---
     Case7_PunchMsg_Previous_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x1b, SN1=0xe7, SN0=0xdc, CN1Plus=0x0d, TH=0x06, TL=0x1d,
+        H=0x87, CN0=0x10 , SN2=0x1b, SN1=0xe7, SN0=0xdc, CN1Plus=0x0d, TH=0x06, TL=0x1d,
         ECC0=0x8f, ECC1=0xdf, ECC2=0xe1, ECC3=0x10, CRC0=0xb2, CRC1=0x20)
     Case7_PunchMsg_Correct_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x0e, SN1=0x75, SN0=0x77, CN1Plus=0x0d, TH=0x06, TL=0x29,
+        H=0x87, CN0=0x10 , SN2=0x0e, SN1=0x75, SN0=0x77, CN1Plus=0x0d, TH=0x06, TL=0x29,
         ECC0=0xe3, ECC1=0x1f, ECC2=0xe1, ECC3=0xa4, CRC0=0xa2, CRC1=0x4c)
     Case7_PunchMsg_Corrupted_WithRS = Corrupted(
         Case7_PunchMsg_Correct_WithRS, ECC0=0x1f, ECC1=0x57, ECC2=0x17, ECC3=0x7e)
@@ -468,10 +481,10 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     # ---
     Case8_PunchMsg_Previous_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x19, SN1=0xf2, SN0=0xf9, CN1Plus=0x0d, TH=0x08, TL=0xba,
+        H=0x87, CN0=0x10 , SN2=0x19, SN1=0xf2, SN0=0xf9, CN1Plus=0x0d, TH=0x08, TL=0xba,
         ECC0=0xa5, ECC1=0x56, ECC2=0x7b, ECC3=0xb2, CRC0=0x5a, CRC1=0xc8)
     Case8_PunchMsg_Correct_WithRS = PunchMsg(
-        H=0x87, CN0=0x10, SN3=0x00, SN2=0x00, SN1=0x3c, SN0=0xe9, CN1Plus=0x0d, TH=0x08, TL=0xf4,
+        H=0x87, CN0=0x10 , SN2=0x00, SN1=0x3c, SN0=0xe9, CN1Plus=0x0d, TH=0x08, TL=0xf4,
         ECC0=0x3b, ECC1=0x22, ECC2=0xe3, ECC3=0x49, CRC0=0x9e, CRC1=0xfb)
     Case8_PunchMsg_Corrupted_WithRS = Corrupted(
         Case8_PunchMsg_Correct_WithRS, ECC1=0xf4, ECC2=0xc4, ECC3=0xd0)
@@ -488,11 +501,11 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     # ---
     Case9_PunchMsg_Previous_AirOrder_WithRS = PunchDoubleMsgAirOrder(
         H=0x88, CRC0=0xf9, SN2=0x0f, SN1=0x42, SN0=0x3f, CN0=0xff, TH=0x07, TL=0x01, SN2_2=0x0f,
-        SN1_2=0x42, SN3=0x00, SN0_2=0x3f, TH_2=0x07, TL_2=0x02, CN1Plus=0x41, ECC0=0x9e, ECC1=0x6a,
-        ECC2=0x77, CN0_2=0xff, ECC3=0x58, ECC4=0x70, ECC5=0x7d, SN3_2=0x00, ECC6=0x37, ECC7=0x6a,
+        SN1_2=0x42 , SN0_2=0x3f, TH_2=0x07, TL_2=0x02, CN1Plus=0x41, ECC0=0x9e, ECC1=0x6a,
+        ECC2=0x77, CN0_2=0xff, ECC3=0x58, ECC4=0x70, ECC5=0x7d , ECC6=0x37, ECC7=0x6a,
         CN1Plus_2=0x41, CRC1=0xff)
     Case9_PunchMsg_Correct_AirOrder_WithRS = PunchMsgAirOrder(
-        H=0x87, CRC1=0xc3, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x07, TL=0x02, SN3=0x00,
+        H=0x87, CRC1=0xc3, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x07, TL=0x02 ,
         ECC0=0x36, ECC1=0xca, CN1Plus=0x41, ECC2=0x7c, ECC3=0xce, CRC0=0x4e)
     Case9_PunchMsg_Corrupted_AirOrder_WithRS = Corrupted(
         Case9_PunchMsg_Correct_AirOrder_WithRS, air_order=True, H=0xc7, CRC1=0xc7, SN2=0x0b,
@@ -501,34 +514,34 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
     # ---
     Case10_PunchMsg_Previous_AirOrder_WithRS = PunchMsgAirOrder(
-        H=0x87, CRC1=0x54, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x07, TL=0x03, SN3=0x00,
+        H=0x87, CRC1=0x54, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x07, TL=0x03 ,
         ECC0=0x39, ECC1=0xfc, CN1Plus=0x41, ECC2=0x04, ECC3=0x8e, CRC0=0x5b)
     Case10_PunchMsg_Correct_AirOrder_WithRS = PunchMsgAirOrder(
-        H=0x87, CRC1=0x12, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x07, TL=0x4b, SN3=0x00,
+        H=0x87, CRC1=0x12, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x07, TL=0x4b ,
         ECC0=0xa6, ECC1=0x50, CN1Plus=0x41, ECC2=0x88, ECC3=0x79, CRC0=0x36)
     Case10_PunchMsg_Corrupted_AirOrder_WithRS = Corrupted(
         Case10_PunchMsg_Correct_AirOrder_WithRS, air_order=True, H=0xa7, SN2=0x2d, CN0=0xfd,
-        SN0=0xb7, SN3=0x08, ECC1=0x40, CN1Plus=0x40, ECC2=0x89, ECC3=0x7d)
+        SN0=0xb7 , ECC1=0x40, CN1Plus=0x40, ECC2=0x89, ECC3=0x7d)
     # --
 
     # ---
     Case11_PunchMsg_Previous_AirOrder_WithRS = PunchMsgAirOrder(
-        H=0x87, CRC1=0x5a, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x09, TL=0x0e, SN3=0x00,
+        H=0x87, CRC1=0x5a, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x09, TL=0x0e ,
         ECC0=0x1a, ECC1=0xd2, CN1Plus=0x41, ECC2=0x6e, ECC3=0xea, CRC0=0x19)
     Case11_PunchMsg_Correct_AirOrder_WithRS = PunchMsgAirOrder(
-        H=0x87, CRC1=0xbe, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x09, TL=0x1a, SN3=0x00,
+        H=0x87, CRC1=0xbe, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x09, TL=0x1a ,
         ECC0=0xd6, ECC1=0x4d, CN1Plus=0x41, ECC2=0x40, ECC3=0x83, CRC0=0x97)
     Case11_PunchMsg_Corrupted_AirOrder_WithRS = Corrupted(
         Case11_PunchMsg_Correct_AirOrder_WithRS, air_order=True, CRC1=0xbf, SN1=0x43, CN0=0xde,
-        SN0=0x3d, TH=0x29, TL=0x3a, SN3=0x10, ECC0=0xd7, ECC1=0x4c, CN1Plus=0x51)
+        SN0=0x3d, TH=0x29, TL=0x3a , ECC0=0xd7, ECC1=0x4c, CN1Plus=0x51)
     # --
 
     # ---
     Case12_PunchMsg_Previous_AirOrder_WithRS = PunchMsgAirOrder(
-        H=0x87, CRC1=0x49, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x09, TL=0x98, SN3=0x00,
+        H=0x87, CRC1=0x49, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x09, TL=0x98 ,
         ECC0=0x1b, ECC1=0x23, CN1Plus=0x41, ECC2=0x66, ECC3=0x84, CRC0=0xeb)
     Case12_PunchMsg_Correct_AirOrder_WithRS = PunchMsgAirOrder(
-        H=0x87, CRC1=0x39, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x09, TL=0xab, SN3=0x00,
+        H=0x87, CRC1=0x39, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x09, TL=0xab ,
         ECC0=0x07, ECC1=0xb0, CN1Plus=0x41, ECC2=0x86, ECC3=0xd8, CRC0=0x1d)
     Case12_PunchMsg_Corrupted_AirOrder_WithRS = Corrupted(
         Case12_PunchMsg_Correct_AirOrder_WithRS, air_order=True, H=0xa7, CRC1=0x1b, SN2=0x2f,
@@ -538,16 +551,16 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     # ---
     Case13_PunchMsg_Previous_AirOrder_WithRS = PunchDoubleMsgAirOrder(
         H=0x88, CRC0=0x98, SN2=0x0f, SN1=0x42, SN0=0x3f, CN0=0xff, TH=0x8b, TL=0x16, SN2_2=0x0f,
-        SN1_2=0x42, SN3=0x00, SN0_2=0x3f, TH_2=0x8b, TL_2=0x17, CN1Plus=0x41, ECC0=0xfb, ECC1=0x81,
-        ECC2=0x43, CN0_2=0xff, ECC3=0xd6, ECC4=0xf2, ECC5=0xa5, SN3_2=0x00, ECC6=0x77, ECC7=0x46,
+        SN1_2=0x42 , SN0_2=0x3f, TH_2=0x8b, TL_2=0x17, CN1Plus=0x41, ECC0=0xfb, ECC1=0x81,
+        ECC2=0x43, CN0_2=0xff, ECC3=0xd6, ECC4=0xf2, ECC5=0xa5 , ECC6=0x77, ECC7=0x46,
         CN1Plus_2=0x41, CRC1=0x17)
     Case13_PunchMsg_Correct_AirOrder_WithRS = PunchMsgAirOrder(
-        H=0x87, CRC1=0xe5, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x8b, TL=0xb2, SN3=0x00,
+        H=0x87, CRC1=0xe5, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x8b, TL=0xb2 ,
         ECC0=0x91, ECC1=0x0a, CN1Plus=0x41, ECC2=0x12, ECC3=0xfb, CRC0=0x61)
     Case13_PunchMsg_Corrupted_AirOrder_WithRS = Corrupted(
         Case13_PunchMsg_Correct_AirOrder_WithRS, air_order=True, H=0xa7, SN2=0x2d, CN0=0xfd,
         ECC2=0x92, ECC3=0x73, CRC0=0xe1)
-    # --                                                               HEAD   CRC1  SN2   SN1    CN0  SN0    TH    TL   SN3   ECC0  ECC1   W    ECC2  ECC3  CRC0
+    # --                                                               HEAD   CRC1  SN2   SN1    CN0  SN0    TH    TL   ECC0  ECC1   W    ECC2  ECC3  CRC0
 
     # ---
     Case14_AckMsg_Correct_AirOrder_WithRS = AckMsg(
@@ -572,25 +585,13 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     # --
 
     # ---
-    Case17_StatusMsg_Previous_AirOrder_WithRS = StatusMsg(
-        H=0x04, BAT=0x45, CN0=0x00, RELAYPATHNO=0x00, BT0=0xb0, BT1=0x02, BT2=0x47, BT3=0x00,
-        BT4=0xd7, BT5=0x6d, ECC0=0x89, ECC1=0xbd, ECC2=0x6a, ECC3=0x50)
-    Case17_StatusMsg_Correct_AirOrder_WithRS = StatusMsg(
-        H=0x04, BAT=0x45, CN0=0x00, RELAYPATHNO=0x00, BT0=0xb0, BT1=0x02, BT2=0x47, BT3=0x00,
-        BT4=0xd7, BT5=0x6d, ECC0=0x89, ECC1=0xbd, ECC2=0x6a, ECC3=0x50)
-    Case17_StatusMsg_Corrupted_AirOrder_WithRS = Corrupted(
-        Case17_StatusMsg_Correct_AirOrder_WithRS, H=0xc4, BAT=0xcd, CN0=0x40, RELAYPATHNO=0x04,
-        BT0=0xd8, BT1=0x20, BT2=0x17, BT3=0x07, BT4=0xd5)
-    # --
-
-    # ---
     Case18_PunchMsg_Previous_AirOrder_WithRS = PunchDoubleMsgAirOrder(
         H=0x88, CRC0=0xc3, SN2=0x0f, SN1=0x42, SN0=0x3f, CN0=0xff, TH=0x7d, TL=0x88, SN2_2=0x0f,
-        SN1_2=0x42, SN3=0x00, SN0_2=0x3f, TH_2=0x7d, TL_2=0x89, CN1Plus=0x41, ECC0=0x14, ECC1=0x17,
-        ECC2=0x47, CN0_2=0xff, ECC3=0xcb, ECC4=0x48, ECC5=0x58, SN3_2=0x00, ECC6=0xd1, ECC7=0xc7,
+        SN1_2=0x42 , SN0_2=0x3f, TH_2=0x7d, TL_2=0x89, CN1Plus=0x41, ECC0=0x14, ECC1=0x17,
+        ECC2=0x47, CN0_2=0xff, ECC3=0xcb, ECC4=0x48, ECC5=0x58 , ECC6=0xd1, ECC7=0xc7,
         CN1Plus_2=0x41, CRC1=0xfa)
     Case18_PunchMsg_Correct_AirOrder_WithRS = PunchMsgAirOrder(
-        H=0x87, CRC1=0x27, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x7d, TL=0x9f, SN3=0x00,
+        H=0x87, CRC1=0x27, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x7d, TL=0x9f ,
         ECC0=0xc0, ECC1=0xaf, CN1Plus=0x41, ECC2=0x3c, ECC3=0xfa, CRC0=0xa1)
     Case18_PunchMsg_Corrupted_AirOrder_WithRS = Corrupted(
         Case18_PunchMsg_Correct_AirOrder_WithRS, air_order=True, CRC1=0x36, CN0=0xfe, ECC2=0x7c,
@@ -598,15 +599,14 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     # --
 
     # ---
-    Case19_PunchMsg_Previous_AirOrder_WithRS = PunchMsgAirOrder(
-        H=0x87, CRC1=0x7e, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3d, TH=0xa0, TL=0x16, SN3=0x02,
-        ECC0=0x19, ECC1=0x25, CN1Plus=0x41, ECC2=0x27, ECC3=0xd6, CRC0=0xa8)
     Case19_PunchMsg_Correct_AirOrder_WithRS = PunchMsgAirOrder(
-        H=0x87, CRC1=0x7e, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x80, TL=0x16, SN3=0x00,
+        H=0x87, CRC1=0x7e, SN2=0x0f, SN1=0x42, CN0=0xff, SN0=0x3f, TH=0x80, TL=0x16 ,
         ECC0=0x19, ECC1=0x25, CN1Plus=0x41, ECC2=0x37, ECC3=0xd6, CRC0=0xa8)
+    Case19_PunchMsg_Previous_AirOrder_WithRS = Corrupted(
+        Case19_PunchMsg_Correct_AirOrder_WithRS, air_order=True, SN0=0x3d, TH=0xa0)
     Case19_PunchMsg_Corrupted_AirOrder_WithRS = Corrupted(
         Case19_PunchMsg_Correct_AirOrder_WithRS, air_order=True, H=0xc7, CRC1=0x54, SN2=0x63,
-        SN1=0x40, CN0=0xe9, SN0=0x1d, TH=0xa0, TL=0x17, SN3=0x03)
+        SN1=0x40, CN0=0xe9, SN0=0x1d, TH=0xa0, TL=0x17 )
     # --
 
     # ---
@@ -652,37 +652,43 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     # --- Example that generated many message alternatives and took way to much time to decode during o-ringen
     Case25_PunchDoubleMsg_Previous_AirOrder_WithRS = PunchDoubleMsgAirOrder(
         H=0x88, CRC0=0x4d, SN2=0x21, SN1=0xc9, SN0=0xa3, CN0=0x40, TH=0x98, TL=0xa3, SN2_2=0x7a,
-        SN1_2=0x3b, SN3=0x00, SN0_2=0x70, TH_2=0x98, TL_2=0xa4, CN1Plus=0x02, ECC0=0x1a, ECC1=0xcf,
-        ECC2=0xea, CN0_2=0x40, ECC3=0x3f, ECC4=0x25, ECC5=0x62, SN3_2=0x0f, ECC6=0x34, ECC7=0x89,
+        SN1_2=0x3b , SN0_2=0x70, TH_2=0x98, TL_2=0xa4, CN1Plus=0x02, ECC0=0x1a, ECC1=0xcf,
+        ECC2=0xea, CN0_2=0x40, ECC3=0x3f, ECC4=0x25, ECC5=0x62 , ECC6=0x34, ECC7=0x89,
         CN1Plus_2=0x02, CRC1=0xf7)
     Case25_PunchDoubleMsg_Correct_AirOrder_WithRS = PunchDoubleMsgAirOrder(
         H=0x88, CRC0=0x72, SN2=0x82, SN1=0x18, SN0=0x79, CN0=0x40, TH=0x98, TL=0xa4, SN2_2=0x8a,
-        SN1_2=0xb5, SN3=0x0f, SN0_2=0x71, TH_2=0x98, TL_2=0xa6, CN1Plus=0x02, ECC0=0x56, ECC1=0x43,
-        ECC2=0xb2, CN0_2=0x40, ECC3=0xa9, ECC4=0x3a, ECC5=0x2e, SN3_2=0x00, ECC6=0xb4, ECC7=0x86,
+        SN1_2=0xb5 , SN0_2=0x71, TH_2=0x98, TL_2=0xa6, CN1Plus=0x02, ECC0=0x56, ECC1=0x43,
+        ECC2=0xb2, CN0_2=0x40, ECC3=0xa9, ECC4=0x3a, ECC5=0x2e , ECC6=0xb4, ECC7=0x86,
         CN1Plus_2=0x02, CRC1=0x50)
     Case25_PunchDoubleMsg_Corrupted_AirOrder_WithRS = Corrupted(
         Case25_PunchDoubleMsg_Correct_AirOrder_WithRS, air_order=True, CN1Plus=0x82, ECC0=0xda,
-        ECC1=0xc7, ECC2=0x0a, CN0_2=0xd2, ECC3=0xec, ECC4=0x0b, ECC5=0xda, SN3_2=0xfa, ECC6=0x80,
+        ECC1=0xc7, ECC2=0x0a, CN0_2=0xd2, ECC3=0xec, ECC4=0x0b, ECC5=0xda , ECC6=0x80,
         ECC7=0x4c, CN1Plus_2=0x4e, CRC1=0x3c)
     # ---
 
     # --- Example that generated many message alternatives and took way to much time to decode during o-ringen
-    Case26_PunchDoubleMsg_Corrupted_AirOrder_WithRS = PunchDoubleMsgAirOrder(
-        H=0xc8, CRC0=0xd1, SN2=0x7a, SN1=0x7d, SN0=0xbe, CN0=0x11, TH=0x15, TL=0xd9, SN2_2=0x15,
-        SN1_2=0xd9, SN3=0x68, SN0_2=0xe9, TH_2=0x14, TL_2=0x52, CN1Plus=0xb2, ECC0=0x4c, ECC1=0x4d,
-        ECC2=0x00, CN0_2=0x99, ECC3=0x19, ECC4=0x3c, ECC5=0x0c, SN3_2=0x4d, ECC6=0x47, ECC7=0x03,
-        CN1Plus_2=0x2f, CRC1=0x87)
+    # The captured ECC/CRC bytes are restored so the message stays undecodable garbage.
+    Case26_PunchDoubleMsg_Corrupted_AirOrder_WithRS = Corrupted(
+        PunchDoubleMsgAirOrder(
+            H=0xc8, SN2=0x7a, SN1=0x7d, SN0=0xbe, CN0=0x11, TH=0x15, TL=0xd9, SN2_2=0x15,
+            SN1_2=0xd9 , SN0_2=0xe9, TH_2=0x14, TL_2=0x52, CN1Plus=0xb2, CN0_2=0x99,
+            CN1Plus_2=0x2f),
+        air_order=True, ECC0=0x4c, ECC1=0x4d, ECC2=0x00, ECC3=0x19, ECC4=0x3c, ECC5=0x0c,
+        ECC6=0x47, ECC7=0x03, CRC0=0xd1, CRC1=0x87)
     # ---
 
     # --- Many errors, don't know correct values. Used to test maximum alternatives
-    Case27_PunchDoubleMsg_Corrupted_WithRS = PunchDoubleMsg(
-        H=0xc8, CN0=0x11, SN3=0xff, SN2=0x7a, SN1=0x7d, SN0=0xbe, CN1Plus=0xb2, TH=0x92, TL=0x18,
-        CN0_2=0x99, SN3_2=0xff, SN2_2=0x15, SN1_2=0xd9, SN0_2=0xe9, CN1Plus_2=0x2f, TH_2=0x92,
-        TL_2=0x18, ECC0=0x4c, ECC1=0x4d, ECC2=0x00, ECC3=0x19, ECC4=0x3c, ECC5=0x0c, ECC6=0x4d,
+    # The captured ECC/CRC bytes are restored so the message stays undecodable garbage.
+    Case27_PunchDoubleMsg_Corrupted_WithRS = Corrupted(
+        PunchDoubleMsg(
+            H=0xc8, CN0=0x11 , SN2=0x7a, SN1=0x7d, SN0=0xbe, CN1Plus=0xb2, TH=0x92, TL=0x18,
+            CN0_2=0x99 , SN2_2=0x15, SN1_2=0xd9, SN0_2=0xe9, CN1Plus_2=0x2f, TH_2=0x92,
+            TL_2=0x18),
+        ECC0=0x4c, ECC1=0x4d, ECC2=0x00, ECC3=0x19, ECC4=0x3c, ECC5=0x0c, ECC6=0x4d,
         ECC7=0x47, CRC0=0x03, CRC1=0x2f)
-    #                                                                   H     CN0  SN3  SN2    SN1  SN0  CN1Plus  TH   TL    CN0   SN3   SN2   SN1   SN0 CN1Plus TH    TL   ECC0  ECC1  ECC2  ECC3  ECC4  ECC5  ECC6  ECC7  CRC0  CRC1
+    #                                                                   H     CN0  SN2    SN1  SN0  CN1Plus  TH   TL    CN0   SN2   SN1   SN0 CN1Plus TH    TL   ECC0  ECC1  ECC2  ECC3  ECC4  ECC5  ECC6  ECC7  CRC0  CRC1
     Case27_PunchMsg_Correct_Previous = PunchMsg(
-        H=0x87, CN0=0x1f, SN3=0x00, SN2=0x00, SN1=0x00, SN0=0xff, CN1Plus=0x00, TH=0x93, TL=0xa8,
+        H=0x87, CN0=0x1f , SN2=0x00, SN1=0x00, SN0=0xff, CN1Plus=0x00, TH=0x93, TL=0xa8,
         ECC0=0x13, ECC1=0x95, ECC2=0xfe, ECC3=0x24, CRC0=0xba, CRC1=0xb2)
 
 
@@ -735,11 +741,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
     # Total no of
 
     PunchMsg_Correct_HighestTHTL = PunchMsg(
-        H=0x87, CN0=0x1f, SN3=0x00, SN2=0x00, SN1=0x00, SN0=0xff, CN1Plus=0x00, TH=0xa8, TL=0xc0,
+        H=0x87, CN0=0x1f , SN2=0x00, SN1=0x00, SN0=0xff, CN1Plus=0x00, TH=0xa8, TL=0xc0,
         ECC0=0x69, ECC1=0xe7, ECC2=0x82, ECC3=0x03, CRC0=0xbf, CRC1=0x2b)
-    StatusMsg_Correct_WithRS = StatusMsg(
-        H=0x04, BAT=0x60, CN0=0x10, RELAYPATHNO=0x00, BT0=0xd4, BT1=0x12, BT2=0x43, BT3=0x24,
-        BT4=0x6a, BT5=0x0c, ECC0=0x47, ECC1=0x32, ECC2=0x63, ECC3=0xa5)
 
     dataHandler = LoraRadioDataHandler(False)
 
@@ -764,8 +767,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             actual, expected, offset = actual[1:], expected[1:], 1
         elif compare == "drop_crc":
             actual, expected = actual[:-2], expected[:-2]
-        elif compare == "prefix27":
-            actual, expected = actual[:27], expected[:27]
+        elif compare == "prefix25":
+            actual, expected = actual[:25], expected[:25]
         if actual == expected:
             return
         names = _FieldNames(msg_cls, max(len(actual), len(expected)) + offset)
@@ -788,10 +791,13 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler.DataReceived = bytearray()
         SettingsClass.SetMessageIDOfLastLoraMessageSent(None)
 
-    # A sub second punch received at a finish (1 Nov 2026), in air order, without the RSSI byte. Status2 is
-    # also 16 bytes, and when it was tried first Reed-Solomon "corrected" this good punch into a valid Status2.
-    # The receiver acked it as a status message, so the sender retried the same bytes 63 times in 10 minutes.
-    SubSecondPunch_StatusLookalike_AirOrder = Hex("8b 59 80 62 04 34 0f be 00 49 40 d5 01 17 22 26")
+    # A sub second punch received at a finish (1 Nov 2026), without the RSSI byte, rebuilt for the current
+    # 15 byte format. Status2 is also 15 bytes, and if it is tried first Reed-Solomon can "correct" this good
+    # punch into a valid Status2. The receiver then acks it as a status message, so the sender retries the
+    # same bytes 63 times in 10 minutes.
+    SubSecondPunch_StatusLookalike_AirOrder = _NamedMessage(LoraRadioMessagePunchSubSecondRS, 15,
+                                                            air_order=True)(
+        H=0x8b, CN0=0x04, SN2=0x80, SN1=0x62, SN0=0x34, CN1Plus=0x01, TH=0x0f, TL=0xbe, TSS=0x49)
 
     # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_SubSecondPunchNotTakenForStatus2
     def test_SubSecondPunchNotTakenForStatus2(self):
@@ -858,7 +864,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
         erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case1_FindPunchErasuresDoubleMessage: " + str(erasures))
-        corruptPositions = [0,  1,  2,  3, 5, 6, 7, 8, 11, 12, 17, 18, 19, 20]
+        corruptPositions = [0, 1, 2, 4, 5, 6, 7, 9, 10, 15, 16, 17, 18]
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
@@ -896,7 +902,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
         erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case3_FindPunchErasuresDoubleMessage: " + str(erasures))
-        corruptPositions = [8, 9, 10, 11, 16]
+        corruptPositions = [7, 8, 9, 11, 14]
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
@@ -928,7 +934,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
         erasures = self.dataHandler._FindReDCoSPunchDoubleErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case5_FindPunchErasuresDoubleMessage: " + str(erasures))
-        corruptPositions = [9, 10, 11, 12, 13, 16]
+        corruptPositions = [8, 9, 10, 11, 14]
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
@@ -1164,7 +1170,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case1_FindPunchErasuresMessage: " + str(erasures))
-        corruptPositions: list[int] = [0, 1, 2, 3, 4, 8, 9, 10, 11, 12]
+        corruptPositions: list[int] = [0, 1, 2, 3, 5, 7, 8, 9, 10, 11]
         # add 6 since we sent incorrect week information
         corruptPositions.append(6)
         for pos in erasures:
@@ -1334,7 +1340,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsg, totalRetryDelaySeconds)
         print("test_Case8_FindPunchErasuresMessage2: " + str(erasures))
-        corruptPositions = [5, 6, 8, 9, 11, 12]
+        corruptPositions = [4, 5, 7, 8, 9, 10, 11]
         for pos in erasures:
             self.assertIn(pos, corruptPositions)
 
@@ -1517,26 +1523,6 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertBytesEqual(ackMsg.GetByteArray(), TestLoraRadioDataHandler.Case16_AckMsg_Correct_AirOrder_WithRS, "test_Case16_GetAckMessage", "skip_header")
         print("=== END test_Case16_GetAckMessage ===")
 
-    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case17_GetStatusMessage
-    def test_Case17_GetStatusMessage(self):
-        print("============================================================================================== START test_Case17_GetStatusMessage ==============================================================================================")
-        SettingsClass.SetSetting("LoraRange", 'L')
-        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
-
-        prevStatusMsgArr = TestLoraRadioDataHandler.Case17_StatusMsg_Previous_AirOrder_WithRS[:]
-        Feed(self.dataHandler, prevStatusMsgArr)
-        prevStatusMsg = self.dataHandler.GetMessage()
-
-        recStatusMsg = TestLoraRadioDataHandler.Case17_StatusMsg_Corrupted_AirOrder_WithRS[:]
-        Feed(self.dataHandler, recStatusMsg)
-        statusMsg = self.dataHandler.GetMessage()
-
-        print("Corrupted message: " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case17_StatusMsg_Corrupted_AirOrder_WithRS[:], logging.DEBUG))
-        print("Correct message:   " + Utils.GetDataInHex(TestLoraRadioDataHandler.Case17_StatusMsg_Correct_AirOrder_WithRS, logging.DEBUG))
-        self.assertIsNotNone(statusMsg)
-        self.assertBytesEqual(statusMsg.GetByteArray(), TestLoraRadioDataHandler.Case17_StatusMsg_Correct_AirOrder_WithRS, "test_Case17_GetStatusMessage")
-        print("=== END test_Case17_GetStatusMessage ===")
-
     # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_Case18_GetPunchMessage
     def test_Case18_GetPunchMessage(self):
         print("============================================================================================== START test_Case18_GetPunchMessage ==============================================================================================")
@@ -1676,41 +1662,41 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         # TH changed to more than 5 minutes more
         corruptedMessageTH = TestLoraRadioDataHandler.PunchMsg_Correct_1[:]
-        corruptedMessageTH[7] = corruptedMessageTH[7] | 0x04
+        corruptedMessageTH[6] = corruptedMessageTH[6] | 0x04
         corruptedLoraMsgTH = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             corruptedMessageTH)
         totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTH, totalRetryDelaySeconds)
-        self.assertEqual(erasures, Hex("07"), "TH erasure not correct")
+        self.assertEqual(erasures, Hex("06"), "TH erasure not correct")
 
         # TH changed to higher than possible
         corruptedMessageTH2 = TestLoraRadioDataHandler.PunchMsg_Correct_1[:]
-        corruptedMessageTH2[7] = 0xA9
+        corruptedMessageTH2[6] = 0xA9
         corruptedLoraMsgTH2 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             corruptedMessageTH2)
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTH2, totalRetryDelaySeconds)
-        self.assertEqual(erasures, Hex("07"), "TH erasure not correct")
+        self.assertEqual(erasures, Hex("06"), "TH erasure not correct")
 
         # TH changed to more than 5 minutes more and the combination TH TL too high
         corruptedMessageTL = TestLoraRadioDataHandler.PunchMsg_Correct_1[:]
-        corruptedMessageTL[7] = 0xA8
-        corruptedMessageTL[8] = 0xC1
+        corruptedMessageTL[6] = 0xA8
+        corruptedMessageTL[7] = 0xC1
         corruptedLoraMsgTL = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             corruptedMessageTL)
         totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTL, totalRetryDelaySeconds)
-        self.assertEqual(erasures, Hex("07"), "TH, TL erasure not correct")
+        self.assertEqual(erasures, Hex("06"), "TH, TL erasure not correct")
 
         # TL changed to higher than possible (TH already highest)
         loraMsg2 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             TestLoraRadioDataHandler.PunchMsg_Correct_HighestTHTL)
         self.dataHandler._CachePunchMessage(loraMsg2)
         corruptedMessageTL2 = TestLoraRadioDataHandler.PunchMsg_Correct_HighestTHTL[:]
-        corruptedMessageTL2[8] = 0xC1
+        corruptedMessageTL2[7] = 0xC1
         corruptedLoraMsgTL2 = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(
             corruptedMessageTL2)
         erasures = self.dataHandler._FindReDCoSPunchErasures(corruptedLoraMsgTL2, totalRetryDelaySeconds)
-        self.assertEqual(erasures, Hex("08"), "TL erasure not correct")
+        self.assertEqual(erasures, Hex("07"), "TL erasure not correct")
 
         # Control number changed
         self.dataHandler._CachePunchMessage(loraMsg)
@@ -1917,19 +1903,6 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         print("=== END test_GetMessage_PunchDoubleMessage ===")
 
-    # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetMessage_Status
-    def test_GetMessage_Status(self):
-        print("============================================================================================== START test_GetMessage_Status ==============================================================================================")
-        Feed(self.dataHandler, TestLoraRadioDataHandler.StatusMsg_Correct_WithRS)
-
-        msg = self.dataHandler.GetMessage()
-        self.assertIsNotNone(msg, "Expected to receive the message back")
-        self.assertBytesEqual(msg.GetByteArray(), TestLoraRadioDataHandler.StatusMsg_Correct_WithRS, "test_GetMessage_Status: Didn't receive the same bytes back")
-        self.assertEqual(msg.GetMessageCategory(), "DATA")
-        self.assertTrue(isinstance(msg, LoraRadioMessageRS))
-        print("=== END test_GetMessage_Status ===")
-        # self.assertEqual(TestLoraRadioDataHandler.PunchMsg_Correct_1 + rsCodes, msg2.GetByteArray(), "Didn't receive a corrected message")
-
     # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetAlternatives
     def test_GetAlternatives(self):
         print("============================================================================================== START test_GetAlternatives ==============================================================================================")
@@ -1942,7 +1915,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         totalRetryDelaySeconds = SettingsClass.GetTotalRetryDelaySeconds()
         alts, fixedValues, fixedErasures = self.dataHandler._GetPunchMessageAlternatives(msg2, totalRetryDelaySeconds)
 
-        self.assertEqual(len(alts), 4)
+        self.assertEqual(len(alts), 2)
 
     # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetAlternativesDouble
     def test_GetAlternativesDouble(self):
@@ -1961,7 +1934,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         for i in range(len(alts)):
             print(alts[i])
 
-        self.assertEqual(len(alts), 8)
+        self.assertEqual(len(alts), 4)
 
     # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetReDCoSErasures
     def test_GetReDCoSErasures(self):
@@ -1979,8 +1952,8 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         alts, fixedValues, fixedErasures = self.dataHandler._GetPunchDoubleMessageAlternatives(msg3, totalRetryDelaySeconds)
         erasuresCombinations = self.dataHandler._GetReDCoSErasureCombinations(msg3, fixedValues, fixedErasures, 0)
 
-        self.assertEqual(len(alts), 8, "No of alternatives wrong")
-        self.assertEqual(fixedValues, [0, 1, 2, 6, 7, 9, 10, 14, 15], "fixedValues unexpected")
+        self.assertEqual(len(alts), 4, "No of alternatives wrong")
+        self.assertEqual(fixedValues, [0, 1, 5, 6, 8, 12, 13], "fixedValues unexpected")
         self.assertEqual(fixedErasures, bytearray(), "fixedErasures unexpected")
         self.assertEqual(len(list(erasuresCombinations)), 12870, "No of erasure combinations unexpected")
 
@@ -2200,9 +2173,16 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         SettingsClass.SetSetting("LoraRange", 'L')
         SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(10000)
 
-        #DoubleMsg_WithRS = bytearray.fromhex("85083f083f083f39ffff00ff643a40f40315ff3cc5f5001e3b403fff9df902")
-        DoubleMsg_WithRS =         bytearray.fromhex("c8b7ffffffff643affff00ff643b40f6c52aff80a40e00628850c5ff9d") # snr, status: f800
-        Correct_DoubleMsg_WithRS = bytearray.fromhex("c8ff00ffffff40643aff00ffffff40643bf6c52a80a40e6298b7c5")
+        # Captured message with its original (now stale) ECC/CRC kept, plus snr/status: f800
+        DoubleMsg_WithRS = Corrupted(
+            PunchDoubleMsgAirOrder(
+                H=0xc8, CN0=0xff, SN2=0xff, SN1=0xff, SN0=0xff, CN1Plus=0x40, TH=0x64, TL=0x3a,
+                CN0_2=0xff, SN2_2=0xff, SN1_2=0xff, SN0_2=0xff, CN1Plus_2=0x40, TH_2=0x64,
+                TL_2=0x3b),
+            air_order=True, CN0=0xb7, CN1Plus=0x64, TH=0x3a, TL=0xff) + bytearray([0xff, 0x9d])
+        Correct_DoubleMsg_WithRS = PunchDoubleMsg(
+            H=0xc8, CN0=0xff, SN2=0xff, SN1=0xff, SN0=0xff, CN1Plus=0x40, TH=0x64, TL=0x3a,
+            CN0_2=0xff, SN2_2=0xff, SN1_2=0xff, SN0_2=0xff, CN1Plus_2=0x40, TH_2=0x64, TL_2=0x3b)
         print("len: " + str(len(DoubleMsg_WithRS)))
 
         interleaved = DoubleMsg_WithRS[:]
@@ -2210,7 +2190,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         punchDoubleMsg = self.dataHandler._GetPunchDoubleReDCoSMessage()
         self.assertIsNotNone(punchDoubleMsg)
         print(Utils.GetDataInHex(punchDoubleMsg.GetByteArray(), logging.DEBUG))
-        self.assertBytesEqual(punchDoubleMsg.GetByteArray(), Correct_DoubleMsg_WithRS, "test_DoubleMessage: Didn't receive the same bytes back", "prefix27")
+        self.assertBytesEqual(punchDoubleMsg.GetByteArray(), Correct_DoubleMsg_WithRS, "test_DoubleMessage: Didn't receive the same bytes back", "prefix25")
         print("control1: "  +str(punchDoubleMsg.GetControlNumber()))
         print("cardno 1: " + str(punchDoubleMsg.GetSICardNo()))
         print("hour 1: " + str(punchDoubleMsg.GetHour()))
@@ -2252,14 +2232,14 @@ class TestLoraRadioDataHandler(unittest.TestCase):
             loraMsg = LoraRadioMessageCreator.GetPunchReDCoSMessageByFullMessageData(prevMsg + rsCodes)
             self.dataHandler._CachePunchMessage(loraMsg)
             # Case27_PunchMsg_Correct_Previous [0x87, 0x1F, 0x00, 0x00, 0x00, 0xFF, 0x00, 0X93, 0xA8, 0x13, 0x95, 0xfe, 0x24, 0xba, 0xb2]
-            #                       H   CN0    SN3  SN2    SN1  SN0  CN1Plus TH    TL    ECC  ECC   ECC   ECC    CRC  CRC
+            #                       H   CN0   SN2    SN1  SN0  CN1Plus TH    TL    ECC  ECC   ECC   ECC    CRC  CRC
 
         #prevPunchDoubleMsg = self.dataHandler.GetMessage()
 
         seconds = 2
         self.dataHandler.LastPunchMessageTime = time.monotonic() - seconds
 
-        # Case27 has different header, TH/TL 400 seconds back in time compared to previous message. SN3 is not 0. This should be worst case.
+        # Case27 has different header, TH/TL 400 seconds back in time compared to previous message. This should be worst case.
         deinterleaved = TestLoraRadioDataHandler.Case27_PunchDoubleMsg_Corrupted_WithRS[:]
         interleaved = LoraRadioMessagePunchDoubleReDCoSRS.InterleaveToAirOrder(deinterleaved)
         print("Deinterleaved: " + Utils.GetDataInHex(deinterleaved, logging.DEBUG))

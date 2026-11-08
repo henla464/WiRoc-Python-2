@@ -6,7 +6,7 @@ import time
 import logging
 from datamodel.db_helper import DatabaseHelper, ErrorCodeData, ChannelData
 from datamodel.datamodel import SettingData
-from loraradio.LoraRadioMessageRS import (LoraRadioMessageAckRS, LoraRadioMessageStatusRS, LoraRadioMessageStatus2RS,
+from loraradio.LoraRadioMessageRS import (LoraRadioMessageAckRS, LoraRadioMessageStatus2RS,
                                           LoraRadioMessagePunchReDCoSRS, LoraRadioMessagePunchDoubleReDCoSRS)
 from loraradio.ReturnStatus import ReturnStatus
 from utils.utils import Utils
@@ -771,7 +771,7 @@ class LoraRadioRAK3172:
             self.serialLock.release()
 
     def GetRadioData(
-            self) -> LoraRadioMessageAckRS | LoraRadioMessageStatusRS | LoraRadioMessageStatus2RS | LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | None:
+            self) -> LoraRadioMessageAckRS | LoraRadioMessageStatus2RS | LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | None:
         self.serialLock.acquire()
         try:
             if self.loraRadioDataHandler.HasData():

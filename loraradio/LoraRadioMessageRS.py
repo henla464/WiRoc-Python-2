@@ -13,7 +13,6 @@ from settings.settings import SettingsClass
 # LoraRadioMessageRS----> LoraRadioMessageReDCoSRS ------> LoraRadioMessagePunchReDCoSRS
 # 			\  \  \  \                                \ -> LoraRadioMessagePunchDoubleReDCoSRS
 # 			 \  \  \  \-> LoraRadioMessageAckRS
-# 			  \  \  \---> LoraRadioMessageStatusRS
 # 		       \  \-----> LoraRadioMessageStatus2RS
 #  		        \-------> LoraRadioMessageHAMCallSignRS
 
@@ -25,17 +24,14 @@ class LoraRadioMessageRS(object):
     RepeaterBitMask: int = 0b00100000
     BatLowBitMask: int = 0b01000000
     AckBitMask: int = 0b10000000
-    MessageTypeSIPunch: int = LoraMessageTypes.MessageTypeSIPunch
-    MessageTypeStatus: int = LoraMessageTypes.MessageTypeStatus
     MessageTypeLoraAck: int = LoraMessageTypes.MessageTypeLoraAck
-    MessageTypeSIPunchDouble: int = LoraMessageTypes.MessageTypeSIPunchDouble
     MessageTypeSIPunchReDCoS: int = LoraMessageTypes.MessageTypeSIPunchReDCoS
     MessageTypeSIPunchDoubleReDCoS: int = LoraMessageTypes.MessageTypeSIPunchDoubleReDCoS
     MessageTypeHAMCallSign: int = LoraMessageTypes.MessageTypeHAMCallSign
     MessageTypeStatus2: int = LoraMessageTypes.MessageTypeStatus2
     MessageTypeSIPunchSubSecond: int = LoraMessageTypes.MessageTypeSIPunchSubSecond
     MessageTypeSIPunchDoubleSubSecond: int = LoraMessageTypes.MessageTypeSIPunchDoubleSubSecond
-    MessageLengths: list[int]= [24, 16, 7, 14, 14, 7, 27, 15, 27, 11, 16, 16, 29]
+    MessageLengths: list[int]= [24, 16, 7, 14, 14, 7, 27, 14, 25, 11, 15, 15, 27]
 
     # Positions within the message
     H: int = 0
@@ -203,21 +199,20 @@ class LoraRadioMessagePunchReDCoSRS(LoraRadioMessageReDCoSRS):
     NoOfCRCBytes = 2
     # Positions within the message, after deinterleaving or before interleaving
     CN0 = 1  # Control number - bit 0-7
-    SN3 = 2  # SI Number, highest byte
-    SN2 = 3
-    SN1 = 4
-    SN0 = 5
-    CN1Plus = 6 # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
-    TH = 7  # 12 hour timer, high byte, number of seconds
-    TL = 8  # 12 hour timer, high byte, number of seconds
-    ECC0 = 9  # Error correcting code
-    ECC1 = 10  # Error correcting code
-    ECC2 = 11  # Error correcting code
-    ECC3 = 12  # Error correcting code
-    CRC0 = 13  # CRC first byte
-    CRC1 = 14  # CRC second byte
+    SN2 = 2  # SI Number, highest byte carried on air (24 bits)
+    SN1 = 3
+    SN0 = 4
+    CN1Plus = 5 # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
+    TH = 6  # 12 hour timer, high byte, number of seconds
+    TL = 7  # 12 hour timer, high byte, number of seconds
+    ECC0 = 8  # Error correcting code
+    ECC1 = 9  # Error correcting code
+    ECC2 = 10  # Error correcting code
+    ECC3 = 11  # Error correcting code
+    CRC0 = 12  # CRC first byte
+    CRC1 = 13  # CRC second byte
 
-    InterleavingInAirOrder = [LoraRadioMessageReDCoSRS.H, CRC1, SN2, SN1, CN0, SN0, TH, TL, SN3, ECC0, ECC1, CN1Plus, ECC2, ECC3, CRC0]
+    InterleavingInAirOrder = [LoraRadioMessageReDCoSRS.H, CRC1, SN2, SN1, CN0, SN0, TH, TL, ECC0, ECC1, CN1Plus, ECC2, ECC3, CRC0]
 
     def __init__(self):
         super().__init__()
@@ -241,7 +236,9 @@ class LoraRadioMessagePunchReDCoSRS(LoraRadioMessageReDCoSRS):
         return (self.payloadData[self.CN1Plus-1] & 0x40) << 2 | self.payloadData[self.CN0-1]
 
     def GetSICardNoByteArray(self):
-        return self.payloadData[self.SN3-1:self.SN0]
+        # The 4-byte form DecodeCardNr and the SI serial protocol expect. Its first byte is
+        # always zero and is not carried on air.
+        return bytearray([0]) + self.payloadData[self.SN2-1:self.SN0]
 
     def GetSICardNo(self):
         return Utils.DecodeCardNr(self.GetSICardNoByteArray())
@@ -310,9 +307,8 @@ class LoraRadioMessagePunchReDCoSRS(LoraRadioMessageReDCoSRS):
         return siMsg.GetByteArray()
 
     def SetSIMessageByteArray(self, siMessageByteArray):
-        self.payloadData = bytearray([0, 0, 0, 0, 0, 0, 0, 0])
+        self.payloadData = bytearray([0, 0, 0, 0, 0, 0, 0])
         self.payloadData[self.CN0-1] = siMessageByteArray[4]
-        self.payloadData[self.SN3-1] = siMessageByteArray[5]
         self.payloadData[self.SN2-1] = siMessageByteArray[6]
         self.payloadData[self.SN1-1] = siMessageByteArray[7]
         self.payloadData[self.SN0-1] = siMessageByteArray[8]
@@ -333,34 +329,32 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
 
     # Positions within the message
     CN0: int = 1  # Control number - bit 0-7
-    SN3: int = 2  # SI Number, highest byte
-    SN2: int = 3
-    SN1: int = 4
-    SN0: int = 5
-    CN1Plus: int = 6 # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
-    TH: int = 7 # 12 hour timer, high byte, number of seconds
-    TL: int = 8  # 12 hour timer, high byte, number of seconds
+    SN2: int = 2  # SI Number, highest byte carried on air (24 bits)
+    SN1: int = 3
+    SN0: int = 4
+    CN1Plus: int = 5 # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
+    TH: int = 6 # 12 hour timer, high byte, number of seconds
+    TL: int = 7  # 12 hour timer, high byte, number of seconds
     # Second punch positions
-    CN0_2: int = 9
-    SN3_2: int = 10  # SI Number, highest byte
-    SN2_2: int = 11
-    SN1_2: int = 12
-    SN0_2: int = 13
-    CN1Plus_2: int = 14  # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
-    TH_2: int = 15  # 12 hour timer, high byte, number of seconds
-    TL_2: int = 16  # 12 hour timer, high byte, number of seconds
-    ECC0: int = 17 # Error correcting code
-    ECC1: int = 18  # Error correcting code
-    ECC2: int = 19  # Error correcting code
-    ECC3: int = 20  # Error correcting code
-    ECC4: int = 21  # Error correcting code
-    ECC5: int = 22  # Error correcting code
-    ECC6: int = 23  # Error correcting code
-    ECC7: int = 24  # Error correcting code
-    CRC0: int = 25  # CRC0 byte
-    CRC1: int = 26  # CRC1 byte
+    CN0_2: int = 8
+    SN2_2: int = 9  # SI Number, highest byte carried on air (24 bits)
+    SN1_2: int = 10
+    SN0_2: int = 11
+    CN1Plus_2: int = 12  # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
+    TH_2: int = 13  # 12 hour timer, high byte, number of seconds
+    TL_2: int = 14  # 12 hour timer, high byte, number of seconds
+    ECC0: int = 15 # Error correcting code
+    ECC1: int = 16  # Error correcting code
+    ECC2: int = 17  # Error correcting code
+    ECC3: int = 18  # Error correcting code
+    ECC4: int = 19  # Error correcting code
+    ECC5: int = 20  # Error correcting code
+    ECC6: int = 21  # Error correcting code
+    ECC7: int = 22  # Error correcting code
+    CRC0: int = 23  # CRC0 byte
+    CRC1: int = 24  # CRC1 byte
 
-    InterleavingInAirOrder = [LoraRadioMessageReDCoSRS.H, CRC0, SN2, SN1, SN0, CN0, TH, TL, SN2_2, SN1_2, SN3, SN0_2, TH_2, TL_2, CN1Plus, ECC0, ECC1, ECC2, CN0_2, ECC3, ECC4, ECC5, SN3_2, ECC6, ECC7, CN1Plus_2, CRC1]
+    InterleavingInAirOrder = [LoraRadioMessageReDCoSRS.H, CRC0, SN2, SN1, SN0, CN0, TH, TL, SN2_2, SN1_2, SN0_2, TH_2, TL_2, CN1Plus, ECC0, ECC1, ECC2, CN0_2, ECC3, ECC4, ECC5, ECC6, ECC7, CN1Plus_2, CRC1]
 
     def __init__(self):
         super().__init__()
@@ -393,10 +387,10 @@ class LoraRadioMessagePunchDoubleReDCoSRS(LoraRadioMessageReDCoSRS):
         return self.payloadData[self.TH_2-1:self.TL_2]
 
     def GetSICardNoByteArray(self):
-        return self.payloadData[self.SN3 - 1:self.SN0]
+        return bytearray([0]) + self.payloadData[self.SN2 - 1:self.SN0]
 
     def GetSICardNoByteArray_2(self):
-        return self.payloadData[self.SN3_2 - 1:self.SN0_2]
+        return bytearray([0]) + self.payloadData[self.SN2_2 - 1:self.SN0_2]
 
     def GetSICardNo(self):
         return Utils.DecodeCardNr(self.GetSICardNoByteArray())
@@ -533,31 +527,28 @@ class LoraRadioMessagePunchSubSecondRS(LoraRadioMessageReDCoSRS):
 
     Same fields as LoraRadioMessagePunchReDCoSRS with the SI sub second byte
     (TSS, units of 1/256 s) added after TH/TL, which is where it sits in the
-    serial SI message. SN3 is kept so that the message length stays distinct
-    from the ReDCoS punch, and so the "SN3 is zero" assumption used when
-    recovering corrupted messages remains valid.
+    serial SI message.
     """
 
     NoOfECCBytes = 4
     NoOfCRCBytes = 2
     # Positions within the message, after deinterleaving or before interleaving
     CN0 = 1  # Control number - bit 0-7
-    SN3 = 2  # SI Number, highest byte
-    SN2 = 3
-    SN1 = 4
-    SN0 = 5
-    CN1Plus = 6 # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
-    TH = 7  # 12 hour timer, high byte, number of seconds
-    TL = 8  # 12 hour timer, low byte, number of seconds
-    TSS = 9  # sub second, units of 1/256 second
-    ECC0 = 10  # Error correcting code
-    ECC1 = 11  # Error correcting code
-    ECC2 = 12  # Error correcting code
-    ECC3 = 13  # Error correcting code
-    CRC0 = 14  # CRC first byte
-    CRC1 = 15  # CRC second byte
+    SN2 = 2  # SI Number, highest byte carried on air (24 bits)
+    SN1 = 3
+    SN0 = 4
+    CN1Plus = 5 # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
+    TH = 6  # 12 hour timer, high byte, number of seconds
+    TL = 7  # 12 hour timer, low byte, number of seconds
+    TSS = 8  # sub second, units of 1/256 second
+    ECC0 = 9  # Error correcting code
+    ECC1 = 10  # Error correcting code
+    ECC2 = 11  # Error correcting code
+    ECC3 = 12  # Error correcting code
+    CRC0 = 13  # CRC first byte
+    CRC1 = 14  # CRC second byte
 
-    InterleavingInAirOrder = [LoraRadioMessageReDCoSRS.H, CRC1, SN2, SN1, CN0, SN0, TH, TL, SN3, TSS, ECC0, ECC1, CN1Plus, ECC2, ECC3, CRC0]
+    InterleavingInAirOrder = [LoraRadioMessageReDCoSRS.H, CRC1, SN2, SN1, CN0, SN0, TH, TL, TSS, ECC0, ECC1, CN1Plus, ECC2, ECC3, CRC0]
 
     def __init__(self):
         super().__init__()
@@ -581,7 +572,9 @@ class LoraRadioMessagePunchSubSecondRS(LoraRadioMessageReDCoSRS):
         return (self.payloadData[self.CN1Plus-1] & 0x40) << 2 | self.payloadData[self.CN0-1]
 
     def GetSICardNoByteArray(self):
-        return self.payloadData[self.SN3-1:self.SN0]
+        # The 4-byte form DecodeCardNr and the SI serial protocol expect. Its first byte is
+        # always zero and is not carried on air.
+        return bytearray([0]) + self.payloadData[self.SN2-1:self.SN0]
 
     def GetSICardNo(self):
         return Utils.DecodeCardNr(self.GetSICardNoByteArray())
@@ -653,9 +646,8 @@ class LoraRadioMessagePunchSubSecondRS(LoraRadioMessageReDCoSRS):
         return siMsg.GetByteArray()
 
     def SetSIMessageByteArray(self, siMessageByteArray):
-        self.payloadData = bytearray([0, 0, 0, 0, 0, 0, 0, 0, 0])
+        self.payloadData = bytearray([0, 0, 0, 0, 0, 0, 0, 0])
         self.payloadData[self.CN0-1] = siMessageByteArray[4]
-        self.payloadData[self.SN3-1] = siMessageByteArray[5]
         self.payloadData[self.SN2-1] = siMessageByteArray[6]
         self.payloadData[self.SN1-1] = siMessageByteArray[7]
         self.payloadData[self.SN0-1] = siMessageByteArray[8]
@@ -679,37 +671,35 @@ class LoraRadioMessagePunchDoubleSubSecondRS(LoraRadioMessageReDCoSRS):
 
     # Positions within the message
     CN0: int = 1  # Control number - bit 0-7
-    SN3: int = 2  # SI Number, highest byte
-    SN2: int = 3
-    SN1: int = 4
-    SN0: int = 5
-    CN1Plus: int = 6 # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
-    TH: int = 7 # 12 hour timer, high byte, number of seconds
-    TL: int = 8  # 12 hour timer, low byte, number of seconds
-    TSS: int = 9  # sub second, units of 1/256 second
+    SN2: int = 2  # SI Number, highest byte carried on air (24 bits)
+    SN1: int = 3
+    SN0: int = 4
+    CN1Plus: int = 5 # bit 6 is the eights bit of control number. Bit 5-4 4-week counter, Bit3-1 Day of week, Bit 0 AM/PM
+    TH: int = 6 # 12 hour timer, high byte, number of seconds
+    TL: int = 7  # 12 hour timer, low byte, number of seconds
+    TSS: int = 8  # sub second, units of 1/256 second
     # Second punch positions
-    CN0_2: int = 10
-    SN3_2: int = 11  # SI Number, highest byte
-    SN2_2: int = 12
-    SN1_2: int = 13
-    SN0_2: int = 14
-    CN1Plus_2: int = 15
-    TH_2: int = 16  # 12 hour timer, high byte, number of seconds
-    TL_2: int = 17  # 12 hour timer, low byte, number of seconds
-    TSS_2: int = 18  # sub second, units of 1/256 second
-    ECC0: int = 19
-    ECC1: int = 20
-    ECC2: int = 21
-    ECC3: int = 22
-    ECC4: int = 23
-    ECC5: int = 24
-    ECC6: int = 25
-    ECC7: int = 26
-    CRC0: int = 27  # CRC first byte
-    CRC1: int = 28  # CRC second byte
+    CN0_2: int = 9
+    SN2_2: int = 10  # SI Number, highest byte carried on air (24 bits)
+    SN1_2: int = 11
+    SN0_2: int = 12
+    CN1Plus_2: int = 13
+    TH_2: int = 14  # 12 hour timer, high byte, number of seconds
+    TL_2: int = 15  # 12 hour timer, low byte, number of seconds
+    TSS_2: int = 16  # sub second, units of 1/256 second
+    ECC0: int = 17
+    ECC1: int = 18
+    ECC2: int = 19
+    ECC3: int = 20
+    ECC4: int = 21
+    ECC5: int = 22
+    ECC6: int = 23
+    ECC7: int = 24
+    CRC0: int = 25  # CRC first byte
+    CRC1: int = 26  # CRC second byte
 
-    InterleavingInAirOrder = [LoraRadioMessageReDCoSRS.H, CRC0, SN2, SN1, SN0, CN0, TH, TL, SN2_2, TSS, SN1_2, SN3,
-                              SN0_2, TH_2, TL_2, CN1Plus, ECC0, ECC1, TSS_2, ECC2, CN0_2, ECC3, ECC4, ECC5, SN3_2,
+    InterleavingInAirOrder = [LoraRadioMessageReDCoSRS.H, CRC0, SN2, SN1, SN0, CN0, TH, TL, SN2_2, TSS, SN1_2,
+                              SN0_2, TH_2, TL_2, CN1Plus, ECC0, ECC1, TSS_2, ECC2, CN0_2, ECC3, ECC4, ECC5,
                               ECC6, ECC7, CN1Plus_2, CRC1]
 
     def __init__(self):
@@ -849,88 +839,6 @@ class LoraRadioMessageAckRS(LoraRadioMessageRS):
 
     def GetRSCode(self):
         raise Exception("Ack does not have RS Code")
-
-
-class LoraRadioMessageStatusRS(LoraRadioMessageRS):
-    NoOfECCBytes = 4
-    # Positions within the message
-    BAT = 1
-    CN0 = 2
-    RELAYPATHNO = 3
-    BT0 = 4
-    BT1 = 5
-    BT2 = 6
-    BT3 = 7
-    BT4 = 8
-    BT5 = 9
-    ECC0 = 10  # Error correcting code
-    ECC1 = 11  # Error correcting code
-    ECC2 = 12  # Error correcting code
-    ECC3 = 13  # Error correcting code
-
-    def __init__(self, noOfLoraMsgSentNotAcked: int = None, allLoraPunchesSucceeded: bool = None):
-        super().__init__()
-        self.messageType = LoraRadioMessageRS.MessageTypeStatus
-        if noOfLoraMsgSentNotAcked is None or allLoraPunchesSucceeded is None:
-            return
-        siStationNumber = SettingsClass.GetSIStationNumber()
-        batteryPercent = Battery.GetBatteryPercent()
-        if siStationNumber > 255:
-            batteryPercent |= 0x80
-
-        allPunchesOk_NoOfFailedMsg_relayPathNo = ((noOfLoraMsgSentNotAcked & 0x1F) << 2) | SettingsClass.GetRelayPathNumber() & 0x03
-        if allLoraPunchesSucceeded:
-            allPunchesOk_NoOfFailedMsg_relayPathNo += 0x80
-
-        btAddressAsInt = SettingsClass.GetBTAddressAsInt()
-        self.payloadData = bytearray(bytes([batteryPercent, siStationNumber, allPunchesOk_NoOfFailedMsg_relayPathNo,
-                                            (btAddressAsInt & 0xFF0000000000) >> 40,
-                                            (btAddressAsInt & 0x00FF00000000) >> 32,
-                                            (btAddressAsInt & 0x0000FF000000) >> 24,
-                                            (btAddressAsInt & 0x000000FF0000) >> 16,
-                                            (btAddressAsInt & 0x00000000FF00) >> 8,
-                                            (btAddressAsInt & 0x0000000000FF),
-                                            ]))
-        self.GenerateAndAddRSCode()
-
-    def GetBatteryPercent(self) -> int:
-        return self.payloadData[0] & 0x7F
-
-    def GetSIStationNumber(self) -> int:
-        return ((self.payloadData[0] & 0x80) << 8) + self.payloadData[1]
-
-    def GetRelayPathNo(self) -> int:
-        return self.payloadData[2] & 0x03
-
-    def GetAllLoraPunchesSentOK(self) -> bool:
-        return (self.payloadData[2] & 0x80) > 0
-
-    def GetNoOfLoraMsgSentNotAcked(self) -> int:
-        return (self.payloadData[2] & 0x7C) >> 2
-
-    def SetPayload(self, payload: bytearray) -> None:
-        self.payloadData = payload
-
-    def GetBTAddressAsInt(self) -> int:
-        return (self.payloadData[3] << 40) | \
-               (self.payloadData[4] << 32) | \
-               (self.payloadData[5] << 24) | \
-               (self.payloadData[6] << 16) | \
-               (self.payloadData[7] << 8) | \
-               self.payloadData[8]
-
-    def GetBTAddress(self) -> str:
-        btAddrAsInt = self.GetBTAddressAsInt()
-        btAddress = '{:x}'.format(btAddrAsInt).upper()
-        btAddress = btAddress[0:2] + ':' + btAddress[2:4] + ':' + btAddress[4:6] + \
-            ':' + btAddress[6:8] + ':' + btAddress[8:10] + ':' + btAddress[10:12]
-        return btAddress
-
-    def GetMessageCategory(self) -> str:
-        return "DATA"
-
-    def GetMessageSubType(self) -> str:
-        return "Status"
 
 
 class LoraRadioMessageStatus2RS(LoraRadioMessageRS):

@@ -3,7 +3,7 @@ __author__ = 'henla464'
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from datamodel.datamodel import SIMessage, SRRMessage, SRRBoardPunch, AirPlusPunch, AirPlusPunchOneOfMultiple
 from datamodel.datamodel import MessageBoxData, RepeaterMessageBoxData
-from loraradio.LoraRadioMessageRS import LoraRadioMessagePunchDoubleReDCoSRS, LoraRadioMessagePunchReDCoSRS, LoraRadioMessageAckRS, LoraRadioMessageStatusRS, LoraRadioMessageStatus2RS
+from loraradio.LoraRadioMessageRS import LoraRadioMessagePunchDoubleReDCoSRS, LoraRadioMessagePunchReDCoSRS, LoraRadioMessageAckRS, LoraRadioMessageStatus2RS
 from typing import Union
 from datamodel.db_helper import DatabaseHelper
 
@@ -11,7 +11,7 @@ from datamodel.db_helper import DatabaseHelper
 class MessageHelper:
     @staticmethod
     def GetMessageBoxData(messageSource: str, messageTypeName: str, messageSubTypeName: str, instanceName: str, powerCycle: int, SIStationSerialNumber: str,
-                          loraMessage: LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | LoraRadioMessageAckRS | LoraRadioMessageStatusRS
+                          loraMessage: LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | LoraRadioMessageAckRS
                                        | LoraRadioMessageStatus2RS | None,
                           messageData: bytearray) -> MessageBoxData:
         siPayloadData = None
@@ -108,7 +108,7 @@ class MessageHelper:
                                          checksumOK: bool,
                                          powerCycle: int,
                                          loraMessage: LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | LoraRadioMessageAckRS
-                                                      | LoraRadioMessageStatusRS | LoraRadioMessageStatus2RS | None,
+                                                      | LoraRadioMessageStatus2RS | None,
                                          messageData: bytearray,
                                          messageID: bytearray | None):
 

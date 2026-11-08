@@ -5,7 +5,7 @@ import serial
 import time
 import logging
 from datamodel.db_helper import DatabaseHelper, ErrorCodeData, ChannelData
-from loraradio.LoraRadioMessageRS import (LoraRadioMessageAckRS, LoraRadioMessageStatusRS, LoraRadioMessageStatus2RS,
+from loraradio.LoraRadioMessageRS import (LoraRadioMessageAckRS, LoraRadioMessageStatus2RS,
                                           LoraRadioMessagePunchReDCoSRS, LoraRadioMessagePunchDoubleReDCoSRS)
 from loraradio.ReturnStatus import ReturnStatus
 from utils.utils import Utils
@@ -599,7 +599,7 @@ class LoraRadioDRF1268DS_RS:
         finally:
             self.serialLock.release()
 
-    def GetRadioData(self) -> LoraRadioMessageAckRS | LoraRadioMessageStatusRS | LoraRadioMessageStatus2RS | LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | None:
+    def GetRadioData(self) -> LoraRadioMessageAckRS | LoraRadioMessageStatus2RS | LoraRadioMessagePunchReDCoSRS | LoraRadioMessagePunchDoubleReDCoSRS | None:
         self.serialLock.acquire()
         try:
             if self.radioSerial.in_waiting == 0 and len(self.loraRadioDataHandler.DataReceived) == 0:

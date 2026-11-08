@@ -67,7 +67,7 @@ class RepeaterSIMessageToLoraAckTransform(object):
         if ackReq and not repeaterReq:
             incomingMsgType = LoraRadioDataHandler.GetHeaderMessageType(payloadData)
             # never ack status messages
-            if incomingMsgType == LoraRadioMessageRS.MessageTypeStatus:
+            if incomingMsgType == LoraRadioMessageRS.MessageTypeStatus2:
                 return None
 
             loraPunchMsg = LoraRadioMessageCreator.GetPunchMessageByFullMessageData(payloadData, rssiValue=None)

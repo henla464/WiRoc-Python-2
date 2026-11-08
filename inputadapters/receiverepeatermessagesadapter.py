@@ -1,7 +1,6 @@
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from datamodel.db_helper import DatabaseHelper
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
-from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from settings.settings import SettingsClass
 from utils.utils import Utils
 import logging
@@ -62,11 +61,7 @@ class ReceiveRepeaterMessagesAdapter(object):
             elif messageToAdd.MessageSubTypeName == "SIMessageDouble":
                 loraMessage = LoraRadioMessageCreator.GetPunchDoubleMessageByFullMessageData(messageToAdd.MessageData, messageToAdd.RSSIValue)
             elif messageToAdd.MessageSubTypeName == "Status":
-                messageType = messageToAdd.MessageData[0] & 0x1F
-                if messageType == LoraRadioMessageRS.MessageTypeStatus:
-                    loraMessage = LoraRadioMessageCreator.GetStatusMessageByFullMessageData(messageToAdd.MessageData, messageToAdd.RSSIValue)
-                else:
-                    loraMessage = LoraRadioMessageCreator.GetStatus2MessageByFullMessageData(messageToAdd.MessageData, messageToAdd.RSSIValue)
+                loraMessage = LoraRadioMessageCreator.GetStatus2MessageByFullMessageData(messageToAdd.MessageData, messageToAdd.RSSIValue)
             return {"MessageType": "DATA", "MessageSource":"Repeater", "MessageSubTypeName": messageToAdd.MessageSubTypeName, "Data": messageToAdd.MessageData, "MessageID": messageToAdd.MessageID, "LoraRadioMessage": loraMessage, "ChecksumOK": True}
         return None
 
