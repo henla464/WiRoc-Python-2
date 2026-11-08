@@ -203,16 +203,19 @@ class LoraRadioRAK3172:
         # Mesh framing is incompatible with the DRF1268DS netid prefix, so compat mode is forced off
         # while mesh is enabled. sendack is passed through; the mesh firmware ignores it (its acks
         # are link-layer and never reach the host).
+        compatMode = drf1268dsCompatMode and not meshEnabled
+        # The DRF1268DS sets LDRO from its own firmware and it cannot be turned off for it, so
+        # compat mode has to keep LDRO on to stay receivable by the dongles.
         return LoraRadioRAK3172.SetLORAP2PParametersCmd.format(frequency=str(channelData.Frequency),
                                                                spreadingfactor=str(channelData.SpreadingFactor),
                                                                bandwidth=str(channelData.RfBw),
                                                                coderate=str(codeRate),
                                                                preamblelength=str(preambleLength),
                                                                txpower=str(loraPower),
-                                                               lowdatarateoptimize=("1" if channelData.LowDatarateOptimize else "0"),
+                                                               lowdatarateoptimize=("1" if channelData.LowDatarateOptimize or compatMode else "0"),
                                                                crcon=("1" if channelData.CRCOn else "0"),
                                                                rxgain=("1" if rxGain else "0"),
-                                                               drf1268dscompatmode=("1" if drf1268dsCompatMode and not meshEnabled else "0"),
+                                                               drf1268dscompatmode=("1" if compatMode else "0"),
                                                                sendack=("1" if sendAck else "0"),
                                                                payloadlength="0",
                                                                meshenabled=("1" if meshEnabled else "0"),
@@ -235,7 +238,7 @@ class LoraRadioRAK3172:
                 coderate=str(codeRate),
                 preamblelength=str(preambleLength),
                 txpower=str(loraPower),
-                lowdatarateoptimize=("1" if channelData.LowDatarateOptimize else "0"),
+                lowdatarateoptimize=("1" if channelData.LowDatarateOptimize or drf1268dsCompatMode else "0"),
                 crcon=("1" if channelData.CRCOn else "0"),
                 rxgain=("1" if rxGain else "0"),
                 drf1268dscompatmode=("1" if drf1268dsCompatMode else "0"),

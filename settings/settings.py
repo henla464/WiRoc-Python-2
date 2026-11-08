@@ -748,8 +748,10 @@ class SettingsClass(object):
         codeRate = SettingsClass.GetCodeRate()
         header = True
         DRF1268DSCompatMode = SettingsClass.GetDRF1268DSCompatModeEnabled()
+        # Compat mode has to keep LDRO on, same as the RAK driver sends it, so the estimate matches
+        lowDatarateOptimize = SettingsClass.channelData.LowDatarateOptimize or DRF1268DSCompatMode
         SettingsClass.timeOnAirData = DatabaseHelper.get_timeonair(SettingsClass.channelData.SpreadingFactor, SettingsClass.channelData.RfBw,
-                                                                   codeRate, SettingsClass.channelData.LowDatarateOptimize, header,
+                                                                   codeRate, lowDatarateOptimize, header,
                                                                    SettingsClass.channelData.CRCOn, DRF1268DSCompatMode,
                                                                    SettingsClass.channelData.PreambleLength,
                                                                    loraModule)
