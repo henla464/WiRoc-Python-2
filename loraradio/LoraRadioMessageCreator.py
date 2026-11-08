@@ -243,7 +243,7 @@ class LoraRadioMessageCreator(object):
     def GetPunchDoubleMessageByFullMessageData(fullMessageDataDeinterleaved: bytearray,
                                                rssiValue: int = None,
                                                snrValue: int = None,
-                                               statusValue: int = None):
+                                               statusValue: int = None) -> LoraRadioMessagePunchDoubleReDCoSRS | LoraRadioMessagePunchDoubleSubSecondRS:
         messageType = fullMessageDataDeinterleaved[0] & LoraRadioMessageRS.MessageTypeBitMask
         if messageType == LoraRadioMessageRS.MessageTypeSIPunchDoubleSubSecond:
             return LoraRadioMessageCreator.GetPunchDoubleSubSecondMessageByFullMessageData(
