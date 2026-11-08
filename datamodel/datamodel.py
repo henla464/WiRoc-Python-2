@@ -61,14 +61,16 @@ class TimeOnAirData(object):
                ("Header", bool), ("CRCOn", bool), ("PreambleLength", int),
                ("DRF1268DSCompatMode", bool), ("LoraModem", bool),
                ("PunchTOA", int), ("DoublePunchTOA", int), ("AckTOA", int),
-               ("StatusTOA", int), ("HAMCallSignTOA", int)]
+               ("StatusTOA", int), ("HAMCallSignTOA", int),
+               ("SingleSubSecondTOA", int), ("DoubleSubSecondTOA", int)]
 
     def __init__(self, SpreadingFactor: int | None = None, RfBw: int | None = None,
                  CodeRate: int | None = None, LowDatarateOptimize: bool | None = None,
                  Header: bool | None = None, CRCOn: bool | None = None, PreambleLength: int | None = None,
                  DRF1268DSCompatMode: bool | None = None, LoraModem: str | None = None,
                  PunchTOA: int | None = None, DoublePunchTOA: int | None = None, AckTOA: int | None = None,
-                 StatusTOA: int | None = None, HAMCallSignTOA: int | None = None):
+                 StatusTOA: int | None = None, HAMCallSignTOA: int | None = None,
+                 SingleSubSecondTOA: int | None = None, DoubleSubSecondTOA: int | None = None):
         self.id: int | None = None
         self.SpreadingFactor: int | None = SpreadingFactor
         self.RfBw: int | None = RfBw
@@ -84,6 +86,8 @@ class TimeOnAirData(object):
         self.AckTOA: int | None = AckTOA
         self.StatusTOA: int | None = StatusTOA
         self.HAMCallSignTOA: int | None = HAMCallSignTOA
+        self.SingleSubSecondTOA: int | None = SingleSubSecondTOA
+        self.DoubleSubSecondTOA: int | None = DoubleSubSecondTOA
 
 
 class MessageBoxData(object):

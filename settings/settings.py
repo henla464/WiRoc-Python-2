@@ -766,12 +766,15 @@ class SettingsClass(object):
         MessageTypeSIPunchSubSecond: int = 11
         MessageTypeSIPunchDoubleSubSecond: int = 12
         # The sub second messages are one byte longer than the ReDCoS messages (two for the
-        # double). Lora rounds the payload up to whole symbol blocks so in most modes this is
-        # the same time on air; where it is not, the punch figure is the closer estimate.
-        if MessageTypeSIPunchReDCoS == messageType or MessageTypeSIPunchSubSecond == messageType:
+        # double), so they have their own figures in the table.
+        if MessageTypeSIPunchReDCoS == messageType:
             return SettingsClass.timeOnAirData.PunchTOA
-        elif MessageTypeSIPunchDoubleReDCoS == messageType or MessageTypeSIPunchDoubleSubSecond == messageType:
+        elif MessageTypeSIPunchSubSecond == messageType:
+            return SettingsClass.timeOnAirData.SingleSubSecondTOA
+        elif MessageTypeSIPunchDoubleReDCoS == messageType:
             return SettingsClass.timeOnAirData.DoublePunchTOA
+        elif MessageTypeSIPunchDoubleSubSecond == messageType:
+            return SettingsClass.timeOnAirData.DoubleSubSecondTOA
         elif MessageTypeLoraAck == messageType:
             return SettingsClass.timeOnAirData.AckTOA
         elif MessageTypeHAMCallSign == messageType:
