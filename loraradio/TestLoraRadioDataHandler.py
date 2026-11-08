@@ -358,7 +358,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler.ReceivedPunchMessageDict = {}
         self.dataHandler.LastPunchMessageTime = None
         self.dataHandler.LastPunchMessage = None
-        self.dataHandler.LastDoublePunchMessage = None
+        self.dataHandler.LastPunchDoubleMessage = None
         self.dataHandler.DataReceived = bytearray()
 
     # A sub second punch received at a finish (1 Nov 2026), in air order, without the RSSI byte. Status2 is

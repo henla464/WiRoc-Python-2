@@ -784,7 +784,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.dataHandler.ReceivedPunchMessageDict = {}
         self.dataHandler.LastPunchMessageTime = None
         self.dataHandler.LastPunchMessage = None
-        self.dataHandler.LastDoublePunchMessage = None
+        self.dataHandler.LastPunchDoubleMessage = None
         self.dataHandler.DataReceived = bytearray()
         SettingsClass.SetMessageIDOfLastLoraMessageSent(None)
 
