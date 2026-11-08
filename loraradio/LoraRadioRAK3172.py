@@ -564,7 +564,6 @@ class LoraRadioRAK3172:
         self.meshActiveRoot = meshActiveRoot
         self.meshStandbyRoot = meshStandbyRoot
         self.meshDeviceID = meshDeviceID
-        preambleLength: int = 8
         self.enabled = enabled
 
         if not enabled:
@@ -602,6 +601,7 @@ class LoraRadioRAK3172:
                 LoraRadioRAK3172.WiRocLogger.error(f"LoraRadioRAK3172::Init() No channel data for {loraRange} {channel}")
                 self.SetErrorCode(ErrorCodeData.ERR_LORA_CONF, "Lora config failed")
                 return False
+            preambleLength: int = channelData.PreambleLength
             if meshEnabled and self.meshFirmwareSupported is False:
                 self.isInitialized = False
                 LoraRadioRAK3172.WiRocLogger.error(
