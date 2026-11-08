@@ -104,9 +104,17 @@ class HardwareAbstraction(object):
                 self.LORAauxLine: gpiod.LineSettings(direction=Direction.INPUT),       # lora aux pin (corresponds to pin 19)
                 self.SRRnrstLine: gpiod.LineSettings(direction=Direction.OUTPUT)  # SRR_NRST reset SRR (corresponds to pin 24 GPIOC3)
             })
-            self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
-            self.line_request.set_value(self.LORAM0Line, Value.ACTIVE)
+            # Start the DRF1268DS in mode 0 (EN low, M0 low), not full sleep (mode 3): Init() wakes it anyway,
+            # and a sleep here, together with the sleep/wake at the end of Init(), left the module answering
+            # nothing (until a power cycle) after about 1 in 30 WiRocPython restarts.
+            self.line_request.set_value(self.LORAenableLine, Value.INACTIVE)
+            self.line_request.set_value(self.LORAM0Line, Value.INACTIVE)
             self.line_request.set_value(self.SRRnrstLine, Value.ACTIVE)
+            # The DRF1268DS's RS (reset) pin is wired to GPIOL11 (gpiochip1 line 11), the same line v8 uses for
+            # the RAK3172. Hold it high (not in reset) so ResetLora() can reset a module that stops answering.
+            self.LORARSLine = 11
+            self.line_request_gpiochip1 = gpiod.request_lines(chip1Path, consumer="wirocpython", config={
+                self.LORARSLine: gpiod.LineSettings(direction=Direction.OUTPUT, output_value=Value.ACTIVE)})
         elif self.wirocHWVersion == 'v8Rev1':
             self.LORAenableLine = None
             self.LORAEnabledLineInverted = False
@@ -155,11 +163,20 @@ class HardwareAbstraction(object):
             return ['/dev/ttyS2']
         return []
 
-    def ResetLora(self):
-        if self.LORARSLine is not None:
-            self.line_request.set_value(self.LORARSLine, Value.INACTIVE)
-            time.sleep(0.001)
-            self.line_request.set_value(self.LORARSLine, Value.ACTIVE)
+    def ResetLora(self) -> bool:
+        # RS is on gpiochip1 (line_request_gpiochip1). Low for 100 ms; on v6/v7 (DRF1268DS) then wait for AUX high.
+        if self.LORARSLine is None or self.line_request_gpiochip1 is None:
+            return False
+        self.line_request_gpiochip1.set_value(self.LORARSLine, Value.INACTIVE)
+        time.sleep(0.1)
+        self.line_request_gpiochip1.set_value(self.LORARSLine, Value.ACTIVE)
+        if 6 <= self.wirocHWVersionNumber <= 7:
+            end = time.monotonic() + 2.0
+            time.sleep(0.01)
+            while time.monotonic() < end and self.line_request.get_value(self.LORAauxLine) != Value.ACTIVE:
+                time.sleep(0.01)
+            time.sleep(0.2)
+        return True
 
     def EnableLora(self):
         if self.LORAenableLine is not None:
