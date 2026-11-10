@@ -1698,8 +1698,8 @@ class LoraRadioDataHandler(object):
         for messageTypeByLength in messageTypesByLength:
             if messageTypeByLength not in messageTypes:
                 if headerTypeMatchesLength:
-                    # The header's type has exactly this length too (a sub second punch and a Status2 are
-                    # both 16 bytes): try the header's type first. Trying the other type first can let
+                    # The header's type has exactly this length too, so another type also matches by
+                    # length: try the header's type first. Trying the other type first can let
                     # Reed-Solomon "correct" a good message into a valid message of the wrong type, and the
                     # same bytes are then misread on every retry.
                     messageTypes.append(messageTypeByLength)

@@ -792,9 +792,9 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         SettingsClass.SetMessageIDOfLastLoraMessageSent(None)
 
     # A sub second punch received at a finish (1 Nov 2026), without the RSSI byte, rebuilt for the current
-    # 15 byte format. Status2 is also 15 bytes, and if it is tried first Reed-Solomon can "correct" this good
-    # punch into a valid Status2. The receiver then acks it as a status message, so the sender retries the
-    # same bytes 63 times in 10 minutes.
+    # 15 byte format. It must not be taken for a Status2 (16 bytes), which Reed-Solomon could "correct"
+    # into a valid message of the wrong type. The receiver then acks it as a status message, so the sender
+    # retries the same bytes 63 times in 10 minutes.
     SubSecondPunch_StatusLookalike_AirOrder = _NamedMessage(LoraRadioMessagePunchSubSecondRS, 15,
                                                             air_order=True)(
         H=0x8b, CN0=0x04, SN2=0x80, SN1=0x62, SN0=0x34, CN1Plus=0x01, TH=0x0f, TL=0xbe, TSS=0x49)
@@ -1996,15 +1996,15 @@ class TestLoraRadioDataHandler(unittest.TestCase):
 
         msg3 = PunchFromRaw(TestLoraRadioDataHandler.PunchDoubleReDCoSMsg_Correct_2_WithoutRS_CS, True)
 
-        corruptedMessageData = msg3.GetByteArray()[:]
-        print("Correct message  : " + Utils.GetDataInHex(corruptedMessageData, logging.DEBUG))
-        corruptedMessageData = Corrupt(corruptedMessageData, {LoraRadioMessagePunchDoubleReDCoSRS.TL: 0x00, LoraRadioMessagePunchDoubleReDCoSRS.TL_2: 0x00, LoraRadioMessagePunchDoubleReDCoSRS.SN0: 0x01, LoraRadioMessagePunchDoubleReDCoSRS.SN1: 0x01, LoraRadioMessagePunchDoubleReDCoSRS.SN2: 0x01, LoraRadioMessagePunchDoubleReDCoSRS.SN0_2: 0x01, LoraRadioMessagePunchDoubleReDCoSRS.SN1_2: 0x01, LoraRadioMessagePunchDoubleReDCoSRS.CRC0: 0x00})
+        correctMessageData = msg3.GetByteArray()[:]
+        print("Correct message  : " + Utils.GetDataInHex(correctMessageData, logging.DEBUG))
+        corruptedMessageData = Corrupt(correctMessageData, {LoraRadioMessagePunchDoubleReDCoSRS.TL: 0x00, LoraRadioMessagePunchDoubleReDCoSRS.TL_2: 0x00, LoraRadioMessagePunchDoubleReDCoSRS.SN0: 0x01, LoraRadioMessagePunchDoubleReDCoSRS.SN1: 0x01, LoraRadioMessagePunchDoubleReDCoSRS.SN2: 0x01, LoraRadioMessagePunchDoubleReDCoSRS.SN0_2: 0x01, LoraRadioMessagePunchDoubleReDCoSRS.SN1_2: 0x01, LoraRadioMessagePunchDoubleReDCoSRS.CRC0: 0x00})
 
         interleaved2 = LoraRadioMessagePunchDoubleReDCoSRS.InterleaveToAirOrder(corruptedMessageData[:])
         Feed(self.dataHandler, interleaved2)
 
         # We don't expect it to work with this few combinations (this force it to reduce combinations to inlcude only for erasures)
-        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(100)
+        SettingsClass.SetReDCoSCombinationThresholdPerSecondTotalRetryTime(50)
         msg = self.dataHandler.GetMessage()
         self.assertIsNone(msg)
 

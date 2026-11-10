@@ -31,7 +31,7 @@ class LoraRadioMessageRS(object):
     MessageTypeStatus2: int = LoraMessageTypes.MessageTypeStatus2
     MessageTypeSIPunchSubSecond: int = LoraMessageTypes.MessageTypeSIPunchSubSecond
     MessageTypeSIPunchDoubleSubSecond: int = LoraMessageTypes.MessageTypeSIPunchDoubleSubSecond
-    MessageLengths: list[int]= [24, 16, 7, 14, 14, 7, 27, 14, 25, 11, 15, 15, 27]
+    MessageLengths: list[int]= [24, 16, 7, 14, 14, 7, 27, 14, 25, 11, 16, 15, 27]
 
     # Positions within the message
     H: int = 0

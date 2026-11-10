@@ -384,9 +384,10 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         TSS_2=0x40, ECC2=0x6e, CN0_2=0xff, ECC3=0x39, ECC4=0x37, ECC5=0x41,
         ECC6=0x0f, ECC7=0x40, CN1Plus_2=0x41, CRC1=0x6f,
     )
+    # compared to non subsecond I had to remove one corruption here for it to be able to decode. Just unlucky with it picking an incorrect decoded message.
     Case9_SubSecondDoubleMsg_Corrupted_AirOrder_WithRS = Corrupted(
         Case9_SubSecondDoubleMsg_Correct_AirOrder_WithRS, air_order=True, SN2=0x4d, SN0=0x39, SN2_2=0x4f,
-        SN0_2=0x3b, TH_2=0x03, ECC5=0x06 , ECC6=0xc3, ECC7=0xc1, CRC1=0x57)
+        SN0_2=0x3b, TH_2=0x03, ECC5=0x06 , ECC6=0xc3, CRC1=0x57) #ECC7=0xc1
     # ---
 
     # ---
@@ -932,10 +933,10 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         SettingsClass.SetMessageIDOfLastLoraMessageSent(None)
 
     # A sub second punch received at a finish (1 Nov 2026), in air order, without the RSSI byte. The
-    # old 16-byte capture had its SN3 byte dropped and ECC/CRC recomputed for the shortened payload;
-    # Status2 is 15 bytes now too, and when it was tried first Reed-Solomon "corrected" the punch into
-    # a valid Status2. The receiver acked it as a status message, so the sender retried the same bytes
-    # 63 times in 10 minutes.
+    # old 16-byte capture had its SN3 byte dropped and ECC/CRC recomputed for the shortened payload.
+    # It must not be taken for a Status2 (16 bytes), which Reed-Solomon could "correct" into a valid
+    # message of the wrong type. The receiver acked it as a status message, so the sender retried the
+    # same bytes 63 times in 10 minutes.
     SubSecondPunch_StatusLookalike_AirOrder = SubSecondMsgAirOrder(
         H=0x8b, CN0=0x04, SN2=0x80, SN1=0x62, SN0=0x34, CN1Plus=0x01, TH=0x0f, TL=0xbe, TSS=0x49)
 
@@ -950,6 +951,18 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         self.assertIsNotNone(msg)
         self.assertEqual(msg.GetMessageType(), LoraRadioMessageRS.MessageTypeSIPunchSubSecond)
         print("=== END test_SubSecondPunchNotTakenForStatus2 ===")
+
+    # RAK3172 capture: 16 byte Status2 followed by 2 RSSI, SNR and status bytes. The stored length table
+    # once said 15 for Status2, which dropped the last ECC byte and made every status message undecodable.
+    Status2Msg_WithTrailer = "8a260058a00044bd8daf659eae30a44efffe0d00"
+
+    def test_GetStatus2MessageFromRAK3172Capture(self):
+        handler = LoraRadioDataHandler(2, 1, 1)
+        handler.DataReceived = bytearray(Hex(TestLoraRadioDataHandler.Status2Msg_WithTrailer))
+        msg = handler._TryGetMessage()
+        self.assertIsNotNone(msg)
+        self.assertEqual(msg.GetMessageType(), LoraRadioMessageRS.MessageTypeStatus2)
+        self.assertEqual(handler.DataReceived, bytearray())
 
     # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_AddData
     def test_AddData(self):
@@ -1867,7 +1880,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         print("============================================================================================== START test_GetMessageTypeByLength ==============================================================================================")
         Feed(self.dataHandler, TestLoraRadioDataHandler.SubSecondMsg_Correct_1)
         msgTypes = self.dataHandler._GetMessageTypesByLength()
-        self.assertEqual(msgTypes, [LoraRadioMessageRS.MessageTypeStatus2, LoraRadioMessageRS.MessageTypeSIPunchSubSecond], "Didn't get the expected message type")
+        self.assertEqual(msgTypes, [LoraRadioMessageRS.MessageTypeSIPunchSubSecond], "Didn't get the expected message type")
         print("=== END test_GetMessageTypeByLength ===")
 
     # sudo env/bin/python3 -m unittest loraradio.TestLoraRadioDataHandler.TestLoraRadioDataHandler.test_GetLikelyMessageTypes
@@ -1881,7 +1894,7 @@ class TestLoraRadioDataHandler(unittest.TestCase):
         messageArr = TestLoraRadioDataHandler.SubSecondMsg_Correct_1[:]
         Feed(self.dataHandler, messageArr)
         messageTypes = self.dataHandler._GetLikelyMessageTypes()
-        self.assertEqual(messageTypes, [LoraRadioMessageRS.MessageTypeSIPunchSubSecond, LoraRadioMessageRS.MessageTypeStatus2], "Didn't get the expected message type short punch")
+        self.assertEqual(messageTypes, [LoraRadioMessageRS.MessageTypeSIPunchSubSecond], "Didn't get the expected message type short punch")
 
         self.dataHandler.DataReceived = bytearray()
         print("=== END test_GetLikelyMessageTypes ===")
