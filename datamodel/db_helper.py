@@ -492,7 +492,7 @@ class DatabaseHelper:
                "ON SubscriptionData.id = MessageSubscriptionData.SubscriptionId "
                "JOIN TransformData ON SubscriptionData.TransformId = TransformData.id "
                "WHERE TransformData.Name IN ('RepeaterSIMessageToLoraAckTransform', 'RepeaterSIMessageDoubleToLoraAckTransform') AND "
-               "MessageSubscriptionData.MessageID = ? ORDER BY SentDate desc LIMIT 2")
+               "MessageSubscriptionData.MessageID = ? ORDER BY SentDate asc LIMIT 2")
         rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID,))
 
         for msd in rows:
@@ -557,7 +557,7 @@ class DatabaseHelper:
                "WHERE (TransformData.Name = 'RepeaterSIMessageToLoraTransform' OR "
                "TransformData.Name = 'RepeaterStatusToLoraTransform' OR "
                "TransformData.Name = 'RepeaterSIMessageDoubleToLoraTransform') AND "
-               "MessageSubscriptionData.MessageID = ? ORDER BY SentDate desc LIMIT 2")
+               "MessageSubscriptionData.MessageID = ? ORDER BY SentDate asc LIMIT 2")
         rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID, ))
 
         for msd in rows:
@@ -602,8 +602,10 @@ class DatabaseHelper:
         #
         cls.init()
         sixtySecondsAgo = datetime.now() - timedelta(seconds=60)
+        # Oldest first: acks arrive in the order the messages were sent, so when two
+        # messages share a hash the ack belongs to the older one.
         sql = ("SELECT MessageSubscriptionData.* FROM MessageSubscriptionData WHERE "
-               "MessageID = ? AND SentDate > ? ORDER BY SentDate desc LIMIT 2")
+               "MessageID = ? AND SentDate > ? ORDER BY SentDate asc LIMIT 2")
         rows = cls.db.get_table_objects_by_SQL(MessageSubscriptionData, sql, (messageID, sixtySecondsAgo))
 
         for msd in rows:
