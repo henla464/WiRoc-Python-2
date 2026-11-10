@@ -75,8 +75,10 @@ class HardwareAbstraction(object):
                 self.StatusLedLine: gpiod.LineSettings(direction=Direction.OUTPUT)
                 # status led pin GPIOA6 Pin 12, linux gpio 6
             })
-            self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
-            self.line_request.set_value(self.StatusLedLine, Value.ACTIVE)
+            self.line_request.set_value(self.LORAenableLine, Value.INACTIVE)
+            self.LORARSLine = 11
+            self.line_request_gpiochip1 = gpiod.request_lines(chip1Path, consumer="wirocpython", config={
+                self.LORARSLine: gpiod.LineSettings(direction=Direction.OUTPUT, output_value=Value.ACTIVE)})
         elif self.wirocHWVersion == 'v4Rev1' or self.wirocHWVersion == 'v5Rev1':
             self.LORAenableLine = 2
             self.LORAM0Line = 17
@@ -88,8 +90,11 @@ class HardwareAbstraction(object):
                 self.LORAM0Line: gpiod.LineSettings(direction=Direction.OUTPUT),  # lora M0 pin (corresponds to pin 7 (nanopi wiki) / pin 37 (PCB footprint))
                 self.LORAauxLine: gpiod.LineSettings(direction=Direction.INPUT)    # lora aux pin (corresponds to pin 19)
             })
-            self.line_request.set_value(self.LORAenableLine, Value.ACTIVE)
+            self.line_request.set_value(self.LORAenableLine, Value.INACTIVE)
             self.line_request.set_value(self.LORAM0Line, Value.INACTIVE)
+            self.LORARSLine = 11
+            self.line_request_gpiochip1 = gpiod.request_lines(chip1Path, consumer="wirocpython", config={
+                self.LORARSLine: gpiod.LineSettings(direction=Direction.OUTPUT, output_value=Value.ACTIVE)})
         elif 6 <= self.wirocHWVersionNumber <= 7:
             self.LORAenableLine = 2
             self.SRRirqLine = 6
