@@ -234,6 +234,7 @@ class LoraRadioDRF1268DS_RS:
         time.sleep(0.3)
         correctEnterATModeResp = LoraRadioDRF1268DS_RS.EnterATModeResponse
         enterATModeResp = self.getRadioSettingsReply(len(correctEnterATModeResp))
+        self.lastEnterATModeResp = enterATModeResp
         if enterATModeResp == correctEnterATModeResp:
             LoraRadioDRF1268DS_RS.WiRocLogger.debug(
                 "LoraRadioDRF1268DS_RS::enterATMode() Success, received " + Utils.GetDataInHex(enterATModeResp,
@@ -244,6 +245,31 @@ class LoraRadioDRF1268DS_RS:
                 "LoraRadioDRF1268DS_RS::enterATMode() Wrong response, expected : " + Utils.GetDataInHex(
                     correctEnterATModeResp, logging.DEBUG) + " got: " + Utils.GetDataInHex(enterATModeResp, logging.DEBUG))
             return False
+
+    def enterATModeWithRetry(self) -> bool:
+        # A wrong reply (seen once: a byte short) is asked again; no reply at all (the module wedged) is reset
+        # through RS first. Either way keep asking for up to 3 s: after a reset it first answers at about 1.1 s.
+        if self.enterATMode():
+            return True
+        got = Utils.GetDataInHex(self.lastEnterATModeResp, logging.WARNING)
+        if len(self.lastEnterATModeResp) == 0 and self.hardwareAbstraction.ResetLora():
+            LoraRadioDRF1268DS_RS.WiRocLogger.warning(
+                "LoraRadioDRF1268DS_RS::enterATModeWithRetry() Enter-AT retry: no answer, reset the module through RS")
+        else:
+            LoraRadioDRF1268DS_RS.WiRocLogger.warning(
+                "LoraRadioDRF1268DS_RS::enterATModeWithRetry() Enter-AT retry: wrong answer (got " + got + "), asking again")
+        tries = 1
+        end = time.monotonic() + 3.0
+        while time.monotonic() < end:
+            self.radioSerial.reset_input_buffer()
+            tries += 1
+            if self.enterATMode():
+                LoraRadioDRF1268DS_RS.WiRocLogger.warning(
+                    "LoraRadioDRF1268DS_RS::enterATModeWithRetry() Enter-AT retry: answered on try " + str(tries))
+                return True
+        LoraRadioDRF1268DS_RS.WiRocLogger.error(
+            "LoraRadioDRF1268DS_RS::enterATModeWithRetry() Enter-AT retry: still no answer after " + str(tries) + " tries")
+        return False
 
     def exitATMode(self) -> bool:
         #LoraRadioDRF1268DS_RS.WiRocLogger.debug("LoraRadioDRF1268DS_RS::exitATMode() Enter")
@@ -410,7 +436,7 @@ class LoraRadioDRF1268DS_RS:
 
             newSettingsWritten = False
             try:
-                if self.enterATMode():
+                if self.enterATModeWithRetry():
                     LoraRadioDRF1268DS_RS.LoraModuleParameters = self.getParameters()
                     if LoraRadioDRF1268DS_RS.LoraModuleParameters is None:
                         LoraRadioDRF1268DS_RS.WiRocLogger.error("LoraRadioDRF1268DS_RS::Init() Could not get parameters")
