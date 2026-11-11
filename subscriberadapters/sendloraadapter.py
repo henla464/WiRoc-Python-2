@@ -295,7 +295,7 @@ class SendLoraAdapter(object):
     @staticmethod
     def GetDelayAfterMessageSent():
         timeS = LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(
-            LoraRadioMessageRS.MessageTypeSIPunchDoubleReDCoS) + 0.05  # message + one loop
+            LoraRadioMessageRS.MessageTypeSIPunchReDCoS) + 0.05  # message + one loop
         if SettingsClass.GetAcknowledgementRequested():
             timeS += LoraRadioMessageRS.GetLoraMessageTimeSendingTimeSByMessageType(
                 LoraRadioMessageRS.MessageTypeLoraAck) + 0.15  # reply ack + 3 loop

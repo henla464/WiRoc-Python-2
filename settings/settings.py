@@ -716,7 +716,7 @@ class SettingsClass(object):
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
         SettingsClass.microSecondsToSendAMessage = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraMessageTypes.MessageTypeSIPunchDoubleReDCoS) * 1000
 
-        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 2)*SettingsClass.microSecondsToSendAMessage
+        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 2)*SettingsClass.microSecondsToSendAMessage + 50000
         return microSecondsDelay
 
     @staticmethod
@@ -729,10 +729,10 @@ class SettingsClass(object):
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
         SettingsClass.microSecondsToSendAMessage  = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraMessageTypes.MessageTypeSIPunchDoubleReDCoS) * 1000
 
-        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 1) + SettingsClass.microSecondsToSendAMessage
-        microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 2) + SettingsClass.microSecondsToSendAMessage
-        microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 3) + SettingsClass.microSecondsToSendAMessage
-        microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 4) + SettingsClass.microSecondsToSendAMessage
+        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 1) + SettingsClass.microSecondsToSendAMessage + 50000
+        microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 2) + SettingsClass.microSecondsToSendAMessage + 50000
+        microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 3) + SettingsClass.microSecondsToSendAMessage + 50000
+        microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 4) + SettingsClass.microSecondsToSendAMessage + 50000
         return int(microSecondsDelay / 1000000)
 
 
