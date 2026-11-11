@@ -50,6 +50,8 @@ class Main:
         self.backgroundTasks: BackgroundTasks = BackgroundTasks()
         self.displayStateMachine = DisplayStateMachine()
         self.lastWiRocDeviceNameSentToServer = None
+        self.wiRocIPAddresses: list[str] = []
+        self.ipAddressesUpdated: float = 0
         Battery.Setup()
         HardwareAbstraction.Instance.SetupPins()
 
@@ -92,6 +94,21 @@ class Main:
         SettingsClass.SetSetting("LogToServer", "0")
 
     def updateDisplayBackground(self, displayData : DisplayData):
+        # The IP lookup spawns an "ip addr" process, so keep it off the main loop that polls the radio
+        now = time.monotonic()
+        if now - self.ipAddressesUpdated > 10:
+            self.ipAddressesUpdated = now
+            wifiIFace = HardwareAbstraction.Instance.GetBuiltinWifiInterfaceName()
+            wifiIpAddresses = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(wifiIFace)
+            if len(wifiIpAddresses) == 0:
+                usbEthernetIfaces = HardwareAbstraction.Instance.GetUSBEthernetInterfaces()
+                if len(usbEthernetIfaces) > 0:
+                    self.wiRocIPAddresses = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(usbEthernetIfaces[0])
+                else:
+                    self.wiRocIPAddresses = []
+            else:
+                self.wiRocIPAddresses = wifiIpAddresses
+        displayData.wiRocIPAddresses = self.wiRocIPAddresses
         self.displayStateMachine.Draw(displayData)
 
     def doUpdateDisplayBackground(self):
@@ -105,14 +122,6 @@ class Main:
         displayData.sendSerialActive = SettingsClass.GetSendSerialAdapterActive()
         displayData.sirapIPAddress = SettingsClass.GetSendToSirapIP()
         displayData.sirapIPPort = SettingsClass.GetSendToSirapIPPort()
-        wifiIFace = HardwareAbstraction.Instance.GetBuiltinWifiInterfaceName()
-        wifiIpAddresses = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(wifiIFace)
-        if len(wifiIpAddresses) == 0:
-            usbEthernetIface = HardwareAbstraction.Instance.GetUSBEthernetInterfaces()
-            if len(usbEthernetIface) > 0:
-                displayData.wiRocIPAddresses = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(usbEthernetIface[0])
-        else:
-            displayData.wiRocIPAddresses = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(wifiIFace)
         displayData.errorCodes = DatabaseHelper.get_error_codes()
 
         t = threading.Thread(target=self.updateDisplayBackground, args=(displayData,))
