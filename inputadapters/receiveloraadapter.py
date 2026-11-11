@@ -188,6 +188,7 @@ class ReceiveLoraAdapter(object):
         state = self.loraRadio.GetMeshState()
         if state is None:
             return
+        SettingsClass.SetMeshHopCount(state["hops"])
         snapshot = {"BTAddress": SettingsClass.GetBTAddress(), "snapshotTime": int(time.time()),
                     "isRoot": state["isroot"] == 1, "meshState": state,
                     "topology": self.loraRadio.GetMeshTopology()}

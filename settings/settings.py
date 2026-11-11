@@ -23,6 +23,11 @@ cacheForEver = TTLCache(maxsize=100, ttl=30000)  # 30000 seconds (500 min)
 cacheUntilChangedByProcess = TTLCache(maxsize=100, ttl=30000)  # 30000 seconds (500 min)
 rlock = RLock()
 
+# Mesh limits from the RAK3172 mesh firmware (mesh.h): uplink/downlink hop limit and the
+# per-hop forwarding delay (MESH_TX_FAST_MS + MESH_TX_FAST_JITTER_MS)
+MESH_RETRY_MAX_HOPS = 4
+MESH_HOP_FORWARD_MS = 40
+
 
 class SettingsClass(object):
     WiRocLogger = logging.getLogger('WiRoc.Settings')
@@ -45,6 +50,7 @@ class SettingsClass(object):
     NewErrorCode = False
     webServerUp = False
     meshPromoted = False  # set from ATC+MESHSTATE, true once a standby root has been promoted
+    meshHopCount = 0  # own hop distance to the root, from ATC+MESHSTATE, 0 = unknown
     _lastCachedSettingsVersion = 0
 
     #####
@@ -474,6 +480,14 @@ class SettingsClass(object):
         return SettingsClass.meshPromoted
 
     @staticmethod
+    def SetMeshHopCount(hops: int):
+        SettingsClass.meshHopCount = hops
+
+    @staticmethod
+    def GetMeshHopCount() -> int:
+        return SettingsClass.meshHopCount
+
+    @staticmethod
     def GetMeshEnabled() -> bool:
         return SettingsClass.IsMeshLoraMode()
 
@@ -707,6 +721,32 @@ class SettingsClass(object):
     microSecondsToSendAnAckMessage = None
 
     @staticmethod
+    def GetRetryDelayFloorUS() -> float:
+        # The ack round trip has fixed costs that don't shrink with the airtime, so on the fast
+        # datarates the exponential backoff alone would retry while the ack is still in flight.
+        doublePunchUS = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraMessageTypes.MessageTypeSIPunchDoubleReDCoS) * 1000
+        roundTripUS = 350000  # IRQ poll + ATC+REC and AUX waits on both sides
+        if SettingsClass.IsMeshLoraMode():
+            # Firmware waits max(500 ms, 2x airtime + 200 ms) per hop for the link ack, the frame
+            # goes to the root and the ack back the same way. Own distance comes from ATC+MESHSTATE.
+            hops = SettingsClass.GetMeshHopCount()
+            if hops < 1:
+                # not joined yet or a root, assume the longest path
+                hops = MESH_RETRY_MAX_HOPS
+            hopAckUS = max(500000, 2 * doublePunchUS + 200000)
+            return 2 * hops * (doublePunchUS + MESH_HOP_FORWARD_MS * 1000) + roundTripUS + hopAckUS
+        ackUS = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraMessageTypes.MessageTypeLoraAck) * 1000
+        return doublePunchUS + ackUS + roundTripUS
+
+    @staticmethod
+    def GetRetryDelayBaseUS(retryNumber: int) -> float:
+        delayFloorUS = SettingsClass.GetRetryDelayFloorUS()
+        if SettingsClass.IsMeshLoraMode():
+            # the mesh floor is a full multi hop ack round trip, back off from that
+            return delayFloorUS * math.pow(1.3, retryNumber - 1)
+        return max(SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber), delayFloorUS)
+
+    @staticmethod
     def GetRetryDelay(retryNumber: int) -> float:
         loraRange = SettingsClass.GetLoraRange()
         channel = SettingsClass.GetChannel()
@@ -716,8 +756,8 @@ class SettingsClass(object):
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
         SettingsClass.microSecondsToSendAMessage = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraMessageTypes.MessageTypeSIPunchDoubleReDCoS) * 1000
 
-        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, retryNumber) + random.uniform(0, 2)*SettingsClass.microSecondsToSendAMessage + 50000
-        return microSecondsDelay
+        # the jitter is added on top of the backoff so retries stay spread out
+        return SettingsClass.GetRetryDelayBaseUS(retryNumber) + random.uniform(0, 2)*SettingsClass.microSecondsToSendAMessage
 
     @staticmethod
     def GetTotalRetryDelaySeconds():
@@ -729,10 +769,10 @@ class SettingsClass(object):
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
         SettingsClass.microSecondsToSendAMessage  = SettingsClass.GetLoraMessageTimeSendingTimeMSByMessageType(LoraMessageTypes.MessageTypeSIPunchDoubleReDCoS) * 1000
 
-        microSecondsDelay = SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 1) + SettingsClass.microSecondsToSendAMessage + 50000
-        microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 2) + SettingsClass.microSecondsToSendAMessage + 50000
-        microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 3) + SettingsClass.microSecondsToSendAMessage + 50000
-        microSecondsDelay += SettingsClass.microSecondsToSendAMessage * 2.5 * math.pow(1.3, 4) + SettingsClass.microSecondsToSendAMessage + 50000
+        microSecondsDelay = 0
+        for retryNumber in range(1, 5):
+            # same terms as GetRetryDelay, with the jitter replaced by its mean (+1x airtime)
+            microSecondsDelay += SettingsClass.GetRetryDelayBaseUS(retryNumber) + SettingsClass.microSecondsToSendAMessage
         return int(microSecondsDelay / 1000000)
 
 
