@@ -153,6 +153,13 @@ class TestLoraRadioRAK3172(unittest.TestCase):
         self.assertIsNone(LoraRadioRAK3172.ParseMeshStateResponse("AT_PARAM_ERROR"))
         self.assertIsNone(LoraRadioRAK3172.ParseMeshStateResponse("ATC+MESHSTATE=1:0:5"))
         self.assertIsNone(LoraRadioRAK3172.ParseMeshStateResponse("ATC+MESHSTATE=1:0:5:x:2:0:3:2:5:3:3:7:806:0"))
+        # newer firmware appends the tx/rx counters
+        state = LoraRadioRAK3172.ParseMeshStateResponse(
+            "ATC+MESHSTATE=1:0:5:0:2:0:3:2:5:3:3:7:806:0:41:2:3:57:9:1:17")
+        self.assertEqual(2, state["hops"])
+        self.assertEqual(41, state["tx_ok"])
+        self.assertEqual(2, state["tx_busy"])
+        self.assertEqual(17, state["last_type"])
 
 
     def test_ParseMeshTopology(self):

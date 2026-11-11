@@ -401,20 +401,22 @@ class LoraRadioRAK3172:
 
     @staticmethod
     def ParseMeshStateResponse(respStr: str) -> dict | None:
-        # Reply: ATC+MESHSTATE=<14 colon separated decimal fields>
+        # Reply: ATC+MESHSTATE=<14 or 21 colon separated decimal fields>
         # enabled:isroot:ownaddr:txq:state:alloc:parent:hops:cost:neighbours:epoch:overhead:ackms:standby
+        # (:tx_ok:tx_busy:tx_assign:rx_any:rx_assign:adopt:last_type appended by newer firmware)
         prefix = LoraRadioRAK3172.ViewMeshStateCmd_ExpectedResponseStart
         if not respStr.startswith(prefix):
             return None
         fields = respStr[len(prefix):].strip().split(':')
-        if len(fields) != 14:
+        if len(fields) < 14:
             return None
         try:
             values = [int(f) for f in fields]
         except ValueError:
             return None
         names = ["enabled", "isroot", "ownaddr", "txq", "state", "alloc", "parent", "hops", "cost",
-                 "neighbours", "epoch", "overhead", "ackms", "standby"]
+                 "neighbours", "epoch", "overhead", "ackms", "standby",
+                 "tx_ok", "tx_busy", "tx_assign", "rx_any", "rx_assign", "adopt", "last_type"]
         return dict(zip(names, values))
 
     def GetMeshState(self) -> dict | None:
