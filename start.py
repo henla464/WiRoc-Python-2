@@ -109,6 +109,7 @@ class Main:
             else:
                 self.wiRocIPAddresses = wifiIpAddresses
         displayData.wiRocIPAddresses = self.wiRocIPAddresses
+        displayData.errorCodes = DatabaseHelper.get_error_codes()
         self.displayStateMachine.Draw(displayData)
 
     def doUpdateDisplayBackground(self):
@@ -122,7 +123,6 @@ class Main:
         displayData.sendSerialActive = SettingsClass.GetSendSerialAdapterActive()
         displayData.sirapIPAddress = SettingsClass.GetSendToSirapIP()
         displayData.sirapIPPort = SettingsClass.GetSendToSirapIPPort()
-        displayData.errorCodes = DatabaseHelper.get_error_codes()
 
         t = threading.Thread(target=self.updateDisplayBackground, args=(displayData,))
         t.daemon = True
