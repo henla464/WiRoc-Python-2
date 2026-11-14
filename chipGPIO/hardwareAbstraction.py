@@ -75,6 +75,7 @@ class HardwareAbstraction(object):
                 self.StatusLedLine: gpiod.LineSettings(direction=Direction.OUTPUT)
                 # status led pin GPIOA6 Pin 12, linux gpio 6
             })
+            self.line_request.set_value(self.StatusLedLine, Value.ACTIVE)
             self.line_request.set_value(self.LORAenableLine, Value.INACTIVE)
             self.LORARSLine = 11
             self.line_request_gpiochip1 = gpiod.request_lines(chip1Path, consumer="wirocpython", config={

@@ -1124,6 +1124,17 @@ def getWebServerUrl2():
     return jsonpickle.encode(MicroMock(Value=webServerUrl))
 
 
+@app.route('/api/meshsnapshot/', methods=['GET'])
+def getMeshSnapshot():
+    setting = DatabaseHelper.get_setting_by_key('MeshSnapshot')
+    value = None
+    if setting is not None and setting.Value:
+        value = json.loads(setting.Value)
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=value))
+
+
 @app.route('/api/onewayreceive/', methods=['GET'])
 @app.route('/api/sportident/usb/onewayreceive/', methods=['GET'])
 def getOneWayReceive():

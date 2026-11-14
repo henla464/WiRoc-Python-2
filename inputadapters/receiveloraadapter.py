@@ -185,14 +185,23 @@ class ReceiveLoraAdapter(object):
         if self.hardwareAbstraction.GetLORAIRQValue():
             return
         self.lastMeshSnapshotTime = now
+        ReceiveLoraAdapter.WiRocLogger.debug(
+            "ReceiveLoraAdapter::UpdateMeshSnapshot() polling mesh state, mode: " + str(SettingsClass.GetLoraMode()))
         state = self.loraRadio.GetMeshState()
         if state is None:
+            ReceiveLoraAdapter.WiRocLogger.debug("ReceiveLoraAdapter::UpdateMeshSnapshot() mesh state was None")
             return
         SettingsClass.SetMeshHopCount(state["hops"])
+        ReceiveLoraAdapter.WiRocLogger.debug("ReceiveLoraAdapter::UpdateMeshSnapshot() polling mesh topology")
+        topology = self.loraRadio.GetMeshTopology()
+        ReceiveLoraAdapter.WiRocLogger.debug(
+            "ReceiveLoraAdapter::UpdateMeshSnapshot() mesh topology: " + str(topology))
         snapshot = {"BTAddress": SettingsClass.GetBTAddress(), "snapshotTime": int(time.time()),
                     "isRoot": state["isroot"] == 1, "meshState": state,
-                    "topology": self.loraRadio.GetMeshTopology()}
+                    "topology": topology}
         SettingsClass.SetSetting('MeshSnapshot', json.dumps(snapshot))
+        ReceiveLoraAdapter.WiRocLogger.debug(
+            "ReceiveLoraAdapter::UpdateMeshSnapshot() stored snapshot, isRoot: " + str(state["isroot"] == 1))
 
     # messageData is a bytearray
     def GetData(self):
