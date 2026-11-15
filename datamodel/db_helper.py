@@ -1394,10 +1394,11 @@ class DatabaseHelper:
         SELECT 
             TestPunchData.id || '_' || ifnull(ms.id,'') as id, 
             TestPunchData.id as TestPunchId,
-            TestPunchData.SICardNumber, 
-            TestPunchData.TwentyFourHour, 
-            TestPunchData.TwelveHourTimer, 
-            TestPunchData.Fetched, 
+            TestPunchData.SICardNumber,
+            TestPunchData.TwentyFourHour,
+            TestPunchData.TwelveHourTimer,
+            TestPunchData.SubSecond,
+            TestPunchData.Fetched,
             TestPunchData.MessageBoxId, 
          	ms.NoOfSendTries,
             CASE 
@@ -1456,8 +1457,9 @@ class DatabaseHelper:
                 WHEN mb2.SportIdentHour is null THEN 0
                 WHEN cast(mb2.SportIdentHour as integer)>= 12 THEN (cast(mb2.SportIdentHour as integer)-12) * 3600 + cast(mb2.SportIdentMinute as integer) * 60 + cast(mb2.SportIdentSecond as integer) 
                 ELSE cast(mb2.SportIdentHour as integer) * 3600 + cast(mb2.SportIdentMinute as integer) * 60 + cast(mb2.SportIdentSecond as integer) 
-            END TwelveHourTimer, 
-            False as Fetched, 
+            END TwelveHourTimer,
+            null as SubSecond,
+            False as Fetched,
             mb2.id as MessageBoxId, 
             ms2.NoOfSendTries, 
             CASE 

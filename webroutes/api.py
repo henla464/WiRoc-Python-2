@@ -1040,7 +1040,8 @@ def getTestPunches(testBatchGuid: str, includeAll):
                  'SINo': testPunch.SICardNumber, 'NoOfSendTries': testPunch.NoOfSendTries,
                  'Type': testPunch.Type, 'RSSI': testPunch.AckRSSIValue, 'SNR': testPunch.AckLinkQuality, 
                  'TypeName': testPunch.TypeName,
-                 'MaxTries': testPunch.MaxTries, 'TestPunchId': testPunch.TestPunchId}
+                 'MaxTries': testPunch.MaxTries, 'TestPunchId': testPunch.TestPunchId,
+                 'SubSecond': testPunch.SubSecond}
         if testPunch.SICardNumber == 'STATUS':
             punch['Time'] = 'STATUS'
         else:
