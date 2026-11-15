@@ -819,15 +819,17 @@ class LoraRadioRAK3172:
                         # remove NetID (drf1268ds sends a netid, set as the channelnumber)
                         receivedMsgData = receivedMsgData[1:]
 
-                    if self.meshEnabled:
-                        # Mesh appends srcaddr + 6 byte node device id after the normal rssi/snr/status trailer.
+                    if self.meshFirmwareSupported:
+                        # Mesh firmware appends srcaddr + 6 byte node device id after the normal rssi/snr/status
+                        # trailer, in P2P mode too (srcaddr is 0 there).
                         # Keep the srcaddr so a root's app ack can be sent back as a downlink.
                         if len(receivedMsgData) < 11:
                             LoraRadioRAK3172.WiRocLogger.debug(
-                                "LoraRadioRAK3172::GetRadioData() mesh frame too short: " + Utils.GetDataInHex(receivedMsgData,
+                                "LoraRadioRAK3172::GetRadioData() frame too short: " + Utils.GetDataInHex(receivedMsgData,
                                                                                                    loggingLevel=logging.DEBUG))
                             return None
-                        self.lastReceivedSrcAddr = receivedMsgData[-7]
+                        if self.meshEnabled:
+                            self.lastReceivedSrcAddr = receivedMsgData[-7]
                         receivedMsgData = receivedMsgData[:-7]
 
                     # The Lora module adds two RSSI bytes, 1 SNR bytea and a Status byte
