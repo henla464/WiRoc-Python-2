@@ -1129,7 +1129,9 @@ def getMeshSnapshotValue():
     # Written by the input process (it has the serial port), read here from the DB
     setting = DatabaseHelper.get_setting_by_key('MeshSnapshot')
     if setting is not None and setting.Value:
-        return json.loads(setting.Value)
+        value = json.loads(setting.Value)
+        if isinstance(value, dict):
+            return value
     return None
 
 
@@ -1144,9 +1146,13 @@ def getMeshSnapshot():
 @app.route('/api/lora/meshstate/', methods=['GET'])
 def getMeshState():
     snapshot = getMeshSnapshotValue()
+    value = None
+    if snapshot is not None:
+        value = dict(snapshot.get("meshState") or {})
+        value["BTAddress"] = snapshot.get("BTAddress")
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=snapshot["meshState"] if snapshot else None))
+    return jsonpickle.encode(MicroMock(Value=value))
 
 
 @app.route('/api/lora/meshtopology/', methods=['GET'])
@@ -1154,7 +1160,7 @@ def getMeshTopology():
     snapshot = getMeshSnapshotValue()
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
-    return jsonpickle.encode(MicroMock(Value=snapshot["topology"] if snapshot else None))
+    return jsonpickle.encode(MicroMock(Value=snapshot.get("topology") if snapshot else None))
 
 
 @app.route('/api/onewayreceive/', methods=['GET'])

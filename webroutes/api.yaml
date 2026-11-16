@@ -702,7 +702,7 @@ paths:
       tags:
         - "Radio"
       summary: "Get the last LoRa mesh topology"
-      description: "The last ATC+MESHTOPO reply, sampled about once a minute while a mesh mode is active. Only the root receives a topology, other nodes get an empty list. Value is null until the first sample has been taken."
+      description: "The last ATC+MESHTOPO reply, sampled about once a minute while a mesh mode is active. The root gets rows for the whole mesh, a node gets its own row with its neighbour costs. Value is null until the first sample has been taken."
       operationId: "getMeshTopology"
       responses:
         "200":
@@ -2885,9 +2885,14 @@ components:
       type: "object"
       properties:
         Value:
+          nullable: true
           allOf:
             - $ref: "#/components/schemas/MeshState"
-          nullable: true
+            - type: "object"
+              properties:
+                BTAddress:
+                  type: "string"
+                  description: "The device's Bluetooth address"
         py/object:
           type: "string"
     MeshTopologyRow:

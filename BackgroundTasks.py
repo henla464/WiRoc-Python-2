@@ -277,6 +277,7 @@ class BackgroundTasks(object):
                          "parentAddr": meshState["parent"], "hopCount": meshState["hops"],
                          "pathCost": meshState["cost"], "neighbourCount": meshState["neighbours"],
                          "transmitQueue": meshState["txq"], "allocatedAddresses": meshState["alloc"],
+                         "txOk": meshState.get("tx_ok"), "txBusy": meshState.get("tx_busy"),
                          "epoch": meshState["epoch"], "overheadPercent": meshState["overhead"],
                          "ackTimeoutMs": meshState["ackms"], "standby": meshState["standby"] == 1}
             if meshState != uploadState["meshState"] or time.monotonic() - uploadState["stateSent"] >= 300:
