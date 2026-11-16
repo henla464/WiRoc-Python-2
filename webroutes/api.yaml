@@ -669,6 +669,48 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrueFalseObj"
+  /lora/meshsnapshot/:
+    get:
+      tags:
+        - "Radio"
+      summary: "Get the last LoRa mesh snapshot"
+      description: "Mesh state and topology from the same ATC+MESHSTATE/ATC+MESHTOPO sample, plus the snapshot time. Value is null until the first sample has been taken."
+      operationId: "getMeshSnapshot"
+      responses:
+        "200":
+          description: "The mesh snapshot, or null"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeshSnapshotObj"
+  /lora/meshstate/:
+    get:
+      tags:
+        - "Radio"
+      summary: "Get the last LoRa mesh state"
+      description: "The last ATC+MESHSTATE reply, sampled about once a minute while a mesh mode is active. Value is null until the first sample has been taken."
+      operationId: "getMeshState"
+      responses:
+        "200":
+          description: "The mesh state, or null"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeshStateObj"
+  /lora/meshtopology/:
+    get:
+      tags:
+        - "Radio"
+      summary: "Get the last LoRa mesh topology"
+      description: "The last ATC+MESHTOPO reply, sampled about once a minute while a mesh mode is active. Only the root receives a topology, other nodes get an empty list. Value is null until the first sample has been taken."
+      operationId: "getMeshTopology"
+      responses:
+        "200":
+          description: "The mesh topology rows, or null"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeshTopologyObj"
   /srr/enabled/:
     get:
       tags:
@@ -2763,6 +2805,121 @@ components:
       properties:
         Value:
           $ref: "#/components/schemas/TrueFalse"
+        py/object:
+          type: "string"
+    MeshState:
+      type: "object"
+      description: "ATC+MESHSTATE fields, all integers. enabled: mesh on, isroot: this node is the root, ownaddr: this node's address, txq: queued transmissions, state/alloc: firmware scheduler state, parent: parent node address, hops: hops to the root, cost: path cost to the root, neighbours: number of neighbours, epoch: topology epoch, overhead: protocol overhead, ackms: ack timeout in ms, standby: standby root. tx_ok/tx_busy/tx_assign/rx_any/rx_assign/adopt/last_type are only present with newer firmware."
+      properties:
+        enabled:
+          type: "integer"
+        isroot:
+          type: "integer"
+        ownaddr:
+          type: "integer"
+        txq:
+          type: "integer"
+        state:
+          type: "integer"
+        alloc:
+          type: "integer"
+        parent:
+          type: "integer"
+        hops:
+          type: "integer"
+        cost:
+          type: "integer"
+        neighbours:
+          type: "integer"
+        epoch:
+          type: "integer"
+        overhead:
+          type: "integer"
+        ackms:
+          type: "integer"
+        standby:
+          type: "integer"
+        tx_ok:
+          type: "integer"
+        tx_busy:
+          type: "integer"
+        tx_assign:
+          type: "integer"
+        rx_any:
+          type: "integer"
+        rx_assign:
+          type: "integer"
+        adopt:
+          type: "integer"
+        last_type:
+          type: "integer"
+    MeshSnapshot:
+      type: "object"
+      description: "Mesh state and topology from the same sample"
+      properties:
+        BTAddress:
+          type: "string"
+          description: "The device's Bluetooth address"
+        snapshotTime:
+          type: "integer"
+          description: "Unix time the sample was taken"
+        isRoot:
+          type: "boolean"
+        meshState:
+          $ref: "#/components/schemas/MeshState"
+        topology:
+          type: "array"
+          nullable: true
+          items:
+            $ref: "#/components/schemas/MeshTopologyRow"
+    MeshSnapshotObj:
+      type: "object"
+      properties:
+        Value:
+          allOf:
+            - $ref: "#/components/schemas/MeshSnapshot"
+          nullable: true
+        py/object:
+          type: "string"
+    MeshStateObj:
+      type: "object"
+      properties:
+        Value:
+          allOf:
+            - $ref: "#/components/schemas/MeshState"
+          nullable: true
+        py/object:
+          type: "string"
+    MeshTopologyRow:
+      type: "object"
+      description: "One node in the mesh topology"
+      properties:
+        addr:
+          type: "integer"
+          description: "The node's mesh address"
+        parent:
+          type: "integer"
+          description: "The node's parent address, 0 for the root"
+        deviceId:
+          type: "string"
+          description: "The node's 12 hex character device id"
+        neighbours:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              addr:
+                type: "integer"
+              cost:
+                type: "integer"
+    MeshTopologyObj:
+      type: "object"
+      properties:
+        Value:
+          type: "array"
+          nullable: true
+          items:
+            $ref: "#/components/schemas/MeshTopologyRow"
         py/object:
           type: "string"
     Power:
