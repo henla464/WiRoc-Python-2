@@ -1996,7 +1996,7 @@ class DatabaseHelper:
         cls.init()
         column_count = cls.db.get_scalar_by_SQL("SELECT count(*) FROM pragma_table_info('TimeOnAirData')")
         seed_setting = cls.get_setting_by_key("TimeOnAirSeedVersion")
-        seed_version = "4"  # bump when the generated TOA values change
+        seed_version = "5"  # bump when the generated TOA values change
         if column_count != len(TimeOnAirData.columns) or seed_setting is None or seed_setting.Value != seed_version:
             # Generated reference data, so rebuild the table when its shape or values change
             cls.db.drop_table(TimeOnAirData())
@@ -2222,10 +2222,14 @@ class DatabaseHelper:
                         TimeOnAirData(6, 4, 0, False, False, False, 12, False, 'RAK3172', 235, 333, 211, 285, 235, 285, 383),
                         TimeOnAirData(5, 4, 0, False, False, False, 12, False, "RAK3172", 130, 192, 105, 155, 130, 154, 216),
 
-                        # TOA values are computed, not measured. For payload L bytes:
-                        #   n = 8 + ceil(max(8L - 4SF + 28 + 16*CRC - 20*IH, 0) / (4*(SF - 2*DE))) * (CR + 4)
+                        # TOA values are computed, not measured. For payload L bytes (explicit
+                        # header, CRC off here):
+                        #   SF7+ : n = 8 + ceil(max(8L - 4SF + 28, 0) / (4*(SF - 2*LDRO))) * (CR + 4)
+                        #   SF5/6: n = 8 + ceil(max(8L - 4SF + 20, 0) / (4*SF)) * (CR + 4)
                         #   TOA = round((n + preamble + 4.25) * 2^SF / BW * 1000) ms
-                        # SF5/SF6 use 6.25 instead of 4.25 (SX126x datasheet 6.1.4); DE = LDRO.
+                        # SF5/SF6 use 6.25 instead of 4.25 and lack the +8 term (SX126x
+                        # datasheet 6.1.4; matches the Semtech LoRa calculator, e.g.
+                        # SF6/BW31.25k/p12/CR 4/5, 15 bytes, header on -> 104.93 ms).
                         # L comes from LoraRadioMessageRS.MessageLengths (punch, double punch, ack,
                         # status, ham, single subsecond, double subsecond). The non-mesh punch
                         # columns don't reproduce from this formula consistently (entered at
@@ -2242,26 +2246,26 @@ class DatabaseHelper:
                         TimeOnAirData(7, 7, 2, False, True, False, 8, False, 'RAK3172', 206, 280, 157, 230, 181, 230, 304, True),
                         TimeOnAirData(7, 7, 3, False, True, False, 8, False, 'RAK3172', 226, 312, 169, 255, 198, 255, 341, True),
                         TimeOnAirData(7, 7, 4, False, True, False, 8, False, 'RAK3172', 247, 345, 181, 280, 214, 280, 378, True),
-                        TimeOnAirData(6, 7, 0, False, True, False, 12, False, 'RAK3172', 103, 136, 87, 111, 95, 111, 144, True),
-                        TimeOnAirData(6, 7, 1, False, True, False, 12, False, 'RAK3172', 115, 156, 95, 125, 105, 125, 166, True),
-                        TimeOnAirData(6, 7, 2, False, True, False, 12, False, 'RAK3172', 127, 177, 103, 140, 115, 140, 189, True),
-                        TimeOnAirData(6, 7, 3, False, True, False, 12, False, 'RAK3172', 140, 197, 111, 154, 125, 154, 211, True),
-                        TimeOnAirData(6, 7, 4, False, True, False, 12, False, 'RAK3172', 152, 218, 119, 168, 136, 168, 234, True),
-                        TimeOnAirData(5, 7, 0, False, True, False, 12, False, 'RAK3172', 60, 76, 47, 60, 51, 60, 80, True),
-                        TimeOnAirData(5, 7, 1, False, True, False, 12, False, 'RAK3172', 68, 88, 52, 68, 58, 68, 93, True),
-                        TimeOnAirData(5, 7, 2, False, True, False, 12, False, 'RAK3172', 76, 101, 58, 76, 64, 76, 107, True),
-                        TimeOnAirData(5, 7, 3, False, True, False, 12, False, 'RAK3172', 84, 113, 63, 84, 70, 84, 120, True),
-                        TimeOnAirData(5, 7, 4, False, True, False, 12, False, 'RAK3172', 92, 125, 68, 92, 76, 92, 133, True),
-                        TimeOnAirData(6, 4, 0, False, True, False, 12, False, 'RAK3172', 309, 408, 260, 334, 285, 334, 432, True),
-                        TimeOnAirData(6, 4, 1, False, True, False, 12, False, 'RAK3172', 346, 469, 285, 377, 315, 377, 500, True),
-                        TimeOnAirData(6, 4, 2, False, True, False, 12, False, 'RAK3172', 383, 531, 309, 420, 346, 420, 568, True),
-                        TimeOnAirData(6, 4, 3, False, True, False, 12, False, 'RAK3172', 420, 592, 334, 463, 377, 463, 635, True),
-                        TimeOnAirData(6, 4, 4, False, True, False, 12, False, 'RAK3172', 457, 654, 358, 506, 408, 506, 703, True),
-                        TimeOnAirData(5, 4, 0, False, True, False, 12, False, 'RAK3172', 179, 228, 142, 179, 155, 179, 241, True),
-                        TimeOnAirData(5, 4, 1, False, True, False, 12, False, 'RAK3172', 204, 265, 158, 204, 173, 204, 281, True),
-                        TimeOnAirData(5, 4, 2, False, True, False, 12, False, 'RAK3172', 228, 302, 173, 228, 192, 228, 321, True),
-                        TimeOnAirData(5, 4, 3, False, True, False, 12, False, 'RAK3172', 253, 339, 188, 253, 210, 253, 361, True),
-                        TimeOnAirData(5, 4, 4, False, True, False, 12, False, 'RAK3172', 278, 376, 204, 278, 228, 278, 401, True),
+                        TimeOnAirData(6, 7, 0, False, True, False, 12, False, 'RAK3172', 103, 136, 87, 111, 95, 103, 136, True),
+                        TimeOnAirData(6, 7, 1, False, True, False, 12, False, 'RAK3172', 115, 156, 95, 125, 105, 115, 156, True),
+                        TimeOnAirData(6, 7, 2, False, True, False, 12, False, 'RAK3172', 127, 177, 103, 140, 115, 127, 177, True),
+                        TimeOnAirData(6, 7, 3, False, True, False, 12, False, 'RAK3172', 140, 197, 111, 154, 125, 140, 197, True),
+                        TimeOnAirData(6, 7, 4, False, True, False, 12, False, 'RAK3172', 152, 218, 119, 168, 136, 152, 218, True),
+                        TimeOnAirData(5, 7, 0, False, True, False, 12, False, 'RAK3172', 56, 76, 43, 60, 51, 60, 76, True),
+                        TimeOnAirData(5, 7, 1, False, True, False, 12, False, 'RAK3172', 63, 88, 47, 68, 58, 68, 88, True),
+                        TimeOnAirData(5, 7, 2, False, True, False, 12, False, 'RAK3172', 70, 101, 51, 76, 64, 76, 101, True),
+                        TimeOnAirData(5, 7, 3, False, True, False, 12, False, 'RAK3172', 77, 113, 56, 84, 70, 84, 113, True),
+                        TimeOnAirData(5, 7, 4, False, True, False, 12, False, 'RAK3172', 84, 125, 60, 92, 76, 92, 125, True),
+                        TimeOnAirData(6, 4, 0, False, True, False, 12, False, 'RAK3172', 309, 408, 260, 334, 285, 309, 408, True),
+                        TimeOnAirData(6, 4, 1, False, True, False, 12, False, 'RAK3172', 346, 469, 285, 377, 315, 346, 469, True),
+                        TimeOnAirData(6, 4, 2, False, True, False, 12, False, 'RAK3172', 383, 531, 309, 420, 346, 383, 531, True),
+                        TimeOnAirData(6, 4, 3, False, True, False, 12, False, 'RAK3172', 420, 592, 334, 463, 377, 420, 592, True),
+                        TimeOnAirData(6, 4, 4, False, True, False, 12, False, 'RAK3172', 457, 654, 358, 506, 408, 457, 654, True),
+                        TimeOnAirData(5, 4, 0, False, True, False, 12, False, 'RAK3172', 167, 228, 130, 179, 155, 179, 228, True),
+                        TimeOnAirData(5, 4, 1, False, True, False, 12, False, 'RAK3172', 188, 265, 142, 204, 173, 204, 265, True),
+                        TimeOnAirData(5, 4, 2, False, True, False, 12, False, 'RAK3172', 210, 302, 155, 228, 192, 228, 302, True),
+                        TimeOnAirData(5, 4, 3, False, True, False, 12, False, 'RAK3172', 232, 339, 167, 253, 210, 253, 339, True),
+                        TimeOnAirData(5, 4, 4, False, True, False, 12, False, 'RAK3172', 253, 376, 179, 278, 228, 278, 376, True),
 
                 # BW 10kHz: (fixed lenght... 44.76bps 166.8dB) 81 bps 164.3dB, 146.48 bps 161.8 dB, 260.42 bps 159.3dB, 455.74bps 156.8dB, 781.27bps 154.3dB, 1302.1bps 151.8dB
                         # BW 31kHz:                                    73 bps 164.6dB, 134.27 bps 162.1 dB, 244.14 bps 159.6dB, 439.45bps 157.1dB, 781.25bps 154.6dB, 1367.1bps 152.1dB
