@@ -3,7 +3,7 @@ __author__ = 'henla464'
 import queue
 import threading
 from datamodel.db_helper import DatabaseHelper
-from settings.settings import SettingsClass, BLOCKED_COMMAND_PATHS
+from settings.settings import SettingsClass, BLOCKED_COMMAND_PATHS, WIROC_LOG_PATH, WIROC_LOG_BACKUP_COUNT
 from datamodel.datamodel import SettingData, BluetoothSerialPortData, TestPunchView
 from battery import Battery
 from init import *
@@ -465,6 +465,31 @@ def getStatus():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=json_data))
+
+
+@app.route('/api/mcp/longpoll/enabled/', methods=['GET'])
+def getLongPollCommandsEnabled():
+    setting = DatabaseHelper.get_setting_by_key('LongPollCommandsEnabled')
+    enabled = '0'
+    if setting is not None:
+        enabled = setting.Value
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=enabled))
+
+
+@app.route('/api/mcp/longpoll/enabled/<enabled>/', methods=['GET'])
+def setLongPollCommandsEnabled(enabled):
+    sd = DatabaseHelper.get_setting_by_key('LongPollCommandsEnabled')
+    if sd is None:
+        sd = SettingData()
+        sd.Key = 'LongPollCommandsEnabled'
+    sd.Value = '1' if (enabled.lower() == 'true' or enabled.lower() == '1') else '0'
+    sd = DatabaseHelper.save_setting(sd)
+    SettingsClass.SetSettingUpdatedByWebService()
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=sd.Value))
 
 
 @app.route('/api/device/identify/', methods=['GET'])
@@ -1510,6 +1535,104 @@ def setLoggingServerPort(port):
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=sd.Value))
+
+
+WIROC_LOG_MAX_LINES = 2000  # keeps a single response well within the 20000-char command-result budget
+# Matches Python logging's default asctime+msecs format, e.g. "2026-11-21 12:53:46,722 WiRoc ERROR ..."
+# - same format slim.php's getLogArchivesLogContent() already parses, so since/until stay consistent.
+WIROC_LOG_LINE_RE = re.compile(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s')
+WIROC_LOG_TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S,%f'
+
+
+def _WiRocLogFilesOldestFirst():
+    # RotatingFileHandler: .log.N is older for higher N; .log (no suffix) is the current file.
+    paths = [f"{WIROC_LOG_PATH}.{n}" for n in range(WIROC_LOG_BACKUP_COUNT, 0, -1)]
+    paths.append(WIROC_LOG_PATH)
+    return [p for p in paths if os.path.exists(p)]
+
+
+def _IterWiRocLogEntries():
+    # Yields (timestamp_str_or_None, entry_text) in chronological order, one per log entry.
+    # Continuation lines (stack traces etc, no timestamp prefix) fold into the entry above them,
+    # so a since/until filter can't silently chop the rest of a multi-line error off.
+    entryTimestamp = None
+    entryLines = []
+    for path in _WiRocLogFilesOldestFirst():
+        with open(path, 'r', errors='replace') as f:
+            for line in f:
+                match = WIROC_LOG_LINE_RE.match(line)
+                if match:
+                    if entryLines:
+                        yield entryTimestamp, ''.join(entryLines)
+                    entryTimestamp = match.group(1)
+                    entryLines = [line]
+                else:
+                    entryLines.append(line)
+    if entryLines:
+        yield entryTimestamp, ''.join(entryLines)
+
+
+def _ParseWiRocLogTimestamp(timestampStr):
+    if timestampStr is None:
+        return None
+    try:
+        return datetime.datetime.strptime(timestampStr, WIROC_LOG_TIMESTAMP_FORMAT)
+    except ValueError:
+        return None
+
+
+def _WiRocLogEntryInRange(timestampStr, since, until):
+    if since is None and until is None:
+        return True
+    parsed = _ParseWiRocLogTimestamp(timestampStr)
+    if parsed is None:
+        return False  # can't verify it's in range (e.g. a boundary entry cut off by rotation) - exclude
+    if since is not None and parsed < since:
+        return False
+    if until is not None and parsed > until:
+        return False
+    return True
+
+
+@app.route('/api/logs/wiroc/', methods=['GET'])
+def getWiRocLogTail():
+    """Query params (all optional): since/until ("YYYY-MM-DD HH:MM:SS,mmm", inclusive) filter
+    by log entry timestamp; offset/limit page through the (optionally filtered) result, limit
+    capped at 2000. With none given, returns the last `limit` (default 200) lines as a tail."""
+    since = _ParseWiRocLogTimestamp(request.args.get('since'))
+    until = _ParseWiRocLogTimestamp(request.args.get('until'))
+    try:
+        offset = int(request.args.get('offset', -1))
+    except ValueError:
+        offset = -1
+    try:
+        limit = int(request.args.get('limit', 200))
+    except ValueError:
+        limit = 200
+    limit = max(1, min(limit, WIROC_LOG_MAX_LINES))
+
+    if since is None and until is None and offset < 0:
+        # Fast path: no filter/paging requested, just the tail - read files newest-first and
+        # stop as soon as we have enough physical lines, same as the original simple behaviour.
+        lines = []
+        for path in reversed(_WiRocLogFilesOldestFirst()):
+            with open(path, 'r', errors='replace') as f:
+                lines = f.readlines() + lines
+            if len(lines) >= limit:
+                break
+        value = {"lines": lines[-limit:], "hasMore": False, "nextOffset": None}
+    else:
+        # Range/paging mode: scan every entry (continuation lines folded in), filter by
+        # since/until if given, then return one bounded page starting at offset.
+        offset = max(0, offset)
+        matched = [text for ts, text in _IterWiRocLogEntries() if _WiRocLogEntryInRange(ts, since, until)]
+        page = matched[offset:offset + limit]
+        hasMore = offset + limit < len(matched)
+        value = {"lines": page, "hasMore": hasMore, "nextOffset": (offset + limit) if hasMore else None}
+
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value=value))
 
 
 @app.route('/api/wirocpythonversion/', methods=['GET'])

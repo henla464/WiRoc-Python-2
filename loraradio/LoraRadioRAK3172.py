@@ -758,6 +758,16 @@ class LoraRadioRAK3172:
                 if self.radioSerial.in_waiting >= 2:
                     self.radioSerial.read(2)  # remove also 'CR LF'
                 return ReturnStatus.BUSY
+            elif sendReply.decode("ascii") == "NA":  # mesh joined but no parent right now (mid-reattach)
+                LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::SendData() Module returned mesh not attached")
+                if self.radioSerial.in_waiting >= 2:
+                    self.radioSerial.read(2)  # remove also 'CR LF'
+                return ReturnStatus.NOT_ATTACHED
+            elif sendReply.decode("ascii") == "NN":  # no mesh address at all / never joined
+                LoraRadioRAK3172.WiRocLogger.debug("LoraRadioRAK3172::SendData() Module returned no network joined")
+                if self.radioSerial.in_waiting >= 2:
+                    self.radioSerial.read(2)  # remove also 'CR LF'
+                return ReturnStatus.NOT_JOINED
             else:
                 LoraRadioRAK3172.WiRocLogger.debug(
                     "LoraRadioRAK3172::SendData() Module returned: " + Utils.GetDataInHex(sendReply, logging.ERROR))

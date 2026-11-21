@@ -110,6 +110,38 @@ def test_malicious_param_cannot_inject_host_after_substitution():
     mock_get.assert_not_called()
 
 
+def test_do_pending_commands_returns_true_when_commands_present():
+    pending_resp = fake_response(200, {"commands": [
+        {"commandId": 1, "targetBtAddress": SELF_BT, "path": "/api/status/", "params": {}}
+    ]})
+    dispatch_resp = fake_response(200, text="ok")
+    with patch("BackgroundTasks.requests.get", side_effect=[pending_resp, dispatch_resp]), \
+         patch("BackgroundTasks.requests.post", return_value=fake_response(200)) as mock_post:
+        result = BackgroundTasks.DoPendingCommandsBackground("https://monitor", "key", SELF_BT)
+    assert result is True  # caller re-polls immediately when this is True
+    mock_post.assert_called_once()  # CommandResult still posted for the processed command
+
+
+def test_do_pending_commands_returns_false_when_empty():
+    with patch("BackgroundTasks.requests.get", return_value=fake_response(200, {"commands": []})), \
+         patch("BackgroundTasks.requests.post") as mock_post:
+        result = BackgroundTasks.DoPendingCommandsBackground("https://monitor", "key", SELF_BT)
+    assert result is False  # caller falls back to the normal 15s cadence
+    mock_post.assert_not_called()
+
+
+def test_do_pending_commands_returns_false_on_bad_status():
+    with patch("BackgroundTasks.requests.get", return_value=fake_response(503)):
+        result = BackgroundTasks.DoPendingCommandsBackground("https://monitor", "key", SELF_BT)
+    assert result is False
+
+
+def test_do_pending_commands_returns_false_on_exception():
+    with patch("BackgroundTasks.requests.get", side_effect=ConnectionError("down")):
+        result = BackgroundTasks.DoPendingCommandsBackground("https://monitor", "key", SELF_BT)
+    assert result is False
+
+
 if __name__ == "__main__":
     test_self_targeted_skips_verification()
     test_relay_dispatches_after_matching_identify()
@@ -121,4 +153,8 @@ if __name__ == "__main__":
     test_missing_placeholder_value_is_reported_not_raised()
     test_blocked_command_is_never_dispatched()
     test_malicious_param_cannot_inject_host_after_substitution()
+    test_do_pending_commands_returns_true_when_commands_present()
+    test_do_pending_commands_returns_false_when_empty()
+    test_do_pending_commands_returns_false_on_bad_status()
+    test_do_pending_commands_returns_false_on_exception()
     print("All DispatchCommandBackground checks passed.")

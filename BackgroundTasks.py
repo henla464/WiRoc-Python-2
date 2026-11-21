@@ -663,7 +663,10 @@ class BackgroundTasks(object):
                     webServerUp: bool = BackgroundTasks.TestConnection(webServerUrl)
                     webServerUpQueue.put(webServerUp)
                     if webServerUp and SettingsClass.GetLongPollCommandsEnabled() and btAddress != "NoBTAddress":
-                        BackgroundTasks.DoPendingCommandsBackground(webServerUrl, SettingsClass.GetAPIKey(), btAddress)
+                        # Keep polling back-to-back while commands keep coming in; fall back to
+                        # the normal 15s cadence only once a poll comes back with nothing.
+                        while BackgroundTasks.DoPendingCommandsBackground(webServerUrl, SettingsClass.GetAPIKey(), btAddress):
+                            pass
                 elif cmd == "EXIT":
                     return
                 time.sleep(15)
@@ -673,7 +676,9 @@ class BackgroundTasks(object):
                 time.sleep(1)
 
     @staticmethod
-    def DoPendingCommandsBackground(webServerUrl, apiKey, btAddress):
+    def DoPendingCommandsBackground(webServerUrl, apiKey, btAddress) -> bool:
+        """Returns True if at least one command was fetched (the caller polls again
+        immediately in that case), False on an empty poll, bad response, or error."""
         try:
             headers = {'X-Authorization': apiKey}
             URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/PendingCommands"
@@ -683,7 +688,7 @@ class BackgroundTasks(object):
             if resp.status_code != 200:
                 BackgroundTasks.WiRocLogger.debug(
                     f"BackgroundTasks::DoPendingCommandsBackground() resp.status_code {resp.status_code}")
-                return
+                return False
             commands = resp.json().get("commands", [])
             BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::DoPendingCommandsBackground() fetched {len(commands)} command(s)")
             for command in commands:
@@ -704,8 +709,10 @@ class BackgroundTasks(object):
                     continue
                 BackgroundTasks.PostCommandResultBackground(webServerUrl, apiKey, btAddress, commandId,
                                                             targetBtAddress, status, result)
+            return len(commands) > 0
         except Exception as ex:
             BackgroundTasks.WiRocLogger.error("BackgroundTasks::DoPendingCommandsBackground() Exception: " + str(ex))
+            return False
 
     @staticmethod
     def _IsSafeLocalPath(path):

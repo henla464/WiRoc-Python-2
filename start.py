@@ -19,7 +19,7 @@ import sys
 from datetime import datetime, timedelta
 from datamodel.db_helper import DatabaseHelper
 from datamodel.MessageHelper import MessageHelper
-from settings.settings import SettingsClass
+from settings.settings import SettingsClass, WIROC_LOG_PATH, WIROC_LOG_BACKUP_COUNT
 import cProfile
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from battery import Battery
@@ -543,7 +543,8 @@ if __name__ == '__main__':
 
     # set a format which is simpler for console use
     formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-    rotFileHandler = logging.handlers.RotatingFileHandler('WiRoc.log', maxBytes=20000000, backupCount=5)
+    rotFileHandler = logging.handlers.RotatingFileHandler(
+        WIROC_LOG_PATH, maxBytes=20000000, backupCount=WIROC_LOG_BACKUP_COUNT)
     rotFileHandler.doRollover()
     rotFileHandler.setFormatter(formatter)
 

@@ -425,6 +425,15 @@ class SendLoraAdapter(object):
                 self.BlockSendingDueToBusy(None)
                 if loraSendStatus == ReturnStatus.SENT:
                     loraSendStatus = ReturnStatus.OTHER
+            elif status == ReturnStatus.NOT_ATTACHED:
+                # Transient (mid-reattach), not a hard failure - treat like BUSY, worth a quick retry.
+                self.BlockSendingDueToBusy(None)
+                if loraSendStatus == ReturnStatus.SENT:
+                    loraSendStatus = ReturnStatus.NOT_ATTACHED
+            elif status == ReturnStatus.NOT_JOINED:
+                self.BlockSendingDueToBusy(None)
+                if loraSendStatus == ReturnStatus.SENT:
+                    loraSendStatus = ReturnStatus.NOT_JOINED
 
         if loraSendStatus == ReturnStatus.SENT:
             SendLoraAdapter.WiRocLogger.debug(
@@ -442,3 +451,10 @@ class SendLoraAdapter(object):
         elif loraSendStatus == ReturnStatus.OTHER:
             DatabaseHelper.add_message_stat(self.GetInstanceName(), statMessageType, "NotSent", 0)
             notSentCB()
+        elif loraSendStatus == ReturnStatus.NOT_ATTACHED:
+            DatabaseHelper.add_message_stat(self.GetInstanceName(), statMessageType, "NotSent", 0)
+            notSentCB()
+        elif loraSendStatus == ReturnStatus.NOT_JOINED:
+            # Not transient like BUSY/NOT_ATTACHED - no mesh address at all, resending won't help. Fail it.
+            DatabaseHelper.add_message_stat(self.GetInstanceName(), statMessageType, "NotSent", 0)
+            failureCB()

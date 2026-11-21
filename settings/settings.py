@@ -32,6 +32,12 @@ BLOCKED_COMMAND_PATHS = {
     '/api/deletepunches/',  # deletes all stored punches
 }
 
+# Where the main app's RotatingFileHandler writes (set up in start.py) and how many rotated
+# backups it keeps - fixed, not DB-backed. Shared so start.py's logging setup and
+# webroutes/api.py's log-reading endpoint can never drift apart on path/backup count.
+WIROC_LOG_PATH = '/home/chip/WiRoc-Python-2/WiRoc.log'
+WIROC_LOG_BACKUP_COUNT = 5
+
 # Mesh limits from the RAK3172 mesh firmware (mesh.h): uplink/downlink hop limit and the
 # per-hop forwarding delay (MESH_TX_FAST_MS + MESH_TX_FAST_JITTER_MS)
 MESH_RETRY_MAX_HOPS = 4

@@ -1697,6 +1697,45 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyIntObj"
+  /logs/wiroc/:
+    get:
+      tags:
+        - "Logging"
+      summary: "Get WiRoc.log, tailed/filtered/paged"
+      description: "With no query params: the last `limit` (default 200) lines, across rotated log files, as a tail. With `since`/`until` given: all log entries (continuation lines like stack traces folded into the entry above them) whose timestamp falls in that inclusive range, one page at a time via `offset`/`limit`. `limit` is capped at 2000 either way, to stay well within the remote-command result size limit."
+      operationId: "getWiRocLogTail"
+      parameters:
+        - name: since
+          in: query
+          required: false
+          description: "Inclusive lower bound, format YYYY-MM-DD HH:MM:SS,mmm (matches the log's own timestamp format)."
+          schema:
+            type: string
+        - name: until
+          in: query
+          required: false
+          description: "Inclusive upper bound, same format as since."
+          schema:
+            type: string
+        - name: offset
+          in: query
+          required: false
+          description: "0-based index into the (optionally since/until-filtered) chronological entry list. Omit for the default tail behaviour."
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          description: "Max lines/entries to return, default 200, capped at 2000."
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "One page of log lines/entries"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WiRocLogPageObj"
   /device/version/wirocpython/:
     get:
       tags:
@@ -1749,6 +1788,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
+  /mcp/longpoll/enabled/:
+    get:
+      tags:
+        - "Device"
+      summary: "Is this device the elected long-polling relay for its network"
+      description: "When enabled, this device long-polls monitor.wiroc.se for queued commands (for itself and, when asked, as a relay for sibling devices on the same LAN). Only one device per local network should have this enabled."
+      operationId: "getLongPollCommandsEnabled"
+      responses:
+        "200":
+          description: "0/1 depending on if long-polling is enabled or not"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
+  /mcp/longpoll/enabled/{enabled}/:
+    get:
+      tags:
+        - "Device"
+      summary: "Enable/disable long-polling for remote commands on this device"
+      operationId: "setLongPollCommandsEnabled"
+      parameters:
+        - name: enabled
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/TrueFalse"
+      responses:
+        "200":
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrueFalseObj"
   /device/identify/:
     get:
       tags:
@@ -3077,6 +3149,26 @@ components:
       properties:
         Value:
           $ref: "#/components/schemas/AvailableCommands"
+        py/object:
+          type: "string"
+    WiRocLogPage:
+      type: "object"
+      properties:
+        lines:
+          type: "array"
+          description: "Tail mode: individual physical lines. since/until or offset given: one log entry per item, continuation lines folded in."
+          items:
+            type: "string"
+        hasMore:
+          type: "boolean"
+        nextOffset:
+          type: "integer"
+          nullable: true
+    WiRocLogPageObj:
+      type: "object"
+      properties:
+        Value:
+          $ref: "#/components/schemas/WiRocLogPage"
         py/object:
           type: "string"
     MeshPath:
