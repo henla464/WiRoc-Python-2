@@ -677,18 +677,33 @@ class BackgroundTasks(object):
         try:
             headers = {'X-Authorization': apiKey}
             URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/PendingCommands"
-            resp = requests.get(url=URL, timeout=3, headers=headers, verify=False)
+            # PendingCommands is a genuine long-poll (monitor holds it open ~25s waiting for a
+            # command before replying) - needs a longer timeout than this file's other, quick calls.
+            resp = requests.get(url=URL, timeout=30, headers=headers, verify=False)
             if resp.status_code != 200:
                 BackgroundTasks.WiRocLogger.debug(
                     f"BackgroundTasks::DoPendingCommandsBackground() resp.status_code {resp.status_code}")
                 return
-            for command in resp.json().get("commands", []):
+            commands = resp.json().get("commands", [])
+            BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::DoPendingCommandsBackground() fetched {len(commands)} command(s)")
+            for command in commands:
+                commandId = command.get("commandId")
+                targetBtAddress = command.get("targetBtAddress")
                 try:
                     status, result = BackgroundTasks.DispatchCommandBackground(command, btAddress)
                 except Exception as ex:
                     status, result = -1, str(ex)
-                BackgroundTasks.PostCommandResultBackground(webServerUrl, apiKey, btAddress, command["commandId"],
-                                                            command["targetBtAddress"], status, result)
+                BackgroundTasks.WiRocLogger.debug(
+                    f"BackgroundTasks::DoPendingCommandsBackground() commandId {commandId} "
+                    f"targetBtAddress {targetBtAddress} -> status {status}")
+                if commandId is None:
+                    # Don't let one malformed command abort the rest of the batch; log the raw
+                    # dict so a field-name mismatch with the server's contract is visible.
+                    BackgroundTasks.WiRocLogger.error(
+                        f"BackgroundTasks::DoPendingCommandsBackground() command missing commandId, raw: {command}")
+                    continue
+                BackgroundTasks.PostCommandResultBackground(webServerUrl, apiKey, btAddress, commandId,
+                                                            targetBtAddress, status, result)
         except Exception as ex:
             BackgroundTasks.WiRocLogger.error("BackgroundTasks::DoPendingCommandsBackground() Exception: " + str(ex))
 
@@ -713,10 +728,18 @@ class BackgroundTasks(object):
     @staticmethod
     def DispatchCommandBackground(command, selfBtAddress):
         try:
+            targetBtAddress = command.get("targetBtAddress")
             pathTemplate = command.get("path", "")
+            BackgroundTasks.WiRocLogger.debug(
+                f"BackgroundTasks::DispatchCommandBackground() commandId {command.get('commandId')} "
+                f"targetBtAddress {targetBtAddress} path {pathTemplate} params {command.get('params')}")
+
             if not BackgroundTasks._IsSafeLocalPath(pathTemplate):
+                BackgroundTasks.WiRocLogger.debug("BackgroundTasks::DispatchCommandBackground() invalid command path")
                 return -1, "invalid command path"
             if pathTemplate in BLOCKED_COMMAND_PATHS:
+                BackgroundTasks.WiRocLogger.debug(
+                    f"BackgroundTasks::DispatchCommandBackground() blocked command path {pathTemplate}")
                 return -1, "command not allowed"
 
             try:
@@ -726,21 +749,26 @@ class BackgroundTasks(object):
             if not BackgroundTasks._IsSafeLocalPath(path):
                 return -1, "invalid command path"
 
-            targetBtAddress = command["targetBtAddress"]
             if targetBtAddress == selfBtAddress:
                 host = "localhost"
+                BackgroundTasks.WiRocLogger.debug("BackgroundTasks::DispatchCommandBackground() self-targeted, dispatching locally")
             else:
                 targetIp = command.get("targetLocalIPAddress")
                 verify = requests.get(url=f"http://{targetIp}:5000/api/device/identify/", timeout=0.5)
                 verifyBtAddress = verify.json().get("Value", {}).get("btAddress") if verify.status_code == 200 else None
+                BackgroundTasks.WiRocLogger.debug(
+                    f"BackgroundTasks::DispatchCommandBackground() relay verify at {targetIp}: expected {targetBtAddress}, got {verifyBtAddress}")
                 if verifyBtAddress != targetBtAddress:
                     return -1, "target not reachable or btAddress mismatch at given IP"
                 host = targetIp
 
             url = f"http://{host}:5000{path}"
             resp = requests.get(url=url, params=queryParams, timeout=10)
+            BackgroundTasks.WiRocLogger.debug(
+                f"BackgroundTasks::DispatchCommandBackground() {url} -> status {resp.status_code}")
             return resp.status_code, resp.text[:20000]
         except Exception as ex:
+            BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::DispatchCommandBackground() Exception: {ex}")
             return -1, str(ex)
 
     @staticmethod
@@ -769,9 +797,12 @@ class BackgroundTasks(object):
             headers = {'X-Authorization': apiKey}
             URL = webServerUrl + "/api/v1/Devices/" + pollerBtAddress + "/CommandResult"
             body = {"commandId": commandId, "targetBtAddress": targetBtAddress, "status": status, "result": result}
+            BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::PostCommandResultBackground() POST {URL} body: {body}")
             resp = requests.post(url=URL, timeout=3, headers=headers, json=body, verify=False)
             if resp.status_code != 200:
                 BackgroundTasks.WiRocLogger.error(
                     f"BackgroundTasks::PostCommandResultBackground() resp.status_code {resp.status_code}")
+            else:
+                BackgroundTasks.WiRocLogger.debug("BackgroundTasks::PostCommandResultBackground() posted ok")
         except Exception as ex:
             BackgroundTasks.WiRocLogger.error("BackgroundTasks::PostCommandResultBackground() Exception: " + str(ex))

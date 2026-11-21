@@ -1749,6 +1749,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyObj"
+  /device/identify/:
+    get:
+      tags:
+        - "Device"
+      summary: "Identify this device by its Bluetooth address"
+      description: "Used by the remote-command relay to confirm a given local IP still belongs to the expected device before dispatching a command there."
+      operationId: "identifyDevice"
+      responses:
+        "200":
+          description: "This device's Bluetooth address"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceIdentifyObj"
+  /device/availablecommands/:
+    get:
+      tags:
+        - "Device"
+      summary: "List the local API commands available for remote execution"
+      description: "Self-generated from this app's own Flask routes, excluding a small hard-coded block list of destructive commands. Reported to monitor.wiroc.se so it can validate remote-command requests against what this device actually supports."
+      operationId: "getAvailableCommands"
+      responses:
+        "200":
+          description: "The available commands"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailableCommandsObj"
   /bluetooth/scan/:
     get:
       tags:
@@ -3001,6 +3029,54 @@ components:
       properties:
         Value:
           $ref: "#/components/schemas/PropertyInt"
+        py/object:
+          type: "string"
+    DeviceIdentify:
+      type: "object"
+      properties:
+        btAddress:
+          type: "string"
+    DeviceIdentifyObj:
+      type: "object"
+      properties:
+        Value:
+          $ref: "#/components/schemas/DeviceIdentify"
+        py/object:
+          type: "string"
+    CommandSpec:
+      type: "object"
+      description: "One locally-callable command, as reported to monitor.wiroc.se."
+      properties:
+        name:
+          type: "string"
+          description: "The Flask endpoint/function name, stable per route."
+        path:
+          type: "string"
+          description: "The route's path template, e.g. /api/setting/<key>/<value>/."
+        method:
+          type: "string"
+        paramsSchema:
+          type: "object"
+          description: "Path placeholder name -> converter type (e.g. string/int/path)."
+          additionalProperties:
+            type: "string"
+        idempotent:
+          type: "boolean"
+          description: "False for commands with a side effect beyond storing a value (power/network/scan/upgrade actions etc.) - unsafe to blindly retry."
+        description:
+          type: "string"
+    AvailableCommands:
+      type: "object"
+      properties:
+        commands:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CommandSpec"
+    AvailableCommandsObj:
+      type: "object"
+      properties:
+        Value:
+          $ref: "#/components/schemas/AvailableCommands"
         py/object:
           type: "string"
     MeshPath:
