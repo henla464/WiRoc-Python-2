@@ -3,7 +3,7 @@ __author__ = 'henla464'
 import queue
 import threading
 from datamodel.db_helper import DatabaseHelper
-from settings.settings import SettingsClass
+from settings.settings import SettingsClass, BLOCKED_COMMAND_PATHS
 from datamodel.datamodel import SettingData, BluetoothSerialPortData, TestPunchView
 from battery import Battery
 from init import *
@@ -465,6 +465,58 @@ def getStatus():
     jsonpickle.set_preferred_backend('json')
     jsonpickle.set_encoder_options('json', ensure_ascii=False)
     return jsonpickle.encode(MicroMock(Value=json_data))
+
+
+@app.route('/api/device/identify/', methods=['GET'])
+def identifyDevice():
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value={"btAddress": SettingsClass.GetBTAddress()}))
+
+
+# Endpoints that do more than just store a value each time they're called (hardware/process/
+# network side effects, or additive/destructive data changes) - not safe to blindly retry.
+NON_IDEMPOTENT_COMMAND_ENDPOINTS = {
+    'shutdown', 'restart', 'dropAllTables', 'getPunches', 'addTestPunch',
+    'getBTAddresses', 'bindRFComm', 'releaseRFComm', 'getListWifi',
+    'connectWifi', 'renewIP', 'setTailscaleEnabled', 'tailscaleLogin',
+    'upgradeWiRocBLE', 'uploadLogArchive',
+}
+# Meta endpoints about the command catalog itself, not actionable device commands.
+EXCLUDED_COMMAND_ENDPOINTS = {'static', 'getAvailableCommands'}
+
+
+@app.route('/api/device/availablecommands/', methods=['GET'])
+def getAvailableCommands():
+    commands = []
+    seenEndpoints = set()
+    for rule in app.url_map.iter_rules():
+        if rule.endpoint in seenEndpoints or rule.endpoint in EXCLUDED_COMMAND_ENDPOINTS:
+            continue
+        if not rule.rule.startswith('/api/') or rule.rule.startswith('/api/swagger'):
+            continue  # swagger-ui blueprint's doc/asset routes, not device commands
+        if rule.rule in BLOCKED_COMMAND_PATHS:
+            continue  # never advertise a blocked command as callable
+        seenEndpoints.add(rule.endpoint)
+
+        paramsSchema = {}
+        for arg in rule.arguments:
+            converter = rule._converters.get(arg)
+            paramsSchema[arg] = converter.__class__.__name__.replace('Converter', '').lower() if converter else 'string'
+
+        viewFunc = app.view_functions.get(rule.endpoint)
+        commands.append({
+            "name": rule.endpoint,
+            "path": rule.rule,
+            "method": "GET",
+            "paramsSchema": paramsSchema,
+            "idempotent": rule.endpoint not in NON_IDEMPOTENT_COMMAND_ENDPOINTS,
+            "description": (getattr(viewFunc, "__doc__", None) or "").strip(),
+        })
+
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Value={"commands": commands}))
 
 
 @app.route('/api/settings/', methods=['GET'])

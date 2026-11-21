@@ -2,11 +2,12 @@ import time
 import traceback
 import subprocess
 import json
+import re
 
 from battery import Battery
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
 from datamodel.db_helper import DatabaseHelper
-from settings.settings import SettingsClass
+from settings.settings import SettingsClass, BLOCKED_COMMAND_PATHS
 import requests
 import yaml
 import logging
@@ -110,6 +111,7 @@ class BackgroundTasks(object):
         lastBatteryIsLowReceived: bool | None = None
         meshUploadState = {"meshState": None, "topology": None, "stateSent": 0.0, "topologySent": 0.0}
         webServerUp = True
+        availableCommandsSent = False
         while True:
             try:
                 SettingsClass.InvalidateCachesIfSettingsUpdated()
@@ -150,6 +152,10 @@ class BackgroundTasks(object):
                             if updateWiRocDevice:
                                 lastWiRocDeviceNameSentToServer = wiRocDeviceName
                                 BackgroundTasks.AddDeviceBackground(wiRocDeviceName, btAddress, apiKey, webServerUrl)
+
+                            if not availableCommandsSent:
+                                availableCommandsSent = BackgroundTasks.PostAvailableCommandsBackground(
+                                    webServerUrl, apiKey, btAddress)
                         time.sleep(40)
                 elif cmd == "EXIT":
                     return
@@ -219,7 +225,11 @@ class BackgroundTasks(object):
         headers = {'X-Authorization': apiKey}
         URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/SetConnectedToInternetTime"
         try:
-            resp = requests.post(url=URL, timeout=2, headers=headers, verify=False)
+            localIp = BackgroundTasks._get_local_ip()
+            body = {"localIPAddress": localIp} if localIp and localIp != '0.0.0.0' else None
+            BackgroundTasks.WiRocLogger.debug(
+                f"BackgroundTasks::SendSetConnectedToInternetBackground() POST {URL} body: {body}")
+            resp = requests.post(url=URL, timeout=2, headers=headers, json=body, verify=False)
             if resp.status_code != 200 and resp.status_code != 303:
                 BackgroundTasks.WiRocLogger.error(
                     f"BackgroundTasks::SendSetConnectedToInternetBackground() resp.status_code {resp.status_code}")
@@ -405,9 +415,14 @@ class BackgroundTasks(object):
             if eth and HardwareAbstraction.Instance.DoesInterfaceExist(eth):
                 candidates.append(eth)
 
-            usbEths = HardwareAbstraction.Instance.GetUSBEthernetInterfaces()
-            for iface in usbEths:
-                candidates.append(iface)
+            # Own try/except: a failure here (e.g. nmcli missing/not running) must not
+            # throw away the builtin ethernet/wifi/mesh candidates gathered above.
+            try:
+                usbEths = HardwareAbstraction.Instance.GetUSBEthernetInterfaces()
+                candidates.extend(usbEths)
+            except Exception as ex:
+                BackgroundTasks.WiRocLogger.debug(
+                    f"BackgroundTasks::_get_local_ip() GetUSBEthernetInterfaces() Exception: {ex}")
 
             wifi = HardwareAbstraction.Instance.GetBuiltinWifiInterfaceName()
             if wifi and HardwareAbstraction.Instance.DoesInterfaceExist(wifi):
@@ -426,16 +441,22 @@ class BackgroundTasks(object):
                     if any(p in iface.lower() for p in mobile_patterns) and iface not in candidates:
                         if HardwareAbstraction.Instance.DoesInterfaceExist(iface):
                             candidates.append(iface)
-            except Exception:
-                pass
+            except Exception as ex:
+                BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::_get_local_ip() mobile USB scan Exception: {ex}")
+
+            BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::_get_local_ip() candidates: {candidates}")
 
             for iface in candidates:
                 ips = HardwareAbstraction.Instance.GetAllIPAddressesOnInterface(iface)
                 if ips and len(ips) > 0:
+                    BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::_get_local_ip() using {iface} -> {ips[0]}")
                     return ips[0]
 
+            BackgroundTasks.WiRocLogger.debug(
+                "BackgroundTasks::_get_local_ip() no candidate interface had an IPv4 address")
             return '0.0.0.0'
-        except Exception:
+        except Exception as ex:
+            BackgroundTasks.WiRocLogger.error(f"BackgroundTasks::_get_local_ip() Exception: {ex}")
             return '0.0.0.0'
 
     @staticmethod
@@ -611,7 +632,8 @@ class BackgroundTasks(object):
         if SettingsClass.GetSendStatusMessages():
             if self.updateWebServerUpProcess is None:
                 webServerUrl = SettingsClass.GetWebServerUrl()
-                self.updateWebServerUpProcess = Process(target=self.UpdateWebServerUpBackground, args=(self.webServerUpQueueCommands, self.webServerUpQueue, webServerUrl), daemon=True)
+                btAddress = SettingsClass.GetBTAddress()
+                self.updateWebServerUpProcess = Process(target=self.UpdateWebServerUpBackground, args=(self.webServerUpQueueCommands, self.webServerUpQueue, webServerUrl, btAddress), daemon=True)
                 self.updateWebServerUpProcess.start()
 
             self.webServerUpQueueCommands.put("CHECK", False)
@@ -631,7 +653,7 @@ class BackgroundTasks(object):
             return False
 
     @staticmethod
-    def UpdateWebServerUpBackground(webServerUpQueueCommands, webServerUpQueue, webServerUrl):
+    def UpdateWebServerUpBackground(webServerUpQueueCommands, webServerUpQueue, webServerUrl, btAddress):
         while True:
             try:
                 cmd = "CHECK"
@@ -640,6 +662,8 @@ class BackgroundTasks(object):
                 if cmd == "CHECK":
                     webServerUp: bool = BackgroundTasks.TestConnection(webServerUrl)
                     webServerUpQueue.put(webServerUp)
+                    if webServerUp and SettingsClass.GetLongPollCommandsEnabled() and btAddress != "NoBTAddress":
+                        BackgroundTasks.DoPendingCommandsBackground(webServerUrl, SettingsClass.GetAPIKey(), btAddress)
                 elif cmd == "EXIT":
                     return
                 time.sleep(15)
@@ -647,3 +671,107 @@ class BackgroundTasks(object):
                 BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::UpdateWebServerUpBackground() exception: {ex}")
                 webServerUpQueue.put(False)
                 time.sleep(1)
+
+    @staticmethod
+    def DoPendingCommandsBackground(webServerUrl, apiKey, btAddress):
+        try:
+            headers = {'X-Authorization': apiKey}
+            URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/PendingCommands"
+            resp = requests.get(url=URL, timeout=3, headers=headers, verify=False)
+            if resp.status_code != 200:
+                BackgroundTasks.WiRocLogger.debug(
+                    f"BackgroundTasks::DoPendingCommandsBackground() resp.status_code {resp.status_code}")
+                return
+            for command in resp.json().get("commands", []):
+                try:
+                    status, result = BackgroundTasks.DispatchCommandBackground(command, btAddress)
+                except Exception as ex:
+                    status, result = -1, str(ex)
+                BackgroundTasks.PostCommandResultBackground(webServerUrl, apiKey, btAddress, command["commandId"],
+                                                            command["targetBtAddress"], status, result)
+        except Exception as ex:
+            BackgroundTasks.WiRocLogger.error("BackgroundTasks::DoPendingCommandsBackground() Exception: " + str(ex))
+
+    @staticmethod
+    def _IsSafeLocalPath(path):
+        return bool(path) and path.startswith("/") and "@" not in path and not any(c.isspace() for c in path)
+
+    @staticmethod
+    def BuildCommandPathAndQuery(pathTemplate, params):
+        # pathTemplate may be a literal path ("/api/status/") or a Flask-style template
+        # ("/api/setting/<key>/<value>/"). Placeholders are filled from params; whatever's
+        # left over (e.g. /api/roc/'s lastId/date/time) is passed through as a query string.
+        remaining = dict(params or {})
+
+        def replace(match):
+            name = match.group(1).split(':')[-1]
+            return str(remaining.pop(name))
+
+        path = re.sub(r'<([^>]+)>', replace, pathTemplate)
+        return path, remaining
+
+    @staticmethod
+    def DispatchCommandBackground(command, selfBtAddress):
+        try:
+            pathTemplate = command.get("path", "")
+            if not BackgroundTasks._IsSafeLocalPath(pathTemplate):
+                return -1, "invalid command path"
+            if pathTemplate in BLOCKED_COMMAND_PATHS:
+                return -1, "command not allowed"
+
+            try:
+                path, queryParams = BackgroundTasks.BuildCommandPathAndQuery(pathTemplate, command.get("params"))
+            except KeyError as ex:
+                return -1, f"missing param {ex} for command path"
+            if not BackgroundTasks._IsSafeLocalPath(path):
+                return -1, "invalid command path"
+
+            targetBtAddress = command["targetBtAddress"]
+            if targetBtAddress == selfBtAddress:
+                host = "localhost"
+            else:
+                targetIp = command.get("targetLocalIPAddress")
+                verify = requests.get(url=f"http://{targetIp}:5000/api/device/identify/", timeout=0.5)
+                verifyBtAddress = verify.json().get("Value", {}).get("btAddress") if verify.status_code == 200 else None
+                if verifyBtAddress != targetBtAddress:
+                    return -1, "target not reachable or btAddress mismatch at given IP"
+                host = targetIp
+
+            url = f"http://{host}:5000{path}"
+            resp = requests.get(url=url, params=queryParams, timeout=10)
+            return resp.status_code, resp.text[:20000]
+        except Exception as ex:
+            return -1, str(ex)
+
+    @staticmethod
+    def PostAvailableCommandsBackground(webServerUrl, apiKey, btAddress) -> bool:
+        try:
+            localResp = requests.get(url="http://localhost:5000/api/device/availablecommands/", timeout=5)
+            if localResp.status_code != 200:
+                return False
+            catalog = localResp.json().get("Value", {})
+
+            headers = {'X-Authorization': apiKey}
+            URL = webServerUrl + "/api/v1/Devices/" + btAddress + "/AvailableCommands"
+            resp = requests.post(url=URL, timeout=5, headers=headers, json=catalog, verify=False)
+            if resp.status_code != 200:
+                BackgroundTasks.WiRocLogger.error(
+                    f"BackgroundTasks::PostAvailableCommandsBackground() resp.status_code {resp.status_code}")
+                return False
+            return True
+        except Exception as ex:
+            BackgroundTasks.WiRocLogger.error("BackgroundTasks::PostAvailableCommandsBackground() Exception: " + str(ex))
+            return False
+
+    @staticmethod
+    def PostCommandResultBackground(webServerUrl, apiKey, pollerBtAddress, commandId, targetBtAddress, status, result):
+        try:
+            headers = {'X-Authorization': apiKey}
+            URL = webServerUrl + "/api/v1/Devices/" + pollerBtAddress + "/CommandResult"
+            body = {"commandId": commandId, "targetBtAddress": targetBtAddress, "status": status, "result": result}
+            resp = requests.post(url=URL, timeout=3, headers=headers, json=body, verify=False)
+            if resp.status_code != 200:
+                BackgroundTasks.WiRocLogger.error(
+                    f"BackgroundTasks::PostCommandResultBackground() resp.status_code {resp.status_code}")
+        except Exception as ex:
+            BackgroundTasks.WiRocLogger.error("BackgroundTasks::PostCommandResultBackground() Exception: " + str(ex))

@@ -23,6 +23,15 @@ cacheForEver = TTLCache(maxsize=100, ttl=30000)  # 30000 seconds (500 min)
 cacheUntilChangedByProcess = TTLCache(maxsize=100, ttl=30000)  # 30000 seconds (500 min)
 rlock = RLock()
 
+# Local-API path templates (exactly as in their @app.route decorator) that a remotely-relayed
+# command must never be allowed to call, no matter what the catalog or caller says. Add/remove
+# entries here to change what's blocked for both the reported catalog and dispatch - shared by
+# webroutes/api.py (getAvailableCommands) and BackgroundTasks.py (DispatchCommandBackground).
+BLOCKED_COMMAND_PATHS = {
+    '/api/dropalltables/',  # deletes the entire local database
+    '/api/deletepunches/',  # deletes all stored punches
+}
+
 # Mesh limits from the RAK3172 mesh firmware (mesh.h): uplink/downlink hop limit and the
 # per-hop forwarding delay (MESH_TX_FAST_MS + MESH_TX_FAST_JITTER_MS)
 MESH_RETRY_MAX_HOPS = 4
@@ -984,6 +993,15 @@ class SettingsClass(object):
         if sett is None:
             SettingsClass.SetSetting("SendStatusMessages", "1")
             return True
+        return sett.Value == "1"
+
+    @staticmethod
+    @cached(cache, key=partial(hashkey, 'GetLongPollCommandsEnabled'), lock=rlock)
+    def GetLongPollCommandsEnabled() -> bool:
+        sett = DatabaseHelper.get_setting_by_key('LongPollCommandsEnabled')
+        if sett is None:
+            SettingsClass.SetSetting("LongPollCommandsEnabled", "0")  # opt-in, operator picks ONE device per LAN
+            return False
         return sett.Value == "1"
 
     @staticmethod

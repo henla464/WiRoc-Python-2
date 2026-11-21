@@ -133,6 +133,13 @@ echo "###################################"
 apt-get -y install libsqlite3-dev
 apt-get -y install sqlite3
 
+
+echo "###################################"
+echo "Avahi - for mDNS and hostname.local"
+echo "###################################"
+apt-get -y install avahi-daemon libnss-mdns
+systemctl enable --now avahi-daemon
+
 echo "###################################"
 echo "Firmware for ath9k"
 echo "###################################"
