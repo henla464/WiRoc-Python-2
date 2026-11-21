@@ -2227,9 +2227,9 @@ class DatabaseHelper:
                         #   TOA = round((n + preamble + 4.25) * 2^SF / BW * 1000) ms
                         # SF5/SF6 use 6.25 instead of 4.25 (SX126x datasheet 6.1.4); DE = LDRO.
                         # L comes from LoraRadioMessageRS.MessageLengths (punch, double punch, ack,
-                        # status, ham, single subsecond, double subsecond); the old non-mesh
-                        # punch columns were made when punch/double punch were 10/22 bytes,
-                        # don't regenerate them casually.
+                        # status, ham, single subsecond, double subsecond). The non-mesh punch
+                        # columns don't reproduce from this formula consistently (entered at
+                        # different times), so don't regenerate them casually.
                         # Mesh mode adds a 3-byte header to every frame, so these are the
                         # same datarates with payload + 3 (mesh range channels only).
                         TimeOnAirData(8, 7, 0, False, True, False, 8, False, 'RAK3172', 330, 395, 264, 330, 297, 330, 428, True),
