@@ -2222,10 +2222,15 @@ class DatabaseHelper:
                         TimeOnAirData(6, 4, 0, False, False, False, 12, False, 'RAK3172', 235, 333, 211, 285, 235, 285, 383),
                         TimeOnAirData(5, 4, 0, False, False, False, 12, False, "RAK3172", 130, 192, 105, 155, 130, 154, 216),
 
+                        # TOA values are computed, not measured. For payload L bytes:
+                        #   n = 8 + ceil(max(8L - 4SF + 28 + 16*CRC - 20*IH, 0) / (4*(SF - 2*DE))) * (CR + 4)
+                        #   TOA = round((n + preamble + 4.25) * 2^SF / BW * 1000) ms
+                        # SF5/SF6 use 6.25 instead of 4.25 (SX126x datasheet 6.1.4); DE = LDRO.
+                        # L comes from LoraRadioMessageRS.MessageLengths (punch, double punch, ack,
+                        # status, ham, single subsecond, double subsecond); the old non-mesh punch
+                        # columns still use the era's smaller lengths, don't regen them casually.
                         # Mesh mode adds a 3-byte header to every frame, so these are the
                         # same datarates with payload + 3 (mesh range channels only).
-                        # SF5/SF6 use the SX126x datasheet 6.25-symbol preamble overhead
-                        # instead of 4.25 (section 6.1.4).
                         TimeOnAirData(8, 7, 0, False, True, False, 8, False, 'RAK3172', 330, 395, 264, 330, 297, 330, 428, True),
                         TimeOnAirData(8, 7, 1, False, True, False, 8, False, 'RAK3172', 371, 453, 289, 371, 330, 371, 494, True),
                         TimeOnAirData(8, 7, 2, False, True, False, 8, False, 'RAK3172', 412, 510, 313, 412, 362, 412, 559, True),
