@@ -802,7 +802,9 @@ class SettingsClass(object):
         SettingsClass.channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
         codeRate = SettingsClass.GetCodeRate()
         header = True
-        DRF1268DSCompatMode = SettingsClass.GetDRF1268DSCompatModeEnabled()
+        # The RAK driver forces compat off while mesh is enabled (mesh frames carry no netid
+        # prefix), so the estimate has to ignore the setting in mesh mode too.
+        DRF1268DSCompatMode = SettingsClass.GetDRF1268DSCompatModeEnabled() and not SettingsClass.IsMeshLoraMode()
         # Compat mode has to keep LDRO on, same as the RAK driver sends it, so the estimate matches
         lowDatarateOptimize = SettingsClass.channelData.LowDatarateOptimize or DRF1268DSCompatMode
         SettingsClass.timeOnAirData = DatabaseHelper.get_timeonair(SettingsClass.channelData.SpreadingFactor, SettingsClass.channelData.RfBw,
