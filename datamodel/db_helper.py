@@ -1970,10 +1970,10 @@ class DatabaseHelper:
             DatabaseHelper.WiRocLogger.debug("DatabaseHelper::add_default_channels() Channels already exists")
 
     @classmethod
-    def get_timeonair(cls, spreadingFactor: int, rfBw: int, codeRate: int, lowDatarateOptimize: bool, header: bool, CRCOn: bool, DRF1268DSCompatMode: bool, preambleLength: int, loraModule: str) -> TimeOnAirData | None:
+    def get_timeonair(cls, spreadingFactor: int, rfBw: int, codeRate: int, lowDatarateOptimize: bool, header: bool, CRCOn: bool, DRF1268DSCompatMode: bool, preambleLength: int, loraModule: str, meshEnabled: bool) -> TimeOnAirData | None:
         cls.init()
         sql = (f"SELECT * FROM TimeOnAirData WHERE SpreadingFactor = {spreadingFactor} and RfBw = {rfBw} and CodeRate = {codeRate} and LowDatarateOptimize = {lowDatarateOptimize} "
-               f"and header = {header} and CRCOn = {CRCOn} and DRF1268DSCompatMode = {DRF1268DSCompatMode} and PreambleLength = {preambleLength} and LoraModem = '" + loraModule + "'")
+               f"and header = {header} and CRCOn = {CRCOn} and DRF1268DSCompatMode = {DRF1268DSCompatMode} and PreambleLength = {preambleLength} and LoraModem = '" + loraModule + f"' and MeshEnabled = {meshEnabled}")
         print(sql)
         rows = cls.db.get_table_objects_by_SQL(ChannelData, sql)
         if len(rows) >= 1:
@@ -1996,7 +1996,7 @@ class DatabaseHelper:
         cls.init()
         column_count = cls.db.get_scalar_by_SQL("SELECT count(*) FROM pragma_table_info('TimeOnAirData')")
         seed_setting = cls.get_setting_by_key("TimeOnAirSeedVersion")
-        seed_version = "2"  # bump when the generated TOA values change
+        seed_version = "4"  # bump when the generated TOA values change
         if column_count != len(TimeOnAirData.columns) or seed_setting is None or seed_setting.Value != seed_version:
             # Generated reference data, so rebuild the table when its shape or values change
             cls.db.drop_table(TimeOnAirData())
@@ -2221,6 +2221,41 @@ class DatabaseHelper:
                         TimeOnAirData(7, 4, 0, False, False, False, 8, False, "RAK3172", 446, None, 348, None, 397, 446, 594),
                         TimeOnAirData(6, 4, 0, False, False, False, 12, False, 'RAK3172', 235, 333, 211, 285, 235, 285, 383),
                         TimeOnAirData(5, 4, 0, False, False, False, 12, False, "RAK3172", 130, 192, 105, 155, 130, 154, 216),
+
+                        # Mesh mode adds a 3-byte header to every frame, so these are the
+                        # same datarates with payload + 3 (mesh range channels only).
+                        # SF5/SF6 use the SX126x datasheet 6.25-symbol preamble overhead
+                        # instead of 4.25 (section 6.1.4).
+                        TimeOnAirData(8, 7, 0, False, True, False, 8, False, 'RAK3172', 330, 395, 264, 330, 297, 330, 428, True),
+                        TimeOnAirData(8, 7, 1, False, True, False, 8, False, 'RAK3172', 371, 453, 289, 371, 330, 371, 494, True),
+                        TimeOnAirData(8, 7, 2, False, True, False, 8, False, 'RAK3172', 412, 510, 313, 412, 362, 412, 559, True),
+                        TimeOnAirData(8, 7, 3, False, True, False, 8, False, 'RAK3172', 453, 567, 338, 453, 395, 453, 625, True),
+                        TimeOnAirData(8, 7, 4, False, True, False, 8, False, 'RAK3172', 494, 625, 362, 494, 428, 494, 690, True),
+                        TimeOnAirData(7, 7, 0, False, True, False, 8, False, 'RAK3172', 165, 214, 132, 181, 148, 181, 230, True),
+                        TimeOnAirData(7, 7, 1, False, True, False, 8, False, 'RAK3172', 185, 247, 144, 206, 165, 206, 267, True),
+                        TimeOnAirData(7, 7, 2, False, True, False, 8, False, 'RAK3172', 206, 280, 157, 230, 181, 230, 304, True),
+                        TimeOnAirData(7, 7, 3, False, True, False, 8, False, 'RAK3172', 226, 312, 169, 255, 198, 255, 341, True),
+                        TimeOnAirData(7, 7, 4, False, True, False, 8, False, 'RAK3172', 247, 345, 181, 280, 214, 280, 378, True),
+                        TimeOnAirData(6, 7, 0, False, True, False, 12, False, 'RAK3172', 103, 136, 87, 111, 95, 111, 144, True),
+                        TimeOnAirData(6, 7, 1, False, True, False, 12, False, 'RAK3172', 115, 156, 95, 125, 105, 125, 166, True),
+                        TimeOnAirData(6, 7, 2, False, True, False, 12, False, 'RAK3172', 127, 177, 103, 140, 115, 140, 189, True),
+                        TimeOnAirData(6, 7, 3, False, True, False, 12, False, 'RAK3172', 140, 197, 111, 154, 125, 154, 211, True),
+                        TimeOnAirData(6, 7, 4, False, True, False, 12, False, 'RAK3172', 152, 218, 119, 168, 136, 168, 234, True),
+                        TimeOnAirData(5, 7, 0, False, True, False, 12, False, 'RAK3172', 60, 76, 47, 60, 51, 60, 80, True),
+                        TimeOnAirData(5, 7, 1, False, True, False, 12, False, 'RAK3172', 68, 88, 52, 68, 58, 68, 93, True),
+                        TimeOnAirData(5, 7, 2, False, True, False, 12, False, 'RAK3172', 76, 101, 58, 76, 64, 76, 107, True),
+                        TimeOnAirData(5, 7, 3, False, True, False, 12, False, 'RAK3172', 84, 113, 63, 84, 70, 84, 120, True),
+                        TimeOnAirData(5, 7, 4, False, True, False, 12, False, 'RAK3172', 92, 125, 68, 92, 76, 92, 133, True),
+                        TimeOnAirData(6, 4, 0, False, True, False, 12, False, 'RAK3172', 309, 408, 260, 334, 285, 334, 432, True),
+                        TimeOnAirData(6, 4, 1, False, True, False, 12, False, 'RAK3172', 346, 469, 285, 377, 315, 377, 500, True),
+                        TimeOnAirData(6, 4, 2, False, True, False, 12, False, 'RAK3172', 383, 531, 309, 420, 346, 420, 568, True),
+                        TimeOnAirData(6, 4, 3, False, True, False, 12, False, 'RAK3172', 420, 592, 334, 463, 377, 463, 635, True),
+                        TimeOnAirData(6, 4, 4, False, True, False, 12, False, 'RAK3172', 457, 654, 358, 506, 408, 506, 703, True),
+                        TimeOnAirData(5, 4, 0, False, True, False, 12, False, 'RAK3172', 179, 228, 142, 179, 155, 179, 241, True),
+                        TimeOnAirData(5, 4, 1, False, True, False, 12, False, 'RAK3172', 204, 265, 158, 204, 173, 204, 281, True),
+                        TimeOnAirData(5, 4, 2, False, True, False, 12, False, 'RAK3172', 228, 302, 173, 228, 192, 228, 321, True),
+                        TimeOnAirData(5, 4, 3, False, True, False, 12, False, 'RAK3172', 253, 339, 188, 253, 210, 253, 361, True),
+                        TimeOnAirData(5, 4, 4, False, True, False, 12, False, 'RAK3172', 278, 376, 204, 278, 228, 278, 401, True),
 
                 # BW 10kHz: (fixed lenght... 44.76bps 166.8dB) 81 bps 164.3dB, 146.48 bps 161.8 dB, 260.42 bps 159.3dB, 455.74bps 156.8dB, 781.27bps 154.3dB, 1302.1bps 151.8dB
                         # BW 31kHz:                                    73 bps 164.6dB, 134.27 bps 162.1 dB, 244.14 bps 159.6dB, 439.45bps 157.1dB, 781.25bps 154.6dB, 1367.1bps 152.1dB

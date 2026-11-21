@@ -811,7 +811,8 @@ class SettingsClass(object):
                                                                    codeRate, lowDatarateOptimize, header,
                                                                    SettingsClass.channelData.CRCOn, DRF1268DSCompatMode,
                                                                    SettingsClass.channelData.PreambleLength,
-                                                                   loraModule)
+                                                                   loraModule,
+                                                                   SettingsClass.IsMeshLoraMode())
         if SettingsClass.timeOnAirData is None:
             return None
         MessageTypeLoraAck: int = 5

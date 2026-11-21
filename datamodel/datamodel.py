@@ -62,7 +62,8 @@ class TimeOnAirData(object):
                ("DRF1268DSCompatMode", bool), ("LoraModem", bool),
                ("PunchTOA", int), ("DoublePunchTOA", int), ("AckTOA", int),
                ("StatusTOA", int), ("HAMCallSignTOA", int),
-               ("SingleSubSecondTOA", int), ("DoubleSubSecondTOA", int)]
+               ("SingleSubSecondTOA", int), ("DoubleSubSecondTOA", int),
+               ("MeshEnabled", bool)]
 
     def __init__(self, SpreadingFactor: int | None = None, RfBw: int | None = None,
                  CodeRate: int | None = None, LowDatarateOptimize: bool | None = None,
@@ -70,7 +71,8 @@ class TimeOnAirData(object):
                  DRF1268DSCompatMode: bool | None = None, LoraModem: str | None = None,
                  PunchTOA: int | None = None, DoublePunchTOA: int | None = None, AckTOA: int | None = None,
                  StatusTOA: int | None = None, HAMCallSignTOA: int | None = None,
-                 SingleSubSecondTOA: int | None = None, DoubleSubSecondTOA: int | None = None):
+                 SingleSubSecondTOA: int | None = None, DoubleSubSecondTOA: int | None = None,
+                 MeshEnabled: bool = False):
         self.id: int | None = None
         self.SpreadingFactor: int | None = SpreadingFactor
         self.RfBw: int | None = RfBw
@@ -88,6 +90,7 @@ class TimeOnAirData(object):
         self.HAMCallSignTOA: int | None = HAMCallSignTOA
         self.SingleSubSecondTOA: int | None = SingleSubSecondTOA
         self.DoubleSubSecondTOA: int | None = DoubleSubSecondTOA
+        self.MeshEnabled: bool = MeshEnabled
 
 
 class MessageBoxData(object):
