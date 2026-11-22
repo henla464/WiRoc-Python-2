@@ -1996,7 +1996,7 @@ class DatabaseHelper:
         cls.init()
         column_count = cls.db.get_scalar_by_SQL("SELECT count(*) FROM pragma_table_info('TimeOnAirData')")
         seed_setting = cls.get_setting_by_key("TimeOnAirSeedVersion")
-        seed_version = "6"  # bump when the generated TOA values change
+        seed_version = "11"  # bump when the generated TOA values change
         if column_count != len(TimeOnAirData.columns) or seed_setting is None or seed_setting.Value != seed_version:
             # Generated reference data, so rebuild the table when its shape or values change
             cls.db.drop_table(TimeOnAirData())
@@ -2005,42 +2005,42 @@ class DatabaseHelper:
             # RfBW = 5 => 31,25 kHz on DRF1268DS, CodeRate 1 = 4/5
             timeOnAirDatas = [
                         # DRF
-                        TimeOnAirData(12, 5, 1, True, True, True, 8, True, "DRF1268DS", 5280, 5935, 3960, 5280, 4620, 4625, 6590),
-                        TimeOnAirData(11, 5, 1, True, True, True, 8, True, "DRF1268DS", 2640, 3620, 1980, 2640, 2310, 2640, 3292),
-                        TimeOnAirData(10, 5, 1, True, True, True, 8, True, "DRF1268DS", 1480, 1970, 1160, 1480, 1320, 1316, 1806),
-                        TimeOnAirData(9, 5, 1, True, True, True, 8, True, "DRF1268DS", 742, 1070, 578, 824, 660, 824, 988),
-                        TimeOnAirData(8, 5, 1, True, True, True, 8, True, "DRF1268DS", 412, 535, 330, 453, 371, 453, 576),
-                        TimeOnAirData(7, 5, 1, True, True, True, 8, True, "DRF1268DS", 247, 309, 165, 247, 206, 227, 329),
+                        TimeOnAirData(12, 5, 1, True, True, True, 8, True, "DRF1268DS", 4620, 6586, 3965, 5276, 4620, 5276, 6586),
+                        TimeOnAirData(11, 5, 1, True, True, True, 8, True, "DRF1268DS", 2638, 3293, 1982, 2638, 2310, 2638, 3621),
+                        TimeOnAirData(10, 5, 1, True, True, True, 8, True, "DRF1268DS", 1319, 1810, 1155, 1483, 1320, 1483, 1974),
+                        TimeOnAirData(9, 5, 1, True, True, True, 8, True, "DRF1268DS", 742, 987, 578, 824, 660, 741, 1069),
+                        TimeOnAirData(8, 5, 1, True, True, True, 8, True, "DRF1268DS", 412, 575, 330, 453, 371, 412, 576),
+                        TimeOnAirData(7, 5, 1, True, True, True, 8, True, "DRF1268DS", 226, 329, 165, 247, 206, 247, 329),
                         TimeOnAirData(6, 5, 1, True, True, True, 12, True, "DRF1268DS", 146, 197, 105, 156, 125, 146, 207),
                         TimeOnAirData(5, 5, 1, True, True, True, 12, True, "DRF1268DS", 88, 124, 63, 93, 78, 88, 129),
                         
                         # CodeRate 2 = 4/6
-                        TimeOnAirData(12, 5, 2, True, True, True, 8, True, "DRF1268DS", 5800, 6584, 4230, 5800, 5010, 5014, 7370),
-                        TimeOnAirData(11, 5, 2, True, True, True, 8, True, "DRF1268DS", 2900, 4080, 2110, 2900, 2510, 2900, 3687),
-                        TimeOnAirData(10, 5, 2, True, True, True, 8, True, "DRF1268DS", 1650, 2240, 1250, 1650, 1450, 1453, 2043),
-                        TimeOnAirData(9, 5, 2, True, True, True, 8, True, "DRF1268DS", 824, 1220, 627, 922, 725, 922, 1122),
-                        TimeOnAirData(8, 5, 2, True, True, True, 8, True, "DRF1268DS", 461, 609, 363, 510, 412, 510, 658),
-                        TimeOnAirData(7, 5, 2, True, True, True, 8, True, "DRF1268DS", 280, 353, 182, 280, 231, 255, 378),
+                        TimeOnAirData(12, 5, 2, True, True, True, 8, True, "DRF1268DS", 5014, 7373, 4227, 5800, 5014, 5800, 7373),
+                        TimeOnAirData(11, 5, 2, True, True, True, 8, True, "DRF1268DS", 2900, 3686, 2114, 2900, 2507, 2900, 4080),
+                        TimeOnAirData(10, 5, 2, True, True, True, 8, True, "DRF1268DS", 1450, 2040, 1253, 1647, 1450, 1647, 2236),
+                        TimeOnAirData(9, 5, 2, True, True, True, 8, True, "DRF1268DS", 824, 1118, 627, 922, 725, 823, 1217),
+                        TimeOnAirData(8, 5, 2, True, True, True, 8, True, "DRF1268DS", 461, 657, 363, 510, 412, 461, 658),
+                        TimeOnAirData(7, 5, 2, True, True, True, 8, True, "DRF1268DS", 255, 378, 182, 280, 231, 280, 378),
                         TimeOnAirData(6, 5, 2, True, True, True, 12, True, "DRF1268DS", 164, 226, 115, 177, 140, 164, 238),
                         TimeOnAirData(5, 5, 2, True, True, True, 12, True, 'DRF1268DS', 101, 144, 70, 107, 88, 101, 150),
 
                         # CodeRate 3 = 4/7
-                        TimeOnAirData(12, 5, 3, True, True, True, 8, True, "DRF1268DS", 6320, 7242, 4490, 6320, 5410, 5402, 8160),
-                        TimeOnAirData(11, 5, 3, True, True, True, 8, True, "DRF1268DS", 3160, 4540, 2240, 3160, 2700, 3160, 4081),
-                        TimeOnAirData(10, 5, 3, True, True, True, 8, True, "DRF1268DS", 1810, 2500, 1350, 1810, 1580, 1581, 2271),
-                        TimeOnAirData(9, 5, 3, True, True, True, 8, True, "DRF1268DS", 906, 1360, 676, 1020, 791, 1021, 1245),
-                        TimeOnAirData(8, 5, 3, True, True, True, 8, True, "DRF1268DS", 510, 683, 396, 568, 453, 567, 740),
-                        TimeOnAirData(7, 5, 3, True, True, True, 8, True, "DRF1268DS", 313, 398, 198, 313, 255, 284, 427),
+                        TimeOnAirData(12, 5, 3, True, True, True, 8, True, "DRF1268DS", 5407, 8159, 4490, 6324, 5407, 6324, 8160),
+                        TimeOnAirData(11, 5, 3, True, True, True, 8, True, "DRF1268DS", 3162, 4080, 2245, 3162, 2703, 3162, 4538),
+                        TimeOnAirData(10, 5, 3, True, True, True, 8, True, "DRF1268DS", 1581, 2269, 1352, 1810, 1580, 1810, 2499),
+                        TimeOnAirData(9, 5, 3, True, True, True, 8, True, "DRF1268DS", 906, 1249, 676, 1020, 791, 905, 1364),
+                        TimeOnAirData(8, 5, 3, True, True, True, 8, True, "DRF1268DS", 510, 739, 396, 568, 453, 510, 740),
+                        TimeOnAirData(7, 5, 3, True, True, True, 8, True, "DRF1268DS", 284, 427, 198, 313, 255, 312, 427),
                         TimeOnAirData(6, 5, 3, True, True, True, 12, True, 'DRF1268DS', 183, 255, 125, 197, 154, 183, 269),
                         TimeOnAirData(5, 5, 3, True, True, True, 12, True, "DRF1268DS", 113, 163, 77, 120, 99, 113, 170),
 
                         # CodeRate 4 = 4/8
-                        TimeOnAirData(12, 5, 4, True, True, True, 8, True, "DRF1268DS", 6850, 7901, 4750, 6850, 5800, 5801, 8950),
-                        TimeOnAirData(11, 5, 4, True, True, True, 8, True, "DRF1268DS", 3420, 5000, 2380, 3420, 2900, 3420, 4476),
-                        TimeOnAirData(10, 5, 4, True, True, True, 8, True, "DRF1268DS", 1970, 2760, 1450, 1970, 1710, 1708, 2498),
-                        TimeOnAirData(9, 5, 4, True, True, True, 8, True, "DRF1268DS", 988, 1510, 725, 1120, 857, 1119, 1379),
-                        TimeOnAirData(8, 5, 4, True, True, True, 8, True, "DRF1268DS", 560, 756, 428, 625, 494, 626, 822),
-                        TimeOnAirData(7, 5, 4, True, True, True, 8, True, "DRF1268DS", 346, 444, 214, 346, 280, 313, 477),
+                        TimeOnAirData(12, 5, 4, True, True, True, 8, True, "DRF1268DS", 5800, 8946, 4750, 6850, 5800, 6849, 8946),
+                        TimeOnAirData(11, 5, 4, True, True, True, 8, True, "DRF1268DS", 3424, 4473, 2376, 3424, 2900, 3424, 4997),
+                        TimeOnAirData(10, 5, 4, True, True, True, 8, True, "DRF1268DS", 1712, 2499, 1450, 1974, 1712, 1974, 2761),
+                        TimeOnAirData(9, 5, 4, True, True, True, 8, True, "DRF1268DS", 988, 1380, 725, 1118, 857, 987, 1511),
+                        TimeOnAirData(8, 5, 4, True, True, True, 8, True, "DRF1268DS", 560, 821, 428, 625, 494, 559, 822),
+                        TimeOnAirData(7, 5, 4, True, True, True, 8, True, "DRF1268DS", 312, 476, 214, 346, 280, 345, 477),
                         TimeOnAirData(6, 5, 4, True, True, True, 12, True, "DRF1268DS", 201, 284, 136, 218, 168, 201, 300),
                         TimeOnAirData(5, 5, 4, True, True, True, 12, True, 'DRF1268DS', 125, 183, 84, 133, 109, 125, 191),
 
@@ -2223,19 +2223,18 @@ class DatabaseHelper:
                         TimeOnAirData(5, 4, 0, False, False, False, 12, False, "RAK3172", 142, 192, 105, 155, 130, 142, 204),
 
                         # TOA values are computed, not measured. For payload L bytes (explicit
-                        # header, CRC off here):
+                        # header; add 16 to the numerator when CRC is on):
                         #   SF7+ : n = 8 + ceil(max(8L - 4SF + 28, 0) / (4*(SF - 2*LDRO))) * (CR + 4)
-                        #   SF5/6: n = 8 + ceil(max(8L - 4SF + 20, 0) / (4*SF)) * (CR + 4)
+                        #   SF5/6: n = 8 + ceil(max(8L - 4SF + 20, 0) / (4*(SF - 2*LDRO))) * (CR + 4)
                         #   TOA = round((n + preamble + 4.25) * 2^SF / BW * 1000) ms
                         # SF5/SF6 use 6.25 instead of 4.25 and lack the +8 term (SX126x
                         # datasheet 6.1.4; matches the Semtech LoRa calculator, e.g.
-                        # SF6/BW31.25k/p12/CR 4/5, 15 bytes, header on -> 104.93 ms).
-                        # L comes from LoraRadioMessageRS.MessageLengths (punch, double punch, ack,
-                        # status, ham, single subsecond, double subsecond). The non-mesh punch
-                        # columns don't reproduce from this formula consistently (entered at
-                        # different times), so don't regenerate them casually.
-                        # Mesh mode adds a 3-byte header to every frame, so these are the
-                        # same datarates with payload + 3 (mesh range channels only).
+                        # SF6/BW31.25k/p12/CR 4/5, 15 bytes, header on -> 104.93 ms with LDRO off).
+                        # DRF1268DS rows use payload + 1 (the module adds a frame byte) and
+                        # RfBw 5 = 31.25 kHz. L comes from LoraRadioMessageRS.MessageLengths
+                        # (punch, double punch, ack, status, ham, single subsecond, double
+                        # subsecond). Mesh mode adds a 3-byte header to every frame, so these
+                        # are the same datarates with payload + 3 (mesh range channels only).
                         TimeOnAirData(8, 7, 0, False, True, False, 8, False, 'RAK3172', 330, 395, 264, 330, 297, 330, 428, True),
                         TimeOnAirData(8, 7, 1, False, True, False, 8, False, 'RAK3172', 371, 453, 289, 371, 330, 371, 494, True),
                         TimeOnAirData(8, 7, 2, False, True, False, 8, False, 'RAK3172', 412, 510, 313, 412, 362, 412, 559, True),
