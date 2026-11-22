@@ -1996,7 +1996,7 @@ class DatabaseHelper:
         cls.init()
         column_count = cls.db.get_scalar_by_SQL("SELECT count(*) FROM pragma_table_info('TimeOnAirData')")
         seed_setting = cls.get_setting_by_key("TimeOnAirSeedVersion")
-        seed_version = "12"  # bump when the generated TOA values change
+        seed_version = "15"  # bump when the generated TOA values change
         if column_count != len(TimeOnAirData.columns) or seed_setting is None or seed_setting.Value != seed_version:
             # Generated reference data, so rebuild the table when its shape or values change
             cls.db.drop_table(TimeOnAirData())
@@ -2007,9 +2007,9 @@ class DatabaseHelper:
                         # DRF
                         TimeOnAirData(12, 5, 1, True, True, True, 8, True, "DRF1268DS", 4620, 6586, 3965, 5276, 4620, 5276, 6586),
                         TimeOnAirData(11, 5, 1, True, True, True, 8, True, "DRF1268DS", 2638, 3293, 1982, 2638, 2310, 2638, 3621),
-                        TimeOnAirData(10, 5, 1, True, True, True, 8, True, "DRF1268DS", 1319, 1810, 1155, 1483, 1320, 1483, 1974),
-                        TimeOnAirData(9, 5, 1, True, True, True, 8, True, "DRF1268DS", 742, 987, 578, 824, 660, 741, 1069),
-                        TimeOnAirData(8, 5, 1, True, True, True, 8, True, "DRF1268DS", 412, 575, 330, 453, 371, 412, 576),
+                        TimeOnAirData(10, 5, 1, True, True, True, 8, True, "DRF1268DS", 1319, 1810, 1155, 1483, 1319, 1483, 1974),
+                        TimeOnAirData(9, 5, 1, True, True, True, 8, True, "DRF1268DS", 741, 987, 578, 823, 659, 741, 1069),
+                        TimeOnAirData(8, 5, 1, True, True, True, 8, True, "DRF1268DS", 412, 575, 330, 453, 371, 412, 575),
                         TimeOnAirData(7, 5, 1, True, True, True, 8, True, "DRF1268DS", 226, 329, 165, 247, 206, 247, 329),
                         TimeOnAirData(6, 5, 1, True, True, True, 12, True, "DRF1268DS", 146, 197, 105, 156, 125, 146, 207),
                         TimeOnAirData(5, 5, 1, True, True, True, 12, True, "DRF1268DS", 88, 124, 63, 93, 78, 88, 129),
@@ -2018,41 +2018,41 @@ class DatabaseHelper:
                         TimeOnAirData(12, 5, 2, True, True, True, 8, True, "DRF1268DS", 5014, 7373, 4227, 5800, 5014, 5800, 7373),
                         TimeOnAirData(11, 5, 2, True, True, True, 8, True, "DRF1268DS", 2900, 3686, 2114, 2900, 2507, 2900, 4080),
                         TimeOnAirData(10, 5, 2, True, True, True, 8, True, "DRF1268DS", 1450, 2040, 1253, 1647, 1450, 1647, 2236),
-                        TimeOnAirData(9, 5, 2, True, True, True, 8, True, "DRF1268DS", 824, 1118, 627, 922, 725, 823, 1217),
-                        TimeOnAirData(8, 5, 2, True, True, True, 8, True, "DRF1268DS", 461, 657, 363, 510, 412, 461, 658),
-                        TimeOnAirData(7, 5, 2, True, True, True, 8, True, "DRF1268DS", 255, 378, 182, 280, 231, 280, 378),
+                        TimeOnAirData(9, 5, 2, True, True, True, 8, True, "DRF1268DS", 823, 1118, 627, 922, 725, 823, 1217),
+                        TimeOnAirData(8, 5, 2, True, True, True, 8, True, "DRF1268DS", 461, 657, 362, 510, 412, 461, 657),
+                        TimeOnAirData(7, 5, 2, True, True, True, 8, True, "DRF1268DS", 255, 378, 181, 280, 230, 280, 378),
                         TimeOnAirData(6, 5, 2, True, True, True, 12, True, "DRF1268DS", 164, 226, 115, 177, 140, 164, 238),
                         TimeOnAirData(5, 5, 2, True, True, True, 12, True, 'DRF1268DS', 101, 144, 70, 107, 88, 101, 150),
 
                         # CodeRate 3 = 4/7
-                        TimeOnAirData(12, 5, 3, True, True, True, 8, True, "DRF1268DS", 5407, 8159, 4490, 6324, 5407, 6324, 8160),
+                        TimeOnAirData(12, 5, 3, True, True, True, 8, True, "DRF1268DS", 5407, 8159, 4489, 6324, 5407, 6324, 8159),
                         TimeOnAirData(11, 5, 3, True, True, True, 8, True, "DRF1268DS", 3162, 4080, 2245, 3162, 2703, 3162, 4538),
-                        TimeOnAirData(10, 5, 3, True, True, True, 8, True, "DRF1268DS", 1581, 2269, 1352, 1810, 1580, 1810, 2499),
-                        TimeOnAirData(9, 5, 3, True, True, True, 8, True, "DRF1268DS", 906, 1249, 676, 1020, 791, 905, 1364),
-                        TimeOnAirData(8, 5, 3, True, True, True, 8, True, "DRF1268DS", 510, 739, 396, 568, 453, 510, 740),
-                        TimeOnAirData(7, 5, 3, True, True, True, 8, True, "DRF1268DS", 284, 427, 198, 313, 255, 312, 427),
-                        TimeOnAirData(6, 5, 3, True, True, True, 12, True, 'DRF1268DS', 183, 255, 125, 197, 154, 183, 269),
+                        TimeOnAirData(10, 5, 3, True, True, True, 8, True, "DRF1268DS", 1581, 2269, 1352, 1810, 1581, 1810, 2499),
+                        TimeOnAirData(9, 5, 3, True, True, True, 8, True, "DRF1268DS", 905, 1249, 676, 1020, 791, 905, 1364),
+                        TimeOnAirData(8, 5, 3, True, True, True, 8, True, "DRF1268DS", 510, 739, 395, 567, 453, 510, 739),
+                        TimeOnAirData(7, 5, 3, True, True, True, 8, True, "DRF1268DS", 284, 427, 198, 312, 255, 312, 427),
+                        TimeOnAirData(6, 5, 3, True, True, True, 12, True, 'DRF1268DS', 183, 254, 125, 197, 154, 183, 269),
                         TimeOnAirData(5, 5, 3, True, True, True, 12, True, "DRF1268DS", 113, 163, 77, 120, 99, 113, 170),
 
                         # CodeRate 4 = 4/8
-                        TimeOnAirData(12, 5, 4, True, True, True, 8, True, "DRF1268DS", 5800, 8946, 4750, 6850, 5800, 6849, 8946),
+                        TimeOnAirData(12, 5, 4, True, True, True, 8, True, "DRF1268DS", 5800, 8946, 4751, 6849, 5800, 6849, 8946),
                         TimeOnAirData(11, 5, 4, True, True, True, 8, True, "DRF1268DS", 3424, 4473, 2376, 3424, 2900, 3424, 4997),
                         TimeOnAirData(10, 5, 4, True, True, True, 8, True, "DRF1268DS", 1712, 2499, 1450, 1974, 1712, 1974, 2761),
-                        TimeOnAirData(9, 5, 4, True, True, True, 8, True, "DRF1268DS", 988, 1380, 725, 1118, 857, 987, 1511),
-                        TimeOnAirData(8, 5, 4, True, True, True, 8, True, "DRF1268DS", 560, 821, 428, 625, 494, 559, 822),
-                        TimeOnAirData(7, 5, 4, True, True, True, 8, True, "DRF1268DS", 312, 476, 214, 346, 280, 345, 477),
-                        TimeOnAirData(6, 5, 4, True, True, True, 12, True, "DRF1268DS", 201, 284, 136, 218, 168, 201, 300),
+                        TimeOnAirData(9, 5, 4, True, True, True, 8, True, "DRF1268DS", 987, 1380, 725, 1118, 856, 987, 1511),
+                        TimeOnAirData(8, 5, 4, True, True, True, 8, True, "DRF1268DS", 559, 821, 428, 625, 494, 559, 821),
+                        TimeOnAirData(7, 5, 4, True, True, True, 8, True, "DRF1268DS", 312, 476, 214, 345, 280, 345, 476),
+                        TimeOnAirData(6, 5, 4, True, True, True, 12, True, "DRF1268DS", 201, 283, 136, 218, 168, 201, 300),
                         TimeOnAirData(5, 5, 4, True, True, True, 12, True, 'DRF1268DS', 125, 183, 84, 133, 109, 125, 191),
 
                         # RfBW = 7 => 31,25 kHz on RAK3172, CodeRate 0 = 4/4
                         TimeOnAirData(12, 7, 0, True, True, False, 8, False, "RAK3172", 4227, 5276, 3178, 4227, 3703, 4227, 5276),
                         TimeOnAirData(11, 7, 0, True, True, False, 8, False, "RAK3172", 2114, 2900, 1851, 2376, 1851, 2114, 2900),
                         TimeOnAirData(10, 7, 0, True, True, False, 8, False, "RAK3172", 1188, 1450, 926, 1188, 1057, 1188, 1581),
-                        TimeOnAirData(9, 7, 0, True, True, False, 8, False, "RAK3172", 594, 790, 463, 659, 528, 594, 856),
+                        TimeOnAirData(9, 7, 0, True, True, False, 8, False, "RAK3172", 594, 791, 463, 659, 528, 594, 856),
                         TimeOnAirData(8, 7, 0, True, True, False, 8, False, "RAK3172", 330, 461, 264, 362, 297, 330, 461),
                         TimeOnAirData(7, 7, 0, True, True, False, 8, False, "RAK3172", 181, 247, 132, 198, 165, 181, 263),
-                        TimeOnAirData(6, 7, 0, True, True, False, 12, False, "RAK3172", 119, 160, 87, 119, 103, 111, 168),
-                        TimeOnAirData(5, 7, 0, True, True, False, 12, False, "RAK3172", 64, 97, 47, 72, 60, 68, 105),
+                        TimeOnAirData(6, 7, 0, True, True, False, 12, False, "RAK3172", 111, 160, 87, 119, 103, 119, 168),
+                        TimeOnAirData(5, 7, 0, True, True, False, 12, False, "RAK3172", 68, 97, 47, 72, 60, 68, 101),
                         TimeOnAirData(8, 7, 0, False, True, False, 8, False, 'RAK3172', 297, 395, 231, 297, 264, 297, 395),
                         TimeOnAirData(7, 7, 0, False, True, False, 8, False, 'RAK3172', 148, 214, 116, 165, 148, 165, 214),
                         TimeOnAirData(6, 7, 0, False, True, False, 12, False, "RAK3172", 95, 127, 78, 103, 87, 95, 127),
@@ -2060,14 +2060,14 @@ class DatabaseHelper:
                         
                         # RAK3172 Non Compat mode
                         # RfBW = 7 => 31,25 kHz on RAK3172, CodeRate 1 = 4/5
-                        TimeOnAirData(12, 7, 1, True, True, False, 8, False, "RAK3172", 4620, 5930, 3310, 4620, 3960, 4620, 5930),
-                        TimeOnAirData(11, 7, 1, True, True, False, 8, False, "RAK3172", 2310, 3290, 1980, 2640, 1980, 2310, 3290),
-                        TimeOnAirData(10, 7, 1, True, True, False, 8, False, "RAK3172", 1320, 1646, 992, 1320, 1160, 1320, 1810),
-                        TimeOnAirData(9, 7, 1, True, True, False, 8, False, "RAK3172", 660, 906, 496, 742, 578, 660, 988),
+                        TimeOnAirData(12, 7, 1, True, True, False, 8, False, "RAK3172", 4620, 5931, 3310, 4620, 3965, 4620, 5931),
+                        TimeOnAirData(11, 7, 1, True, True, False, 8, False, "RAK3172", 2310, 3293, 1982, 2638, 1982, 2310, 3293),
+                        TimeOnAirData(10, 7, 1, True, True, False, 8, False, "RAK3172", 1319, 1647, 991, 1319, 1155, 1319, 1810),
+                        TimeOnAirData(9, 7, 1, True, True, False, 8, False, "RAK3172", 659, 905, 496, 741, 578, 659, 987),
                         TimeOnAirData(8, 7, 1, True, True, False, 8, False, "RAK3172", 371, 535, 289, 412, 330, 371, 535),
-                        TimeOnAirData(7, 7, 1, True, True, False, 8, False, "RAK3172", 205, 289, 145, 227, 186, 205, 309),
-                        TimeOnAirData(6, 7, 1, True, True, False, 12, False, 'RAK3172', 136, 187, 95, 136, 115, 126, 197),
-                        TimeOnAirData(5, 7, 1, True, True, False, 12, False, 'RAK3172', 73, 114, 52, 83, 68, 78, 124),
+                        TimeOnAirData(7, 7, 1, True, True, False, 8, False, "RAK3172", 206, 288, 144, 226, 185, 206, 308),
+                        TimeOnAirData(6, 7, 1, True, True, False, 12, False, 'RAK3172', 125, 187, 95, 136, 115, 136, 197),
+                        TimeOnAirData(5, 7, 1, True, True, False, 12, False, 'RAK3172', 78, 114, 52, 83, 68, 78, 119),
 
                         TimeOnAirData(8, 7, 1, False, True, False, 8, False, 'RAK3172', 330, 453, 248, 330, 289, 330, 453),
                         TimeOnAirData(7, 7, 1, False, True, False, 8, False, 'RAK3172', 165, 247, 124, 185, 165, 185, 247),
@@ -2075,14 +2075,14 @@ class DatabaseHelper:
                         TimeOnAirData(5, 7, 1, False, True, False, 12, False, "RAK3172", 58, 78, 42, 63, 52, 58, 83),
 
                         # RfBW = 7 => 31,25 kHz on RAK3172, CodeRate 2 = 4/6
-                        TimeOnAirData(12, 7, 2, True, True, False, 8, False, "RAK3172", 5010, 6590, 3440, 5010, 4230, 5010, 6590),
-                        TimeOnAirData(11, 7, 2, True, True, False, 8, False, "RAK3172", 2510, 3690, 2110, 2900, 2110, 2510, 3690),
-                        TimeOnAirData(10, 7, 2, True, True, False, 8, False, "RAK3172", 1450, 1843, 1060, 1450, 1250, 1450, 2040),
-                        TimeOnAirData(9, 7, 2, True, True, False, 8, False, "RAK3172", 725, 1022, 529, 824, 627, 725, 1120),
-                        TimeOnAirData(8, 7, 2, True, True, False, 8, False, "RAK3172", 412, 609, 314, 461, 363, 412, 609),
-                        TimeOnAirData(7, 7, 2, True, True, False, 8, False, "RAK3172", 231, 329, 157, 255, 206, 231, 354),
-                        TimeOnAirData(6, 7, 2, True, True, False, 12, False, 'RAK3172', 152, 214, 103, 152, 127, 140, 226),
-                        TimeOnAirData(5, 7, 2, True, True, False, 12, False, "RAK3172", 82, 131, 58, 94, 76, 88, 143),
+                        TimeOnAirData(12, 7, 2, True, True, False, 8, False, "RAK3172", 5014, 6586, 3441, 5014, 4227, 5014, 6586),
+                        TimeOnAirData(11, 7, 2, True, True, False, 8, False, "RAK3172", 2507, 3686, 2114, 2900, 2114, 2507, 3686),
+                        TimeOnAirData(10, 7, 2, True, True, False, 8, False, "RAK3172", 1450, 1843, 1057, 1450, 1253, 1450, 2040),
+                        TimeOnAirData(9, 7, 2, True, True, False, 8, False, "RAK3172", 725, 1020, 528, 823, 627, 725, 1118),
+                        TimeOnAirData(8, 7, 2, True, True, False, 8, False, "RAK3172", 412, 608, 313, 461, 362, 412, 608),
+                        TimeOnAirData(7, 7, 2, True, True, False, 8, False, "RAK3172", 230, 329, 157, 255, 206, 230, 353),
+                        TimeOnAirData(6, 7, 2, True, True, False, 12, False, 'RAK3172', 140, 214, 103, 152, 127, 152, 226),
+                        TimeOnAirData(5, 7, 2, True, True, False, 12, False, "RAK3172", 88, 131, 58, 94, 76, 88, 137),
                         
                         TimeOnAirData(8, 7, 2, False, True, False, 8, False, 'RAK3172', 362, 510, 264, 362, 313, 362, 510),
                         TimeOnAirData(7, 7, 2, False, True, False, 8, False, "RAK3172", 181, 280, 132, 206, 181, 206, 280),
@@ -2090,14 +2090,14 @@ class DatabaseHelper:
                         TimeOnAirData(5, 7, 2, False, True, False, 12, False, "RAK3172", 64, 88, 45, 70, 58, 64, 94),
 
                         # RfBW = 7 => 31,25 kHz on RAK3172, CodeRate 3 = 4/7
-                        TimeOnAirData(12, 7, 3, True, True, False, 8, False, "RAK3172", 5410, 7240, 3570, 5410, 4490, 5410, 7240),
-                        TimeOnAirData(11, 7, 3, True, True, False, 8, False, "RAK3172", 2700, 4080, 2240, 3160, 2240, 2700, 4080),
-                        TimeOnAirData(10, 7, 3, True, True, False, 8, False, "RAK3172", 1580, 2041, 1120, 1580, 1350, 1580, 2270),
-                        TimeOnAirData(9, 7, 3, True, True, False, 8, False, "RAK3172", 791, 1135, 562, 906, 676, 791, 1250),
-                        TimeOnAirData(8, 7, 3, True, True, False, 8, False, "RAK3172", 453, 682, 338, 510, 396, 453, 682),
-                        TimeOnAirData(7, 7, 3, True, True, False, 8, False, "RAK3172", 255, 370, 169, 284, 227, 255, 399),
-                        TimeOnAirData(6, 7, 3, True, True, False, 12, False, "RAK3172", 168, 240, 111, 168, 140, 154, 254),
-                        TimeOnAirData(5, 7, 3, True, True, False, 12, False, 'RAK3172', 92, 149, 63, 106, 84, 99, 163),
+                        TimeOnAirData(12, 7, 3, True, True, False, 8, False, "RAK3172", 5407, 7242, 3572, 5407, 4489, 5407, 7242),
+                        TimeOnAirData(11, 7, 3, True, True, False, 8, False, "RAK3172", 2703, 4080, 2245, 3162, 2245, 2703, 4080),
+                        TimeOnAirData(10, 7, 3, True, True, False, 8, False, "RAK3172", 1581, 2040, 1122, 1581, 1352, 1581, 2269),
+                        TimeOnAirData(9, 7, 3, True, True, False, 8, False, "RAK3172", 791, 1135, 561, 905, 676, 791, 1249),
+                        TimeOnAirData(8, 7, 3, True, True, False, 8, False, "RAK3172", 453, 682, 338, 510, 395, 453, 682),
+                        TimeOnAirData(7, 7, 3, True, True, False, 8, False, "RAK3172", 255, 370, 169, 284, 226, 255, 398),
+                        TimeOnAirData(6, 7, 3, True, True, False, 12, False, "RAK3172", 154, 240, 111, 168, 140, 168, 254),
+                        TimeOnAirData(5, 7, 3, True, True, False, 12, False, 'RAK3172', 99, 149, 63, 106, 84, 99, 156),
 
                         TimeOnAirData(8, 7, 3, False, True, False, 8, False, "RAK3172", 395, 567, 281, 395, 338, 395, 567),
                         TimeOnAirData(7, 7, 3, False, True, False, 8, False, 'RAK3172', 198, 312, 140, 226, 198, 226, 312),
@@ -2105,14 +2105,14 @@ class DatabaseHelper:
                         TimeOnAirData(5, 7, 3, False, True, False, 12, False, 'RAK3172', 70, 99, 48, 77, 63, 70, 106),
 
                         # RfBW = 7 => 31,25 kHz on RAK3172, CodeRate 4 = 4/8
-                        TimeOnAirData(12, 7, 4, True, True, False, 8, False, "RAK3172", 5800, 7900, 3700, 5800, 4750, 5800, 7900),
-                        TimeOnAirData(11, 7, 4, True, True, False, 8, False, "RAK3172", 2900, 4470, 2380, 3420, 2380, 2900, 4470),
-                        TimeOnAirData(10, 7, 4, True, True, False, 8, False, "RAK3172", 1710, 2238, 1190, 1710, 1450, 1710, 2500),
-                        TimeOnAirData(9, 7, 4, True, True, False, 8, False, "RAK3172", 857, 1249, 594, 988, 725, 857, 1380),
-                        TimeOnAirData(8, 7, 4, True, True, False, 8, False, "RAK3172", 494, 756, 363, 560, 428, 494, 756),
-                        TimeOnAirData(7, 7, 4, True, True, False, 8, False, "RAK3172", 280, 411, 181, 313, 247, 280, 444),
-                        TimeOnAirData(6, 7, 4, True, True, False, 12, False, "RAK3172", 185, 267, 119, 185, 152, 169, 283),
-                        TimeOnAirData(5, 7, 4, True, True, False, 12, False, "RAK3172", 101, 166, 68, 117, 92, 109, 182),
+                        TimeOnAirData(12, 7, 4, True, True, False, 8, False, "RAK3172", 5800, 7897, 3703, 5800, 4751, 5800, 7897),
+                        TimeOnAirData(11, 7, 4, True, True, False, 8, False, "RAK3172", 2900, 4473, 2376, 3424, 2376, 2900, 4473),
+                        TimeOnAirData(10, 7, 4, True, True, False, 8, False, "RAK3172", 1712, 2236, 1188, 1712, 1450, 1712, 2499),
+                        TimeOnAirData(9, 7, 4, True, True, False, 8, False, "RAK3172", 856, 1249, 594, 987, 725, 856, 1380),
+                        TimeOnAirData(8, 7, 4, True, True, False, 8, False, "RAK3172", 494, 756, 362, 559, 428, 494, 756),
+                        TimeOnAirData(7, 7, 4, True, True, False, 8, False, "RAK3172", 280, 411, 181, 312, 247, 280, 443),
+                        TimeOnAirData(6, 7, 4, True, True, False, 12, False, "RAK3172", 168, 267, 119, 185, 152, 185, 283),
+                        TimeOnAirData(5, 7, 4, True, True, False, 12, False, "RAK3172", 109, 166, 68, 117, 92, 109, 174),
 
                         TimeOnAirData(8, 7, 4, False, True, False, 8, False, "RAK3172", 428, 625, 297, 428, 362, 428, 625),
                         TimeOnAirData(7, 7, 4, False, True, False, 8, False, 'RAK3172', 214, 345, 148, 247, 214, 247, 345),
@@ -2182,34 +2182,34 @@ class DatabaseHelper:
                         TimeOnAirData(5, 4, 0, False, True, False, 12, False, 'RAK3172', 155, 204, 118, 167, 142, 155, 216),
 
                         # CodeRate 1=4/5
-                        TimeOnAirData(10, 4, 1, True, True, False, 8, False, "RAK3172", 3960, 4938, 2970, 3960, 3470, 3960, 5430),
-                        TimeOnAirData(9, 4, 1, True, True, False, 8, False, "RAK3172", 1980, 2714, 1490, 2220, 1730, 1980, 2960),
-                        TimeOnAirData(8, 4, 1, True, True, False, 8, False, "RAK3172", 1110, 1600, 867, 1230, 990, 1110, 1600),
-                        TimeOnAirData(7, 4, 1, False, True, False, 8, False, "RAK3172", 494, 741, 372, 556, 495, 556, 741),
+                        TimeOnAirData(10, 4, 1, True, True, False, 8, False, "RAK3172", 3963, 4948, 2978, 3963, 3471, 3963, 5440),
+                        TimeOnAirData(9, 4, 1, True, True, False, 8, False, "RAK3172", 1982, 2720, 1489, 2228, 1735, 1982, 2966),
+                        TimeOnAirData(8, 4, 1, True, True, False, 8, False, "RAK3172", 1114, 1606, 868, 1237, 991, 1114, 1606),
+                        TimeOnAirData(7, 4, 1, False, True, False, 8, False, "RAK3172", 495, 742, 372, 557, 495, 557, 742),
                         TimeOnAirData(6, 4, 1, False, True, False, 12, False, 'RAK3172', 315, 438, 254, 346, 285, 315, 438),
                         TimeOnAirData(5, 4, 1, False, True, False, 12, False, 'RAK3172', 173, 235, 127, 188, 158, 173, 250),
 
                         # CodeRate 2=4/6
-                        TimeOnAirData(10, 4, 2, True, True, False, 8, False, "RAK3172", 4350, 5529, 3170, 4350, 3760, 4350, 6120),
-                        TimeOnAirData(9, 4, 2, True, True, False, 8, False, "RAK3172", 2170, 3055, 1590, 2470, 1880, 2170, 3350),
-                        TimeOnAirData(8, 4, 2, True, True, False, 8, False, "RAK3172", 1230, 1820, 940, 1380, 1090, 1230, 1820),
-                        TimeOnAirData(7, 4, 2, False, True, False, 8, False, "RAK3172", 544, 839, 397, 618, 544, 618, 839),
+                        TimeOnAirData(10, 4, 2, True, True, False, 8, False, "RAK3172", 4357, 5538, 3175, 4357, 3766, 4357, 6129),
+                        TimeOnAirData(9, 4, 2, True, True, False, 8, False, "RAK3172", 2178, 3065, 1588, 2474, 1883, 2178, 3360),
+                        TimeOnAirData(8, 4, 2, True, True, False, 8, False, "RAK3172", 1237, 1828, 942, 1385, 1089, 1237, 1828),
+                        TimeOnAirData(7, 4, 2, False, True, False, 8, False, "RAK3172", 545, 840, 397, 618, 545, 618, 840),
                         TimeOnAirData(6, 4, 2, False, True, False, 12, False, 'RAK3172', 346, 494, 272, 383, 309, 346, 494),
                         TimeOnAirData(5, 4, 2, False, True, False, 12, False, 'RAK3172', 192, 265, 136, 210, 173, 192, 284),
 
                         # CodeRate 3=4/7
-                        TimeOnAirData(10, 4, 3, True, True, False, 8, False, "RAK3172", 4740, 6121, 3370, 4740, 4050, 4740, 6810),
-                        TimeOnAirData(9, 4, 3, True, True, False, 8, False, "RAK3172", 2370, 3405, 1680, 2720, 2030, 2370, 3750),
-                        TimeOnAirData(8, 4, 3, True, True, False, 8, False, "RAK3172", 1360, 2050, 1010, 1530, 1190, 1360, 2050),
-                        TimeOnAirData(7, 4, 3, False, True, False, 8, False, "RAK3172", 593, 937, 421, 679, 593, 679, 937),
+                        TimeOnAirData(10, 4, 3, True, True, False, 8, False, "RAK3172", 4751, 6129, 3372, 4751, 4062, 4751, 6818),
+                        TimeOnAirData(9, 4, 3, True, True, False, 8, False, "RAK3172", 2375, 3409, 1686, 2720, 2031, 2375, 3754),
+                        TimeOnAirData(8, 4, 3, True, True, False, 8, False, "RAK3172", 1360, 2049, 1015, 1532, 1188, 1360, 2049),
+                        TimeOnAirData(7, 4, 3, False, True, False, 8, False, "RAK3172", 594, 938, 422, 680, 594, 680, 938),
                         TimeOnAirData(6, 4, 3, False, True, False, 12, False, 'RAK3172', 377, 549, 291, 420, 334, 377, 549),
                         TimeOnAirData(5, 4, 3, False, True, False, 12, False, "RAK3172", 210, 296, 145, 232, 188, 210, 318),
 
                         # CodeRate 4=4/8
-                        TimeOnAirData(10, 4, 4, True, True, False, 8, False, "RAK3172", 5140, 6712, 3560, 5140, 4350, 5140, 7500),
-                        TimeOnAirData(9, 4, 4, True, True, False, 8, False, "RAK3172", 2570, 3746, 1780, 2960, 2170, 2570, 4140),
-                        TimeOnAirData(8, 4, 4, True, True, False, 8, False, "RAK3172", 1480, 2270, 1090, 1680, 1280, 1480, 2270),
-                        TimeOnAirData(7, 4, 4, False, True, False, 8, False, "RAK3172", 642, 1040, 446, 741, 642, 740, 1040),
+                        TimeOnAirData(10, 4, 4, True, True, False, 8, False, "RAK3172", 5145, 6720, 3569, 5145, 4357, 5145, 7508),
+                        TimeOnAirData(9, 4, 4, True, True, False, 8, False, "RAK3172", 2572, 3754, 1785, 2966, 2178, 2572, 4148),
+                        TimeOnAirData(8, 4, 4, True, True, False, 8, False, "RAK3172", 1483, 2271, 1089, 1680, 1286, 1483, 2271),
+                        TimeOnAirData(7, 4, 4, False, True, False, 8, False, "RAK3172", 643, 1037, 446, 742, 643, 742, 1037),
                         TimeOnAirData(6, 4, 4, False, True, False, 12, False, 'RAK3172', 408, 605, 309, 457, 358, 408, 605),
                         TimeOnAirData(5, 4, 4, False, True, False, 12, False, "RAK3172", 228, 327, 155, 253, 204, 228, 352),
 
@@ -2217,25 +2217,24 @@ class DatabaseHelper:
                         TimeOnAirData(11, 4, 0, True, False, False, 8, False, "RAK3172", 6351, None, 4775, None, 5563, 6351, 7926),
                         TimeOnAirData(10, 4, 0, True, False, False, 8, False, "RAK3172", 3175, None, 2388, None, 2782, 3175, 4357),
                         TimeOnAirData(9, 4, 0, True, False, False, 8, False, "RAK3172", 1588, None, 1194, None, 1588, 1785, 2375),
-                        TimeOnAirData(8, 4, 0, True, False, False, 8, False, "RAK3172", 892, None, 695, None, 794, 892, 1287),
+                        TimeOnAirData(8, 4, 0, True, False, False, 8, False, "RAK3172", 892, None, 695, None, 794, 892, 1286),
                         TimeOnAirData(7, 4, 0, False, False, False, 8, False, "RAK3172", 446, None, 348, None, 397, 446, 594),
                         TimeOnAirData(6, 4, 0, False, False, False, 12, False, 'RAK3172', 260, 358, 211, 285, 235, 260, 358),
                         TimeOnAirData(5, 4, 0, False, False, False, 12, False, "RAK3172", 142, 192, 105, 155, 130, 142, 204),
 
-                        # TOA values are computed, not measured. For payload L bytes (explicit
-                        # header; add 16 to the numerator when CRC is on):
-                        #   SF7+ : n = 8 + ceil(max(8L - 4SF + 28, 0) / (4*(SF - 2*LDRO))) * (CR + 4)
-                        #   SF5/6: n = 8 + ceil(max(8L - 4SF + 20, 0) / (4*(SF - 2*LDRO))) * (CR + 4)
-                        #   TOA = round((n + preamble + 4.25) * 2^SF / BW * 1000) ms
-                        # SF5/SF6 use 6.25 instead of 4.25 and lack the +8 term (SX126x
-                        # datasheet 6.1.4; matches the Semtech LoRa calculator, e.g.
-                        # SF6/BW31.25k/p12/CR 4/5, 15 bytes, header on -> 104.93 ms with LDRO off).
-                        # DRF1268DS rows and RAK3172 compat-mode rows use payload + 1 (the
-                        # DRF1268DS module adds a frame byte; compat mode mimics its framing).
-                        # RfBw 5 = 31.25 kHz. L comes from LoraRadioMessageRS.MessageLengths
-                        # (punch, double punch, ack, status, ham, single subsecond, double
-                        # subsecond). Mesh mode adds a 3-byte header to every frame, so these
-                        # are the same datarates with payload + 3 (mesh range channels only).
+                        # TOA values are computed, not measured, with SX126x datasheet 6.1.4
+                        # (matches the Semtech LoRa calculator). For payload L bytes:
+                        #   num = 8L - 4SF + (28 for SF7+, 20 for SF5/6) + 16*CRC - 20*(1 - header)
+                        #   n   = 8 + ceil(max(num, 0) / (4*(SF - 2*LDRO))) * (CR + 4)
+                        #   TOA = round((n + preamble + overhead) * 2^SF / BW * 1000) ms
+                        # overhead is 4.25 symbols for SF7+, 6.25 for SF5/6. CRC and header are
+                        # the row's flags. RfBw 5 and 7 = 31.25 kHz, RfBw 4 = 10.4 kHz.
+                        # L per column: punch 14, double punch 25, ack 7, status 16, ham 11,
+                        # single subsecond 15, double subsecond 27 (LoraRadioMessageRS.MessageLengths).
+                        # DRF1268DS rows and RAK3172 compat-mode rows use L + 1 (the DRF1268DS
+                        # module adds a frame byte; compat mode mimics its framing). Mesh rows use
+                        # L + 3 (3-byte header, mesh range channels only).
+                        # Bump seed_version when these values or MessageLengths change.
                         TimeOnAirData(8, 7, 0, False, True, False, 8, False, 'RAK3172', 330, 395, 264, 330, 297, 330, 428, True),
                         TimeOnAirData(8, 7, 1, False, True, False, 8, False, 'RAK3172', 371, 453, 289, 371, 330, 371, 494, True),
                         TimeOnAirData(8, 7, 2, False, True, False, 8, False, 'RAK3172', 412, 510, 313, 412, 362, 412, 559, True),
