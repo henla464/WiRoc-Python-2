@@ -11,6 +11,7 @@ from loraradio.LoraRadioMessageRS import LoraRadioMessageRS
 from loraradio.LoraRadioMessageCreator import LoraRadioMessageCreator
 from utils.utils import Utils
 from chipGPIO.hardwareAbstraction import HardwareAbstraction
+from BackgroundTasks import BackgroundTasks
 
 
 class ReceiveLoraAdapter(object):
@@ -68,6 +69,7 @@ class ReceiveLoraAdapter(object):
         self.hardwareAbstraction = hardwareAbstraction
         self.lastMeshStatePollTime = 0.0
         self.lastMeshSnapshotTime = 0.0
+        self.lastStoredTopology = None
 
     def GetInstanceNumber(self) -> int:
         return self.instanceNumber
@@ -200,6 +202,10 @@ class ReceiveLoraAdapter(object):
                     "isRoot": state["isroot"] == 1, "meshState": state,
                     "topology": topology}
         SettingsClass.SetSetting('MeshSnapshot', json.dumps(snapshot))
+        if topology != self.lastStoredTopology:
+            self.lastStoredTopology = topology
+            # Have the upload process send it now instead of on its next 40 s tick
+            BackgroundTasks.RequestInfrequentHTTPTick()
         ReceiveLoraAdapter.WiRocLogger.debug(
             "ReceiveLoraAdapter::UpdateMeshSnapshot() stored snapshot, isRoot: " + str(state["isroot"] == 1))
 

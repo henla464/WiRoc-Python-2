@@ -19,6 +19,8 @@ from subscriberadapters.sendstatusadapter import SendStatusAdapter
 
 class BackgroundTasks(object):
     WiRocLogger: logging.Logger = logging.getLogger('WiRoc')
+    # Set from __init__ (main process) so any module can wake the infrequent-HTTP process.
+    InfrequentHTTPQueue = None
 
     def __init__(self):
         self.lastWiRocDeviceNameSentToServer: str | None = None
@@ -29,6 +31,7 @@ class BackgroundTasks(object):
         self.messageStatQueueCommands = Queue()
         self.doInfrequentDatabaseTasksQueueCommands = Queue()
         self.doInfrequentHTTPTasksQueueCommands = Queue()
+        BackgroundTasks.InfrequentHTTPQueue = self.doInfrequentHTTPTasksQueueCommands
 
         self.messageStatProcess: Process | None = None
         self.updateWebServerUpProcess: Process | None = None
@@ -56,6 +59,24 @@ class BackgroundTasks(object):
                 self.doInfrequentHTTPTasksQueueCommands.put("BATTERYISLOWNOTRECEIVED", False)
         except Full as fex:
             BackgroundTasks.WiRocLogger.error(f"BackgroundTasks::SendDataToInfrequentHTTPTaskProcess() doInfrequentHTTPTasksQueueCommands full 2")
+
+    @staticmethod
+    def RequestInfrequentHTTPTick():
+        # Run an upload tick now instead of waiting out the process's inter-tick sleep,
+        # e.g. when a fresh mesh snapshot has been stored and is waiting for upload.
+        if BackgroundTasks.InfrequentHTTPQueue is None:
+            return
+        try:
+            BackgroundTasks.InfrequentHTTPQueue.put("START", False)
+        except Full:
+            pass
+
+    @staticmethod
+    def _WaitForQueuedCommand(queueCommands: Queue, timeoutSeconds: float) -> str | None:
+        try:
+            return queueCommands.get(True, timeoutSeconds)
+        except Empty:
+            return None
 
     def GetDataFromSubProcesses(self):
         try:
@@ -112,17 +133,21 @@ class BackgroundTasks(object):
         meshUploadState = {"meshState": None, "topology": None, "stateSent": 0.0, "topologySent": 0.0}
         webServerUp = True
         availableCommandsSent = False
+        pendingCmd: str | None = None
         while True:
             try:
                 SettingsClass.InvalidateCachesIfSettingsUpdated()
-                cmd = "START"
-                if not doInfrequentHTTPTasksQueueCommands.empty():
-                    try:
-                        cmd = doInfrequentHTTPTasksQueueCommands.get(False)
-                    except Empty:
-                        BackgroundTasks.WiRocLogger.debug("BackgroundTasks::DoInfrequentHTTPTasksBackground() doInfrequentDatabaseTasksQueueCommands is empty")
-                        time.sleep(1)
-                        continue
+                if pendingCmd is not None:
+                    cmd, pendingCmd = pendingCmd, None
+                else:
+                    cmd = "START"
+                    if not doInfrequentHTTPTasksQueueCommands.empty():
+                        try:
+                            cmd = doInfrequentHTTPTasksQueueCommands.get(False)
+                        except Empty:
+                            BackgroundTasks.WiRocLogger.debug("BackgroundTasks::DoInfrequentHTTPTasksBackground() doInfrequentDatabaseTasksQueueCommands is empty")
+                            time.sleep(1)
+                            continue
 
                 if cmd == "START":
                     if webServerUp:
@@ -156,7 +181,10 @@ class BackgroundTasks(object):
                             if not availableCommandsSent:
                                 availableCommandsSent = BackgroundTasks.PostAvailableCommandsBackground(
                                     webServerUrl, apiKey, btAddress)
-                        time.sleep(40)
+                    # Idle until the next tick; a queued command (state change or upload nudge)
+                    # wakes us early. Also covers webServerUp False, which used to busy-loop.
+                    pendingCmd = BackgroundTasks._WaitForQueuedCommand(
+                        doInfrequentHTTPTasksQueueCommands, 40)
                 elif cmd == "EXIT":
                     return
                 elif cmd == "WEBSERVERUP":
@@ -173,7 +201,8 @@ class BackgroundTasks(object):
                     batteryIsLowReceived = False
             except Exception as ex:
                 BackgroundTasks.WiRocLogger.debug(f"BackgroundTasks::DoInfrequentHTTPTasksBackground() exception: {ex}")
-                time.sleep(40)
+                pendingCmd = BackgroundTasks._WaitForQueuedCommand(
+                    doInfrequentHTTPTasksQueueCommands, 40)
 
     @staticmethod
     def UpdateBatteryIsLowBackground(batteryIsLow, webServerURL, apiKey, btAddress, lastBatteryIsLow) -> bool:
