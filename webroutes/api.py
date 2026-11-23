@@ -29,6 +29,17 @@ def getOpenApiContent():
     f.close()
     return swaggercontent
 
+
+def _require_supported(**proposed):
+    # Rejects a settings change that would leave no airtime entry for the combination the
+    # driver would send. Applies to the web API and everything routed through it (MCP).
+    if SettingsClass.IsLoraConfigurationSupported(**proposed):
+        return
+    changes = ', '.join(f'{key}={value}' for key, value in proposed.items() if value is not None)
+    raise Exception(f"Error: {changes} is not supported (no airtime entry for the resulting "
+                    "LoraRange, Channel, CodeRate and mode combination)")
+
+
 @app.route('/api/lora/enabled/', methods=['GET'])
 def getLoraEnabled():
     setting = DatabaseHelper.get_setting_by_key('LoraEnabled')
@@ -66,6 +77,7 @@ def getChannel():
 @app.route('/api/lora/channel/<channel>/', methods=['GET'])
 @app.route('/api/channel/<channel>/', methods=['GET'])
 def setChannel(channel):
+    _require_supported(channel=channel)
     sd = DatabaseHelper.get_setting_by_key('Channel')
     if sd is None:
         sd = SettingData()
@@ -115,13 +127,23 @@ def getMeshSupported():
     return jsonpickle.encode(MicroMock(Value=supported))
 
 
+@app.route('/api/lora/datarates/', methods=['GET'])
+def getSupportedDataRates():
+    # Valid values from the current settings, so the app/MCP don't need a hard-coded list
+    ranges = [r for r in ('MF', 'F', 'XF', 'UF', 'L', 'ML', 'XL', 'UL')
+              if SettingsClass.IsLoraConfigurationSupported(loraRange=r)]
+    codeRates = [cr for cr in range(5) if SettingsClass.IsLoraConfigurationSupported(codeRate=cr)]
+    jsonpickle.set_preferred_backend('json')
+    jsonpickle.set_encoder_options('json', ensure_ascii=False)
+    return jsonpickle.encode(MicroMock(Ranges=[_LORARANGE_TO_OLD.get(r, r) for r in ranges],
+                                       CodeRates=codeRates))
+
+
 @app.route('/api/lorarange/<lorarange>/', methods=['GET'])
 @app.route('/api/lora/lorarange/<lorarange>/', methods=['GET'])
 def setLoraRange(lorarange):
     loraRange = _LORARANGE_FROM_OLD.get(lorarange, lorarange)
-    if SettingsClass.IsMeshLoraMode() and not SettingsClass.IsMeshCompatibleLoraRange(loraRange):
-        # Mesh is enabled, it only runs on fast data rates
-        raise Exception("Error: not a valid LoraRange while a mesh mode is selected (the data rate is too slow)")
+    _require_supported(loraRange=loraRange)
     sd = DatabaseHelper.get_setting_by_key('LoraRange')
     if sd is None:
         sd = SettingData()
@@ -245,6 +267,7 @@ def getDRF1268DSCompatMode():
 
 @app.route('/api/lora/drf1268dscompatmode/<enabled>/', methods=['GET'])
 def setDRF1268DSCompatMode(enabled):
+    _require_supported(compat=(enabled.lower() == 'true' or enabled.lower() == '1'))
     sd = DatabaseHelper.get_setting_by_key('DRF1268DSCompatModeEnabled')
     if sd is None:
         sd = SettingData()
@@ -298,6 +321,7 @@ def getCodeRate():
 @app.route('/api/coderate/<int:coderate>/', methods=['GET'])
 @app.route('/api/lora/coderate/<int:coderate>/', methods=['GET'])
 def setCodeRate(coderate):
+    _require_supported(codeRate=coderate)
     sd = DatabaseHelper.get_setting_by_key('CodeRate')
     if sd is None:
         sd = SettingData()
@@ -628,11 +652,11 @@ def getLoraMode():
 @app.route('/api/loramode/<loramode>/', methods=['GET'])
 @app.route('/api/lora/mode/<loramode>/', methods=['GET'])
 def setLoraMode(loramode):
-    if loramode in ("MESHROOT", "MESHNODE", "MESHSTANDBYROOT"):
-        # Mesh only runs on the RAK3172 and on the fast data rates
-        if not SettingsClass.IsLoraMeshSupported() or not SettingsClass.IsMeshCompatibleLoraRange(SettingsClass.GetLoraRange()):
-            raise Exception("Error: mesh mode requires a RAK3172 module with mesh firmware and a LoraRange of MF, F, XF or UF")
-    if loramode in ("RECEIVER", "REPEATER", "SENDER", "MESHROOT", "MESHNODE", "MESHSTANDBYROOT"):
+    if loramode in SettingsClass.MESH_LORA_MODES and not SettingsClass.IsLoraMeshSupported():
+        # Mesh only runs on the RAK3172 with mesh firmware
+        raise Exception("Error: mesh mode requires a RAK3172 module with mesh firmware")
+    if loramode in ("RECEIVER", "REPEATER", "SENDER") + SettingsClass.MESH_LORA_MODES:
+        _require_supported(loraMode=loramode)
         sd = DatabaseHelper.get_setting_by_key('LoraMode')
         if sd is None:
             sd = SettingData()

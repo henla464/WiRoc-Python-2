@@ -467,9 +467,33 @@ class SettingsClass(object):
         # Mesh only runs on the faster data rates (any channel in these ranges)
         return loraRange in ('MF', 'F', 'XF', 'UF')
 
+    MESH_LORA_MODES = ('MESHROOT', 'MESHNODE', 'MESHSTANDBYROOT')
+
     @staticmethod
     def IsMeshLoraMode() -> bool:
-        return SettingsClass.GetLoraMode() in ('MESHROOT', 'MESHNODE', 'MESHSTANDBYROOT')
+        return SettingsClass.GetLoraMode() in SettingsClass.MESH_LORA_MODES
+
+    @staticmethod
+    def IsLoraConfigurationSupported(loraRange: str = None, channel: str = None, codeRate: int = None,
+                                     loraMode: str = None, compat: bool = None) -> bool:
+        # None keeps the current setting. The parameters mirror what the driver sends, so a
+        # configuration is supported exactly when the airtime table has a row for it.
+        if HardwareAbstraction.Instance is None:
+            HardwareAbstraction.Instance = HardwareAbstraction()
+        loraModule = HardwareAbstraction.Instance.GetLoraModule()
+        loraRange = loraRange or SettingsClass.GetLoraRange()
+        channel = channel or SettingsClass.GetChannel()
+        codeRate = SettingsClass.GetCodeRate() if codeRate is None else codeRate
+        loraMode = loraMode or SettingsClass.GetLoraMode()
+        channelData = DatabaseHelper.get_channel(channel, loraRange, loraModule)
+        if channelData is None:
+            return False
+        mesh = loraMode in SettingsClass.MESH_LORA_MODES
+        drfCompat = (SettingsClass.GetDRF1268DSCompatModeEnabled() if compat is None else compat) and not mesh
+        return DatabaseHelper.get_timeonair(
+            channelData.SpreadingFactor, channelData.RfBw, codeRate,
+            channelData.LowDatarateOptimize or drfCompat, True, channelData.CRCOn,
+            drfCompat, channelData.PreambleLength, loraModule, mesh) is not None
 
     @staticmethod
     def IsReceiverRole() -> bool:

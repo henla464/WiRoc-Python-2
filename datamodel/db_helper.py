@@ -1975,7 +1975,7 @@ class DatabaseHelper:
         sql = (f"SELECT * FROM TimeOnAirData WHERE SpreadingFactor = {spreadingFactor} and RfBw = {rfBw} and CodeRate = {codeRate} and LowDatarateOptimize = {lowDatarateOptimize} "
                f"and header = {header} and CRCOn = {CRCOn} and DRF1268DSCompatMode = {DRF1268DSCompatMode} and PreambleLength = {preambleLength} and LoraModem = '" + loraModule + f"' and MeshEnabled = {meshEnabled}")
         print(sql)
-        rows = cls.db.get_table_objects_by_SQL(ChannelData, sql)
+        rows = cls.db.get_table_objects_by_SQL(TimeOnAirData, sql)
         if len(rows) >= 1:
             return rows[0]
         return None
