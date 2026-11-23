@@ -1702,7 +1702,7 @@ paths:
       tags:
         - "Logging"
       summary: "Get WiRoc.log, tailed/filtered/paged"
-      description: "With no query params: the last `limit` (default 200) lines, across rotated log files, as a tail. With `since`/`until` given: all log entries (continuation lines like stack traces folded into the entry above them) whose timestamp falls in that inclusive range, one page at a time via `offset`/`limit`. `limit` is capped at 2000 either way, to stay well within the remote-command result size limit."
+      description: "With no query params: the last `limit` (default 200) lines, across rotated log files, as a tail. With `since`/`until`/`level`/`logger` given: all log entries (continuation lines like stack traces folded into the entry above them) matching those filters, one page at a time via `offset`/`limit`. `limit` is capped at 2000 either way, to stay well within the remote-command result size limit."
       operationId: "getWiRocLogTail"
       parameters:
         - name: since
@@ -1717,10 +1717,22 @@ paths:
           description: "Inclusive upper bound, same format as since."
           schema:
             type: string
+        - name: level
+          in: query
+          required: false
+          description: "Minimum severity to include: VERBOSE, DEBUG, INFO, WARNING, ERROR or CRITICAL. E.g. level=INFO to skip DEBUG noise."
+          schema:
+            type: string
+        - name: logger
+          in: query
+          required: false
+          description: "Source logger name, exact match, e.g. WiRoc or WiRoc.Input. Distinct loggers are filtered separately so noisy ones (e.g. a child logger) can be excluded."
+          schema:
+            type: string
         - name: offset
           in: query
           required: false
-          description: "0-based index into the (optionally since/until-filtered) chronological entry list. Omit for the default tail behaviour."
+          description: "0-based index into the (optionally filtered) chronological entry list. Omit for the default tail behaviour."
           schema:
             type: integer
         - name: limit

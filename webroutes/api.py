@@ -1564,8 +1564,12 @@ def setLoggingServerPort(port):
 WIROC_LOG_MAX_LINES = 2000  # keeps a single response well within the 20000-char command-result budget
 # Matches Python logging's default asctime+msecs format, e.g. "2026-11-21 12:53:46,722 WiRoc ERROR ..."
 # - same format slim.php's getLogArchivesLogContent() already parses, so since/until stay consistent.
-WIROC_LOG_LINE_RE = re.compile(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s')
+# Matches the logging.Formatter pattern used in start.py: timestamp, logger name, level name.
+# Name and level are optional so an entry from a differently-formatted writer still opens a
+# new entry instead of folding into the previous one.
+WIROC_LOG_LINE_RE = re.compile(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})(?: +(\S+) +([A-Z]+))?')
 WIROC_LOG_TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S,%f'
+WIROC_LOG_LEVELS = {'VERBOSE': 5, 'DEBUG': 10, 'INFO': 20, 'WARNING': 30, 'ERROR': 40, 'CRITICAL': 50}
 
 
 def _WiRocLogFilesOldestFirst():
@@ -1576,10 +1580,12 @@ def _WiRocLogFilesOldestFirst():
 
 
 def _IterWiRocLogEntries():
-    # Yields (timestamp_str_or_None, entry_text) in chronological order, one per log entry.
-    # Continuation lines (stack traces etc, no timestamp prefix) fold into the entry above them,
-    # so a since/until filter can't silently chop the rest of a multi-line error off.
+    # Yields (timestamp, logger_name, level_name, entry_text) in chronological order, one per
+    # log entry. Continuation lines (stack traces etc, no timestamp prefix) fold into the entry
+    # above them, so a filter can't silently chop the rest of a multi-line error off.
     entryTimestamp = None
+    entryName = None
+    entryLevel = None
     entryLines = []
     for path in _WiRocLogFilesOldestFirst():
         with open(path, 'r', errors='replace') as f:
@@ -1587,13 +1593,13 @@ def _IterWiRocLogEntries():
                 match = WIROC_LOG_LINE_RE.match(line)
                 if match:
                     if entryLines:
-                        yield entryTimestamp, ''.join(entryLines)
-                    entryTimestamp = match.group(1)
+                        yield entryTimestamp, entryName, entryLevel, ''.join(entryLines)
+                    entryTimestamp, entryName, entryLevel = match.group(1), match.group(2), match.group(3)
                     entryLines = [line]
                 else:
                     entryLines.append(line)
     if entryLines:
-        yield entryTimestamp, ''.join(entryLines)
+        yield entryTimestamp, entryName, entryLevel, ''.join(entryLines)
 
 
 def _ParseWiRocLogTimestamp(timestampStr):
@@ -1621,10 +1627,14 @@ def _WiRocLogEntryInRange(timestampStr, since, until):
 @app.route('/api/logs/wiroc/', methods=['GET'])
 def getWiRocLogTail():
     """Query params (all optional): since/until ("YYYY-MM-DD HH:MM:SS,mmm", inclusive) filter
-    by log entry timestamp; offset/limit page through the (optionally filtered) result, limit
-    capped at 2000. With none given, returns the last `limit` (default 200) lines as a tail."""
+    by log entry timestamp; level (minimum, e.g. INFO) and logger (exact name, e.g. WiRoc or
+    WiRoc.Output) filter by the entry's severity and source logger; offset/limit page through the
+    (optionally filtered) result, limit capped at 2000. With none given, returns the last
+    `limit` (default 200) lines as a tail."""
     since = _ParseWiRocLogTimestamp(request.args.get('since'))
     until = _ParseWiRocLogTimestamp(request.args.get('until'))
+    minLevel = WIROC_LOG_LEVELS.get(request.args.get('level', '').upper())
+    loggerFilter = request.args.get('logger') or None
     try:
         offset = int(request.args.get('offset', -1))
     except ValueError:
@@ -1635,7 +1645,7 @@ def getWiRocLogTail():
         limit = 200
     limit = max(1, min(limit, WIROC_LOG_MAX_LINES))
 
-    if since is None and until is None and offset < 0:
+    if since is None and until is None and offset < 0 and minLevel is None and loggerFilter is None:
         # Fast path: no filter/paging requested, just the tail - read files newest-first and
         # stop as soon as we have enough physical lines, same as the original simple behaviour.
         lines = []
@@ -1646,10 +1656,13 @@ def getWiRocLogTail():
                 break
         value = {"lines": lines[-limit:], "hasMore": False, "nextOffset": None}
     else:
-        # Range/paging mode: scan every entry (continuation lines folded in), filter by
-        # since/until if given, then return one bounded page starting at offset.
+        # Range/paging mode: scan every entry (continuation lines folded in), apply the
+        # since/until/level/logger filters, then return one bounded page starting at offset.
         offset = max(0, offset)
-        matched = [text for ts, text in _IterWiRocLogEntries() if _WiRocLogEntryInRange(ts, since, until)]
+        matched = [text for ts, name, level, text in _IterWiRocLogEntries()
+                   if _WiRocLogEntryInRange(ts, since, until)
+                   and (minLevel is None or WIROC_LOG_LEVELS.get(level, 0) >= minLevel)
+                   and (loggerFilter is None or name == loggerFilter)]
         page = matched[offset:offset + limit]
         hasMore = offset + limit < len(matched)
         value = {"lines": page, "hasMore": hasMore, "nextOffset": (offset + limit) if hasMore else None}
