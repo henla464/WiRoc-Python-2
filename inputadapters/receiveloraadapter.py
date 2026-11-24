@@ -164,8 +164,6 @@ class ReceiveLoraAdapter(object):
         now = time.monotonic()
         if receivedMessage or now - self.lastMeshStatePollTime < 2.0:
             return
-        if self.hardwareAbstraction.GetLORAIRQValue():
-            return
         self.lastMeshStatePollTime = now
         state = self.loraRadio.GetMeshState()
         if state is None:
@@ -182,9 +180,11 @@ class ReceiveLoraAdapter(object):
         if not SettingsClass.GetMeshEnabled():
             return
         now = time.monotonic()
-        if receivedMessage or now - self.lastMeshSnapshotTime < 60.0:
-            return
-        if self.hardwareAbstraction.GetLORAIRQValue():
+        # LORA_IRQ means a host message or a new topology map is available; GetData() drains the
+        # message first, so an asserted IRQ with no message means poll now instead of waiting 60 s.
+        # The 2 s floor keeps a stuck IRQ from hammering the serial link.
+        pollInterval = 2.0 if self.hardwareAbstraction.GetLORAIRQValue() else 60.0
+        if receivedMessage or now - self.lastMeshSnapshotTime < pollInterval:
             return
         self.lastMeshSnapshotTime = now
         ReceiveLoraAdapter.WiRocLogger.debug(
