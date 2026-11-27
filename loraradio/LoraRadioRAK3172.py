@@ -404,6 +404,7 @@ class LoraRadioRAK3172:
         # Reply: ATC+MESHSTATE=<14 or 21 colon separated decimal fields>
         # enabled:isroot:ownaddr:txq:state:alloc:parent:hops:cost:neighbours:epoch:overhead:ackms:standby
         # (:tx_ok:tx_busy:tx_assign:rx_any:rx_assign:adopt:last_type appended by newer firmware)
+        # Newer firmware inserts allocver (root allocation-table change counter) after alloc.
         prefix = LoraRadioRAK3172.ViewMeshStateCmd_ExpectedResponseStart
         if not respStr.startswith(prefix):
             return None
@@ -417,6 +418,8 @@ class LoraRadioRAK3172:
         names = ["enabled", "isroot", "ownaddr", "txq", "state", "alloc", "parent", "hops", "cost",
                  "neighbours", "epoch", "overhead", "ackms", "standby",
                  "tx_ok", "tx_busy", "tx_assign", "rx_any", "rx_assign", "adopt", "last_type"]
+        if len(fields) not in (14, 21):
+            names.insert(6, "allocver")
         return dict(zip(names, values))
 
     def GetMeshState(self) -> dict | None:
@@ -447,6 +450,7 @@ class LoraRadioRAK3172:
     @staticmethod
     def ParseMeshTopologyResponse(respStr: str) -> list[dict] | None:
         # Reply: ATC+MESHTOPO=<addr>:<parent>:<deviceId>[:<neighbour>=<cost>,...]|...
+        # Newer firmware inserts <age ms> between the device id and the neighbour list.
         prefix = LoraRadioRAK3172.ViewMeshTopologyCmd_ExpectedResponseStart
         if not respStr.startswith(prefix):
             return None
@@ -463,14 +467,19 @@ class LoraRadioRAK3172:
                 return None
             neighbours = []
             try:
-                if len(fields) >= 4 and fields[3] != "":
-                    for neighbour in fields[3].split(','):
+                rowDict = {"addr": int(fields[0]), "parent": int(fields[1]),
+                           "deviceId": deviceID, "neighbours": neighbours}
+                index = 3
+                if len(fields) > index and fields[index].isdigit():
+                    rowDict["ageMs"] = int(fields[index])
+                    index += 1
+                if len(fields) > index and fields[index] != "":
+                    for neighbour in fields[index].split(','):
                         pair = neighbour.split('=')
                         if len(pair) != 2:
                             return None
                         neighbours.append({"addr": int(pair[0]), "cost": int(pair[1])})
-                rows.append({"addr": int(fields[0]), "parent": int(fields[1]),
-                             "deviceId": deviceID, "neighbours": neighbours})
+                rows.append(rowDict)
             except ValueError:
                 return None
         return rows
